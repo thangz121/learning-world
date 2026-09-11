@@ -107,7 +107,7 @@ public class CloudflareTranslateTtsProvider : ISpeechSynthesisProvider {
     foreach (string chunk in chunks) {
       ct.ThrowIfCancellationRequested();
       string url = BuildRequestUrl(_baseUrl, chunk, lang, rate);
-      parts.Add(await FetchChunkAsync(url, ct).ConfigureAwait(false));
+      parts.Add(await FetchChunkAsync(url, ct));
     }
 
     int total = 0;

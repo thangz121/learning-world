@@ -75,6 +75,9 @@ public static class PregenSeeder {
           Debug.LogWarning("[PregenSeeder] Skipped entry: " + ex.Message);
         }
       }
+      // Single boot info line (not spam): proves offline L2 state at startup,
+      // which decides whether first-launch audio needs the network at all.
+      Debug.Log("[PregenSeeder] Seeded " + seeded + " pregen masters to L2.");
       return seeded;
     } catch (Exception ex) {
       Debug.LogWarning("[PregenSeeder] Seed failed (offline L2 untouched): " + ex.Message);

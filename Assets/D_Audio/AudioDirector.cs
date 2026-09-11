@@ -105,7 +105,7 @@ public class AudioDirector : IAudioDirector {
     var dialog = new DialogueRequest(text, LearningVoice, FrozenLang, rate, 0f,
       SpeechStyle.Clear, AudioFormat.Mp3_44100, AudioPriority.P1_Pronunciation);
     var job = SpeechJob.ForVocabulary(wordId, mode, tts, dialog);
-    await SubmitAsync(job).ConfigureAwait(false);
+    await SubmitAsync(job);
   }
 
   public async Task SpeakAsync(DialogueRequest request) {
@@ -114,7 +114,7 @@ public class AudioDirector : IAudioDirector {
     var tts = new TtsRequest(request.Text, request.Voice, lang, request.Rate,
       request.Pitch, request.Style, request.Format, request.Priority);
     var job = SpeechJob.ForDialogue(request, tts);
-    await SubmitAsync(job).ConfigureAwait(false);
+    await SubmitAsync(job);
   }
 
   public void PlaySfx(SfxId id) {
@@ -199,7 +199,7 @@ public class AudioDirector : IAudioDirector {
         }
         _queue.Enqueue(job);
       }
-      await job.Done.Task.ConfigureAwait(false);
+      await job.Done.Task;
       return;
     }
 
@@ -210,7 +210,7 @@ public class AudioDirector : IAudioDirector {
       FadeOutCurrent();
     }
     CancelCurrent();
-    await RunExclusiveAsync(job, true).ConfigureAwait(false);
+    await RunExclusiveAsync(job, true);
 
     // Replay paused P3 (bypass its stale dedupe timestamp), then drain FIFO queue.
     SpeechJob resume = null;
@@ -220,9 +220,9 @@ public class AudioDirector : IAudioDirector {
     }
     if (resume != null) {
       _cache.Forget(resume.Key);
-      await RunExclusiveAsync(resume, false).ConfigureAwait(false);
+      await RunExclusiveAsync(resume, false);
     }
-    await DrainQueueAsync().ConfigureAwait(false);
+    await DrainQueueAsync();
   }
 
   async Task DrainQueueAsync() {
@@ -243,7 +243,7 @@ public class AudioDirector : IAudioDirector {
       }
       if (next == null) return;
       _cache.Forget(next.Key); // queued wait must not self-dedupe on playout
-      await RunExclusiveAsync(next, true).ConfigureAwait(false);
+      await RunExclusiveAsync(next, true);
     }
   }
 
@@ -251,7 +251,7 @@ public class AudioDirector : IAudioDirector {
     var cts = new CancellationTokenSource();
     bool entered = false;
     try {
-      await _playSlot.WaitAsync(cts.Token).ConfigureAwait(false);
+      await _playSlot.WaitAsync(cts.Token);
       entered = true;
       lock (_gate) {
         _currentCts = cts;
@@ -271,7 +271,7 @@ public class AudioDirector : IAudioDirector {
       } else {
         byte[] bytes;
         if (!_cache.TryGetDisk(job.Key, out bytes) || bytes == null) {
-          TtsAudioResult r = await SynthesizeAsync(job.Tts, cts.Token).ConfigureAwait(false);
+          TtsAudioResult r = await SynthesizeAsync(job.Tts, cts.Token);
           bytes = r.Mp3;
           fromCache = r.FromCache;
           if (bytes != null && bytes.Length > 0) StoreCaches(job.Key, null, bytes);
@@ -280,13 +280,13 @@ public class AudioDirector : IAudioDirector {
         }
         cts.Token.ThrowIfCancellationRequested(); // late TTS after cancel: drop silently
         if (bytes != null && bytes.Length > 0) {
-          clip = await DecodeAudioAsync(bytes, job.Key, cts.Token).ConfigureAwait(false);
+          clip = await DecodeAudioAsync(bytes, job.Key, cts.Token);
           if (clip != null) StoreCaches(job.Key, clip, null);
         }
       }
 
       if (clip != null) {
-        await PlayClipAsync(clip, job.Tts.Priority, cts.Token).ConfigureAwait(false);
+        await PlayClipAsync(clip, job.Tts.Priority, cts.Token);
       } else {
         Debug.LogWarning("[AudioDirector] No decodable audio for '" + job.Tts.Text
           + "' (L2 bytes kept for W1 Addressables hook). Quest continues.");
@@ -301,7 +301,7 @@ public class AudioDirector : IAudioDirector {
     } catch (TtsException tex) {
       Debug.LogWarning("[AudioDirector] TTS failed (" + tex.Message
         + ") -> pre-gen/offline fallback. Quest continues.");
-      await PlayPregenFallbackAsync(job, cts.Token).ConfigureAwait(false);
+      await PlayPregenFallbackAsync(job, cts.Token);
       if (signalDone) job.Done.TrySetResult(false);
     } catch (Exception ex) {
       Debug.LogWarning("[AudioDirector] Playback error (quest continues): " + ex.Message);
@@ -324,13 +324,13 @@ public class AudioDirector : IAudioDirector {
 
   async Task PlayPregenFallbackAsync(SpeechJob job, CancellationToken ct) {
     try {
-      byte[] pre = await TryLoadPregenAsync(job.Tts, job.Key, ct).ConfigureAwait(false);
+      byte[] pre = await TryLoadPregenAsync(job.Tts, job.Key, ct);
       if (pre == null || pre.Length == 0) {
         Debug.Log("[AudioDirector] No pre-gen available in W0 for '" + job.Tts.Text + "'.");
         return;
       }
-      AudioClip clip = await DecodeAudioAsync(pre, job.Key, ct).ConfigureAwait(false);
-      if (clip != null) await PlayClipAsync(clip, job.Tts.Priority, ct).ConfigureAwait(false);
+      AudioClip clip = await DecodeAudioAsync(pre, job.Key, ct);
+      if (clip != null) await PlayClipAsync(clip, job.Tts.Priority, ct);
       if (job.IsVocabulary) {
         _bus.Publish(new VocabularyPlayed(job.VocabWord, job.VocabMode, true));
       }
