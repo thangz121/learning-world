@@ -1,0 +1,92 @@
+{
+  "entries": [
+    {
+      "id": "milo_greet",
+      "text": "Hello! I am Milo!",
+      "voice": "milo_v1",
+      "lang": "en-US",
+      "rate": 1.0,
+      "pitch": 1.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "milo_greet.mp3"
+    },
+    {
+      "id": "milo_instruct_find",
+      "text": "Find the apple!",
+      "voice": "milo_v1",
+      "lang": "en-US",
+      "rate": 1.0,
+      "pitch": 1.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "milo_instruct_find.mp3"
+    },
+    {
+      "id": "milo_instruct_bring",
+      "text": "Bring it to Mia!",
+      "voice": "milo_v1",
+      "lang": "en-US",
+      "rate": 1.0,
+      "pitch": 1.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "milo_instruct_bring.mp3"
+    },
+    {
+      "id": "milo_praise_found",
+      "text": "You found it!",
+      "voice": "milo_v1",
+      "lang": "en-US",
+      "rate": 1.0,
+      "pitch": 1.0,
+      "style": "Excited",
+      "format": "Mp3_44100",
+      "file": "milo_praise_found.mp3"
+    },
+    {
+      "id": "milo_celebrate",
+      "text": "Perfect! Good job!",
+      "voice": "milo_v1",
+      "lang": "en-US",
+      "rate": 1.0,
+      "pitch": 1.0,
+      "style": "Excited",
+      "format": "Mp3_44100",
+      "file": "milo_celebrate.mp3"
+    },
+    {
+      "id": "milo_encourage",
+      "text": "Great! Let's try together!",
+      "voice": "milo_v1",
+      "lang": "en-US",
+      "rate": 1.0,
+      "pitch": 1.0,
+      "style": "Excited",
+      "format": "Mp3_44100",
+      "file": "milo_encourage.mp3"
+    },
+    {
+      "id": "apple_normal",
+      "text": "apple",
+      "voice": "learning_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "apple_normal.mp3"
+    },
+    {
+      "id": "apple_slow",
+      "text": "apple",
+      "voice": "learning_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "apple_slow.mp3"
+    }
+  ]
+}

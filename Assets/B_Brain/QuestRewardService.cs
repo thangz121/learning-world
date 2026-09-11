@@ -57,12 +57,20 @@ public sealed class QuestRewardService {
     }
   }
 
-  // Fallback content mirroring Content/quests/market_help_mia.json reward block
-  // (source of truth stays the JSON; this keeps the GameInstaller path working
-  // with zero file IO). Objectives live in QuestManager's own mirror; rewards
-  // are the only fields this service reads.
+  // Fallback content mirroring Content/quests/w1_mia_apple.json and
+  // Content/quests/market_help_mia.json reward blocks (source of truth stays
+  // the JSON; this keeps the GameInstaller path working with zero file IO).
+  // Objectives live in QuestManager's own mirror; rewards are the only fields
+  // this service reads.
   sealed class BuiltInRewardContent : IQuestContentProvider {
     public QuestData Get(QuestId questId) {
+      if (questId.Value == "w1_mia_apple") {
+        return new QuestData {
+          id = "w1_mia_apple",
+          rewardFriendshipMia = 10,
+          rewardWorldChange = "flower_pot",
+        };
+      }
       if (questId.Value != "market_help_mia") return null;
       return new QuestData {
         id = "market_help_mia",

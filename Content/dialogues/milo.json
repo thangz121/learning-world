@@ -4,13 +4,19 @@
     "ENCOURAGE",
     "HINT_POINT",
     "HINT_DEMO",
-    "CELEBRATE"
+    "CELEBRATE",
+    "GREET",
+    "INSTRUCT_FIND",
+    "INSTRUCT_BRING"
   ],
   "responses": {
     "ENCOURAGE": "Great! Let's try together!",
     "HINT_POINT": "Come with me!",
     "HINT_DEMO": "Watch me do it!",
-    "CELEBRATE": "Perfect! Good job!"
+    "CELEBRATE": "Perfect! Good job!",
+    "GREET": "Hello! I am Milo!",
+    "INSTRUCT_FIND": "Find the apple!",
+    "INSTRUCT_BRING": "Bring it to Mia!"
   },
   "note": "Milo encouragement max 8 words, NPC dialogue max 6 words"
 }

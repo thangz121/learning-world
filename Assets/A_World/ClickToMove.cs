@@ -6,6 +6,7 @@
 // no FindObjectOfType, no `new` service, no audio/speech/Worker calls.
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(NavMeshAgent))]
@@ -76,6 +77,7 @@ public class ClickToMove : MonoBehaviour {
     // with no pointer device (e.g. batch EditMode runs).
     Mouse mouse = Mouse.current;
     if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
+    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return; // W1: HUD button clicks must not move the player
     Camera cam = Camera.main;
     if (cam == null) return;
     Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());

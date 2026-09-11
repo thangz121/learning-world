@@ -41,6 +41,14 @@
   - UAC0009: `GameInstaller` `#if UNITY_EDITOR || DEVELOPMENT_BUILD` → `#if UNITY_EDITOR || DEBUG` (supported managed symbol; giữ intent tests-only, không suppress).
   - Input deprecation: audit toàn Assets chỉ còn đúng 1 legacy dep đã verify (`ClickToMove` click picking) → migrate 2 dòng sang `UnityEngine.InputSystem.Mouse` (+null-guard batch) + ref `Unity.InputSystem` trong LWE.World + `activeInputHandler: 1` (New-only). Unity từng tự set Both(2) khi cài inputsystem 1.20.0.
   - Batch verify: 0 errors, 0 project-code warnings, 23/23 PASS.
+* W1 Stage-1 2026-09-11 10:40+07 (4 agents parallel + Lead integration, headless verified):
+  - A: MarketScene (1-GO shell) + MarketBuilder (code-built market: stall/tree/fences/crate+apple/player/NavMesh runtime bake/camera/EventSystem) + ClickRouter (New-Input single raycast, arrival interactions, vocab audio via Director) + SmartCamera modes + MarketHUD (banner + replay) + Apple/FlowerPot presenters; Interactable OnMouseDown removed.
+  - B: QuestManager w1_mia_apple mirror + AdvanceOnSeen Find-only fix (double-click exploit) + QuestRewardService w1 mirror + Milo lines (Greet/InstructFind/InstructBring/PraiseFound/Repeat/SetTarget) + MiloPresenter/MiaPresenter (procedural figures, proximity greet, idle Tick, carrying/Bring/Give-correction).
+  - C: Content/quests/w1_mia_apple.json + milo.json +3 lines + Content/audio_manifest.json (8 entries, key-exact params); validator authoring PASS.
+  - D: tools/pregen_w1.py fetched 8/8 real mp3s (94KB) to Assets/StreamingAssets/audio/ + PregenSeeder (C#-computed keys, never throws) + CT-A05 resolver test.
+  - Lead: SharedKernel IClickTarget (replaced A reflection hacks with typed calls + HUD replay Action), _Bootstrap MarketBootstrap + BootstrapScene (Build Settings idx0), GameInstaller seeder + additive MarketScene load (event-driven, exactly-once) + seen/spoken production routing, ugui 2.6.0 package (verified blocker: HUD needs UnityEngine.UI), BuildSettings both scenes.
+  - Headless playmode smoke 20/20 (boot, quest find→bring→complete, friendship 10, flower visible, HUD done, NavMesh valid+path complete; physical displacement needs real frames — manual acceptance).
+  - Batch gate: 0 errors, 0 project warnings, EditMode 24/24 PASS (23 + CT-A05). Manual in-Unity acceptance (look/feel/audio/ear/offline) still required before W1 complete.
 
 ## Gate
 Chỉ khi: mở được + compile sạch + EditMode PASS + lock ổn định → mới sang Vertical Slice implementation.

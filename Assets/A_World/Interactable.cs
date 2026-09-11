@@ -3,7 +3,11 @@
 // (WordId / InteractionId / NpcId) at Awake and never compared as raw strings.
 // Publishes WordSeenEvent(wordId, LearnSource.Object, UtcNow) via injected bus.
 // No audio/speech/Worker calls, no `new` service.
-// Note: OnMouseDown requires a Collider on this GameObject to receive clicks.
+// W1: OnMouseDown removed — Active Input Handling is New-only, so the legacy
+// click path is dead. All clicks route through ClickRouter (New Input System),
+// which calls Interact() on arrival. This GameObject still needs its Collider
+// for the router's raycast.
+// Note: this GameObject needs a Collider so ClickRouter raycasts can hit it.
 using System;
 using UnityEngine;
 
@@ -38,8 +42,6 @@ public class Interactable : MonoBehaviour {
     if (!string.IsNullOrWhiteSpace(interactionId)) Interaction = new InteractionId(interactionId);
     if (!string.IsNullOrWhiteSpace(npcId)) Npc = new NpcId(npcId);
   }
-
-  void OnMouseDown() { Interact(); }
 
   // Click-to-move arrival callback path (called when the player reaches this object).
   public void Interact() {

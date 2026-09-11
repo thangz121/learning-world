@@ -5,8 +5,10 @@
 // built-in provider mirroring Content/quests/market_help_mia.json, so the
 // GameInstaller 3-arg call keeps compiling.
 // Implements frozen IQuestService plus W0-T1 helpers:
-//   AdvanceOnSeen(word) — Find/Bring(/Give/Select) path: reports WordSeen to learning,
-//     advances when the current objective targets that word with a non-Speak action.
+//   AdvanceOnSeen(word) — Find path ONLY: reports WordSeen to learning, advances
+//     only when the current objective is a (Find, word) match. Bring/Give/Select
+//     NEVER advance here (explicit ReportAction path, e.g. bring needs Mia);
+//     Speak advances only via AdvanceOnSpoken.
 //   AdvanceOnSpoken(word, level) — Speak path: reports to learning, advances only
 //     the current (Speak, word) objective on SpeechLevel Great+.
 // Completion is published ONLY via _bus.Publish(new QuestCompletedEvent(...)).
@@ -87,13 +89,15 @@ public sealed class QuestManager : IQuestService {
     TryAdvance(_active.Value, action, target);
   }
 
-  // Interact/WordSeen path (Find/Bring/Give/Select). Never advances a Speak objective.
+  // Interact/WordSeen path (Find ONLY). Never advances Bring/Give/Select/Speak:
+  // those need the explicit ReportAction path, so re-clicking a seen word can
+  // never complete them (e.g. clicking the apple twice must not finish bring).
   public void AdvanceOnSeen(WordId word) {
     _learning.ReportSeen(word, LearnSource.Quest);
     if (!_active.HasValue) return;
     QuestId q = _active.Value;
     TypedObjective cur = CurrentObjective(q);
-    if (cur != null && cur.Action != PlayerAction.Speak && cur.Target.Value == word.Value)
+    if (cur != null && cur.Action == PlayerAction.Find && cur.Target.Value == word.Value)
       TryAdvance(q, cur.Action, word);
   }
 
@@ -154,10 +158,20 @@ public sealed class QuestManager : IQuestService {
     return list;
   }
 
-  // Fallback content mirroring Content/quests/market_help_mia.json (source of truth
-  // stays the JSON; this keeps the GameInstaller 3-arg path working with zero file IO).
+  // Fallback content mirroring Content/quests/w1_mia_apple.json and
+  // Content/quests/market_help_mia.json (source of truth stays the JSON; this
+  // keeps the GameInstaller 3-arg path working with zero file IO).
   sealed class BuiltInQuestContentProvider : IQuestContentProvider {
     public QuestData Get(QuestId questId) {
+      if (questId.Value == "w1_mia_apple") {
+        return new QuestData {
+          id = "w1_mia_apple",
+          objectives = new List<ObjectiveData> {
+            new ObjectiveData { id = "find_apple", action = "find", target = "apple" },
+            new ObjectiveData { id = "bring_apple", action = "bring", target = "apple" }
+          }
+        };
+      }
       if (questId.Value != "market_help_mia") return null;
       return new QuestData {
         id = "market_help_mia",

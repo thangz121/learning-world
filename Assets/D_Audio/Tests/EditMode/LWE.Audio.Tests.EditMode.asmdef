@@ -1,0 +1,6 @@
+{
+  "name": "LWE.Audio.Tests.EditMode",
+  "references": ["LWE.SharedKernel", "LWE.Audio"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": []
+}

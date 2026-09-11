@@ -14,6 +14,7 @@
 //   NpcVoiceProfileSelector(ISaveService),
 //   Milo.Bind(IGameEventBus, IQuestService, ILearningService, IHintService, IAudioDirector)
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameInstaller : MonoBehaviour {
   public IGameEventBus EventBus { get; private set; }
@@ -44,6 +45,59 @@ public class GameInstaller : MonoBehaviour {
     Audio = new AudioDirector(EventBus, Tts);         // Application, cache L1/L2 + Mixer + Focus
     Voices = new NpcVoiceProfileSelector(Save);       // Application, save.npcVoices + worldSeed
     Milo.Bind(EventBus, Quests, Learning, Hints, Audio);
+    PregenSeeder.SeedFromStreamingAssets();           // D: offline L2 seeding before first audio use
+    LoadMarketSceneAndBuild();
+  }
+
+  // W1 slice entry: BootstrapScene (this object) loads the MarketScene
+  // additively, binds the code-built world, then hands quest narration to the
+  // MarketBootstrap on this same GameObject. No ServiceLocator: services flow
+  // as arguments, and only the composition root news them up.
+  // NOTE: the build is driven by sceneLoaded (notinline after LoadScene):
+  // depending on entry path the additive load may complete synchronously or
+  // deferred; the event covers both, and _sliceBuilt keeps it exactly-once.
+  bool _sliceBuilt;
+
+  void LoadMarketSceneAndBuild() {
+    Scene market = SceneManager.GetSceneByName("MarketScene");
+    if (market.IsValid() && market.isLoaded) { BuildFromScene(market); return; }
+    SceneManager.sceneLoaded += OnMarketSceneLoaded;
+    SceneManager.LoadScene("MarketScene", LoadSceneMode.Additive);
+    Scene after = SceneManager.GetSceneByName("MarketScene");
+    if (after.IsValid() && after.isLoaded && !_sliceBuilt) {
+      SceneManager.sceneLoaded -= OnMarketSceneLoaded;
+      BuildFromScene(after);
+    }
+  }
+
+  void OnMarketSceneLoaded(Scene scene, LoadSceneMode mode) {
+    if (scene.name != "MarketScene") return;
+    SceneManager.sceneLoaded -= OnMarketSceneLoaded;
+    BuildFromScene(scene);
+  }
+
+  void BuildFromScene(Scene market) {
+    if (_sliceBuilt) return;
+    _sliceBuilt = true;
+    MarketBuilder builder = null;
+    if (market.IsValid()) {
+      foreach (GameObject root in market.GetRootGameObjects()) {
+        builder = root.GetComponentInChildren<MarketBuilder>(true);
+        if (builder != null) break;
+      }
+    }
+    if (builder == null) {
+      Debug.LogError("[GameInstaller] MarketScene has no MarketBuilder; slice cannot start.", this);
+      return;
+    }
+    builder.BuildServices(EventBus, Audio);
+    builder.WireQuestService(Quests);
+    MarketBootstrap bootstrap = GetComponent<MarketBootstrap>();
+    if (bootstrap == null) {
+      Debug.LogError("[GameInstaller] No MarketBootstrap on the installer object; slice cannot start.", this);
+      return;
+    }
+    bootstrap.Build(EventBus, Quests, Hints, builder);
   }
 
   // Runtime online->offline swap INSIDE the router: every injected consumer

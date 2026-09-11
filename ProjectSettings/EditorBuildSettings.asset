@@ -4,5 +4,11 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/_Bootstrap/BootstrapScene.unity
+    guid: 60f137632bbc1a3498537934d9ecdd48
+  - enabled: 1
+    path: Assets/A_World/Supermarket/MarketScene.unity
+    guid: f4a9791c889511f498fefbdd9fbe2137
   m_configObjects: {}

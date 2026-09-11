@@ -3,7 +3,7 @@
 //   Milo.Bind(IGameEventBus, IQuestService, ILearningService, IHintService, IAudioDirector)
 // All output goes via IAudioDirector.SpeakAsync with VoiceProfileId milo_v1 —
 // Milo NEVER calls providers (TTS/STT/Worker) directly. Quest/Learning/Hint refs
-// are retained for Tier3 context-aware lines; W0-T1 lines are fixed content.
+// are retained for Tier3 context-aware lines; W0-T1 + W1 lines are fixed content.
 // Lines mirror Content/dialogues/milo.json; every line is <= 8 words.
 using System;
 
@@ -49,6 +49,42 @@ public static class Milo {
   // "Watch(1) me(2) do(3) it(4)"
   public static void DemoHint() {
     Say("Watch me do it!", SpeechStyle.Clear, AudioPriority.P3_Dialogue);
+  }
+
+  // "Hello(1) I(2) am(3) Milo(4)"
+  public static void Greet() {
+    Say("Hello! I am Milo!", SpeechStyle.Clear, AudioPriority.P3_Dialogue);
+  }
+
+  // "Find(1) the(2) apple(3)"
+  public static void InstructFind() {
+    Say("Find the apple!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+  }
+
+  // "Bring(1) it(2) to(3) Mia(4)"
+  public static void InstructBring() {
+    Say("Bring it to Mia!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+  }
+
+  // "You(1) found(2) it(3)"
+  public static void PraiseFound() {
+    Say("You found it!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+  }
+
+  static int _lastInstructionIndex; // default 0 -> find.
+
+  // Records the instruction for RepeatInstruction, then says it now:
+  // 0 -> InstructFind, anything else -> InstructBring.
+  public static void SetInstructionTarget(int objectiveIndex) {
+    _lastInstructionIndex = objectiveIndex;
+    if (objectiveIndex == 0) InstructFind();
+    else InstructBring();
+  }
+
+  // Re-says the last instruction set via SetInstructionTarget (default: find).
+  public static void RepeatInstruction() {
+    if (_lastInstructionIndex == 0) InstructFind();
+    else InstructBring();
   }
 
   static void Say(string text, SpeechStyle style, AudioPriority priority) {
