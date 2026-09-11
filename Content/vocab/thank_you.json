@@ -1,0 +1,44 @@
+{
+  "id": "thank_you",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "thank you",
+    "vi": "cảm ơn"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "social",
+    "tags": [
+      "polite"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "thank you"
+    ],
+    "phonetic": "θæŋk juː"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Thank_you",
+    "image": "thank_you.png"
+  },
+  "audio": {
+    "normal": "audio/thank_you_normal.mp3",
+    "slow": "audio/thank_you_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

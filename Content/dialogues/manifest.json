@@ -1,0 +1,259 @@
+{
+  "count": 36,
+  "lang": "en-US",
+  "approved": false,
+  "lines": [
+    {
+      "id": "greet_01",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Hi! Come here!",
+      "audio": "audio/dialog/greet_01.mp3"
+    },
+    {
+      "id": "greet_02",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Hi! Come in!",
+      "audio": "audio/dialog/greet_02.mp3"
+    },
+    {
+      "id": "greet_03",
+      "npc": "mom",
+      "voice": "npc_female_01",
+      "text": "Hello! Let's play!",
+      "audio": "audio/dialog/greet_03.mp3"
+    },
+    {
+      "id": "greet_04",
+      "npc": "boy",
+      "voice": "npc_male_01",
+      "text": "Let's play together!",
+      "audio": "audio/dialog/greet_04.mp3"
+    },
+    {
+      "id": "inst_01",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Look over here!",
+      "audio": "audio/dialog/inst_01.mp3"
+    },
+    {
+      "id": "inst_02",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Find the apple, please!",
+      "audio": "audio/dialog/inst_02.mp3"
+    },
+    {
+      "id": "inst_03",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Apple please!",
+      "audio": "audio/dialog/inst_03.mp3"
+    },
+    {
+      "id": "inst_04",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Bring one apple!",
+      "audio": "audio/dialog/inst_04.mp3"
+    },
+    {
+      "id": "inst_05",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Listen and point!",
+      "audio": "audio/dialog/inst_05.mp3"
+    },
+    {
+      "id": "inst_06",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Touch the red one!",
+      "audio": "audio/dialog/inst_06.mp3"
+    },
+    {
+      "id": "enc_01",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Great! Let's try together!",
+      "audio": "audio/dialog/enc_01.mp3"
+    },
+    {
+      "id": "enc_02",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Good! One more time!",
+      "audio": "audio/dialog/enc_02.mp3"
+    },
+    {
+      "id": "enc_03",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Nice! Well done!",
+      "audio": "audio/dialog/enc_03.mp3"
+    },
+    {
+      "id": "enc_04",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "You can do it!",
+      "audio": "audio/dialog/enc_04.mp3"
+    },
+    {
+      "id": "enc_05",
+      "npc": "mom",
+      "voice": "npc_female_01",
+      "text": "Great job, little one!",
+      "audio": "audio/dialog/enc_05.mp3"
+    },
+    {
+      "id": "ok_01",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Great! Apple!",
+      "audio": "audio/dialog/ok_01.mp3"
+    },
+    {
+      "id": "ok_02",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Perfect! Good job!",
+      "audio": "audio/dialog/ok_02.mp3"
+    },
+    {
+      "id": "ok_03",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Thank you! Yay!",
+      "audio": "audio/dialog/ok_03.mp3"
+    },
+    {
+      "id": "ok_04",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Yes! That's the apple!",
+      "audio": "audio/dialog/ok_04.mp3"
+    },
+    {
+      "id": "retry_01",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Almost! Listen again!",
+      "audio": "audio/dialog/retry_01.mp3"
+    },
+    {
+      "id": "retry_02",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Let's say it slowly!",
+      "audio": "audio/dialog/retry_02.mp3"
+    },
+    {
+      "id": "retry_03",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Try again please!",
+      "audio": "audio/dialog/retry_03.mp3"
+    },
+    {
+      "id": "retry_04",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Say apple together!",
+      "audio": "audio/dialog/retry_04.mp3"
+    },
+    {
+      "id": "hint_01",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Come with me!",
+      "audio": "audio/dialog/hint_01.mp3"
+    },
+    {
+      "id": "hint_02",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Watch me do it!",
+      "audio": "audio/dialog/hint_02.mp3"
+    },
+    {
+      "id": "hint_03",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Look at the shelf!",
+      "audio": "audio/dialog/hint_03.mp3"
+    },
+    {
+      "id": "hint_04",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Choose the red fruit!",
+      "audio": "audio/dialog/hint_04.mp3"
+    },
+    {
+      "id": "trans_01",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Let's help Mia!",
+      "audio": "audio/dialog/trans_01.mp3"
+    },
+    {
+      "id": "trans_02",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "Now find the banana!",
+      "audio": "audio/dialog/trans_02.mp3"
+    },
+    {
+      "id": "trans_03",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Come back soon!",
+      "audio": "audio/dialog/trans_03.mp3"
+    },
+    {
+      "id": "done_01",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "We did it! Hurray!",
+      "audio": "audio/dialog/done_01.mp3"
+    },
+    {
+      "id": "done_02",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Thank you! Bye!",
+      "audio": "audio/dialog/done_02.mp3"
+    },
+    {
+      "id": "done_03",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "High five, friend!",
+      "audio": "audio/dialog/done_03.mp3"
+    },
+    {
+      "id": "milo_01",
+      "npc": "milo",
+      "voice": "milo_v1",
+      "text": "I am Milo!",
+      "audio": "audio/dialog/milo_01.mp3"
+    },
+    {
+      "id": "mia_01",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "I am Mia!",
+      "audio": "audio/dialog/mia_01.mp3"
+    },
+    {
+      "id": "mia_02",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Milk and bread here!",
+      "audio": "audio/dialog/mia_02.mp3"
+    }
+  ]
+}

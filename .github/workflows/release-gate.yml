@@ -1,0 +1,26 @@
+name: release-gate
+# v6.4 license-free ship gate. Splits:
+#   NON-UNITY CI GATE (this workflow): always runs on GitHub, no license.
+#   UNITY LOCAL GATE (manual, local Unity Editor): compile + EditMode + PlayMode + Windows build.
+# Unity tests are NEVER marked PASS on GitHub unless run — status is NOT RUN / LOCAL REQUIRED.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['slice-v*']
+jobs:
+  non-unity-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Content+Audio SHIP gate (file thật, approved, pack mapped)
+        run: python tools/validate_content.py --ship Content/vocab Content/quests Content/dialogues
+      - name: Unity test files present (static existence only, NOT execution)
+        run: |
+          test -d Assets/Tests/EditMode || (echo "FAIL: release thiếu Assets/Tests/EditMode" && exit 1)
+          test $(ls Assets/Tests/EditMode/CT-*.cs 2>/dev/null | wc -l) -ge 16 || (echo "FAIL: release thiếu Unity test files (cần đủ CT-001..012 + CT-A01..04)" && exit 1)
+          echo "PASS: Unity test files present (execution status: NOT RUN — see UNITY LOCAL GATE)"
+      - name: UNITY LOCAL GATE reminder (manual, required before ship)
+        run: |
+          echo "LOCAL REQUIRED before ship: open Unity 6000.6.0f1 -> compile clean -> EditMode green -> PlayMode green -> build StandaloneWindows64 -> playtest VerticalSliceAcceptance.md"

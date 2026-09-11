@@ -1,0 +1,39 @@
+{
+  "id": "sit",
+  "active": false,
+  "language": "en",
+  "display": {
+    "en": "sit",
+    "vi": "sit"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen"
+    ]
+  },
+  "semantic": {
+    "category": "world",
+    "tags": [
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [],
+    "phonetic": ""
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Sit",
+    "image": "sit.png"
+  },
+  "audio": {
+    "normal": null,
+    "slow": null,
+    "syllable": null,
+    "voice": null,
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "big",
+  "active": false,
+  "language": "en",
+  "display": {
+    "en": "big",
+    "vi": "big"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen"
+    ]
+  },
+  "semantic": {
+    "category": "world",
+    "tags": [
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [],
+    "phonetic": ""
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Big",
+    "image": "big.png"
+  },
+  "audio": {
+    "normal": null,
+    "slow": null,
+    "syllable": null,
+    "voice": null,
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

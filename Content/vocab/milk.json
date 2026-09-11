@@ -1,0 +1,46 @@
+{
+  "id": "milk",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "milk",
+    "vi": "sữa"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "food",
+    "tags": [
+      "drink",
+      "white",
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "milk"
+    ],
+    "phonetic": "mɪlk"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Milk",
+    "image": "milk.png"
+  },
+  "audio": {
+    "normal": "audio/milk_normal.mp3",
+    "slow": "audio/milk_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

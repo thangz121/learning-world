@@ -1,0 +1,39 @@
+{
+  "id": "bottle",
+  "active": false,
+  "language": "en",
+  "display": {
+    "en": "bottle",
+    "vi": "bottle"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen"
+    ]
+  },
+  "semantic": {
+    "category": "world",
+    "tags": [
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [],
+    "phonetic": ""
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Bottle",
+    "image": "bottle.png"
+  },
+  "audio": {
+    "normal": null,
+    "slow": null,
+    "syllable": null,
+    "voice": null,
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "id": "bag",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "bag",
+    "vi": "túi"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "object",
+    "tags": [
+      "container",
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "bag"
+    ],
+    "phonetic": "bæɡ"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Bag",
+    "image": "bag.png"
+  },
+  "audio": {
+    "normal": "audio/bag_normal.mp3",
+    "slow": "audio/bag_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

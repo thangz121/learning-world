@@ -1,0 +1,39 @@
+{
+  "id": "watermelon",
+  "active": false,
+  "language": "en",
+  "display": {
+    "en": "watermelon",
+    "vi": "watermelon"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen"
+    ]
+  },
+  "semantic": {
+    "category": "world",
+    "tags": [
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [],
+    "phonetic": ""
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Watermelon",
+    "image": "watermelon.png"
+  },
+  "audio": {
+    "normal": null,
+    "slow": null,
+    "syllable": null,
+    "voice": null,
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

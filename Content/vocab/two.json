@@ -1,0 +1,44 @@
+{
+  "id": "two",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "two",
+    "vi": "số hai"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "number",
+    "tags": [
+      "count"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "two"
+    ],
+    "phonetic": "tuː"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Two",
+    "image": "two.png"
+  },
+  "audio": {
+    "normal": "audio/two_normal.mp3",
+    "slow": "audio/two_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

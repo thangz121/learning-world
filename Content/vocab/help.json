@@ -1,0 +1,45 @@
+{
+  "id": "help",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "help",
+    "vi": "giúp"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "verb",
+    "tags": [
+      "action",
+      "social"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "help"
+    ],
+    "phonetic": "help"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Help",
+    "image": "help.png"
+  },
+  "audio": {
+    "normal": "audio/help_normal.mp3",
+    "slow": "audio/help_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

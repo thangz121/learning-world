@@ -1,0 +1,44 @@
+{
+  "id": "find",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "find",
+    "vi": "tìm"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "verb",
+    "tags": [
+      "action"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "find"
+    ],
+    "phonetic": "faɪnd"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Find",
+    "image": "find.png"
+  },
+  "audio": {
+    "normal": "audio/find_normal.mp3",
+    "slow": "audio/find_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

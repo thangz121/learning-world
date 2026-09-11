@@ -1,0 +1,44 @@
+{
+  "id": "one",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "one",
+    "vi": "số một"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "number",
+    "tags": [
+      "count"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "one"
+    ],
+    "phonetic": "wʌn"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/One",
+    "image": "one.png"
+  },
+  "audio": {
+    "normal": "audio/one_normal.mp3",
+    "slow": "audio/one_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "colors_counting",
+  "npc": "shopkeeper_mia",
+  "one_objective_at_a_time": true,
+  "objectives": [
+    {
+      "id": "find_red",
+      "action": "find",
+      "target": "red"
+    },
+    {
+      "id": "bring_apple",
+      "action": "bring",
+      "target": "apple"
+    },
+    {
+      "id": "speak_one",
+      "action": "speak",
+      "target": "one"
+    }
+  ],
+  "hint_levels": [
+    "visual_glow",
+    "milo_point",
+    "milo_demo",
+    "auto_simplify"
+  ],
+  "simplify_path": {
+    "reduce_choices_to": 2,
+    "demo_one_step": true
+  },
+  "reward": {
+    "friendship_mia": 10,
+    "world_change": "flower_pot"
+  }
+}

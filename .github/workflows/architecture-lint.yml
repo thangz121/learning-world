@@ -1,0 +1,23 @@
+name: architecture-lint
+on: [pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Grep architecture rules (real, allowlist test/tools)
+        run: |
+          set -e
+          echo "== FAIL nếu còn ServiceLocator.Instance =="
+          ! rg -n "ServiceLocator\.Instance" Assets docs --glob '!*Test*.cs' --glob '!tools/**' || (echo "FAIL: dùng GameInstaller, cấm ServiceLocator" && exit 1)
+          echo "== FAIL nếu còn Action<string> gameplay =="
+          ! rg -n "Action<string>" Assets/_SharedKernel Assets/A_World Assets/B_Brain Assets/C_Content Assets/D_Audio --glob '!*Test*.cs' || (echo "FAIL: dùng typed record + QuestId/WordId" && exit 1)
+          echo "== FAIL nếu new service ngoài Installer/test =="
+          ! rg -n "new (QuestManager|LearningService|GameEventBus|HintService|AudioDirector|AzureSttProvider|FallbackSpeechProvider|MockSpeechProvider|CloudflareTranslateTtsProvider|NpcVoiceProfileSelector|LocalSave|QuestRewardService)\(" Assets --glob '!*Test*.cs' --glob '!Assets/_Bootstrap/GameInstaller.cs' || (echo "FAIL: chỉ GameInstaller được new service (router switch inside)" && exit 1)
+          echo "== FAIL nếu string questId/action thô trong gameplay =="
+          ! rg -n "string (questId|action|npcId)" Assets/A_World Assets/B_Brain Assets/C_Content Assets/D_Audio --glob '!*Test*.cs' || (echo "FAIL: dùng QuestId/PlayerAction/NpcId" && exit 1)
+          echo "== FAIL nếu gameplay gọi Worker/Google/TTS trực tiếp (v6) =="
+          ! rg -n "Cloudflare|googleapis\.com|GoogleTTS\.Speak" Assets/A_World Assets/B_Brain Assets/C_Content --glob '!*Test*.cs' || (echo "FAIL: gameplay chỉ gọi IAudioDirector (Agent D sở hữu provider)" && exit 1)
+          echo "== FAIL nếu tên Google voice trong gameplay/content code =="
+          ! rg -n "Neural2|Wavenet|WaveNet|Chirp-HD" Assets/A_World Assets/B_Brain Assets/C_Content Content --glob '!*Test*.cs' || (echo "FAIL: chỉ dùng VoiceProfileId, tên Google chỉ ở Worker/config" && exit 1)
+          echo "PASS: architecture lint"

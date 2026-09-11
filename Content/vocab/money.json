@@ -1,0 +1,39 @@
+{
+  "id": "money",
+  "active": false,
+  "language": "en",
+  "display": {
+    "en": "money",
+    "vi": "money"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen"
+    ]
+  },
+  "semantic": {
+    "category": "world",
+    "tags": [
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [],
+    "phonetic": ""
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Money",
+    "image": "money.png"
+  },
+  "audio": {
+    "normal": null,
+    "slow": null,
+    "syllable": null,
+    "voice": null,
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

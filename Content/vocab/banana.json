@@ -1,0 +1,48 @@
+{
+  "id": "banana",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "banana",
+    "vi": "quả chuối"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "food",
+    "tags": [
+      "fruit",
+      "yellow",
+      "long",
+      "sweet",
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "banana"
+    ],
+    "phonetic": "bəˈnænə"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Banana",
+    "image": "banana.png"
+  },
+  "audio": {
+    "normal": "audio/banana_normal.mp3",
+    "slow": "audio/banana_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

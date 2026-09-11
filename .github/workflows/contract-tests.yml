@@ -1,0 +1,59 @@
+name: contract-tests
+# v6.4 license-free: NO Unity, NO game-ci, NO license secrets. Checks runnable without Editor:
+# validator, suite IDs, doc<->file mapping, ownership. Unity tests = NOT RUN / LOCAL REQUIRED.
+on: [pull_request]
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Content+Audio validator (real, fail nếu Active!=15 hoặc audio chưa approved)
+        run: python tools/validate_content.py Content/vocab Content/quests Content/dialogues
+      - name: Contract suite ID consistency (real)
+        run: |
+          python - <<'PY'
+          import re, sys
+          from pathlib import Path
+          ids = {f"CT-{i:03d}" for i in range(1, 13)} | {f"CT-A{i:02d}" for i in range(1, 5)}
+          docs = (Path("docs/testing/ContractTests.md").read_text(encoding="utf-8")
+                  + Path("docs/AGENTS.md").read_text(encoding="utf-8")
+                  + Path("docs/testing/TestManifest.md").read_text(encoding="utf-8"))
+          missing = [c for c in sorted(ids) if c not in docs]
+          if missing:
+              print(f"FAIL: thiếu test ID {missing} — docs phải dùng CT-001..CT-012 + CT-A01..A04"); sys.exit(1)
+          print("PASS: CT-001..CT-012 + CT-A01..A04 present in docs")
+          PY
+      - name: Doc-to-Unity bidirectional mapping (real, phase-aware, Part G v6.3)
+        run: |
+          python - <<'PY'
+          import os, re, sys
+          from pathlib import Path
+          manifest = Path("docs/testing/TestManifest.md").read_text(encoding="utf-8")
+          rows = re.findall(r"\| (CT-[A0-9]+) \| (Assets/Tests/EditMode/[^\s|]+) \|", manifest)
+          testdir = Path("Assets/Tests/EditMode")
+          scaffolded = Path("ProjectSettings/ProjectVersion.txt").exists()
+          on_main = (os.environ.get("GITHUB_REF") == "refs/heads/main")
+          if not testdir.exists():
+              if not scaffolded:
+                  print("SKIP (pre-scaffold W0 only): Assets/Tests/EditMode chưa tồn tại và chưa có Unity project — cho phép tạm, release gate vẫn FAIL")
+                  sys.exit(0)
+              print("FAIL: đã scaffold Unity nhưng thiếu Assets/Tests/EditMode (tạo skeleton test-first ở W0-T0)"); sys.exit(1)
+          if on_main and not any(testdir.glob("CT-*.cs")):
+              print("FAIL: main branch tuyệt đối không được xanh khi test implementation chưa tồn tại"); sys.exit(1)
+          doc_ids = {c for c, _ in rows}
+          files = {p.name for p in testdir.glob("CT-*.cs")}
+          errs = []
+          for c, f in rows:
+              if Path(f).name not in files: errs.append(f"doc có {c} nhưng thiếu file {f}")
+          for fn in sorted(files):
+              m = re.match(r"(CT-[A0-9]+)_", fn)
+              if not m or m.group(1) not in doc_ids: errs.append(f"file {fn} không có CT tương ứng trong TestManifest")
+          if errs: print("FAIL:"); [print(" -", e) for e in errs]; sys.exit(1)
+          print("PASS: doc<->Unity test mapping 2 chiều")
+          PY
+      - name: Unity test status (NOT RUN on GitHub — local required)
+        run: |
+          echo "Unity EditMode/PlayMode tests are NOT RUN in GitHub CI (no Unity runtime, no license, by decision v6.4)."
+          echo "Run locally: open Unity 6000.6.0f1 -> Test Runner -> EditMode. Status here: NOT RUN / LOCAL REQUIRED."

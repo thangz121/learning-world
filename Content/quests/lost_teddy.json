@@ -1,0 +1,36 @@
+{
+  "id": "lost_teddy",
+  "npc": "shopkeeper_mia",
+  "one_objective_at_a_time": true,
+  "objectives": [
+    {
+      "id": "find_teddy",
+      "action": "find",
+      "target": "teddy"
+    },
+    {
+      "id": "bring_teddy",
+      "action": "bring",
+      "target": "teddy"
+    },
+    {
+      "id": "speak_thank_you",
+      "action": "speak",
+      "target": "thank_you"
+    }
+  ],
+  "hint_levels": [
+    "visual_glow",
+    "milo_point",
+    "milo_demo",
+    "auto_simplify"
+  ],
+  "simplify_path": {
+    "reduce_choices_to": 2,
+    "demo_one_step": true
+  },
+  "reward": {
+    "friendship_mia": 10,
+    "world_change": "flower_pot"
+  }
+}

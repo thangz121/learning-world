@@ -1,0 +1,9 @@
+LWE pregen probe (Agent D, W0-T1)
+time_utc: 2026-09-10T09:40:40.302024+00:00
+base_url: https://round-mud-63dd.hoaithuong1995cdmna.workers.dev/
+request: GET ?text=Apple&lang=en-US&rate=normal
+http_status: 200
+content_type: audio/mpeg
+bytes: 6720
+outcome: SUCCESS
+detail: audio/mpeg ok

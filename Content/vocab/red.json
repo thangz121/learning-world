@@ -1,0 +1,45 @@
+{
+  "id": "red",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "red",
+    "vi": "màu đỏ"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "color",
+    "tags": [
+      "color",
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "red"
+    ],
+    "phonetic": "red"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Red",
+    "image": "red.png"
+  },
+  "audio": {
+    "normal": "audio/red_normal.mp3",
+    "slow": "audio/red_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

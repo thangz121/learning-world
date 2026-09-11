@@ -1,0 +1,16 @@
+{
+  "npcId": "milo",
+  "intents": [
+    "ENCOURAGE",
+    "HINT_POINT",
+    "HINT_DEMO",
+    "CELEBRATE"
+  ],
+  "responses": {
+    "ENCOURAGE": "Great! Let's try together!",
+    "HINT_POINT": "Come with me!",
+    "HINT_DEMO": "Watch me do it!",
+    "CELEBRATE": "Perfect! Good job!"
+  },
+  "note": "Milo encouragement max 8 words, NPC dialogue max 6 words"
+}

@@ -1,0 +1,19 @@
+{
+  "npcId": "shopkeeper_mia",
+  "intents": [
+    "GREETING",
+    "HELP_REQUEST",
+    "ITEM_REQUEST",
+    "CORRECT_ANSWER",
+    "WRONG_ANSWER",
+    "GOODBYE"
+  ],
+  "responses": {
+    "GREETING": "Hi! Come here!",
+    "HELP_REQUEST": "Help me please!",
+    "ITEM_REQUEST": "Apple please!",
+    "CORRECT_ANSWER": "Great! Apple!",
+    "WRONG_ANSWER": "Almost! Listen again!",
+    "GOODBYE": "Thank you! Bye!"
+  }
+}

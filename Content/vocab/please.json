@@ -1,0 +1,44 @@
+{
+  "id": "please",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "please",
+    "vi": "làm ơn"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "social",
+    "tags": [
+      "polite"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "please"
+    ],
+    "phonetic": "pliːz"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Please",
+    "image": "please.png"
+  },
+  "audio": {
+    "normal": "audio/please_normal.mp3",
+    "slow": "audio/please_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

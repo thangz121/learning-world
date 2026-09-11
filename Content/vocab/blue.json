@@ -1,0 +1,45 @@
+{
+  "id": "blue",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "blue",
+    "vi": "màu xanh dương"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "color",
+    "tags": [
+      "color",
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "blue"
+    ],
+    "phonetic": "bluː"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Blue",
+    "image": "blue.png"
+  },
+  "audio": {
+    "normal": "audio/blue_normal.mp3",
+    "slow": "audio/blue_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

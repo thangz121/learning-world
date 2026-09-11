@@ -1,0 +1,45 @@
+{
+  "id": "basket",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "basket",
+    "vi": "giỏ"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "object",
+    "tags": [
+      "container",
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "basket"
+    ],
+    "phonetic": "ˈbæskɪt"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Basket",
+    "image": "basket.png"
+  },
+  "audio": {
+    "normal": "audio/basket_normal.mp3",
+    "slow": "audio/basket_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

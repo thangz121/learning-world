@@ -1,0 +1,46 @@
+{
+  "id": "bread",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "bread",
+    "vi": "bánh mì"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "food",
+    "tags": [
+      "bakery",
+      "brown",
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "bread"
+    ],
+    "phonetic": "bred"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Bread",
+    "image": "bread.png"
+  },
+  "audio": {
+    "normal": "audio/bread_normal.mp3",
+    "slow": "audio/bread_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

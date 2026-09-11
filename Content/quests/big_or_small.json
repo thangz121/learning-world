@@ -1,0 +1,36 @@
+{
+  "id": "big_or_small",
+  "npc": "shopkeeper_mia",
+  "one_objective_at_a_time": true,
+  "objectives": [
+    {
+      "id": "find_big",
+      "action": "find",
+      "target": "big"
+    },
+    {
+      "id": "select_apple",
+      "action": "select",
+      "target": "apple"
+    },
+    {
+      "id": "speak_big",
+      "action": "speak",
+      "target": "big"
+    }
+  ],
+  "hint_levels": [
+    "visual_glow",
+    "milo_point",
+    "milo_demo",
+    "auto_simplify"
+  ],
+  "simplify_path": {
+    "reduce_choices_to": 2,
+    "demo_one_step": true
+  },
+  "reward": {
+    "friendship_mia": 10,
+    "world_change": "flower_pot"
+  }
+}
