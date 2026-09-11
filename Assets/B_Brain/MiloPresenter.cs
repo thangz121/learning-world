@@ -1,11 +1,14 @@
-// B_Brain/MiloPresenter.cs — Agent B (W1). Procedural Milo companion presenter.
-// MonoBehaviour (Unity instantiates): parameterless ctor + public Bind(...) only.
-// Lead wiring: set SpawnPosition (A anchor (2.5,0,1.5)) + PlayerTarget, then
-//   Bind(bus, quests, hints). Implements SharedKernel IClickTarget so A's
-// click router calls OnClicked() (typed, no reflection, no input code here).
+// B_Brain/MiloPresenter.cs — Agent B (W1 Phase 1.1). Milo companion presenter.
+//
+// Architecture (frozen): GameplayRoot (THIS transform: SpawnPosition,
+// CapsuleCollider interaction, IClickTarget, quest/hint subscriptions) vs
+// VisualRoot (child: quaternius Worker_Male mesh + Animator + doll face kit).
+// Swapping the model later touches ONLY BuildVisual + face offsets; quest,
+// routing, rewards and colliders are untouched.
+// MonoBehaviour (Unity instantiates): parameterless ctor + public Bind only.
 // All voice output goes through the static Milo class (IAudioDirector only).
-// No input code (no OnMouseDown), no Camera calls, no `new` services,
-// no provider/Worker refs. Null-guarded throughout (batch-safe).
+// No input code, no Camera calls, no `new` services, no provider/Worker refs.
+// Null-guarded throughout (batch-safe). C# 9.0 only.
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,7 +16,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   const float GreetDistance = 3f;
-  const float HopDuration = 0.8f;
+  const float WaveDuration = 1.6f;
 
   [Header("Lead-wired placement (A anchor)")]
   public Vector3 SpawnPosition = new Vector3(2.5f, 0f, 1.5f);
@@ -28,19 +31,17 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   QuestId _activeQuest = new QuestId("w1_mia_apple");
   float _clockSinceProgress;
   bool _greeted;
-  float _hopT;
-  Transform _body;
-  Vector3 _bodyBase;
-  float _bobPhase;
-  bool _built;
 
-  // Unique-per-instance bob offset without Object.GetInstanceID (obsolete as
-  // error in Unity 6). Monotonic session counter is all the visual needs.
-  static int s_bobSeed;
+  // Visual rig (presentation only, never gameplay state).
+  Animator _animator;
+  Transform _headBone;
+  Transform _waveBone;
+  Quaternion _waveBase = Quaternion.identity;
+  bool _waving;
+  float _waveT;
 
   void Awake() {
-    _bobPhase = (float)(s_bobSeed++ % 360);
-    BuildMilo();
+    BuildVisual();
     ApplySpawnPosition();
   }
 
@@ -74,7 +75,9 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   }
 
   // Click entry point for A's router (no input code in this file).
+  // Visible click feedback: short wave while the instruction replays.
   public void OnMiloClicked() {
+    _waveT = WaveDuration;
     Milo.RepeatInstruction();
   }
 
@@ -85,11 +88,13 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   void OnQuestStarted(QuestStartedEvent e) {
     _activeQuest = e.QuestId;
     _clockSinceProgress = 0f;
+    _waveT = WaveDuration; // greeting gesture aligns with the opening line
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
     _clockSinceProgress = 0f;
-    if (e.QuestId.Value == _activeQuest.Value) _hopT = HopDuration;
+    if (e.QuestId.Value != _activeQuest.Value) return;
+    if (_animator != null) _animator.SetTrigger("Celebrate");
   }
 
   void OnHintLevel(HintLevelChanged e) {
@@ -118,15 +123,26 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
         Milo.Greet();
       }
     }
+  }
 
-    if (_hopT > 0f) {
-      _hopT -= dt;
-      if (_hopT <= 0f) transform.position = SpawnPosition;
-      else transform.position = SpawnPosition + new Vector3(0f, Mathf.Abs(Mathf.Sin(_hopT * 10f)) * 0.25f, 0f);
+  // Secondary gesture layer: procedural arm wave applied AFTER the Animator
+  // evaluated (LateUpdate wins for the frame). Restores the Animator-driven
+  // pose exactly when the timer lapses, so idle motion is never frozen.
+  void LateUpdate() {
+    if (_waveBone == null) return;
+    if (_waveT > 0f) {
+      if (!_waving) {
+        _waving = true;
+        _waveBase = _waveBone.localRotation;
+      }
+      _waveT -= Time.deltaTime;
+      float wave = Mathf.Sin(Time.time * 14f) * 18f;
+      _waveBone.localRotation = _waveBase * Quaternion.Euler(0f, 0f, -75f + wave);
+      if (_waveT <= 0f) {
+        _waving = false;
+        _waveBone.localRotation = _waveBase;
+      }
     }
-
-    if (_body != null)
-      _body.localPosition = _bodyBase + new Vector3(0f, Mathf.Sin(Time.time * 2f + _bobPhase) * 0.05f, 0f);
   }
 
   void OnDisable() {
@@ -140,49 +156,137 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     _subs.Clear();
   }
 
-  // Procedural marshmallow Milo: capsule body + sphere head + eyes, warm
-  // orange. Primitives keep their colliders so A's router raycast can hit
-  // Milo; this file reads clicks ONLY via OnMiloClicked().
-  void BuildMilo() {
-    if (_built) return;
-    _built = true;
+  // ---- VisualRoot: real animated mesh + doll face kit -------------------------
+  // GameplayRoot (this transform) carries the explicit interaction capsule;
+  // the visual child carries mesh + Animator + face and may be swapped freely.
+  void BuildVisual() {
+    GameObject visualPrefab = Resources.Load<GameObject>("NpcVisuals/MiloVisual");
+    if (visualPrefab == null) {
+      Debug.LogError("[MiloPresenter] Missing NpcVisuals/MiloVisual prefab; Milo has no body.", this);
+      AddInteractionCapsule();
+      return;
+    }
+    GameObject visual = Instantiate(visualPrefab, transform, false);
+    visual.name = "MiloVisualRoot";
+    visual.transform.localPosition = Vector3.zero;
+    visual.transform.localRotation = Quaternion.identity;
+    visual.transform.localScale = Vector3.one;
 
-    GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-    if (body == null) return;
-    body.name = "MiloBody";
-    body.transform.SetParent(transform, false);
-    body.transform.localPosition = new Vector3(0f, 0.75f, 0f);
-    body.transform.localScale = new Vector3(0.7f, 0.75f, 0.7f);
-    SetColor(body, new Color(1f, 0.62f, 0.25f));
-    _body = body.transform;
-    _bodyBase = _body.localPosition;
+    _animator = visual.GetComponentInChildren<Animator>(true);
+    if (_animator == null) {
+      Debug.LogError("[MiloPresenter] MiloVisual has no Animator; idle/celebrate clips will not play.", this);
+    }
 
-    GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    if (head == null) return;
-    head.name = "MiloHead";
-    head.transform.SetParent(transform, false);
-    head.transform.localPosition = new Vector3(0f, 1.65f, 0f);
-    head.transform.localScale = new Vector3(0.62f, 0.62f, 0.62f);
-    SetColor(head, new Color(1f, 0.68f, 0.32f));
-
-    MakeEye("MiloEyeL", new Vector3(-0.12f, 1.72f, 0.26f));
-    MakeEye("MiloEyeR", new Vector3(0.12f, 1.72f, 0.26f));
+    SkinnedMeshRenderer skin = visual.GetComponentInChildren<SkinnedMeshRenderer>(true);
+    if (skin != null) {
+      // Readability adaptation for preschoolers (documented, reversible):
+      // quaternius Face/Skin run near-white/near-black, which reads as a
+      // silhouette at gameplay distance. Tint instance copies only (the
+      // imported sub-assets stay pristine): orange vest (Milo identity),
+      // warm tan face, warm mid-brown skin.
+      TintSharedMaterials(skin, "Vest", new Color(1f, 0.55f, 0.12f));
+      TintSharedMaterials(skin, "Face", new Color(1f, 0.82f, 0.64f));
+      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f));
+    }
+    if (skin != null && skin.bones != null) {
+      foreach (Transform bone in skin.bones) {
+        if (bone == null) continue;
+        if (_headBone == null && bone.name == "Head") _headBone = bone;
+        if (_waveBone == null && (bone.name == "UpperArm.R" || bone.name == "Shoulder.R"))
+          _waveBone = bone;
+      }
+    }
+    if (_headBone == null) {
+      Debug.LogWarning("[MiloPresenter] Head bone not found; face kit attached to visual root.", this);
+    }
+    BuildFace(_headBone != null ? _headBone : visual.transform);
+    AddInteractionCapsule();
   }
 
-  void MakeEye(string eyeName, Vector3 localPos) {
-    GameObject eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    if (eye == null) return;
-    eye.name = eyeName;
-    eye.transform.SetParent(transform, false);
-    eye.transform.localPosition = localPos;
-    eye.transform.localScale = new Vector3(0.09f, 0.11f, 0.06f);
-    SetColor(eye, Color.black);
+  // Instance-only material tint (imported sub-assets stay pristine).
+  static void TintSharedMaterials(SkinnedMeshRenderer skin, string nameFragment, Color color) {
+    if (skin == null) return;
+    Material[] mats = skin.sharedMaterials;
+    bool changed = false;
+    for (int i = 0; i < mats.Length; i++) {
+      Material m = mats[i];
+      if (m == null || m.name == null) continue;
+      if (m.name.IndexOf(nameFragment, StringComparison.OrdinalIgnoreCase) < 0) continue;
+      Shader s = m.shader != null ? m.shader : Shader.Find("Universal Render Pipeline/Lit");
+      if (s == null) continue;
+      Material copy = new Material(s);
+      copy.CopyPropertiesFromMaterial(m);
+      if (copy.HasProperty("_BaseColor")) copy.SetColor("_BaseColor", color);
+      else if (copy.HasProperty("_Color")) copy.SetColor("_Color", color);
+      copy.name = m.name + "_Tinted";
+      mats[i] = copy;
+      changed = true;
+    }
+    if (changed) skin.sharedMaterials = mats;
   }
 
-  static void SetColor(GameObject go, Color color) {
+  void AddInteractionCapsule() {
+    CapsuleCollider col = gameObject.AddComponent<CapsuleCollider>();
+    col.radius = 0.4f;
+    col.height = 1.7f;
+    col.center = new Vector3(0f, 0.85f, 0f);
+  }
+
+  // Doll face kit (accessory geometry, not the character): dark eyes + white
+  // glints + smile, parented to the Head bone so idle animation carries them.
+  // URP/Lit materials via Paint (never default-white). Offsets tuned for the
+  // quaternius head size; verified against Game-view screenshots.
+  void BuildFace(Transform parent) {
+    // NOTE: the quaternius head is LARGE (~0.6m wide chibi skull) with its own
+    // white slit eyes modeled near z≈0.28-0.30. Doll pupils/smile sit PROUD of
+    // any plausible surface (z≈0.33) so they can never z-fight or bury.
+    AddFacePart("MiloEyeL", parent, new Vector3(-0.11f, 0.05f, 0.33f),
+      new Vector3(0.12f, 0.15f, 0.08f), Color.black);
+    AddFacePart("MiloEyeR", parent, new Vector3(0.11f, 0.05f, 0.33f),
+      new Vector3(0.12f, 0.15f, 0.08f), Color.black);
+    AddFacePart("MiloSmile", parent, new Vector3(0f, -0.09f, 0.33f),
+      new Vector3(0.14f, 0.08f, 0.07f), new Color(0.35f, 0.15f, 0.1f));
+  }
+
+  void AddFacePart(string partName, Transform parent, Vector3 localPos, Vector3 localScale, Color color) {
+    if (parent == null) return;
+    GameObject part = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    if (part == null) return;
+    part.name = partName;
+    part.transform.SetParent(parent, false);
+    // Rig bones can carry huge authoring scales (quaternius Head ≈100x, which
+    // is cancelled for skinning by bindposes but NOT for regular children):
+    // divide the intended model-space offset/size by the parent world scale.
+    Vector3 ps = parent.lossyScale;
+    if (Mathf.Abs(ps.x) > 0.0001f && Mathf.Abs(ps.y) > 0.0001f && Mathf.Abs(ps.z) > 0.0001f) {
+      part.transform.localPosition = new Vector3(localPos.x / ps.x, localPos.y / ps.y, localPos.z / ps.z);
+      part.transform.localScale = new Vector3(localScale.x / ps.x, localScale.y / ps.y, localScale.z / ps.z);
+    } else {
+      part.transform.localPosition = localPos;
+      part.transform.localScale = localScale;
+    }
+    Paint(part, color);
+  }
+
+  // URP/Lit construction identical to world geometry (never null-shader
+  // magenta, never default-white): explicit shader + _BaseColor, with a
+  // Built-in Standard fallback that cannot exist alongside URP in practice.
+  static void Paint(GameObject go, Color color) {
     if (go == null) return;
     Renderer r = go.GetComponent<Renderer>();
     if (r == null) return;
-    r.material.color = color;
+    Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+    if (lit != null) {
+      Material mat = new Material(lit);
+      mat.SetColor("_BaseColor", color);
+      r.sharedMaterial = mat;
+      return;
+    }
+    Shader standard = Shader.Find("Standard");
+    if (standard != null) {
+      Material mat = new Material(standard);
+      mat.color = color;
+      r.sharedMaterial = mat;
+    }
   }
 }

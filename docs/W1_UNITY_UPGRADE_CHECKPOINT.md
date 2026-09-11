@@ -49,6 +49,12 @@
   - Lead: SharedKernel IClickTarget (replaced A reflection hacks with typed calls + HUD replay Action), _Bootstrap MarketBootstrap + BootstrapScene (Build Settings idx0), GameInstaller seeder + additive MarketScene load (event-driven, exactly-once) + seen/spoken production routing, ugui 2.6.0 package (verified blocker: HUD needs UnityEngine.UI), BuildSettings both scenes.
   - Headless playmode smoke 20/20 (boot, quest find→bring→complete, friendship 10, flower visible, HUD done, NavMesh valid+path complete; physical displacement needs real frames — manual acceptance).
   - Batch gate: 0 errors, 0 project warnings, EditMode 24/24 PASS (23 + CT-A05). Manual in-Unity acceptance (look/feel/audio/ear/offline) still required before W1 complete.
+* W1 NPC visual+animation upgrade (quaternius CC0, Game-view verified headless):
+  - Milo = Worker_Male, Mia = Worker_Female (Ultimate Animated Character Pack, CC0; Casual/Chef rejected: weaker market-crew fit; Universal Base+AnimLib unreachable headless via itch tokens).
+  - Prefabs + Idle/Victory/PickUp Animator controllers (Editor-API built); URP/Lit already on import, no conversion needed.
+  - Presenters split GameplayRoot (collider/identity/events, unchanged APIs) vs VisualRoot (model+Animator+face kit); procedural wave layer (LateUpdate), Victory/PickUp triggers, look-at kept; sin-bob/hop removed (Animator owns motion).
+  - Readability adaptations (instance materials only): orange/coral vests, tan faces, warm-brown skin, geometric doll eyes+smile on Head bone (100x bone-scale counter-scaling fix for the giant-blob artifact).
+  - Screenshots verified: real characters, faces, hat/hair, stall/crate/world coherent, no magenta/white; wave + celebration triggers fired headless (visual timing by ear/eye = manual).
 
 ## Gate
 Chỉ khi: mở được + compile sạch + EditMode PASS + lock ổn định → mới sang Vertical Slice implementation.

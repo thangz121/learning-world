@@ -38,6 +38,7 @@ public class MarketBootstrap : MonoBehaviour {
 
     var miaGo = new GameObject("Mia");
     MiaPresenter miaPresenter = miaGo.AddComponent<MiaPresenter>();
+    miaPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
     miaPresenter.Bind(bus, quests, hints);
 
     // HUD: objective text + replay delegates to Milo (no World->Brain reference).
@@ -58,10 +59,11 @@ public class MarketBootstrap : MonoBehaviour {
     bus.Subscribe<WordSeenEvent>(OnWordSeen);
     bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted);
 
-    // Slice opening: banner + quest start + greeting + first instruction.
-    // (Same-priority P3 lines queue FIFO in the Director: greet, then instruct.)
-    if (_hud != null) _hud.ShowObjective("Find the apple!");
+    // Slice opening: quest start FIRST (its QuestStartedEvent drives the HUD's
+    // generic line), then the explicit W1 instruction wins; greeting and first
+    // instruction follow (same-priority P3 lines queue FIFO in the Director).
     quests.StartQuest(W1Quest);
+    if (_hud != null) _hud.ShowObjective("Find the apple!");
     Milo.Greet();
     Milo.SetInstructionTarget(0);
   }
