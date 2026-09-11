@@ -1,0 +1,6 @@
+{
+  "name": "LWE.World",
+  "references": ["LWE.SharedKernel"],
+  "includePlatforms": [],
+  "excludePlatforms": []
+}

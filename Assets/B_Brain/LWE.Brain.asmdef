@@ -1,0 +1,6 @@
+{
+  "name": "LWE.Brain",
+  "references": ["LWE.SharedKernel"],
+  "includePlatforms": [],
+  "excludePlatforms": []
+}

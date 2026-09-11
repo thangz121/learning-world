@@ -1,0 +1,6 @@
+{
+  "name": "LWE.Bootstrap",
+  "references": ["LWE.SharedKernel", "LWE.World", "LWE.Brain", "LWE.Content", "LWE.Audio"],
+  "includePlatforms": [],
+  "excludePlatforms": []
+}
