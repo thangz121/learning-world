@@ -37,6 +37,10 @@
   - CT-003 (A+B): production `B_Brain/QuestRewardService` (subscribe QuestCompletedEvent, ledger friendship mia + world-change set, apply-once) + `QuestData.rewardFriendshipMia/rewardWorldChange` + GameInstaller wire `Rewards`. Test chạy full quest flow → flower_pot + mia 10 + không double-apply. A bind visual ở W1 (không code A_World ở gate này).
   - CT-008 (C+D): Unity-side mirror của validate_content.py authoring rules qua ContentDatabase readers (counts 15/35/50, id==filename, cấm Google voice names, active tags/forms/audio metadata voice+lang freeze, quest schema/targets/hint freeze/simplify/one-at-a-time, dialogue pack 30-40 + voices + word caps + audio mapping). --ship file gates ở lại phía python/pregen (W1). Production readers bổ sung: `QuestEntry.oneObjectiveAtATime`, `DialoguePack` + `ParseDialoguePack`. Test asmdef thêm ref `LWE.Content` (đúng chiều, không cycle).
   - EditMode batch: 23/23 PASS, 0 compile errors. Git checkpoint W0-T1-UNITY-GREEN (Assets, Packages/manifest+lock, ProjectSettings, docs). W1 được phép bắt đầu từ checkpoint này.
+* Warning cleanup 2026-09-11 ~09:45+07 (post-tag working tree, chưa commit):
+  - UAC0009: `GameInstaller` `#if UNITY_EDITOR || DEVELOPMENT_BUILD` → `#if UNITY_EDITOR || DEBUG` (supported managed symbol; giữ intent tests-only, không suppress).
+  - Input deprecation: audit toàn Assets chỉ còn đúng 1 legacy dep đã verify (`ClickToMove` click picking) → migrate 2 dòng sang `UnityEngine.InputSystem.Mouse` (+null-guard batch) + ref `Unity.InputSystem` trong LWE.World + `activeInputHandler: 1` (New-only). Unity từng tự set Both(2) khi cài inputsystem 1.20.0.
+  - Batch verify: 0 errors, 0 project-code warnings, 23/23 PASS.
 
 ## Gate
 Chỉ khi: mở được + compile sạch + EditMode PASS + lock ổn định → mới sang Vertical Slice implementation.

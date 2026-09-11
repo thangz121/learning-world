@@ -52,8 +52,10 @@ public class GameInstaller : MonoBehaviour {
 
   public void SwitchToOnlineSpeech() => _speechRouter.SwitchTo(new AzureSttProvider());
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-  // Tests only. Production never uses Mock at runtime.
+#if UNITY_EDITOR || DEBUG
+  // Tests only. Production never uses Mock at runtime. DEBUG (not the deprecated
+  // DEVELOPMENT_BUILD, UAC0009) covers Editor + development/test players and is
+  // undefined in release production builds.
   public void UseMockSpeechForTests() => _speechRouter.SwitchTo(new MockSpeechProvider());
 #endif
 }

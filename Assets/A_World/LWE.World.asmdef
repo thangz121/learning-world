@@ -1,6 +1,6 @@
 {
   "name": "LWE.World",
-  "references": ["LWE.SharedKernel"],
+  "references": ["LWE.SharedKernel", "Unity.InputSystem"],
   "includePlatforms": [],
   "excludePlatforms": []
 }

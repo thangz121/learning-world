@@ -6,6 +6,7 @@
 // no FindObjectOfType, no `new` service, no audio/speech/Worker calls.
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [DisallowMultipleComponent]
@@ -70,10 +71,14 @@ public class ClickToMove : MonoBehaviour {
   }
 
   void HandleClick() {
-    if (!Input.GetMouseButtonDown(0)) return;
+    // Input System Package (New): Active Input Handling is New-only, so the
+    // legacy UnityEngine.Input API is unavailable. Null-guard covers contexts
+    // with no pointer device (e.g. batch EditMode runs).
+    Mouse mouse = Mouse.current;
+    if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
     Camera cam = Camera.main;
     if (cam == null) return;
-    Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+    Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
     if (Physics.Raycast(ray, out RaycastHit hit, clickMaxDistance, clickMask)) {
       // Plain click-move carries no typed target, so arrival publishes nothing.
       // A new click redirects the player and cancels any pending target arrival.
