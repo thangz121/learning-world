@@ -28,6 +28,13 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   IHintService _hints;
   readonly List<IDisposable> _subs = new List<IDisposable>();
 
+  // First-talk seam for the onboarding flow (MarketBootstrap wires it; the
+  // quest starts on first talk, not at scene build). Fires EXACTLY once, after
+  // the normal click feedback. Plain Action (no bus, no strings).
+  public Action OnFirstTalk;
+  bool _talked;
+  bool _questStarted;
+
   QuestId _activeQuest = new QuestId("w1_mia_apple");
   float _clockSinceProgress;
   bool _greeted;
@@ -35,6 +42,9 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   // Visual rig (presentation only, never gameplay state).
   Animator _animator;
   Transform _headBone;
+  CharacterPresentation _presentation;
+  SkinnedMeshRenderer _skinForFace;
+  Transform _visualForFace;
   Transform _waveBone;
   Quaternion _waveBase = Quaternion.identity;
   bool _waving;
@@ -49,6 +59,11 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     // Lead sets SpawnPosition after AddComponent (post-Awake); re-apply here
     // so the Inspector/wired value wins before the first frame.
     ApplySpawnPosition();
+    FaceCameraImmediate();
+    // Face setup waits for Start: world transforms read during Awake (inside
+    // AddComponent) are stale-identity, which made the surface probe miss.
+    // Facing is applied first so the face anchors on the camera side.
+    if (_presentation != null) _presentation.SetupFace(_skinForFace, _headBone, transform, _visualForFace);
   }
 
   void ApplySpawnPosition() {
@@ -67,6 +82,7 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     _subs.Add(_bus.Subscribe<QuestStartedEvent>(OnQuestStarted));
     _subs.Add(_bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted));
     _subs.Add(_bus.Subscribe<HintLevelChanged>(OnHintLevel));
+    _subs.Add(_bus.Subscribe<StoryMomentEvent>(OnStoryMoment));
   }
 
   // IClickTarget entry point for A's router (no input code in this file).
@@ -76,9 +92,15 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
 
   // Click entry point for A's router (no input code in this file).
   // Visible click feedback: short wave while the instruction replays.
+  // First click additionally opens the story (one-shot hook for Bootstrap).
   public void OnMiloClicked() {
     _waveT = WaveDuration;
+    if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 2f);
     Milo.RepeatInstruction();
+    if (!_talked) {
+      _talked = true;
+      if (OnFirstTalk != null) OnFirstTalk();
+    }
   }
 
   void OnWordSeen(WordSeenEvent e) {
@@ -87,14 +109,20 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
 
   void OnQuestStarted(QuestStartedEvent e) {
     _activeQuest = e.QuestId;
+    _questStarted = true;
     _clockSinceProgress = 0f;
     _waveT = WaveDuration; // greeting gesture aligns with the opening line
+    if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
     _clockSinceProgress = 0f;
     if (e.QuestId.Value != _activeQuest.Value) return;
     if (_animator != null) _animator.SetTrigger("Celebrate");
+    // Golden reaction (§11.4): post-quest baseline stays Happy — the completed
+    // state is durable and capturable, not a 4s pulse. Transient moments
+    // (greet/click) keep short pulses.
+    if (_presentation != null) _presentation.SetExpression(CharacterExpression.Happy);
   }
 
   void OnHintLevel(HintLevelChanged e) {
@@ -103,11 +131,23 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     else if (e.Level >= 2) Milo.PointHint();
   }
 
+  // Narrative reaction ownership (golden §11): Milo owns encouragement on
+  // wrong choices and a shared wave on correct ones. Quest rules untouched.
+  void OnStoryMoment(StoryMomentEvent e) {
+    if (_presentation == null) return;
+    if (e.Moment == StoryMoment.WrongChoice) {
+      Milo.Encourage();
+    } else if (e.Moment == StoryMoment.CorrectChoice) {
+      _waveT = WaveDuration;
+      _presentation.PulseExpression(CharacterExpression.Happy, 2f);
+    }
+  }
+
   void Update() {
     float dt = Time.deltaTime;
     _clockSinceProgress += dt;
 
-    if (_hints != null) {
+    if (_hints != null && _questStarted) {
       bool done = false;
       if (_quests != null) done = _quests.GetState(_activeQuest).Completed;
       if (!done) _hints.Tick(_activeQuest, dt, _clockSinceProgress);
@@ -116,13 +156,38 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     if (PlayerTarget != null) {
       Vector3 toPlayer = PlayerTarget.position - transform.position;
       toPlayer.y = 0f;
-      if (toPlayer.sqrMagnitude > 0.0001f)
-        transform.rotation = Quaternion.LookRotation(toPlayer);
+      // Face readability: the follow camera sits behind the player, so facing
+      // the player turns the face AWAY from the gameplay camera. Face the
+      // camera instead (player fallback); greet logic still uses distance.
+      Vector3 faceDir = CameraFaceDirection(toPlayer);
+      if (faceDir.sqrMagnitude > 0.0001f)
+        transform.rotation = Quaternion.LookRotation(faceDir);
       if (!_greeted && toPlayer.magnitude < GreetDistance) {
         _greeted = true;
+        if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
         Milo.Greet();
       }
     }
+  }
+
+  // Camera-facing direction (Y-only). Falls back to the player direction when
+  // no MainCamera exists (batch/headless safe).
+  Vector3 CameraFaceDirection(Vector3 toPlayer) {
+    Camera cam = Camera.main;
+    if (cam == null) return toPlayer;
+    Vector3 toCam = cam.transform.position - transform.position;
+    toCam.y = 0f;
+    if (toCam.sqrMagnitude > 0.0001f) return toCam;
+    return toPlayer;
+  }
+
+  void FaceCameraImmediate() {
+    Camera cam = Camera.main;
+    if (cam == null) return;
+    Vector3 toCam = cam.transform.position - transform.position;
+    toCam.y = 0f;
+    if (toCam.sqrMagnitude > 0.0001f)
+      transform.rotation = Quaternion.LookRotation(toCam);
   }
 
   // Secondary gesture layer: procedural arm wave applied AFTER the Animator
@@ -168,9 +233,17 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     }
     GameObject visual = Instantiate(visualPrefab, transform, false);
     visual.name = "MiloVisualRoot";
-    visual.transform.localPosition = Vector3.zero;
+    // W1 grounding (W1TOUR GROUND 2026-09-12: live Idle minVert -0.493 with
+    // root at 0; GndDiag2 agrees): clips sink the skeleton rigidly ~0.49m, and
+    // a clip always plays, so the VisualRoot carries a permanent lift.
+    // localPosition is in PARENT space (gameplay root scale 1): 0.493 local.
+    visual.transform.localPosition = new Vector3(0f, 0.493f, 0f);
     visual.transform.localRotation = Quaternion.identity;
-    visual.transform.localScale = Vector3.one;
+    // Scale fix: the quaternius armature imports at 100x (3.3m tall giant).
+    // Half the visual so Milo stands ~1.65m next to the 1.6m player capsule.
+    // GameplayRoot (collider/identity) stays at scale 1. Face-kit compensation
+    // divides by bone lossyScale, so it adapts to this scale automatically.
+    visual.transform.localScale = Vector3.one * 0.5f;
 
     _animator = visual.GetComponentInChildren<Animator>(true);
     if (_animator == null) {
@@ -199,7 +272,12 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     if (_headBone == null) {
       Debug.LogWarning("[MiloPresenter] Head bone not found; face kit attached to visual root.", this);
     }
-    BuildFace(_headBone != null ? _headBone : visual.transform);
+    // Reusable presentation layer: surface-anchored face, blink, breathing,
+    // attention glances, expressions (SharedKernel, no gameplay coupling).
+    // Face geometry setup is deferred to Start (see comment there).
+    _presentation = gameObject.AddComponent<CharacterPresentation>();
+    _skinForFace = skin;
+    _visualForFace = visual.transform;
     AddInteractionCapsule();
   }
 
@@ -232,61 +310,4 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     col.center = new Vector3(0f, 0.85f, 0f);
   }
 
-  // Doll face kit (accessory geometry, not the character): dark eyes + white
-  // glints + smile, parented to the Head bone so idle animation carries them.
-  // URP/Lit materials via Paint (never default-white). Offsets tuned for the
-  // quaternius head size; verified against Game-view screenshots.
-  void BuildFace(Transform parent) {
-    // NOTE: the quaternius head is LARGE (~0.6m wide chibi skull) with its own
-    // white slit eyes modeled near z≈0.28-0.30. Doll pupils/smile sit PROUD of
-    // any plausible surface (z≈0.33) so they can never z-fight or bury.
-    AddFacePart("MiloEyeL", parent, new Vector3(-0.11f, 0.05f, 0.33f),
-      new Vector3(0.12f, 0.15f, 0.08f), Color.black);
-    AddFacePart("MiloEyeR", parent, new Vector3(0.11f, 0.05f, 0.33f),
-      new Vector3(0.12f, 0.15f, 0.08f), Color.black);
-    AddFacePart("MiloSmile", parent, new Vector3(0f, -0.09f, 0.33f),
-      new Vector3(0.14f, 0.08f, 0.07f), new Color(0.35f, 0.15f, 0.1f));
-  }
-
-  void AddFacePart(string partName, Transform parent, Vector3 localPos, Vector3 localScale, Color color) {
-    if (parent == null) return;
-    GameObject part = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    if (part == null) return;
-    part.name = partName;
-    part.transform.SetParent(parent, false);
-    // Rig bones can carry huge authoring scales (quaternius Head ≈100x, which
-    // is cancelled for skinning by bindposes but NOT for regular children):
-    // divide the intended model-space offset/size by the parent world scale.
-    Vector3 ps = parent.lossyScale;
-    if (Mathf.Abs(ps.x) > 0.0001f && Mathf.Abs(ps.y) > 0.0001f && Mathf.Abs(ps.z) > 0.0001f) {
-      part.transform.localPosition = new Vector3(localPos.x / ps.x, localPos.y / ps.y, localPos.z / ps.z);
-      part.transform.localScale = new Vector3(localScale.x / ps.x, localScale.y / ps.y, localScale.z / ps.z);
-    } else {
-      part.transform.localPosition = localPos;
-      part.transform.localScale = localScale;
-    }
-    Paint(part, color);
-  }
-
-  // URP/Lit construction identical to world geometry (never null-shader
-  // magenta, never default-white): explicit shader + _BaseColor, with a
-  // Built-in Standard fallback that cannot exist alongside URP in practice.
-  static void Paint(GameObject go, Color color) {
-    if (go == null) return;
-    Renderer r = go.GetComponent<Renderer>();
-    if (r == null) return;
-    Shader lit = Shader.Find("Universal Render Pipeline/Lit");
-    if (lit != null) {
-      Material mat = new Material(lit);
-      mat.SetColor("_BaseColor", color);
-      r.sharedMaterial = mat;
-      return;
-    }
-    Shader standard = Shader.Find("Standard");
-    if (standard != null) {
-      Material mat = new Material(standard);
-      mat.color = color;
-      r.sharedMaterial = mat;
-    }
-  }
 }

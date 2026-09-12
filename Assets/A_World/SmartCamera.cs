@@ -21,7 +21,16 @@ public class SmartCamera : MonoBehaviour {
   [Tooltip("Rotation smoothing speed for exponential Slerp.")]
   public float rotationSmoothSpeed = 5f;
   [Header("Follow defaults")]
-  public Vector3 defaultOffset = new Vector3(0f, 4.5f, -6f);
+  // Player-experience audit 2026-09-12: (0,3.4,-5.2) keeps Milo present at the
+  // spawn frame edge and reads well at gameplay distance; the steeper
+  // (0,4,-4.6) trial pushed him further out of frame, so it was reverted.
+  // Awning occlusion on western walks is handled by ResolveObstruction below.
+  public Vector3 defaultOffset = new Vector3(0f, 3.4f, -5.2f);
+  [Header("Obstruction")]
+  [Tooltip("Pull the follow camera in front of blocking world geometry (stall awning etc).")]
+  public float obstructionSphereRadius = 0.3f;
+  [Tooltip("Layers the obstruction pull-in considers (default: everything).")]
+  public LayerMask obstructionMask = ~0;
   [Header("Constraints")]
   [Tooltip("Minimum camera height (m) above y=0 ground; never clip through ground.")]
   public float minHeightAboveGround = 1.2f;
@@ -33,10 +42,48 @@ public class SmartCamera : MonoBehaviour {
   Transform _followTarget;
   Vector3 _followOffset;
   bool _hasFollowTarget;
-
   Vector3 _focusPoint;
   float _focusDistance = 4f;
   bool _hasFocus;
+
+  // Temporary emotional-beat framing (§Blocker7): focus a world point, then
+  // automatically resume the previous Follow target. Reusable for any quest;
+  // never leaves the camera stranded. Durations stay short (1.5-3s).
+  Transform _returnTarget;
+  Vector3 _returnOffset;
+  bool _hasReturn;
+  float _focusT;
+
+  public void FocusOnFor(Vector3 point, float distance, float seconds) {
+    _returnTarget = _followTarget;
+    _returnOffset = _followOffset;
+    _hasReturn = _hasFollowTarget && _followTarget != null;
+    FocusOn(point, distance);
+    _focusT = Mathf.Max(0.5f, seconds);
+  }
+
+  // Explicit story framing (player-experience audit): place the camera at an
+  // authored pose looking at a story point (e.g. Mia's stall front, never
+  // through her awning), then auto-return like FocusOnFor. Reusable for any
+  // introduction/reveal beat whose sightline FocusOnFor cannot guarantee.
+  Vector3 _explicitCamPos;
+  bool _hasExplicitCamPos;
+
+  public void FramePointFor(Vector3 camPos, Vector3 point, float seconds) {
+    _returnTarget = _followTarget;
+    _returnOffset = _followOffset;
+    _hasReturn = _hasFollowTarget && _followTarget != null;
+    _focusPoint = point;
+    _explicitCamPos = camPos;
+    _hasExplicitCamPos = true;
+    _hasFocus = true;
+    _hasFollowTarget = false;
+    _cinPlaying = false;
+    Mode = CameraMode.Interaction;
+    _positionVelocity = Vector3.zero;
+    _focusT = Mathf.Max(0.5f, seconds);
+    EnforcePerspective();
+  }
 
   Vector3[] _cinPath;
   float _cinT;
@@ -71,8 +118,10 @@ public class SmartCamera : MonoBehaviour {
     _followOffset = offset;
     _hasFollowTarget = target != null;
     _hasFocus = false;
+    _hasExplicitCamPos = false;
     _cinPlaying = false;
     Mode = CameraMode.Follow;
+    _positionVelocity = Vector3.zero;
   }
 
   // Interaction mode: depth-aware framing of a world point. Keeps the current
@@ -82,9 +131,11 @@ public class SmartCamera : MonoBehaviour {
     _focusPoint = point;
     _focusDistance = Mathf.Max(0.5f, distance);
     _hasFocus = true;
+    _hasExplicitCamPos = false;
     _hasFollowTarget = false;
     _cinPlaying = false;
     Mode = CameraMode.Interaction;
+    _positionVelocity = Vector3.zero;
     EnforcePerspective();
   }
 
@@ -117,7 +168,9 @@ public class SmartCamera : MonoBehaviour {
     _cinT = 0f;
     _cinDuration = Mathf.Max(0.1f, duration);
     _cinPlaying = true;
+    _hasExplicitCamPos = false;
     Mode = CameraMode.Cinematic;
+    _positionVelocity = Vector3.zero;
     EnforcePerspective();
   }
 
@@ -138,6 +191,13 @@ public class SmartCamera : MonoBehaviour {
         break;
       case CameraMode.Interaction:
         if (_hasFocus) TickInteraction();
+        if (_focusT > 0f) {
+          _focusT -= Time.deltaTime;
+          if (_focusT <= 0f && _hasReturn && _returnTarget != null) {
+            _hasReturn = false;
+            Follow(_returnTarget, _returnOffset);
+          }
+        }
         break;
       case CameraMode.Cinematic:
         if (_cinPlaying) TickCinematic();
@@ -146,16 +206,45 @@ public class SmartCamera : MonoBehaviour {
   }
 
   void TickFollow() {
-    Vector3 desired = ClampAboveGround(_followTarget.position + _followOffset);
+    Vector3 desired = ClampAboveGround(
+      ResolveObstruction(_followTarget.position, _followTarget.position + _followOffset));
     transform.position = Vector3.SmoothDamp(transform.position, desired, ref _positionVelocity, positionSmoothTime);
     LookTowards(_followTarget.position);
   }
 
+  // Obstruction pull-in (player-experience audit): the unconstrained follow
+  // offset can park the camera inside the stall awning or behind the tree, so
+  // sweep from the target toward the desired pose and stop in front of the
+  // first blocking surface. Hits within 1m are the followed character's own
+  // capsule and are ignored. Reusable for any follow target.
+  Vector3 ResolveObstruction(Vector3 targetPoint, Vector3 desired) {
+    Vector3 from = targetPoint + Vector3.up * 1f;
+    Vector3 delta = desired - from;
+    float dist = delta.magnitude;
+    if (dist < 0.001f) return desired;
+    RaycastHit[] hits = Physics.SphereCastAll(
+      from, obstructionSphereRadius, delta.normalized, dist, obstructionMask);
+    float nearest = dist;
+    foreach (RaycastHit h in hits) {
+      if (h.collider == null) continue;
+      if (h.distance < 1f) continue;
+      if (h.distance < nearest) nearest = h.distance;
+    }
+    if (nearest < dist)
+      return from + delta.normalized * Mathf.Max(0.8f, nearest - 0.4f);
+    return desired;
+  }
+
   void TickInteraction() {
-    Vector3 dir = transform.forward;
-    if (dir.sqrMagnitude < 0.0001f) dir = Vector3.forward;
-    Vector3 desired = ClampAboveGround(
-      _focusPoint - dir.normalized * _focusDistance + Vector3.up * (_focusDistance * 0.2f));
+    Vector3 desired;
+    if (_hasExplicitCamPos) {
+      desired = ClampAboveGround(ResolveObstruction(_focusPoint, _explicitCamPos));
+    } else {
+      Vector3 dir = transform.forward;
+      if (dir.sqrMagnitude < 0.0001f) dir = Vector3.forward;
+      desired = ClampAboveGround(ResolveObstruction(
+        _focusPoint, _focusPoint - dir.normalized * _focusDistance + Vector3.up * (_focusDistance * 0.2f)));
+    }
     transform.position = Vector3.SmoothDamp(transform.position, desired, ref _positionVelocity, positionSmoothTime);
     LookTowards(_focusPoint);
   }

@@ -36,6 +36,9 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   // Visual rig (presentation only, never gameplay state).
   Animator _animator;
   Transform _headBone;
+  CharacterPresentation _presentation;
+  SkinnedMeshRenderer _skinForFace;
+  Transform _visualForFace;
   Transform _waveBone;
   Quaternion _waveBase = Quaternion.identity;
   bool _waving;
@@ -50,6 +53,10 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     // Lead sets SpawnPosition after AddComponent (post-Awake); re-apply here
     // so the wired value wins before the first frame.
     ApplySpawnPosition();
+    FaceCameraImmediate();
+    // Face setup waits for Start: world transforms read during Awake (inside
+    // AddComponent) are stale-identity, which made the surface probe miss.
+    if (_presentation != null) _presentation.SetupFace(_skinForFace, _headBone, transform, _visualForFace);
   }
 
   void ApplySpawnPosition() {
@@ -67,6 +74,7 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     _subs.Add(_bus.Subscribe<WordSeenEvent>(OnWordSeen));
     _subs.Add(_bus.Subscribe<QuestStartedEvent>(OnQuestStarted));
     _subs.Add(_bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted));
+    _subs.Add(_bus.Subscribe<StoryMomentEvent>(OnStoryMoment));
   }
 
   // IClickTarget entry point for A's router (no input code in this file).
@@ -75,22 +83,29 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   }
 
   // Click entry point for A's router (no input code in this file).
-  // Visible friendly response: short wave on every click.
+  // Visible friendly response: short wave on every click. Post-completion
+  // clicks are inert (narrative context: no more wrongs after the quest).
   public void OnMiaClicked() {
     _waveT = WaveDuration;
+    if (_quests != null && _quests.GetState(_activeQuest).Completed) return;
     if (_carryingApple) {
       if (_quests == null) return;
       _quests.ReportAction(PlayerAction.Bring, _appleWord);
       _carryingApple = false;
+      if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
       if (_animator != null) _animator.SetTrigger("PickUp"); // bend receiving the apple
+      if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.CorrectChoice, DateTime.UtcNow));
     } else {
       if (_hints != null) _hints.ReportWrong(_activeQuest);
-      Milo.Encourage();
+      if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.WrongChoice, DateTime.UtcNow));
     }
   }
 
   void OnWordSeen(WordSeenEvent e) {
-    if (e.WordId.Value == _appleWord.Value) _carryingApple = true;
+    if (e.WordId.Value == _appleWord.Value) {
+      _carryingApple = true;
+      if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 2.5f);
+    }
   }
 
   void OnQuestStarted(QuestStartedEvent e) {
@@ -100,22 +115,51 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
 
   void OnQuestCompleted(QuestCompletedEvent e) {
     if (e.QuestId.Value != _activeQuest.Value) return;
+    // Golden reaction (§11.4): durable Happy baseline after the completed quest.
+    if (_presentation != null) _presentation.SetExpression(CharacterExpression.Happy);
     if (_animator != null) _animator.SetTrigger("Celebrate");
   }
 
-  void Update() {
-    // Shopkeeper greeting posture: gently face the player like Milo does,
-    // so the doll face stays readable from the gameplay camera. Y-only,
-    // smoothed (no snap, no spin).
-    if (PlayerTarget != null) {
-      Vector3 toPlayer = PlayerTarget.position - transform.position;
-      toPlayer.y = 0f;
-      if (toPlayer.sqrMagnitude > 0.0001f) {
-        Quaternion look = Quaternion.LookRotation(toPlayer);
-        float t = 1f - Mathf.Exp(-3f * Time.deltaTime);
-        transform.rotation = Quaternion.Slerp(transform.rotation, look, t);
-      }
+  // Narrative reaction ownership (golden §11): Mia owns the sad response to
+  // wrong choices (child-friendly "oops", retry preserved). Encouragement
+  // voice belongs to Milo (he subscribes WrongChoice himself).
+  void OnStoryMoment(StoryMomentEvent e) {
+    if (_presentation == null) return;
+    if (e.Moment == StoryMoment.WrongChoice) {
+      _presentation.PulseExpression(CharacterExpression.Sad, 2.5f);
+    } else if (e.Moment == StoryMoment.CorrectChoice) {
+      _presentation.PulseExpression(CharacterExpression.Happy, 3f);
     }
+  }
+
+  void Update() {
+    // Shopkeeper greeting posture: face the gameplay camera (not the player:
+    // the follow camera sits behind the player, so player-facing turns the
+    // doll face AWAY from the viewer). Y-only, smoothed (no snap, no spin).
+    Camera cam = Camera.main;
+    Vector3 faceDir;
+    if (cam != null) {
+      faceDir = cam.transform.position - transform.position;
+    } else if (PlayerTarget != null) {
+      faceDir = PlayerTarget.position - transform.position;
+    } else {
+      return;
+    }
+    faceDir.y = 0f;
+    if (faceDir.sqrMagnitude > 0.0001f) {
+      Quaternion look = Quaternion.LookRotation(faceDir);
+      float t = 1f - Mathf.Exp(-3f * Time.deltaTime);
+      transform.rotation = Quaternion.Slerp(transform.rotation, look, t);
+    }
+  }
+
+  void FaceCameraImmediate() {
+    Camera cam = Camera.main;
+    if (cam == null) return;
+    Vector3 toCam = cam.transform.position - transform.position;
+    toCam.y = 0f;
+    if (toCam.sqrMagnitude > 0.0001f)
+      transform.rotation = Quaternion.LookRotation(toCam);
   }
 
   // Secondary gesture layer: procedural arm wave applied AFTER the Animator
@@ -161,9 +205,15 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     }
     GameObject visual = Instantiate(visualPrefab, transform, false);
     visual.name = "MiaVisualRoot";
-    visual.transform.localPosition = Vector3.zero;
+    // W1 grounding: same rig/offset as Milo (W1TOUR GROUND 2026-09-12 live
+    // Idle minVert -0.493, root at 0). Parent space, scale 1 -> 0.493 local.
+    visual.transform.localPosition = new Vector3(0f, 0.493f, 0f);
     visual.transform.localRotation = Quaternion.identity;
-    visual.transform.localScale = Vector3.one;
+    // Scale fix: the quaternius armature imports at 100x (3.4m tall giant).
+    // Half the visual so Mia stands ~1.7m next to the 1.6m player capsule.
+    // GameplayRoot (collider/identity) stays at scale 1. Face-kit compensation
+    // divides by bone lossyScale, so it adapts to this scale automatically.
+    visual.transform.localScale = Vector3.one * 0.5f;
 
     _animator = visual.GetComponentInChildren<Animator>(true);
     if (_animator == null) {
@@ -191,7 +241,10 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     if (_headBone == null) {
       Debug.LogWarning("[MiaPresenter] Head bone not found; face kit attached to visual root.", this);
     }
-    BuildFace(_headBone != null ? _headBone : visual.transform);
+    // Reusable presentation layer (face geometry setup deferred to Start).
+    _presentation = gameObject.AddComponent<CharacterPresentation>();
+    _skinForFace = skin;
+    _visualForFace = visual.transform;
     AddInteractionCapsule();
   }
 
@@ -224,61 +277,4 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     col.center = new Vector3(0f, 0.85f, 0f);
   }
 
-  // Doll face kit (accessory geometry, not the character): dark eyes + white
-  // glints + smile, parented to the Head bone so idle animation carries them.
-  // URP/Lit materials via Paint (never default-white). Offsets tuned for the
-  // quaternius head size; verified against Game-view screenshots.
-  void BuildFace(Transform parent) {
-    // NOTE: the quaternius head is LARGE (~0.5m wide chibi skull) with its own
-    // white slit eyes modeled near z≈0.28-0.30. Doll pupils/smile sit PROUD of
-    // any plausible surface (z≈0.33) so they can never z-fight or bury.
-    AddFacePart("MiaEyeL", parent, new Vector3(-0.11f, 0.05f, 0.33f),
-      new Vector3(0.12f, 0.15f, 0.08f), Color.black);
-    AddFacePart("MiaEyeR", parent, new Vector3(0.11f, 0.05f, 0.33f),
-      new Vector3(0.12f, 0.15f, 0.08f), Color.black);
-    AddFacePart("MiaSmile", parent, new Vector3(0f, -0.09f, 0.33f),
-      new Vector3(0.14f, 0.08f, 0.07f), new Color(0.55f, 0.2f, 0.2f));
-  }
-
-  void AddFacePart(string partName, Transform parent, Vector3 localPos, Vector3 localScale, Color color) {
-    if (parent == null) return;
-    GameObject part = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    if (part == null) return;
-    part.name = partName;
-    part.transform.SetParent(parent, false);
-    // Rig bones can carry huge authoring scales (quaternius Head ≈100x, which
-    // is cancelled for skinning by bindposes but NOT for regular children):
-    // divide the intended model-space offset/size by the parent world scale.
-    Vector3 ps = parent.lossyScale;
-    if (Mathf.Abs(ps.x) > 0.0001f && Mathf.Abs(ps.y) > 0.0001f && Mathf.Abs(ps.z) > 0.0001f) {
-      part.transform.localPosition = new Vector3(localPos.x / ps.x, localPos.y / ps.y, localPos.z / ps.z);
-      part.transform.localScale = new Vector3(localScale.x / ps.x, localScale.y / ps.y, localScale.z / ps.z);
-    } else {
-      part.transform.localPosition = localPos;
-      part.transform.localScale = localScale;
-    }
-    Paint(part, color);
-  }
-
-  // URP/Lit construction identical to world geometry (never null-shader
-  // magenta, never default-white): explicit shader + _BaseColor, with a
-  // Built-in Standard fallback that cannot exist alongside URP in practice.
-  static void Paint(GameObject go, Color color) {
-    if (go == null) return;
-    Renderer r = go.GetComponent<Renderer>();
-    if (r == null) return;
-    Shader lit = Shader.Find("Universal Render Pipeline/Lit");
-    if (lit != null) {
-      Material mat = new Material(lit);
-      mat.SetColor("_BaseColor", color);
-      r.sharedMaterial = mat;
-      return;
-    }
-    Shader standard = Shader.Find("Standard");
-    if (standard != null) {
-      Material mat = new Material(standard);
-      mat.color = color;
-      r.sharedMaterial = mat;
-    }
-  }
 }

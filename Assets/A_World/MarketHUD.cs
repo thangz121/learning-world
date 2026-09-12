@@ -4,6 +4,10 @@
 // button invokes OnReplayPressed (Lead wires it to Milo.RepeatInstruction, so
 // LWE.World never references the Brain assembly). No debug text, no
 // technical language anywhere in the UI.
+// ROLE (story hierarchy): the HUD is a minimal progress reminder ONLY
+// ("Helping Mia…", "Apple found!", "Great job!"). It NEVER issues story
+// instructions — NPC speech (Milo) + the world-anchored WorldQuestionBubble
+// own the narrative/question presentation.
 // Wiring: Bind(bus, quests). LWE.World does NOT reference LWE.Brain.
 using System;
 using UnityEngine;
@@ -27,8 +31,17 @@ public class MarketHUD : BusBehaviour {
 
   Text _objectiveText;
   Button _replayButton;
+  GameObject _replayButtonGo;
 
   void Awake() {
+    BuildUiImmediate();
+  }
+
+  // Deterministic build hook (tests/snapshot tools): builds the UI
+  // synchronously instead of relying on Awake delivery, which batch EditMode
+  // contexts do not guarantee (same pattern as BuildFaceImmediate).
+  public void BuildUiImmediate() {
+    if (_objectiveText != null) return;
     BuildUi();
   }
 
@@ -58,6 +71,18 @@ public class MarketHUD : BusBehaviour {
     if (_objectiveText != null) _objectiveText.text = CurrentObjective;
   }
 
+  // Replay-button visibility gate (player-experience audit 2026-09-12): the
+  // button is meaningless before any line has been spoken ("Hear WHAT
+  // again?"), so it starts hidden and the story shows it with the first
+  // instruction (MarketBootstrap.OnFirstTalk). Reusable for any captioned flow.
+  public bool IsReplayVisible {
+    get { return _replayButtonGo != null && _replayButtonGo.activeSelf; }
+  }
+
+  public void SetReplayVisible(bool visible) {
+    if (_replayButtonGo != null) _replayButtonGo.SetActive(visible);
+  }
+
   void EnsureSubscribed() {
     if (_subscribed || _bus == null || !isActiveAndEnabled) return;
     On<QuestStartedEvent>(OnQuestStarted, _bus);
@@ -66,7 +91,9 @@ public class MarketHUD : BusBehaviour {
   }
 
   void OnQuestStarted(QuestStartedEvent e) {
-    ShowObjective("Let's help!");
+    // Intentionally NOT overwriting the chip: MarketBootstrap owns the exact
+    // action wording ("Talk to Milo" pre-stage, then per-objective lines) and
+    // sets it around StartQuest. A generic line here would flash over it.
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
@@ -81,7 +108,10 @@ public class MarketHUD : BusBehaviour {
     }
   }
 
-  // ---- code-built uGUI (overlay canvas, top banner, replay button) --------------
+  // ---- code-built uGUI (overlay canvas, compact corner chip, replay button) ----
+  // The objective chip is SECONDARY and minimal: small top-left corner, short
+  // action text only ("Talk to Milo"). The world (NPC speech, name labels,
+  // question bubble) carries the story, never this chip.
 
   void BuildUi() {
     GameObject canvasGo = new GameObject("MarketCanvas");
@@ -102,20 +132,20 @@ public class MarketHUD : BusBehaviour {
     panel.sprite = MakeRoundedSprite(64, 18, new Color(1f, 0.96f, 0.87f));
     panel.type = Image.Type.Sliced;
     RectTransform panelRt = panelGo.GetComponent<RectTransform>();
-    panelRt.anchorMin = new Vector2(0.5f, 1f);
-    panelRt.anchorMax = new Vector2(0.5f, 1f);
-    panelRt.pivot = new Vector2(0.5f, 1f);
-    panelRt.anchoredPosition = new Vector2(0f, -24f);
-    panelRt.sizeDelta = new Vector2(760f, 150f);
+    panelRt.anchorMin = new Vector2(0f, 1f);
+    panelRt.anchorMax = new Vector2(0f, 1f);
+    panelRt.pivot = new Vector2(0f, 1f);
+    panelRt.anchoredPosition = new Vector2(24f, -24f);
+    panelRt.sizeDelta = new Vector2(430f, 84f);
 
     GameObject textGo = new GameObject("ObjectiveText");
     textGo.transform.SetParent(panelGo.transform);
     _objectiveText = textGo.AddComponent<Text>();
     _objectiveText.font = font;
-    _objectiveText.fontSize = 40;
+    _objectiveText.fontSize = 30;
     _objectiveText.color = new Color(0.35f, 0.22f, 0.12f);
-    _objectiveText.alignment = TextAnchor.MiddleCenter;
-    _objectiveText.verticalOverflow = VerticalWrapMode.Overflow;
+    _objectiveText.alignment = TextAnchor.MiddleLeft;
+    _objectiveText.verticalOverflow = VerticalWrapMode.Truncate;
     _objectiveText.text = CurrentObjective;
     RectTransform textRt = textGo.GetComponent<RectTransform>();
     textRt.anchorMin = Vector2.zero;
@@ -130,6 +160,8 @@ public class MarketHUD : BusBehaviour {
     buttonImage.type = Image.Type.Sliced;
     _replayButton = buttonGo.AddComponent<Button>();
     _replayButton.onClick.AddListener(HandleReplayButton);
+    _replayButtonGo = buttonGo;
+    buttonGo.SetActive(false); // gated: shown with the first spoken instruction
     RectTransform buttonRt = buttonGo.GetComponent<RectTransform>();
     buttonRt.anchorMin = new Vector2(1f, 0f);
     buttonRt.anchorMax = new Vector2(1f, 0f);

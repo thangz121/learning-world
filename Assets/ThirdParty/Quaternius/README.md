@@ -9,6 +9,8 @@ Source: "Ultimate Animated Character Pack" by quaternius
 Used in this project (copied FBX only, nothing else from the 48 MB pack):
 - Worker_Male.fbx → Milo (hard-hat market helper)
 - Worker_Female.fbx → Mia (shopkeeper)
+- Player_CasualMale.fbx → player avatar, Casual_Male (distinct casual look;
+  Player_ prefix reserves the swap seam for future gender/skin phases)
 
 Rejected after Game-view review (kept out to stay lean):
 - Casual_Female.fbx, Chef_Female.fbx (fine models, weaker market-crew fit)

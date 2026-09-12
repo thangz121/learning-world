@@ -39,6 +39,9 @@ public class MarketBuilder : MonoBehaviour {
   public FlowerPotPresenter FlowerPresenter { get; private set; }
   public Transform PlayerHand { get; private set; }
   public GameObject CrateApple { get; private set; }
+  public PlayerVisual PlayerViz { get; private set; }
+  public DistractorChoice Distractor { get; private set; }
+  public WorldQuestionBubble Bubble { get; private set; }
 
   IGameEventBus _bus;
 
@@ -48,10 +51,13 @@ public class MarketBuilder : MonoBehaviour {
     BuildTreeAndFences();
     BuildAppleCrate();
     BuildFlowerBed();
+    BuildDistractor();
+    BuildBubble();
     // NavMesh bakes BEFORE the player exists: the agent enables against a
     // valid NavMesh (no "failed to create agent"), and the player capsule
     // itself is excluded from the baked geometry.
     BuildNavMesh();
+    BuildNavCarves();
     BuildPlayer();
     BuildCamera();
     BuildFrameServices();
@@ -66,6 +72,7 @@ public class MarketBuilder : MonoBehaviour {
       return;
     }
     if (Player != null) Player.Bind(bus);
+    if (PlayerViz != null) PlayerViz.Bind(bus);
     if (Apple != null) Apple.Bind(bus);
     if (Router != null) {
       Router.Bind(bus, audio);
@@ -86,9 +93,12 @@ public class MarketBuilder : MonoBehaviour {
     if (Hud != null) Hud.Bind(bus, null);
   }
 
-  // Second wiring step for the Lead (IQuestService lives outside this signature).
-  public void WireQuestService(IQuestService quests) {
+  // Second wiring step for the Lead (IQuestService/IHintService live outside
+  // the BuildServices signature). Binds the HUD quest line and the reusable
+  // distractor choice prop.
+  public void WireQuestService(IQuestService quests, IHintService hints) {
     if (Hud != null) Hud.Bind(_bus, quests);
+    if (Distractor != null) Distractor.Bind(_bus, hints, quests);
   }
 
   // ---- environment: sky, light, ground, path --------------------------------
@@ -337,6 +347,44 @@ public class MarketBuilder : MonoBehaviour {
     FlowerRoot = bed;
   }
 
+  // ---- reusable wrong-choice prop (red ball on a pedestal) --------------------
+  // A plausible-but-incorrect selectable object for choice-based stories
+  // (W1: apple vs ball). IClickTarget (never Interactable) so no vocab audio
+  // or Content entries are needed. Bound in WireQuestService.
+
+  void BuildDistractor() {
+    GameObject stand = new GameObject("BallStand");
+    stand.transform.SetParent(transform);
+    stand.transform.position = new Vector3(4.7f, 0f, -0.9f);
+
+    GameObject pedestal = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    pedestal.name = "Pedestal";
+    pedestal.transform.SetParent(stand.transform);
+    pedestal.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+    pedestal.transform.localScale = new Vector3(0.7f, 0.5f, 0.7f);
+    pedestal.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.62f, 0.44f, 0.26f));
+
+    GameObject ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    ball.name = "RedBall";
+    ball.transform.SetParent(stand.transform);
+    ball.transform.localPosition = new Vector3(0f, 0.78f, 0f);
+    ball.transform.localScale = new Vector3(0.56f, 0.56f, 0.56f);
+    ball.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.8f, 0.12f, 0.18f));
+
+    Distractor = ball.AddComponent<DistractorChoice>();
+  }
+
+  // ---- world-anchored visual question bubble (above Mia's stall) --------------
+  // Shows WHAT Mia is asking (mini apple icon). Driven by quest phases in
+  // MarketBootstrap (Show on start, Hide on complete). Reusable: swap icon.
+
+  void BuildBubble() {
+    GameObject bubbleGo = new GameObject("QuestionBubble");
+    bubbleGo.transform.SetParent(transform);
+    Bubble = bubbleGo.AddComponent<WorldQuestionBubble>();
+    Bubble.Place(new Vector3(MiaAnchorPos.x, 2.1f, MiaAnchorPos.z + 0.9f));
+  }
+
   // ---- player capsule + anchors -------------------------------------------------
 
   void BuildPlayer() {
@@ -352,8 +400,16 @@ public class MarketBuilder : MonoBehaviour {
     agent.angularSpeed = 720f;
     agent.acceleration = 12f;
     agent.stoppingDistance = 0.4f;
+    // W1 grounding (W1TOUR AGENT 2026-09-12): a fresh AddComponent agent read
+    // baseOffset=1.000 in this Unity version, floating the root at y=0.83 with
+    // the NavMesh at 0.03. Pin the agent volume to the capsule it drives:
+    // capsule primitive (height 2, radius 0.5) x player scale 0.8.
+    agent.baseOffset = 0f;
+    agent.height = 1.6f;
+    agent.radius = 0.4f;
 
     Player = player.AddComponent<ClickToMove>();
+    PlayerViz = player.AddComponent<PlayerVisual>(); // presentation child (capsule stays for physics, hidden)
 
     GameObject hand = new GameObject("HandAnchor");
     hand.transform.SetParent(player.transform);
@@ -389,6 +445,20 @@ public class MarketBuilder : MonoBehaviour {
     camGo.transform.position = PlayerSpawn + WorldCamera.defaultOffset;
     camGo.transform.LookAt(PlayerSpawn + Vector3.up);
     if (Player != null) WorldCamera.Follow(Player.transform, WorldCamera.defaultOffset);
+    FacePlayerToCamera();
+  }
+
+  // Golden spawn presentation (§6.3): the first frame must show the character,
+  // not the back of the head. The root yaw is gameplay-authoritative, so this
+  // initial facing is presentation seeding only: the NavMeshAgent re-orients
+  // toward movement on the first MoveTo (controls are world-space clicks and
+  // are never inverted). Physics/collider are rotation-symmetric.
+  void FacePlayerToCamera() {
+    if (Player == null || WorldCamera == null) return;
+    Vector3 toCam = WorldCamera.transform.position - Player.transform.position;
+    toCam.y = 0f;
+    if (toCam.sqrMagnitude > 0.001f)
+      Player.transform.rotation = Quaternion.LookRotation(toCam);
   }
 
   // ---- frame services (router / HUD / presenters) -----------------------------------
@@ -417,6 +487,35 @@ public class MarketBuilder : MonoBehaviour {
     NavMeshSurface surface = navGo.AddComponent<NavMeshSurface>();
     surface.collectObjects = CollectObjects.All;
     surface.BuildNavMesh();
+  }
+
+  // W1 grounding 2026-09-12: the All-geometry bake turns prop tops (tree
+  // canopy, stall counter, crate, pedestal, fence rails) into walkable
+  // islands, and the agent climbs them (tour measured player rootY=0.817
+  // after walking next to the tree; an earlier shot caught fence-balancing).
+  // Stationary carve volumes keep the agent on the grass. Interaction reach
+  // (apple 2.5m, NPC clicks) is unaffected: carves only deny foot placement.
+  void BuildNavCarves() {
+    CarveBox("TreeCarve", new Vector3(-6.2f, 1f, 3.8f), new Vector3(1.4f, 2f, 1.4f));
+    CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 0.9f), new Vector3(3.2f, 1f, 1.6f));
+    CarveBox("CrateCarve", new Vector3(CrateAnchorPos.x, 0.3f, CrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
+    CarveBox("PedestalCarve", new Vector3(4.7f, 0.4f, -0.9f), new Vector3(0.9f, 0.8f, 0.9f));
+    CarveBox("FenceCarveN", new Vector3(0f, 0.5f, -6f), new Vector3(16.4f, 1f, 0.4f));
+    CarveBox("FenceCarveS", new Vector3(0f, 0.5f, 6f), new Vector3(16.4f, 1f, 0.4f));
+    CarveBox("FenceCarveW", new Vector3(-8f, 0.5f, 0f), new Vector3(0.4f, 1f, 12.4f));
+    CarveBox("FenceCarveE", new Vector3(8f, 0.5f, 0f), new Vector3(0.4f, 1f, 12.4f));
+  }
+
+  void CarveBox(string carveName, Vector3 pos, Vector3 size) {
+    GameObject go = new GameObject(carveName);
+    go.transform.SetParent(transform);
+    go.transform.position = pos;
+    NavMeshObstacle obstacle = go.AddComponent<NavMeshObstacle>();
+    obstacle.shape = NavMeshObstacleShape.Box;
+    obstacle.center = Vector3.zero;
+    obstacle.size = size;
+    obstacle.carving = true;
+    obstacle.carveOnlyStationary = true;
   }
 
   static Material Lit(Color color) {

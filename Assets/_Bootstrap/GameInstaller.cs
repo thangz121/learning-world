@@ -91,7 +91,7 @@ public class GameInstaller : MonoBehaviour {
       return;
     }
     builder.BuildServices(EventBus, Audio);
-    builder.WireQuestService(Quests);
+    builder.WireQuestService(Quests, Hints);
     MarketBootstrap bootstrap = GetComponent<MarketBootstrap>();
     if (bootstrap == null) {
       Debug.LogError("[GameInstaller] No MarketBootstrap on the installer object; slice cannot start.", this);
