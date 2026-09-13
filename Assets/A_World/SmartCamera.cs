@@ -21,11 +21,17 @@ public class SmartCamera : MonoBehaviour {
   [Tooltip("Rotation smoothing speed for exponential Slerp.")]
   public float rotationSmoothSpeed = 5f;
   [Header("Follow defaults")]
-  // Player-experience audit 2026-09-12: (0,3.4,-5.2) keeps Milo present at the
-  // spawn frame edge and reads well at gameplay distance; the steeper
-  // (0,4,-4.6) trial pushed him further out of frame, so it was reverted.
-  // Awning occlusion on western walks is handled by ResolveObstruction below.
-  public Vector3 defaultOffset = new Vector3(0f, 3.4f, -5.2f);
+  // Third-person follow offset: SOUTH-behind (+z), looking NORTH toward the
+  // stall row. Phase-1 closure (P1Survey p2 run): the old (0,3.4,-5.2) parked
+  // the camera NORTH looking SOUTH, so Milo (north-west of spawn) sat behind
+  // the camera (spawn frame empty) and every authored south-front story pose
+  // (intro/wrong/complete) forced a 180-degree sweep THROUGH the stall
+  // (wrong framing red-out, BLOCKED_BY AwningStripe). South follow matches
+  // the authored poses, so transitions stay short and under the awning
+  // (canopy at y2.62, sightlines pass below it). Fence clearance: at z=6 the
+  // view ray rides at y~1.0 (feet target) / ~1.7 (1m target), above the
+  // 0.8m rail top.
+  public Vector3 defaultOffset = new Vector3(0f, 3.2f, 4.6f);
   [Header("Obstruction")]
   [Tooltip("Pull the follow camera in front of blocking world geometry (stall awning etc).")]
   public float obstructionSphereRadius = 0.3f;
@@ -33,7 +39,9 @@ public class SmartCamera : MonoBehaviour {
   public LayerMask obstructionMask = ~0;
   [Header("Constraints")]
   [Tooltip("Minimum camera height (m) above y=0 ground; never clip through ground.")]
-  public float minHeightAboveGround = 1.2f;
+  public float minHeightAboveGround = 1.5f;
+  [Tooltip("Obstruction pull-in never parks the camera closer than this (m) to the follow target. Phase-1 closure: the stall pull-in used to dive to ~1.5m/y1.36 and fill the frame with the player's arm.")]
+  public float minFollowDistance = 2.6f;
   [Tooltip("Default cinematic sweep duration (s) for quest-start intros.")]
   public float cinematicDuration = 2.5f;
 
@@ -206,10 +214,24 @@ public class SmartCamera : MonoBehaviour {
   }
 
   void TickFollow() {
-    Vector3 desired = ClampAboveGround(
-      ResolveObstruction(_followTarget.position, _followTarget.position + _followOffset));
+    Vector3 desired = ClampAboveGround(EnforceFollowFloor(
+      _followTarget.position,
+      ResolveObstruction(_followTarget.position, _followTarget.position + _followOffset)));
     transform.position = Vector3.SmoothDamp(transform.position, desired, ref _positionVelocity, positionSmoothTime);
     LookTowards(_followTarget.position);
+  }
+
+  // Follow floor (Phase-1 closure): obstruction pull-in must never park the
+  // camera inside the player's personal space (survey: stall-S dove to 1.5m /
+  // y1.36 and filled the frame with an arm). Holds a minimum stand-off from
+  // the target along the resolved ray. Reusable for any follow target.
+  Vector3 EnforceFollowFloor(Vector3 targetPoint, Vector3 pulled) {
+    Vector3 away = pulled - targetPoint;
+    if (away.magnitude < minFollowDistance) {
+      if (away.sqrMagnitude < 0.0001f) away = Vector3.back;
+      pulled = targetPoint + away.normalized * minFollowDistance;
+    }
+    return pulled;
   }
 
   // Obstruction pull-in (player-experience audit): the unconstrained follow

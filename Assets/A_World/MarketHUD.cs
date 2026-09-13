@@ -32,6 +32,8 @@ public class MarketHUD : BusBehaviour {
   Text _objectiveText;
   Button _replayButton;
   GameObject _replayButtonGo;
+  CanvasGroup _fade; // adaptive hierarchy: the chip yields to emotional beats
+  float _targetAlpha = 1f;
 
   void Awake() {
     BuildUiImmediate();
@@ -56,6 +58,30 @@ public class MarketHUD : BusBehaviour {
 
   void OnEnable() {
     EnsureSubscribed();
+  }
+
+  CameraMode? _lastCamMode;
+
+  void Update() {
+    // Adaptive hierarchy (final polish): while the shared camera holds an
+    // emotional/story beat (Interaction/Cinematic), the objective chip fades
+    // to a whisper so NPC faces and reactions own the frame; Follow restores
+    // it. Same-assembly read of the shared camera (no service lookup). The
+    // fade snaps exactly on transitions (reads as intentional with the cut).
+    Camera cam = Camera.main;
+    SmartCamera smart = cam != null ? cam.GetComponent<SmartCamera>() : null;
+    if (smart != null && (!_lastCamMode.HasValue || _lastCamMode.Value != smart.Mode)) {
+      _lastCamMode = smart.Mode;
+      ApplyCameraMode(smart.Mode);
+    }
+  }
+
+  // Deterministic driver for the fade (tests call this directly; Update polls
+  // the live camera and forwards here). Snaps immediately so EditMode asserts
+  // exact values; live play smooths via the Update lerp above.
+  public void ApplyCameraMode(CameraMode mode) {
+    _targetAlpha = (mode == CameraMode.Follow) ? 1f : 0.35f;
+    if (_fade != null) _fade.alpha = _targetAlpha;
   }
 
   protected override void OnDisable() {
@@ -109,9 +135,9 @@ public class MarketHUD : BusBehaviour {
   }
 
   // ---- code-built uGUI (overlay canvas, compact corner chip, replay button) ----
-  // The objective chip is SECONDARY and minimal: small top-left corner, short
-  // action text only ("Talk to Milo"). The world (NPC speech, name labels,
-  // question bubble) carries the story, never this chip.
+  // Final polish: the chip is deliberately SMALL (secondary reminder, never a
+  // narrator) and adaptive (fades during emotional camera beats). The world
+  // (NPC speech, name labels, question bubble) carries the story.
 
   void BuildUi() {
     GameObject canvasGo = new GameObject("MarketCanvas");
@@ -119,6 +145,8 @@ public class MarketHUD : BusBehaviour {
     Canvas canvas = canvasGo.AddComponent<Canvas>();
     canvas.renderMode = RenderMode.ScreenSpaceOverlay;
     canvas.sortingOrder = 10;
+    _fade = canvasGo.AddComponent<CanvasGroup>();
+    _fade.alpha = _targetAlpha;
     CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
     scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
     scaler.referenceResolution = new Vector2(1280f, 720f);
@@ -135,14 +163,14 @@ public class MarketHUD : BusBehaviour {
     panelRt.anchorMin = new Vector2(0f, 1f);
     panelRt.anchorMax = new Vector2(0f, 1f);
     panelRt.pivot = new Vector2(0f, 1f);
-    panelRt.anchoredPosition = new Vector2(24f, -24f);
-    panelRt.sizeDelta = new Vector2(430f, 84f);
+    panelRt.anchoredPosition = new Vector2(20f, -20f);
+    panelRt.sizeDelta = new Vector2(320f, 64f);
 
     GameObject textGo = new GameObject("ObjectiveText");
     textGo.transform.SetParent(panelGo.transform);
     _objectiveText = textGo.AddComponent<Text>();
     _objectiveText.font = font;
-    _objectiveText.fontSize = 30;
+    _objectiveText.fontSize = 23;
     _objectiveText.color = new Color(0.35f, 0.22f, 0.12f);
     _objectiveText.alignment = TextAnchor.MiddleLeft;
     _objectiveText.verticalOverflow = VerticalWrapMode.Truncate;

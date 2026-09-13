@@ -60,6 +60,12 @@ public class ClickRouter : MonoBehaviour {
     get { return _hasInteractPending || _hasClickPending; }
   }
 
+  // Lead introspection for ProximityDiscovery: while a click arrival for this
+  // target is pending, proximity stays silent (the router fires on arrival).
+  public Interactable PendingInteractTarget {
+    get { return _hasInteractPending ? _pendingInteract : null; }
+  }
+
   void Update() {
     Mouse mouse = Mouse.current;
     if (mouse == null) return; // batch-safe: no pointer device, no clicks
@@ -108,6 +114,7 @@ public class ClickRouter : MonoBehaviour {
       if (pending == null) { ClearPending(); return; } // target destroyed mid-walk
       if (!pending.IsInRange(playerPos)) return;
       ClearPending();
+      _player.Stop(); // arrival: halt AT range (never plow into/under the target)
       pending.Interact(); // publishes WordSeenEvent via its own bound bus
       PlayVocabFireAndForget(pending.Word);
       return;
@@ -119,6 +126,7 @@ public class ClickRouter : MonoBehaviour {
     if (targetBehaviour == null) { ClearPending(); return; }
     if (Vector3.Distance(playerPos, _pendingPoint) > arrivalRange) return;
     ClearPending();
+    _player.Stop(); // arrival: halt AT range before the callback
     try {
       target.OnClicked();
     } catch (Exception e) {

@@ -19,7 +19,10 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   const float WaveDuration = 1.6f;
 
   [Header("Lead-wired placement (A anchor)")]
-  public Vector3 SpawnPosition = new Vector3(2.5f, 0f, 1.5f);
+  // Phase-1 closure: Milo hosts the market stall front (his place; Mia keeps
+  // the counter as shopkeeper). Open grass east of the counter, clear of the
+  // stall carve, 2.3m conversational distance from Mia so both stage together.
+  public Vector3 SpawnPosition = new Vector3(-1.3f, 0f, -1.7f);
   [Header("Lead-wired player reference (Transform only, null-guarded)")]
   public Transform PlayerTarget;
 
@@ -42,6 +45,8 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   // Visual rig (presentation only, never gameplay state).
   Animator _animator;
   Transform _headBone;
+  Transform _footL;
+  Transform _footR;
   CharacterPresentation _presentation;
   SkinnedMeshRenderer _skinForFace;
   Transform _visualForFace;
@@ -258,8 +263,8 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
       // imported sub-assets stay pristine): orange vest (Milo identity),
       // warm tan face, warm mid-brown skin.
       TintSharedMaterials(skin, "Vest", new Color(1f, 0.55f, 0.12f));
-      TintSharedMaterials(skin, "Face", new Color(1f, 0.82f, 0.64f));
-      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f));
+      TintSharedMaterials(skin, "Face", new Color(1f, 0.82f, 0.64f), 0.45f);
+      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.5f);
     }
     if (skin != null && skin.bones != null) {
       foreach (Transform bone in skin.bones) {
@@ -267,6 +272,8 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
         if (_headBone == null && bone.name == "Head") _headBone = bone;
         if (_waveBone == null && (bone.name == "UpperArm.R" || bone.name == "Shoulder.R"))
           _waveBone = bone;
+        if (_footL == null && bone.name == "Foot.L") _footL = bone;
+        if (_footR == null && bone.name == "Foot.R") _footR = bone;
       }
     }
     if (_headBone == null) {
@@ -276,13 +283,20 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     // attention glances, expressions (SharedKernel, no gameplay coupling).
     // Face geometry setup is deferred to Start (see comment there).
     _presentation = gameObject.AddComponent<CharacterPresentation>();
+    // Final polish footwear (shared helper, Foot.L/R proven on all rigs): the
+    // pack ships no shoe geometry, so feet read as bare stubs without caps.
+    _presentation.QueueShoe(_footL, "ShoeL");
+    _presentation.QueueShoe(_footR, "ShoeR");
     _skinForFace = skin;
     _visualForFace = visual.transform;
     AddInteractionCapsule();
   }
 
   // Instance-only material tint (imported sub-assets stay pristine).
-  static void TintSharedMaterials(SkinnedMeshRenderer skin, string nameFragment, Color color) {
+  // Final polish: optional smoothness override establishes the shared finish
+  // language (skin 0.5 soft sheen vs matte cloth at import 0.31); negative
+  // keeps the imported value. Metallic is pinned to 0 (stylized, never metal).
+  static void TintSharedMaterials(SkinnedMeshRenderer skin, string nameFragment, Color color, float smoothness = -1f) {
     if (skin == null) return;
     Material[] mats = skin.sharedMaterials;
     bool changed = false;
@@ -296,6 +310,8 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
       copy.CopyPropertiesFromMaterial(m);
       if (copy.HasProperty("_BaseColor")) copy.SetColor("_BaseColor", color);
       else if (copy.HasProperty("_Color")) copy.SetColor("_Color", color);
+      if (smoothness >= 0f && copy.HasProperty("_Smoothness")) copy.SetFloat("_Smoothness", smoothness);
+      if (copy.HasProperty("_Metallic")) copy.SetFloat("_Metallic", 0f);
       copy.name = m.name + "_Tinted";
       mats[i] = copy;
       changed = true;

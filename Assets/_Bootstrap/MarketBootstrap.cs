@@ -45,6 +45,15 @@ public class MarketBootstrap : MonoBehaviour {
     miaPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
     miaPresenter.Bind(bus, quests, hints);
 
+    // Shop-counter click proxy (Phase-1 closure): tapping Mia's counter reaches
+    // Mia herself, so players never need pixel taps on her body behind the
+    // counter/awning. Reusable ClickForwarder; quest reactions stay in Mia.
+    if (builder.StallCounter != null) {
+      ClickForwarder counterFwd = builder.StallCounter.GetComponent<ClickForwarder>();
+      if (counterFwd == null) counterFwd = builder.StallCounter.AddComponent<ClickForwarder>();
+      counterFwd.Bind(miaPresenter);
+    }
+
     // In-world identity (reusable for future chapters): Milo is named from
     // frame one (he is the first action target); Mia stays unlabeled until
     // the story introduces her, so frame one never splits attention.
@@ -112,10 +121,12 @@ public class MarketBootstrap : MonoBehaviour {
     // Attention guidance (player-experience audit): Milo's line names Mia, so
     // the camera takes the player to her stall front once, then auto-returns.
     // An authored pose (never through her awning) wins over the generic
-    // quest-start sweep (same frame, Interaction mode).
-    if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null) {
-      Vector3 miaHead = _builder.MiaAnchor.position + new Vector3(0f, 1.2f, 0f);
-      _builder.WorldCamera.FramePointFor(new Vector3(-1.2f, 1.9f, 0.8f), miaHead, 2.5f);
+    // quest-start sweep (same frame, Interaction mode). Round-B framing: aim
+    // the MIDPOINT of Milo+Mia (both stage together) from further back so
+    // Milo's face is not cut at the frame edge; both stay readable.
+    if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null && _builder.MiloAnchor != null) {
+      Vector3 midHead = (_builder.MiloAnchor.position + _builder.MiaAnchor.position) * 0.5f + new Vector3(0f, 1.2f, 0f);
+      _builder.WorldCamera.FramePointFor(new Vector3(-0.6f, 2f, 1.6f), midHead, 2.5f);
     }
   }
 
@@ -135,17 +146,39 @@ public class MarketBootstrap : MonoBehaviour {
     if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.QuestComplete, DateTime.UtcNow));
     // Celebration framing (player-experience audit): the generic pull-back
     // landed inside the awning twice. Authored stall-front pose, auto-returns.
+    // Round-B: shifted east ((−0.8,2,1.2) -> (−0.2,1.9,−0.2)) so the arriving
+    // player (staging south-east of Mia) sits OFF the camera->Mia ray instead
+    // of hiding Mia's celebrate behind their head. Still south, below the
+    // awning, outside the stall carve.
+    // R4 (P1Survey p2-complete 2026-09-13): the (−0.2,1.9,−0.2)->Mia ray
+    // passes ~0.7m from Milo, but Milo stands 1.9m from the camera vs Mia at
+    // ~4m, so he fills the foreground and buries the celebration (Milo moved
+    // to the stall front in Phase-1 closure, invalidating the Round-B
+    // assumption). New pose sits SOUTH of Mia on her own x (−3.3,1.8,−0.2):
+    // Milo (~2.2m east) and the player (~0.9m east) both fall OFF the ray as
+    // readable over-shoulder witnesses instead of occluders. Still below the
+    // awning (slats y2.62), outside the stall carve (x −4.8..−2.2 z −4.1..−2.7).
     if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null) {
       Vector3 miaHead = _builder.MiaAnchor.position + new Vector3(0f, 1.2f, 0f);
-      _builder.WorldCamera.FramePointFor(new Vector3(-0.8f, 2f, 1.2f), miaHead, 3.2f);
+      _builder.WorldCamera.FramePointFor(new Vector3(-3.3f, 1.8f, -0.2f), miaHead, 3.2f);
     }
   }
 
   // Wrong choices get a closer framing on Mia's sad reaction (face must fill
   // enough frame to read at gameplay distance), then the camera returns by
-  // itself. Retry context is fully preserved.
+  // itself. Retry context is fully preserved. Authored stall-front pose
+  // (Phase-1 closure): the generic FocusOnFor kept its arrival view direction
+  // and parked inside the apple/ball on some approaches. Round-B: moved
+  // closer (2.3m vs 3.7m) so the sad frown reads; still south-front, below
+  // the awning, outside the stall carve.
   void OnStoryMoment(StoryMomentEvent e) {
-    if (e.Moment == StoryMoment.WrongChoice) FocusMia(2.6f, 2.4f);
+    if (e.Moment == StoryMoment.WrongChoice) FrameMiaFront(2.4f);
+  }
+
+  void FrameMiaFront(float seconds) {
+    if (_builder == null || _builder.WorldCamera == null || _builder.MiaAnchor == null) return;
+    Vector3 miaHead = _builder.MiaAnchor.position + new Vector3(0f, 1.2f, 0f);
+    _builder.WorldCamera.FramePointFor(new Vector3(-2.2f, 1.6f, -0.6f), miaHead, seconds);
   }
 
   void FocusMia(float distance, float seconds) {

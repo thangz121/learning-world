@@ -139,3 +139,42 @@ Giữ lại (production):
      convention +Z; đã có CT-S01M khóa contract.
 - Follow-up (không blocker, giữ từ §5/§9): `Walk_Carry` chưa wire,
   PregenSeeder audio fallback.
+
+## 11. Pass R4 2026-09-13 (Phase-1 final-polish: golden-template closure)
+- Phạm vi: đối chiếu 16 shots R3 với checklist 23 mục của Phase-1 polish spec.
+  Khóa thêm: objective chip (compact + whisper, CT-P03A/B), thought-bubble
+  (shell/outline/tail/apple+stem+leaf, 0 collider, CT-P03C), giày 3 rig
+  (CT-P03D/E), da smoothness 0.5/metallic 0, identity cam/coral/blue,
+  stall gọn, staging, story speech-led, wrong close-up + correct celebrate +
+  retry, MSAA 4x. R4 sửa 3 prod + 2 survey:
+- (1) Player bay 7.6cm: GROUND minMapped=+0.076 (ảnh gnd-player thấy khe + bóng
+  dưới giày; Milo 0.009/Mia 0.000 đã đạt) → `PlayerVisual.GroundLiftLocal`
+  0.395 → **0.300** (trừ đúng float đo được, parent scale 0.8).
+- (2) Celebrate bị Milo che: cam (−0.2,1.9,−0.2)→Mia đi xuyên Milo (đứng cách
+  cam 1.9m vs Mia 4m, foreground khổng lồ) → pose mới **(−3.3,1.8,−0.2)**
+  (nam Mia, cùng x): Milo + player rơi khỏi ray thành witness.
+- (3) Path cháy trắng: (0.92,0.78,0.55) × sun 1.1 + ambient 0.75 → trắng bệch
+  → **(0.76,0.60,0.40)** render đúng warm tan.
+- (4) Survey: stall-W follow-cam nhìn đất trống → `StallView` authored
+  (cam (−6.2,2,0.3) → counter); `FaceMacro` 1.4→1.6m + aim +0.12 (label lọt khung).
+- Verify (build R4 payload tươi: LWE.World/Bootstrap.dll 10:45): EditMode
+  **52/52 PASS**; survey16 COMPLETE (wrong=1, completed=True, `Great job!`,
+  sightlines CLEAR); GROUND player/milo/mia **0.000/0.007/0.000**; celebrate
+  Mia center-frame tay giơ cao (Milo off-ray); stall-W đủ Milo+Mia+label+stall+
+  táo+player+path; giày player chạm đất; label Milo đọc crisp + khe hở trên mũ.
+- Lockdown: xóa `P1Survey.cs(.meta)` → revert `LWE.Bootstrap.asmdef`
+  (InputSystem ref chỉ phục vụ temp) → FINAL clean build **Succeeded errors=0**
+  → boot check alive 50s+ **3×FACE_OK 0 exceptions** → xóa `P1Build.cs(.meta)` +
+  `Assets/Editor(.meta)` → FINAL EditMode **52/52** trên cây khóa → commit.
+- Bài học mới:
+  - 15. Probe số quyết định, ảnh xác nhận: giảm lift ĐÚNG bằng minMapped đo
+    được (0.095 local), không đoán; re-probe sau fix (0.000).
+  - 16. Khi NPC đổi chỗ (Milo ra stall-front), mọi authored camera pose cũ
+    phải audit lại sightline — khoảng cách tới cam quan trọng hơn khoảng cách
+    tới ray.
+  - 17. Màu material phải chấm dưới đúng ánh sáng build (sun+ambient), không
+    chấm bằng giá trị RGB trên giấy.
+- Watch items (non-blocking, giữ nguyên có lý do): chân gầy + facet phẳng +
+  tay mitten = style flat-shade pack Quaternius (đồng nhất cả cast, giữ import
+  normals); 1 TIMEOUT mode=5 lẻ ở step stall-W survey (shot vẫn đúng, COMPLETE);
+  `Walk_Carry` chưa wire, PregenSeeder fallback (từ §5/§9).

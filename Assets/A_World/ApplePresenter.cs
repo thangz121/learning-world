@@ -25,7 +25,14 @@ public class ApplePresenter : BusBehaviour {
   float _pulseT;
 
   void Update() {
-    if (!_glowOn || _crateApple == null) return;
+    if (_crateApple == null) return;
+    if (_breathing && !_glowOn) {
+      _breatheT += Time.deltaTime;
+      float breathe = 1f + 0.05f * Mathf.Sin(_breatheT * 2f);
+      _crateApple.transform.localScale = _crateBaseScale * breathe;
+      return;
+    }
+    if (!_glowOn) return;
     _pulseT += Time.deltaTime;
     float pulse = 1f + 0.08f * Mathf.Sin(_pulseT * 4f);
     _crateApple.transform.localScale = _crateBaseScale * pulse;
@@ -63,12 +70,26 @@ public class ApplePresenter : BusBehaviour {
     if (_subscribed || _bus == null || !isActiveAndEnabled) return;
     On<WordSeenEvent>(OnWordSeen, _bus);
     On<HintLevelChanged>(OnHint, _bus);
+    On<QuestStartedEvent>(OnQuestBreathe, _bus);
     On<QuestCompletedEvent>(OnQuestDone, _bus);
     _subscribed = true;
   }
 
+  // Find-stage affordance (Phase-1 closure): while the apple is the active
+  // objective, the crate apple breathes gently (5%, slow) so first-time
+  // players can SEE that it is alive/interactable. Distinct from the L1 hint
+  // glow (8% + light): breathing invites, glow directs. Stops once found.
+  bool _breathing;
+  float _breatheT;
+
+  void OnQuestBreathe(QuestStartedEvent e) {
+    _breathing = true;
+    _breatheT = 0f;
+  }
+
   void OnWordSeen(WordSeenEvent e) {
     if (e.WordId.Value != AppleWord) return;
+    _breathing = false;
     SetGlow(false);
     AttachCarriedApple();
   }
@@ -78,6 +99,8 @@ public class ApplePresenter : BusBehaviour {
   }
 
   void OnQuestDone(QuestCompletedEvent e) {
+    _breathing = false;
+    SetGlow(false);
     HideCarriedApple();
   }
 
@@ -117,14 +140,36 @@ public class ApplePresenter : BusBehaviour {
       renderer.sharedMaterial = mat;
     }
     Collider collider = mini.GetComponent<Collider>();
-    if (collider != null) Destroy(collider); // carried decoy must not eat clicks
+    if (collider != null) CharacterPresentation.DestroyNow(collider); // carried decoy must not eat clicks
     GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     stem.name = "CarriedStem";
     stem.transform.SetParent(mini.transform);
     stem.transform.localPosition = new Vector3(0f, 0.65f, 0f);
     stem.transform.localScale = new Vector3(0.15f, 0.4f, 0.15f);
+    // Final polish: the stem used to ship with the DEFAULT white material (a
+    // white stick on a red ball reads as a debug artifact). Painted brown like
+    // the crate apple, plus a leaf in the same language.
+    Renderer stemRenderer = stem.GetComponent<Renderer>();
+    if (stemRenderer != null) {
+      Material stemMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+      stemMat.SetColor("_BaseColor", new Color(0.4f, 0.26f, 0.12f));
+      stemRenderer.sharedMaterial = stemMat;
+    }
     Collider stemCollider = stem.GetComponent<Collider>();
-    if (stemCollider != null) Destroy(stemCollider);
+    if (stemCollider != null) CharacterPresentation.DestroyNow(stemCollider);
+    GameObject leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    leaf.name = "CarriedLeaf";
+    leaf.transform.SetParent(mini.transform);
+    leaf.transform.localPosition = new Vector3(0.3f, 0.6f, 0f);
+    leaf.transform.localScale = new Vector3(0.35f, 0.08f, 0.2f);
+    Renderer leafRenderer = leaf.GetComponent<Renderer>();
+    if (leafRenderer != null) {
+      Material leafMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+      leafMat.SetColor("_BaseColor", new Color(0.25f, 0.6f, 0.25f));
+      leafRenderer.sharedMaterial = leafMat;
+    }
+    Collider leafCollider = leaf.GetComponent<Collider>();
+    if (leafCollider != null) CharacterPresentation.DestroyNow(leafCollider);
     return mini;
   }
 

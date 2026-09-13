@@ -18,16 +18,21 @@ public sealed class PlayerVisual : MonoBehaviour {
   // quaternius clips pose the feet ~0.32m below the prefab origin at game
   // scale, and the Animator always plays a clip (the rest bind pose is never
   // rendered), so the VisualRoot carries a permanent lift. localPosition is
-  // in PARENT space: player root scale is 0.8, so 0.395 local = 0.316 world.
+  // in PARENT space: player root scale is 0.8, so 0.300 local = 0.240 world.
+  // R4 (P1Survey p2-gnd-player 2026-09-13): probe read minMapped=+0.076
+  // (photo-confirmed 7cm float + shadow gap under shoes), so the 0.395 lift
+  // (0.316 world) was cut by exactly the measured float (0.095 local).
   // CharacterPresentation captures this base in SetupFace (breathing/hop ride
   // on top), so the lift composes with all presentation motion.
-  const float GroundLiftLocal = 0.395f;
+  const float GroundLiftLocal = 0.300f;
 
   Animator _animator;
   NavMeshAgent _agent;
   CharacterPresentation _presentation;
   SkinnedMeshRenderer _skinForFace;
   Transform _headForFace;
+  Transform _footLForShoe;
+  Transform _footRForShoe;
   Transform _visualForFace;
   int _movingHash;
 
@@ -106,12 +111,14 @@ public sealed class PlayerVisual : MonoBehaviour {
       // Player identity: blue shirt (distinct from Milo's orange / Mia's coral),
       // warm tan face, warm mid-brown skin. Instance copies only.
       TryTint(skin, "Shirt", new Color(0.25f, 0.5f, 0.95f));
-      TryTint(skin, "Face", new Color(1f, 0.82f, 0.64f));
-      TryTint(skin, "Skin", new Color(0.42f, 0.27f, 0.17f));
+      TryTint(skin, "Face", new Color(1f, 0.82f, 0.64f), 0.45f);
+      TryTint(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.5f);
       if (skin.bones != null) {
         foreach (Transform bone in skin.bones) {
           if (bone == null) continue;
           if (headBone == null && bone.name == "Head") headBone = bone;
+          if (_footLForShoe == null && bone.name == "Foot.L") _footLForShoe = bone;
+          if (_footRForShoe == null && bone.name == "Foot.R") _footRForShoe = bone;
         }
       }
     }
@@ -120,12 +127,17 @@ public sealed class PlayerVisual : MonoBehaviour {
       return;
     }
     _presentation = gameObject.AddComponent<CharacterPresentation>();
+    // Final polish footwear (shared helper, Foot.L/R proven on all rigs).
+    _presentation.QueueShoe(_footLForShoe, "ShoeL");
+    _presentation.QueueShoe(_footRForShoe, "ShoeR");
     _skinForFace = skin;
     _headForFace = headBone;
     _visualForFace = visual.transform;
   }
 
-  static void TryTint(SkinnedMeshRenderer skin, string nameFragment, Color color) {
+  // Final polish: optional smoothness override (skin 0.5 soft sheen vs matte
+  // cloth at import 0.31); negative keeps imported. Metallic pinned to 0.
+  static void TryTint(SkinnedMeshRenderer skin, string nameFragment, Color color, float smoothness = -1f) {
     if (skin == null) return;
     Material[] mats = skin.sharedMaterials;
     bool changed = false;
@@ -139,6 +151,8 @@ public sealed class PlayerVisual : MonoBehaviour {
       copy.CopyPropertiesFromMaterial(m);
       if (copy.HasProperty("_BaseColor")) copy.SetColor("_BaseColor", color);
       else if (copy.HasProperty("_Color")) copy.SetColor("_Color", color);
+      if (smoothness >= 0f && copy.HasProperty("_Smoothness")) copy.SetFloat("_Smoothness", smoothness);
+      if (copy.HasProperty("_Metallic")) copy.SetFloat("_Metallic", 0f);
       copy.name = m.name + "_Tinted";
       mats[i] = copy;
       changed = true;

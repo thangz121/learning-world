@@ -18,8 +18,10 @@ using UnityEngine.InputSystem.UI;
 [DisallowMultipleComponent]
 public class MarketBuilder : MonoBehaviour {
   // Fixed world contract (metres). Single source of truth for W1 coordinates.
+  // Phase-1 closure: Milo hosts the market stall front (his place; Mia keeps
+  // the counter as shopkeeper), so spawn path + onboarding lead southwest.
   public static readonly Vector3 PlayerSpawn = new Vector3(0f, 0f, 4.5f);
-  public static readonly Vector3 MiloAnchorPos = new Vector3(2.5f, 0f, 1.5f);
+  public static readonly Vector3 MiloAnchorPos = new Vector3(-1.3f, 0f, -1.7f);
   public static readonly Vector3 MiaAnchorPos = new Vector3(-3.5f, 0f, -2.5f);
   public static readonly Vector3 CrateAnchorPos = new Vector3(3.5f, 0f, -2.0f);
   public static readonly Vector3 FlowerAnchorPos = new Vector3(-1.5f, 0f, 2.5f);
@@ -32,6 +34,7 @@ public class MarketBuilder : MonoBehaviour {
   public GameObject FlowerRoot { get; private set; }
   public Transform MiloAnchor { get; private set; }
   public Transform MiaAnchor { get; private set; }
+  public GameObject StallCounter { get; private set; }
   public ClickRouter Router { get; private set; }
   public MarketHUD Hud { get; private set; }
   public SmartCamera WorldCamera { get; private set; }
@@ -42,6 +45,7 @@ public class MarketBuilder : MonoBehaviour {
   public PlayerVisual PlayerViz { get; private set; }
   public DistractorChoice Distractor { get; private set; }
   public WorldQuestionBubble Bubble { get; private set; }
+  public ProximityDiscovery AppleDiscovery { get; private set; }
 
   IGameEventBus _bus;
 
@@ -74,6 +78,7 @@ public class MarketBuilder : MonoBehaviour {
     if (Player != null) Player.Bind(bus);
     if (PlayerViz != null) PlayerViz.Bind(bus);
     if (Apple != null) Apple.Bind(bus);
+    if (AppleDiscovery != null) AppleDiscovery.Bind(bus, audio, Player, Router);
     if (Router != null) {
       Router.Bind(bus, audio);
       Router.AttachPlayer(Player);
@@ -130,13 +135,21 @@ public class MarketBuilder : MonoBehaviour {
     ground.transform.localScale = new Vector3(1.6f, 1f, 1.2f); // 10m plane -> 16x12m
     ground.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.35f, 0.68f, 0.32f));
 
-    // Warm path stripe from spawn toward the market centre.
+    // Warm path stripe from spawn toward Milo's stall front (onboarding: the
+    // world itself points first-time players at Milo; HUD stays secondary).
+    // Phase-1 closure: yaw flipped 180deg (16.7 -> 196.7) so the stripe runs
+    // NORTH from spawn (0,4.5) to Milo (-1.3,-1.7); the old heading pointed
+    // SOUTH to the fence (spawn shot showed path-to-nowhere, Milo behind cam).
     GameObject path = GameObject.CreatePrimitive(PrimitiveType.Cube);
     path.name = "Path";
     path.transform.SetParent(transform);
-    path.transform.position = new Vector3(0f, 0.02f, 1.2f);
-    path.transform.localScale = new Vector3(2.2f, 0.04f, 7f);
-    path.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.92f, 0.78f, 0.55f));
+    path.transform.position = new Vector3(-0.65f, 0.02f, 1.4f);
+    path.transform.localRotation = Quaternion.Euler(0f, 196.7f, 0f);
+    path.transform.localScale = new Vector3(2.2f, 0.04f, 5.5f);
+    // R4 (P1Survey p2-approach/walk 2026-09-13): (0.92,0.78,0.55) under the
+    // 1.1 warm sun + 0.75 ambient blew out to near-white carpet. (0.76,0.60,
+    // 0.40) renders as the intended warm tan under the same lighting.
+    path.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.76f, 0.60f, 0.40f));
 
     // EventSystem required for the HUD replay button (New Input System module).
     GameObject uiEvents = new GameObject("EventSystem");
@@ -145,7 +158,13 @@ public class MarketBuilder : MonoBehaviour {
     uiEvents.AddComponent<InputSystemUIInputModule>();
   }
 
-  // ---- market stall with striped awning (near Mia anchor) --------------------
+  // ---- market stall with striped awning (Milo's place; Mia keeps counter) ----
+  // Phase-1 closure readability pass: every element audited (A gameplay /
+  // B identity / C composition). Counter (A+B shop landmark, lowered so Mia
+  // reads over it), 4 slim posts + 4 narrow slats (B market identity, raised
+  // so the canopy clears heads and gameplay sightlines). Removed: 2 extra
+  // slats + counter bulk that dominated the frame and hid Mia (survey:
+  // sightlines BLOCKED_BY AwningStripe, stall-S camera dive).
 
   void BuildStall() {
     GameObject stall = new GameObject("MarketStall");
@@ -159,28 +178,29 @@ public class MarketBuilder : MonoBehaviour {
     counter.name = "Counter";
     counter.transform.SetParent(stall.transform);
     counter.transform.localPosition = Vector3.zero;
-    counter.transform.localScale = new Vector3(3f, 0.9f, 1.2f);
-    counter.transform.position = new Vector3(counter.transform.position.x, 0.45f, counter.transform.position.z);
+    counter.transform.localScale = new Vector3(2.4f, 0.75f, 1f);
+    counter.transform.position = new Vector3(counter.transform.position.x, 0.375f, counter.transform.position.z);
     counter.GetComponent<Renderer>().sharedMaterial = Lit(wood);
+    StallCounter = counter; // Lead wires a ClickForwarder so counter taps reach Mia
 
     for (int i = 0; i < 4; i++) {
-      float px = (i % 2 == 0) ? -1.4f : 1.4f;
-      float pz = (i < 2) ? -0.5f : 0.5f;
+      float px = (i % 2 == 0) ? -0.95f : 0.95f;
+      float pz = (i < 2) ? -0.45f : 0.45f;
       GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
       post.name = "AwningPost";
       post.transform.SetParent(stall.transform);
-      post.transform.localPosition = new Vector3(px, 1.4f, pz);
-      post.transform.localScale = new Vector3(0.12f, 1.8f, 0.12f);
+      post.transform.localPosition = new Vector3(px, 1.5f, pz);
+      post.transform.localScale = new Vector3(0.09f, 2.2f, 0.09f);
       post.GetComponent<Renderer>().sharedMaterial = Lit(wood);
     }
 
     // Striped awning: alternating red/cream slats, tilted for depth readability.
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 4; i++) {
       GameObject slat = GameObject.CreatePrimitive(PrimitiveType.Cube);
       slat.name = "AwningStripe";
       slat.transform.SetParent(stall.transform);
-      slat.transform.localPosition = new Vector3(-1.55f + i * 0.62f, 2.35f, 0f);
-      slat.transform.localScale = new Vector3(0.62f, 0.08f, 1.9f);
+      slat.transform.localPosition = new Vector3(-0.93f + i * 0.62f, 2.62f, 0f);
+      slat.transform.localScale = new Vector3(0.62f, 0.08f, 1.4f);
       slat.transform.localRotation = Quaternion.Euler(-12f, 0f, 0f);
       slat.GetComponent<Renderer>().sharedMaterial = Lit(i % 2 == 0 ? red : cream);
     }
@@ -306,6 +326,8 @@ public class MarketBuilder : MonoBehaviour {
     Apple.interactionId = "take_apple";
     Apple.npcId = "mia";
     Apple.interactionDistance = 2.5f;
+    Apple.ParseIds(); // fields assigned post-Awake: re-parse or events drop
+    AppleDiscovery = apple.AddComponent<ProximityDiscovery>();
   }
 
   // ---- hidden flower-pot group (revealed by FlowerPotPresenter) ----------------
@@ -374,15 +396,17 @@ public class MarketBuilder : MonoBehaviour {
     Distractor = ball.AddComponent<DistractorChoice>();
   }
 
-  // ---- world-anchored visual question bubble (above Mia's stall) --------------
+  // ---- world-anchored visual question bubble (beside Mia's stall) --------------
   // Shows WHAT Mia is asking (mini apple icon). Driven by quest phases in
   // MarketBootstrap (Show on start, Hide on complete). Reusable: swap icon.
+  // Final polish: parked EAST of Mia (not overhead) so it never overlaps her
+  // name label, and stays clear of the awning volume.
 
   void BuildBubble() {
     GameObject bubbleGo = new GameObject("QuestionBubble");
     bubbleGo.transform.SetParent(transform);
     Bubble = bubbleGo.AddComponent<WorldQuestionBubble>();
-    Bubble.Place(new Vector3(MiaAnchorPos.x, 2.1f, MiaAnchorPos.z + 0.9f));
+    Bubble.Place(new Vector3(MiaAnchorPos.x + 1.15f, 2f, MiaAnchorPos.z + 0.95f));
   }
 
   // ---- player capsule + anchors -------------------------------------------------
@@ -497,7 +521,7 @@ public class MarketBuilder : MonoBehaviour {
   // (apple 2.5m, NPC clicks) is unaffected: carves only deny foot placement.
   void BuildNavCarves() {
     CarveBox("TreeCarve", new Vector3(-6.2f, 1f, 3.8f), new Vector3(1.4f, 2f, 1.4f));
-    CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 0.9f), new Vector3(3.2f, 1f, 1.6f));
+    CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 0.9f), new Vector3(2.6f, 1f, 1.4f));
     CarveBox("CrateCarve", new Vector3(CrateAnchorPos.x, 0.3f, CrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
     CarveBox("PedestalCarve", new Vector3(4.7f, 0.4f, -0.9f), new Vector3(0.9f, 0.8f, 0.9f));
     CarveBox("FenceCarveN", new Vector3(0f, 0.5f, -6f), new Vector3(16.4f, 1f, 0.4f));

@@ -36,6 +36,8 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   // Visual rig (presentation only, never gameplay state).
   Animator _animator;
   Transform _headBone;
+  Transform _footL;
+  Transform _footR;
   CharacterPresentation _presentation;
   SkinnedMeshRenderer _skinForFace;
   Transform _visualForFace;
@@ -89,16 +91,43 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     _waveT = WaveDuration;
     if (_quests != null && _quests.GetState(_activeQuest).Completed) return;
     if (_carryingApple) {
-      if (_quests == null) return;
-      _quests.ReportAction(PlayerAction.Bring, _appleWord);
-      _carryingApple = false;
-      if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
-      if (_animator != null) _animator.SetTrigger("PickUp"); // bend receiving the apple
-      if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.CorrectChoice, DateTime.UtcNow));
+      CompleteBring();
     } else {
       if (_hints != null) _hints.ReportWrong(_activeQuest);
       if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.WrongChoice, DateTime.UtcNow));
     }
+  }
+
+  // Shared bring completion (click path + proximity path stay identical).
+  void CompleteBring() {
+    if (_quests == null) return;
+    _quests.ReportAction(PlayerAction.Bring, _appleWord);
+    _carryingApple = false;
+    if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
+    if (_animator != null) _animator.SetTrigger("PickUp"); // bend receiving the apple
+    if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.CorrectChoice, DateTime.UtcNow));
+  }
+
+  // Lead introspection (survey telemetry + tests): whether Mia currently
+  // holds the apple context needed to complete the bring.
+  public bool IsCarrying {
+    get { return _carryingApple; }
+  }
+
+  // Proximity bring (Phase-1 closure, child-friendly + occlusion-robust):
+  // walking up to Mia while carrying completes the bring even when the click
+  // ray is eaten by the awning/counter (P1Survey p2-complete TIMEOUT: the
+  // click moved the player to 0.7m but never fired). Same CompleteBring path
+  // as a click, hence idempotent (carrying clears, quest completes; whichever
+  // of click/proximity lands first wins, the other goes inert). Empty-handed
+  // proximity is deliberately silent: wandering near Mia must never count as
+  // a wrong. Reusable pattern for any bring-to-NPC quest.
+  public void TryProximityBring(Vector3 playerPos) {
+    if (!_carryingApple) return;
+    if (_quests == null) return;
+    if (_quests.GetState(_activeQuest).Completed) return;
+    if (Vector3.Distance(playerPos, transform.position) > 1.8f) return;
+    CompleteBring();
   }
 
   void OnWordSeen(WordSeenEvent e) {
@@ -133,6 +162,9 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   }
 
   void Update() {
+    // Proximity bring check (live play forwards the player position; the
+    // deterministic TryProximityBring(Vector3) overload is what tests drive).
+    if (PlayerTarget != null) TryProximityBring(PlayerTarget.position);
     // Shopkeeper greeting posture: face the gameplay camera (not the player:
     // the follow camera sits behind the player, so player-facing turns the
     // doll face AWAY from the viewer). Y-only, smoothed (no snap, no spin).
@@ -205,8 +237,15 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     }
     GameObject visual = Instantiate(visualPrefab, transform, false);
     visual.name = "MiaVisualRoot";
-    // W1 grounding: same rig/offset as Milo (W1TOUR GROUND 2026-09-12 live
-    // Idle minVert -0.493, root at 0). Parent space, scale 1 -> 0.493 local.
+    // W1 grounding round-F: 0.493 REVERTED after instrument proof. A photo-only
+    // read of three side views suggested a ~0.35 float, so the lift was cut to
+    // 0.14 — the calibrated BakeMesh probe (P1Survey v2, Milo 0.006 as anchor)
+    // then read Mia minMapped=-0.352 AT 0.14, i.e. +0.001 at 0.493: the Female
+    // rig shares the Male bind minima (raw -0.387 vs -0.377) and was grounded
+    // all along; the photos showed dark feet + counter-top edge + sun-stretched
+    // shadow conspiring at low angles. Lessons: (1) never copy lifts across
+    // rigs WITHOUT measuring; (2) never "fix" from photos alone WITHOUT
+    // instrument confirmation — photo-flag, instrument-measure, fix, verify.
     visual.transform.localPosition = new Vector3(0f, 0.493f, 0f);
     visual.transform.localRotation = Quaternion.identity;
     // Scale fix: the quaternius armature imports at 100x (3.4m tall giant).
@@ -227,8 +266,8 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
       // vest (Mia identity, distinct from Milo's orange), warm tan face,
       // warm mid-brown skin instead of the near-black artist default.
       TintSharedMaterials(skin, "Vest", new Color(0.95f, 0.45f, 0.4f));
-      TintSharedMaterials(skin, "Face", new Color(1f, 0.82f, 0.64f));
-      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f));
+      TintSharedMaterials(skin, "Face", new Color(1f, 0.82f, 0.64f), 0.45f);
+      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.5f);
     }
     if (skin != null && skin.bones != null) {
       foreach (Transform bone in skin.bones) {
@@ -236,6 +275,8 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
         if (_headBone == null && bone.name == "Head") _headBone = bone;
         if (_waveBone == null && (bone.name == "UpperArm.R" || bone.name == "Shoulder.R"))
           _waveBone = bone;
+        if (_footL == null && bone.name == "Foot.L") _footL = bone;
+        if (_footR == null && bone.name == "Foot.R") _footR = bone;
       }
     }
     if (_headBone == null) {
@@ -243,13 +284,19 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     }
     // Reusable presentation layer (face geometry setup deferred to Start).
     _presentation = gameObject.AddComponent<CharacterPresentation>();
+    // Final polish footwear (shared helper, Foot.L/R proven on all rigs).
+    _presentation.QueueShoe(_footL, "ShoeL");
+    _presentation.QueueShoe(_footR, "ShoeR");
     _skinForFace = skin;
     _visualForFace = visual.transform;
     AddInteractionCapsule();
   }
 
   // Instance-only material tint (imported sub-assets stay pristine).
-  static void TintSharedMaterials(SkinnedMeshRenderer skin, string nameFragment, Color color) {
+  // Final polish: optional smoothness override establishes the shared finish
+  // language (skin 0.5 soft sheen vs matte cloth at import 0.31); negative
+  // keeps the imported value. Metallic is pinned to 0 (stylized, never metal).
+  static void TintSharedMaterials(SkinnedMeshRenderer skin, string nameFragment, Color color, float smoothness = -1f) {
     if (skin == null) return;
     Material[] mats = skin.sharedMaterials;
     bool changed = false;
@@ -263,6 +310,8 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
       copy.CopyPropertiesFromMaterial(m);
       if (copy.HasProperty("_BaseColor")) copy.SetColor("_BaseColor", color);
       else if (copy.HasProperty("_Color")) copy.SetColor("_Color", color);
+      if (smoothness >= 0f && copy.HasProperty("_Smoothness")) copy.SetFloat("_Smoothness", smoothness);
+      if (copy.HasProperty("_Metallic")) copy.SetFloat("_Metallic", 0f);
       copy.name = m.name + "_Tinted";
       mats[i] = copy;
       changed = true;

@@ -33,8 +33,16 @@ public class Interactable : MonoBehaviour {
   public void Bind(IGameEventBus bus) { _bus = bus; }
 
   void Awake() {
-    // Boundary: raw strings become typed IDs immediately; empty strings stay unset.
-    // (WordId/NpcId constructors throw on null, so guard first.)
+    ParseIds();
+  }
+
+  // Boundary: raw strings become typed IDs. Awake parses the Inspector-time
+  // values; code-built setup (MarketBuilder assigns fields AFTER AddComponent,
+  // when Awake has already run) MUST call this again after assignment —
+  // otherwise HasWord stays false and Interact() silently drops every event.
+  // Tests use the same hook (set fields, then ParseIds).
+  public void ParseIds() {
+    HasWord = false;
     if (!string.IsNullOrWhiteSpace(wordId)) {
       Word = new WordId(wordId);
       HasWord = true;

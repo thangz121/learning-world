@@ -112,8 +112,10 @@ public sealed class CharacterPresentation : MonoBehaviour {
     // territory (pupils half-buried in hair read as white glint dots); below
     // is open face. Pupils are sized so the sculpt's own eye shading rims
     // them instead of being fully covered (belongs-to-face, not sticker).
-    _eyeL = BuildEye("EyeL", p + n * Proud - right * (s * 0.185f) + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.18f, s * 0.23f, s * 0.12f));
-    _eyeR = BuildEye("EyeR", p + n * Proud + right * (s * 0.185f) + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.18f, s * 0.23f, s * 0.12f));
+    // Final polish: +12% pupil presence so the doll eyes dominate the
+    // sculpted lid shading (shared by every character, verified at 1.5m/6m).
+    _eyeL = BuildEye("EyeL", p + n * Proud - right * (s * 0.185f) + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.2f, s * 0.26f, s * 0.13f));
+    _eyeR = BuildEye("EyeR", p + n * Proud + right * (s * 0.185f) + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.2f, s * 0.26f, s * 0.13f));
     // Mouths ride the SAME measured pane as the eyes (shared depth basis:
     // the sculpt face is flat across these heights). A per-height mouth
     // measurement was tried and REVERTED: the mouth band is contaminated by
@@ -166,6 +168,67 @@ public sealed class CharacterPresentation : MonoBehaviour {
     BuildFaceNow();
   }
 
+  // Reusable stylized footwear (final polish): the Quaternius pack ships no
+  // shoe geometry (dump-proven: no shoe submesh on any of the three rigs), so
+  // feet read as bare stubs. One uniform dark shoe cap per foot, built with
+  // the same world-placement + SetParent(worldStays) pattern as the face kit,
+  // parented to the Foot.L/R bone so it follows Idle/Walk clips with zero
+  // extra wiring. Sizes are world units tuned once for the chibi proportion;
+  // color is the shared shoe leather (identity stays in clothing, identical
+  // for every character by design). Sole lands ~ankle-0.135, matching the
+  // pre-shoe sole, so grounding lifts stay valid (verified by probe).
+  public static readonly Vector3 ShoeSize = new Vector3(0.13f, 0.1f, 0.26f);
+  public static readonly Color ShoeColor = new Color(0.23f, 0.17f, 0.13f);
+
+  struct QueuedShoe { public Transform Foot; public string Name; }
+  readonly System.Collections.Generic.List<QueuedShoe> _pendingShoes =
+    new System.Collections.Generic.List<QueuedShoe>();
+
+  // Queue a shoe for the deferred frame-2 build (live path: world transforms
+  // read during Awake/AddComponent are stale-identity, same rule as the face).
+  public void QueueShoe(Transform footBone, string shoeName) {
+    if (footBone == null || string.IsNullOrWhiteSpace(shoeName)) return;
+    _pendingShoes.Add(new QueuedShoe { Foot = footBone, Name = shoeName.Trim() });
+  }
+
+  // Deterministic shoe hook (tests drive this directly; the frame-2 Update
+  // path calls it live). Builds every queued shoe at live transforms.
+  public void BuildShoesImmediate() {
+    if (_pendingShoes.Count == 0) return;
+    Vector3 fwd = Vector3.forward;
+    if (_anchorSpace != null) {
+      fwd = _anchorSpace.forward;
+      fwd.y = 0f;
+      if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.forward;
+    }
+    fwd.Normalize();
+    Quaternion look = Quaternion.LookRotation(fwd);
+    foreach (QueuedShoe q in _pendingShoes) {
+      if (q.Foot == null) continue;
+      GameObject shoe = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      shoe.name = q.Name;
+      shoe.transform.position = q.Foot.position + fwd * 0.05f + Vector3.down * 0.085f;
+      shoe.transform.rotation = look;
+      shoe.transform.localScale = ShoeSize;
+      PaintShoe(shoe);
+      DestroyColliders(shoe);
+      shoe.transform.SetParent(q.Foot, true);
+    }
+    _pendingShoes.Clear();
+  }
+
+  static void PaintShoe(GameObject go) {
+    if (go == null) return;
+    Renderer r = go.GetComponent<Renderer>();
+    if (r == null) return;
+    Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+    if (lit == null) return;
+    Material mat = new Material(lit);
+    mat.SetColor("_BaseColor", ShoeColor);
+    if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.55f);
+    r.sharedMaterial = mat;
+  }
+
   public void BlinkNow() { _blinkPhase = 0f; }
 
   void Update() {
@@ -174,9 +237,14 @@ public sealed class CharacterPresentation : MonoBehaviour {
       if (_buildFrame >= 2) {
         _pendingBuild = false;
         BuildFaceNow();
+        BuildShoesImmediate(); // shoes need the same live transforms as the face
       } else {
         return;
       }
+    } else if (_pendingShoes.Count > 0) {
+      // No face pending (or already built): still flush queued shoes once the
+      // scene runs a frame, so live spawners never strand them.
+      BuildShoesImmediate();
     }
     float dt = Time.deltaTime;
     if (dt <= 0f) return;
@@ -360,8 +428,8 @@ public sealed class CharacterPresentation : MonoBehaviour {
     GameObject glint = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     glint.name = eyeName + "Glint";
     glint.transform.SetParent(root.transform, false);
-    glint.transform.localPosition = new Vector3(0.014f, 0.022f, 0.026f);
-    glint.transform.localScale = new Vector3(0.02f, 0.02f, 0.014f);
+    glint.transform.localPosition = new Vector3(0.016f, 0.024f, 0.028f);
+    glint.transform.localScale = new Vector3(0.024f, 0.024f, 0.016f);
     Paint(glint, Color.white);
     DestroyColliders(root);
     AttachToHead(root);
@@ -392,8 +460,19 @@ public sealed class CharacterPresentation : MonoBehaviour {
   static void DestroyColliders(GameObject go) {
     if (go == null) return;
     foreach (Collider c in go.GetComponentsInChildren<Collider>(true)) {
-      if (c != null) DestroyImmediate(c);
+      DestroyNow(c);
     }
+  }
+
+  // EditMode-safe destroy (tests build kits outside play mode, where
+  // Destroy() is a silent no-op that leaks colliders into later tests).
+  // Reusable by any world/presentation builder (World -> SharedKernel).
+  public static void DestroyNow(UnityEngine.Object o) {
+    if (o == null) return;
+#if UNITY_EDITOR
+    if (!Application.isPlaying) { DestroyImmediate(o); return; }
+#endif
+    Destroy(o);
   }
 
   static void Paint(GameObject go, Color color) {
