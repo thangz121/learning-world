@@ -121,6 +121,77 @@ def main():
             a = (o.get("action") or "").capitalize()
             if a not in ("Find", "Bring", "Speak", "Give", "Select"):
                 errors.append(f"quest {qid}: action '{o.get('action')}' must be PlayerAction enum")
+    # ---- Phase 2D: audio-manifest <-> binary consistency ----
+    # Content/audio_manifest.json is the ship list (consumed by pregen_w1.py,
+    # mirrored to StreamingAssets/audio/manifest.json for PregenSeeder).
+    # Authoring gate: every listed entry must have its binary on disk, valid
+    # mp3, mirrored, with no orphans either direction. Actives WITHOUT a
+    # manifest entry are reported informationally (their binaries are future
+    # 2D+ work); --ship requires them.
+    audio_manifest = root / "audio_manifest.json"
+    ship_dir = root.parent / "Assets" / "StreamingAssets" / "audio"
+    manifest_entries = []
+    if not audio_manifest.is_file():
+        errors.append("Content/audio_manifest.json missing (pregen ship list)")
+    else:
+        raw_manifest = load_json(audio_manifest)
+        manifest_entries = raw_manifest if isinstance(raw_manifest, list) else raw_manifest.get("entries", [])
+        seen_mid, seen_mfile = set(), set()
+        for e in manifest_entries:
+            if not isinstance(e, dict):
+                errors.append("audio_manifest: entry must be an object"); continue
+            missing = [k for k in ("id", "text", "voice", "lang", "rate", "pitch", "style", "format", "file") if k not in e]
+            if missing:
+                errors.append(f"audio_manifest {e.get('id')}: missing keys {missing}"); continue
+            eid = e["id"]
+            if eid in seen_mid: errors.append(f"audio_manifest: duplicate id '{eid}'")
+            seen_mid.add(eid)
+            if e["file"] in seen_mfile: errors.append(f"audio_manifest: duplicate file '{e['file']}'")
+            seen_mfile.add(e["file"])
+            if not (1 <= len(e["text"] or "") <= 200):
+                errors.append(f"audio_manifest {eid}: text length out of 1..200 contract")
+            if Path(e["file"]).name != e["file"]:
+                errors.append(f"audio_manifest {eid}: file must be a plain filename")
+            if Path(e["file"]).suffix.lower() not in VALID_EXT:
+                errors.append(f"audio_manifest {eid}: ext must be .mp3/.wav")
+            if e.get("voice") not in ALLOWED_VOICES:
+                errors.append(f"audio_manifest {eid}: voice '{e.get('voice')}' not in VoiceProfile pool")
+            if e.get("lang") != "en-US":
+                errors.append(f"audio_manifest {eid}: lang must freeze en-US")
+            f = ship_dir / e["file"]
+            if not f.is_file():
+                errors.append(f"audio_manifest {eid}: MISSING BINARY '{e['file']}'")
+            elif f.stat().st_size == 0:
+                errors.append(f"audio_manifest {eid}: file rỗng '{e['file']}'")
+            elif f.suffix.lower() == ".mp3":
+                head = f.read_bytes()[:2]
+                if len(head) < 2 or head[0] != 0xFF or (head[1] & 0xE0) != 0xE0:
+                    errors.append(f"audio_manifest {eid}: '{e['file']}' missing MPEG frame sync (corrupt?)")
+        # mirror check (PregenSeeder reads the mirror, not Content/)
+        mirror = ship_dir / "manifest.json"
+        if not mirror.is_file():
+            errors.append("Assets/StreamingAssets/audio/manifest.json missing (seeder mirror)")
+        else:
+            mraw = load_json(mirror)
+            mids = [x.get("id") for x in (mraw.get("entries") or []) if isinstance(x, dict)]
+            if set(mids) != seen_mid or len(mids) != len(seen_mid):
+                errors.append(f"seeder mirror ids != Content manifest ids (mirror={len(mids)}, content={len(seen_mid)})")
+        # orphan binaries (on disk, no manifest entry)
+        for bf in sorted(ship_dir.glob("*.mp3")) + sorted(ship_dir.glob("*.wav")):
+            if bf.name not in seen_mfile:
+                errors.append(f"orphan binary '{bf.name}' on disk with no manifest entry")
+        # actives without binaries: informational in authoring, FAIL in --ship
+        manifest_files = set(seen_mfile)
+        for vid, v in vocabs.items():
+            if v.get("active") is True:
+                a = v.get("audio") or {}
+                for key in ("normal", "slow"):
+                    rel = a.get(key)
+                    base = Path(rel).name if rel else ""
+                    if not base or base not in manifest_files:
+                        msg = f"active {vid}/{key}: no shipped binary (mapping only)"
+                        if ship: errors.append(msg + " (ship gate)")
+                        else: print(f"NOTE: {msg}")
     for p in sorted(dialogues_dir.glob("*.json")):
         if p.stem == "manifest": continue
         d = load_json(p)

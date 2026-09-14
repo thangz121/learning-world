@@ -81,10 +81,54 @@
     "text": "apple",
     "voice": "learning_v1",
     "lang": "en-US",
-    "rate": 0.70,
+    "rate": 0.7,
     "pitch": 0.0,
     "style": "Clear",
     "format": "Mp3_44100",
     "file": "apple_slow.mp3"
+  },
+  {
+    "id": "ball_normal",
+    "text": "ball",
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "rate": 0.85,
+    "pitch": 0.0,
+    "style": "Clear",
+    "format": "Mp3_44100",
+    "file": "ball_normal.mp3"
+  },
+  {
+    "id": "ball_slow",
+    "text": "ball",
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "rate": 0.7,
+    "pitch": 0.0,
+    "style": "Clear",
+    "format": "Mp3_44100",
+    "file": "ball_slow.mp3"
+  },
+  {
+    "id": "inst_07",
+    "text": "Ball please!",
+    "voice": "mia_v1",
+    "lang": "en-US",
+    "rate": 1.0,
+    "pitch": 1.0,
+    "style": "Clear",
+    "format": "Mp3_44100",
+    "file": "inst_07.mp3"
+  },
+  {
+    "id": "ok_05",
+    "text": "Great! Ball!",
+    "voice": "mia_v1",
+    "lang": "en-US",
+    "rate": 1.0,
+    "pitch": 1.0,
+    "style": "Clear",
+    "format": "Mp3_44100",
+    "file": "ok_05.mp3"
   }
 ]
