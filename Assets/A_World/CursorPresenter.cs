@@ -14,6 +14,12 @@
 // R9: the pointer arrow also ROTATES with the player's facing (screen-space
 // heading cue: the arrow leans where the child will walk). Pure presentation:
 // no gameplay state, no events, no services, no audio.
+// Player-report follow-up: the arrow now leans toward the LAST CLICKED
+// direction (the assumed walk direction) instead of the current facing —
+// clicking somewhere swings the arrow where the child is about to go.
+// Pointer confinement: the first click confines the OS pointer to the game
+// window (the custom arrow keeps working inside); M releases back to the
+// normal OS cursor (toggle).
 // Presentation ONLY: no gameplay state, no events, no services, no audio.
 // One Physics.Raycast per frame (same default mask as the click router).
 // Neither layer EVER eats clicks: overlay Image.raycastTarget=false + no
@@ -38,9 +44,9 @@ public sealed class CursorPresenter : MonoBehaviour {
   // World marker: gold DOWN-ARROW above the hovered target (classic "tap
   // here" cue). Rides above the target's rendered top so it never sinks into
   // hats, apples, or name labels; gentle bob only (never spins/flashes).
-  // Shape language: shaft + two slanted chevron arms (primitives only —
-  // Unity ships no cone primitive), the same "tap here!" cue as the quest
-  // thought-bubble, shrunk to hover scale.
+  // Shape language: shaft on top + two slanted chevron arms meeting at a
+  // BOTTOM tip (primitives only — Unity ships no cone primitive), the same
+  // "tap here!" cue as the quest thought-bubble, shrunk to hover scale.
   public static readonly Color MarkerColor = new Color(1f, 0.78f, 0.2f);
   const float MarkerLift = 0.34f; // above the target collider top
   const float MarkerBob = 0.08f;
@@ -97,13 +103,14 @@ public sealed class CursorPresenter : MonoBehaviour {
     if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
     AddMarkPart("MarkShaft", PrimitiveType.Cylinder,
       new Vector3(0f, 0.10f, 0f), new Vector3(0.09f, 0.24f, 0.09f), mat, Quaternion.identity);
-    // Chevron head pointing DOWN (left arm runs center-bottom -> upper-left).
+    // Chevron head pointing DOWN (∨): the arms meet at a BOTTOM tip (0,-0.12)
+    // with their outer ends higher — left arm runs upper-left -> lower-center.
     AddMarkPart("MarkHeadL", PrimitiveType.Cube,
-      new Vector3(-0.07f, -0.05f, 0f), new Vector3(0.20f, 0.06f, 0.06f), mat,
-      Quaternion.Euler(0f, 0f, 45f));
-    AddMarkPart("MarkHeadR", PrimitiveType.Cube,
-      new Vector3(0.07f, -0.05f, 0f), new Vector3(0.20f, 0.06f, 0.06f), mat,
+      new Vector3(-0.05f, -0.07f, 0f), new Vector3(0.14f, 0.06f, 0.06f), mat,
       Quaternion.Euler(0f, 0f, -45f));
+    AddMarkPart("MarkHeadR", PrimitiveType.Cube,
+      new Vector3(0.05f, -0.07f, 0f), new Vector3(0.14f, 0.06f, 0.06f), mat,
+      Quaternion.Euler(0f, 0f, 45f));
     _marker.SetActive(false);
   }
 
@@ -152,6 +159,32 @@ public sealed class CursorPresenter : MonoBehaviour {
     return a;
   }
 
+  // Assumed-walk direction (player-report follow-up): the last clicked screen
+  // direction, in the same angle contract as the heading cue. Empty until the
+  // first click lands; the facing cue covers the pre-click frames.
+  float _clickAngle;
+  bool _hasClick;
+
+  // Pointer-lock state machine (pure, tests pin this): first click confines
+  // the OS pointer to the window (custom arrow keeps working inside); M
+  // toggles back to the normal OS cursor (and back again).
+  public static CursorLockMode NextLockState(CursorLockMode current, bool clicked, bool mPressed) {
+    if (mPressed) return current == CursorLockMode.None ? CursorLockMode.Confined : CursorLockMode.None;
+    if (clicked && current == CursorLockMode.None) return CursorLockMode.Confined;
+    return current;
+  }
+
+  // Test seam: register a click direction deterministically (no live mouse).
+  public void RegisterClickForTests(Vector2 playerScreenPos, Vector2 clickScreenPos) {
+    _clickAngle = ComputeArrowAngle(playerScreenPos, clickScreenPos);
+    _hasClick = true;
+    _angle = _clickAngle;
+  }
+
+  public bool HasClickDirection {
+    get { return _hasClick; }
+  }
+
   // Test seam: drive one frame deterministically without a live mouse.
   // Marker placement has its own seam (PlaceMarkerForTests) since hover needs
   // a live camera raycast.
@@ -190,17 +223,51 @@ public sealed class CursorPresenter : MonoBehaviour {
     }
     if (_arrow == null) BuildCursorImmediate();
     if (_canvas != null) _canvas.enabled = true;
-    Cursor.visible = false; // the in-game arrow replaces the hardware arrow
     Vector2 px = mouse.position.ReadValue();
+    // Pointer confinement: first click keeps the OS pointer inside the game
+    // window; M releases back to the normal OS cursor (toggle). Read-only
+    // keyboard poll — never consumes anything.
+    bool clicked = mouse.leftButton.wasPressedThisFrame;
+    Keyboard keyboard = Keyboard.current;
+    bool mPressed = keyboard != null && keyboard.mKey.wasPressedThisFrame;
+    Cursor.lockState = NextLockState(Cursor.lockState, clicked, mPressed);
+    // The in-game arrow replaces the hardware arrow while confined; a
+    // released (None) pointer shows the normal OS cursor again.
+    Cursor.visible = Cursor.lockState == CursorLockMode.None;
+    if (clicked) RegisterClick(px);
     Collider target = HoverScan();
     bool hovering = target != null;
     ComputeCursor(hovering, out float scaleTarget, out Color colorTarget);
     float t = 1f - Mathf.Exp(-12f * Mathf.Max(Time.deltaTime, 0.0001f));
     _scale = Mathf.Lerp(_scale, scaleTarget, t);
-    _angle = SmoothAngle(_angle, ReadPlayerHeading(), t);
+    _angle = SmoothAngle(_angle, _hasClick ? _clickAngle : ReadPlayerHeading(), t);
     _arrow.color = Color.Lerp(_arrow.color, colorTarget, t);
     ApplyArrow(px, _arrow.color);
     TickMarker(target);
+  }
+
+  // Assumed-walk direction: player screen position -> clicked screen point,
+  // in the heading angle contract. Holds the last angle when the player
+  // cannot be resolved (degenerate click keeps the previous cue).
+  void RegisterClick(Vector2 clickPx) {
+    if (!TryPlayerScreenPos(out Vector2 playerPx)) return;
+    _clickAngle = ComputeArrowAngle(playerPx, clickPx);
+    _hasClick = true;
+  }
+
+  bool TryPlayerScreenPos(out Vector2 screenPos) {
+    screenPos = Vector2.zero;
+    if (_playerT == null) {
+      GameObject player = GameObject.Find("Player");
+      if (player == null) return false;
+      _playerT = player.transform;
+    }
+    Camera cam = Camera.main;
+    if (cam == null) return false;
+    Vector3 projected = cam.WorldToScreenPoint(_playerT.position);
+    if (projected.z < 0f) return false;
+    screenPos = new Vector2(projected.x, projected.y);
+    return true;
   }
 
   void ApplyArrow(Vector2 screenPos, Color color) {
@@ -261,10 +328,12 @@ public sealed class CursorPresenter : MonoBehaviour {
 
   void OnDisable() {
     Cursor.visible = true; // editor/play-mode safety: never trap the user cursorless
+    Cursor.lockState = CursorLockMode.None;
   }
 
   void OnDestroy() {
     Cursor.visible = true;
+    Cursor.lockState = CursorLockMode.None;
   }
 
   // Straight-up arrow (no imported assets): dark bordered silhouette with a

@@ -635,5 +635,16 @@ Giữ lại (production):
     cycle with zero effect (no GameObject, no Bind) while the quest half-
     worked around it. Instantiation checklist: file → GameObject → Bind →
     predicate targets the HIDDEN object (crate root ≠ hidden sphere).
+  - 50. Cursor follow-ups (player report): click direction beats facing for
+    the arrow cue (assumed walk direction); verify chevron TIP direction by
+    computing arm endpoints, not by reading rotation signs (a ±45° pair can
+    render ∧ while the comment claims ∨ — it did); Confined (not Locked)
+    keeps the OS position stream alive for custom cursors, M toggles release.
+  - 51. Zombie Unity batch processes hold the Library lock and kill the next
+    run at startup (45-line log, exit 1, no compile error) — sweep Unity
+    processes before re-running, don't "fix" code that never compiled.
+  - 52. Hover-driven visuals hide themselves live (Update sees no hover and
+    switches off): freeze the presenter to photograph them, don't fight the
+    state machine from the survey.
 - Next: PHASE 2A (content/quest data foundation) — see
   `docs/HANDOFF/`.
