@@ -26,7 +26,12 @@
     "expectedForms": [
       "one"
     ],
-    "phonetic": "wʌn"
+    "phonetic": "wʌn",
+    "phonemes": [
+      "W",
+      "AH",
+      "N"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/One",

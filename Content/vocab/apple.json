@@ -30,7 +30,13 @@
     "expectedForms": [
       "apple"
     ],
-    "phonetic": "ˈæpəl"
+    "phonetic": "ˈæpəl",
+    "phonemes": [
+      "AE",
+      "P",
+      "AH",
+      "L"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Apple",

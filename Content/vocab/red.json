@@ -27,7 +27,12 @@
     "expectedForms": [
       "red"
     ],
-    "phonetic": "red"
+    "phonetic": "red",
+    "phonemes": [
+      "R",
+      "EH",
+      "D"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Red",

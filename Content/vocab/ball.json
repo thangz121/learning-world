@@ -30,7 +30,12 @@
     "expectedForms": [
       "ball"
     ],
-    "phonetic": "bɔːl"
+    "phonetic": "bɔːl",
+    "phonemes": [
+      "B",
+      "AO",
+      "L"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Ball",

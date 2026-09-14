@@ -86,6 +86,28 @@ def main():
         for banned in ("Neural2", "Wavenet", "WaveNet", "Chirp", "googlesamples"):
             if banned.lower() in blob.lower():
                 errors.append(f"{vid}.json: cấm tên Google voice trong content (chỉ VoiceProfileId)")
+        # Phase 2.1-local: optional speech.phonemes (ARPAbet ids, content-owned).
+        # Absent/empty = no phoneme-level assessment (backward compatible: 45 files omit it).
+        # Present = must be a non-empty list of short uppercase alphabetic ids.
+        sp = (v.get("speech") or {})
+        if "phonemes" in sp and sp.get("phonemes") is not None:
+            ph = sp.get("phonemes")
+            if not isinstance(ph, list) or len(ph) == 0:
+                errors.append(f"{vid}.json: speech.phonemes must be a non-empty list when present")
+            else:
+                seen_ph = set()
+                for p in ph:
+                    if not isinstance(p, str) or not p.strip():
+                        errors.append(f"{vid}.json: speech.phonemes entries must be non-empty strings")
+                        break
+                    norm = p.strip().upper()
+                    if len(norm) > 4 or not norm.replace("3", "").replace("2", "").isalpha():
+                        errors.append(f"{vid}.json: speech.phonemes entry '{p}' must look like ARPAbet (<=4 letters)")
+                        break
+                    if norm in seen_ph:
+                        errors.append(f"{vid}.json: speech.phonemes duplicate '{norm}'")
+                        break
+                    seen_ph.add(norm)
         if v.get("active") is True:
             tags = ((v.get("semantic") or {}).get("tags") or [])
             forms = ((v.get("speech") or {}).get("expectedForms") or [])

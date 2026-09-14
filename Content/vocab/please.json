@@ -26,7 +26,13 @@
     "expectedForms": [
       "please"
     ],
-    "phonetic": "pliːz"
+    "phonetic": "pliːz",
+    "phonemes": [
+      "P",
+      "L",
+      "IY",
+      "Z"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Please",

@@ -17,6 +17,9 @@ public class VocabEntry
     public List<string> tags;
     public List<string> expectedForms;
     public string phonetic;
+    // Phase 2.1-local: target-constrained pronunciation (ARPAbet ids, e.g. B/AO/L).
+    // Optional, content-owned; absent/empty = no phoneme-level assessment for this word.
+    public List<string> phonemes;
     public string prefab;
     public string image;
     public string audioNormal;

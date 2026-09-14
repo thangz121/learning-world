@@ -15,7 +15,7 @@ public static class ContentDatabase
 
     [Serializable] private class RawDisplay { public string en; public string vi; }
     [Serializable] private class RawSemantic { public string category; public List<string> tags; }
-    [Serializable] private class RawSpeech { public List<string> expectedForms; public string phonetic; }
+    [Serializable] private class RawSpeech { public List<string> expectedForms; public string phonetic; public List<string> phonemes; }
     [Serializable] private class RawAssets { public string prefab; public string image; }
     [Serializable] private class RawVocabAudio
     {
@@ -84,6 +84,18 @@ public static class ContentDatabase
         e.tags = r.semantic != null && r.semantic.tags != null ? r.semantic.tags : new List<string>();
         e.expectedForms = r.speech != null && r.speech.expectedForms != null ? r.speech.expectedForms : new List<string>();
         e.phonetic = r.speech != null ? r.speech.phonetic : null;
+        // Phase 2.1-local: optional phoneme list (absent/empty = no phoneme assessment).
+        // Normalized (trimmed, uppercased, empties dropped) so content casing never breaks the engine.
+        e.phonemes = new List<string>();
+        if (r.speech != null && r.speech.phonemes != null) {
+          for (int i = 0; i < r.speech.phonemes.Count; i++) {
+            string p = r.speech.phonemes[i];
+            if (string.IsNullOrWhiteSpace(p)) continue;
+            string norm = p.Trim().ToUpperInvariant();
+            if (norm.Length == 0 || norm.Length > 4) continue;
+            if (!e.phonemes.Contains(norm)) e.phonemes.Add(norm);
+          }
+        }
         e.prefab = r.assets != null ? r.assets.prefab : null;
         e.image = r.assets != null ? r.assets.image : null;
         e.audioNormal = r.audio != null ? r.audio.normal : null;

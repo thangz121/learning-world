@@ -21,7 +21,13 @@
   },
   "speech": {
     "expectedForms": [],
-    "phonetic": ""
+    "phonetic": "ˈtɛdi",
+    "phonemes": [
+      "T",
+      "EH",
+      "D",
+      "IY"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Teddy",
