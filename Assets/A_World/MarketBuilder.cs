@@ -40,6 +40,7 @@ public class MarketBuilder : MonoBehaviour {
   // Lead wiring surface (assigned in Awake; bound in BuildServices).
   public ClickToMove Player { get; private set; }
   public Interactable Apple { get; private set; }
+  public Interactable Ball { get; private set; }
   public GameObject FlowerRoot { get; private set; }
   public Transform MiloAnchor { get; private set; }
   public Transform MiaAnchor { get; private set; }
@@ -48,14 +49,17 @@ public class MarketBuilder : MonoBehaviour {
   public MarketHUD Hud { get; private set; }
   public SmartCamera WorldCamera { get; private set; }
   public ApplePresenter ApplePresenter { get; private set; }
+  public BallPresenter BallPresenter { get; private set; }
   public FlowerPotPresenter FlowerPresenter { get; private set; }
   public Transform PlayerHand { get; private set; }
   public GameObject CrateApple { get; private set; }
+  public GameObject CrateBall { get; private set; }
   public PlayerVisual PlayerViz { get; private set; }
   public DistractorChoice Distractor { get; private set; }
   public WorldQuestionBubble Bubble { get; private set; }
   public CursorPresenter Cursor { get; private set; }
   public ProximityDiscovery AppleDiscovery { get; private set; }
+  public ProximityDiscovery BallDiscovery { get; private set; }
 
   IGameEventBus _bus;
 
@@ -64,6 +68,7 @@ public class MarketBuilder : MonoBehaviour {
     BuildStall();
     BuildTreeAndHedge();
     BuildAppleCrate();
+    BuildBallCrate();
     BuildFlowerBed();
     BuildDistractor();
     BuildBubble();
@@ -90,6 +95,8 @@ public class MarketBuilder : MonoBehaviour {
     if (PlayerViz != null) PlayerViz.Bind(bus);
     if (Apple != null) Apple.Bind(bus);
     if (AppleDiscovery != null) AppleDiscovery.Bind(bus, audio, Player, Router);
+    if (Ball != null) Ball.Bind(bus);
+    if (BallDiscovery != null) BallDiscovery.Bind(bus, audio, Player, Router);
     if (Router != null) {
       Router.Bind(bus, audio);
       Router.AttachPlayer(Player);
@@ -106,11 +113,17 @@ public class MarketBuilder : MonoBehaviour {
       ApplePresenter.SetCrateApple(CrateApple);
       ApplePresenter.AttachHand(handAnchor);
     }
+    if (BallPresenter != null) {
+      BallPresenter.Bind(bus);
+      BallPresenter.SetCrateBall(CrateBall);
+      BallPresenter.AttachHand(handAnchor);
+    }
     if (Distractor != null) Distractor.SetHand(handAnchor);
     if (FlowerPresenter != null) {
       FlowerPresenter.Bind(bus);
       FlowerPresenter.SetFlowerRoot(FlowerRoot);
     }
+    if (BallDiscovery != null) BallDiscovery.Bind(bus, audio, Player, Router);
     // HUD needs IQuestService too, which this signature does not carry:
     // bind bus now, Lead completes quest wiring via WireQuestService.
     if (Hud != null) Hud.Bind(bus, null);
@@ -424,6 +437,46 @@ public class MarketBuilder : MonoBehaviour {
     AppleDiscovery = apple.AddComponent<ProximityDiscovery>();
   }
 
+  // ---- ball quest target crate (mirrors apple crate structure) ------------------
+  // 2F placement (§6): east lawn (5.5, 0, 3.2) — off the Milo-Mia axis so the
+  // child must FIND it, 2.6m from the distractor pedestal (5.4, 0, 0.6) with a
+  // different presentation (low crate vs tall pedestal), reachable open grass,
+  // outside every carve, visible from the mid-lawn approach.
+  public static readonly Vector3 BallCrateAnchorPos = new Vector3(5.5f, 0f, 3.2f);
+
+  void BuildBallCrate() {
+    GameObject crate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+    crate.name = "BallCrate";
+    crate.transform.SetParent(transform);
+    crate.transform.position = BallCrateAnchorPos;
+    crate.transform.localScale = new Vector3(1.2f, 0.4f, 1.2f);
+    crate.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.65f, 0.45f, 0.3f));
+
+    // Blue ball on the crate (quest target)
+    GameObject ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    ball.name = "QuestBall";
+    ball.transform.SetParent(crate.transform);
+    ball.transform.localPosition = new Vector3(0f, 0.62f, 0f);
+    ball.transform.localScale = new Vector3(0.56f, 0.56f, 0.56f);
+    ball.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.20f, 0.42f, 0.90f)); // blue ball
+
+    CrateBall = ball;
+    // 2F click-robustness: the Interactable rides the CRATE root (not the
+    // ball sphere) — low-angle rays hit the wide crate body first, and
+    // GetComponentInParent only searches UP, so a sphere-mounted Interactable
+    // silently drops crate-body clicks to plain movement (found live: the
+    // find beat only fired via proximity backup). Crate-or-ball clicks both
+    // mean the ball (one quest item per crate, same as the apple language).
+    Ball = crate.AddComponent<Interactable>();
+    Ball.wordId = "ball";
+    Ball.interactionId = "take_ball";
+    Ball.npcId = "mia";
+    Ball.interactionDistance = 2.0f;
+    Ball.ParseIds();
+    BallDiscovery = crate.AddComponent<ProximityDiscovery>();
+    BallDiscovery.questIdValue = "w1_mia_ball"; // arms on the ball quest only
+  }
+
   // ---- hidden flower-pot group (revealed by FlowerPotPresenter) ----------------
 
   void BuildFlowerBed() {
@@ -631,6 +684,10 @@ public class MarketBuilder : MonoBehaviour {
     appleGo.transform.SetParent(transform);
     ApplePresenter = appleGo.AddComponent<ApplePresenter>();
 
+    GameObject ballPresenterGo = new GameObject("BallPresenter");
+    ballPresenterGo.transform.SetParent(transform);
+    BallPresenter = ballPresenterGo.AddComponent<BallPresenter>();
+
     GameObject flowerGo = new GameObject("FlowerPresenter");
     flowerGo.transform.SetParent(transform);
     FlowerPresenter = flowerGo.AddComponent<FlowerPotPresenter>();
@@ -661,6 +718,7 @@ public class MarketBuilder : MonoBehaviour {
     CarveBox("TreeCarve", new Vector3(-6.2f, 1f, 3.8f), new Vector3(1.4f, 2f, 1.4f));
     CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 1.4f), new Vector3(2.6f, 1f, 1.4f));
     CarveBox("CrateCarve", new Vector3(CrateAnchorPos.x, 0.3f, CrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
+    CarveBox("BallCrateCarve", new Vector3(BallCrateAnchorPos.x, 0.3f, BallCrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
     CarveBox("PedestalCarve", new Vector3(5.4f, 0.4f, 0.6f), new Vector3(0.9f, 0.8f, 0.9f));
     // R9: fence -> hedge (same footprint, renamed with the visuals).
     CarveBox("EdgeCarveN", new Vector3(0f, 0.5f, -6f), new Vector3(16.4f, 1f, 0.4f));

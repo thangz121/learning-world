@@ -71,6 +71,13 @@ public sealed class QuestRewardService {
           rewardWorldChange = "flower_pot",
         };
       }
+      if (questId.Value == "w1_mia_ball") {
+        return new QuestData {
+          id = "w1_mia_ball",
+          rewardFriendshipMia = 10,
+          rewardWorldChange = "flower_pot",
+        };
+      }
       if (questId.Value != "market_help_mia") return null;
       return new QuestData {
         id = "market_help_mia",

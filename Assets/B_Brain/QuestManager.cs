@@ -172,6 +172,15 @@ public sealed class QuestManager : IQuestService {
           }
         };
       }
+      if (questId.Value == "w1_mia_ball") {
+        return new QuestData {
+          id = "w1_mia_ball",
+          objectives = new List<ObjectiveData> {
+            new ObjectiveData { id = "find_ball", action = "find", target = "ball" },
+            new ObjectiveData { id = "bring_ball", action = "bring", target = "ball" }
+          }
+        };
+      }
       if (questId.Value != "market_help_mia") return null;
       return new QuestData {
         id = "market_help_mia",

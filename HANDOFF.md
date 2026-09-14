@@ -624,5 +624,16 @@ Giữ lại (production):
     files can capture neighbor states (2E icon beats proved transitions
     in log + both states on screen, but per-file mapping slipped a beat).
     Prove sequences by SET + log, never by a single frame alone.
+  - 47. Survey arrival predicates must be LOOSER than the agent's
+    stoppingDistance (0.4m): a 0.35m tolerance never tripped while gameplay
+    parked correctly, burning full windows (2F ball-find, twice).
+  - 48. Mount Interactables on the CLICKABLE VOLUME root (crate), not the
+    visual sweet spot (sphere): GetComponentInParent searches UP only, so
+    low-angle rays hitting the wide body silently fall through to movement
+    (2F ball-find fired only via proximity backup until moved).
+  - 49. File created ≠ wired: the BallPresenter existed for a full build
+    cycle with zero effect (no GameObject, no Bind) while the quest half-
+    worked around it. Instantiation checklist: file → GameObject → Bind →
+    predicate targets the HIDDEN object (crate root ≠ hidden sphere).
 - Next: PHASE 2A (content/quest data foundation) — see
   `docs/HANDOFF/`.

@@ -42,6 +42,9 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   // quest starts on first talk, not at scene build). Fires EXACTLY once, after
   // the normal click feedback. Plain Action (no bus, no strings).
   public Action OnFirstTalk;
+  // Fires on EVERY click (including after first talk). MarketBootstrap uses this
+  // to start subsequent quests when the current one is completed.
+  public Action OnTalk;
   bool _talked;
   bool _questStarted;
 
@@ -105,10 +108,12 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   // Click entry point for A's router (no input code in this file).
   // Visible click feedback: short wave while the instruction replays.
   // First click additionally opens the story (one-shot hook for Bootstrap).
+  // Every click fires OnTalk; first click also fires OnFirstTalk.
   public void OnMiloClicked() {
     _waveT = WaveDuration;
     if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 2f);
     Milo.RepeatInstruction();
+    if (OnTalk != null) OnTalk();
     if (!_talked) {
       _talked = true;
       if (OnFirstTalk != null) OnFirstTalk();

@@ -107,10 +107,12 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     _waveT = WaveDuration;
     if (!_questStarted) return; // pre-talk: wave only, quest state untouched
     if (_quests != null && _quests.GetState(_activeQuest).Completed) return;
-    if (_carryingApple && !_carryingBall) {
+    bool isBallQuest = _activeQuest.Value == "w1_mia_ball";
+    if ((_carryingApple && !_carryingBall && !isBallQuest)
+        || (_carryingBall && !_carryingApple && isBallQuest)) {
       CompleteBring();
-    } else if (_carryingBall) {
-      WrongBring(); // R9: the wrong item reached the counter
+    } else if (_carryingBall || _carryingApple) {
+      WrongBring(); // wrong item for the active quest reached the counter
     } else if (_bringJustResolved) {
       _bringJustResolved = false; // echo of the resolved bring: silent wave
     } else {
@@ -119,27 +121,27 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     }
   }
 
-  // R9 wrong-item bring (click path + proximity path stay identical): the
-  // hands clear FIRST (before publishing, so subscriber order never matters),
-  // the hint ladder counts it, and the WrongChoice moment tells the ball to
-  // hop home + plays Mia-sad/Milo-encourage. Quest stays open, retry intact.
+  // Shared bring completion (click path + proximity path stay identical).
+  void CompleteBring() {
+    if (!_questStarted) return; // defense in depth (OnMiaClicked gates first)
+    if (_quests == null) return;
+    _bringJustResolved = true; // same echo guard as the wrong bring
+    // Report the correct word based on what's being carried
+    WordId carriedWord = _carryingApple ? _appleWord : _ballWord;
+    _quests.ReportAction(PlayerAction.Bring, carriedWord);
+    _carryingApple = false;
+    _carryingBall = false;
+    if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
+    if (_animator != null) _animator.SetTrigger("PickUp"); // bend receiving the item
+    if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.CorrectChoice, DateTime.UtcNow));
+  }
+
   void WrongBring() {
     if (!_questStarted) return;
     _carryingBall = false;
     _bringJustResolved = true; // the trailing arrival tap is echo, not intent
     if (_hints != null) _hints.ReportWrong(_activeQuest);
     if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.WrongChoice, DateTime.UtcNow));
-  }
-  // Shared bring completion (click path + proximity path stay identical).
-  void CompleteBring() {
-    if (!_questStarted) return; // defense in depth (OnMiaClicked gates first)
-    if (_quests == null) return;
-    _bringJustResolved = true; // same echo guard as the wrong bring
-    _quests.ReportAction(PlayerAction.Bring, _appleWord);
-    _carryingApple = false;
-    if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
-    if (_animator != null) _animator.SetTrigger("PickUp"); // bend receiving the apple
-    if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.CorrectChoice, DateTime.UtcNow));
   }
 
   // Lead introspection (survey telemetry + tests): whether Mia currently
@@ -153,7 +155,7 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     get { return _carryingBall; }
   }
 
-  // Proximity bring (Phase-1 closure, child-friendly + occlusion-robust):
+// Proximity bring (Phase-1 closure, child-friendly + occlusion-robust):
   // walking up to Mia while carrying completes the bring even when the click
   // ray is eaten by the awning/counter (P1Survey p2-complete TIMEOUT: the
   // click moved the player to 0.7m but never fired). Same CompleteBring path
@@ -166,13 +168,16 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     if (_quests == null) return;
     if (_quests.GetState(_activeQuest).Completed) return;
     // R8 (player report: bring fires from too far): 1.8 -> 1.5m — the child
-    // hands the apple OVER THE COUNTER, not across the lawn. Matches the
+    // hands the item OVER THE COUNTER, not across the lawn. Matches the
     // tightened click arrivalRange (1.5m): both paths converge at the counter.
-    // R9: the same radius judges the wrong item — walking the ball up to Mia
-    // is a bring attempt too (empty-handed wandering stays silent as before).
+    // The active quest determines whether the carried item is correct or wrong.
     if (Vector3.Distance(playerPos, transform.position) > 1.5f) return;
-    if (_carryingBall) WrongBring();
-    else CompleteBring();
+    bool isBallQuest = _activeQuest.Value == "w1_mia_ball";
+    if ((_carryingBall && isBallQuest) || (_carryingApple && !isBallQuest)) {
+      CompleteBring();
+    } else {
+      WrongBring();
+    }
   }
 
   void OnWordSeen(WordSeenEvent e) {

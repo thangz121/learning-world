@@ -10,39 +10,52 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 public class MarketBootstrap : MonoBehaviour {
-  static readonly QuestId W1Quest = new QuestId("w1_mia_apple");
+  static readonly QuestId W1QuestApple = new QuestId("w1_mia_apple");
+  static readonly QuestId W1QuestBall = new QuestId("w1_mia_ball");
   static readonly WordId AppleWord = new WordId("apple");
+  static readonly WordId BallWord = new WordId("ball");
 
   IGameEventBus _bus;
   IQuestService _quests;
+  IAudioDirector _audio;
   MarketHUD _hud;
   MarketBuilder _builder;
   WorldNameLabel _miloLabel;
   WorldNameLabel _miaLabel;
   bool _built;
-  // R7: pre-talk finds must not narrate (no praise, no "Bring it" objective:
-  // the quest hasn't started, HUD still says "Talk to Milo"). Set by the
-  // QuestStartedEvent subscription below; mirrors the presenters' own gates.
+  // Track which quest is active (only one at a time in W1)
+  QuestId? _activeQuest;
+  // R7: pre-talk finds must not narrate. Set by QuestStartedEvent.
   bool _questStarted;
+
+  // 2F ball-quest dialogue (data-driven, NOT new literals): exact manifest
+  // texts, pinned to Content/dialogues/manifest.json by CT-P10 (code mirrors
+  // content until runtime catalog loading lands; validators own the truth).
+  // Call params match the 2D L2 contract exactly (rate/pitch 1.0, Clear).
+  const string BallAskText = "Ball please!"; // manifest inst_07
+  const string BallPraiseText = "Great! Ball!"; // manifest ok_05
 
   // Called ONCE by GameInstaller after MarketScene is loaded. All services are
   // constructed; the MarketBuilder (A) has built the world in its Awake.
-  public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder) {
+  public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null) {
     if (_built) return;
     _built = true;
     _bus = bus;
     _quests = quests;
+    _audio = audio;
     if (bus == null || quests == null || hints == null || builder == null) {
       Debug.LogError("[MarketBootstrap] Build called with null dependencies; slice cannot start.", this);
       return;
     }
     _builder = builder;
 
-    // B presenters (Unity instantiates via AddComponent; Bind injects services).
+// B presenters (Unity instantiates via AddComponent; Bind injects services).
     var miloGo = new GameObject("Milo");
     MiloPresenter miloPresenter = miloGo.AddComponent<MiloPresenter>();
     miloPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
     miloPresenter.Bind(bus, quests, hints);
+    miloPresenter.OnFirstTalk = OnFirstTalk;
+    miloPresenter.OnTalk = OnTalk;
 
     var miaGo = new GameObject("Mia");
     MiaPresenter miaPresenter = miaGo.AddComponent<MiaPresenter>();
@@ -122,69 +135,151 @@ public class MarketBootstrap : MonoBehaviour {
   // the question bubble over her stall, so the player can locate her.
   void OnFirstTalk() {
     if (_bus == null || _quests == null) return;
-    _quests.StartQuest(W1Quest);
+    
+    // Check if apple quest is completed - if so, start ball quest instead
+    QuestState appleState = _quests.GetState(W1QuestApple);
+    QuestId questToStart = (!appleState.Completed) ? W1QuestApple : W1QuestBall;
+    
+    _quests.StartQuest(questToStart);
     _bus.Publish(new StoryMomentEvent(StoryMoment.StoryIntro, DateTime.UtcNow));
     if (_builder != null && _builder.Bubble != null) _builder.Bubble.Show();
     if (_miaLabel != null) _miaLabel.Show();
     if (_hud != null) {
-      _hud.ShowObjective("Find the apple");
-      _hud.SetReplayVisible(true); // first spoken line exists from here on
+      string objective = (questToStart == W1QuestApple) ? "Find the apple" : "Find the ball";
+      _hud.ShowObjective(objective);
+      _hud.SetReplayVisible(true);
     }
     Milo.SetInstructionTarget(0);
-    // Attention guidance (player-experience audit): Milo's line names Mia, so
-    // the camera takes the player to her stall front once, then auto-returns.
-    // An authored pose (never through her awning) wins over the generic
-    // quest-start sweep (same frame, Interaction mode). Round-B framing: aim
-    // the MIDPOINT of Milo+Mia (both stage together) from further back so
-    // Milo's face is not cut at the frame edge; both stay readable.
+    // Attention guidance: Milo's line names Mia, so camera takes player to her stall front
     if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null && _builder.MiloAnchor != null) {
       Vector3 midHead = (_builder.MiloAnchor.position + _builder.MiaAnchor.position) * 0.5f + new Vector3(0f, 1.2f, 0f);
       _builder.WorldCamera.FramePointFor(new Vector3(-0.6f, 2f, 1.6f), midHead, 2.5f);
     }
   }
 
+  // Fires on every click to Milo. Handles quest progression: if the current
+  // active quest is completed and there's a next quest, start it.
+  void OnTalk() {
+    if (_bus == null || _quests == null) return;
+    if (_activeQuest == null) return;
+    
+    QuestState currentState = _quests.GetState(_activeQuest.Value);
+    if (!currentState.Completed) return; // current quest not done yet
+    
+    // Determine next quest based on current active quest
+    QuestId? nextQuest = null;
+    if (_activeQuest.Value == W1QuestApple.Value) {
+      nextQuest = W1QuestBall;
+    }
+    // Add more quest chains here as needed
+    
+    if (nextQuest.HasValue) {
+      QuestState nextState = _quests.GetState(nextQuest.Value);
+      if (!nextState.Completed) { // only start if not already completed
+        _quests.StartQuest(nextQuest.Value);
+        _bus.Publish(new StoryMomentEvent(StoryMoment.StoryIntro, DateTime.UtcNow));
+        if (_builder != null && _builder.Bubble != null) _builder.Bubble.Show();
+        if (_miaLabel != null) _miaLabel.Show();
+        if (_hud != null) {
+          string objective = (nextQuest.Value == W1QuestBall) ? "Find the ball" : "Find the apple";
+          _hud.ShowObjective(objective);
+          _hud.SetReplayVisible(true);
+        }
+        if (nextQuest.Value == W1QuestBall) {
+          // 2F entry-driven narration: the ASK comes from manifest data
+          // (mia voice per roster), not Milo's apple-worded instruction.
+          SayQuestLine(BallAskText, MiaVoice(), AudioPriority.P2_Instruction);
+        } else {
+          Milo.SetInstructionTarget(0);
+        }
+        if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null && _builder.MiloAnchor != null) {
+          Vector3 midHead = (_builder.MiloAnchor.position + _builder.MiaAnchor.position) * 0.5f + new Vector3(0f, 1.2f, 0f);
+          _builder.WorldCamera.FramePointFor(new Vector3(-0.6f, 2f, 1.6f), midHead, 2.5f);
+        }
+      }
+    }
+  }
+
   void OnWordSeen(WordSeenEvent e) {
     if (_bus == null || _quests == null) return;
-    if (e.WordId.Value != AppleWord.Value) return;
     if (!_questStarted) return; // pre-talk find: silent (quest begins at Talk)
-    if (_quests.GetState(W1Quest).Completed) return; // post-completion clicks: no re-instruct
-    Milo.PraiseFound();
-    Milo.SetInstructionTarget(1);
-    if (_hud != null) _hud.ShowObjective("Bring the apple to Mia");
+    if (_activeQuest == null) return;
+
+    QuestState state = _quests.GetState(_activeQuest.Value);
+    if (state.Completed) return; // post-completion clicks: no re-instruct
+
+    if (e.WordId.Value == AppleWord.Value && _activeQuest.Value == W1QuestApple.Value) {
+      Milo.PraiseFound();
+      Milo.SetInstructionTarget(1);
+      if (_hud != null) _hud.ShowObjective("Bring the apple to Mia");
+    } else if (e.WordId.Value == BallWord.Value && _activeQuest.Value == W1QuestBall.Value) {
+      // 2F entry-driven praise: manifest correct-response line (Mia voice),
+      // mirroring Milo.PraiseFound's role in the apple branch — word-free
+      // generic praise would misname the target, manifest data names it.
+      SayQuestLine(BallPraiseText, MiaVoice(), AudioPriority.P4_Feedback);
+      if (_hud != null) _hud.ShowObjective("Bring the ball to Mia");
+    }
+  }
+
+  static string MiaVoice() {
+    NpcDefinition mia = NpcRoster.Get("mia");
+    return mia != null && !string.IsNullOrEmpty(mia.voice) ? mia.voice : "mia_v1";
+  }
+
+  // 2F narration entry point: manifest text + roster voice through the frozen
+  // 2D audio contract (rate/pitch 1.0, Clear — the exact params P08B pins for
+  // L2 hits). Fire-and-forget: the Director owns failures as warnings; the
+  // quest never blocks on voice. No new sentences live here beyond the two
+  // manifest mirrors above (CT-P10 pins them to Content/).
+  void SayQuestLine(string text, string voice, AudioPriority priority) {
+    if (_audio == null || string.IsNullOrEmpty(text)) return;
+    var req = new DialogueRequest(text, new VoiceProfileId(voice ?? ""),
+      new LanguageCode("en-US"), 1f, 1f, SpeechStyle.Clear,
+      AudioFormat.Mp3_44100, priority);
+    FireLine(req);
+  }
+
+  async void FireLine(DialogueRequest req) {
+    if (_audio == null) return;
+    try {
+      await _audio.SpeakAsync(req);
+    } catch (Exception) {
+      // Director already logs; narration must never break quest flow.
+    }
   }
 
   void OnQuestStartedFlag(QuestStartedEvent e) {
-    if (e.QuestId.Value != W1Quest.Value) return;
-    _questStarted = true;
+    if (e.QuestId.Value == W1QuestApple.Value || e.QuestId.Value == W1QuestBall.Value) {
+      _questStarted = true;
+      _activeQuest = e.QuestId;
+      // Update bubble icon based on which quest started
+      if (_builder != null && _builder.Bubble != null) {
+        if (e.QuestId.Value == W1QuestApple.Value) {
+          _builder.Bubble.SetIcon(new WordId("apple"));
+        } else if (e.QuestId.Value == W1QuestBall.Value) {
+          _builder.Bubble.SetIcon(new WordId("ball"));
+        }
+      }
+    }
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
-    if (e.QuestId.Value != W1Quest.Value) return;
-    Milo.Celebrate();
-    if (_builder != null && _builder.Bubble != null) _builder.Bubble.Hide();
-    if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.QuestComplete, DateTime.UtcNow));
-    // Celebration framing (player-experience audit): the generic pull-back
-    // landed inside the awning twice. Authored stall-front pose, auto-returns.
-    // Round-B: shifted east ((−0.8,2,1.2) -> (−0.2,1.9,−0.2)) so the arriving
-    // player (staging south-east of Mia) sits OFF the camera->Mia ray instead
-    // of hiding Mia's celebrate behind their head. Still south, below the
-    // awning, outside the stall carve.
-    // R4 (P1Survey p2-complete 2026-09-13): the (−0.2,1.9,−0.2)->Mia ray
-    // passes ~0.7m from Milo, but Milo stands 1.9m from the camera vs Mia at
-    // ~4m, so he fills the foreground and buries the celebration (Milo moved
-    // to the stall front in Phase-1 closure, invalidating the Round-B
-    // assumption). New pose sits SOUTH of Mia on her own x (−3.3,1.8,−0.2):
-    // Milo (~2.2m east) and the player (~0.9m east) both fall OFF the ray as
-    // readable over-shoulder witnesses instead of occluders. Still below the
-    // awning (slats y2.62), outside the stall carve (x −4.8..−2.2 z −4.1..−2.7).
-    // R5V-c (r5-complete run-2: due-south close-up frames backs of heads —
-    // Mia faces her player, so any near south cam buries faces): pull back to
-    // an ENSEMBLE view (both + stall, ~3.7m — face4m proves readability there)
-    // instead of chasing a close-up. Candidate pose: the complete photo
-    // decides (revert to -1.9 if the beat loses its warmth).
-    if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null) {
-      Vector3 miaPlayerMid = _builder.MiaAnchor.position + new Vector3(0.1f, 1.0f, 0.35f);
-      _builder.WorldCamera.FramePointFor(new Vector3(-1.3f, 2.3f, 0.6f), miaPlayerMid, 3.2f);
+    if (e.QuestId.Value == W1QuestApple.Value) {
+      Milo.Celebrate();
+      if (_builder != null && _builder.Bubble != null) _builder.Bubble.Hide();
+      if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.QuestComplete, DateTime.UtcNow));
+      if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null) {
+        Vector3 miaPlayerMid = _builder.MiaAnchor.position + new Vector3(0.1f, 1.0f, 0.35f);
+        _builder.WorldCamera.FramePointFor(new Vector3(-1.3f, 2.3f, 0.6f), miaPlayerMid, 3.2f);
+      }
+    } else if (e.QuestId.Value == W1QuestBall.Value) {
+      Milo.Celebrate();
+      if (_builder != null && _builder.Bubble != null) _builder.Bubble.Hide();
+      if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.QuestComplete, DateTime.UtcNow));
+      if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null) {
+        Vector3 miaPlayerMid = _builder.MiaAnchor.position + new Vector3(0.1f, 1.0f, 0.35f);
+        _builder.WorldCamera.FramePointFor(new Vector3(-1.3f, 2.3f, 0.6f), miaPlayerMid, 3.2f);
+      }
     }
   }
 

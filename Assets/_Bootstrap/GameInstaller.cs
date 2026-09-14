@@ -97,7 +97,7 @@ public class GameInstaller : MonoBehaviour {
       Debug.LogError("[GameInstaller] No MarketBootstrap on the installer object; slice cannot start.", this);
       return;
     }
-    bootstrap.Build(EventBus, Quests, Hints, builder);
+    bootstrap.Build(EventBus, Quests, Hints, builder, Audio);
   }
 
   // Runtime online->offline swap INSIDE the router: every injected consumer
