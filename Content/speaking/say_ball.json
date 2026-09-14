@@ -1,0 +1,16 @@
+{
+  "id": "say_ball",
+  "targetWord": "ball",
+  "questId": "",
+  "attemptsAllowed": 3,
+  "minDecisionForPass": "pass",
+  "replayPromptOnRetry": true,
+  "promptLine": "Can you say ball?",
+  "successLine": "Great!",
+  "retryLine": "Try again.",
+  "noSpeechLine": "Can you say it?",
+  "wrongLine": "Listen and try.",
+  "unclearLine": "Let's try again.",
+  "micMissingLine": "Microphone not connected.",
+  "errorLine": "Let's try again."
+}
