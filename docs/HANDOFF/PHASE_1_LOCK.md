@@ -228,21 +228,37 @@ survey driver from git history when needed; `W1CapWatch.ps1`
 stays outside the repo at
 `C:\Users\ASUS\AppData\Local\Temp\opencode\`).
 
-## FINAL REGRESSION (LOCK SESSION)
+## FINAL REGRESSION (LOCK SESSION, 2026-09-14)
 
 Route: SPAWN → MILO → TALK → QUEST → TARGET → WRONG → RETRY →
 CORRECT → CELEBRATION → COMPLETION.
 
-- EditMode on locked tree: 69/69 PASS.
-- Clean standalone: Succeeded errors=0, payload DLLs fresh.
-- Boot check: alive 65s+, 3×FACE_OK, 0 exceptions.
-- Survey: COMPLETE, wrongs counted once per bring, completed=True,
-  `Great job!`, crate/carried/bubble null post-quest, HUD clean,
-  camera beats hit, no missing materials, no debug objects.
-- Build identifier + survey log name: recorded in the lock
-  commit message and in `HANDOFF.md` §18 (appended by the lock
-  operation). If this paragraph outlives its build, the
-  HANDOFF entry governs.
+- EditMode on locked tree: **69/69 PASS** (`p1lock-editmode.xml`
+  pre-commit; `p1lock-editmode-final.xml` post-lockdown on the
+  fully clean tree — both 69/69, 0 failed).
+- Survey build (`p1lock-build3.log`): **Succeeded**, 0 compile
+  errors (errors=4 are headless batch-mode env noise —
+  RenderTexture/license lines, no `error CS`), payload DLLs fresh.
+  Driver: temp `P1LockSurvey -p1lock` (router arrival flow after
+  real ClickToMove walks; OS-raycast path unchanged since R9v4).
+- Survey result (Player.log P1LOCK markers): START spawn
+  (0.00,0.11,4.50) → TALK "Find the apple" → PICKUP ball neutral
+  (carrying=True, wrongs=0) → WRONG (wrongs=1, ball home) →
+  FIND ("Bring the apple to Mia") → BRING completed=True,
+  wrongs=1, "Great job!" → COMPLETE. **Zero WAIT-TIMEOUTs,
+  0 exceptions.** Shots: `p1lock-{spawn,talk,pickup,wrong,find,
+  celebrate,complete}.png` (7/7 written; spawn + complete
+  visually inspected: layered world, Milo mat, Mia stall+hat,
+  apple/ball separation, crisp labels, grounded feet).
+- Final CLEAN build (`p1lock-buildfinal.log`, survey-free):
+  **Succeeded**, 0 compile errors, Bootstrap DLL fresh.
+- Boot check on clean build (foregrounded): **3×FACE_OK +
+  6/6 SHOE_SEAT side-mode + 0 exceptions in ~10s**.
+- Build identifier + survey log name: the `p1lock-*` logs/shots
+  above (outside the repo at `Temp/opencode/` + Player.log).
+  Code baseline tag `phase-1-locked` (= `v0.1-phase1-locked`)
+  points at the lock commit; this evidence arrived one docs
+  commit later and changes no production line.
 
 ## HANDOFF CONVENTION NOTE
 

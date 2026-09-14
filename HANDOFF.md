@@ -584,3 +584,38 @@ Giữ lại (production):
   nguyên vẹn (COMPLETE + Great job! + retry + gates), 2 bug thật tìm ra khi
   survey đều đã fix + verify lại.
 - Follow-up giữ nguyên: `Walk_Carry` chưa wire, PregenSeeder audio fallback.
+
+## 18. PHASE 1 LOCK 2026-09-14 (formal checkpoint — Phase 2 may begin)
+- Lock record: `docs/HANDOFF/PHASE_1_LOCK.md` (STATUS: LOCKED).
+  Phase 1 is a baseline, not a perfection loop; the 10 known items
+  there are non-blocking backlog (reopen gate documented in the lock).
+- Code baseline: commit `2851717` + tags `phase-1-locked` /
+  `v0.1-phase1-locked`. Tree fully clean (0 temp files, asmdef
+  InputSystem reverted, `git status` empty).
+- Lock-session evidence (this section governs build identity):
+  EditMode **69/69** pre- AND post-lockdown; survey build Succeeded
+  (0 compile errors) + P1LOCK COMPLETE (talk→pickup→wrong=1→find→
+  bring→completed, `Great job!`, 0 timeouts, 0 exceptions, 7 shots,
+  spawn+complete visually inspected); final clean build Succeeded +
+  boot 3×FACE_OK + 6/6 SHOE side + 0 exceptions.
+- Mission-brief note: the brief's "52/52, 4 builds" numbers were the
+  R4 baseline; governing lock numbers are **69/69** (52→58→60→69 via
+  R7/R8/R9, zero regressions) + the R9v4→P1LOCK build chain above.
+- Env lessons (new):
+  - 40. Unity batch `-executeMethod` does NOT exit alone — always pass
+    `-quit` or the call hangs until killed (cost one 20-min timeout).
+  - 41. Temp survey scripts must self-spawn via
+    `[RuntimeInitializeOnLoadMethod]` (scene stays a one-GO shell;
+    nothing attaches temp drivers). An `Awake`-only driver silently
+    never runs (cost one rebuild).
+  - 42. Project `Temp/` is unstable in this environment (a Succeeded
+    build's output vanished mid-session) — build to the absolute
+    `C:/Users/ASUS/AppData/Local/Temp/opencode/PlayerBuild` path.
+  - 43. `errors=N` in the build summary counts headless env noise
+    (RenderTexture/license lines); judge by `result=Succeeded` + zero
+    `error CS` + fresh managed DLLs.
+  - 44. Background players present-stall (75s background run never
+    reached face setup; foregrounded run hit 3×FACE_OK in ~10s) —
+    always foreground before judging liveness.
+- Next: PHASE 2A (content/quest data foundation) — see
+  `docs/HANDOFF/`.
