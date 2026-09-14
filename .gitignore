@@ -33,5 +33,12 @@ Thumbs.db
 # no raw voice in the repo, ever). Import via tools/import_speech_sample.py.
 Content/speech_samples/
 
+# Phase 2.1-local M6: phone-mic gateway secrets/recordings are LOCAL ONLY.
+# TLS private keys must never be committed (§33). Opt-in test recordings
+# (--record-dir) must never be committed (§20).
+*.pem
+*.key
+phone-mic-recordings/
+
 # Nested scratch Unity project (not part of this checkpoint)
 My project/

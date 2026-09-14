@@ -1,0 +1,151 @@
+<!doctype html>
+<!-- tools/phone_mic_page.html — Phase 2.1-local M6 phone microphone page.
+  Served over HTTPS by tools/phone_mic_gateway.py (same origin => WSS works,
+  no cloud, LAN only). Vanilla JS, zero external dependencies (offline-first).
+  Audio: getUserMedia AUDIO ONLY (never video) -> AudioContext(16 kHz) ->
+  mono downmix -> Int16 PCM -> WSS binary frames. Canonical format (§7).
+  This page is transport only: no recognition, no scores, no transcript. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LWE Phone Microphone (dev)</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 16px; background: #101418; color: #eee; }
+  .pill { display: inline-block; padding: 4px 10px; border-radius: 12px; margin: 2px; font-size: 14px; background: #333; }
+  .ok { background: #1c6b3a; } .bad { background: #8a2424; } .warn { background: #8a6d1c; }
+  #meter { width: 100%; height: 18px; background: #222; border-radius: 4px; margin: 8px 0; }
+  #level { height: 100%; width: 0%; background: #4caf50; border-radius: 4px; }
+  button { font-size: 18px; padding: 10px 22px; margin: 6px 4px 6px 0; }
+  .row { margin: 6px 0; } code { font-size: 12px; }
+</style>
+</head>
+<body>
+<h2>PHONE MICROPHONE <small>(dev transport test)</small></h2>
+<div class="row">PC: <span id="pc" class="pill">CONNECTING</span>
+Microphone: <span id="mic" class="pill">UNKNOWN</span>
+State: <span id="state" class="pill">IDLE</span></div>
+<div class="row">Audio: <div id="meter"><div id="level"></div></div></div>
+<div class="row">
+<button id="start">START</button>
+<button id="stop" disabled>STOP</button>
+</div>
+<div class="row">Duration: <span id="dur">0.00</span> sec &nbsp; Packets: <span id="pkts">0</span></div>
+<div class="row">Status: <span id="status">idle</span></div>
+<div class="row"><code id="srv"></code></div>
+<script>
+(function () {
+  "use strict";
+  var wsUrl = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/mic";
+  document.getElementById("srv").textContent = wsUrl;
+  var pc = document.getElementById("pc"), mic = document.getElementById("mic"),
+      state = document.getElementById("state"), status = document.getElementById("status"),
+      level = document.getElementById("level"), dur = document.getElementById("dur"),
+      pkts = document.getElementById("pkts"),
+      startBtn = document.getElementById("start"), stopBtn = document.getElementById("stop");
+  function pill(el, txt, cls) { el.textContent = txt; el.className = "pill " + (cls || ""); }
+  function say(t) { status.textContent = t; }
+
+  var ws = null, stream = null, ctx = null, src = null, proc = null, analyser = null, analyserData = null;
+  var session = null, packets = 0, startedAt = 0, streaming = false, stopped = true;
+
+  function setState(s, cls) { pill(state, s, cls); }
+  function connect() {
+    pill(pc, "CONNECTING", "warn"); setState("CONNECTING", "warn");
+    ws = new WebSocket(wsUrl);
+    ws.binaryType = "arraybuffer";
+    ws.onopen = function () { pill(pc, "CONNECTED", "ok"); setState("CONNECTED", "ok"); say("connected"); };
+    ws.onclose = function () {
+      pill(pc, "DISCONNECTED", "bad"); setState("DISCONNECTED", "bad");
+      say("connection lost. try again.");
+      cleanupAudio(); startBtn.disabled = false; stopBtn.disabled = true;
+      setTimeout(connect, 3000); // auto-reconnect (§12), fresh session each time
+    };
+    ws.onerror = function () { pill(pc, "ERROR", "bad"); say("socket error"); };
+    ws.onmessage = function (ev) {
+      var msg = "";
+      try { msg = JSON.parse(ev.data); } catch (e) { say("protocol error (bad json)"); return; }
+      if (msg.type === "ready") { say("server ready, session " + msg.sessionSerial); }
+      else if (msg.type === "error") { pill(pc, "ERROR", "bad"); say("server: " + msg.reason); }
+      else if (msg.type === "stopped") { say("stopped ok"); }
+    };
+  }
+  function cleanupAudio() {
+    streaming = false;
+    try { if (proc) proc.disconnect(); } catch (e) {}
+    try { if (src) src.disconnect(); } catch (e) {}
+    try { if (analyser) analyser.disconnect(); } catch (e) {}
+    try { if (ctx) ctx.close(); } catch (e) {}
+    try { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    proc = src = analyser = ctx = stream = null;
+  }
+  startBtn.onclick = function () {
+    if (!ws || ws.readyState !== 1) { say("not connected yet"); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      pill(mic, "UNSUPPORTED", "bad"); say("browser needs HTTPS + microphone support"); return;
+    }
+    pill(mic, "REQUESTING", "warn");
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(function (s) {
+      stream = s;
+      pill(mic, "READY", "ok");
+      ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      src = ctx.createMediaStreamSource(stream);
+      analyser = ctx.createAnalyser(); analyser.fftSize = 512;
+      analyserData = new Uint8Array(analyser.frequencyBinCount);
+      proc = ctx.createScriptProcessor(4096, 1, 1);
+      session = "ph-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1e6).toString(36);
+      ws.send(JSON.stringify({ type: "start", session: session, sampleRate: 16000, channels: 1, format: "pcm16" }));
+      packets = 0; startedAt = performance.now(); streaming = true; stopped = false;
+      setState("STREAMING", "ok"); startBtn.disabled = true; stopBtn.disabled = false;
+      pkts.textContent = "0";
+      src.connect(analyser);
+      proc.onaudioprocess = function (ev) {
+        if (!streaming || !ws || ws.readyState !== 1) return;
+        var inp = ev.inputBuffer.getChannelData(0);
+        var out = new Int16Array(inp.length);
+        for (var i = 0; i < inp.length; i++) {
+          var v = inp[i]; if (v > 1) v = 1; else if (v < -1) v = -1;
+          out[i] = v < 0 ? v * 32768 : v * 32767;
+        }
+        ws.send(out.buffer);
+        packets++;
+        pkts.textContent = packets;
+        dur.textContent = ((performance.now() - startedAt) / 1000).toFixed(2);
+      };
+      src.connect(proc); proc.connect(ctx.destination);
+      (function meter() {
+        if (!streaming) { level.style.width = "0%"; return; }
+        analyser.getByteTimeDomainData(analyserData);
+        var peak = 0;
+        for (var i = 0; i < analyserData.length; i++) {
+          var d = Math.abs(analyserData[i] - 128) / 128;
+          if (d > peak) peak = d;
+        }
+        level.style.width = Math.min(100, peak * 100).toFixed(0) + "%";
+        requestAnimationFrame(meter);
+      })();
+      say("streaming…");
+    }).catch(function (err) {
+      var name = err && err.name ? err.name : "error";
+      if (name === "NotAllowedError") { pill(mic, "DENIED", "bad"); say("microphone permission denied — allow it and retry"); }
+      else if (name === "NotFoundError") { pill(mic, "NO_MIC", "bad"); say("no microphone found"); }
+      else { pill(mic, "ERROR", "bad"); say("mic error: " + name); }
+    });
+  };
+  stopBtn.onclick = function () {
+    if (streaming && ws && ws.readyState === 1 && !stopped) {
+      stopped = true;
+      try { ws.send(JSON.stringify({ type: "stop", session: session })); } catch (e) {}
+    }
+    streaming = false;
+    setState("STOPPED", ""); startBtn.disabled = false; stopBtn.disabled = true;
+    cleanupAudio(); say("stopped");
+  };
+  window.addEventListener("pagehide", function () {
+    try { if (ws && ws.readyState === 1 && streaming) ws.send(JSON.stringify({ type: "cancel", session: session })); } catch (e) {}
+  });
+  connect();
+})();
+</script>
+</body>
+</html>
