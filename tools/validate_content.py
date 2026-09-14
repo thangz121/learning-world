@@ -56,9 +56,10 @@ def main():
     passive = [v for v in vocabs.values() if v.get("active") is False]
     print(f"Mode: {'SHIP GATE' if ship else 'authoring'} | Active: {len(active)} / Passive: {len(passive)} / Total: {len(vocabs)}")
     errors = []
-    if len(active) != 15: errors.append(f"active must be 15, got {len(active)}")
+    # Phase 2A: +ball (first pipeline quest target) -> 16 active / 51 total.
+    if len(active) != 16: errors.append(f"active must be 16, got {len(active)}")
     if len(passive) != 35: errors.append(f"passive must be 35, got {len(passive)}")
-    if len(vocabs) != 50: errors.append(f"total must be 50, got {len(vocabs)}")
+    if len(vocabs) != 51: errors.append(f"total must be 51, got {len(vocabs)}")
     for vid, v in vocabs.items():
         if v.get("id") != vid:
             errors.append(f"{vid}.json: id field '{v.get('id')}' != filename")

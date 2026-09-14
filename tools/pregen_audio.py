@@ -125,7 +125,7 @@ def fetch_audio(url):
 
 
 def collect_requests():
-    """[(kind, file_id, text)] — 15 active vocab NORMAL + every manifest line."""
+    """[(kind, file_id, text)] — active vocab NORMAL + every manifest line (dynamic: grows with Content)."""
     reqs = []
     for p in sorted(VOCAB_DIR.glob("*.json")):
         v = json.loads(p.read_text(encoding="utf-8"))

@@ -1,5 +1,5 @@
 {
-  "count": 36,
+  "count": 38,
   "lang": "en-US",
   "approved": false,
   "lines": [
@@ -254,6 +254,20 @@
       "voice": "mia_v1",
       "text": "Milk and bread here!",
       "audio": "audio/dialog/mia_02.mp3"
+    },
+    {
+      "id": "inst_07",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Ball please!",
+      "audio": "audio/dialog/inst_07.mp3"
+    },
+    {
+      "id": "ok_05",
+      "npc": "mia",
+      "voice": "mia_v1",
+      "text": "Great! Ball!",
+      "audio": "audio/dialog/ok_05.mp3"
     }
   ]
 }

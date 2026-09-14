@@ -1,0 +1,48 @@
+{
+  "id": "ball",
+  "active": true,
+  "language": "en",
+  "display": {
+    "en": "ball",
+    "vi": "quả bóng"
+  },
+  "learning": {
+    "minAge": 4,
+    "difficulty": 1,
+    "skills": [
+      "listen",
+      "recognize",
+      "speak",
+      "use"
+    ]
+  },
+  "semantic": {
+    "category": "object",
+    "tags": [
+      "toy",
+      "round",
+      "blue",
+      "play",
+      "market"
+    ]
+  },
+  "speech": {
+    "expectedForms": [
+      "ball"
+    ],
+    "phonetic": "bɔːl"
+  },
+  "assets": {
+    "prefab": "Addressables/Market/Ball",
+    "image": "ball.png"
+  },
+  "audio": {
+    "normal": "audio/ball_normal.mp3",
+    "slow": "audio/ball_slow.mp3",
+    "syllable": null,
+    "voice": "learning_v1",
+    "lang": "en-US",
+    "generated": false,
+    "approved": false
+  }
+}

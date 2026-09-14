@@ -1,6 +1,6 @@
 {
   "name": "LWE.Tests.EditMode",
-  "references": ["LWE.SharedKernel", "LWE.Brain", "LWE.Content", "LWE.Audio", "LWE.World"],
+  "references": ["LWE.SharedKernel", "LWE.Brain", "LWE.Content", "LWE.Audio", "LWE.World", "LWE.Bootstrap"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": []
 }

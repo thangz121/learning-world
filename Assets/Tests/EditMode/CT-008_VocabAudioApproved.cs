@@ -48,9 +48,10 @@ public class CT_008_VocabAudioApproved {
   [Test] public void CT_008() {
     string root = ContentRoot();
 
-    // ---- vocab: 50 files / 15 active / 35 passive, schema + audio metadata ----
+    // ---- vocab: 51 files / 16 active / 35 passive, schema + audio metadata ----
+    // (Phase 2A: +ball active quest target; pins grow WITH content, see CT-P06F.)
     string[] vocabFiles = Directory.GetFiles(Path.Combine(root, "vocab"), "*.json");
-    Assert.AreEqual(50, vocabFiles.Length, "vocab pack must be 50 files");
+    Assert.AreEqual(51, vocabFiles.Length, "vocab pack must be 51 files");
     var vocabs = new List<VocabEntry>();
     var vocabIds = new HashSet<string>();
     int active = 0, passive = 0;
@@ -76,7 +77,7 @@ public class CT_008_VocabAudioApproved {
         passive++;
       }
     }
-    Assert.AreEqual(15, active, "active vocab must be 15");
+    Assert.AreEqual(16, active, "active vocab must be 16");
     Assert.AreEqual(35, passive, "passive vocab must be 35");
 
     // ---- quests: >=5, schema freeze, targets resolve to vocab ----
