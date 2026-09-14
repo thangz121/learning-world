@@ -1,12 +1,13 @@
 // CT-P13: Phase 2.1-local speech assessment engine — deterministic EditMode suite.
-// M1 scope: target pronunciation data (content-owned phonemes -> engine contract).
-// Later milestones extend THIS file (M2 DSP core, M3 provider+policy, M4 benchmark).
+// M1: target pronunciation data. M2: DSP core on SIMULATED fixtures.
+// M3: provider + policy fusion (this file). M4: full benchmark matrix.
 // Labels: SIMULATED = synthetic fixtures through the real code path (honest);
 // PROVEN = observed on real hardware/audio; NOT PROVEN = explicitly listed gaps.
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using UnityEngine;
 
 public class CT_P13_LocalAcousticEngine {
@@ -413,5 +414,215 @@ public class CT_P13_M2_DspCore {
     sw.Stop();
     Assert.IsTrue(ev.HasAcousticData);
     Assert.Less(sw.ElapsedMilliseconds, 500, "burst budget: 2 s audio must analyze in <500 ms (took " + sw.ElapsedMilliseconds + " ms)");
+  }
+}
+
+// CT-P13 M3: provider + policy fusion on SIMULATED fixtures through the REAL
+// capture -> provider -> policy -> runner path. Offline-first proof: no
+// transcript engine anywhere, yet clear attempts pass and missing endings
+// read Partial (never transcript-equals-target auto-pass — there IS no transcript).
+public class CT_P13_M3_ProviderPolicy {
+  sealed class ReadyMic : IMicrophoneDevice {
+    public event Action<MicStatus> StatusChanged;
+    public MicStatus Status => MicStatus.Ready;
+    public string SelectedDevice => "test-mic";
+    public string[] Devices => new[] { "test-mic" };
+    public SpeechCapability Capability => new SpeechCapability { Status = MicStatus.Ready, DeviceName = "test-mic", DeviceCount = 1 };
+    public void Refresh() { }
+    public void ReportCaptureFailure() { }
+  }
+
+  static ScriptedPronunciationProvider SixWords() {
+    return new ScriptedPronunciationProvider()
+      .Add("ball", "B", "AO", "L")
+      .Add("apple", "AE", "P", "AH", "L")
+      .Add("red", "R", "EH", "D")
+      .Add("one", "W", "AH", "N")
+      .Add("please", "P", "L", "IY", "Z")
+      .Add("teddy", "T", "EH", "D", "IY");
+  }
+
+  static CapturedSpeech Seg(float[] pcm) {
+    float mean = VoiceActivity.MeanAbsolute(pcm);
+    float dur = (float)pcm.Length / 16000;
+    return new CapturedSpeech {
+      Samples = pcm, SampleRate = 16000, Channels = 1,
+      DurationSec = dur, MeanEnergy = mean, PeakEnergy = mean * 2f,
+      VoicedSec = dur * 0.7f, TimedOut = false, Cancelled = false, Error = string.Empty
+    };
+  }
+
+  static SpeechRecognitionResult Recognize(float[] pcm, string word, ITargetPronunciationProvider targets) {
+    var provider = new LocalAcousticProvider(targets);
+    return provider.RecognizeAsync(Seg(pcm), new WordId(word), CancellationToken.None)
+      .GetAwaiter().GetResult();
+  }
+
+  static SpeakingAssessment Assess(float[] pcm, string word) {
+    SpeechRecognitionResult r = Recognize(pcm, word, SixWords());
+    return SpeakingPassPolicy.Default().Decide(r, new WordId(word), "spk-m3");
+  }
+
+  [Test] public void P13M3_ProviderContractHonest() {
+    var provider = new LocalAcousticProvider(SixWords());
+    Assert.AreEqual("local-acoustic", provider.ProviderId);
+    Assert.IsFalse(provider.ProvidesTranscript);
+    Assert.IsFalse(provider.ProvidesPhonemeEvidence, "acoustic != phoneme evidence (honest split)");
+    Assert.IsFalse(provider.RequiresNetwork, "offline-first: no network");
+  }
+
+  [Test] public void P13M3_ProviderAttachesAcoustic() {
+    SpeechRecognitionResult r = Recognize(AcousticFixtures.Word("ball", 1f), "ball", SixWords());
+    Assert.IsFalse(r.IsError);
+    Assert.IsTrue(r.HasSpeech);
+    Assert.IsTrue(string.IsNullOrEmpty(r.Transcript), "no STT: transcript stays empty, never faked");
+    Assert.AreEqual(0f, r.RecognitionConfidence);
+    Assert.IsTrue(r.Pronunciation.HasAcousticData);
+    Assert.GreaterOrEqual(r.Pronunciation.AcousticMatch, 0.4f);
+    Assert.IsFalse(r.Pronunciation.AcousticMissingEnding);
+    Assert.IsFalse(r.Pronunciation.HasPhonemeData);
+  }
+
+  [Test] public void P13M3_ProviderFallsBackWithoutPronunciation() {
+    SpeechRecognitionResult r = Recognize(AcousticFixtures.Word("ball", 1f), "bag", SixWords());
+    Assert.IsFalse(r.IsError);
+    Assert.IsTrue(r.HasSpeech, "VAD evidence is real even without pronunciation data");
+    Assert.IsFalse(r.Pronunciation.HasAcousticData, "unknown word: acoustic NOT AVAILABLE (never guessed)");
+  }
+
+  [Test] public void P13M3_ProviderNeverThrows() {
+    var provider = new LocalAcousticProvider(SixWords());
+    var empty = new CapturedSpeech { Samples = null, SampleRate = 16000, Error = string.Empty };
+    SpeechRecognitionResult r = provider.RecognizeAsync(empty, new WordId("ball"), CancellationToken.None)
+      .GetAwaiter().GetResult();
+    Assert.IsTrue(r.IsError || !r.HasSpeech, "null audio degrades gracefully, never throws");
+    var errSeg = new CapturedSpeech { Error = SpeechFailureReasons.DeviceError };
+    SpeechRecognitionResult e = provider.RecognizeAsync(errSeg, new WordId("ball"), CancellationToken.None)
+      .GetAwaiter().GetResult();
+    Assert.IsTrue(e.IsError);
+    var cts = new CancellationTokenSource();
+    cts.Cancel();
+    SpeechRecognitionResult c = provider.RecognizeAsync(Seg(AcousticFixtures.Word("ball", 1f)),
+      new WordId("ball"), cts.Token).GetAwaiter().GetResult();
+    Assert.IsTrue(c.IsError);
+    Assert.AreEqual(SpeechFailureReasons.Cancelled, c.ErrorReason);
+  }
+
+  [Test] public void P13M3_SelfBallPasses() {
+    SpeakingAssessment a = Assess(AcousticFixtures.Word("ball", 1f), "ball");
+    Assert.IsTrue(a.Decision == SpeakingDecision.Pass || a.Decision == SpeakingDecision.StrongPass,
+      "SIMULATED clear ball must pass offline (got " + a.Decision + ", " + a.Evidence + ")");
+    Assert.IsTrue(a.AttemptDetected);
+    Assert.IsFalse(a.IsEnvironmentError);
+    Assert.IsTrue(a.IntelligibilityIsProxy, "human intelligibility still NOT PROVEN");
+  }
+
+  [Test] public void P13M3_TruncatedBaIsPartialWithMissingEnding() {
+    SpeakingAssessment a = Assess(AcousticFixtures.Truncated("ball", 2), "ball");
+    Assert.AreEqual(SpeakingDecision.Partial, a.Decision,
+      "ba-for-ball: Partial, never WrongWord/PASS (got " + a.Decision + ", " + a.Evidence + ")");
+    Assert.AreEqual(SpeechLevel.Almost, a.ToSpeechLevel(), "partial never advances the frozen Speak gate");
+    StringAssert.Contains("MISSING_ENDING", a.Evidence);
+  }
+
+  [Test] public void P13M3_WrongWordAcoustic() {
+    SpeakingAssessment a = Assess(AcousticFixtures.Word("apple", 1f), "ball");
+    Assert.AreEqual(SpeakingDecision.WrongWord, a.Decision,
+      "SIMULATED apple-for-ball must read WrongWord (got " + a.Decision + ", " + a.Evidence + ")");
+    Assert.IsFalse(a.IsEnvironmentError);
+  }
+
+  [Test] public void P13M3_RepetitionPassesCapped() {
+    float[] bb = AcousticFixtures.Concat(
+      AcousticFixtures.Word("ball", 1f), AcousticFixtures.Word("ball", 1f));
+    SpeakingAssessment a = Assess(bb, "ball");
+    Assert.AreEqual(SpeakingDecision.Pass, a.Decision,
+      "ball-ball: honored attempt, capped at Pass (got " + a.Decision + ", " + a.Evidence + ")");
+  }
+
+  [Test] public void P13M3_NoAcousticStaysPossibleAttempt() {
+    // 2.1 honesty path preserved: speech without ANY resemblance engine.
+    SpeechRecognitionResult r = Recognize(AcousticFixtures.Word("ball", 1f), "ball", null);
+    Assert.IsFalse(r.Pronunciation.HasAcousticData);
+    SpeakingAssessment a = SpeakingPassPolicy.Default().Decide(r, new WordId("ball"), "spk-m3");
+    Assert.AreEqual(SpeakingDecision.PossibleAttempt, a.Decision);
+  }
+
+  [Test] public void P13M3_QuietTooWeakUnchanged() {
+    var r = new SpeechRecognitionResult {
+      Transcript = "", RecognitionConfidence = 0f, HasSpeech = true,
+      AudioDurationSec = 0.8f, SpeechDurationSec = 0.6f, MeanEnergy = 0.002f,
+      ProviderId = "local-acoustic", LatencyMs = 1, ErrorReason = "", IsError = false,
+      Pronunciation = PronunciationEvidence.None()
+    };
+    SpeakingAssessment a = SpeakingPassPolicy.Default().Decide(r, new WordId("ball"), "spk-m3");
+    Assert.AreEqual(SpeakingDecision.TooWeak, a.Decision, "VAD energy gates stay before acoustic evidence");
+  }
+
+  static SpeechRecognitionResult ScriptedAcoustic(
+      string transcript, float conf, float match, bool missingEnding) {
+    var pron = PronunciationEvidence.None();
+    pron.HasAcousticData = true;
+    pron.AcousticMatch = match;
+    pron.AcousticOnset = 0.7f;
+    pron.AcousticCoda = missingEnding ? 0.2f : 0.8f;
+    pron.AcousticMissingEnding = missingEnding;
+    return new SpeechRecognitionResult {
+      Transcript = transcript, RecognitionConfidence = conf, HasSpeech = true,
+      AudioDurationSec = 0.8f, SpeechDurationSec = 0.6f, MeanEnergy = 0.05f,
+      ProviderId = "fake", LatencyMs = 5, ErrorReason = "", IsError = false,
+      Pronunciation = pron
+    };
+  }
+
+  [Test] public void P13M3_TranscriptPassDowngradedByMissingEnding() {
+    // §16: ASR "ball" + audio missing the L must NEVER auto-pass.
+    SpeechRecognitionResult r = ScriptedAcoustic("ball", 0.9f, 0.6f, true);
+    SpeakingAssessment a = SpeakingPassPolicy.Default().Decide(r, new WordId("ball"), "spk-m3");
+    Assert.AreEqual(SpeakingDecision.Partial, a.Decision,
+      "transcript says ball but coda missing -> Partial (got " + a.Decision + ")");
+  }
+
+  [Test] public void P13M3_TranscriptPassStandsWithGoodAcoustic() {
+    SpeechRecognitionResult r = ScriptedAcoustic("ball", 0.9f, 0.8f, false);
+    SpeakingAssessment a = SpeakingPassPolicy.Default().Decide(r, new WordId("ball"), "spk-m3");
+    Assert.AreEqual(SpeakingDecision.StrongPass, a.Decision);
+  }
+
+  [Test] public void P13M3_TranscriptPassDowngradedByLowMatch() {
+    SpeechRecognitionResult r = ScriptedAcoustic("ball", 0.9f, 0.2f, false);
+    SpeakingAssessment a = SpeakingPassPolicy.Default().Decide(r, new WordId("ball"), "spk-m3");
+    Assert.AreEqual(SpeakingDecision.Partial, a.Decision,
+      "confident transcript + disagreeing audio -> Partial (got " + a.Decision + ")");
+  }
+
+  [Test] public void P13M3_RunnerPassesBallEndToEnd() {
+    var mic = new ReadyMic();
+    var capture = new FakeSpeechCapture(() => Seg(AcousticFixtures.Word("ball", 1f)));
+    var recognizer = new SpeechRecognizer(mic, capture, new LocalAcousticProvider(SixWords()));
+    var bus = new GameEventBus();
+    WordSpokenEvent? spoken = null;
+    bus.Subscribe<WordSpokenEvent>(e => spoken = e);
+    var runner = new SpeakingExerciseRunner(recognizer, null, bus);
+    SpeakingExerciseResult result = runner.RunAsync(
+      SpeakingExerciseConfig.DefaultFor(new WordId("ball")), CancellationToken.None)
+      .GetAwaiter().GetResult();
+    Assert.AreEqual(SpeakingExerciseOutcome.Passed, result.Outcome);
+    Assert.AreEqual(1, result.AttemptsUsed);
+    Assert.IsTrue(spoken.HasValue, "pass publishes learning evidence");
+  }
+
+  [Test] public void P13M3_RunnerPartialCompletesBa() {
+    var mic = new ReadyMic();
+    var capture = new FakeSpeechCapture(() => Seg(AcousticFixtures.Truncated("ball", 2)));
+    var recognizer = new SpeechRecognizer(mic, capture, new LocalAcousticProvider(SixWords()));
+    var bus = new GameEventBus();
+    var runner = new SpeakingExerciseRunner(recognizer, null, bus);
+    var config = SpeakingExerciseConfig.DefaultFor(new WordId("ball"));
+    config.attemptsAllowed = 1;
+    SpeakingExerciseResult result = runner.RunAsync(config, CancellationToken.None)
+      .GetAwaiter().GetResult();
+    Assert.AreEqual(SpeakingExerciseOutcome.PartialComplete, result.Outcome);
+    Assert.AreEqual("Try again.", result.ChildMessage, "child hears encouragement, never a score");
   }
 }

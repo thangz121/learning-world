@@ -110,6 +110,13 @@ public static class AcousticAnalysis {
   public const float FluxPeakFloor = 0.18f;      // frame-to-frame spectral jump above
                                                  // this starts a new acoustic regime
   public const int FluxMinGapFrames = 6;         // regimes last >= 60 ms (child rate)
+  public const float LengthMismatchRatio = 1.5f; // (legacy frame gate, superseded)
+  public const float LengthMismatchDurRatio = 1.3f; // voiced duration > 1.3x prototype AND
+                                                 // syllable mismatch TOGETHER = different word
+                                                 // (either alone is innocent: slow speech
+                                                 // stretches time; hesitation splits humps)
+  public const float LengthMismatchPenalty = 0.20f; // two quanta (pairs with the syllable
+                                                 // term; repetitions exempt — see below)
   public const int MinFramesForAssessment = 5;   // <50 ms voiced = too short for phoneme evidence
   public const float SilenceEnergyFloor = 0.001f;
 
@@ -559,14 +566,20 @@ public static class AcousticAnalysis {
       || (ev.EstimatedSyllables > ev.ExpectedSyllables && durRatio > 1.8f);
 
     // Structural terms: nucleus-count agreement/disagreement is target
-    // structure (content syllables). Skipped for repetitions (extra copies
-    // must not punish resemblance). Otherwise self gains one quantum,
-    // mismatches lose two. M2: needed to break same-quantum ties (redself/apple).
+    // structure (content syllables), plus unexplained VOICED length (pauses and
+    // leading/trailing silence excluded — only sounding material counts).
+    // Both skipped for repetitions. Slow speech (long, humps agree) and
+    // hesitation (split humps, normal length) each trip at most ONE term;
+    // a different word trips both (apple-as-ball: 2 humps + 1.4x sounding).
+    // M2/M3: needed to break ties without punishing slow-correct speech.
+    bool sylMismatch = ev.EstimatedSyllables != ev.ExpectedSyllables;
     if (!ev.IsRepetition && ev.ExpectedSyllables > 0) {
-      if (ev.EstimatedSyllables == ev.ExpectedSyllables)
+      if (!sylMismatch)
         ev.OverallMatch = Quantize(ev.OverallMatch + SyllableAgreementReward);
       else
         ev.OverallMatch = Quantize(ev.OverallMatch - SyllableMismatchPenalty);
+      if (sylMismatch && durRatio > LengthMismatchDurRatio)
+        ev.OverallMatch = Quantize(ev.OverallMatch - LengthMismatchPenalty);
     }
 
     float tailContrast = Contrast(frames); // diagnostic only (see noCodaAttempt)

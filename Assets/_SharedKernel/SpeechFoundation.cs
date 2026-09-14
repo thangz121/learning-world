@@ -72,6 +72,10 @@ public static class SpeechFailureReasons {
 // Phoneme/acoustic evidence from a pronunciation backend (§8/§28).
 // Default (HasPhonemeData=false, Source="none") means NOT AVAILABLE —
 // scoring MUST NOT treat AccuracyScore as real data in that state.
+// Phase 2.1-local adds the ACOUSTIC block (HasAcousticData + fields): local
+// DSP evidence from AcousticAnalysis (target-constrained match, onset/coda,
+// ending flags). Acoustic evidence is NOT phoneme evidence: the two blocks
+// are scored independently and honestly (acoustic never fills AccuracyScore).
 [Serializable]
 public struct PronunciationEvidence {
   public bool HasPhonemeData;   // true ONLY when the backend returned phoneme/word-level scores
@@ -82,14 +86,42 @@ public struct PronunciationEvidence {
   public float WordAccuracy;    // 0..1 accuracy of the target word itself
   public string WordErrorType;  // "None" | "Mispronunciation" | "Omission" | "Insertion" | ""
   public int PhonemeCount;
+  // --- Phase 2.1-local acoustic block (all default = NOT AVAILABLE) ---
+  public bool HasAcousticData;  // true ONLY when AcousticAnalysis ran on real audio
+  public float AcousticMatch;   // 0..1 quantized target resemblance (OverallMatch)
+  public float AcousticOnset;   // 0..1 quantized initial-sound realization
+  public float AcousticCoda;    // 0..1 quantized ending-sound realization
+  public bool AcousticMissingEnding; // coda deletion-like (mandatory §5 signal)
+  public bool AcousticWeakEnding;    // coda partially realized
+  public bool AcousticRepetition;    // extra copies ("ball ball" — attempt honored)
+  public int AcousticSyllables;      // estimated voiced humps
 
   public static PronunciationEvidence None() {
     return new PronunciationEvidence {
       HasPhonemeData = false, Source = "none",
       AccuracyScore = float.NaN, FluencyScore = float.NaN,
       CompletenessScore = float.NaN, WordAccuracy = float.NaN,
-      WordErrorType = string.Empty, PhonemeCount = 0
+      WordErrorType = string.Empty, PhonemeCount = 0,
+      HasAcousticData = false, AcousticMatch = 0f,
+      AcousticOnset = 0f, AcousticCoda = 0f,
+      AcousticMissingEnding = false, AcousticWeakEnding = false,
+      AcousticRepetition = false, AcousticSyllables = 0
     };
+  }
+
+  // Honest carrier from the DSP layer (no transcript involved).
+  public static PronunciationEvidence FromAcoustic(AcousticEvidence acoustic) {
+    var e = None();
+    if (!acoustic.HasAcousticData) return e;
+    e.HasAcousticData = true;
+    e.AcousticMatch = acoustic.OverallMatch;
+    e.AcousticOnset = acoustic.OnsetScore;
+    e.AcousticCoda = acoustic.CodaScore;
+    e.AcousticMissingEnding = acoustic.MissingEnding;
+    e.AcousticWeakEnding = acoustic.WeakEnding;
+    e.AcousticRepetition = acoustic.IsRepetition;
+    e.AcousticSyllables = acoustic.EstimatedSyllables;
+    return e;
   }
 }
 
@@ -278,6 +310,12 @@ public sealed class SpeakingPassPolicy {
   public float SilenceEnergyFloor = 0.001f;
   public float WeakEnergyFloor = 0.005f;
   public float MinSpeechDurationSec = 0.15f;
+  // Phase 2.1-local acoustic thresholds (offline/no-transcript path + downgrade
+  // guard). Same honesty contract: no word-specific branches, all named here.
+  public float AcousticPassMatch = 0.60f;     // acoustic-only Pass floor
+  public float AcousticStrongMatch = 0.80f;   // acoustic-only StrongPass floor
+  public float AcousticPartialFloor = 0.40f;  // below this (with speech) = WrongWord
+  public float AcousticDowngradeFloor = 0.30f;// lexical pass + acoustic below this = Partial
 
   public static SpeakingPassPolicy Default() { return new SpeakingPassPolicy(); }
 
@@ -342,9 +380,12 @@ public sealed class SpeakingPassPolicy {
     }
 
     assessment.AttemptDetected = true;
+    bool hasAcoustic = result.Pronunciation.HasAcousticData;
 
-    // --- Speech without transcript: attempt is real, resemblance unknown (§87). ---
+    // --- Speech without transcript: acoustic decides when available (offline
+    // local path); otherwise the honest PossibleAttempt (§87 preserved). ---
     if (!result.HasTranscript()) {
+      if (hasAcoustic) return DecideAcoustic(assessment, target, result);
       assessment.Decision = SpeakingDecision.PossibleAttempt;
       assessment.FailureReason = SpeechFailureReasons.TranscriptUnavailable;
       assessment.IsEnvironmentError = false;
@@ -405,9 +446,67 @@ public sealed class SpeakingPassPolicy {
       assessment.Decision = SpeakingDecision.Partial;
       assessment.FailureReason = SpeechFailureReasons.Partial;
     }
+    // Acoustic DOWNGRADE guard (§16): transcript-alone must never auto-pass.
+    // A lexical pass with a disagreeing coda (missing ending) or a very low
+    // acoustic match is capped at Partial — the audio is the ground truth.
+    if (hasAcoustic
+        && (assessment.Decision == SpeakingDecision.Pass || assessment.Decision == SpeakingDecision.StrongPass)
+        && (result.Pronunciation.AcousticMissingEnding
+            || result.Pronunciation.AcousticMatch < AcousticDowngradeFloor)) {
+      assessment.Decision = SpeakingDecision.Partial;
+      assessment.FailureReason = SpeechFailureReasons.Partial;
+    }
     assessment.IsEnvironmentError = false;
     assessment.Evidence = BuildEvidence(target, result, lexical,
       contains ? "contains-target" : "no-target-token");
+    return assessment;
+  }
+
+  // Phase 2.1-local: offline acoustic decision (no transcript engine).
+  // Attempt > perfection: deletions/substitutions/repetitions land Partial or
+  // Pass (never a fail state); only clear non-matches are WrongWord.
+  SpeakingAssessment DecideAcoustic(SpeakingAssessment assessment, WordId target, SpeechRecognitionResult result) {
+    var ac = result.Pronunciation;
+    float match = ac.AcousticMatch;
+    if (match < 0f) match = 0f;
+    if (match > 1f) match = 1f;
+    assessment.LexicalMatchScore = float.NaN;
+    assessment.PronunciationScore = float.NaN;
+    assessment.IntelligibilityScore = match; // proxy, flag stays true
+    assessment.OverallScore = match;
+    assessment.IsEnvironmentError = false;
+    string note = "acoustic=" + match.ToString("0.0")
+      + " onset=" + ac.AcousticOnset.ToString("0.0")
+      + " coda=" + ac.AcousticCoda.ToString("0.0")
+      + (ac.AcousticMissingEnding ? " MISSING_ENDING"
+        : ac.AcousticWeakEnding ? " weak-ending" : " ending-ok")
+      + (ac.AcousticRepetition ? " repetition" : "")
+      + " syl~" + ac.AcousticSyllables;
+    if (match >= AcousticStrongMatch && !ac.AcousticMissingEnding
+        && !ac.AcousticWeakEnding && !ac.AcousticRepetition) {
+      assessment.Decision = SpeakingDecision.StrongPass;
+      assessment.FailureReason = SpeechFailureReasons.None;
+    } else if (match >= AcousticPassMatch && !ac.AcousticMissingEnding) {
+      // Repetition lands here (capped at Pass — a real production, not a drill).
+      assessment.Decision = SpeakingDecision.Pass;
+      assessment.FailureReason = SpeechFailureReasons.None;
+    } else if (match >= AcousticPartialFloor) {
+      // A repetition that only partly resembles STILL contains a full production
+      // attempt ("ba-ba-ball"): floor it at Pass, never fail self-correction.
+      if (ac.AcousticRepetition) {
+        assessment.Decision = SpeakingDecision.Pass;
+        assessment.FailureReason = SpeechFailureReasons.None;
+      } else {
+        // Deletions ("ba", "all"), weak codas, coarse substitutions: credible
+        // attempts, incomplete evidence — retry, never fail.
+        assessment.Decision = SpeakingDecision.Partial;
+        assessment.FailureReason = SpeechFailureReasons.Partial;
+      }
+    } else {
+      assessment.Decision = SpeakingDecision.WrongWord;
+      assessment.FailureReason = SpeechFailureReasons.WrongWord;
+    }
+    assessment.Evidence = BuildEvidence(target, result, float.NaN, note);
     return assessment;
   }
 
@@ -416,9 +515,12 @@ public sealed class SpeakingPassPolicy {
     string pron = result.Pronunciation.HasPhonemeData ? result.Pronunciation.AccuracyScore.ToString("0.00") : "n/a";
     string heard = string.IsNullOrWhiteSpace(result.Transcript) ? "<empty>" : result.Transcript.Trim();
     if (heard.Length > 48) heard = heard.Substring(0, 48) + "...";
+    string acoustic = result.Pronunciation.HasAcousticData
+      ? " acoustic=" + result.Pronunciation.AcousticMatch.ToString("0.0")
+        + (result.Pronunciation.AcousticMissingEnding ? "/MISSING_ENDING" : "") : string.Empty;
     return "target=" + target.Value + " heard=\"" + heard + "\" speech=" + (result.HasSpeech ? "Y" : "N")
       + " conf=" + result.RecognitionConfidence.ToString("0.00") + " lexical=" + lex
-      + " pron=" + pron + " provider=" + result.ProviderId + " note=" + note;
+      + " pron=" + pron + acoustic + " provider=" + result.ProviderId + " note=" + note;
   }
 }
 
