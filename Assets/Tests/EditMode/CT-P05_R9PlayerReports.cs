@@ -53,7 +53,7 @@ public class CT_P05_R9PlayerReports {
     // restore — GameObject.Find only sees ACTIVE objects, so sweep hidden
     // ones too; otherwise minis leak across tests).
     foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>()) {
-      if (go != null && go.name == "CarriedBall") Destroy(go);
+      if (go != null && go.name == "CarriedBall") UnityEngine.Object.DestroyImmediate(go);
     }
   }
 
@@ -198,6 +198,13 @@ public class CT_P05_R9PlayerReports {
     float down = CursorPresenter.ComputeArrowAngle(o, new Vector2(0f, -1f));
     Assert.AreEqual(180f, Math.Abs(down), 0.001f, "facing down flips the arrow");
     Assert.AreEqual(0f, CursorPresenter.ComputeArrowAngle(o, o), 0.001f, "degenerate facing reads straight, never NaN");
+    // Smoothing keeps the render contract: every result stays inside
+    // [-180,180] (unnormalized LerpAngle output photographed mirrored).
+    Assert.AreEqual(94f, CursorPresenter.SmoothAngle(389.1f, 94f, 1f), 0.001f, "full step lands exactly");
+    Assert.AreEqual(-94f, CursorPresenter.SmoothAngle(266f, -94f, 1f), 0.001f, "full step lands exactly (negative)");
+    float partial = CursorPresenter.SmoothAngle(389.1f, 94f, 0.18f);
+    Assert.GreaterOrEqual(partial, -180f, "partial steps never escape the render range");
+    Assert.LessOrEqual(partial, 180f, "partial steps never escape the render range");
   }
 
   // 8. Full R9 loop at unit level: pick ball -> wrong bring -> swap apple ->
@@ -217,6 +224,30 @@ public class CT_P05_R9PlayerReports {
       Assert.AreEqual(1, ctx.Quests.GetState(W1).ObjectiveIndex, "find must advance first");
       mia.OnMiaClicked(); // correct bring
       Assert.IsTrue(ctx.Quests.GetState(W1).Completed, "correct bring still completes the quest");
+    } finally {
+      UnityEngine.Object.DestroyImmediate(ball.gameObject);
+      UnityEngine.Object.DestroyImmediate(mia.gameObject);
+      DestroyMinis();
+    }
+  }
+
+  // 9. Echo guard: the trailing tap after a resolved bring is silent (one
+  // bring = one wrong, even when click arrival AND proximity both resolve).
+  [Test] public void CT_P05I_TrailingTapAfterWrongBringIsSilent() {
+    var ctx = new Ctx();
+    DistractorChoice ball = NewBall(ctx);
+    MiaPresenter mia = NewMia(ctx);
+    try {
+      ctx.Quests.StartQuest(W1);
+      ball.OnClicked(); // pick up
+      mia.OnMiaClicked(); // wrong bring (proximity-equivalent resolution)
+      Assert.AreEqual(1, ctx.Hints.GetState(W1).WrongCount, "setup: one wrong");
+      mia.OnMiaClicked(); // trailing arrival tap, hands empty now: echo
+      Assert.AreEqual(1, ctx.Hints.GetState(W1).WrongCount, "echo tap must stay silent");
+      Assert.AreEqual(1, ctx.Moments.Count, "echo tap must publish no moment");
+      mia.OnMiaClicked(); // a genuinely NEW empty-handed tap still counts
+      Assert.AreEqual(2, ctx.Hints.GetState(W1).WrongCount, "new intent must count again");
+      Assert.IsFalse(ctx.Quests.GetState(W1).Completed, "echoes must never complete");
     } finally {
       UnityEngine.Object.DestroyImmediate(ball.gameObject);
       UnityEngine.Object.DestroyImmediate(mia.gameObject);

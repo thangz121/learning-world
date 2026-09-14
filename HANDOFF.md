@@ -515,3 +515,72 @@ Giữ lại (production):
 - VERDICT: **R8 PASS** — ranges siết mà flow thật vẫn COMPLETE mượt, cursor +
   marker + label 2x chứng minh bằng ảnh, toàn bộ evidence R6/R7 nguyên vẹn.
 - Follow-up giữ nguyên: `Walk_Carry` chưa wire, PregenSeeder audio fallback.
+
+## 17. Pass R9 2026-09-14 (6 player reports: flower/distractor/bubble/cursor/marker/hedge) — VERDICT: PASS
+- Yêu cầu user: (a) bồn 3 hoa to + che camera, (b) distractor pick được để
+  khó hơn, (c) bong bóng gợi ý dễ nhìn hơn + chuẩn cho NPC sau, (d) mũi tên
+  chuột xoay theo hướng nhìn player, (e) hover marker "!" → mũi tên chỉ xuống,
+  (f) bỏ hàng rào kiểu chuồng cọp. Không quest/system mới.
+- Fix (production):
+  - **Flower** (`MarketBuilder`): cluster gọn (~1.2m → **~0.7m**: pot
+    0.7→0.56, stalk 0.7→0.44, head 1.05→0.66/0.22, ox ±0.25→±0.13, vẫn 3
+    bông) + dời `FlowerAnchorPos` (-1.5,2.5) → **(-4.6,5.0)** (góc SW, off mọi
+    quest path; vòng 1 đậu sát gốc cây (-5.6,4.6) che stalk → dời tiếp 2m).
+  - **Distractor** (`DistractorChoice` + `MiaPresenter`): bóng NHẶT được.
+    Luật — pickup trung tính (quest mở, 0 wrong, `WordSeen(ball)` arm Mia,
+    đã chứng minh safe với Milo/QuestManager/Bootstrap/Apple); mang tới Mia
+    (click HOẶC proximity 1.5m) = wrong + bóng về pedestal (retry giữ);
+    tay đang cầm táo mà chạm bóng = legacy instant-wrong; thấy táo khi cầm
+    bóng = SWAP (bóng về, táo lên tay; proximity crate tự swap: forgiving).
+    Pre-quest giữ legacy (bài 31), post-quest inert. Tay cầm chung fist-bone
+    với táo (một tay một đồ).
+  - **Echo-guard** (`MiaPresenter._bringJustResolved`, BUG THẬT do survey
+    R9v1 khui): click arrival + proximity resolve CÙNG 1 bring — correct thì
+    idempotent (carry clear) nhưng wrong bring bị đếm 2 (live: wrongs=2 cho
+    1 lần mang). Bring (đúng/sai) arm flag; tap tay-không tiếp theo consume
+    và silent (wave). One bring = one wrong.
+  - **Bubble** (`WorldQuestionBubble`): shell/outline/icon +30%/+25%
+    (0.65→0.85, apple 0.24→0.30, pulse ±6%→±8%) + **`AnchorFor(npcPos)`**
+    contract cho mọi NPC sau (đông-nam, head height 1.78m, clear label/mặt/
+    awning); `MarketBuilder` đặt bubble Mia qua contract.
+  - **Cursor** (`CursorPresenter`): arrow xoay theo facing của player
+    (project facing ra screen, `ComputeArrowAngle`, smooth `SmoothAngle`);
+    marker "!" → **mũi tên chỉ xuống** (shaft + 2 chevron, primitives only).
+  - **Hedge** (`MarketBuilder.BuildHedgeEdge` thay `BuildFence`): bụi tròn
+    xen kẽ + khóm hoa 3 màu (deterministic, không Random), cao ≤0.8m,
+    cùng footprint (carves `EdgeCarve*`, router bounds giữ nguyên),
+    collider giữ (bake/click như posts cũ). Sightlines mở mọi camera.
+- Tests: CT-P05 mới 9 tests (pickup neutral / ball-bring wrong+restore /
+  swap / hands-full legacy / proximity-ball-wrong + empty-silent / anchor
+  contract + size pins / heading angle + SmoothAngle range / full loop /
+  echo-silent) + CT-S01A viết lại theo hands-full + CT-P04G marker mới →
+  EditMode **69/69 PASS** (60 cũ + 9 mới).
+- Verify live (4 builds Succeeded errors=0; survey R9v4 FINAL COMPLETE,
+  **0 TIMEOUT, 0 exceptions**): pretap → talk → PICKUP (pedestal rỗng,
+  carriedball=True, 0 wrongs) → hover Mia (down-arrow vàng) → ball-bring
+  **wrongs=1** (echo-guard: proximity+click = 1!) → find (objIdx=1) →
+  legacy-wrong tay-đầy **wrongs=2** → bring **completed=True, wrongs giữ 2**
+  (apple echo cũng chặn) → bubble closeup mid-quest (shell to, táo đọc ngay)
+  → flower SW gọn 3 bông → hedge wide (garden edge, hết chuồng cọp) →
+  macros Milo/Mia. Góc arrow render khớp log <1° (flower +82, hedge +47 —
+  đối chiếu bằng projection math đầy đủ, hết nghi vấn mirror).
+- Lockdown: xóa `R9Survey(+meta)` → revert asmdef → FINAL clean build
+  **Succeeded errors=0** → boot check 70s+ **3×FACE_OK 0 exceptions** → xóa
+  `R9Build(+meta)` + `Assets/Editor(+meta)` → FINAL EditMode **69/69** trên
+  cây khóa. Temp = 0 file. Không commit (chờ user, như R6/R7/R8).
+- Bài học mới:
+  - 36. **Click arrival + proximity resolve cùng 1 bring**: correct thì
+    idempotent nhưng wrong thì double-count. Mọi bring mới (đúng/sai) đều
+    cần echo-guard phía receiver — một bring = một wrong.
+  - 37. **`LerpAngle` chạy ngoài ±180°** (389/442/635 trong log): normalize
+    mỗi frame trước render mapping (`SmoothAngle`), pin bằng unit test.
+  - 38. **Survey wait-mode phải đọc state HIỆN live**: `Find()` bỏ qua
+    object inactive (mode-8 đọc `CarriedBall`, không phải bóng đã ẩn) +
+    shot bubble closeup phải chạy mid-quest (bubble ẩn post-complete).
+  - 39. Nghi vấn "render sai" thì đối chiếu bằng **projection math đầy đủ**
+    (view matrix + perspective division), không bằng trực giác compass —
+    trực giác đã sai handedness, số thì khớp log <1°.
+- VERDICT: **R9 PASS** — đủ 6 yêu cầu có ảnh chứng minh, flow R6/R7/R8
+  nguyên vẹn (COMPLETE + Great job! + retry + gates), 2 bug thật tìm ra khi
+  survey đều đã fix + verify lại.
+- Follow-up giữ nguyên: `Walk_Carry` chưa wire, PregenSeeder audio fallback.

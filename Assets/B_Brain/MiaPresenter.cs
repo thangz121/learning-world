@@ -37,6 +37,12 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   // Mia is a real mistake (wrong + ball hops home, quest stays open). Pickup
   // itself is neutral (exploring is never punished); only the BRING decides.
   bool _carryingBall;
+  // R9 double-fire guard (PROVEN live: one ball-bring counted 2 wrongs): the
+  // click arrival and the proximity check resolve the SAME bring — whichever
+  // lands second finds empty hands and would count a phantom wrong. A bring
+  // (correct or wrong) arms this; the next EMPTY-hand tap consumes it and
+  // goes silent (wave only). Genuine mistakes still count, one tap = one wrong.
+  bool _bringJustResolved;
   // R7: quest-gate (pre-talk softlock). Clicks before the quest starts must
   // not consume carrying state, count wrongs, or publish story moments: the
   // quest hasn't begun, so there is nothing to be wrong ABOUT yet. Friendly
@@ -105,6 +111,8 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
       CompleteBring();
     } else if (_carryingBall) {
       WrongBring(); // R9: the wrong item reached the counter
+    } else if (_bringJustResolved) {
+      _bringJustResolved = false; // echo of the resolved bring: silent wave
     } else {
       if (_hints != null) _hints.ReportWrong(_activeQuest);
       if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.WrongChoice, DateTime.UtcNow));
@@ -118,6 +126,7 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   void WrongBring() {
     if (!_questStarted) return;
     _carryingBall = false;
+    _bringJustResolved = true; // the trailing arrival tap is echo, not intent
     if (_hints != null) _hints.ReportWrong(_activeQuest);
     if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.WrongChoice, DateTime.UtcNow));
   }
@@ -125,6 +134,7 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   void CompleteBring() {
     if (!_questStarted) return; // defense in depth (OnMiaClicked gates first)
     if (_quests == null) return;
+    _bringJustResolved = true; // same echo guard as the wrong bring
     _quests.ReportAction(PlayerAction.Bring, _appleWord);
     _carryingApple = false;
     if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
@@ -180,11 +190,13 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     _questStarted = true;
     _carryingApple = false;
     _carryingBall = false;
+    _bringJustResolved = false;
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
     if (e.QuestId.Value != _activeQuest.Value) return;
     _carryingBall = false; // hygiene (completion needs the apple, so live-unreachable)
+    _bringJustResolved = false;
     // Golden reaction (§11.4): durable Happy baseline after the completed quest.
     if (_presentation != null) _presentation.SetExpression(CharacterExpression.Happy);
     if (_animator != null) _animator.SetTrigger("Celebrate");

@@ -2,7 +2,7 @@
 // Builds the ENTIRE constrained 3D market mini-world in code (Awake), so the
 // scene file stays a one-GameObject shell. Fixed world contract (metres):
 //   ground X[-8,8] Z[-6,6] | player spawn (0,0,4.5) | Milo anchor (2.5,0,1.5)
-//   Mia stall anchor (-3.5,0,-2.5) | apple crate (3.5,0,-2.0) | flower bed (-5.6,0,4.6)
+//   Mia stall anchor (-3.5,0,-2.5) | apple crate (3.5,0,-2.0) | flower bed (-4.6,0,5.0)
 // Visuals are URP/Lit colored materials (no greybox): green grass, warm path,
 // sky-blue background + fog, striped awning stall, leafy tree, hedge boundary.
 // (R9: fence -> hedge; flower bed compact + parked in the SW corner.)
@@ -32,7 +32,8 @@ public class MarketBuilder : MonoBehaviour {
   // R9 (player report: the flower bed ate frame + camera): compact cluster
   // (~0.7m tall, was ~1.2m) parked in the SW corner, off every quest path and
   // behind the default follow camera — a reward nook, never an occluder.
-  public static readonly Vector3 FlowerAnchorPos = new Vector3(-5.6f, 0f, 4.6f);
+  // R9b: 2m clear of the west tree (was hugging its trunk, stalks unreadable).
+  public static readonly Vector3 FlowerAnchorPos = new Vector3(-4.6f, 0f, 5.0f);
   public const float BoundX = 8f;
   public const float BoundZ = 6f;
 
@@ -436,8 +437,8 @@ public class MarketBuilder : MonoBehaviour {
     // R9 compact cluster (player report: the old bed ate frame + camera):
     // smaller pot, shorter stalks, tighter blooms — ~0.7m tall total (was
     // ~1.2m), still 3 blooms. Parked in the SW corner (see FlowerAnchorPos).
-    pot.transform.localPosition = new Vector3(0f, 0.18f, 0f);
-    pot.transform.localScale = new Vector3(0.5f, 0.36f, 0.5f);
+    pot.transform.localPosition = new Vector3(0f, 0.17f, 0f);
+    pot.transform.localScale = new Vector3(0.56f, 0.34f, 0.56f);
     pot.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.8f, 0.42f, 0.25f));
 
     Color[] bloom = {
@@ -450,13 +451,13 @@ public class MarketBuilder : MonoBehaviour {
       GameObject stalk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
       stalk.name = "FlowerStalk";
       stalk.transform.SetParent(bed.transform);
-      stalk.transform.localPosition = new Vector3(ox, 0.42f, 0f);
+      stalk.transform.localPosition = new Vector3(ox, 0.44f, 0f);
       stalk.transform.localScale = new Vector3(0.07f, 0.3f, 0.07f);
       stalk.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.55f, 0.28f));
       GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
       head.name = "FlowerHead";
       head.transform.SetParent(bed.transform);
-      head.transform.localPosition = new Vector3(ox, 0.62f, 0f);
+      head.transform.localPosition = new Vector3(ox, 0.66f, 0f);
       head.transform.localScale = new Vector3(0.22f, 0.22f, 0.22f);
       head.GetComponent<Renderer>().sharedMaterial = Lit(bloom[i]);
     }

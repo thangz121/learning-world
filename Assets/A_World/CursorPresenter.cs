@@ -139,6 +139,19 @@ public sealed class CursorPresenter : MonoBehaviour {
     return Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg;
   }
 
+  // R9b heading-smoothing (pure, tests pin this): LerpAngle alone is NOT
+  // enough — its result roams outside [-180,180] (389/442/635 seen in the R9
+  // survey log), and the render mapping (rotation.z = -angle) only contracts
+  // normalized inputs, so mid-swing frames render mirrored headings. One wrap
+  // restores the render contract every frame (settled values photo-match the
+  // logged angles to <1deg: flower +82, hedge +47).
+  public static float SmoothAngle(float current, float target, float t) {
+    float a = Mathf.LerpAngle(current, target, t);
+    if (a > 180f) a -= 360f;
+    else if (a < -180f) a += 360f;
+    return a;
+  }
+
   // Test seam: drive one frame deterministically without a live mouse.
   // Marker placement has its own seam (PlaceMarkerForTests) since hover needs
   // a live camera raycast.
@@ -162,6 +175,11 @@ public sealed class CursorPresenter : MonoBehaviour {
     get { return _marker != null && _marker.activeSelf; }
   }
 
+  // Lead introspection (survey telemetry): the smoothed heading now rendered.
+  public float CurrentAngle {
+    get { return _angle; }
+  }
+
   void Update() {
     Mouse mouse = Mouse.current;
     if (mouse == null) {
@@ -179,7 +197,7 @@ public sealed class CursorPresenter : MonoBehaviour {
     ComputeCursor(hovering, out float scaleTarget, out Color colorTarget);
     float t = 1f - Mathf.Exp(-12f * Mathf.Max(Time.deltaTime, 0.0001f));
     _scale = Mathf.Lerp(_scale, scaleTarget, t);
-    _angle = Mathf.LerpAngle(_angle, ReadPlayerHeading(), t);
+    _angle = SmoothAngle(_angle, ReadPlayerHeading(), t);
     _arrow.color = Color.Lerp(_arrow.color, colorTarget, t);
     ApplyArrow(px, _arrow.color);
     TickMarker(target);
