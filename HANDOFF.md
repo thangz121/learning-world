@@ -617,5 +617,12 @@ Giữ lại (production):
   - 44. Background players present-stall (75s background run never
     reached face setup; foregrounded run hit 3×FACE_OK in ~10s) —
     always foreground before judging liveness.
+  - 45. Survey shots must fire INSIDE the camera focus window (R6 lesson
+    28, re-learned in 2E: 1.2-2.4s durations with longer waits shot the
+    returned Follow view). Duration 8s + settle ~2s + shoot.
+  - 46. Under present-stall, screenshot requests QUEUE and flush late:
+    files can capture neighbor states (2E icon beats proved transitions
+    in log + both states on screen, but per-file mapping slipped a beat).
+    Prove sequences by SET + log, never by a single frame alone.
 - Next: PHASE 2A (content/quest data foundation) — see
   `docs/HANDOFF/`.

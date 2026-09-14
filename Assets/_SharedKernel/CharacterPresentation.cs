@@ -739,6 +739,34 @@ public sealed class CharacterPresentation : MonoBehaviour {
     Destroy(o);
   }
 
+  // Phase 2E shared helper (moved verbatim from Milo/MiaPresenter, which
+  // carried identical copies): instance-only material tint for quaternius
+  // rigs — imported sub-assets stay pristine, stylized finish language
+  // applied per named part (skin soft sheen vs matte cloth). Metallic
+  // pinned 0; negative smoothness keeps the imported value.
+  public static void TintSharedMaterials(SkinnedMeshRenderer skin, string nameFragment, Color color, float smoothness = -1f) {
+    if (skin == null) return;
+    Material[] mats = skin.sharedMaterials;
+    bool changed = false;
+    for (int i = 0; i < mats.Length; i++) {
+      Material m = mats[i];
+      if (m == null || m.name == null) continue;
+      if (m.name.IndexOf(nameFragment, StringComparison.OrdinalIgnoreCase) < 0) continue;
+      Shader s = m.shader != null ? m.shader : Shader.Find("Universal Render Pipeline/Lit");
+      if (s == null) continue;
+      Material copy = new Material(s);
+      copy.CopyPropertiesFromMaterial(m);
+      if (copy.HasProperty("_BaseColor")) copy.SetColor("_BaseColor", color);
+      else if (copy.HasProperty("_Color")) copy.SetColor("_Color", color);
+      if (smoothness >= 0f && copy.HasProperty("_Smoothness")) copy.SetFloat("_Smoothness", smoothness);
+      if (copy.HasProperty("_Metallic")) copy.SetFloat("_Metallic", 0f);
+      copy.name = m.name + "_Tinted";
+      mats[i] = copy;
+      changed = true;
+    }
+    if (changed) skin.sharedMaterials = mats;
+  }
+
   static void Paint(GameObject go, Color color) {
     if (go == null) return;
     Renderer r = go.GetComponent<Renderer>();

@@ -513,6 +513,10 @@ public class MarketBuilder : MonoBehaviour {
     // future NPC parks its hint the same way (east-south, head height, clear
     // of labels/faces/awnings). Icon-first thought language inside.
     Bubble.Place(WorldQuestionBubble.AnchorFor(MiaAnchorPos));
+    // 2E: the asked thing goes through the icon contract too (same apple
+    // visual as the default build — now explicitly staged, so 2F stages the
+    // ball by changing one word, not the bubble).
+    Bubble.SetIcon(new WordId("apple"));
   }
 
   // R5V-b Milo's place: a flat round mat under Milo's anchor (his identity +

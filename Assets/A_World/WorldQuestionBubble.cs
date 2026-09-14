@@ -51,6 +51,70 @@ public class WorldQuestionBubble : MonoBehaviour {
     return npcPos + new Vector3(1.45f, 1.78f, 0.55f);
   }
 
+  // Phase 2E icon contract (closes 2B P1-5: the icon was hardcoded apple).
+  // SetIcon rebuilds ONLY the icon child from a word-driven spec table —
+  // target changes, icon changes, no per-word code after this point:
+  // "apple" -> red fruit + stem + leaf (R9 language, unchanged);
+  // "ball" -> blue sphere in the distractor-ball language (no stem/leaf);
+  // anything else -> neutral thought dot (never apple by accident).
+  // Existing Apple appearance is byte-identical (CT-P09 pins names/sizes).
+  public void SetIcon(WordId target) {
+    if (_icon == null) {
+      // Order-safe: composition roots may set the icon before first build
+      // (same pattern as WorldNameLabel.Setup building on demand).
+      if (_shell == null) BuildBubbleImmediate();
+      if (_icon == null) return;
+    }
+    DestroyIconChildren(_icon);
+    BuildIconContent(_icon, SpecFor(target.Value));
+  }
+
+  public string CurrentIconId {
+    get { return _iconId; }
+  }
+
+  string _iconId = "apple";
+
+  struct IconSpec {
+    public string fruitName;
+    public Vector3 fruitScale;
+    public Color fruitColor;
+    public bool stem;
+    public bool leaf;
+  }
+
+  static IconSpec SpecFor(string word) {
+    string w = (word ?? "").Trim().ToLowerInvariant();
+    if (w == "apple") {
+      return new IconSpec {
+        fruitName = "AskApple",
+        fruitScale = new Vector3(0.30f, 0.30f, 0.30f),
+        fruitColor = new Color(0.85f, 0.15f, 0.15f),
+        stem = true, leaf = true,
+      };
+    }
+    if (w == "ball") {
+      return new IconSpec {
+        fruitName = "AskBall",
+        fruitScale = new Vector3(0.30f, 0.30f, 0.30f),
+        fruitColor = new Color(0.20f, 0.42f, 0.90f), // distractor-ball blue
+        stem = false, leaf = false,
+      };
+    }
+    return new IconSpec {
+      fruitName = "AskUnknown",
+      fruitScale = new Vector3(0.26f, 0.26f, 0.26f),
+      fruitColor = new Color(0.85f, 0.75f, 0.55f),
+      stem = false, leaf = false,
+    };
+  }
+
+  void DestroyIconChildren(Transform icon) {
+    for (int i = icon.childCount - 1; i >= 0; i--) {
+      CharacterPresentation.DestroyNow(icon.GetChild(i).gameObject);
+    }
+  }
+
   // Placement entry point (MarketBuilder positions it beside the stall so the
   // awning never occludes it). Remembers base for the bob.
   public void Place(Vector3 worldPos) {
@@ -111,8 +175,8 @@ public class WorldQuestionBubble : MonoBehaviour {
     AddPuff("TailPuff1", new Vector3(0f, -0.40f, 0f), 0.125f);
     AddPuff("TailPuff2", new Vector3(0f, -0.60f, 0f), 0.08f);
 
-    // Icon: mini apple (future asks replace this child only). Stem + leaf use
-    // the crate-apple language so it reads as APPLE, never a red dot.
+    // Icon: the ASKED thing in crate/prop language (2E: built from the spec
+    // table via SetIcon's path, so apple/ball/future share one builder).
     // Depth: the whole icon rides PROUD of the shell front plane (+0.15), so
     // the apple dome + stem + leaf all clear the shell face (R2 bug: the icon
     // sat at +0.10 with only a sliver peeking and read as a plain white ball
@@ -121,29 +185,44 @@ public class WorldQuestionBubble : MonoBehaviour {
     icon.transform.SetParent(transform);
     icon.transform.localPosition = new Vector3(0f, 0.03f, 0.20f);
     _icon = icon.transform; // R6: pulse driver (Update), structure unchanged
+    _iconId = "apple";
+    BuildIconContent(_icon, SpecFor("apple"));
+  }
+
+  // Single icon builder (shared by the default build and SetIcon): fruit
+  // sphere in the target's world language + stem/leaf only when the spec
+  // says so (apple has them, ball/fallback don't).
+  void BuildIconContent(Transform icon, IconSpec spec) {
+    _iconId = spec.fruitName == "AskApple" ? "apple"
+      : spec.fruitName == "AskBall" ? "ball" : "unknown";
     GameObject fruit = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    fruit.name = "AskApple";
-    fruit.transform.SetParent(icon.transform);
+    fruit.name = spec.fruitName;
+    fruit.transform.SetParent(icon);
     fruit.transform.localPosition = Vector3.zero;
     // R6: apple +20% (0.20 -> 0.24) — the ICON is hierarchy level 1, it must
     // read before any text. Stem/leaf scale with it (same apple language).
-    fruit.transform.localScale = new Vector3(0.30f, 0.30f, 0.30f);
-    fruit.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.85f, 0.15f, 0.15f));
+    fruit.transform.localScale = spec.fruitScale;
+    fruit.GetComponent<Renderer>().sharedMaterial = Lit(spec.fruitColor);
     CharacterPresentation.DestroyNow(fruit.GetComponent<Collider>());
-    GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    stem.name = "AskStem";
-    stem.transform.SetParent(icon.transform);
-    stem.transform.localPosition = new Vector3(0f, 0.19f, 0f);
-    stem.transform.localScale = new Vector3(0.068f, 0.19f, 0.068f);
-    stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.4f, 0.26f, 0.12f));
-    CharacterPresentation.DestroyNow(stem.GetComponent<Collider>());
-    GameObject leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    leaf.name = "AskLeaf";
-    leaf.transform.SetParent(icon.transform);
-    leaf.transform.localPosition = new Vector3(0.105f, 0.19f, 0f);
-    leaf.transform.localScale = new Vector3(0.135f, 0.045f, 0.075f);
-    leaf.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.6f, 0.25f));
-    CharacterPresentation.DestroyNow(leaf.GetComponent<Collider>());
+    if (!spec.stem && !spec.leaf) return;
+    if (spec.stem) {
+      GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      stem.name = "AskStem";
+      stem.transform.SetParent(icon);
+      stem.transform.localPosition = new Vector3(0f, 0.19f, 0f);
+      stem.transform.localScale = new Vector3(0.068f, 0.19f, 0.068f);
+      stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.4f, 0.26f, 0.12f));
+      CharacterPresentation.DestroyNow(stem.GetComponent<Collider>());
+    }
+    if (spec.leaf) {
+      GameObject leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      leaf.name = "AskLeaf";
+      leaf.transform.SetParent(icon.transform);
+      leaf.transform.localPosition = new Vector3(0.105f, 0.19f, 0f);
+      leaf.transform.localScale = new Vector3(0.135f, 0.045f, 0.075f);
+      leaf.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.6f, 0.25f));
+      CharacterPresentation.DestroyNow(leaf.GetComponent<Collider>());
+    }
   }
 
   void AddPuff(string puffName, Vector3 localPos, float size) {

@@ -316,17 +316,18 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
       // instance copies only (imported sub-assets stay pristine): coral-pink
       // vest (Mia identity, distinct from Milo's orange), warm tan face,
       // warm mid-brown skin instead of the near-black artist default.
-      TintSharedMaterials(skin, "Vest", new Color(0.95f, 0.45f, 0.4f));
+      // Shared 2E helper (was a local copy identical to Milo's).
+      CharacterPresentation.TintSharedMaterials(skin, "Vest", new Color(0.95f, 0.45f, 0.4f));
       // R5V-c (MAT census + macro photos: BOTH NPCs wear the same yellow hard
       // hat, identity = vest shade only — too weak for a 4yo): Mia's hat goes
       // coral-pink to match her vest (Milo keeps yellow). Instance copy only.
       // Reversible one-liner: delete this line if hats must match the pack.
-      TintSharedMaterials(skin, "Hat", new Color(0.95f, 0.55f, 0.62f));
+      CharacterPresentation.TintSharedMaterials(skin, "Hat", new Color(0.95f, 0.55f, 0.62f));
       // R5-A material test (2026-09-13): Face 0.45 -> 0.25, Skin 0.50 -> 0.30
       // (candidate values; macro + gameplay photos decide).
       // R5c: deepen Face tan one step (brows persisted => diffuse sculpt).
-      TintSharedMaterials(skin, "Face", new Color(0.93f, 0.70f, 0.52f), 0.25f);
-      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.3f);
+      CharacterPresentation.TintSharedMaterials(skin, "Face", new Color(0.93f, 0.70f, 0.52f), 0.25f);
+      CharacterPresentation.TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.3f);
     }
     if (skin != null && skin.bones != null) {
       foreach (Transform bone in skin.bones) {
@@ -349,33 +350,6 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     _skinForFace = skin;
     _visualForFace = visual.transform;
     AddInteractionCapsule();
-  }
-
-  // Instance-only material tint (imported sub-assets stay pristine).
-  // Final polish: optional smoothness override establishes the shared finish
-  // language (skin 0.5 soft sheen vs matte cloth at import 0.31); negative
-  // keeps the imported value. Metallic is pinned to 0 (stylized, never metal).
-  static void TintSharedMaterials(SkinnedMeshRenderer skin, string nameFragment, Color color, float smoothness = -1f) {
-    if (skin == null) return;
-    Material[] mats = skin.sharedMaterials;
-    bool changed = false;
-    for (int i = 0; i < mats.Length; i++) {
-      Material m = mats[i];
-      if (m == null || m.name == null) continue;
-      if (m.name.IndexOf(nameFragment, StringComparison.OrdinalIgnoreCase) < 0) continue;
-      Shader s = m.shader != null ? m.shader : Shader.Find("Universal Render Pipeline/Lit");
-      if (s == null) continue;
-      Material copy = new Material(s);
-      copy.CopyPropertiesFromMaterial(m);
-      if (copy.HasProperty("_BaseColor")) copy.SetColor("_BaseColor", color);
-      else if (copy.HasProperty("_Color")) copy.SetColor("_Color", color);
-      if (smoothness >= 0f && copy.HasProperty("_Smoothness")) copy.SetFloat("_Smoothness", smoothness);
-      if (copy.HasProperty("_Metallic")) copy.SetFloat("_Metallic", 0f);
-      copy.name = m.name + "_Tinted";
-      mats[i] = copy;
-      changed = true;
-    }
-    if (changed) skin.sharedMaterials = mats;
   }
 
   void AddInteractionCapsule() {

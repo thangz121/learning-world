@@ -64,6 +64,14 @@ public class MarketBootstrap : MonoBehaviour {
     // Labels live on CHILD objects: WorldNameLabel drives its own world
     // position every frame, so it must never sit on the NPC root itself
     // (it would fight the presenter's transform).
+    // 2E: display names + heights come from the NPC roster (single source;
+    // no "Milo"/"Mia" literals scattered). Behavior unchanged.
+    NpcDefinition miloDef = NpcRoster.Get("milo");
+    NpcDefinition miaDef = NpcRoster.Get("mia");
+    string miloName = miloDef != null ? miloDef.displayName : "Milo";
+    string miaName = miaDef != null ? miaDef.displayName : "Mia";
+    float miloHeight = miloDef != null ? miloDef.labelHeight : 2.35f;
+    float miaHeight = miaDef != null ? miaDef.labelHeight : 2.35f;
     GameObject miloLabelGo = new GameObject("MiloLabel");
     miloLabelGo.transform.SetParent(miloGo.transform, false);
     _miloLabel = miloLabelGo.AddComponent<WorldNameLabel>();
@@ -71,12 +79,12 @@ public class MarketBootstrap : MonoBehaviour {
     // 2.05m sits inside Milo's hard-hat ridge / Mia's hair volume, so level
     // cameras see the pill with the text occluded. 2.35m clears all headwear
     // (Milo 1.65 + hat ~0.3, Mia 1.65 + hair ~0.3, pill half-height 0.19).
-    _miloLabel.Setup("Milo", miloGo.transform, 2.35f);
+    _miloLabel.Setup(miloName, miloGo.transform, miloHeight);
     _miloLabel.Show();
     GameObject miaLabelGo = new GameObject("MiaLabel");
     miaLabelGo.transform.SetParent(miaGo.transform, false);
     _miaLabel = miaLabelGo.AddComponent<WorldNameLabel>();
-    _miaLabel.Setup("Mia", miaGo.transform, 2.35f);
+    _miaLabel.Setup(miaName, miaGo.transform, miaHeight);
     _miaLabel.Hide();
 
     // HUD: objective text + replay delegates to Milo (no World->Brain reference).
