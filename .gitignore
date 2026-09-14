@@ -22,6 +22,9 @@
 .vscode/
 .idea/
 
+# Unity editor user state — machine-specific and regenerated automatically
+[Uu]serSettings/
+
 # OS noise
 .DS_Store
 Thumbs.db

@@ -20,6 +20,10 @@ public class MarketBootstrap : MonoBehaviour {
   WorldNameLabel _miloLabel;
   WorldNameLabel _miaLabel;
   bool _built;
+  // R7: pre-talk finds must not narrate (no praise, no "Bring it" objective:
+  // the quest hasn't started, HUD still says "Talk to Milo"). Set by the
+  // QuestStartedEvent subscription below; mirrors the presenters' own gates.
+  bool _questStarted;
 
   // Called ONCE by GameInstaller after MarketScene is loaded. All services are
   // constructed; the MarketBuilder (A) has built the world in its Awake.
@@ -93,6 +97,7 @@ public class MarketBootstrap : MonoBehaviour {
     bus.Subscribe<WordSeenEvent>(OnWordSeen);
     bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted);
     bus.Subscribe<StoryMomentEvent>(OnStoryMoment);
+    bus.Subscribe<QuestStartedEvent>(OnQuestStartedFlag);
 
     // Opening is talk-gated (first-time readability): the HUD names the one
     // action ("Talk to Milo"); Milo's proximity greet + name label do the
@@ -133,10 +138,16 @@ public class MarketBootstrap : MonoBehaviour {
   void OnWordSeen(WordSeenEvent e) {
     if (_bus == null || _quests == null) return;
     if (e.WordId.Value != AppleWord.Value) return;
+    if (!_questStarted) return; // pre-talk find: silent (quest begins at Talk)
     if (_quests.GetState(W1Quest).Completed) return; // post-completion clicks: no re-instruct
     Milo.PraiseFound();
     Milo.SetInstructionTarget(1);
     if (_hud != null) _hud.ShowObjective("Bring the apple to Mia");
+  }
+
+  void OnQuestStartedFlag(QuestStartedEvent e) {
+    if (e.QuestId.Value != W1Quest.Value) return;
+    _questStarted = true;
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
@@ -158,9 +169,14 @@ public class MarketBootstrap : MonoBehaviour {
     // Milo (~2.2m east) and the player (~0.9m east) both fall OFF the ray as
     // readable over-shoulder witnesses instead of occluders. Still below the
     // awning (slats y2.62), outside the stall carve (x −4.8..−2.2 z −4.1..−2.7).
+    // R5V-c (r5-complete run-2: due-south close-up frames backs of heads —
+    // Mia faces her player, so any near south cam buries faces): pull back to
+    // an ENSEMBLE view (both + stall, ~3.7m — face4m proves readability there)
+    // instead of chasing a close-up. Candidate pose: the complete photo
+    // decides (revert to -1.9 if the beat loses its warmth).
     if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null) {
-      Vector3 miaHead = _builder.MiaAnchor.position + new Vector3(0f, 1.2f, 0f);
-      _builder.WorldCamera.FramePointFor(new Vector3(-3.3f, 1.8f, -0.2f), miaHead, 3.2f);
+      Vector3 miaPlayerMid = _builder.MiaAnchor.position + new Vector3(0.1f, 1.0f, 0.35f);
+      _builder.WorldCamera.FramePointFor(new Vector3(-1.3f, 2.3f, 0.6f), miaPlayerMid, 3.2f);
     }
   }
 

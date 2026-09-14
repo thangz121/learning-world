@@ -70,13 +70,18 @@ public class WorldNameLabel : MonoBehaviour {
   }
 
   void BuildLabel() {
-    transform.localScale = Vector3.one * 0.004f;
+    // R8 zoom detail (player report: zoom-in must not lose detail): the canvas
+    // renders at 2x texel density (600x192 @ 112pt, root scale halved) for the
+    // IDENTICAL 1.2m world size — close-up name tags stay crisp instead of
+    // going blocky. Faces/props are geometry (infinite zoom); text was the
+    // only resolution-bound detail on the NPCs.
+    transform.localScale = Vector3.one * 0.002f;
     GameObject canvasGo = new GameObject("LabelCanvas");
     canvasGo.transform.SetParent(transform, false);
     Canvas canvas = canvasGo.AddComponent<Canvas>();
     canvas.renderMode = RenderMode.WorldSpace;
     RectTransform canvasRt = canvasGo.GetComponent<RectTransform>();
-    canvasRt.sizeDelta = new Vector2(300f, 96f);
+    canvasRt.sizeDelta = new Vector2(600f, 192f);
     Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
     // High-contrast pill (reusable identity cue): the old bare cream text
     // washed out against sky/awning at gameplay distance. Dark backing +
@@ -95,12 +100,12 @@ public class WorldNameLabel : MonoBehaviour {
     textGo.transform.SetParent(canvasGo.transform, false);
     _text = textGo.AddComponent<Text>();
     _text.font = font;
-    _text.fontSize = 56;
+    _text.fontSize = 112;
     _text.color = Color.white;
     _text.alignment = TextAnchor.MiddleCenter;
     Shadow shadow = textGo.AddComponent<Shadow>();
     shadow.effectColor = new Color(0.25f, 0.16f, 0.1f, 0.85f);
-    shadow.effectDistance = new Vector2(3f, -3f);
+    shadow.effectDistance = new Vector2(6f, -6f);
     RectTransform textRt = textGo.GetComponent<RectTransform>();
     textRt.anchorMin = Vector2.zero;
     textRt.anchorMax = Vector2.one;

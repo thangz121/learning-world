@@ -53,7 +53,7 @@ public class CT_P02_ProximityBring {
       f.ArmCarrying(mia);
       Assert.AreEqual(1, f.Quests.GetState(W1Quest).ObjectiveIndex, "setup: find must advance first");
       Assert.IsTrue(mia.IsCarrying, "setup: Mia must hold the apple context");
-      mia.TryProximityBring(new Vector3(-2.4f, 0f, -1.2f)); // ~1.7m: inside 1.8m
+      mia.TryProximityBring(new Vector3(-2.6f, 0f, -1.6f)); // ~1.27m: inside 1.5m (R8 tightened from 1.8)
       Assert.IsTrue(f.Quests.GetState(W1Quest).Completed, "proximity while carrying must complete the bring");
       Assert.AreEqual(1, f.Moments.Count, "must emit exactly one moment");
       Assert.AreEqual(StoryMoment.CorrectChoice, f.Moments[0].Moment);

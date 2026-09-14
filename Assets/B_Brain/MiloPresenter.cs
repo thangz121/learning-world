@@ -15,14 +15,21 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
-  const float GreetDistance = 3f;
+  // R5V-2 interaction zone (spec §18-19): greet 2.0-2.2m + facing cone ±60° +
+  // rising edge. (DERIVED project parameter for the 1.65m NPC scale.)
+  const float GreetDistance = 2.1f;
+  const float GreetResetDistance = 2.6f;
+  const float GreetFacingDot = 0.5f; // cos(60°): player must face Milo
   const float WaveDuration = 1.6f;
 
   [Header("Lead-wired placement (A anchor)")]
   // Phase-1 closure: Milo hosts the market stall front (his place; Mia keeps
   // the counter as shopkeeper). Open grass east of the counter, clear of the
   // stall carve, 2.3m conversational distance from Mia so both stage together.
-  public Vector3 SpawnPosition = new Vector3(-1.3f, 0f, -1.7f);
+  // R5V-2 composition: Milo hosts his own place EAST on the path (0.0,-0.8),
+  // 3.89m from Mia (-3.5,-2.5): two distinct visual anchors, no cross-trigger.
+  // (DERIVED project parameter from the 1.65m NPC scale, not a universal law.)
+  public Vector3 SpawnPosition = new Vector3(0f, 0f, -0.8f);
   [Header("Lead-wired player reference (Transform only, null-guarded)")]
   public Transform PlayerTarget;
 
@@ -167,12 +174,29 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
       Vector3 faceDir = CameraFaceDirection(toPlayer);
       if (faceDir.sqrMagnitude > 0.0001f)
         transform.rotation = Quaternion.LookRotation(faceDir);
-      if (!_greeted && toPlayer.magnitude < GreetDistance) {
+      float dist = toPlayer.magnitude;
+      if (dist > GreetResetDistance) {
+        _greeted = false; // re-arm: leaving the zone allows one future greet
+      } else if (!_greeted && dist < GreetDistance && PlayerFacesMilo()) {
         _greeted = true;
         if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
         Milo.Greet();
       }
     }
+  }
+
+  // R5V-2 facing cone: the PLAYER must face Milo (dot(playerFwd, toMilo) >=
+  // cos60°). Walking behind/away never greets; standing inside stays silent
+  // (rising edge via _greeted). Null-safe (no player transform = no greet).
+  bool PlayerFacesMilo() {
+    if (PlayerTarget == null) return false;
+    Vector3 toMilo = transform.position - PlayerTarget.position;
+    toMilo.y = 0f;
+    if (toMilo.sqrMagnitude < 0.0001f) return true;
+    Vector3 fwd = PlayerTarget.forward;
+    fwd.y = 0f;
+    if (fwd.sqrMagnitude < 0.0001f) return false;
+    return Vector3.Dot(fwd.normalized, toMilo.normalized) >= GreetFacingDot;
   }
 
   // Camera-facing direction (Y-only). Falls back to the player direction when
@@ -238,11 +262,18 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
     }
     GameObject visual = Instantiate(visualPrefab, transform, false);
     visual.name = "MiloVisualRoot";
-    // W1 grounding (W1TOUR GROUND 2026-09-12: live Idle minVert -0.493 with
-    // root at 0; GndDiag2 agrees): clips sink the skeleton rigidly ~0.49m, and
-    // a clip always plays, so the VisualRoot carries a permanent lift.
-    // localPosition is in PARENT space (gameplay root scale 1): 0.493 local.
-    visual.transform.localPosition = new Vector3(0f, 0.493f, 0f);
+    // R6 grounding (FINAL POLISH 2026-09-13: the 0.493 lift was historical
+    // contamination from the discredited BakeMesh minMapped era. Two
+    // independent lines agree it is pure float: (1) low-angle macros show
+    // ~0.4m daylight + detached shadow; (2) trusted bone-bind SOLE2 reads
+    // sole=0.519 at root 0, i.e. off=0.519 ~= lift, so the TRUE Worker idle
+    // sink ~= 0.03. Build-A round (0.05) read SOLE2 ~0.07 + tight contact
+    // shadow in f6-17 (planted look, 7cm number): 0.02 lands the sole at
+    // ~+0.04 with breathing floor +0.03, safely above penetration. Build-B
+    // (0.02) reads contact at SOLE2 ~0.045: final 0.01 lands ~+0.03, floor
+    // ~+0.02. Per-rig measured (never copy lifts across rigs blind).
+    // Photos decide.
+    visual.transform.localPosition = new Vector3(0f, 0.01f, 0f);
     visual.transform.localRotation = Quaternion.identity;
     // Scale fix: the quaternius armature imports at 100x (3.3m tall giant).
     // Half the visual so Milo stands ~1.65m next to the 1.6m player capsule.
@@ -263,8 +294,11 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
       // imported sub-assets stay pristine): orange vest (Milo identity),
       // warm tan face, warm mid-brown skin.
       TintSharedMaterials(skin, "Vest", new Color(1f, 0.55f, 0.12f));
-      TintSharedMaterials(skin, "Face", new Color(1f, 0.82f, 0.64f), 0.45f);
-      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.5f);
+      // R5-A material test (2026-09-13): Face 0.45 -> 0.25, Skin 0.50 -> 0.30
+      // (candidate values; macro + gameplay photos decide).
+      // R5c: deepen Face tan one step (brows persisted => diffuse sculpt).
+      TintSharedMaterials(skin, "Face", new Color(0.93f, 0.70f, 0.52f), 0.25f);
+      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.3f);
     }
     if (skin != null && skin.bones != null) {
       foreach (Transform bone in skin.bones) {

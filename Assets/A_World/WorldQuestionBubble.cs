@@ -10,7 +10,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class WorldQuestionBubble : MonoBehaviour {
   Transform _shell;
+  Transform _icon; // R6: gentle attention pulse (scale only, no new objects)
   float _bobPhase;
+  float _pulsePhase;
   bool _shown = true;
 
   void Awake() {
@@ -21,6 +23,14 @@ public class WorldQuestionBubble : MonoBehaviour {
     if (!_shown) return;
     _bobPhase += Time.deltaTime * Mathf.PI * 2f * 0.5f;
     transform.position = _basePos + Vector3.up * (Mathf.Sin(_bobPhase) * 0.05f);
+    // R6 quest-hint motion (FINAL POLISH): the apple icon breathes gently
+    // (R9: 1 +/- 0.08 at ~1Hz) so a 4yo's eye is drawn without arcade flashing.
+    // Shell stays rock-steady (only the icon pulses, never the whole bubble).
+    if (_icon != null) {
+      _pulsePhase += Time.deltaTime * Mathf.PI * 2f * 1f;
+      float k = 1f + 0.08f * Mathf.Sin(_pulsePhase);
+      _icon.transform.localScale = new Vector3(k, k, k);
+    }
     Camera cam = Camera.main;
     if (cam == null) return;
     Vector3 toCam = cam.transform.position - transform.position;
@@ -30,6 +40,16 @@ public class WorldQuestionBubble : MonoBehaviour {
   }
 
   Vector3 _basePos;
+
+  // R9 hint-placement CONTRACT (player report: the hint must read instantly,
+  // current + future NPCs all follow this one rule): the bubble parks EAST-
+  // SOUTH of the asker at head height (1.78m), 1.45m east — never over the
+  // 2.35m name label, never over the face/body, clear of awning volumes.
+  // MarketBuilder places Mia's bubble through this; future NPCs call it too.
+  // Icon-first thought language carries the meaning before any text is read.
+  public static Vector3 AnchorFor(Vector3 npcPos) {
+    return npcPos + new Vector3(1.45f, 1.78f, 0.55f);
+  }
 
   // Placement entry point (MarketBuilder positions it beside the stall so the
   // awning never occludes it). Remembers base for the bob.
@@ -70,21 +90,26 @@ public class WorldQuestionBubble : MonoBehaviour {
     outline.name = "ShellOutline";
     outline.transform.SetParent(_shell);
     outline.transform.localPosition = new Vector3(0f, 0f, -0.08f);
-    outline.transform.localScale = new Vector3(0.62f, 0.5f, 0.3f);
+    // R6 readability (FINAL POLISH): shell +18% so the apple icon reads at
+    // normal gameplay distance (~5m). Names/shapes unchanged (CT-P03C).
+    // R9 (player report: hint must read INSTANTLY): shell +30% more, icon
+    // +25%, pulse 6% -> 8%. Still a thought (outline + tail untouched in
+    // language), just impossible to miss. CT-P03C pins names, not sizes.
+    outline.transform.localScale = new Vector3(0.95f, 0.77f, 0.36f);
     outline.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.93f, 0.86f, 0.72f));
     CharacterPresentation.DestroyNow(outline.GetComponent<Collider>());
     GameObject shell = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     shell.name = "Shell";
     shell.transform.SetParent(_shell);
     shell.transform.localPosition = Vector3.zero;
-    shell.transform.localScale = new Vector3(0.55f, 0.44f, 0.3f);
+    shell.transform.localScale = new Vector3(0.85f, 0.68f, 0.36f);
     shell.GetComponent<Renderer>().sharedMaterial = Lit(new Color(1f, 1f, 1f));
     CharacterPresentation.DestroyNow(shell.GetComponent<Collider>());
 
     // Tail: two small puffs descending toward the thinker (straight down reads
     // from every camera orbit, since the thinker is always below the bubble).
-    AddPuff("TailPuff1", new Vector3(0f, -0.3f, 0f), 0.1f);
-    AddPuff("TailPuff2", new Vector3(0f, -0.49f, 0f), 0.065f);
+    AddPuff("TailPuff1", new Vector3(0f, -0.40f, 0f), 0.125f);
+    AddPuff("TailPuff2", new Vector3(0f, -0.60f, 0f), 0.08f);
 
     // Icon: mini apple (future asks replace this child only). Stem + leaf use
     // the crate-apple language so it reads as APPLE, never a red dot.
@@ -94,26 +119,29 @@ public class WorldQuestionBubble : MonoBehaviour {
     // in close framings).
     GameObject icon = new GameObject("AskIcon");
     icon.transform.SetParent(transform);
-    icon.transform.localPosition = new Vector3(0f, 0.02f, 0.17f);
+    icon.transform.localPosition = new Vector3(0f, 0.03f, 0.20f);
+    _icon = icon.transform; // R6: pulse driver (Update), structure unchanged
     GameObject fruit = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     fruit.name = "AskApple";
     fruit.transform.SetParent(icon.transform);
     fruit.transform.localPosition = Vector3.zero;
-    fruit.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+    // R6: apple +20% (0.20 -> 0.24) — the ICON is hierarchy level 1, it must
+    // read before any text. Stem/leaf scale with it (same apple language).
+    fruit.transform.localScale = new Vector3(0.30f, 0.30f, 0.30f);
     fruit.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.85f, 0.15f, 0.15f));
     CharacterPresentation.DestroyNow(fruit.GetComponent<Collider>());
     GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     stem.name = "AskStem";
     stem.transform.SetParent(icon.transform);
-    stem.transform.localPosition = new Vector3(0f, 0.13f, 0f);
-    stem.transform.localScale = new Vector3(0.045f, 0.13f, 0.045f);
+    stem.transform.localPosition = new Vector3(0f, 0.19f, 0f);
+    stem.transform.localScale = new Vector3(0.068f, 0.19f, 0.068f);
     stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.4f, 0.26f, 0.12f));
     CharacterPresentation.DestroyNow(stem.GetComponent<Collider>());
     GameObject leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     leaf.name = "AskLeaf";
     leaf.transform.SetParent(icon.transform);
-    leaf.transform.localPosition = new Vector3(0.07f, 0.13f, 0f);
-    leaf.transform.localScale = new Vector3(0.09f, 0.03f, 0.05f);
+    leaf.transform.localPosition = new Vector3(0.105f, 0.19f, 0f);
+    leaf.transform.localScale = new Vector3(0.135f, 0.045f, 0.075f);
     leaf.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.6f, 0.25f));
     CharacterPresentation.DestroyNow(leaf.GetComponent<Collider>());
   }

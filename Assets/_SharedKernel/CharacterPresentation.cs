@@ -25,6 +25,7 @@ public sealed class CharacterPresentation : MonoBehaviour {
   SkinnedMeshRenderer _skin;
   bool _pendingBuild;
   int _buildFrame;
+  int _frame; // live frames ticked (R5m: shoe-only flush waits for frame 2)
   Vector3 _visualBasePos;
   Quaternion _visualBaseRot;
   bool _hasVisualBase;
@@ -50,6 +51,26 @@ public sealed class CharacterPresentation : MonoBehaviour {
   float _blinkT;
   float _blinkPhase = -1f; // <0 idle, else 0..1 across the blink
   float _breathPhase;
+  // Gait lift offset (R5d, shared mechanism): walk clips pose the feet higher
+  // relative to the root than idle clips, so a single static lift grounds one
+  // gait and floats the other (R5c burst: idle planted at -0.012, walk floats
+  // ~0.10 world). Owners drive SetLiftOffset from locomotion state; the offset
+  // eases toward its target (no visible pop on gait change) and composes with
+  // breathing + hop on the same visual-root channel. Local units of the
+  // visual root's parent space; default 0 (idle lifts stay exactly as built).
+  float _liftOffset;
+  float _liftTarget;
+  // R5k surface tracking (shared mechanism): the NavMesh root rides ±3cm of
+  // bake noise across the lawn while the RENDERED ground is flat, so a baked
+  // lift plants one spot and sinks/floats another (R5j: idle -0.012 at (1,2)
+  // vs -0.037 at (-5,1) with identical lifts). Track the rendered surface by
+  // raycast and hold the VISUAL at its calibrated height above it; the baked
+  // lifts keep their meaning (clip pose compensation at the calib spot).
+  // Teleports snap; roaming eases like gait. Roam-free NPCs: ~zero change.
+  // Local units of the visual root's parent space, like the lift channel.
+  float _surfDelta0;
+  bool _hasSurfCalib;
+  float _surfOffset;
   float _attT;             // countdown to next glance
   float _attHold;          // remaining hold time of the current glance
   float _attYaw;
@@ -67,6 +88,10 @@ public sealed class CharacterPresentation : MonoBehaviour {
       _visualBasePos = _visualRoot.localPosition;
       _visualBaseRot = _visualRoot.localRotation;
       _hasVisualBase = true;
+      // R5k: calibrate surface-vs-root once (frame-2 live transforms).
+      _surfDelta0 = SurfaceDeltaNow();
+      _hasSurfCalib = true;
+      _surfOffset = 0f;
     }
     _pendingBuild = true;
     _buildFrame = 0;
@@ -158,6 +183,33 @@ public sealed class CharacterPresentation : MonoBehaviour {
   // Reusable celebratory hop (visual root only; colliders/gameplay untouched).
   public void PlayHop() { _hopT = HopDuration; }
 
+  // Gait lift driver (see _liftOffset): target is approached smoothly inside
+  // TickBreath, so walk<->idle transitions never snap the character.
+  public void SetLiftOffset(float localY) { _liftTarget = localY; }
+
+  // R5k rendered-surface delta (world units): surfaceY - rootY, via the same
+  // own-subtree-excluding downward raycast the audit probes use. 0 when the
+  // physics scene is unavailable (batch-safe: keeps baked behavior).
+  float SurfaceDeltaNow() {
+    if (_visualRoot == null || _visualRoot.parent == null) return 0f;
+    Transform root = _visualRoot.parent;
+    float rootY = root.position.y;
+    RaycastHit[] hits = Physics.RaycastAll(root.position + Vector3.up * 2f, Vector3.down, 6f);
+    if (hits == null) return 0f;
+    float best = float.MinValue;
+    bool any = false;
+    foreach (RaycastHit h in hits) {
+      if (h.collider == null) continue;
+      Transform t = h.collider.transform;
+      bool own = false;
+      while (t != null) { if (t == root) { own = true; break; } t = t.parent; }
+      if (own) continue;
+      if (h.point.y <= rootY + 0.6f && h.point.y > best) { best = h.point.y; any = true; }
+    }
+    if (!any) return 0f;
+    return best - rootY;
+  }
+
   // Deterministic build hook (tests/snapshot tools): builds the face
   // synchronously instead of waiting for the 2nd Update frame. Live spawners
   // keep using the deferred path (SetupFace + Update).
@@ -175,8 +227,9 @@ public sealed class CharacterPresentation : MonoBehaviour {
   // parented to the Foot.L/R bone so it follows Idle/Walk clips with zero
   // extra wiring. Sizes are world units tuned once for the chibi proportion;
   // color is the shared shoe leather (identity stays in clothing, identical
-  // for every character by design). Sole lands ~ankle-0.135, matching the
-  // pre-shoe sole, so grounding lifts stay valid (verified by probe).
+  // for every character by design). Seat is sole-relative (live-baked mesh
+  // minima at frame-2 idle): rig "Foot" bones ride high above the sole, so an
+  // ankle-relative drop misplaces caps by decimeters (R5l proof).
   public static readonly Vector3 ShoeSize = new Vector3(0.13f, 0.1f, 0.26f);
   public static readonly Color ShoeColor = new Color(0.23f, 0.17f, 0.13f);
 
@@ -189,12 +242,65 @@ public sealed class CharacterPresentation : MonoBehaviour {
   public void QueueShoe(Transform footBone, string shoeName) {
     if (footBone == null || string.IsNullOrWhiteSpace(shoeName)) return;
     _pendingShoes.Add(new QueuedShoe { Foot = footBone, Name = shoeName.Trim() });
+    _shoeRetry = 0;
   }
+
+  // R5p-fix settle retry: BakeMesh is not only EMPTY on the first frames
+  // (R5q) — it bakes the BIND pose at the ORIGIN while the gameplay roots
+  // already sit at spawn (player 4.5m, Mia 4.3m, Milo 2.1m from origin: the
+  // exact "degenerate verts 4m out" R5o blamed on garbage). The 0.8m gate
+  // then rejects EVERYTHING and the old code permanently built a floating
+  // drop cap (survey32: 6/6 mode=drop, shoes 20-40cm off, stance TIMEOUT).
+  // Live callers now DEFER (keep the queue) while the gate finds nothing and
+  // only accept drop after the mesh provably settles or retries exhaust.
+  int _shoeRetry;
+  const int ShoeRetryMax = 180;
 
   // Deterministic shoe hook (tests drive this directly; the frame-2 Update
   // path calls it live). Builds every queued shoe at live transforms.
-  public void BuildShoesImmediate() {
-    if (_pendingShoes.Count == 0) return;
+  // R5q: BakeMesh is EMPTY on the first frames even though transforms are
+  // live (face math avoids BakeMesh, which is why faces never noticed) — so
+  // this is a TRY-build: live callers retry next frame until the bake yields
+  // verts; direct/test callers force through (fallback drop applies).
+  public void BuildShoesImmediate() { TryBuildShoes(true); }
+
+  bool MeshReady() {
+    if (_skin == null || _skin.sharedMesh == null) return true;
+    Mesh scratch = new Mesh();
+    try { _skin.BakeMesh(scratch); } catch { Destroy(scratch); return false; }
+    bool ok = scratch != null && scratch.vertexCount > 0;
+    Destroy(scratch);
+    return ok;
+  }
+
+  bool TryBuildShoes(bool force) {
+    if (_pendingShoes.Count == 0) return true;
+    if (!force && !MeshReady()) return false;
+    // R5p-fix: peek first — if the mesh has verts but none lie within the
+    // 0.8m gate yet (bind pose still at origin), DEFER instead of building a
+    // permanent floating drop. Forced (test) callers skip the wait.
+    if (!force && _shoeRetry < ShoeRetryMax) {
+      bool anyGated = false;
+      foreach (QueuedShoe peek in _pendingShoes) {
+        if (peek.Foot == null) continue;
+        string peekMode;
+        int peekVerts;
+        float peekDist;
+        SoleSeatFor(peek.Name, peek.Foot.position, out peekMode, out peekVerts, out peekDist);
+        if (peekMode != "drop") { anyGated = true; break; }
+      }
+      if (!anyGated) {
+        if (_shoeRetry == 0 || _shoeRetry % 30 == 0) {
+          string footInfo = _pendingShoes.Count > 0 && _pendingShoes[0].Foot != null
+            ? _pendingShoes[0].Foot.position.ToString("F2") : "nullfoot";
+          string diag = ShoeMeshDiag();
+          Debug.Log("[CharacterPresentation] SHOE_DEFER retry=" + _shoeRetry
+            + " foot=" + footInfo + " " + diag + " (mesh not settled inside 0.8m gate)", this);
+        }
+        _shoeRetry++;
+        return false;
+      }
+    }
     Vector3 fwd = Vector3.forward;
     if (_anchorSpace != null) {
       fwd = _anchorSpace.forward;
@@ -203,11 +309,41 @@ public sealed class CharacterPresentation : MonoBehaviour {
     }
     fwd.Normalize();
     Quaternion look = Quaternion.LookRotation(fwd);
+    // R5n sole-relative seat: the rigs' "Foot" bones ride well above the mesh
+    // sole (R5l projection proof: caps hovered 15-36cm), so an ankle-relative
+    // drop is rig-fragile.
+    // R5o full-sole seat: bone XZ is ALSO offset from the mesh sole (~15cm:
+    // 100x armature amplifies a millimeter bind mismatch). Seat each cap on
+    // its OWN foot's live-baked sole minima (side-partitioned by dominant
+    // bone name .L/.R); the cap then rides its bone with a correct constant
+    // local offset (mesh flex ±2cm stays invisible).
+    // R5p garbage-gated seat (R5o caught degenerate verts 4m out): candidates
+    // must lie within 0.8m (world) of their foot bone; fallback chain
+    // side-partitioned -> unpartitioned-near-bone -> old drop. The chosen
+    // mode is logged (audit trail in Player.log).
     foreach (QueuedShoe q in _pendingShoes) {
       if (q.Foot == null) continue;
       GameObject shoe = GameObject.CreatePrimitive(PrimitiveType.Sphere);
       shoe.name = q.Name;
-      shoe.transform.position = q.Foot.position + fwd * 0.05f + Vector3.down * 0.085f;
+      string mode;
+      int vertCount;
+      float minDist;
+      Vector3 seat = SoleSeatFor(q.Name, q.Foot.position, out mode, out vertCount, out minDist);
+      Vector3 basePos;
+      if (mode != "drop") {
+        basePos = new Vector3(seat.x, seat.y + ShoeSize.y * 0.5f, seat.z);
+      } else {
+        basePos = new Vector3(
+          q.Foot.position.x + fwd.x * 0.05f,
+          q.Foot.position.y - 0.085f,
+          q.Foot.position.z + fwd.z * 0.05f);
+      }
+      Debug.Log("[CharacterPresentation] SHOE_SEAT " + q.Name + " mode=" + mode
+        + " seat=" + basePos.ToString("F3")
+        + " foot=" + q.Foot.position.ToString("F3")
+        + " verts=" + vertCount + " minDist=" + minDist.ToString("F3")
+        + " retry=" + _shoeRetry, this);
+      shoe.transform.position = basePos;
       shoe.transform.rotation = look;
       shoe.transform.localScale = ShoeSize;
       PaintShoe(shoe);
@@ -215,6 +351,120 @@ public sealed class CharacterPresentation : MonoBehaviour {
       shoe.transform.SetParent(q.Foot, true);
     }
     _pendingShoes.Clear();
+    _shoeRetry = 0;
+    return true;
+  }
+
+  // R5p per-foot live sole (world): lowest CURRENT-posed vertex position
+  // whose dominant bone name matches the shoe side (.L/.R in the shoe name)
+  // AND which lies within 0.8m of the foot bone (far-flung verts rejected).
+  // Falls back to the nearest unpartitioned minima ("near"), then "drop".
+  // Mapping = face-kit proven bone-bind math: BIND verts (sharedMesh) posed
+  // by (dominantBone.localToWorld * bindpose). BakeMesh + renderer.localToWorld
+  // is BANNED here (survey36 proof: 40-50x Body scale double-transforms the
+  // bake into 20m x 52-85m giants; min-Y only looked plausible by coincidence
+  // and never moves with the stride). Diag outs: vertCount + minDist.
+  Vector3 SoleSeatFor(string shoeName, Vector3 footPos, out string mode, out int vertCount, out float minDist) {
+    Vector3 seat = new Vector3(0f, -1000f, 0f);
+    mode = "drop";
+    vertCount = 0;
+    minDist = 999f;
+    try {
+      if (_skin == null || _skin.sharedMesh == null) return seat;
+      Mesh mesh = _skin.sharedMesh;
+      if (mesh == null || !mesh.isReadable) return seat;
+      bool wantLeft = shoeName != null && shoeName.EndsWith("L");
+      bool wantRight = shoeName != null && shoeName.EndsWith("R");
+      Vector3[] verts = mesh.vertices;
+      BoneWeight[] weights = mesh.boneWeights;
+      if (verts == null || verts.Length == 0) return seat;
+      vertCount = verts.Length;
+      Transform[] bones = _skin.bones;
+      Matrix4x4[] binds = mesh.bindposes;
+      if (bones == null || binds == null || bones.Length != binds.Length) return seat;
+      float bestSide = float.MaxValue;
+      Vector3 seatSide = seat;
+      bool anySide = false;
+      float bestNear = float.MaxValue;
+      Vector3 seatNear = seat;
+      bool anyNear = false;
+      for (int i = 0; i < verts.Length; i++) {
+        int dom = -1;
+        string bn = "";
+        if (weights != null && i < weights.Length) {
+          BoneWeight w = weights[i];
+          dom = w.boneIndex0;
+          float bw = w.weight0;
+          if (w.weight1 > bw) { dom = w.boneIndex1; bw = w.weight1; }
+          if (w.weight2 > bw) { dom = w.boneIndex2; bw = w.weight2; }
+          if (w.weight3 > bw) { dom = w.boneIndex3; }
+          if (dom >= 0 && dom < bones.Length && bones[dom] != null)
+            bn = bones[dom].name;
+        }
+        if (dom < 0 || dom >= bones.Length || dom >= binds.Length || bones[dom] == null) continue;
+        Vector3 wp = bones[dom].localToWorldMatrix.MultiplyPoint3x4(binds[dom].MultiplyPoint3x4(verts[i]));
+        float d = (wp - footPos).magnitude;
+        if (d < minDist) minDist = d;
+        if (d > 0.8f) continue; // R5p garbage gate
+        bool left = bn.IndexOf(".L") >= 0;
+        bool right = bn.IndexOf(".R") >= 0;
+        bool sideOk = (wantLeft && left) || (wantRight && right)
+          || (!wantLeft && !wantRight);
+        if (wp.y < bestNear) { bestNear = wp.y; seatNear = wp; anyNear = true; }
+        if (sideOk && wp.y < bestSide) { bestSide = wp.y; seatSide = wp; anySide = true; }
+      }
+      if (anySide) {
+        // R5V sole guard: a "side" minima ABOVE the ankle is not a sole (player
+        // Casual_Male survey37: seat +0.033 above the foot while the true sole
+        // sits -0.31 below -> 35cm floating caps). Fall through to the
+        // unpartitioned near-sole instead of building on ankle verts.
+        if (seatSide.y > footPos.y - 0.05f && anyNear && seatNear.y < footPos.y - 0.05f) {
+          seat = seatNear; mode = "near";
+        } else {
+          seat = seatSide; mode = "side";
+        }
+      }
+      else if (anyNear) { seat = seatNear; mode = "near"; }
+      else { seat = new Vector3(0f, -1000f, 0f); mode = "drop"; }
+    } catch { seat = new Vector3(0f, -1000f, 0f); mode = "drop"; }
+    return seat;
+  }
+
+  // R5p-fix one-shot mesh diag (throttled by caller): bone-bind mapped bounds
+  // vs the gameplay root, so the 40-50x double-scale dispute stays settled.
+  string ShoeMeshDiag() {
+    try {
+      string rootP = transform != null ? transform.position.ToString("F2") : "noroot";
+      if (_skin == null || _skin.sharedMesh == null) return "root=" + rootP + " noshared";
+      Mesh mesh = _skin.sharedMesh;
+      Vector3[] verts = mesh.vertices;
+      if (verts == null || verts.Length == 0) return "root=" + rootP + " empty";
+      Transform[] bones = _skin.bones;
+      Matrix4x4[] binds = mesh.bindposes;
+      if (bones == null || binds == null || bones.Length != binds.Length) return "root=" + rootP + " nobind";
+      BoneWeight[] weights = mesh.boneWeights;
+      Vector3 mn = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+      Vector3 mx = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+      int mapped = 0;
+      for (int i = 0; i < verts.Length; i++) {
+        int dom = -1;
+        if (weights != null && i < weights.Length) {
+          BoneWeight w = weights[i];
+          dom = w.boneIndex0;
+          float bw = w.weight0;
+          if (w.weight1 > bw) { dom = w.boneIndex1; bw = w.weight1; }
+          if (w.weight2 > bw) { dom = w.boneIndex2; bw = w.weight2; }
+          if (w.weight3 > bw) { dom = w.boneIndex3; }
+        }
+        if (dom < 0 || dom >= bones.Length || dom >= binds.Length || bones[dom] == null) continue;
+        Vector3 wp = bones[dom].localToWorldMatrix.MultiplyPoint3x4(binds[dom].MultiplyPoint3x4(verts[i]));
+        mn.x = Mathf.Min(mn.x, wp.x); mn.y = Mathf.Min(mn.y, wp.y); mn.z = Mathf.Min(mn.z, wp.z);
+        mx.x = Mathf.Max(mx.x, wp.x); mx.y = Mathf.Max(mx.y, wp.y); mx.z = Mathf.Max(mx.z, wp.z);
+        mapped++;
+      }
+      return "root=" + rootP + " n=" + verts.Length + " mapped=" + mapped
+        + " wMin=" + mn.ToString("F2") + " wMax=" + mx.ToString("F2");
+    } catch (System.Exception e) { return "diag-throw:" + e.Message; }
   }
 
   static void PaintShoe(GameObject go) {
@@ -232,19 +482,23 @@ public sealed class CharacterPresentation : MonoBehaviour {
   public void BlinkNow() { _blinkPhase = 0f; }
 
   void Update() {
+    _frame++;
     if (_pendingBuild) {
       _buildFrame++;
       if (_buildFrame >= 2) {
         _pendingBuild = false;
         BuildFaceNow();
-        BuildShoesImmediate(); // shoes need the same live transforms as the face
+        TryBuildShoes(false); // R5q: may defer until the bake yields verts
       } else {
         return;
       }
-    } else if (_pendingShoes.Count > 0) {
-      // No face pending (or already built): still flush queued shoes once the
-      // scene runs a frame, so live spawners never strand them.
-      BuildShoesImmediate();
+    } else if (_pendingShoes.Count > 0 && _frame >= 2) {
+      // Shoe-only usage (no face pending): still wait for frame 2, when
+      // world transforms are guaranteed live. Building on frame 0/1 bakes a
+      // permanent WRONG local offset from stale-identity bones (R5m: caps
+      // hovered 15-36cm all game, proven by the red-shoe player build).
+      // R5q: Try (not force) — an empty first bake defers to a later frame.
+      TryBuildShoes(false);
     }
     float dt = Time.deltaTime;
     if (dt <= 0f) return;
@@ -277,13 +531,23 @@ public sealed class CharacterPresentation : MonoBehaviour {
   void TickBreath(float dt) {
     if (_visualRoot == null || !_hasVisualBase) return;
     _breathPhase += dt * (Mathf.PI * 2f) * 0.25f;
+    _liftOffset = Mathf.Lerp(_liftOffset, _liftTarget, Mathf.Min(1f, dt * 6f));
+    // R5k: hold calibrated height above the RENDERED surface. Convert world
+    // delta to parent-local units (player root scale 0.8); teleports snap.
+    if (_hasSurfCalib) {
+      Transform parent = _visualRoot.parent;
+      float ps = (parent != null && Mathf.Abs(parent.lossyScale.y) > 0.001f) ? parent.lossyScale.y : 1f;
+      float targetLocal = (SurfaceDeltaNow() - _surfDelta0) / ps;
+      if (Mathf.Abs(targetLocal - _surfOffset) > 0.25f) _surfOffset = targetLocal;
+      else _surfOffset = Mathf.Lerp(_surfOffset, targetLocal, Mathf.Min(1f, dt * 6f));
+    }
     float hopY = 0f;
     if (_hopT > 0f) {
       _hopT -= dt;
       float k = Mathf.Clamp01(1f - _hopT / HopDuration);
       hopY = Mathf.Sin(k * Mathf.PI) * HopHeight;
     }
-    _visualRoot.localPosition = _visualBasePos + Vector3.up * (Mathf.Sin(_breathPhase) * 0.008f + hopY);
+    _visualRoot.localPosition = _visualBasePos + Vector3.up * (Mathf.Sin(_breathPhase) * 0.008f + hopY + _liftOffset + _surfOffset);
   }
 
   void TickAttention(float dt) {

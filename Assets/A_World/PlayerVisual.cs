@@ -14,17 +14,19 @@ using UnityEngine.AI;
 [DisallowMultipleComponent]
 public sealed class PlayerVisual : MonoBehaviour {
   const float VisualScale = 0.5f; // quaternius 100x armature -> ~1.6m character
-  // W1 grounding (W1TOUR GROUND 2026-09-12 live probe + GndDiag2): the
-  // quaternius clips pose the feet ~0.32m below the prefab origin at game
-  // scale, and the Animator always plays a clip (the rest bind pose is never
-  // rendered), so the VisualRoot carries a permanent lift. localPosition is
-  // in PARENT space: player root scale is 0.8, so 0.300 local = 0.240 world.
-  // R4 (P1Survey p2-gnd-player 2026-09-13): probe read minMapped=+0.076
-  // (photo-confirmed 7cm float + shadow gap under shoes), so the 0.395 lift
-  // (0.316 world) was cut by exactly the measured float (0.095 local).
-  // CharacterPresentation captures this base in SetupFace (breathing/hop ride
-  // on top), so the lift composes with all presentation motion.
-  const float GroundLiftLocal = 0.300f;
+  // R6 grounding (FINAL POLISH 2026-09-13): the 0.340 lift descends from the
+  // same discredited BakeMesh minMapped era as the NPC 0.493. Trusted
+  // bone-bind SOLE2 reads sole=0.324 at rootY 0.030 (off=0.294 ~= the 0.272
+  // world lift => TRUE Casual_Male idle sink ~= 0.02), and wide shots show a
+  // ~10cm daylight gap + detached shadow. Build-A photo round (0.06 local)
+  // still showed ~6cm float + detached shadow in the f6-23 zoom: predicted
+  // idle sole = raw(~+0.01 world) + lift, so 0.015 local = 0.012 world lands
+  // the sole at ~+0.02 (contact shadow sells contact, breathing floor +0.004
+  // never penetrates). Build-B (0.015) reads planted in profile but keeps a
+  // 3-6cm number + thin daylight in 3/4 stills: final 0.005 local = 0.004
+  // world lands ~+0.015, breathing floor ~+0.008, still never sinks on the
+  // flat lawn/path. Build-C macros decide.
+  const float GroundLiftLocal = 0.005f;
 
   Animator _animator;
   NavMeshAgent _agent;
@@ -34,10 +36,26 @@ public sealed class PlayerVisual : MonoBehaviour {
   Transform _footLForShoe;
   Transform _footRForShoe;
   Transform _visualForFace;
+  // R6 gait compensation (Build-A PROVEN, sign flipped): the old -0.03 assumed
+  // the walk clip poses feet HIGHER than idle (BakeMesh-era claim). Build-A
+  // photos prove the opposite: f6-22 mid-stride support planted with total
+  // walk lift 0.024 world while f6-23 idle floated ~6cm on 0.048 world — i.e.
+  // the walk clip CROUCHES ~3.6cm below idle (bent support knee, visible).
+  // Proven-planted walk total = 0.024 world = 0.03 local; with the 0.015 base
+  // the comp was +0.015. Build-B walk-mid (pot-occluded, inconclusive) plus
+  // the final base cut to 0.005 keeps the proven total: comp +0.025
+  // (0.005+0.025 = 0.03 local = 0.024 world, exactly the f6-22 proof value).
+  // If the Build-C walk-mid floats, cut toward 0; if stance sinks, raise base.
+  const float WalkLiftLocal = 0.025f;
   int _movingHash;
 
   IGameEventBus _bus;
   IDisposable _questSub;
+
+  // R5j: the carried-apple anchor rides the FIST bone (reads as "held").
+  // (MarketBuilder's old root-child HandAnchor floated beside the head —
+  // R5i photo proof.) Null until BuildVisual finds Fist.R; Lead falls back.
+  public Transform HandBone { get; private set; }
 
   void Awake() {
     _agent = GetComponent<NavMeshAgent>();
@@ -72,6 +90,7 @@ public sealed class PlayerVisual : MonoBehaviour {
     if (_animator == null || _agent == null) return;
     bool moving = _agent.velocity.sqrMagnitude > 0.25f;
     _animator.SetBool(_movingHash, moving);
+    if (_presentation != null) _presentation.SetLiftOffset(moving ? WalkLiftLocal : 0f);
   }
 
   // Future avatar-swap seam: expression/gesture API for dialogue/story code.
@@ -111,14 +130,22 @@ public sealed class PlayerVisual : MonoBehaviour {
       // Player identity: blue shirt (distinct from Milo's orange / Mia's coral),
       // warm tan face, warm mid-brown skin. Instance copies only.
       TryTint(skin, "Shirt", new Color(0.25f, 0.5f, 0.95f));
-      TryTint(skin, "Face", new Color(1f, 0.82f, 0.64f), 0.45f);
-      TryTint(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.5f);
+      // R5-A material test (2026-09-13): Face 0.45 -> 0.25, Skin 0.50 -> 0.30
+      // to kill the glossy brow/cheek separation (specular on sculpt ridges
+      // reading as detached white ellipses). Candidate values only: macro +
+      // gameplay photos decide. Revert/tune if the face goes chalky or flat.
+      // R5c (brows persisted after R5-A => diffuse sculpt, not specular):
+      // deepen Face tan one step to integrate the lid/brow ridges. If the
+      // face loses identity or goes muddy in photos, revert this line only.
+      TryTint(skin, "Face", new Color(0.93f, 0.70f, 0.52f), 0.25f);
+      TryTint(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.3f);
       if (skin.bones != null) {
         foreach (Transform bone in skin.bones) {
           if (bone == null) continue;
           if (headBone == null && bone.name == "Head") headBone = bone;
           if (_footLForShoe == null && bone.name == "Foot.L") _footLForShoe = bone;
           if (_footRForShoe == null && bone.name == "Foot.R") _footRForShoe = bone;
+          if (HandBone == null && bone.name == "Fist.R") HandBone = bone;
         }
       }
     }

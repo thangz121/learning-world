@@ -2,9 +2,10 @@
 // Builds the ENTIRE constrained 3D market mini-world in code (Awake), so the
 // scene file stays a one-GameObject shell. Fixed world contract (metres):
 //   ground X[-8,8] Z[-6,6] | player spawn (0,0,4.5) | Milo anchor (2.5,0,1.5)
-//   Mia stall anchor (-3.5,0,-2.5) | apple crate (3.5,0,-2.0) | flower bed (-1.5,0,2.5)
+//   Mia stall anchor (-3.5,0,-2.5) | apple crate (3.5,0,-2.0) | flower bed (-5.6,0,4.6)
 // Visuals are URP/Lit colored materials (no greybox): green grass, warm path,
-// sky-blue background + fog, striped awning stall, leafy tree, fence boundary.
+// sky-blue background + fog, striped awning stall, leafy tree, hedge boundary.
+// (R9: fence -> hedge; flower bed compact + parked in the SW corner.)
 // Wiring: Lead calls BuildServices(bus, audio) after scene load (GameInstaller
 // owns the services; this class NEVER news them). Presenters stay exposed so
 // the Lead can re-wire/verify from other agents' components.
@@ -21,10 +22,17 @@ public class MarketBuilder : MonoBehaviour {
   // Phase-1 closure: Milo hosts the market stall front (his place; Mia keeps
   // the counter as shopkeeper), so spawn path + onboarding lead southwest.
   public static readonly Vector3 PlayerSpawn = new Vector3(0f, 0f, 4.5f);
-  public static readonly Vector3 MiloAnchorPos = new Vector3(-1.3f, 0f, -1.7f);
+  // R5V-2 composition: Milo moves EAST to his own place on the path
+  // (0.0,-0.8), 3.89m from Mia (-3.5,-2.5) — clears the 3.6m minimum floor so
+  // the two anchors stop competing in one frame. Camera midpoints derive from
+  // these anchors, so intro/celebrate poses follow automatically.
+  public static readonly Vector3 MiloAnchorPos = new Vector3(0f, 0f, -0.8f);
   public static readonly Vector3 MiaAnchorPos = new Vector3(-3.5f, 0f, -2.5f);
   public static readonly Vector3 CrateAnchorPos = new Vector3(3.5f, 0f, -2.0f);
-  public static readonly Vector3 FlowerAnchorPos = new Vector3(-1.5f, 0f, 2.5f);
+  // R9 (player report: the flower bed ate frame + camera): compact cluster
+  // (~0.7m tall, was ~1.2m) parked in the SW corner, off every quest path and
+  // behind the default follow camera — a reward nook, never an occluder.
+  public static readonly Vector3 FlowerAnchorPos = new Vector3(-5.6f, 0f, 4.6f);
   public const float BoundX = 8f;
   public const float BoundZ = 6f;
 
@@ -45,6 +53,7 @@ public class MarketBuilder : MonoBehaviour {
   public PlayerVisual PlayerViz { get; private set; }
   public DistractorChoice Distractor { get; private set; }
   public WorldQuestionBubble Bubble { get; private set; }
+  public CursorPresenter Cursor { get; private set; }
   public ProximityDiscovery AppleDiscovery { get; private set; }
 
   IGameEventBus _bus;
@@ -52,7 +61,7 @@ public class MarketBuilder : MonoBehaviour {
   void Awake() {
     BuildEnvironment();
     BuildStall();
-    BuildTreeAndFences();
+    BuildTreeAndHedge();
     BuildAppleCrate();
     BuildFlowerBed();
     BuildDistractor();
@@ -62,6 +71,7 @@ public class MarketBuilder : MonoBehaviour {
     // itself is excluded from the baked geometry.
     BuildNavMesh();
     BuildNavCarves();
+    BuildMiloMat(); // R5V-b: post-NavMesh so the bake never sees it
     BuildPlayer();
     BuildCamera();
     BuildFrameServices();
@@ -84,11 +94,18 @@ public class MarketBuilder : MonoBehaviour {
       Router.AttachPlayer(Player);
     }
     if (WorldCamera != null) WorldCamera.Bind(bus);
+    // R5j: ride the FIST bone (reads as "held"). The old root-child anchor
+    // floated beside the head (R5i photo proof); kept only as fallback.
+    // R9: the pickable distractor ball rides the SAME hand (one hand, one
+    // item — the swap rule keeps carry exclusive, see DistractorChoice).
+    Transform handAnchor = (PlayerViz != null && PlayerViz.HandBone != null)
+      ? PlayerViz.HandBone : PlayerHand;
     if (ApplePresenter != null) {
       ApplePresenter.Bind(bus);
       ApplePresenter.SetCrateApple(CrateApple);
-      ApplePresenter.AttachHand(PlayerHand);
+      ApplePresenter.AttachHand(handAnchor);
     }
+    if (Distractor != null) Distractor.SetHand(handAnchor);
     if (FlowerPresenter != null) {
       FlowerPresenter.Bind(bus);
       FlowerPresenter.SetFlowerRoot(FlowerRoot);
@@ -115,17 +132,26 @@ public class MarketBuilder : MonoBehaviour {
     RenderSettings.fogStartDistance = 18f;
     RenderSettings.fogEndDistance = 45f;
     RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-    RenderSettings.ambientLight = new Color(0.75f, 0.78f, 0.82f);
+    // R5V-1 stylized daylight (was 0.75/0.78/0.82: faces washed, grass neon):
+    // softer ambient keeps skin volume without blowing out the lawn.
+    RenderSettings.ambientLight = new Color(0.68f, 0.71f, 0.75f);
     RenderSettings.ambientIntensity = 1f;
 
     GameObject sun = new GameObject("DirectionalLight");
     sun.transform.SetParent(transform);
-    sun.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+    // R5V-1: higher sun (50 -> 62 deg) shortens the dominating long shadows;
+    // due-south-east yaw keeps faces lit from the gameplay camera side.
+    // R5V-b (r5-wrong/complete photos: stall shadow covers ~40% frame, fence
+    // stripes dominate foreground): 62 -> 68 deg + strength 0.72 -> 0.65.
+    // Candidate values only: faces + contact shadows in photos decide.
+    sun.transform.rotation = Quaternion.Euler(68f, -35f, 0f);
     Light light = sun.AddComponent<Light>();
     light.type = LightType.Directional;
     light.color = new Color(1f, 0.96f, 0.88f); // warm sunlight
-    light.intensity = 1.1f;
+    light.intensity = 0.95f; // R5V-1: 1.1 blew out path + brow speculars
     light.shadows = LightShadows.Soft;
+    light.shadowStrength = 0.65f; // R5V-1: full-strength shadows dominated composition
+    // R5V-b: 0.72 -> 0.65 (r5-low-mia: stall shadow filled half the frame).
 
     // Green grass ground covering exactly X[-8,8] Z[-6,6].
     GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -133,19 +159,28 @@ public class MarketBuilder : MonoBehaviour {
     ground.transform.SetParent(transform);
     ground.transform.position = Vector3.zero;
     ground.transform.localScale = new Vector3(1.6f, 1f, 1.2f); // 10m plane -> 16x12m
-    ground.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.35f, 0.68f, 0.32f));
+    // R5V-1: toned down (0.35,0.68,0.32 glowed neon under sun+ambient).
+    ground.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.33f, 0.62f, 0.30f));
 
-    // Warm path stripe from spawn toward Milo's stall front (onboarding: the
+    // R5V-1 outer world: a darker skirt far below/outside the fence so the
+    // playable lawn reads as a place inside a larger world, not a floating
+    // island in sky-blue void. Unlit-cheap, no gameplay, no NavMesh.
+    GameObject outer = GameObject.CreatePrimitive(PrimitiveType.Plane);
+    outer.name = "OuterGround";
+    outer.transform.SetParent(transform);
+    outer.transform.position = new Vector3(0f, -0.12f, 0f);
+    outer.transform.localScale = new Vector3(6f, 1f, 6f);
+    outer.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.24f, 0.47f, 0.33f));
+
+    // Warm path stripe from spawn toward Milo's place (onboarding: the
     // world itself points first-time players at Milo; HUD stays secondary).
-    // Phase-1 closure: yaw flipped 180deg (16.7 -> 196.7) so the stripe runs
-    // NORTH from spawn (0,4.5) to Milo (-1.3,-1.7); the old heading pointed
-    // SOUTH to the fence (spawn shot showed path-to-nowhere, Milo behind cam).
+    // R5V-2: re-aimed straight NORTH spawn (0,4.5) -> Milo (0,-0.8).
     GameObject path = GameObject.CreatePrimitive(PrimitiveType.Cube);
     path.name = "Path";
     path.transform.SetParent(transform);
-    path.transform.position = new Vector3(-0.65f, 0.02f, 1.4f);
-    path.transform.localRotation = Quaternion.Euler(0f, 196.7f, 0f);
-    path.transform.localScale = new Vector3(2.2f, 0.04f, 5.5f);
+    path.transform.position = new Vector3(0f, 0.015f, 1.85f);
+    path.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+    path.transform.localScale = new Vector3(2.2f, 0.03f, 5.3f);
     // R4 (P1Survey p2-approach/walk 2026-09-13): (0.92,0.78,0.55) under the
     // 1.1 warm sun + 0.75 ambient blew out to near-white carpet. (0.76,0.60,
     // 0.40) renders as the intended warm tan under the same lighting.
@@ -169,7 +204,12 @@ public class MarketBuilder : MonoBehaviour {
   void BuildStall() {
     GameObject stall = new GameObject("MarketStall");
     stall.transform.SetParent(transform);
-    stall.transform.position = new Vector3(MiaAnchorPos.x, 0f, MiaAnchorPos.z - 0.9f);
+    // R5V-b (r5-talk/wrong/face4m: Mia at (-3.5,-2.5) reads as SITTING on the
+    // counter — only 0.4m south of its front face): stall rides 0.5m further
+    // north (-0.9 -> -1.4) so Mia stands 0.9m clear of the counter like a
+    // shopkeeper before her shop. Mia/post/anchor-derived cams/bubble/probes
+    // all stay untouched; only the stall + its carve move.
+    stall.transform.position = new Vector3(MiaAnchorPos.x, 0f, MiaAnchorPos.z - 1.4f);
     Color wood = new Color(0.55f, 0.36f, 0.2f);
     Color cream = new Color(0.99f, 0.95f, 0.86f);
     Color red = new Color(0.85f, 0.25f, 0.22f);
@@ -206,12 +246,28 @@ public class MarketBuilder : MonoBehaviour {
     }
   }
 
-  // ---- tree + fence boundary --------------------------------------------------
+  // ---- tree + hedge boundary --------------------------------------------------
 
-  void BuildTreeAndFences() {
+  void BuildTreeAndHedge() {
+    BuildTree(new Vector3(-6.2f, 0f, 3.8f), 1f);
+    // R5V-1 background depth: two OUTSIDE trees so the boundary reads as a
+    // garden edge inside a larger world (foreground path / midground play /
+    // background green), plus three small bushes inside corners for charm.
+    // Each answers WHY: orientation + horizon depth, never clutter.
+    BuildTree(new Vector3(-11f, -0.1f, -3f), 1.6f);
+    BuildTree(new Vector3(10.5f, -0.1f, 4.5f), 1.4f);
+    BuildTree(new Vector3(3f, -0.1f, -10.5f), 1.8f);
+    BuildBush(new Vector3(-6.8f, 0f, -4.8f));
+    BuildBush(new Vector3(6.8f, 0f, -4.8f));
+    BuildBush(new Vector3(6.8f, 0f, 4.8f));
+    BuildHedgeEdge();
+  }
+
+  void BuildTree(Vector3 pos, float s) {
     GameObject tree = new GameObject("Tree");
     tree.transform.SetParent(transform);
-    tree.transform.position = new Vector3(-6.2f, 0f, 3.8f);
+    tree.transform.position = pos;
+    tree.transform.localScale = Vector3.one * s;
     GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     trunk.name = "Trunk";
     trunk.transform.SetParent(tree.transform);
@@ -231,41 +287,75 @@ public class MarketBuilder : MonoBehaviour {
       leaf.transform.localScale = new Vector3(1.6f, 1.3f, 1.6f);
       leaf.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.58f, 0.28f));
     }
-
-    GameObject fence = new GameObject("Fence");
-    fence.transform.SetParent(transform);
-    Color fenceBrown = new Color(0.6f, 0.42f, 0.25f);
-    // Posts every 2m around the X[-8,8] Z[-6,6] boundary + two side rails.
-    for (float x = -8f; x <= 8.01f; x += 2f) {
-      AddFencePost(fence.transform, fenceBrown, new Vector3(x, 0.45f, -6f));
-      AddFencePost(fence.transform, fenceBrown, new Vector3(x, 0.45f, 6f));
-    }
-    for (float z = -4f; z <= 4.01f; z += 2f) {
-      AddFencePost(fence.transform, fenceBrown, new Vector3(-8f, 0.45f, z));
-      AddFencePost(fence.transform, fenceBrown, new Vector3(8f, 0.45f, z));
-    }
-    AddRail(fence.transform, fenceBrown, new Vector3(0f, 0.7f, -6f), new Vector3(16.4f, 0.1f, 0.12f));
-    AddRail(fence.transform, fenceBrown, new Vector3(0f, 0.7f, 6f), new Vector3(16.4f, 0.1f, 0.12f));
-    AddRail(fence.transform, fenceBrown, new Vector3(-8f, 0.7f, 0f), new Vector3(0.12f, 0.1f, 12.4f));
-    AddRail(fence.transform, fenceBrown, new Vector3(8f, 0.7f, 0f), new Vector3(0.12f, 0.1f, 12.4f));
   }
 
-  void AddFencePost(Transform parent, Color color, Vector3 pos) {
-    GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cube);
-    post.name = "FencePost";
-    post.transform.SetParent(parent);
-    post.transform.position = pos;
-    post.transform.localScale = new Vector3(0.16f, 0.9f, 0.16f);
-    post.GetComponent<Renderer>().sharedMaterial = Lit(color);
+  // R5V-1 corner bush: one squashed canopy sphere (orientation + charm).
+  void BuildBush(Vector3 pos) {
+    GameObject bush = new GameObject("Bush");
+    bush.transform.SetParent(transform);
+    bush.transform.position = pos;
+    GameObject leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    leaf.name = "BushLeaf";
+    leaf.transform.SetParent(bush.transform);
+    leaf.transform.localPosition = new Vector3(0f, 0.35f, 0f);
+    leaf.transform.localScale = new Vector3(1.1f, 0.7f, 1.1f);
+    leaf.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.28f, 0.60f, 0.30f));
   }
 
-  void AddRail(Transform parent, Color color, Vector3 pos, Vector3 scale) {
-    GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
-    rail.name = "FenceRail";
-    rail.transform.SetParent(parent);
-    rail.transform.position = pos;
-    rail.transform.localScale = scale;
-    rail.GetComponent<Renderer>().sharedMaterial = Lit(color);
+  // R9 (player report: the fence reads as a tiger cage): the play-area edge
+  // is a low garden HEDGE now — rounded bushes + tiny flower tufts along the
+  // same boundary footprint (carves + router bounds untouched). Nothing rises
+  // above ~0.8m: sightlines stay open from every camera, faces never occluded.
+  void BuildHedgeEdge() {
+    GameObject hedge = new GameObject("HedgeEdge");
+    hedge.transform.SetParent(transform);
+    Color leafA = new Color(0.28f, 0.60f, 0.30f);
+    Color leafB = new Color(0.22f, 0.52f, 0.28f);
+    Color[] tuft = {
+      new Color(0.95f, 0.55f, 0.65f),
+      new Color(0.98f, 0.82f, 0.30f),
+      new Color(0.96f, 0.95f, 0.90f),
+    };
+    // Deterministic alternation (never Random: every build is identical).
+    int n = 0;
+    for (float x = -8f; x <= 8.01f; x += 1.6f) {
+      AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, -6f), n);
+      AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, 6f), n + 1);
+      if (n % 4 == 1) AddFlowerTuft(hedge.transform, new Vector3(x, 0f, -6f), tuft[(n / 4) % 3]);
+      n++;
+    }
+    for (float z = -4.4f; z <= 4.41f; z += 1.6f) {
+      AddHedgeBush(hedge.transform, new Vector3(-8f, 0.28f, z), n);
+      AddHedgeBush(hedge.transform, new Vector3(8f, 0.28f, z), n + 1);
+      n++;
+    }
+
+    void AddHedgeBush(Transform parent, Vector3 pos, int seed) {
+      GameObject bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      bush.name = "HedgeBush";
+      bush.transform.SetParent(parent);
+      bush.transform.position = pos;
+      bush.transform.localScale = (seed % 2 == 0)
+        ? new Vector3(1.15f, 0.62f, 1.15f)
+        : new Vector3(0.95f, 0.55f, 0.95f);
+      bush.GetComponent<Renderer>().sharedMaterial = Lit(seed % 2 == 0 ? leafA : leafB);
+      // Collider kept (same bake/click behavior the fence posts had).
+    }
+
+    void AddFlowerTuft(Transform parent, Vector3 groundPos, Color color) {
+      GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      stem.name = "HedgeTuftStem";
+      stem.transform.SetParent(parent);
+      stem.transform.position = groundPos + new Vector3(0f, 0.5f, 0f);
+      stem.transform.localScale = new Vector3(0.05f, 0.35f, 0.05f);
+      stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.55f, 0.28f));
+      GameObject bloom = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      bloom.name = "HedgeTuftBloom";
+      bloom.transform.SetParent(parent);
+      bloom.transform.position = groundPos + new Vector3(0f, 0.72f, 0f);
+      bloom.transform.localScale = new Vector3(0.13f, 0.13f, 0.13f);
+      bloom.GetComponent<Renderer>().sharedMaterial = Lit(color);
+    }
   }
 
   // ---- apple crate + big red apple (the W1 interaction target) ----------------
@@ -325,7 +415,10 @@ public class MarketBuilder : MonoBehaviour {
     Apple.wordId = "apple";
     Apple.interactionId = "take_apple";
     Apple.npcId = "mia";
-    Apple.interactionDistance = 2.5f;
+    // R8 (player report: range feels too generous): 2.5 -> 2.0m — the child
+    // must walk visibly UP TO the crate, not snipe it across the lawn. Still
+    // forgiving (no pixel-hunting); proximity discovery follows automatically.
+    Apple.interactionDistance = 2.0f;
     Apple.ParseIds(); // fields assigned post-Awake: re-parse or events drop
     AppleDiscovery = apple.AddComponent<ProximityDiscovery>();
   }
@@ -340,8 +433,11 @@ public class MarketBuilder : MonoBehaviour {
     GameObject pot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     pot.name = "FlowerPot";
     pot.transform.SetParent(bed.transform);
-    pot.transform.localPosition = new Vector3(0f, 0.25f, 0f);
-    pot.transform.localScale = new Vector3(0.7f, 0.5f, 0.7f);
+    // R9 compact cluster (player report: the old bed ate frame + camera):
+    // smaller pot, shorter stalks, tighter blooms — ~0.7m tall total (was
+    // ~1.2m), still 3 blooms. Parked in the SW corner (see FlowerAnchorPos).
+    pot.transform.localPosition = new Vector3(0f, 0.18f, 0f);
+    pot.transform.localScale = new Vector3(0.5f, 0.36f, 0.5f);
     pot.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.8f, 0.42f, 0.25f));
 
     Color[] bloom = {
@@ -350,18 +446,18 @@ public class MarketBuilder : MonoBehaviour {
       new Color(0.95f, 0.45f, 0.6f),
     };
     for (int i = 0; i < 3; i++) {
-      float ox = (i - 1) * 0.25f;
+      float ox = (i - 1) * 0.13f;
       GameObject stalk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
       stalk.name = "FlowerStalk";
       stalk.transform.SetParent(bed.transform);
-      stalk.transform.localPosition = new Vector3(ox, 0.7f, 0f);
-      stalk.transform.localScale = new Vector3(0.08f, 0.5f, 0.08f);
+      stalk.transform.localPosition = new Vector3(ox, 0.42f, 0f);
+      stalk.transform.localScale = new Vector3(0.07f, 0.3f, 0.07f);
       stalk.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.55f, 0.28f));
       GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
       head.name = "FlowerHead";
       head.transform.SetParent(bed.transform);
-      head.transform.localPosition = new Vector3(ox, 1.05f, 0f);
-      head.transform.localScale = new Vector3(0.28f, 0.28f, 0.28f);
+      head.transform.localPosition = new Vector3(ox, 0.62f, 0f);
+      head.transform.localScale = new Vector3(0.22f, 0.22f, 0.22f);
       head.GetComponent<Renderer>().sharedMaterial = Lit(bloom[i]);
     }
 
@@ -377,7 +473,9 @@ public class MarketBuilder : MonoBehaviour {
   void BuildDistractor() {
     GameObject stand = new GameObject("BallStand");
     stand.transform.SetParent(transform);
-    stand.transform.position = new Vector3(4.7f, 0f, -0.9f);
+    // R5V-2: 3.22m from the apple crate (was 1.63m: a tiny red-on-red cluster
+    // unreadable at 4yo). East-south placement keeps both on the same side.
+    stand.transform.position = new Vector3(5.4f, 0f, 0.6f);
 
     GameObject pedestal = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     pedestal.name = "Pedestal";
@@ -391,7 +489,11 @@ public class MarketBuilder : MonoBehaviour {
     ball.transform.SetParent(stand.transform);
     ball.transform.localPosition = new Vector3(0f, 0.78f, 0f);
     ball.transform.localScale = new Vector3(0.56f, 0.56f, 0.56f);
-    ball.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.8f, 0.12f, 0.18f));
+    // R5V-2: BLUE ball (was near-identical red: apple 0.85/0.15/0.15 vs ball
+    // 0.80/0.12/0.18). Color + position + context now differ (Roblox visual-
+    // language rule: never color-alone, so silhouette context differs too:
+    // ball on tall pedestal vs apple in low crate). Name kept for survey/tests.
+    ball.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.20f, 0.42f, 0.90f));
 
     Distractor = ball.AddComponent<DistractorChoice>();
   }
@@ -406,7 +508,26 @@ public class MarketBuilder : MonoBehaviour {
     GameObject bubbleGo = new GameObject("QuestionBubble");
     bubbleGo.transform.SetParent(transform);
     Bubble = bubbleGo.AddComponent<WorldQuestionBubble>();
-    Bubble.Place(new Vector3(MiaAnchorPos.x + 1.15f, 2f, MiaAnchorPos.z + 0.95f));
+    // R9: placement goes through the shared contract (AnchorFor) — every
+    // future NPC parks its hint the same way (east-south, head height, clear
+    // of labels/faces/awnings). Icon-first thought language inside.
+    Bubble.Place(WorldQuestionBubble.AnchorFor(MiaAnchorPos));
+  }
+
+  // R5V-b Milo's place: a flat round mat under Milo's anchor (his identity +
+  // orientation cue — he no longer stands on bare grass). WHY: separates his
+  // anchor from Mia's stall in screen space, gives the onboarding path a
+  // destination. Flat (no trip), collider destroyed (never eats ground
+  // clicks), matte (never glows). Post-NavMesh: not baked, not walkable.
+  void BuildMiloMat() {
+    GameObject mat = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    mat.name = "MiloMat";
+    mat.transform.SetParent(transform);
+    mat.transform.position = new Vector3(MiloAnchorPos.x, 0.012f, MiloAnchorPos.z);
+    mat.transform.localScale = new Vector3(2.2f, 0.024f, 2.2f);
+    mat.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.45f, 0.60f, 0.85f));
+    Collider c = mat.GetComponent<Collider>();
+    if (c != null) Destroy(c);
   }
 
   // ---- player capsule + anchors -------------------------------------------------
@@ -420,7 +541,12 @@ public class MarketBuilder : MonoBehaviour {
     player.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.2f, 0.45f, 0.9f));
 
     NavMeshAgent agent = player.AddComponent<NavMeshAgent>();
-    agent.speed = 3.5f;
+    // R6 walk (FINAL POLISH): 3.5 m/s is a jog for a ~1.3m stylized child
+    // (~2.7 body-lengths/s) and skates against the chibi walk cycle. Candidate
+    // 2.2 m/s (~1.7 BL/s, brisk child walk) to match foot cycle to root
+    // translation. Walk burst macros decide (raise if it reads as trudging,
+    // lower if feet still skate).
+    agent.speed = 2.2f;
     agent.angularSpeed = 720f;
     agent.acceleration = 12f;
     agent.stoppingDistance = 0.4f;
@@ -503,6 +629,13 @@ public class MarketBuilder : MonoBehaviour {
     GameObject flowerGo = new GameObject("FlowerPresenter");
     flowerGo.transform.SetParent(transform);
     FlowerPresenter = flowerGo.AddComponent<FlowerPotPresenter>();
+
+    // R7 software cursor (presentation only: no bus, no services). Built with
+    // the frame services so it exists from the first rendered frame; hides
+    // the hardware arrow and highlights clickables on hover by itself.
+    GameObject cursorGo = new GameObject("MouseCursor");
+    cursorGo.transform.SetParent(transform);
+    Cursor = cursorGo.AddComponent<CursorPresenter>();
   }
 
   void BuildNavMesh() {
@@ -521,13 +654,14 @@ public class MarketBuilder : MonoBehaviour {
   // (apple 2.5m, NPC clicks) is unaffected: carves only deny foot placement.
   void BuildNavCarves() {
     CarveBox("TreeCarve", new Vector3(-6.2f, 1f, 3.8f), new Vector3(1.4f, 2f, 1.4f));
-    CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 0.9f), new Vector3(2.6f, 1f, 1.4f));
+    CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 1.4f), new Vector3(2.6f, 1f, 1.4f));
     CarveBox("CrateCarve", new Vector3(CrateAnchorPos.x, 0.3f, CrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
-    CarveBox("PedestalCarve", new Vector3(4.7f, 0.4f, -0.9f), new Vector3(0.9f, 0.8f, 0.9f));
-    CarveBox("FenceCarveN", new Vector3(0f, 0.5f, -6f), new Vector3(16.4f, 1f, 0.4f));
-    CarveBox("FenceCarveS", new Vector3(0f, 0.5f, 6f), new Vector3(16.4f, 1f, 0.4f));
-    CarveBox("FenceCarveW", new Vector3(-8f, 0.5f, 0f), new Vector3(0.4f, 1f, 12.4f));
-    CarveBox("FenceCarveE", new Vector3(8f, 0.5f, 0f), new Vector3(0.4f, 1f, 12.4f));
+    CarveBox("PedestalCarve", new Vector3(5.4f, 0.4f, 0.6f), new Vector3(0.9f, 0.8f, 0.9f));
+    // R9: fence -> hedge (same footprint, renamed with the visuals).
+    CarveBox("EdgeCarveN", new Vector3(0f, 0.5f, -6f), new Vector3(16.4f, 1f, 0.4f));
+    CarveBox("EdgeCarveS", new Vector3(0f, 0.5f, 6f), new Vector3(16.4f, 1f, 0.4f));
+    CarveBox("EdgeCarveW", new Vector3(-8f, 0.5f, 0f), new Vector3(0.4f, 1f, 12.4f));
+    CarveBox("EdgeCarveE", new Vector3(8f, 0.5f, 0f), new Vector3(0.4f, 1f, 12.4f));
   }
 
   void CarveBox(string carveName, Vector3 pos, Vector3 size) {
@@ -545,6 +679,10 @@ public class MarketBuilder : MonoBehaviour {
   static Material Lit(Color color) {
     Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
     mat.SetColor("_BaseColor", color);
+    // R5V-1 unified stylized finish: matte environment (specular highlights
+    // on grass/path read as neon/glow under the warm sun).
+    if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0f);
+    if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
     return mat;
   }
 }

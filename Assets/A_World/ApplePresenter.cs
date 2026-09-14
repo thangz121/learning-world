@@ -12,6 +12,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class ApplePresenter : BusBehaviour {
   const string AppleWord = "apple";
+  // W1 slice quest this presenter serves (Content/quests/w1_mia_apple.json).
+  const string W1QuestId = "w1_mia_apple";
 
   IGameEventBus _bus;
   bool _subscribed;
@@ -81,8 +83,15 @@ public class ApplePresenter : BusBehaviour {
   // glow (8% + light): breathing invites, glow directs. Stops once found.
   bool _breathing;
   float _breatheT;
+  // R7 pre-talk softlock guard: the taken-apple may be found BEFORE the quest
+  // starts (nothing blocks clicking the crate pre-talk). Hiding the crate then
+  // would softlock find_apple after Talk (no visible/clickable apple left to
+  // re-find). Track quest-active; only the IN-QUEST find empties the crate.
+  bool _questActive;
 
   void OnQuestBreathe(QuestStartedEvent e) {
+    if (e.QuestId.Value != W1QuestId) return;
+    _questActive = true;
     _breathing = true;
     _breatheT = 0f;
   }
@@ -91,14 +100,33 @@ public class ApplePresenter : BusBehaviour {
     if (e.WordId.Value != AppleWord) return;
     _breathing = false;
     SetGlow(false);
+    // R6 quest lifecycle (FINAL POLISH): the apple is TAKEN — the crate goes
+    // empty in the same frame the carried apple appears in the hand, so the
+    // quest item never looks active in two places at once. The Interactable
+    // rides on the crate apple, so hiding it also removes the (now stale)
+    // click target: re-clicks fall through to plain movement, and the bring
+    // path (Mia click/proximity) is untouched. The crate itself stays.
+    // R7: only the IN-QUEST find empties the crate (pre-talk finds keep it
+    // visible so find_apple stays recoverable after Talk).
+    if (_questActive && _crateApple != null) _crateApple.SetActive(false);
     AttachCarriedApple();
   }
 
   void OnHint(HintLevelChanged e) {
-    if (e.Level >= 1) SetGlow(true);
+    if (e.QuestId.Value != W1QuestId) return;
+    if (e.Level >= 1) {
+      // R6: never glow a taken (hidden) crate — the carried apple in the
+      // hand is the active visual now; a light at the empty crate would be a
+      // stale quest marker the moment the crate reactivates... it never does,
+      // but the guard keeps the lifecycle honest regardless of hint timing.
+      if (_crateApple == null || !_crateApple.activeInHierarchy) return;
+      SetGlow(true);
+    }
   }
 
   void OnQuestDone(QuestCompletedEvent e) {
+    if (e.QuestId.Value != W1QuestId) return;
+    _questActive = false;
     _breathing = false;
     SetGlow(false);
     HideCarriedApple();

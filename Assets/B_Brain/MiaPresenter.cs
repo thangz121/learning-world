@@ -31,7 +31,17 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
 
   QuestId _activeQuest = new QuestId("w1_mia_apple");
   readonly WordId _appleWord = new WordId("apple");
+  readonly WordId _ballWord = new WordId("ball");
   bool _carryingApple;
+  // R9 pickup difficulty: the distractor ball is PICKABLE now. Carrying it to
+  // Mia is a real mistake (wrong + ball hops home, quest stays open). Pickup
+  // itself is neutral (exploring is never punished); only the BRING decides.
+  bool _carryingBall;
+  // R7: quest-gate (pre-talk softlock). Clicks before the quest starts must
+  // not consume carrying state, count wrongs, or publish story moments: the
+  // quest hasn't begun, so there is nothing to be wrong ABOUT yet. Friendly
+  // wave only (same as Milo's pre-talk greeting).
+  bool _questStarted;
 
   // Visual rig (presentation only, never gameplay state).
   Animator _animator;
@@ -89,17 +99,31 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   // clicks are inert (narrative context: no more wrongs after the quest).
   public void OnMiaClicked() {
     _waveT = WaveDuration;
+    if (!_questStarted) return; // pre-talk: wave only, quest state untouched
     if (_quests != null && _quests.GetState(_activeQuest).Completed) return;
-    if (_carryingApple) {
+    if (_carryingApple && !_carryingBall) {
       CompleteBring();
+    } else if (_carryingBall) {
+      WrongBring(); // R9: the wrong item reached the counter
     } else {
       if (_hints != null) _hints.ReportWrong(_activeQuest);
       if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.WrongChoice, DateTime.UtcNow));
     }
   }
 
+  // R9 wrong-item bring (click path + proximity path stay identical): the
+  // hands clear FIRST (before publishing, so subscriber order never matters),
+  // the hint ladder counts it, and the WrongChoice moment tells the ball to
+  // hop home + plays Mia-sad/Milo-encourage. Quest stays open, retry intact.
+  void WrongBring() {
+    if (!_questStarted) return;
+    _carryingBall = false;
+    if (_hints != null) _hints.ReportWrong(_activeQuest);
+    if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.WrongChoice, DateTime.UtcNow));
+  }
   // Shared bring completion (click path + proximity path stay identical).
   void CompleteBring() {
+    if (!_questStarted) return; // defense in depth (OnMiaClicked gates first)
     if (_quests == null) return;
     _quests.ReportAction(PlayerAction.Bring, _appleWord);
     _carryingApple = false;
@@ -114,6 +138,11 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     get { return _carryingApple; }
   }
 
+  // R9 introspection: whether Mia holds the WRONG-item context (ball in hand).
+  public bool IsCarryingBall {
+    get { return _carryingBall; }
+  }
+
   // Proximity bring (Phase-1 closure, child-friendly + occlusion-robust):
   // walking up to Mia while carrying completes the bring even when the click
   // ray is eaten by the awning/counter (P1Survey p2-complete TIMEOUT: the
@@ -123,27 +152,39 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   // proximity is deliberately silent: wandering near Mia must never count as
   // a wrong. Reusable pattern for any bring-to-NPC quest.
   public void TryProximityBring(Vector3 playerPos) {
-    if (!_carryingApple) return;
+    if (!_carryingApple && !_carryingBall) return;
     if (_quests == null) return;
     if (_quests.GetState(_activeQuest).Completed) return;
-    if (Vector3.Distance(playerPos, transform.position) > 1.8f) return;
-    CompleteBring();
+    // R8 (player report: bring fires from too far): 1.8 -> 1.5m — the child
+    // hands the apple OVER THE COUNTER, not across the lawn. Matches the
+    // tightened click arrivalRange (1.5m): both paths converge at the counter.
+    // R9: the same radius judges the wrong item — walking the ball up to Mia
+    // is a bring attempt too (empty-handed wandering stays silent as before).
+    if (Vector3.Distance(playerPos, transform.position) > 1.5f) return;
+    if (_carryingBall) WrongBring();
+    else CompleteBring();
   }
 
   void OnWordSeen(WordSeenEvent e) {
     if (e.WordId.Value == _appleWord.Value) {
       _carryingApple = true;
+      _carryingBall = false; // SWAP: the quest item takes the hands (mirrors the ball hopping home)
       if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 2.5f);
+    } else if (e.WordId.Value == _ballWord.Value && !_carryingApple) {
+      _carryingBall = true; // apple keeps priority: the quest item always wins the hands
     }
   }
 
   void OnQuestStarted(QuestStartedEvent e) {
     _activeQuest = e.QuestId;
+    _questStarted = true;
     _carryingApple = false;
+    _carryingBall = false;
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
     if (e.QuestId.Value != _activeQuest.Value) return;
+    _carryingBall = false; // hygiene (completion needs the apple, so live-unreachable)
     // Golden reaction (§11.4): durable Happy baseline after the completed quest.
     if (_presentation != null) _presentation.SetExpression(CharacterExpression.Happy);
     if (_animator != null) _animator.SetTrigger("Celebrate");
@@ -237,16 +278,14 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     }
     GameObject visual = Instantiate(visualPrefab, transform, false);
     visual.name = "MiaVisualRoot";
-    // W1 grounding round-F: 0.493 REVERTED after instrument proof. A photo-only
-    // read of three side views suggested a ~0.35 float, so the lift was cut to
-    // 0.14 — the calibrated BakeMesh probe (P1Survey v2, Milo 0.006 as anchor)
-    // then read Mia minMapped=-0.352 AT 0.14, i.e. +0.001 at 0.493: the Female
-    // rig shares the Male bind minima (raw -0.387 vs -0.377) and was grounded
-    // all along; the photos showed dark feet + counter-top edge + sun-stretched
-    // shadow conspiring at low angles. Lessons: (1) never copy lifts across
-    // rigs WITHOUT measuring; (2) never "fix" from photos alone WITHOUT
-    // instrument confirmation — photo-flag, instrument-measure, fix, verify.
-    visual.transform.localPosition = new Vector3(0f, 0.493f, 0f);
+    // R6 grounding (FINAL POLISH 2026-09-13): 0.493 was the same historical
+    // contamination as Milo (discredited BakeMesh minMapped era). Bone-bind
+    // SOLE2 reads sole=0.488 at root 0 (off=0.488 ~= lift => TRUE Female idle
+    // sink ~= 0), and the south low-angle macro showed shoes dangling at
+    // counter-mid height. Build-A round (0.05) read SOLE2 ~0.04 + planted
+    // f6-19: 0.02 lands the sole at ~+0.015, breathing floor +0.007, no sink
+    // risk on the flat lawn. Per-rig measured like Milo. Photos decide.
+    visual.transform.localPosition = new Vector3(0f, 0.02f, 0f);
     visual.transform.localRotation = Quaternion.identity;
     // Scale fix: the quaternius armature imports at 100x (3.4m tall giant).
     // Half the visual so Mia stands ~1.7m next to the 1.6m player capsule.
@@ -266,8 +305,16 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
       // vest (Mia identity, distinct from Milo's orange), warm tan face,
       // warm mid-brown skin instead of the near-black artist default.
       TintSharedMaterials(skin, "Vest", new Color(0.95f, 0.45f, 0.4f));
-      TintSharedMaterials(skin, "Face", new Color(1f, 0.82f, 0.64f), 0.45f);
-      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.5f);
+      // R5V-c (MAT census + macro photos: BOTH NPCs wear the same yellow hard
+      // hat, identity = vest shade only — too weak for a 4yo): Mia's hat goes
+      // coral-pink to match her vest (Milo keeps yellow). Instance copy only.
+      // Reversible one-liner: delete this line if hats must match the pack.
+      TintSharedMaterials(skin, "Hat", new Color(0.95f, 0.55f, 0.62f));
+      // R5-A material test (2026-09-13): Face 0.45 -> 0.25, Skin 0.50 -> 0.30
+      // (candidate values; macro + gameplay photos decide).
+      // R5c: deepen Face tan one step (brows persisted => diffuse sculpt).
+      TintSharedMaterials(skin, "Face", new Color(0.93f, 0.70f, 0.52f), 0.25f);
+      TintSharedMaterials(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.3f);
     }
     if (skin != null && skin.bones != null) {
       foreach (Transform bone in skin.bones) {

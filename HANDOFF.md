@@ -178,3 +178,340 @@ Giữ lại (production):
   tay mitten = style flat-shade pack Quaternius (đồng nhất cả cast, giữ import
   normals); 1 TIMEOUT mode=5 lẻ ở step stall-W survey (shot vẫn đúng, COMPLETE);
   `Walk_Carry` chưa wire, PregenSeeder fallback (từ §5/§9).
+
+## 12. Pass R5p 2026-09-13 (shoe seat: minima gated 0.8m + log mode) — VERDICT: FAIL, không lock
+- Phạm vi: fix giày lơ lửng 15-36cm (R5l proof) bằng seat sole-relative gated +
+  log mode; giữ nguyên face/lift/surface (R5d/k) và survey beats.
+- Prod (working tree, CHƯA commit):
+  - `CharacterPresentation`: `SoleSeatFor` seat = minima thấp nhất của foot-bone
+    dominant (.L/.R theo tên giày) trong gate 0.8m quanh foot bone; fallback
+    side → near → drop; log `SHOE_SEAT name mode seat foot verts minDist retry`
+    + `SHOE_DEFER` khi mesh chưa settle (retry tới 180 frames, force cho tests).
+  - Toán mapping là bone-bind (`bones[dom]*bindpose*bindVert`, như face kit đã
+    chứng minh), CẤM BakeMesh+renderer.localToWorld ở prod seat.
+  - `R5Survey` (temp): mirror thêm `SHOE_SEAT/SHOE_DEFER` vào r5survey-live.log;
+    giữ nguyên beats (low/shin/front-low/stance-servo/magenta/blendshape).
+- Gate (build39 + survey37, 2026-09-13): EditMode **52/52 PASS** (editmode31/32/33);
+  build **Succeeded errors=0** (build37/38/39); survey **COMPLETE** (wrong=1,
+  completed=True, `Great job!`, Player.log 0 exceptions).
+- Số (survey37, build39 payload tươi):
+  - Seat: **6/6 mode=side, retry=0, minDist 0.016-0.021m** (survey32 cũ: 6/6 drop,
+    minDist 3.1-4.9m). Gate engage ngay frame-2, không defer.
+  - Shoe world (Renderer.bounds render thật, lossyScale đúng 0.13/0.10/0.26):
+    player idle y=0.318, walk-end y=0.317-0.319; Milo y=0.528; Mia y=0.530.
+  - GapProbe (mapping cũ, chỉ tham khảo): player idle gap=-0.032 / walk -0.036
+    (sunk), Milo +0.002, Mia +0.004; MINV bone=Foot.R cả 3 rig.
+  - Stance servo (mode=12): **TIMEOUT** lần 4 liên tiếp (survey32/34/35/37).
+- Ảnh (survey37): low-player PASS (giày trên path, chân chạm cap); shin/front-low
+  CẢI THIỆN (cap đã chạm/overlap đầu chân thay vì blob rời như survey34) nhưng
+  vẫn daylight + bóng dưới giày ở điểm grass (walk-end/shin); walk-stance float
+  ~20-30cm; low-milo/mia: Milo/Mia ngồi/đứng trên quầy stall (staging, không phải
+  defect grounding) nhưng probe raycast Ground 0 gây hiểu lầm.
+- Root cause mới (PROVEN bằng số, bài học 18-20):
+  - 18. BakeMesh+localToWorld DOUBLE-SCALE qua Body 40-50x (diag survey36:
+    bounds 20m rộng × 52-85m cao trong khi render thật 1.3-1.65m). Mọi
+    minMapped/gap từ R4 trở đi chỉ đúng tình cờ ở min-Y, không nhạy pose
+    (idle vs walk chỉ lệch 4mm mapped), và XZ offset bị phóng ~40x nên gate
+    0.8m reject toàn bộ (survey32: 6/6 drop). R5o "verts 4m out" thực chất là
+    bind-pose ở origin trong lúc root đã ở spawn (player 4.5m/Mia 4.3m/Milo 2.1m).
+  - 19. Seat frame-2 đo offset ở pose chưa steady: sole(bind, frame-2) cách foot
+    2cm nhưng sole(idle) cách foot ~10-20cm+ (clip sink skeleton ~0.49m không
+    rigid giữa bone và mesh) → cap chạm đầu chân nhưng cả cụm vẫn float ~27cm
+    trên grass. Seat phải đo ở Idle steady (defer tới Animator ổn định), không
+    phải frame-2.
+  - 20. Stance-servo TIMEOUT là artifact timing script (servo start khi walk chỉ
+    còn ~1s, arrival → velocity=0 → false vĩnh viễn), không phải bằng chứng
+    không-stance. Muốn verdict stance phải trigger servo SỚM (cùng lúc walk-a)
+    hoặc widen window.
+- VERDICT: **FAIL — không lock, không commit, không xóa temp** (`R5Survey`,
+  `R5Build`, `Assets/Editor`, InputSystem ref giữ lại cho vòng sau). R5p-seat
+  (gated minima + log) coi như DONE ở mức engage (6/6 side); vòng sau: (a) seat
+  ở Idle-steady + (b) viết lại GapProbe/GroundProbe bằng bone-bind math + (c) tune
+  lại lift trên số đúng + (d) sửa stance-servo timing; chỉ PASS khi shin/front-low
+  hết daylight, stance COMPLETE không TIMEOUT, gap<=0.01 trên ảnh.
+- Follow-up giữ nguyên (từ §5/§9/§11): `Walk_Carry` chưa wire, PregenSeeder
+  audio fallback.
+
+## 13. Pass R5V 2026-09-13 (world-presentation polish, 4 build→play→photo cycles) — VERDICT: FAIL, không lock
+- Phạm vi: R5 grounding/face/debug + R5V-1 (ground/lighting/shadow/boundary) +
+  R5V-2 (Milo/Mia composition, apple/distractor, zones) +   R5V-3 (stall/HUD/
+  celebrate/Mia-identity). Không đụng quest/audio/NavMesh/architecture.
+- Session mở đầu: phát hiện cây working-tree KHÔNG compile
+  (`MarketBuilder.cs` thiếu `}` đóng `BuildTree` → `BuildBush`/`BuildFence` nest
+  trái phép, CS1513). Fix 1 brace. EditMode **52/52 PASS** sau fix (không chạy
+  lại sau các batch R5V-b/c vì không đụng API nào có test cover; compile được
+  chứng minh bởi 4/4 player build).
+- Chuỗi evidence (build Succeeded errors=0 + payload DLL fresh + play COMPLETE):
+  - B1 (15:52Z? 15:55 local): tree R5V-a (R5V-1/2 edits có sẵn). Play COMPLETE.
+  - B2 (16:17): R5V-b (stall-north, celebrate-cam→east, sun 68°/shadow 0.65,
+    MiloMat, survey framing+diag). Play COMPLETE.
+  - B3 (16:24): R5V-c (Mia hat hồng + celebrate ensemble). Play COMPLETE.
+  - B4 (16:31): survey settle tweak (complete 2.8s). Play COMPLETE.
+  - Mọi run: wrong=1, completed=True, `Great job!`, Player.log 0 exceptions.
+- Web research (fresh, §4): Unity URP Shadows docs (shadowStrength/bias/normal-
+  bias/shadow-distance = DIRECT params; chọn strength 0.65 + sun 68° = DERIVED);
+  Roblox Creator docs — onboarding bằng visual (không chữ), younger users thích
+  explore > compete, visual language nhất quán, đừng chỉ dựa vào màu sắc,
+  proximity prompts, legibility/contrast (DIRECT principles); Haigh-Hutchinson
+  GDC camera (tránh occlusion, minimize motion, smooth transitions = DIRECT);
+  GameDeveloper third-person composition (centered = central meaning).
+  Quy ước ghi: DIRECT (nguồn nói) / DERIVED (suy từ scale 1.65m NPC của project)
+  / VISUAL DESIGN DECISION. "3.6m/1.8m/15°" là DERIVED, không phải luật chung.
+- Screenshot verdicts (mỗi shot đọc trực tiếp, format SHOULD/ACTUAL/PASS):
+  - spawn (first impression): PASS-leaning. Path/mat/fence/stall/crate/ball/
+    trees/bushes/outer-green phân lớp rõ; Milo center trên mat xanh, Mia ở stall,
+    táo đỏ vs bóng xanh tách hẳn. Trừ: Milo label bị crop trên khung hình spawn.
+  - low-player/shin/spawn-crop-3x: PLAYER IDLE GROUNDED ×3 vị trí (sole chạm
+    path/cỏ, không daylight gap). PASS.
+  - low-mia run-4 (macro nam, counter không chắn): MIA FLOAT ~0.25-0.35m
+    (giày treo ngang thân counter, dưới là mặt counter không phải cỏ). FAIL.
+  - Milo: cùng họ rig Worker + cùng lift 0.493 + parallax "ngồi lên counter"
+    lặp lại → float cùng họ (chưa có macro sạch như Mia). FAIL (inference).
+  - walk-a/stance: mid-stride flight là bình thường; stance-servo mode-12 đã
+    FIRE 1 lần (run-2/3) nhưng framing 3/4 + bóng ngang làm gap +/- vài cm
+    không đọc chắc. Walk = INCONCLUSIVE (cần side-view stride series).
+  - faces (front macros cả 2 NPC + 4m): PASS. Không white ellipse plane, không
+    extra geometry; vết shading nhạt = sculpt gốc (đọc như brow/blush búp bê).
+    Side macro void (NPC xoay mặt về camera) nhưng chứng minh mắt gắn chặt.
+  - skeleton/debug: PASS (TREE dump sạch PoleTarget/label nodes, ảnh không có
+    white-T/helper/geometry lạ).
+  - talk/wrong/found/face4m: PASS (Milo close-up đẹp, Mia sad đọc được, táo vs
+    bóng tách 3.22m + đỏ vs xanh + crate vs pedestal, labels crisp).
+  - Mia staging: stall-north (-0.9→-1.4, counter front -3.4, Mia clear 0.9m)
+    giảm hẳn "ngồi lên counter" ở wrong/run-2 (đứng trước stall tự nhiên). PASS-leaning.
+  - celebrate: run-1 (player che mặt Mia) → run-3 ensemble (hết che nhưng dính
+    turn-lag: lưng đầu) → run-4 settle 2.8s (lố window 3.2s, rơi về follow).
+    Ensemble là composition đúng; mặt Mia ở beat chưa lần nào đọc to. BORDERLINE.
+  - Mia hat hồng (MAT census chứng minh submesh `Hat` tồn tại cả 2 rig):
+    identity WIN (vàng/cam vs hồng/coral). PASS.
+  - MiloMat xanh (no-collider, post-NavMesh): "Milo's place" đọc ngay ở spawn. PASS.
+  - label gating: LABEL diag `milo=True mia=null` (Find chỉ thấy active) +
+    TREE sau đó cả 2 active → Mia ẩn pre-talk đúng. "Mia pill ở spawn run-1" là
+    đọc nhầm (run-2/3/4 không còn). PASS.
+  - HUD: chip compact + adaptive fade đã yield trong beats; overlap còn lại chỉ
+    là chip mờ sau label (chấp nhận được). PASS.
+  - lighting/shadow (sun 68°, strength 0.65, ambient 0.68/0.71/0.75, env matte):
+    mặt đọc được, hết cháy path; sọc fence + bóng stall còn lớn nhưng đỡ.
+    BORDERLINE-PASS.
+  - world depth/layers/island: PASS (FG path-mat / MG char-stall / BG fence-
+    trees-outer; boundary rõ).
+  - liveliness: PARTIAL (blink/breath/glance/hop tồn tại trong code; session này
+    không có proof chuyển động; ambient motion vắng) → NOT PROVEN cho lock.
+- Bài học mới:
+  - 21. Mọi đo CPU-side đều đã thua ảnh 3 lần: BakeMesh+localToWorld (40-50x),
+    GapProbe (0.000 trong khi ảnh float), SOLE2 bone-bind (off ≈ lift một cách
+    đáng ngờ). Từ nay grounding = ảnh + contact shadow; số chỉ để tham khảo.
+  - 22. "Mia/Milo ngồi lên counter" mà các pass trước gọi là STAGING chính là
+    FLOAT ~0.3-0.5m bị đọc nhầm (lift 0.493 từ thời minMapped rác; TRUE Worker
+    idle sink ≈ 0). High-angle/small-in-frame che giấu lỗi decimeter.
+  - 23. NPC quay mặt về camera làm void side-macro (phải khóa rotation khi audit
+    mắt), nhưng vô tình chứng minh mắt gắn chặt.
+  - 24. Celebrate beat window (3.2s) vs settle: shot 1.2s dính transition,
+    2.8s lố window. Beat sau này cần dài hơn (5s) nếu muốn ảnh settled.
+  - 25. `Wait()` đừng fix cứng settle: đã thêm tham số `settleAfter` (temp).
+- Matrix tổng (lock gate): player-idle PASS; Milo/Mia-idle FAIL; walk
+  INCONCLUSIVE; shoes/face/debug PASS; human-quality YES×3; spacing số PASS +
+  composition BORDERLINE; greet/stop-distance NOT PROVEN số (chưa chạy test
+  hành vi; quest clicks thật vẫn PASS chức năng); distractor PASS; wrong PASS;
+  celebrate BORDERLINE; camera PHƯƠNG preserved PASS; stall/HUD PASS; env/
+  island/depth PASS; lighting/shadow BORDERLINE-PASS; liveliness NOT PROVEN;
+  first-impression PASS-leaning.
+- VERDICT: **FAIL — không lock, không commit, không xóa temp** (`R5Survey`,
+  `R5Build`, `Assets/Editor`, InputSystem ref giữ cho vòng sau).
+- NEXT (1 fix trọng tâm, đã chín bằng 2 dòng evidence độc lập — ảnh float ≈
+  lift + SOLE2 off ≈ lift ⇒ TRUE Worker sink ≈ 0): Milo/Mia
+  `0.493 → ~0.05` (candidate, revert sẵn) + macro nam sạch + ảnh quyết định.
+  Sau đó: Mia-happy close-up hướng Tây, ambient-motion pass, rồi mới R6/R7.
+  CẤM Phase 2.
+- Follow-up giữ nguyên: `Walk_Carry` chưa wire, PregenSeeder fallback.
+
+## 14. Pass R6 2026-09-13 (FINAL POLISH: feet/walk/hint/lifecycle) — VERDICT: PASS, đề xuất PHASE 1 LOCK
+- Phạm vi: đúng 4 vấn đề mission (feet grounding, walk motion, quest-hint visual,
+  quest lifecycle). Không quest/chapter/system/world mới. Không đụng face/camera/
+  lighting/HUD-architecture (giữ nguyên các pass đã lock).
+- SOURCE-OF-TRUTH lift (prove bằng 2 dòng độc lập — ảnh float ≈ lift + SOLE2
+  bone-bind off ≈ lift ⇒ TRUE idle sink ≈ 0 cả 3 rig; BakeMesh minMapped là liar
+  do Body scale 100x double-transform, BANNED khỏi mọi probe R6):
+  - Milo VisualRoot 0.493 → 0.05 (A) → 0.02 (B) → 0.01 (C-final).
+  - Mia VisualRoot 0.493 → 0.05 → 0.02 (giữ: SOLE2 0.003-0.009 ≈ contact).
+  - Player GroundLiftLocal 0.340 → 0.06 (A) → 0.015 (B) → 0.005-final (0.004 world).
+  - Player WalkLiftLocal −0.03 → +0.015 (B) → +0.025-final: dấu DƯƠNG là đúng —
+    f6-22 chứng minh walk clip CROUCH sâu hơn idle ~3.6cm (gối trụ gập), comp
+    giữ tổng walk = 0.024 world (giá trị f6-22 đã đứng vững). agent.baseOffset=0
+    + breathing/surf giữ nguyên (legit, negligible). Giày ride lift (không lift
+    riêng). Single source duy nhất: VisualRoot lift.
+- Walk (không IK mới, không rig mới): controller sẵn đã mượt (blend 0.2/0.25s,
+  ApplyRootMotion 0); agent.speed 3.5 → 2.2 m/s (~1.7 body-length/s, brisk child
+  walk — skate hết). Evidence: f6-21 push-off (gót nhấc, không snap), f6-22
+  mid-stride/push-off (chân trụ + chân vung + tay vung coherent), f6-23 stop
+  (chân chụm, không snap). Milo/Mia stationary BY DESIGN (shopkeeper, không
+  locomotion clip — thêm walk = new system, mission cấm): slot walk của NPC =
+  idle-steady góc 2 + celebrate, ghi rõ trong matrix.
+- Quest hint (refine, không rebuild): thought-bubble vốn đã đúng ngôn ngữ —
+  shell +18%, apple icon 0.20→0.24 (icon là hierarchy level 1), icon pulse
+  ±6% 1Hz + bob sẵn có (không arcade flash), dời khỏi label Mia về phía
+  đông-nam ((Mia.x+1.45, 1.78, Mia.z+0.55)). Test textless: bỏ hết chữ vẫn đọc
+  "wanted: apple". Không che mặt/body Mia ở mọi góc (05/27/28 + gameplay).
+- Quest lifecycle (1 thay đổi production): ApplePresenter ẩn BigApple ngay tại
+  WordSeen (crate rỗng + táo trên tay cùng frame — item không bao giờ active ở
+  2 nơi), carried ẩn tại complete (sẵn có), bubble Show/Hide (sẵn có, verify),
+  hint-glow guard khi crate đã ẩn, flower reward chỉ nở tại complete
+  (SetActive(false) từ đầu — f6-01 chứng minh vắng pre-quest). Distractor ball
+  ở lại đúng (world prop, inert post-quest). Không quest 2 (single-quest slice:
+  terminal = Great job! + flowers, ghi rõ).
+- Chuỗi evidence (production FINAL từ build C; C/D/E chỉ khác survey):
+  - EditMode 52/52 PASS ×6 (mỗi vòng code + final trên cây khóa, zero temp).
+  - Build A (candidate) / B (tune) / C (final lifts) / D (survey-fix) / E
+    (in-beat 11): TẤT CẢ Succeeded errors=0 + payload DLL fresh + COMPLETE qua
+    click raycast thật (wrongs=1, completed=True, Great job!, 0 exceptions,
+    C/D/E zero TIMEOUT). A fail quest-path (2 TIMEOUT — click táo từ Mia-frame
+    sau wrong) → B fix follow-restore; B/C miss beat window (complete sớm qua
+    proximity / settle tràn 3.2s) → D/E stage ngoài 1.8m + settle gọn.
+  - Số FINAL (survey E, bone-bind SOLE2 + Renderer.bounds SHOE, BakeMesh cấm):
+    player off 0.020-0.029 idle / 0.001 post-walk; Milo 0.023-0.037; Mia
+    0.008-0.019. Ảnh D/E: 3 rig tiếp xúc + bóng gắn, không daylight gap,
+    không dangle, không 0.1m+ float ở front/side/3-4/low/idle/walk-stop.
+  - Facing audit (TURN telemetry, decisive): root==travel, visual==root±glance;
+    các still "ngược hướng" build A là misread (far-eye + arrival heading bắc
+    vào cam nam) — survey D/E arrival +z (nam) cho TRUE FRONT, số xác nhận
+    rootYaw≈5°, angRootToCam≈8°.
+  - Celebrate: f6-10-D in-beat (Mia tay giơ + Happy, không che) + f6-11-E
+    settled in-beat (Interaction, ensemble) + Happy durable post-beat.
+- Lockdown (theo protocol R4): xóa R6Survey(+meta) → revert asmdef InputSystem →
+  FINAL clean build Succeeded errors=0 (Bootstrap tươi, survey-free) → boot
+  check alive 65s+ 3×FACE_OK 0 exceptions → xóa R6Build(+meta)+Assets/Editor →
+  FINAL EditMode 52/52 trên cây khóa. Temp = 0 file. Không commit (chờ user).
+- Bài học mới:
+  - 26. Walk clip crouch (gối trụ gập hạ hông): comp dấu ÂM cũ chỉ đúng tình cờ
+    ở magnitude — evidence đổi dấu comp thành DƯƠNG (+0.025) mới giữ stance;
+    đừng tune animation bằng số BakeMesh, tune bằng stance photo + SOLE2.
+  - 27. Arrival tolerance (remaining ≤ stopping+0.3) đánh bại mọi margin
+    proximity < 2.5m: stage bring phải ≥2.56m nếu muốn completion rơi trong
+    wait của click (nếu không beat window trôi trước khi shot).
+  - 28. Beat timing = wait-settle arithmetic: f6-11 = T0+0.8+1.2+settle; settle
+    default 1.2 đã đẩy shot đúng T0+3.2 = biên beat. Tính tay trước khi chạy.
+  - 29. Photo misread có pattern: far-eye qua sống mũi + arrival heading ngược
+    cam + label/prop trùng tia. TURN telemetry (rootYaw/vizYaw/bearing) rẻ hơn
+    mọi tranh cãi — log nó ở mọi probe shot.
+  - 30. Một static cam không cover 6m walk; mỗi motion beat cần framing riêng
+    (start/mid/stop) + kiểm tra occluder (flower pot ăn frame mid ở build B).
+- Matrix cuối (§34 mission): 1 Milo-feet PASS (f6-17/24-D/E + SOLE2 0.023) /
+  2 Mia-feet PASS (f6-19/20/25 + 0.008-0.019) / 3 Player-feet PASS (f6-15-E TRUE
+  FRONT + 16/26 + 0.001-0.029) / 4-5 Milo/Mia-walk N/A BY DESIGN (idle-steady +
+  celebrate thay thế, mission cấm new system) / 6-9 Player walk/start/mid/stop
+  PASS (21/22/23 C/D/E) / 10-14 hint PASS (05/27/28 + textless test) /
+  15-19 lifecycle PASS (09 empty-crate+carried, 12 after, 13 terminal, 14 reward,
+  crate/bubble null trong log; quest-2 N/A single-quest) / 20 full flow PASS
+  (C/D/E zero-TIMEOUT real-click) / 21-22 builds PASS (C+D final-code + E, tất
+  cả Succeeded + fresh DLL + COMPLETE) / 23 first-impression PASS (f6-01-E +
+  f6-29: layered, Milo-mat, Mia-stall, apple-vs-ball tách).
+- VERDICT: **FINAL POLISH PASS — đề xuất PHASE 1 = LOCKED** (production không
+  đổi từ build C; C/D/E là 3 builds độc lập của cùng final code, tất cả
+  Succeeded + COMPLETE + 0 exceptions). Cấm Phase 2 cho tới khi user duyệt lock
+  + commit.
+- Follow-up giữ nguyên (từ §5/§9/§11): `Walk_Carry` chưa wire, PregenSeeder
+  audio fallback. (Mới, non-blocking: Milo label crop nhẹ ở spawn follow-view;
+  "Hear it again" phủ chân Mia ở hint-closeup — cùng họ HUD-over-world đã
+  accept ở R5V.)
+
+## 15. Pass R7 2026-09-13 (bug mang táo không nhận quest + cursor/Hover) — VERDICT: PASS
+- Báo cáo player thật: lấy táo → mang tới NPC nhưng quest không nhận + xin con
+  trỏ chuột + hover đổi trạng thái. Điều tra ra 1 SOFTLOCK THẬT (do R6 gây ra):
+  click táo TRƯỚC khi nói chuyện với Milo → WordSeen nổ (không gate) → R6 ẩn
+  crate ngay → sau Talk, find_apple không còn táo visible/clickable để tìm lại;
+  mang tới Mia pre-talk thì CompleteBring ăn mất carrying mà ReportAction no-op
+  (quest chưa start) → kẹt. Thêm 2 rìa: click Mia pre-talk cộng wrong + story
+  noise; MarketBootstrap khen "Bring it" + đổi HUD pre-talk (sai narration).
+- Fix (production, tối thiểu, đúng seam sẵn có):
+  - `ApplePresenter`: track `_questActive` (QuestStarted/Completed w1) — chỉ
+    in-quest find mới ẩn crate; pre-talk find giữ crate + carried visual.
+  - `MiaPresenter`: `_questStarted` gate — pre-talk click chỉ wave (không ăn
+    carrying, không wrong, không story); CompleteBring double-guard.
+  - `MarketBootstrap`: `_questStarted` gate — pre-talk WordSeen silent (HUD giữ
+    "Talk to Milo").
+  - Milo KHÔNG đổi: RepeatInstruction sau find vốn đã nói "Bring it to Mia!"
+    (đúng redirect nếu audio chạy) — mang NHẦM sang Milo không phải bug, mang
+    tới MIA (cô bán hàng) mới đúng; đã giải thích cho player.
+- Cursor mới (`A_World/CursorPresenter.cs`, wire trong MarketBuilder —
+  presentation-only, không service/event/audio): thay arrow OS bằng dot mềm
+  (procedural, không asset), theo Mouse.current mỗi frame; hover trúng
+  Interactable/IClickTarget (cùng contract với ClickRouter, read-only) → TO
+  1.35× + VÀNG (trắng khi idle). Overlay KHÔNG BAO GIỜ ăn click:
+  Image.raycastTarget=false + không GraphicRaycaster + không Collider
+  (CT-P04F khóa). Hardware cursor ẩn khi custom hiện, restore ở OnDisable.
+- Tests CT-P04 (6 tests → EditMode **58/58**): crate giữ pre-quest / ẩn
+  in-quest / Mia pre-talk wave-only (giữ carrying, 0 wrong, 0 story) /
+  talk→find→bring completes + CorrectChoice / hover language values / overlay
+  safety. (1 fail giữa chừng: test thiếu glue WordSeen→AdvanceOnSeen mà
+  production có trong MarketBootstrap — bổ sung đúng wiring production, xanh.)
+- Verify live (build R7 Succeeded errors=0 + payload tươi + survey R7
+  COMPLETE, 0 TIMEOUT, 0 exceptions): pre-talk tap (crate=True, carried=True,
+  hud "Talk to Milo") → talk (crate=True còn → recover được) → re-find
+  (objIdx=1, crate=null) → wrong=1 → bring → completed=True Great job!
+  (crate/carried/bubble null). Ảnh: r7-05 cursor VÀNG trên người Mia (hover
+  NPC), r7-02 dot vàng trên táo trong crate (hover object) + crate còn táo +
+  táo trên tay, r7-01 dot TRẮNG idle.
+- Lockdown: xóa R7Survey/R7Build(+meta)+Editor → revert asmdef InputSystem →
+  FINAL EditMode **58/58** trên cây sạch (CursorPresenter + CT-P04 ở lại, là
+  production/test thật, không phải temp). Không commit (chờ user).
+- Bài học mới:
+  - 31. Mọi visual lifecycle (ẩn/hiện object) PHẢI gate theo quest-active, cấm
+    gate theo event trần — event nổ được ở mọi thứ tự click của trẻ con.
+  - 32. Presenters cần quest-started flag riêng (Milo đã có, Mia/Bootstrap
+    thiếu): GetState mặc định (idx 0, !completed) không phân biệt được
+    "chưa start" vs "mới start".
+  - 33. Overlay cursor: raycastTarget=false + cấm GraphicRaycaster là 2 dòng
+    sinh tử (1 dòng thiếu là ăn toàn bộ click world qua IsPointerOverGameObject).
+- VERDICT: **R7 PASS** — softlock pre-talk đã hết (chứng minh live + unit),
+  cursor + hover + quest gates giữ nguyên toàn bộ evidence R6 (production R6
+  không đổi 1 dòng trong pass này ngoài 3 gate + cursor mới).
+- Follow-up giữ nguyên (từ §5/§9/§11/§14): `Walk_Carry` chưa wire, PregenSeeder
+  audio fallback (fallback im lặng = lý do phụ khiến "mang tới Milo không thấy
+  gì" — Milo redirect bằng audio line, cân nhắc visual redirect nếu audio tiếp
+  tục câm).
+
+## 16. Pass R8 2026-09-13/14 (player-report polish: range/cursor/zoom-detail) — VERDICT: PASS
+- Báo cáo player thật: lệnh NPC nổ từ quá xa + zoom-in mất detail (label vỡ) +
+  con trỏ OS không nói gì. Phạm vi đúng 3 việc: (a) siết ranges, (b) arrow
+  cursor + hover marker, (c) label 2x. Không quest/system/world mới.
+- Fix (production, tối thiểu):
+  - `ClickRouter.arrivalRange` 1.9 → **1.5m** (arrival lands ~1.2-1.6m from
+    center: conversational distance, taps feel earned).
+  - `MarketBuilder` Apple `interactionDistance` 2.5 → **2.0m** (phải đi BỘ tới
+    crate, không snipe across lawn; proximity discovery follow tự động).
+  - `MiaPresenter.TryProximityBring` 1.8 → **1.5m** (handover OVER THE COUNTER;
+    converge với click arrivalRange — 2 paths cùng 1 điểm).
+  - `WorldNameLabel` 2x texel density (canvas 300×96@56pt → **600×192@112pt**,
+    root scale 0.004 → **0.002**, world size GIỮ NGUYÊN 1.2m — close-up không
+    blocky; text là detail duy nhất resolution-bound, face/prop là geometry).
+  - `CursorPresenter`: dot R7 → **arrow thẳng đứng** (procedural 2-pass: dark
+    border + white core, hotspot ở tip; thẳng đứng đọc giống nhau mọi orbit) +
+    **HoverMarker "!" vàng** (dot+stem primitives, 1 object reuse, collider-free
+    — không bao giờ ăn ray, bob 2Hz ±0.08 trên collider top +0.34m).
+- Tests: CT-P04G (marker contract: hidden→placed→hidden, dot+stem, 0 collider,
+  material đầy đủ) + CT-P04H (proximity boundary: 1.56m silent + giữ carrying,
+  1.27m complete) + CT-P02 update theo 1.5m → EditMode **60/60 PASS**.
+- Verify live (build R8 Succeeded errors=0 + survey R8 COMPLETE, 0 TIMEOUT,
+  0 exceptions): pre-talk tap (crate=True, carried=True, HUD "Talk to Milo",
+  marker=True trên táo) → talk (crate=True còn) → re-find (objIdx=1,
+  crate=null) → hover Mia (marker=True "!" trên đầu Mia, thought-bubble táo) →
+  wrong=1 → bring tại 1.5m → completed=True `Great job!` (Mia celebrate tay
+  giơ, label "Mia" crisp 2x, arrow cursor thấy rõ) → macros Milo/Mia 1.6m (mặt
+  đọc tốt + arrow render trong shot).
+- Lockdown (theo protocol R4/R6/R7): xóa `R8Survey(+meta)` → revert asmdef
+  InputSystem → FINAL clean build **Succeeded errors=0** (Bootstrap tươi do
+  recompile, World/Brain giữ payload R8 đã survey — production không đổi) →
+  boot check alive 70s+ **3×FACE_OK 0 exceptions** → xóa `R8Build(+meta)` +
+  `Assets/Editor(+meta)` → FINAL EditMode **60/60** trên cây khóa. Temp = 0
+  file. Không commit (chờ user, như R6/R7).
+- Bài học mới:
+  - 34. **Exe stub mtime KHÔNG phải freshness signal** (incremental build không
+    relink native stub): `LittleWorldEnglish.exe` giữ 3:11 PM trong khi
+    LWE.World/Brain/Bootstrap.dll tươi 10:25 PM. Từ nay chấm freshness bằng
+    **managed DLL mtime**, không phải exe.
+  - 35. `ScreenCapture` CÓ bắt ScreenSpaceOverlay cursor (arrow hiện trong cả
+    gameplay shots lẫn macros) — lo ngại overlay-capture là thừa; virtual-mouse
+    hover photograph bình thường.
+- VERDICT: **R8 PASS** — ranges siết mà flow thật vẫn COMPLETE mượt, cursor +
+  marker + label 2x chứng minh bằng ảnh, toàn bộ evidence R6/R7 nguyên vẹn.
+- Follow-up giữ nguyên: `Walk_Carry` chưa wire, PregenSeeder audio fallback.

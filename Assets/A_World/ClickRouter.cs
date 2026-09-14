@@ -26,7 +26,13 @@ public class ClickRouter : MonoBehaviour {
   public float clickMaxDistance = 200f;
   [Header("Arrival + bounds")]
   [Tooltip("Arrival range (m) for click-target callbacks without their own Interactable.")]
-  public float arrivalRange = 2.5f;
+  // R5V-2 (§18): 2.5 -> 1.9m from the CLICK point on the NPC body. With a
+  // 0.4m body radius + ~1m click height, arrival lands ~1.6-2.0m from the NPC
+  // CENTER (target 1.8m) instead of on top of the NPC.
+  // R8 (player report: NPC commands fire from too far): 1.9 -> 1.5m — the
+  // child walks right up to Milo/Mia/the ball (arrival lands ~1.2-1.6m from
+  // center: conversational distance, faces readable, taps feel earned).
+  public float arrivalRange = 1.5f;
   public float boundX = 8f;
   public float boundZ = 6f;
 

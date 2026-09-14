@@ -34,8 +34,10 @@ public class CT_S01_StoryLoop {
     }
   }
 
-  // A. DistractorChoice: wrong emits Wrong, quest stays open, retry preserved,
-  // post-quest clicks are inert.
+  // A. DistractorChoice R9 (pickup is neutral, the BRING decides): hands-full
+  // taps stay legacy instant-wrong, retry preserved, post-quest inert.
+  // (Pickup/bring-wrong/swap paths are pinned in CT-P05; this keeps the
+  // legacy contract the story loop was frozen on.)
   [Test] public void CT_S01A_DistractorWrongRetry() {
     var f = new Fixture();
     GameObject go = new GameObject("BallTest");
@@ -44,11 +46,14 @@ public class CT_S01_StoryLoop {
       ball.Bind(f.Bus, f.Hints, f.Quests);
       f.Quests.StartQuest(W1Quest);
 
+      // Hands full of the quest item: tapping the wrong prop is a real mistake.
+      f.Bus.Publish(new WordSeenEvent(Apple, LearnSource.Object, DateTime.UtcNow));
       ball.OnClicked();
-      Assert.AreEqual(1, f.Moments.Count, "wrong click must emit exactly one moment");
-      Assert.AreEqual(StoryMoment.WrongChoice, f.Moments[0].Moment, "wrong click must emit WrongChoice");
+      Assert.AreEqual(1, f.Moments.Count, "hands-full tap must emit exactly one moment");
+      Assert.AreEqual(StoryMoment.WrongChoice, f.Moments[0].Moment, "hands-full tap must emit WrongChoice");
       Assert.IsFalse(f.Quests.GetState(W1Quest).Completed, "wrong must never complete the quest");
       Assert.AreEqual(1, f.Hints.GetState(W1Quest).WrongCount, "wrong must feed the hint ladder");
+      Assert.IsFalse(ball.IsCarrying, "hands-full tap must not pick the ball up");
 
       ball.OnClicked(); // retry: prop stays usable, never locks the child out
       Assert.AreEqual(2, f.Moments.Count, "retry must stay possible");
