@@ -1044,6 +1044,138 @@ public class CT_P13_M4_Benchmark {
   }
 }
 
+// CT-P13 M5: staged speaking beat on the REAL production path with REAL content
+// files (no scripted pronunciations, no fake provider): Content/vocab/*.json
+// -> TargetPronunciationCatalog -> LocalAcousticProvider -> SpeechRecognizer
+// (capture seam) -> SpeakingExerciseRunner -> WordSpokenEvent -> frozen
+// QuestManager.AdvanceOnSpoken (+ Learning). SIMULATED audio (fixtures), REAL
+// everything else — the runtime Bootstrap wiring (mic + scene + NPC prompt
+// visuals) awaits stager-era content loading, like CatalogQuestProvider (2F).
+public class CT_P13_M5_StagedBeat {
+  static string ContentRoot() {
+    string assets = Application.dataPath;
+    return Path.Combine(Directory.GetParent(assets).FullName, "Content");
+  }
+
+  static TargetPronunciationCatalog RealCatalog() {
+    string[] files = Directory.GetFiles(Path.Combine(ContentRoot(), "vocab"), "*.json");
+    Assert.GreaterOrEqual(files.Length, 51, "real Content bundle present");
+    var entries = new List<VocabEntry>();
+    foreach (string path in files)
+      entries.Add(ContentDatabase.ParseVocab(File.ReadAllText(path)));
+    var catalog = new TargetPronunciationCatalog(entries);
+    Assert.AreEqual(6, catalog.Count(), "benchmark pronunciation coverage (ball/apple/red/one/please/teddy)");
+    return catalog;
+  }
+
+  sealed class ReadyMic : IMicrophoneDevice {
+    public event Action<MicStatus> StatusChanged;
+    public MicStatus Status => MicStatus.Ready;
+    public string SelectedDevice => "test-mic";
+    public string[] Devices => new[] { "test-mic" };
+    public SpeechCapability Capability => new SpeechCapability { Status = MicStatus.Ready, DeviceName = "test-mic", DeviceCount = 1 };
+    public void Refresh() { }
+    public void ReportCaptureFailure() { }
+  }
+
+  static CapturedSpeech Seg(float[] pcm) {
+    float mean = VoiceActivity.MeanAbsolute(pcm);
+    float dur = (float)pcm.Length / 16000;
+    return new CapturedSpeech {
+      Samples = pcm, SampleRate = 16000, Channels = 1,
+      DurationSec = dur, MeanEnergy = mean, PeakEnergy = mean * 2f,
+      VoicedSec = dur * 0.7f, TimedOut = false, Cancelled = false, Error = string.Empty
+    };
+  }
+
+  [Test] public void P13M5_RealCatalogDrivesProvider() {
+    var provider = new LocalAcousticProvider(RealCatalog());
+    SpeechRecognitionResult r = provider.RecognizeAsync(
+      Seg(AcousticFixtures.Word("apple", 1f)), new WordId("apple"), CancellationToken.None)
+      .GetAwaiter().GetResult();
+    Assert.IsFalse(r.IsError);
+    Assert.IsTrue(r.Pronunciation.HasAcousticData, "real content feeds real acoustic evidence");
+  }
+
+  [Test] public void P13M5_AcousticAppleCompletesFrozenSpeakLeg() {
+    // market_help_mia: find->bring (driven directly, as in P12G) then SPEAK via
+    // the acoustic stack. Proves the staged beat: assessment -> WordSpokenEvent
+    // -> frozen AdvanceOnSpoken (Perfect/Great gate untouched).
+    var bus = new GameEventBus();
+    var learning = new LearningService(bus);
+    var hints = new HintService(bus);
+    var quests = new QuestManager(bus, learning, hints);
+    bus.Subscribe<WordSpokenEvent>(e => quests.AdvanceOnSpoken(e.WordId, e.Result.Level));
+    var q = new QuestId("market_help_mia");
+    quests.StartQuest(q);
+    quests.AdvanceOnSeen(new WordId("apple"));
+    quests.ReportAction(PlayerAction.Bring, new WordId("apple"));
+    Assert.AreEqual(2, quests.GetState(q).ObjectiveIndex, "speak leg reached");
+
+    var recognizer = new SpeechRecognizer(new ReadyMic(),
+      new FakeSpeechCapture(() => Seg(AcousticFixtures.Word("apple", 1f))),
+      new LocalAcousticProvider(RealCatalog()));
+    var runner = new SpeakingExerciseRunner(recognizer, null, bus);
+    SpeakingExerciseResult result = runner.RunAsync(
+      SpeakingExerciseConfig.DefaultFor(new WordId("apple")), CancellationToken.None)
+      .GetAwaiter().GetResult();
+    Assert.AreEqual(SpeakingExerciseOutcome.Passed, result.Outcome,
+      "SIMULATED clear apple passes the staged beat (" + result.BestAssessment.Evidence + ")");
+    Assert.IsTrue(quests.GetState(q).Completed, "frozen Speak gate advances on acoustic Pass");
+  }
+
+  [Test] public void P13M5_WrongWordKeepsQuestOpen() {
+    var bus = new GameEventBus();
+    var learning = new LearningService(bus);
+    var hints = new HintService(bus);
+    var quests = new QuestManager(bus, learning, hints);
+    bus.Subscribe<WordSpokenEvent>(e => quests.AdvanceOnSpoken(e.WordId, e.Result.Level));
+    var q = new QuestId("market_help_mia");
+    quests.StartQuest(q);
+    quests.AdvanceOnSeen(new WordId("apple"));
+    quests.ReportAction(PlayerAction.Bring, new WordId("apple"));
+
+    var recognizer = new SpeechRecognizer(new ReadyMic(),
+      new FakeSpeechCapture(() => Seg(AcousticFixtures.Word("ball", 1f))),
+      new LocalAcousticProvider(RealCatalog()));
+    var runner = new SpeakingExerciseRunner(recognizer, null, bus);
+    var config = SpeakingExerciseConfig.DefaultFor(new WordId("apple"));
+    config.attemptsAllowed = 1;
+    SpeakingExerciseResult result = runner.RunAsync(config, CancellationToken.None)
+      .GetAwaiter().GetResult();
+    Assert.AreEqual(SpeakingExerciseOutcome.NotPassed, result.Outcome);
+    Assert.IsFalse(quests.GetState(q).Completed, "wrong word never advances the frozen gate");
+    Assert.AreEqual(2, quests.GetState(q).ObjectiveIndex, "quest stays OPEN at the speak leg");
+  }
+
+  [Test] public void P13M5_PartialKeepsQuestOpenForRetry() {
+    var bus = new GameEventBus();
+    var learning = new LearningService(bus);
+    var hints = new HintService(bus);
+    var quests = new QuestManager(bus, learning, hints);
+    bus.Subscribe<WordSpokenEvent>(e => quests.AdvanceOnSpoken(e.WordId, e.Result.Level));
+    var q = new QuestId("market_help_mia");
+    quests.StartQuest(q);
+    quests.AdvanceOnSeen(new WordId("apple"));
+    quests.ReportAction(PlayerAction.Bring, new WordId("apple"));
+
+    var appl = AcousticFixtures.RenderWord(
+      new List<string> { "AE", "P", "AH" }, 1f); // "appl": coda-deleted apple
+    var recognizer = new SpeechRecognizer(new ReadyMic(),
+      new FakeSpeechCapture(() => Seg(appl)),
+      new LocalAcousticProvider(RealCatalog()));
+    var runner = new SpeakingExerciseRunner(recognizer, null, bus);
+    var config = SpeakingExerciseConfig.DefaultFor(new WordId("apple"));
+    config.attemptsAllowed = 1;
+    SpeakingExerciseResult result = runner.RunAsync(config, CancellationToken.None)
+      .GetAwaiter().GetResult();
+    Assert.AreEqual(SpeakingExerciseOutcome.PartialComplete, result.Outcome,
+      "SIMULATED coda-deleted apple encourages retry, never fails");
+    Assert.IsFalse(quests.GetState(q).Completed);
+    StringAssert.Contains("MISSING_ENDING", result.BestAssessment.Evidence);
+  }
+}
+
 // M4 needs a Ready mic too (M3's is private-nested).
 public sealed class CT_P13_M3_ProviderPolicy_ReadyMic : IMicrophoneDevice {
   public event Action<MicStatus> StatusChanged;
