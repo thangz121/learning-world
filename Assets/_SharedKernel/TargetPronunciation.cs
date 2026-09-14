@@ -78,6 +78,9 @@ public sealed class TargetPronunciation {
 // scripted dictionary (tests). The ENGINE never reads JSON or Resources.
 public interface ITargetPronunciationProvider {
   bool TryGet(WordId word, out TargetPronunciation pronunciation);
+  // Closed-set cohort for margin scoring (words carrying pronunciation data).
+  // Empty = single-target mode (absolute thresholds only, no margin).
+  string[] KnownWords();
 }
 
 public static class PhonemeTable {

@@ -34,6 +34,13 @@ public sealed class TargetPronunciationCatalog : ITargetPronunciationProvider {
     return _byWord.TryGetValue(word.Value, out pronunciation);
   }
 
+  public string[] KnownWords() {
+    string[] keys = new string[_byWord.Count];
+    _byWord.Keys.CopyTo(keys, 0);
+    Array.Sort(keys, StringComparer.Ordinal);
+    return keys;
+  }
+
   public int Count() { return _byWord.Count; }
 }
 
@@ -52,5 +59,12 @@ public sealed class ScriptedPronunciationProvider : ITargetPronunciationProvider
     pronunciation = null;
     if (string.IsNullOrEmpty(word.Value)) return false;
     return _map.TryGetValue(word.Value, out pronunciation);
+  }
+
+  public string[] KnownWords() {
+    string[] keys = new string[_map.Count];
+    _map.Keys.CopyTo(keys, 0);
+    Array.Sort(keys, StringComparer.Ordinal);
+    return keys;
   }
 }

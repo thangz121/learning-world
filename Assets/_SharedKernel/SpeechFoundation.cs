@@ -95,6 +95,11 @@ public struct PronunciationEvidence {
   public bool AcousticWeakEnding;    // coda partially realized
   public bool AcousticRepetition;    // extra copies ("ball ball" — attempt honored)
   public int AcousticSyllables;      // estimated voiced humps
+  // Closed-set cohort margin: match minus best runner-up over the provider's
+  // KnownWords (bias-cancelling word-vs-word evidence; NaN = single-target mode).
+  public WordId AcousticRunnerUp;
+  public float AcousticRunnerUpMatch;
+  public float AcousticMargin;
 
   public static PronunciationEvidence None() {
     return new PronunciationEvidence {
@@ -105,7 +110,9 @@ public struct PronunciationEvidence {
       HasAcousticData = false, AcousticMatch = 0f,
       AcousticOnset = 0f, AcousticCoda = 0f,
       AcousticMissingEnding = false, AcousticWeakEnding = false,
-      AcousticRepetition = false, AcousticSyllables = 0
+      AcousticRepetition = false, AcousticSyllables = 0,
+      AcousticRunnerUp = default(WordId), AcousticRunnerUpMatch = float.NaN,
+      AcousticMargin = float.NaN
     };
   }
 
@@ -316,6 +323,9 @@ public sealed class SpeakingPassPolicy {
   public float AcousticStrongMatch = 0.80f;   // acoustic-only StrongPass floor
   public float AcousticPartialFloor = 0.40f;  // below this (with speech) = WrongWord
   public float AcousticDowngradeFloor = 0.30f;// lexical pass + acoustic below this = Partial
+  // Closed-set margin gates (provider cohort, bias-cancelling): another word
+  // fitting clearly better is counter-evidence no absolute score can give.
+  public float AcousticWrongMargin = -0.15f;  // margin at/below this = WrongWord
 
   public static SpeakingPassPolicy Default() { return new SpeakingPassPolicy(); }
 
@@ -481,17 +491,32 @@ public sealed class SpeakingPassPolicy {
       + (ac.AcousticMissingEnding ? " MISSING_ENDING"
         : ac.AcousticWeakEnding ? " weak-ending" : " ending-ok")
       + (ac.AcousticRepetition ? " repetition" : "")
-      + " syl~" + ac.AcousticSyllables;
-    if (match >= AcousticStrongMatch && !ac.AcousticMissingEnding
-        && !ac.AcousticWeakEnding && !ac.AcousticRepetition) {
+      + " syl~" + ac.AcousticSyllables
+      + (!float.IsNaN(ac.AcousticMargin)
+        ? " margin=" + (ac.AcousticMargin >= 0 ? "+" : "") + ac.AcousticMargin.ToString("0.00")
+          + " runner=" + ac.AcousticRunnerUp.Value : "");
+    bool hasMargin = !float.IsNaN(ac.AcousticMargin);
+    // Closed-set margin (bias-cancelling word-vs-word) with ending-integrity:
+    // margin demotes to WrongWord ONLY with a clean ending. Any ending flag
+    // (Missing = fragment; Weak = degraded) means an attempt is underway and
+    // floors at Partial below — a coda deletion can outscore roomy short
+    // models ("re" fits ball at 0.9), and garble-with-weak-ending deserves
+    // retry, not a wrong-word verdict. Attempt > perfection. M4.
+    if (hasMargin && ac.AcousticMargin <= AcousticWrongMargin
+        && !ac.AcousticMissingEnding && !ac.AcousticWeakEnding) {
+      assessment.Decision = SpeakingDecision.WrongWord;
+      assessment.FailureReason = SpeechFailureReasons.WrongWord;
+    } else if (match >= AcousticStrongMatch && !ac.AcousticMissingEnding
+        && !ac.AcousticWeakEnding && !ac.AcousticRepetition
+        && (!hasMargin || ac.AcousticMargin >= 0f)) {
       assessment.Decision = SpeakingDecision.StrongPass;
       assessment.FailureReason = SpeechFailureReasons.None;
-    } else if (match >= AcousticPassMatch && !ac.AcousticMissingEnding) {
+    } else if (match >= AcousticPassMatch && !ac.AcousticMissingEnding
+        && (!hasMargin || ac.AcousticMargin >= 0f)) {
       // Repetition lands here (capped at Pass — a real production, not a drill).
       assessment.Decision = SpeakingDecision.Pass;
       assessment.FailureReason = SpeechFailureReasons.None;
-    } else if (match >= AcousticPartialFloor) {
-      // A repetition that only partly resembles STILL contains a full production
+    } else if (match >= AcousticPartialFloor) {      // A repetition that only partly resembles STILL contains a full production
       // attempt ("ba-ba-ball"): floor it at Pass, never fail self-correction.
       if (ac.AcousticRepetition) {
         assessment.Decision = SpeakingDecision.Pass;
@@ -502,6 +527,12 @@ public sealed class SpeakingPassPolicy {
         assessment.Decision = SpeakingDecision.Partial;
         assessment.FailureReason = SpeechFailureReasons.Partial;
       }
+    } else if (ac.AcousticMissingEnding || ac.AcousticWeakEnding) {
+      // Attempt floors (never WrongWord): a flagged ending means an attempt is
+      // underway (deleted coda = fragment; weak coda = degraded production).
+      // Covers near-zero matches too ("tedd": 3/4 right, 0.0 match). M4.
+      assessment.Decision = SpeakingDecision.Partial;
+      assessment.FailureReason = SpeechFailureReasons.Partial;
     } else {
       assessment.Decision = SpeakingDecision.WrongWord;
       assessment.FailureReason = SpeechFailureReasons.WrongWord;

@@ -29,5 +29,9 @@
 .DS_Store
 Thumbs.db
 
+# Phase 2.1-local: curated real speech samples are LOCAL ONLY (privacy:
+# no raw voice in the repo, ever). Import via tools/import_speech_sample.py.
+Content/speech_samples/
+
 # Nested scratch Unity project (not part of this checkpoint)
 My project/

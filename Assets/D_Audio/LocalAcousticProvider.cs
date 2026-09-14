@@ -70,9 +70,21 @@ public sealed class LocalAcousticProvider : ISpeechAssessmentProvider {
         if (_targets.TryGet(target, out pron) && pron != null && pron.IsUsable()) {
           float[] mono = ToMono(audio.Samples, audio.Channels);
           AcousticEvidence evidence = AcousticAnalysis.Analyze(mono, audio.SampleRate, pron);
-          mono = null; // release scratch (Analyze retains nothing)
-          if (evidence.HasAcousticData)
+          if (evidence.HasAcousticData) {
             result.Pronunciation = PronunciationEvidence.FromAcoustic(evidence);
+            WordId runnerUp = default(WordId);
+            float runnerMatch = float.NaN, margin = float.NaN;
+            ScoreCohort(mono, audio.SampleRate, target, evidence.OverallMatch,
+              out runnerUp, out runnerMatch, out margin);
+            var pe = result.Pronunciation;
+            pe.AcousticRunnerUp = runnerUp;
+            pe.AcousticRunnerUpMatch = runnerMatch;
+            pe.AcousticMargin = margin;
+            result.Pronunciation = pe;
+            mono = null; // release scratch (Analyze retains nothing)
+          } else {
+            mono = null;
+          }
         }
       }
       result.LatencyMs = sw.ElapsedMilliseconds;
@@ -85,6 +97,43 @@ public sealed class LocalAcousticProvider : ISpeechAssessmentProvider {
       result.LatencyMs = sw.ElapsedMilliseconds;
       return Task.FromResult(result);
     }
+  }
+
+  // Closed-set cohort (template-matching argmin, Hair et al.): score the SAME
+  // audio against every other known word; margin = target minus best runner-up.
+  // Bias-cancelling word-vs-word evidence (absolute scores inflate together on
+  // easy audio). Burst-bounded (one Analyze per cohort word, all transient).
+  // Never throws; empty cohort = NaN margin (absolute-only mode).
+  void ScoreCohort(float[] mono, int sampleRate, WordId target, float targetMatch,
+      out WordId runnerUp, out float runnerMatch, out float margin) {
+    runnerUp = default(WordId);
+    runnerMatch = float.NaN;
+    margin = float.NaN;
+    try {
+      if (_targets == null || mono == null) return;
+      string[] words;
+      try { words = _targets.KnownWords(); } catch (Exception) { return; }
+      if (words == null || words.Length < 2) return;
+      float best = float.NegativeInfinity;
+      string bestWord = null;
+      for (int i = 0; i < words.Length; i++) {
+        string w = words[i];
+        if (string.IsNullOrEmpty(w)) continue;
+        if (string.Equals(w, target.Value, StringComparison.OrdinalIgnoreCase)) continue;
+        try {
+          TargetPronunciation pron;
+          if (!_targets.TryGet(new WordId(w), out pron) || pron == null || !pron.IsUsable()) continue;
+          AcousticEvidence oe = AcousticAnalysis.Analyze(mono, sampleRate, pron);
+          if (!oe.HasAcousticData) continue;
+          if (oe.OverallMatch > best) { best = oe.OverallMatch; bestWord = w; }
+        } catch (Exception) { /* one bad word never sinks the cohort */ }
+      }
+      if (bestWord != null) {
+        runnerUp = new WordId(bestWord);
+        runnerMatch = best;
+        margin = targetMatch - best;
+      }
+    } catch (Exception) { /* margin is advisory, never fatal */ }
   }
 
   static float[] ToMono(float[] samples, int channels) {

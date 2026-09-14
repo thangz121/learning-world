@@ -33,13 +33,32 @@ public struct FrameFeatures {
   public float HighRatio; // 0..1 energy in 4..8 kHz / total
 
   public static float Distance(FrameFeatures a, FrameFeatures b) {
+    // Silence-aware: a near-silent frame has NO meaningful spectrum (0/0),
+    // so comparing its ratios to a prototype is noise. Level-only match with
+    // an undefined-spectrum floor (loud-vs-silence is strong contradiction —
+    // M4: 0.10 let frication slide into closures; 0.25 separates while the
+    // both-silent branch keeps true closures/gaps cheap).
+    if (a.Energy < 0.05f || b.Energy < 0.05f) {
+      float level = Math.Abs(a.Energy - b.Energy);
+      if (a.Energy < 0.05f && b.Energy < 0.05f) return level;
+      return level + 0.25f;
+    }
     float de = a.Energy - b.Energy;
     float dz = (a.Zcr - b.Zcr) * 0.7f;
     float dc = (a.Centroid - b.Centroid) * 0.8f;
     float dl = (a.LowRatio - b.LowRatio) * 0.8f;
     float dm = (a.MidRatio - b.MidRatio) * 0.8f;
     float dh = (a.HighRatio - b.HighRatio) * 0.8f;
-    return (float)Math.Sqrt(de * de + dz * dz + dc * dc + dl * dl + dm * dm + dh * dh);
+    float d = (float)Math.Sqrt(de * de + dz * dz + dc * dc + dl * dl + dm * dm + dh * dh);
+    // Stochastic-class correction: two independent frication realizations differ
+    // by chance (~0.5-0.7) while meaning the same thing — discount the expected
+    // noise distance so frication matches frication (M4: please-self sank on
+    // seed variance while cross-words floated). Tone/stop/vowel pairs unaffected.
+    if (a.Zcr > 0.5f && b.Zcr > 0.5f && a.Energy >= 0.15f && b.Energy >= 0.15f) {
+      d -= 0.30f;
+      if (d < 0f) d = 0f;
+    }
+    return d;
   }
 }
 
@@ -59,7 +78,9 @@ public struct PhonemeAcousticEvidence {
 [Serializable]
 public struct AcousticEvidence {
   public bool HasAcousticData;
-  public float OverallMatch; // 0..1 quantized 0.1 (target resemblance, speaker-normalized)
+  public float OverallMatch; // 0..1 quantized 0.1 (target resemblance, REPORTED — never fake precision)
+  public float MatchRaw;     // unquantized blend (RANKING only: argmin/tiebreaks need total
+                             // order; never displayed, never a quality claim)
   public float OnsetScore;   // 0..1 quantized 0.1 (first-phoneme realization; §5A initial sound)
   public float CodaScore;    // 0..1 quantized 0.1 (last-phoneme realization; §5C ending sound)
   public PhonemeAcousticEvidence[] PerPhoneme; // null when unavailable
@@ -75,17 +96,28 @@ public struct AcousticEvidence {
 
 public static class AcousticAnalysis {
   // ---- named thresholds (calibrated on synthetic fixtures; child sessions retune) ----
-  public const int WindowMs = 25;
-  public const int HopMs = 10;
-  public const int ExpectedFramesPerWeight = 10; // ~100 ms per duration unit
+  public const int WindowMs = 25;  public const int HopMs = 10;
   public const float LoosePairCeil = 1.1f;       // pair distance above this = not credibly matched
   public const float NormDistCeil = 1.0f;        // DTW norm distance mapping to OverallMatch 0
   public const float MinPhonemeCoverage = 0.35f;
-  public const float MinPhonemeScore = 0.30f;
+  public const float MinPhonemeScore = 0.50f;    // Detected needs a real match (M4: 0.30
+                                                 // "detected" every substitution (0.4-0.6),
+                                                 // blinding the attempt-hood floor)
   public const float MissingCoverageCeil = 0.30f;
   public const float TailMissingCoverage = 0.35f;
   public const float TailWeakCoverage = 0.60f;
   public const float TailQuietRatio = 0.18f;     // tail energy < 18% of peak = decayed/cut
+  public const float TailMissingScoreCeil = 0.60f; // stretched tail scoring below this never
+                                                 // realized the coda (weak-but-present scores higher)
+  public const float EdgeMismatchDeduction = 0.20f; // mangled edge costs two quanta (weakest-link)
+  public const float StructuralGate = 0.65f;     // resemblance at/above this needs no structural
+                                                 // tiebreaks (slow-correct keeps its Pass; weak
+                                                 // resemblances below still get demoted)
+  public const int TrimEdgeRollFrames = 3;       // 30 ms speech-edge roll kept when trimming silence
+  public const float TrimFloorAbs = 0.002f;      // absolute trim floor (raw frame energy)
+  public const int InstanceGapFrames = 12;       // >= 120 ms silence splits word instances
+  public const int MinInstanceFrames = 10;       // instances shorter than 100 ms are fragments
+  public const float BestInstanceCap = 0.70f;    // merged repetition resemblance ceiling (Pass, never Strong)
   public const float VoicedZcrCeil = 0.30f;      // tail ZCR below this = sonorant-like continuation
   public const float VoicedLowFloor = 0.45f;     // tail low-band above this = sonorant-like
   public const float SyllablePeakRatio = 0.30f;  // peak >= 30% of max energy
@@ -99,16 +131,24 @@ public static class AcousticAnalysis {
                                                  // hump count != expected syllables (structural term)
   public const float SyllableAgreementReward = 0.10f; // one quantum for hump count ==
                                                  // expected syllables (nucleus-count agreement)
-  public const float CodaIdentityMargin = 0.05f; // coda owns its frames only if closer
+  public const float CodaIdentityMargin = 0.15f; // coda owns its frames only if closer
                                                  // than the nucleus prototype by this margin
+                                                 // (M4: 0.05 called realized IY-codas "not
+                                                 // coda" — coarse vowel/vowel gaps need room;
+                                                 // true deletions still miss by 0.2+)
                                                  // (M2: 0.10 rejected realized sonorant codas —
                                                  // coarse prototypes overlap, so the bar is
                                                  // tie-tolerance, not proof-beyond-doubt)
-  public const float AbruptTailRatio = 0.70f;    // tail energy >= 70% of peak = stops loud
-                                                 // (M2: 0.50 called realized sonorant codas
-                                                 // "abrupt" — their 60-65% sustain is normal)
+  public const float AbruptTailRatio = 0.70f;    // (legacy level gate, superseded by cliff below)
+  public const float TailCliffFloor = 0.30f;     // max frame-to-frame energy DROP inside the tail:
+                                                 // truncation stops cold (ba: 0.45+ over 1-2 frames);
+                                                 // natural offsets decay gradually (<0.3/frame).
+                                                 // M4: 0.45 missed fade-softened cuts.
   public const float FluxPeakFloor = 0.18f;      // frame-to-frame spectral jump above
                                                  // this starts a new acoustic regime
+  public const float VouchFluxFloor = 0.30f;     // re-onset flux needed to vouch a closure
+                                                 // (closure→burst ≈ 0.5+; noise-null dips
+                                                 // and attack ramps ≈ 0.2 stay below)
   public const int FluxMinGapFrames = 6;         // regimes last >= 60 ms (child rate)
   public const float LengthMismatchRatio = 1.5f; // (legacy frame gate, superseded)
   public const float LengthMismatchDurRatio = 1.3f; // voiced duration > 1.3x prototype AND
@@ -128,11 +168,38 @@ public static class AcousticAnalysis {
 
   // ================= FEATURE EXTRACTION =================
 
+  public static void FrameLayout(int sampleRate, out int win, out int hop) {
+    win = Math.Max(64, sampleRate * WindowMs / 1000);
+    hop = Math.Max(32, sampleRate * HopMs / 1000);
+  }
+
+  // Trims long leading/trailing silence runs (capture quiet-start + silence
+  // timeout), keeping a short speech-edge roll so stop closures/releases
+  // survive. Threshold is relative (5% of peak, min absolute floor) so quiet
+  // speech is never eaten. Returns a fresh array (caller-owned, transient).
+  public static FrameFeatures[] TrimFrames(FrameFeatures[] frames) {
+    if (frames == null || frames.Length == 0) return frames;
+    float peak = 0f;
+    for (int i = 0; i < frames.Length; i++)
+      if (frames[i].Energy > peak) peak = frames[i].Energy;
+    float thr = Math.Max(TrimFloorAbs, peak * 0.05f);
+    int first = 0;
+    while (first < frames.Length && frames[first].Energy < thr) first++;
+    if (first >= frames.Length) return new FrameFeatures[0];
+    int last = frames.Length - 1;
+    while (last > first && frames[last].Energy < thr) last--;
+    int s0 = Math.Max(0, first - TrimEdgeRollFrames);
+    int s1 = Math.Min(frames.Length - 1, last + TrimEdgeRollFrames);
+    var out_ = new FrameFeatures[s1 - s0 + 1];
+    for (int i = s0; i <= s1; i++) out_[i - s0] = frames[i];
+    return out_;
+  }
+
   public static FrameFeatures[] ExtractFrames(float[] samples, int sampleRate) {
     if (samples == null || samples.Length == 0 || sampleRate <= 0)
       return new FrameFeatures[0];
-    int win = Math.Max(64, sampleRate * WindowMs / 1000);
-    int hop = Math.Max(32, sampleRate * HopMs / 1000);
+    int win, hop;
+    FrameLayout(sampleRate, out win, out hop);
     int n = (samples.Length - win) / hop + 1;
     if (n <= 0) return new FrameFeatures[0];
     // mono-average is the caller's job; guard anyway (interleaved stereo -> average pairs).
@@ -200,57 +267,18 @@ public static class AcousticAnalysis {
     }
   }
 
-  // ================= EXPECTED SEQUENCE (parametric, content-driven) =================
+  // ================= EXPECTED TRACK (synth exemplar — see ReferenceSynthesizer) =================
+  // Reference tracks are rendered per attempt (transient, never retained), so
+  // there is no prototype table here at all: the ONLY hand values left in
+  // this file are decision thresholds (documented, calibrated, quarantined).
 
-  // Mid (F2-region) shares are coarse manner averages: vowels carry F2
-  // anywhere 0.8–2.2 kHz (compromise 0.15 — child-side flux, not the prototype,
-  // is what separates AO from L); fricative/stop bursts are broadband.
-  public static FrameFeatures PrototypeFor(PhonemeManner manner) {
-    switch (manner) {
-      case PhonemeManner.Vowel:
-        return new FrameFeatures { Energy = 0.90f, Zcr = 0.15f, Centroid = 0.25f, LowRatio = 0.65f, MidRatio = 0.15f, HighRatio = 0.05f };
-      case PhonemeManner.Stop:
-        // Closure-like (near-silence between surrounding sounds): low energy
-        // separates real mid-word gaps (apple P) from continuous sonorants
-        // (red has no gap — its vowel frames pair ~0.8 away here).
-        // M2 calibration: 0.35 was too close to vowels and blurred the gap cue.
-        return new FrameFeatures { Energy = 0.20f, Zcr = 0.35f, Centroid = 0.35f, LowRatio = 0.45f, MidRatio = 0.30f, HighRatio = 0.15f };
-      case PhonemeManner.Fricative:
-        return new FrameFeatures { Energy = 0.50f, Zcr = 0.85f, Centroid = 0.70f, LowRatio = 0.15f, MidRatio = 0.30f, HighRatio = 0.55f };
-      case PhonemeManner.Nasal:
-        return new FrameFeatures { Energy = 0.60f, Zcr = 0.12f, Centroid = 0.15f, LowRatio = 0.75f, MidRatio = 0.08f, HighRatio = 0.03f };
-      case PhonemeManner.Liquid:
-        return new FrameFeatures { Energy = 0.75f, Zcr = 0.15f, Centroid = 0.22f, LowRatio = 0.68f, MidRatio = 0.20f, HighRatio = 0.04f };
-      default: // Glide
-        return new FrameFeatures { Energy = 0.70f, Zcr = 0.15f, Centroid = 0.25f, LowRatio = 0.60f, MidRatio = 0.12f, HighRatio = 0.05f };
-    }
-  }
-
-  // Expands the target pronunciation into an expected frame track + per-phoneme
-  // frame ranges (start inclusive, end exclusive). Generic over any phoneme list.
-  public static FrameFeatures[] BuildExpected(TargetPronunciation pron, out int[] phoneStart, out int[] phoneEnd) {
-    phoneStart = new int[0];
-    phoneEnd = new int[0];
-    if (pron == null || !pron.IsUsable()) return new FrameFeatures[0];
-    int m = pron.Length();
-    phoneStart = new int[m];
-    phoneEnd = new int[m];
-    int total = 0;
-    int[] budgets = new int[m];
-    for (int i = 0; i < m; i++) {
-      budgets[i] = Math.Max(2, (int)Math.Round(
-        pron.Phonemes[i].DurationWeight * ExpectedFramesPerWeight));
-      total += budgets[i];
-    }
-    var seq = new FrameFeatures[total];
-    int at = 0;
-    for (int i = 0; i < m; i++) {
-      phoneStart[i] = at;
-      FrameFeatures proto = PrototypeFor(pron.Phonemes[i].Manner);
-      for (int k = 0; k < budgets[i]; k++) seq[at++] = proto;
-      phoneEnd[i] = at;
-    }
-    return seq;
+  // Edge gate by manner: self stop edges score ~0.7+ BY CONSTRUCTION (closure↔
+  // closure pairs are free) while sung-through stops sit ~0.5-0.6; continuants
+  // self ~0.8+. So stops demote below 0.65, continuants below 0.6. (History:
+  // uniform 0.6 demoted self stops in the parametric era; 0.5 let sall pass
+  // in the exemplar era. Exemplar symmetry moved self stops to 0.7+.)
+  public static float EdgeGateFor(PhonemeManner manner) {
+    return manner == PhonemeManner.Stop ? 0.65f : 0.6f;
   }
 
   // ================= DTW (Sakoe-Chiba band, normalized) =================
@@ -343,8 +371,14 @@ public static class AcousticAnalysis {
   // ================= TOP-LEVEL MATCH =================
 
   public static AcousticEvidence Analyze(float[] samples, int sampleRate, TargetPronunciation pron) {
+    return AnalyzeInner(samples, sampleRate, pron, true);
+  }
+
+  // allowSplit=false for best-instance recursion (depth 1, single words).
+  static AcousticEvidence AnalyzeInner(float[] samples, int sampleRate, TargetPronunciation pron, bool allowSplit) {
     var ev = new AcousticEvidence {
-      HasAcousticData = false, OverallMatch = 0f, PerPhoneme = null,
+      HasAcousticData = false, OverallMatch = 0f, OnsetScore = 0f, CodaScore = 0f,
+      PerPhoneme = null,
       MissingEnding = false, WeakEnding = false, EstimatedSyllables = 0,
       ExpectedSyllables = pron != null ? pron.SyllableCount : 0,
       IsRepetition = false, DurationSec = 0f, VoicedSec = 0f, Notes = "no-data"
@@ -354,6 +388,12 @@ public static class AcousticAnalysis {
     ev.DurationSec = (float)samples.Length / sampleRate;
 
     FrameFeatures[] frames = ExtractFrames(samples, sampleRate);
+    // Production-critical trim: capture windows carry leading quiet-start and
+    // trailing silence-timeout (up to seconds). Long silence runs are NOT
+    // speech and must not enter DTW (they would smear every alignment), but
+    // stop closures/releases live at speech edges — keep a 50 ms roll each
+    // side so closures survive while room/timeout silence does not.
+    frames = TrimFrames(frames);
     if (frames.Length < MinFramesForAssessment) {
       ev.Notes = "too-short";
       return ev;
@@ -365,8 +405,29 @@ public static class AcousticAnalysis {
     ev.VoicedSec = (float)voiced * HopMs / 1000f;
 
     NormalizeUtterance(frames);
-    int[] pStart, pEnd;
-    FrameFeatures[] expected = BuildExpected(pron, out pStart, out pEnd);
+    // Canonical reference track: the SAME extract->trim->normalize pipeline
+    // applied to the synth exemplar (symmetric normalization — the parametric
+    // era compared normalized child against UNNORMALIZED hand prototypes, a
+    // systematic bias). Per-phoneme spans are real synth boundaries (no
+    // duration-weight estimation). Transient per attempt, never retained.
+    var refIds = new System.Collections.Generic.List<string>(pron.Length());
+    for (int i = 0; i < pron.Length(); i++) refIds.Add(pron.Phonemes[i].Id);
+    int[] refS0, refS1;
+    float[] refPcm = ReferenceSynthesizer.Render(refIds, out refS0, out refS1);
+    if (refPcm == null || refPcm.Length == 0) return ev;
+    FrameFeatures[] expected = ExtractFrames(refPcm, sampleRate);
+    expected = TrimFrames(expected);
+    if (expected.Length == 0) return ev;
+    NormalizeUtterance(expected);
+    int fwin, fhop;
+    FrameLayout(sampleRate, out fwin, out fhop);
+    int hop1 = Math.Max(1, fhop);
+    int phoneCount = pron.Length();
+    int[] pStart = new int[phoneCount], pEnd = new int[phoneCount];
+    for (int i = 0; i < phoneCount; i++) {
+      pStart[i] = Math.Max(0, Math.Min(expected.Length, refS0[i] / hop1));
+      pEnd[i] = Math.Max(pStart[i] + 1, Math.Min(expected.Length, (refS1[i] + hop1 - 1) / hop1));
+    }
     if (expected.Length == 0) return ev;
 
     int[] pathA, pathB;
@@ -384,21 +445,38 @@ public static class AcousticAnalysis {
     // so 0.25/0.20 edge weights are principled, not a hack.
     // M2 calibration: unblended and onset-only blends still tied (please/ball).
     float baseMatch = 1f - Clamp01(normDist / NormDistCeil);
+    // Edge means over ALL aligned pairs (silence included: closures and gaps
+    // are evidence, not dirt). M4: a speech-only subset blinded continuant
+    // onsets to stop gaps AND misfired stop dip checks (the subset removed
+    // the very closure it looked for — self-ball capped at 0.4).
     float onsetMean = LoosePairCeil, codaMean = LoosePairCeil;
+    // Stop release-half means (VOT-bearing part of the edge): closure matches
+    // everybody, the release (transient + voicing/aspiration) carries voicing
+    // identity (pall-as-ball: aspiration where voice-bar belongs). M4.
+    double onsetRelSum = 0, codaRelSum = 0;
+    int onsetRelCnt = 0, codaRelCnt = 0;
+    int lastPhone = pStart.Length - 1;
+    int on0 = pStart[0], on1 = pEnd[0], co0 = pStart[lastPhone], co1 = pEnd[lastPhone];
+    int onRel0 = on0 + (on1 - on0) / 2, coRel0 = co0 + (co1 - co0) / 2;
     {
-      int lastPhone = pStart.Length - 1;
-      int on0 = pStart[0], on1 = pEnd[0], co0 = pStart[lastPhone], co1 = pEnd[lastPhone];
       int cntO = 0, cntC = 0;
       double sumO = 0, sumC = 0;
       for (int s = 0; s < pathA.Length; s++) {
         int ej = pathB[s];
-        if (ej >= on0 && ej < on1) {
-          sumO += FrameFeatures.Distance(frames[pathA[s]], expected[ej]);
+        int ci = pathA[s];
+        // Trim rolls are capture artifacts (leading quiet-start / trailing
+        // timeout silence re-added after stripping): they carry no phoneme
+        // identity, so edge scoring skips them (M4: 3 free perfect pairs for
+        // every onset, 3 free drag pairs for every coda).
+        if (ej >= on0 && ej < on1 && ci >= TrimEdgeRollFrames) {
+          sumO += FrameFeatures.Distance(frames[ci], expected[ej]);
           cntO++;
+          if (ej >= onRel0) { onsetRelSum += FrameFeatures.Distance(frames[ci], expected[ej]); onsetRelCnt++; }
         }
-        if (ej >= co0 && ej < co1) {
-          sumC += FrameFeatures.Distance(frames[pathA[s]], expected[ej]);
+        if (ej >= co0 && ej < co1 && ci < frames.Length - TrimEdgeRollFrames) {
+          sumC += FrameFeatures.Distance(frames[ci], expected[ej]);
           cntC++;
+          if (ej >= coRel0) { codaRelSum += FrameFeatures.Distance(frames[ci], expected[ej]); codaRelCnt++; }
         }
       }
       if (cntO > 0) onsetMean = (float)(sumO / cntO);
@@ -406,9 +484,53 @@ public static class AcousticAnalysis {
     }
     float onsetScore = 1f - Clamp01(onsetMean / LoosePairCeil);
     float codaScore = 1f - Clamp01(codaMean / LoosePairCeil);
+    // Gap-in-sonorant-coda (POSITIONAL, warp-proof): a sonorant coda (voicing
+    // expected throughout) containing an interior gap means a stop closure
+    // sits where none belongs (red-audio's D gap inside one-target's N).
+    // Stops/fricatives exempt (closures are their nature). M4.
+    TargetPhoneme lastPhoneDef = pron.Phonemes[pStart.Length - 1];
+    if (lastPhoneDef.IsSonorant()
+        && HasClosureGap(frames,
+          Math.Max(0, frames.Length - TrimEdgeRollFrames - 2 * Math.Max(1, co1 - co0)),
+          frames.Length - TrimEdgeRollFrames))
+      codaScore = Math.Min(codaScore, 0.4f);
+    // Stop release-half check: closure matches everything (silence is silence),
+    // so a stop edge is judged on its release (voicing/aspiration identity).
+    // pall-as-ball: aspiration where B's voice-bar belongs. Gate 0.60 with the
+    // same deduction (self releases score 0.7+ with margin). M4.
+    bool releaseOnsetBad = false, releaseCodaBad = false;
+    {
+      TargetPhoneme firstPhoneDef = pron.Phonemes[0];
+      if (firstPhoneDef.Manner == PhonemeManner.Stop && onsetRelCnt > 0) {
+        float rel = 1f - Clamp01((float)(onsetRelSum / onsetRelCnt) / LoosePairCeil);
+        if (rel < 0.60f) releaseOnsetBad = true;
+      }
+      if (lastPhoneDef.Manner == PhonemeManner.Stop && codaRelCnt > 0) {
+        float rel = 1f - Clamp01((float)(codaRelSum / codaRelCnt) / LoosePairCeil);
+        if (rel < 0.60f) releaseCodaBad = true;
+      }
+    }
     ev.OnsetScore = Quantize(onsetScore);
     ev.CodaScore = Quantize(codaScore);
     ev.OverallMatch = Quantize(0.55f * baseMatch + 0.25f * onsetScore + 0.20f * codaScore);
+    float rawOverall = 0.55f * baseMatch + 0.25f * onsetScore + 0.20f * codaScore;
+    ev.MatchRaw = rawOverall;
+    // Mangled edges cap resemblance (weakest-link), with manner-aware gates:
+    // self stop edges score ~0.7+ BY CONSTRUCTION (closure↔closure pairs are
+    // free), so stops demote below 0.65 while continuants demote below 0.6.
+    // A fired deduction also forfeits the syllable-agreement reward below
+    // (mangled edges + clean structure still means an imperfect production —
+    // M4: sall would otherwise rebound 0.4→0.5→0.6 Pass on the reward).
+    bool edgeFired = false;
+    if (ev.OnsetScore < EdgeGateFor(pron.Phonemes[0].Manner) || releaseOnsetBad) {
+      ev.OverallMatch = Quantize(ev.OverallMatch - EdgeMismatchDeduction);
+      rawOverall -= EdgeMismatchDeduction;
+      edgeFired = true;
+    }
+    if (ev.CodaScore < EdgeGateFor(pron.Phonemes[pStart.Length - 1].Manner) || releaseCodaBad) {
+      ev.OverallMatch = Quantize(ev.OverallMatch - EdgeMismatchDeduction);
+      rawOverall -= EdgeMismatchDeduction;
+    }
 
     // Per-phoneme: for each expected phoneme, gather aligned child frames.
     // TWO signals (comparison-based framework: path SHAPE + local distance):
@@ -435,7 +557,11 @@ public static class AcousticAnalysis {
         }
       }
       int distinct = matched > 0 ? childLast - childFirst + 1 : 0;
-      bool stretched = distinct <= Math.Max(2, budgeted / 4);
+      // Stretched: expected frames squeeze onto at most half the budgeted
+      // child frames (DTW path goes vertical). Boundary-inclusive (a 12-frame
+      // coda on 6 child frames is stretched, not "exactly half"). M4: strict <
+      // missed tedd's IY (12-vs-6) by one frame.
+      bool stretched = distinct * 2 <= budgeted;
       float coverage = (float)credible / budgeted;
       float mean = matched > 0 ? (float)(sumDist / matched) : LoosePairCeil;
       float score = 1f - Clamp01(mean / LoosePairCeil);
@@ -467,23 +593,58 @@ public static class AcousticAnalysis {
     for (int i = 0; i < frames.Length; i++)
       if (frames[i].Energy > peak) peak = frames[i].Energy;
     int hopFramesPerSec = sampleRate * HopMs / 1000;
-    int tailN = Math.Max(3, Math.Min(frames.Length, sampleRate * 200 / 1000 / Math.Max(1, hopFramesPerSec)));
+    // Coda-relative tail window: last third of the utterance (min 3 frames,
+    // max 200 ms), EXCLUDING the trailing trim roll (fade-out silence would
+    // dilute tail energy and fake "decayed" + sink abrupt readings — M4: wuh).
+    int tail200 = sampleRate * 200 / 1000 / Math.Max(1, hopFramesPerSec);
+    int tailN = Math.Max(3, Math.Min(frames.Length, Math.Min(tail200, Math.Max(3, frames.Length / 3))));
+    int tailEnd = Math.Max(tailN, frames.Length - TrimEdgeRollFrames);
+    int tailStart = Math.Max(0, tailEnd - tailN);
     double tailE = 0;
     double tailZ = 0, tailL = 0;
-    for (int i = frames.Length - tailN; i < frames.Length; i++) {
+    for (int i = tailStart; i < tailEnd; i++) {
       tailE += frames[i].Energy;
       tailZ += frames[i].Zcr;
       tailL += frames[i].LowRatio;
     }
-    tailE /= tailN; tailZ /= tailN; tailL /= tailN;
+    int tailCount = Math.Max(1, tailEnd - tailStart);
+    tailE /= tailCount; tailZ /= tailCount; tailL /= tailCount;
     bool abruptEnd = peak > 1e-6f && tailE >= peak * AbruptTailRatio;
     bool decayedEnd = peak > 1e-6f && tailE < peak * TailQuietRatio;
     bool sonorantTail = tailZ < VoicedZcrCeil && tailL > VoicedLowFloor;
     TargetPhoneme lastP = pron.Last();
+    // Stop-coda closure vouch (POSITIONAL mirror of the onset rule): a stop
+    // coda with NO closure gap in its window was never produced ("re" for red:
+    // EH sung straight through where D's closure belongs) → mark Missing and
+    // let the ending rules turn it into MissingEnding. Full stops vouch by
+    // their closure and flow to the normal coverage/score path. M4.
+    float closureChildEnergy = -1f; // diagnostic (Notes): 1 = vouched, 0 = none
+    if (lastP.Manner == PhonemeManner.Stop) {
+      int codaBudget = Math.Max(1, pEnd[m - 1] - pStart[m - 1]);
+      int cw1 = Math.Max(0, frames.Length - TrimEdgeRollFrames - 2 * codaBudget);
+      int cw0 = Math.Max(0, frames.Length - TrimEdgeRollFrames);
+      bool vouched = HasClosureGap(frames, cw1, cw0);
+      closureChildEnergy = vouched ? 1f : 0f;
+      if (!vouched) {
+        PhonemeAcousticEvidence noClo = per[m - 1];
+        noClo.Missing = true;
+        noClo.Detected = false;
+        per[m - 1] = noClo;
+        tail = noClo;
+      }
+    }
 
     ev.EstimatedSyllables = CountSyllables(frames);
     float protoDurSec = (float)expected.Length * HopMs / 1000f;
     float durRatio = protoDurSec > 0f ? ev.VoicedSec / protoDurSec : 1f;
+    // Slow speech stretches humps apart without adding syllables: scale the
+    // inter-peak gap by sounding rate (M4: slow-ball's stretched AO|L valley
+    // split at the fixed 120 ms gap and punished slow-correct as WrongWord).
+    if (durRatio > 1.15f) {
+      int scaledGap = Math.Max(SyllableMinGapFrames,
+        (int)Math.Round(SyllableMinGapFrames * Math.Min(1.5f, durRatio)));
+      ev.EstimatedSyllables = CountSyllables(frames, scaledGap);
+    }
 
     // Overlap second pass over the alignment path (transient, no retention).
     int tailMin = int.MaxValue, tailMax = int.MinValue, earlierMax = int.MinValue;
@@ -509,11 +670,11 @@ public static class AcousticAnalysis {
     for (int i = m - 2; i >= 0; i--) {
       if (pron.Phonemes[i].IsVowel()) { nucleusIdx = i; break; }
     }
-    bool codaHasIdentity = true; // abstain = assume present (other branches still judge)
     float dCoda = 0f, dNucleus = 0f;
     if (nucleusIdx >= 0 && tailSpan > 0) {
-      FrameFeatures codaProto = PrototypeFor(lastP.Manner);
-      FrameFeatures nucProto = PrototypeFor(pron.Phonemes[nucleusIdx].Manner);
+      // Data-driven protos: means of the REFERENCE spans (no hand table).
+      FrameFeatures codaProto = MeanFrames(expected, pStart[m - 1], pEnd[m - 1]);
+      FrameFeatures nucProto = MeanFrames(expected, pStart[nucleusIdx], pEnd[nucleusIdx]);
       double sC = 0, sN = 0;
       int cnt = 0;
       for (int c = tailMin; c <= tailMax; c++) {
@@ -529,14 +690,34 @@ public static class AcousticAnalysis {
       if (cnt > 0) {
         dCoda = (float)(sC / cnt);
         dNucleus = (float)(sN / cnt);
-        codaHasIdentity = dCoda + CodaIdentityMargin < dNucleus;
       }
     }
     // Regime deficit as corroboration (rate-robust: lengthened "baaa" still
     // has fewer regimes than ball). Diagnostic in Notes; decision uses identity.
     int regimesObserved = CountRegimes(frames);
     int regimesExpected = pron.MannerRuns();
-    bool noCodaAttempt = abruptEnd && durRatio < 1.6f && !codaHasIdentity;
+    // Truncation cliff: max frame-to-frame energy drop inside the tail window
+    // (stops cold vs decays — level-based "abrupt" misread realized sonorant
+    // sustain (60-65% of peak) as truncation, M4).
+    float tailCliff = 0f;
+    for (int i = tailStart + 1; i < tailEnd; i++) {
+      float drop = frames[i - 1].Energy - frames[i].Energy;
+      if (drop > tailCliff) tailCliff = drop;
+    }
+    bool cliffEnd = tailCliff >= TailCliffFloor;
+    // Three-way nearest-prototype verdict on the tail (data-driven protos):
+    // coda-like (dCoda clearly smaller) = realized; nucleus-like + cliff =
+    // truncated ON the vowel ("ba", "appl": the L never started); within the
+    // margin both ways = ambiguous (weak, never deletion). M4: a separate
+    // "stopped" test compared cross-word sonorants and false-fired.
+    bool codaLike = dCoda + CodaIdentityMargin < dNucleus;
+    bool nucleusLike = nucleusIdx >= 0 && dNucleus + CodaIdentityMargin < dCoda;
+    // Truncation = nucleus-like tail that STOPS (cliff = cold cut; loud-level
+    // abrupt = stops at vowel peak with no decay). Either stop signature plus
+    // nucleus-likeness means the coda never started. Double-gated so realized
+    // codas (coda-like) and soft fades (no stop) never trip it. M4.
+    bool stopsCold = cliffEnd || abruptEnd;
+    bool noCodaAttempt = durRatio < 1.6f && stopsCold && nucleusLike && !codaLike;
     if (noCodaAttempt) {
       // No dedicated coda frames exist: mark the tail phoneme missing even
       // though its coverage pairs looked close (they are the vowel's frames).
@@ -554,7 +735,7 @@ public static class AcousticAnalysis {
     } else if (tailGoodShape && !decayedEnd) {
       ev.MissingEnding = false;
       ev.WeakEnding = tail.Coverage < 0.85f;
-    } else if (tail.Missing && (abruptEnd || decayedEnd || tail.Coverage < TailMissingCoverage)) {
+    } else if (tail.Missing && (abruptEnd || decayedEnd || tail.MatchScore < TailMissingScoreCeil || tail.Coverage < TailMissingCoverage)) {
       bool sonorantTrace = lastP.IsSonorant() && sonorantTail && !tail.Stretched && !decayedEnd;
       ev.MissingEnding = !sonorantTrace; // weak-but-present sonorant coda: never deletion
       ev.WeakEnding = !ev.MissingEnding;
@@ -565,6 +746,53 @@ public static class AcousticAnalysis {
     ev.IsRepetition = (ev.EstimatedSyllables >= ev.ExpectedSyllables + 2)
       || (ev.EstimatedSyllables > ev.ExpectedSyllables && durRatio > 1.8f);
 
+    // Best-instance merge for repetitions/self-corrections ("ba-ba-ball"): the
+    // whole-utterance match dilutes the good final copy, so score voiced spans
+    // separately (depth-1 recursion, single words — no further splits), keep
+    // the BEST resemblance but the LAST span's ending (recency: the child's
+    // final production state), capped at Pass (disfluent != model production).
+    // Structural terms below exempt repetitions, so the merged score stands.
+    bool mergedBest = false;
+    if (allowSplit) {
+      int win, hop;
+      FrameLayout(sampleRate, out win, out hop);
+      int[][] spans = SplitInstances(frames);
+      if (spans.Length >= 2) {
+        AcousticEvidence best = ev;
+        bool haveBest = false;
+        for (int si = 0; si < spans.Length; si++) {
+          int s0 = spans[si][0] * hop;
+          int s1 = Math.Min(samples.Length, spans[si][1] * hop + win);
+          if (s1 - s0 < win) continue;
+          var sub = new float[s1 - s0];
+          for (int k = s0; k < s1; k++) sub[k - s0] = samples[k];
+          AcousticEvidence ie = AnalyzeInner(sub, sampleRate, pron, false);
+          if (!ie.HasAcousticData) continue;
+          if (!haveBest || ie.OverallMatch > best.OverallMatch) { best = ie; haveBest = true; }
+        }
+        if (haveBest) {
+          int ls0 = spans[spans.Length - 1][0] * hop;
+          int ls1 = Math.Min(samples.Length, spans[spans.Length - 1][1] * hop + win);
+          AcousticEvidence last = ev;
+          if (ls1 - ls0 >= win) {
+            var lsub = new float[ls1 - ls0];
+            for (int k = ls0; k < ls1; k++) lsub[k - ls0] = samples[k];
+            AcousticEvidence le = AnalyzeInner(lsub, sampleRate, pron, false);
+            if (le.HasAcousticData) last = le;
+          }
+          ev.OverallMatch = Math.Min(best.OverallMatch, BestInstanceCap);
+          rawOverall = Math.Min(best.MatchRaw, BestInstanceCap);
+          ev.OnsetScore = best.OnsetScore;
+          ev.CodaScore = best.CodaScore;
+          ev.PerPhoneme = best.PerPhoneme;
+          ev.MissingEnding = last.MissingEnding;
+          ev.WeakEnding = last.WeakEnding;
+          ev.IsRepetition = true;
+          mergedBest = true;
+        }
+      }
+    }
+
     // Structural terms: nucleus-count agreement/disagreement is target
     // structure (content syllables), plus unexplained VOICED length (pauses and
     // leading/trailing silence excluded — only sounding material counts).
@@ -573,17 +801,45 @@ public static class AcousticAnalysis {
     // a different word trips both (apple-as-ball: 2 humps + 1.4x sounding).
     // M2/M3: needed to break ties without punishing slow-correct speech.
     bool sylMismatch = ev.EstimatedSyllables != ev.ExpectedSyllables;
+    int sylDeficit = ev.ExpectedSyllables - ev.EstimatedSyllables; // >0: whole nucleus missing
     if (!ev.IsRepetition && ev.ExpectedSyllables > 0) {
-      if (!sylMismatch)
+      if (!sylMismatch && !edgeFired) {
         ev.OverallMatch = Quantize(ev.OverallMatch + SyllableAgreementReward);
-      else
+        rawOverall += SyllableAgreementReward;
+      } else if (ev.OverallMatch < StructuralGate) {
         ev.OverallMatch = Quantize(ev.OverallMatch - SyllableMismatchPenalty);
-      if (sylMismatch && durRatio > LengthMismatchDurRatio)
+        rawOverall -= SyllableMismatchPenalty;
+      }
+      if (sylMismatch && durRatio > LengthMismatchDurRatio && ev.OverallMatch < StructuralGate) {
         ev.OverallMatch = Quantize(ev.OverallMatch - LengthMismatchPenalty);
+        rawOverall -= LengthMismatchPenalty;
+      }
+      // A missing nucleus at NORMAL rate is a different word, not slow speech
+      // (ball-as-apple: 1 hump where 2 belong, sounding at 0.9x — the apple
+      // syllable never happened). M4: ball-as-apple otherwise stays Partial.
+      if (sylDeficit >= 1 && durRatio < LengthMismatchDurRatio && ev.OverallMatch < StructuralGate) {
+        ev.OverallMatch = Quantize(ev.OverallMatch - SyllableMismatchPenalty);
+        rawOverall -= SyllableMismatchPenalty;
+      }
+      // Interior-gap contradiction (evidence asymmetry: presence of a stop gap
+      // where the target has NO stop phoneme at all is positive counter-
+      // evidence; absence of gaps proves little and is never punished here).
+      // red-audio's D closure inside all-sonorant one (W AH N). M4.
+      if (ev.OverallMatch < StructuralGate && TargetHasNoStop(pron) && InteriorGapFrac(frames) > 0.10f) {
+        ev.OverallMatch = Quantize(ev.OverallMatch - SyllableMismatchPenalty);
+        rawOverall -= SyllableMismatchPenalty;
+      }
     }
+    if (rawOverall < 0f) rawOverall = 0f;
+    if (rawOverall > 1f) rawOverall = 1f;
+    ev.MatchRaw = rawOverall;
 
     float tailContrast = Contrast(frames); // diagnostic only (see noCodaAttempt)
+    int detN = 0;
+    for (int i = 0; i < per.Length; i++) if (per[i].Detected) detN++;
     ev.Notes = "match=" + ev.OverallMatch.ToString("0.0")
+      + " base=" + baseMatch.ToString("0.00")
+      + " det=" + detN + "/" + per.Length
       + " tailCov=" + tail.Coverage.ToString("0.0")
       + " shared=" + sharedFraction.ToString("0.00")
       + " identity=" + dCoda.ToString("0.00") + "vs" + dNucleus.ToString("0.00")
@@ -591,6 +847,9 @@ public static class AcousticAnalysis {
       + " diagnostic-contrast=" + tailContrast.ToString("0.00")
       + " syl=" + ev.EstimatedSyllables + "/" + ev.ExpectedSyllables
       + " durRatio=" + durRatio.ToString("0.0")
+      + (closureChildEnergy >= 0f ? " cloE=" + closureChildEnergy.ToString("0.00") : "")
+      + " cliff=" + tailCliff.ToString("0.00")
+      + (mergedBest ? " best-instance" : "")
       + (ev.MissingEnding ? " MISSING_ENDING" : ev.WeakEnding ? " weak-ending" : " ending-ok")
       + (ev.IsRepetition ? " repetition" : "");
     return ev;
@@ -681,7 +940,100 @@ public static class AcousticAnalysis {
     return (float)Math.Sqrt(de * de + dz * dz + dc * dc + dl * dl + dm * dm + dh * dh);
   }
 
-  public static int CountSyllables(FrameFeatures[] frames) {    if (frames == null || frames.Length < 3) return frames == null || frames.Length == 0 ? 0 : 1;
+  // Target has no stop phoneme anywhere: any interior stop gap in the attempt
+  // contradicts an all-continuant target (used by the gap-contradiction term).
+  static bool TargetHasNoStop(TargetPronunciation pron) {
+    if (pron == null || !pron.IsUsable()) return false;
+    for (int i = 0; i < pron.Length(); i++)
+      if (pron.Phonemes[i].Manner == PhonemeManner.Stop) return false;
+    return true;
+  }
+
+  // Fraction of middle-80% frames that are near-silence (stop-gap evidence
+  // independent of alignment). Edges excluded (roll + offset decay live there).
+  static float InteriorGapFrac(FrameFeatures[] frames) {
+    if (frames == null || frames.Length < 10) return 0f;
+    int s0 = frames.Length / 10, s1 = frames.Length * 9 / 10;
+    int gap = 0, total = 0;
+    for (int i = s0; i < s1; i++) {
+      total++;
+      if (frames[i].Energy < 0.05f) gap++;
+    }
+    return total > 0 ? (float)gap / total : 0f;
+  }
+
+  // Mean feature vector over a frame range (reference-span protos for the
+  // identity shootout). Empty range -> zero vector (never throws).
+  static FrameFeatures MeanFrames(FrameFeatures[] frames, int s0, int s1) {
+    var m = new FrameFeatures();
+    if (frames == null || frames.Length == 0) return m;
+    int a = Math.Max(0, s0), b = Math.Min(frames.Length, s1);
+    if (b <= a) return m;
+    double e = 0, z = 0, c = 0, l = 0, d = 0, h = 0;
+    for (int i = a; i < b; i++) {
+      e += frames[i].Energy; z += frames[i].Zcr; c += frames[i].Centroid;
+      l += frames[i].LowRatio; d += frames[i].MidRatio; h += frames[i].HighRatio;
+    }
+    double n = Math.Max(1, b - a);
+    m.Energy = (float)(e / n); m.Zcr = (float)(z / n); m.Centroid = (float)(c / n);
+    m.LowRatio = (float)(l / n); m.MidRatio = (float)(d / n); m.HighRatio = (float)(h / n);
+    return m;
+  }
+
+  // Closure-gap probe (POSITIONAL, warp-proof, room-proof): a RUN of ≥2
+  // sub-threshold frames ending in a SHARP re-onset (flux spike = release burst
+  // after closure). Single-frame dips (frication attacks, noise nulls, glottal
+  // blips, Hamming smear) and gradual ramps (offset decays) are NOT gaps —
+  // M4: S-attack vouched sall's missing closure; fade-softened cuts must use
+  // the cliff test instead. Stops vouch BY gaps; sonorants are contradicted BY
+  // gaps. One rule, two directions. M4.
+  static bool HasClosureGap(FrameFeatures[] frames, int s0, int s1) {
+    if (frames == null || frames.Length == 0) return false;
+    int a = Math.Max(0, s0), b = Math.Min(frames.Length, s1);
+    for (int i = a; i < b; i++) {
+      if (frames[i].Energy >= 0.10f) continue;
+      int run = 0;
+      while (i + run < b && frames[i + run].Energy < 0.10f) run++;
+      if (run >= 2) {
+        int reon = Math.Min(frames.Length - 1, i + run);
+        int rpre = Math.Max(0, i + run - 1);
+        if (SpectralFlux(frames[rpre], frames[reon]) >= VouchFluxFloor) return true;
+      }
+      i += Math.Max(0, run - 1);
+    }
+    return false;
+  }
+  // silence gaps (normalized energy: gain-invariant). Stop closures and brief
+  // dips never split (gap must reach InstanceGapFrames); fragments under
+  // MinInstanceFrames are dropped. Pure shape logic, no thresholds on content.
+  static int[][] SplitInstances(FrameFeatures[] frames) {
+    var spans = new System.Collections.Generic.List<int[]>();
+    int n = frames == null ? 0 : frames.Length;
+    int i = 0;
+    while (i < n) {
+      while (i < n && frames[i].Energy < 0.03f) i++; // skip gap
+      int s = i;
+      while (i < n) {
+        if (frames[i].Energy < 0.03f) {
+          int g = i;
+          while (g < n && frames[g].Energy < 0.03f) g++;
+          if (g - i >= InstanceGapFrames) break; // real gap: span ends at i
+          i = g; // brief dip: continues the span
+        } else {
+          i++;
+        }
+      }
+      if (i - s >= MinInstanceFrames) spans.Add(new int[] { s, i });
+    }
+    return spans.ToArray();
+  }
+
+  public static int CountSyllables(FrameFeatures[] frames) {
+    return CountSyllables(frames, SyllableMinGapFrames);
+  }
+
+  public static int CountSyllables(FrameFeatures[] frames, int minGapFrames) {
+    if (frames == null || frames.Length < 3) return frames == null || frames.Length == 0 ? 0 : 1;
     float peak = 0f;
     for (int i = 0; i < frames.Length; i++)
       if (frames[i].Energy > peak) peak = frames[i].Energy;
@@ -697,10 +1049,10 @@ public static class AcousticAnalysis {
       env[i] = (float)(s / Math.Max(1, c));
     }
     float floor = peak * SyllablePeakRatio;
-    int count = 0, lastPeak = -SyllableMinGapFrames - 1;
+    int count = 0, lastPeak = -minGapFrames - 1;
     for (int i = 1; i < frames.Length - 1; i++) {
       if (env[i] >= floor && env[i] >= env[i - 1] && env[i] > env[i + 1]
-          && i - lastPeak > SyllableMinGapFrames) {
+          && i - lastPeak > minGapFrames) {
         // prominence: valley since last peak below ratio of smaller peak.
         bool prominent = true;
         if (count > 0) {
