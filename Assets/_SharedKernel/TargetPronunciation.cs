@@ -54,6 +54,18 @@ public sealed class TargetPronunciation {
   public TargetPhoneme First() { return Phonemes[0]; }
   public TargetPhoneme Last() { return Phonemes[Phonemes.Length - 1]; }
 
+  // Manner RUNS: consecutive same-manner phonemes form one acoustic regime
+  // (ball B/AO/L = 3 runs; a geminate-free inventory keeps this exact).
+  // The engine compares it against observed spectral regimes for deletion
+  // detection — generic over any phoneme list, no word branches.
+  public int MannerRuns() {
+    if (Phonemes == null || Phonemes.Length == 0) return 0;
+    int runs = 1;
+    for (int i = 1; i < Phonemes.Length; i++)
+      if (Phonemes[i].Manner != Phonemes[i - 1].Manner) runs++;
+    return runs;
+  }
+
   // Proportional frame budget for phoneme i given total voiced frames N.
   public int FrameBudget(int index, int totalFrames) {
     if (TotalWeight <= 0f || totalFrames <= 0) return 0;
