@@ -25,6 +25,12 @@ public class VocabEntry
     public string audioLang; // Freeze "en-US".
     public bool audioGenerated;
     public bool audioApproved;
+    // Phase 2C progression metadata (authoring; absent block = defaults).
+    // Consumed by VocabularyProgression (recommendation order + gating).
+    // introOrder: lower = introduced earlier (default 999 = unordered).
+    // prerequisites: word ids that must leave Unknown first (default none).
+    public int introOrder;
+    public List<string> prerequisites;
 }
 
 [Serializable]

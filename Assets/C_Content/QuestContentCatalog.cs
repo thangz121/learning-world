@@ -58,6 +58,14 @@ public sealed class QuestContentEntry {
   public string rewardWorldChange;
   public string nextQuest;
   public List<WordAudioMap> audio = new List<WordAudioMap>();
+  // Phase 2C `simplify_path` DECISION (option A: wire to the consumption
+  // boundary). Semantic, fixed: L4 auto_simplify is a PRESENTATION-difficulty
+  // directive (show reduceChoicesTo options + demoOneStep demo), never a
+  // learning-state change — QuestManager must never see scores (see §21).
+  // Carried here so 2E/2F world consumers read ONE record; the world-side
+  // consumer itself lands with staging (2F), like the rest of the entry.
+  public int simplifyReduceChoices;
+  public bool simplifyDemo;
 }
 
 public static class QuestContentCatalog {
@@ -102,6 +110,8 @@ public static class QuestContentCatalog {
     entry.rewardWorldChange = quest.rewardWorldChange;
     entry.completionEffect = quest.rewardWorldChange;
     entry.nextQuest = nextQuest ?? "";
+    entry.simplifyReduceChoices = quest.simplifyReduceChoices;
+    entry.simplifyDemo = quest.simplifyDemo;
     var vocabById = new Dictionary<string, VocabEntry>();
     if (vocabs != null) {
       foreach (VocabEntry v in vocabs) {
@@ -148,6 +158,13 @@ public static class QuestContentCatalog {
       errors.Add(entry.questId + ": targetObject missing");
     if (string.IsNullOrEmpty(entry.rewardWorldChange))
       errors.Add(entry.questId + ": rewardWorldChange missing");
+    // Phase 2C: simplify contract pinned at the boundary (mirrors the
+    // Content freeze: reduce>0 + demo true). The world consumer lands in 2F;
+    // until then this pin guarantees the directive survives authoring intact.
+    if (entry.simplifyReduceChoices <= 0)
+      errors.Add(entry.questId + ": simplifyReduceChoices must be > 0");
+    if (!entry.simplifyDemo)
+      errors.Add(entry.questId + ": simplifyDemo must be true");
     var lineIds = new HashSet<string>();
     if (pack != null && pack.lines != null) {
       foreach (DialogueLine l in pack.lines) {

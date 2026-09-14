@@ -22,10 +22,19 @@ public static class ContentDatabase
         public string normal; public string slow; public string syllable;
         public string voice; public string lang; public bool generated; public bool approved;
     }
+    // Phase 2C: optional authoring block. Absent entirely in older files
+    // (backward compatible: defaults below). Present-but-malformed values
+    // fall back to defaults too — the python validator (not the parser)
+    // is where authoring mistakes fail loudly.
+    [Serializable] private class RawProgression
+    {
+        public int introOrder; public List<string> prerequisites;
+    }
     [Serializable] private class RawVocab
     {
         public string id; public bool active; public RawDisplay display;
         public RawSemantic semantic; public RawSpeech speech; public RawAssets assets; public RawVocabAudio audio;
+        public RawProgression progression;
     }
 
     [Serializable] private class RawObjective { public string id; public string action; public string target; }
@@ -83,6 +92,29 @@ public static class ContentDatabase
         e.audioLang = r.audio != null ? r.audio.lang : null;
         e.audioGenerated = r.audio != null && r.audio.generated;
         e.audioApproved = r.audio != null && r.audio.approved;
+        // Phase 2C progression block (optional): JsonUtility auto-instantiates
+        // a missing nested block (all-default), so absence is detected by
+        // CONTENT, not nullness: a block carrying no information
+        // (order < 1 AND no prerequisites) means "unordered, no
+        // prerequisites". Convention (validator-enforced): real orders start
+        // at 1; 0 is reserved = unordered. An explicit block must therefore
+        // always set introOrder >= 1.
+        e.introOrder = 999;
+        e.prerequisites = new List<string>();
+        if (r.progression != null
+            && (r.progression.introOrder >= 1
+                || (r.progression.prerequisites != null && r.progression.prerequisites.Count > 0)))
+        {
+            if (r.progression.introOrder >= 1) e.introOrder = r.progression.introOrder;
+            if (r.progression.prerequisites != null)
+            {
+                foreach (string p in r.progression.prerequisites)
+                {
+                    if (!string.IsNullOrWhiteSpace(p) && !e.prerequisites.Contains(p.Trim()))
+                        e.prerequisites.Add(p.Trim());
+                }
+            }
+        }
         return e;
     }
 

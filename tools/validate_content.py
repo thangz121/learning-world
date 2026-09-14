@@ -63,6 +63,25 @@ def main():
     for vid, v in vocabs.items():
         if v.get("id") != vid:
             errors.append(f"{vid}.json: id field '{v.get('id')}' != filename")
+        # Phase 2C progression block (optional; absent = defaults). Present
+        # block must be well-formed: explicit introOrder int >= 1 (orders
+        # start at 1; 0 is reserved = unordered, which closes the
+        # JsonUtility auto-instantiation ambiguity) + prerequisites
+        # resolving to vocab ids.
+        prog = v.get("progression")
+        if prog is not None:
+            if not isinstance(prog, dict):
+                errors.append(f"{vid}.json: progression must be an object")
+            else:
+                if "introOrder" not in prog or not isinstance(prog["introOrder"], int) or prog["introOrder"] < 1:
+                    errors.append(f"{vid}.json: progression.introOrder must be an explicit int >= 1")
+                pre = prog.get("prerequisites", [])
+                if not isinstance(pre, list) or any(not isinstance(p, str) for p in pre):
+                    errors.append(f"{vid}.json: progression.prerequisites must be a string list")
+                else:
+                    for p in pre:
+                        if p not in vocabs:
+                            errors.append(f"{vid}.json: prerequisite '{p}' has no vocab/{p}.json")
         blob = json.dumps(v)
         for banned in ("Neural2", "Wavenet", "WaveNet", "Chirp", "googlesamples"):
             if banned.lower() in blob.lower():

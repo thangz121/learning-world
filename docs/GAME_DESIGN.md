@@ -85,8 +85,9 @@ Source of truth là `Content/vocab/*.json` (`"active": true/false`), Markdown ch
 
 Slice đầu KHÔNG học 50 từ cùng lúc (loãng, khó đo). Chia:
 
-### Active Vocabulary (15 từ — học thật, đo recall, lên MasteryFSM)
+### Active Vocabulary (16 từ — học thật, đo recall, lên MasteryFSM)
 *apple, banana, milk, bread, basket, bag, red, blue, one, two, find, bring, help, please, thank you*
++ *ball* (Phase 2A: quest target mới, progression order + prerequisites xem `docs/HANDOFF/PHASE_2C_VOCABULARY_PROGRESSION.md`)
 
 Mỗi từ Active phải có đủ: prefab interactable + audio + quest objective + speech assessment + NextReview. Playtest hỏi: “Bé có nhớ 15 từ này không?” (recognition + transfer không visual prompt), không phải “Bé đã chạm vào bao nhiêu vật?”
 

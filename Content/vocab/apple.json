@@ -44,5 +44,9 @@
     "lang": "en-US",
     "generated": false,
     "approved": false
+  },
+  "progression": {
+    "introOrder": 1,
+    "prerequisites": []
   }
 }
