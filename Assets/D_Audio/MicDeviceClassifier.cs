@@ -70,6 +70,7 @@ public static class MicDeviceClassifier {
   static readonly string[] BuiltInHints = {
     "microphone array", "mic array", "array mic", "built-in", "builtin",
     "internal mic", "internal microphone", "integrated mic", "laptop mic",
-    "macbook", "imac", "webcam" // webcam mics behave like room mics, not headsets
+    "macbook", "imac", "webcam", // webcam mics behave like room mics, not headsets
+    "realtek", "conexant", "high definition audio" // stock laptop codecs (Windows)
   };
 }

@@ -142,6 +142,11 @@ public class MarketBootstrap : MonoBehaviour {
       monitor.Bind(mic.Gate, mic.LocalMic, mic.PhoneMic, dialog,
         mic.BridgeHost, mic.BridgePort, FindToolsDir());
       MicMonitor = monitor;
+      // Corner status widget (measured signal bars / headphone + data dot).
+      // Presentation-only: polls the monitor snapshot, never eats clicks.
+      GameObject hudGo = new GameObject("MicStatusHud");
+      MicStatusHud hud = hudGo.AddComponent<MicStatusHud>();
+      hud.Bind(monitor);
     }
   }
 

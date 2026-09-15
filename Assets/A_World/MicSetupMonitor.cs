@@ -79,6 +79,24 @@ public class MicSetupMonitor : MonoBehaviour {
   // on leaving them. Complements the one-shot probes (which stay as backup).
   PhonePresenceWatcher _watcher;
   int _watcherAppliedSeq;
+  // Edge dedup: the watcher re-posts GatewayDown/TransportLost on every
+  // reconnect tick (~2 s). Without this the monitor would ReportLinkDown +
+  // LogWarning forever (log spam with full stacks). Applied once per
+  // down-episode; any sign of life (UP/AUDIO) re-arms.
+  bool _linkDownApplied;
+  // Audio-log dedup: the watcher posts PhoneAudio per AUDIO chunk (~4/s), so
+  // one session would Debug.Log (full stack in player builds) dozens of times
+  // (observed 39x serial 1). Log once per serial; state application stays
+  // unconditional (idempotent). Reset on down-edges so a new session with a
+  // reused serial still logs.
+  bool _audioLoggedOnce;
+  uint _lastAudioLoggedSerial;
+  // Status-HUD signal state (measured, never faked — see MicSignal):
+  // phone bars ride the watcher's payload energy with peak-hold decay;
+  // the local dot rides device presence + poll freshness (the local mic is
+  // never held open by the HUD — captures own the device).
+  float _smoothEnergy;
+  int _lastLocalPollTick = -1;
 
   // Injection boundary (wired by MarketBootstrap; all optional except gate).
   // Phone is IPhoneLinkDevice (kernel interface) because LWE.World must not
@@ -107,6 +125,7 @@ public class MicSetupMonitor : MonoBehaviour {
     _startupDone = true;
     _localTimer = _localPollSec;
     _phoneTimer = _phoneRecheckSec;
+    _lastLocalPollTick = TickMs(); // startup refresh inside the gate counts
     try {
       MicSetupState state = _gate.EvaluateAtStartup();
       if (state == MicSetupState.OfferPhone) ShowOffer();
@@ -132,6 +151,94 @@ public class MicSetupMonitor : MonoBehaviour {
     ApplyProbeResult();
     UpdateWaitSession();
     UpdatePresenceWatch();
+    UpdateSignalSmoothing();
+  }
+
+  // --- status-HUD signal snapshot (measured, read-only for the HUD) -------
+  // Source follows gate precedence (local wins, like CompositeMicDevice).
+  // Phone energy/age come from the watcher's payload stats; local "data" is
+  // device-presence sampling (listed + Ready + poll fresh) because the HUD
+  // never opens the mic (captures own it). Never throws; never touches audio.
+  public MicSignalSnapshot CurrentSignal {
+    get {
+      var none = new MicSignalSnapshot {
+        Source = MicSignalSource.None, Level = SignalLevel.None,
+        DataFlowing = false, LinkUp = false, Energy = 0f
+      };
+      try {
+        if (_gate == null) return none;
+        bool localReady = SafeAvailable(_local);
+        if (localReady) {
+          return new MicSignalSnapshot {
+            Source = MicSignalSource.Local, Level = SignalLevel.None,
+            DataFlowing = IsLocalPollFresh(), LinkUp = true, Energy = 0f
+          };
+        }
+        bool phoneReady = SafeAvailable(_phone);
+        if (_gate.State == MicSetupState.ReadyPhone
+            || _gate.State == MicSetupState.WaitPhoneLink
+            || phoneReady) {
+          float energy = 0f;
+          bool flowing = false;
+          try {
+            if (_watcher != null) {
+              long frames, bytes;
+              float lastEnergy;
+              int lastBytes, ageMs;
+              _watcher.ReadAudioStats(out frames, out bytes,
+                out lastEnergy, out lastBytes, out ageMs);
+              flowing = phoneReady && lastBytes > 0
+                && MicSignal.IsDataFlowing(ageMs);
+              if (MicSignal.IsDataFlowing(ageMs)) energy = _smoothEnergy;
+            }
+          } catch (Exception) { }
+          return new MicSignalSnapshot {
+            Source = MicSignalSource.Phone,
+            Level = phoneReady ? MicSignal.ComputeLevel(energy) : SignalLevel.None,
+            DataFlowing = flowing, LinkUp = phoneReady, Energy = energy
+          };
+        }
+        return none;
+      } catch (Exception) { return none; }
+    }
+  }
+
+  // Peak-hold decay for the phone bars: jumps to fresh payload energy,
+  // falls to 0 when the wire goes quiet (bars go grey = idle, not crossed).
+  void UpdateSignalSmoothing() {
+    try {
+      float dt = 0f;
+      try { dt = Time.deltaTime; } catch (Exception) { }
+      if (dt < 0f || dt > 5f) dt = 0.03f;
+      float target = 0f;
+      try {
+        if (_watcher != null) {
+          long frames, bytes;
+          float lastEnergy;
+          int lastBytes, ageMs;
+          _watcher.ReadAudioStats(out frames, out bytes,
+            out lastEnergy, out lastBytes, out ageMs);
+          if (MicSignal.IsDataFlowing(ageMs) && lastBytes > 0) target = lastEnergy;
+        }
+      } catch (Exception) { }
+      _smoothEnergy = MicSignal.ApplyDecay(_smoothEnergy, target, dt);
+    } catch (Exception) { }
+  }
+
+  static bool SafeAvailable(IMicrophoneDevice d) {
+    try { return d != null && d.Capability.IsAvailable(); }
+    catch (Exception) { return false; }
+  }
+
+  static int TickMs() {
+    try { return Environment.TickCount; } catch (Exception) { return 0; }
+  }
+
+  bool IsLocalPollFresh() {
+    try {
+      if (_lastLocalPollTick < 0) return false;
+      return unchecked(TickMs() - _lastLocalPollTick) <= 15000;
+    } catch (Exception) { return false; }
   }
 
   // --- exercise entry ----------------------------------------------------------
@@ -189,6 +296,8 @@ public class MicSetupMonitor : MonoBehaviour {
   void BeginPhoneWait() {
     _waitActive = true;
     _qrLoaded = false;
+    _linkDownApplied = false; // fresh wait episode: down edges may log again
+    _audioLoggedOnce = false; // fresh wait episode: audio may log again
     _skipShown = false;
     _gwPageUrl = "";
     _waitElapsed = 0f;
@@ -409,6 +518,7 @@ public class MicSetupMonitor : MonoBehaviour {
   void PollLocal() {
     try {
       if (_local != null) _local.Refresh();
+      _lastLocalPollTick = TickMs();
       if (_gate != null) _gate.NotifySourcesChanged();
       // Headset plugged while a dialog is open: recovery wins silently.
       if (_dialog != null && _dialog.IsShowing
@@ -529,13 +639,21 @@ public class MicSetupMonitor : MonoBehaviour {
         case WatcherEvent.PhoneAudio:
           // Live session proof (same weight as a probe hit): link it now
           // instead of waiting for the next 3 s re-probe.
-          try {
-            UnityEngine.Debug.Log("[MicSetup] Phone audio live (serial "
-              + serial + ") — link confirmed.");
-          } catch (Exception) { }
+          _linkDownApplied = false; // sign of life: re-arm down edges
+          // Log once per serial: chunk bursts of the same session skip the
+          // log (full stack each) but still apply the idempotent link state.
+          if (!_audioLoggedOnce || serial != _lastAudioLoggedSerial) {
+            _audioLoggedOnce = true;
+            _lastAudioLoggedSerial = serial;
+            try {
+              UnityEngine.Debug.Log("[MicSetup] Phone audio live (serial "
+                + serial + ") — link confirmed.");
+            } catch (Exception) { }
+          }
           HandleLinkObservation(PhoneLinkState.PhoneLinked, _waitActive);
           break;
         case WatcherEvent.PhoneUp:
+          _linkDownApplied = false; // sign of life: re-arm down edges
           try {
             UnityEngine.Debug.Log("[MicSetup] Phone page opened — waiting for START.");
           } catch (Exception) { }
@@ -555,6 +673,11 @@ public class MicSetupMonitor : MonoBehaviour {
         case WatcherEvent.PhoneDown:
         case WatcherEvent.TransportLost:
         case WatcherEvent.GatewayDown: {
+          // Dedup: same down-episode re-posts on every reconnect tick.
+          // Apply (and log) once; recovery signs re-arm above.
+          if (_linkDownApplied) break;
+          _linkDownApplied = true;
+          _audioLoggedOnce = false; // next session logs even if serial repeats
           string why = ev == WatcherEvent.PhoneDown ? "phone page gone"
             : ev == WatcherEvent.TransportLost ? "bridge lost" : "gateway down";
           try {

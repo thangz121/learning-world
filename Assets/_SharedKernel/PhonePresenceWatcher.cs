@@ -56,6 +56,16 @@ public sealed class PhonePresenceWatcher : IDisposable {
   long _audioCount;
   long _stopCount;
   long _downCount;
+  // Measured AUDIO-content stats (worker thread writes, driver reads):
+  // payload bytes prove CONTENT flowing, not just control traffic (§req-2).
+  // Energy is mean-absolute over little-endian PCM16 samples (/32768 — same
+  // convention as PhoneMicProtocol.Pcm16ToFloat32, computed inline to avoid
+  // per-frame float[] allocation). Tick uses Environment.TickCount (no Unity
+  // API on this thread). _lastAudioTick < 0 = no AUDIO frame ever seen.
+  long _audioBytes;
+  float _lastAudioEnergy;
+  int _lastAudioBytes;
+  int _lastAudioTick = -1;
 
   public PhonePresenceWatcher(string host, int port) {
     _host = string.IsNullOrEmpty(host) ? "127.0.0.1" : host;
@@ -110,6 +120,42 @@ public sealed class PhonePresenceWatcher : IDisposable {
     }
   }
 
+  // Measured content proof (§req-2): how many AUDIO payload bytes arrived,
+  // the energy of the most recent payload, and its age in ms (negative = never).
+  // Green dot <=> ageMs fresh AND lastBytes > 0 (real bytes on the wire).
+  public void ReadAudioStats(out long frames, out long bytes,
+      out float lastEnergy, out int lastBytes, out int ageMs) {
+    lock (_mutex) {
+      frames = _audioCount;
+      bytes = _audioBytes;
+      lastEnergy = _lastAudioEnergy;
+      lastBytes = _lastAudioBytes;
+      ageMs = _lastAudioTick < 0 ? -1
+        : unchecked(Environment.TickCount - _lastAudioTick);
+    }
+  }
+
+  // Measured per AUDIO payload (worker thread; lock-held, allocation-free).
+  void RecordAudio(byte[] payload) {
+    int n = payload != null ? payload.Length : 0;
+    float energy = 0f;
+    int pairs = n / 2;
+    if (pairs > 0) {
+      double sum = 0;
+      for (int i = 0; i < pairs; i++) {
+        short s = (short)(payload[i * 2] | (payload[i * 2 + 1] << 8));
+        sum += Math.Abs((int)s) / 32768.0;
+      }
+      energy = (float)(sum / pairs);
+    }
+    lock (_mutex) {
+      _audioBytes += n;
+      _lastAudioEnergy = energy;
+      _lastAudioBytes = n;
+      try { _lastAudioTick = Environment.TickCount; } catch (Exception) { }
+    }
+  }
+
   void Post(WatcherEvent ev, uint serial, string reason) {
     lock (_mutex) {
       _lastEvent = ev;
@@ -148,6 +194,7 @@ public sealed class PhonePresenceWatcher : IDisposable {
           if (!f.HasValue) continue; // quiet slice (timeout) or malformed: normal
           switch (f.Value.Kind) {
             case KindAudio:
+              RecordAudio(f.Value.Payload);
               Post(WatcherEvent.PhoneAudio, f.Value.Serial, string.Empty);
               break;
             case KindStop:

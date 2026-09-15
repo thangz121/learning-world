@@ -318,3 +318,18 @@ Bridge kinds 5/6 (additive, same envelope; PhoneMicProtocol.KindPresenceUp/Down)
   1x rate (93 chunks/23.8 s, 57 chunks/15.0 s), clean STOPs, raw bridge bytes verified
   HELLO/UP/DOWN/AUDIO.
 E2E 2026-09-15: EditMode FULL 256 (255 pass + 1 pre-existing conditional skip P13M4, 0 fail) on Unity 6000.6.0f1 batchmode; P14 21/21, P15 19/19 (new P14U/P15Q/P15R/P15S green).
+
+## Monitor log-dedup (2026-09-15 addendum — log-only, no behavior change)
+
+- Observed in player build: `Phone audio live (serial 1)` logged 39x (one
+  `Debug.Log` + full stack per AUDIO chunk, ~4/s) for a single session.
+  Same root cause as the down-edge re-posts: the watcher posts an edge per
+  chunk and the monitor applied+logged every edge.
+- Fix (`MicSetupMonitor`, working tree): log PhoneAudio once per serial
+  (`_audioLoggedOnce`/`_lastAudioLoggedSerial`); link-state application
+  stays unconditional (idempotent `ReportLinkUp` + `OnPhoneLink`). Reset on
+  down-edges and on `BeginPhoneWait` so a reused serial after gateway
+  restart still logs. Down-edge dedup (`_linkDownApplied`, same file) covers
+  GatewayDown/TransportLost re-posts.
+- Verify: EditMode FULL 256 (255 pass + 1 pre-existing skip P13M4, 0 fail),
+  same as baseline — no regression.
