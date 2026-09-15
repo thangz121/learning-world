@@ -78,6 +78,23 @@ State: <span id="state" class="pill">IDLE</span></div>
 
   function pill(el, txt, cls) { el.textContent = txt; el.className = "pill " + (cls || ""); }
   function say(t) { status.textContent = t; }
+  // Source-precedence (game -> gateway -> this page): when the PC uses a
+  // plugged-in mic, START stands down (game-side precedence applies anyway —
+  // this only moves the UI, never grants access). Streaming sessions finish;
+  // the NEXT start stays locked until the PC reports mic:phone again.
+  var pcPrefersLocalMic = false;
+  function applyPcPreferMic(origin) {
+    pcPrefersLocalMic = (origin === "local");
+    if (pcPrefersLocalMic) {
+      startBtn.disabled = true;
+      say("PC đang dùng mic cắm sẵn — điện thoại chờ");
+      logStep(curStep, "PC prefers local mic — START đứng xuống (điện thoại chờ)");
+    } else {
+      say("PC sẵn sàng nhận mic điện thoại");
+      logStep(curStep, "PC prefers phone mic — START mở lại");
+      try { if (!streaming && !starting) startBtn.disabled = false; } catch (e) {}
+    }
+  }
   var stepIds = ["st1", "st2", "st3", "st4", "st5"], curStep = 0;
   function logStep(n, t) {
     var now = new Date(), ts = ("0" + now.getHours()).slice(-2) + ":" +
@@ -170,7 +187,12 @@ State: <span id="state" class="pill">IDLE</span></div>
   var lastPongAt = 0, connectAttempt = 0, manualStop = false, everReady = false;
 
   function setState(s, cls) { pill(state, s, cls); }
-  function setStartEnabled(on) { startBtn.disabled = !on; }
+  function setStartEnabled(on) {
+    // Source-precedence gate: PC-local wins keeps START down even when the
+    // generic flow would re-enable it (streaming sessions still finish).
+    if (pcPrefersLocalMic) { startBtn.disabled = true; return; }
+    startBtn.disabled = !on;
+  }
   function setStopEnabled(on) { stopBtn.disabled = !on; }
 
   function clearTimers() {
@@ -309,6 +331,10 @@ State: <span id="state" class="pill">IDLE</span></div>
         cleanupAudio(); setStartEnabled(true); setStopEnabled(false);
       }
       else if (msg.type === "stopped") { say("stopped ok"); logStep(5, "PC confirmed stop"); }
+      else if (msg.type === "pc-prefer") {
+        // Source-precedence: game decides, gateway relays. Only mic applies here.
+        if (msg.media === "mic") applyPcPreferMic(msg.origin);
+      }
     };
   }
 

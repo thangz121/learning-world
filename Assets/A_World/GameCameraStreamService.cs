@@ -44,6 +44,18 @@ public class GameCameraStreamService : MonoBehaviour {
   PhoneCameraState _lastLoggedState = PhoneCameraState.Disabled;
   bool _logArmed = true;
 
+  // Source-precedence (game -> gateway -> phone START UI, per-medium): the
+  // game prefers ANY plugged-in PC webcam over the phone (generic count, no
+  // names — names are labels only). Reported on TRANSITIONS only via the cam
+  // bridge (8452), fire-and-forget (TCP dials block). Game-side precedence
+  // applies regardless — this only stands the phone START button down.
+  // -e2e-nocam forces phone (E2E hook, mirrors -e2e-nomic for mics).
+  System.Func<bool> _localCamPresentFn;
+  bool _forcePhoneCam;
+  string _lastReportedCamPrefer;
+  float _camPreferPollSec = 5f;
+  float _camPreferTimer;
+
   public PhoneCameraState State => _state;
   public bool IsRunning => _running;
   public Texture2D CurrentTexture => _state == PhoneCameraState.Live ? _texture : null;
@@ -55,6 +67,51 @@ public class GameCameraStreamService : MonoBehaviour {
     if (port > 0) _port = port;
     string reason;
     if (config.Validate(out reason)) _config = config;
+  }
+
+  // Test seam: inject scripted local-webcam presence (generic bool, no names).
+  // Null restores the default (WebCamTexture.devices count).
+  public void SetLocalCamProbeForTests(System.Func<bool> fn) {
+    _localCamPresentFn = fn;
+  }
+
+  // E2E hook: -e2e-nocam forces phone even with a local webcam present.
+  public void SetForcePhoneForTests(bool force) {
+    _forcePhoneCam = force;
+  }
+
+  bool HasLocalCam() {
+    try {
+      if (_forcePhoneCam) return false;
+      try {
+        foreach (string a in System.Environment.GetCommandLineArgs())
+          if (string.Equals(a, "-e2e-nocam", System.StringComparison.OrdinalIgnoreCase)) return false;
+      } catch (Exception) { }
+      if (_localCamPresentFn != null) {
+        try { return _localCamPresentFn(); } catch (Exception) { return false; }
+      }
+      try {
+        var devs = UnityEngine.WebCamTexture.devices;
+        return devs != null && devs.Length > 0;
+      } catch (Exception) { return false; }
+    } catch (Exception) { return false; }
+  }
+
+  void ReportCamPreferIfChanged() {
+    try {
+      string prefer = PcSourcePrecedence.PreferCam(HasLocalCam(), false);
+      // forcePhone already folded into HasLocalCam (false when forced), so
+      // the payload stays honest ("cam:phone" when forced).
+      if (string.Equals(prefer, _lastReportedCamPrefer, StringComparison.Ordinal)) return;
+      _lastReportedCamPrefer = prefer;
+      string host = _host;
+      int port = _port;
+      try {
+        System.Threading.Tasks.Task.Run(() => {
+          try { PcPreferenceReporter.Report(host, port, prefer, false); } catch (Exception) { }
+        });
+      } catch (Exception) { }
+    } catch (Exception) { }
   }
 
   public void StartService() {
@@ -70,6 +127,8 @@ public class GameCameraStreamService : MonoBehaviour {
       _lastError = string.Empty;
       _appliedSeq = 0;
       _state = PhoneCameraState.WaitingForPhone;
+      _camPreferTimer = _camPreferPollSec;
+      try { ReportCamPreferIfChanged(); } catch (Exception) { }
     } catch (Exception) { _state = PhoneCameraState.Error; }
   }
 
@@ -96,11 +155,20 @@ public class GameCameraStreamService : MonoBehaviour {
     try {
       DrainWatcherEdges();
       RefreshLiveness();
+      // Source-precedence poll (cheap bool, 5 s): USB webcam plugged/unplugged
+      // flips the phone START UI via the gateway. Transitions only.
+      try {
+        _camPreferTimer -= UnityEngine.Time.deltaTime;
+        if (_camPreferTimer <= 0f) {
+          _camPreferTimer = _camPreferPollSec;
+          ReportCamPreferIfChanged();
+        }
+      } catch (Exception) { }
       // One line per STATE TRANSITION only (R10: never per-frame spam).
       // Lets Player.log prove Live vs waiting vs lost without a debugger.
       if (_logArmed && _state != _lastLoggedState) {
         _lastLoggedState = _state;
-        Debug.Log("[PhoneCamera] " + StatusLine());
+        UnityEngine.Debug.Log("[PhoneCamera] " + StatusLine());
       }
     } catch (Exception) { _state = PhoneCameraState.Error; }
   }

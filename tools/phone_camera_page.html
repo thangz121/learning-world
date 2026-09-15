@@ -80,7 +80,6 @@ window.setScreenOff = function (on) {
   var btn = document.getElementById("screenoff");
   if (btn) btn.textContent = window.__screenOff ? "MỞ MÀN HÌNH" : "TẮT MÀN HÌNH (tiết kiệm pin)";
 };
-})();
   var LS_GOOD = "lwe_last_good_cam_ws";
   var READY_TIMEOUT_MS = 6000, CONNECT_TIMEOUT_MS = 7000;
   var PING_EVERY_MS = 15000, PONG_TIMEOUT_MS = 6000, RECONNECT_BASE_MS = 1500;
@@ -135,7 +134,25 @@ window.setScreenOff = function (on) {
   var ctx2d = canvas.getContext("2d");
 
   function setState(s, cls) { pill(state, s, cls); }
-  function setStartEnabled(on) { startBtn.disabled = !on; }
+  // Source-precedence (game -> gateway -> this page): PC webcam wins keeps
+  // START down (streaming sessions still finish; next start stays locked).
+  var pcPrefersLocalCam = false;
+  function applyPcPreferCam(origin) {
+    pcPrefersLocalCam = (origin === "local");
+    if (pcPrefersLocalCam) {
+      startBtn.disabled = true;
+      say("PC đang dùng camera cắm sẵn — điện thoại chờ");
+      logStep(curStep, "PC prefers local camera — START đứng xuống (điện thoại chờ)");
+    } else {
+      say("PC sẵn sàng nhận camera điện thoại");
+      logStep(curStep, "PC prefers phone camera — START mở lại");
+      try { if (!streaming && !starting) startBtn.disabled = false; } catch (e) {}
+    }
+  }
+  function setStartEnabled(on) {
+    if (pcPrefersLocalCam) { startBtn.disabled = true; return; }
+    startBtn.disabled = !on;
+  }
   function setStopEnabled(on) { stopBtn.disabled = !on; }
   function clearTimers() {
     if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
@@ -262,6 +279,9 @@ window.setScreenOff = function (on) {
         cleanupCamera(); setStartEnabled(true); setStopEnabled(false);
       }
       else if (msg.type === "cam-stopped") { say("stopped ok"); logStep(5, "PC confirmed stop"); }
+      else if (msg.type === "pc-prefer") {
+        if (msg.media === "cam") applyPcPreferCam(msg.origin);
+      }
     };
   }
 

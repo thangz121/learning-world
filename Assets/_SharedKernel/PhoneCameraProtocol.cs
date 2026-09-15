@@ -96,6 +96,10 @@ public static class PhoneCameraProtocol {
   public const byte KindDown = 6;   // payload utf8 "ws-closed" (page gone mid-game)
   public const byte KindSubscribe = 0x10; // Unity -> gateway (payload empty)
   public const byte KindCancel = 0x11;    // Unity -> gateway (payload empty)
+  // Unity -> gateway ONLY: source-preference report (payload utf8
+  // "cam:local" / "cam:phone"). Same contract as PhoneMicProtocol
+  // KindPreferLocal, on this medium's own bridge.
+  public const byte KindPreferLocal = 0x12;
 
   public const int HeaderBytes = 1 + 4 + 4; // kind + serial + seq
   public const int MaxPayloadBytes = 300 * 1024; // envelope cap (JPEG headroom)
@@ -183,6 +187,7 @@ public static class PhoneCameraProtocol {
       case KindDown:
       case KindSubscribe:
       case KindCancel:
+      case KindPreferLocal:
         return true;
       default:
         reason = "unknown-kind:" + frame.Kind;

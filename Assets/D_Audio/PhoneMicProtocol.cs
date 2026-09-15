@@ -50,6 +50,11 @@ public static class PhoneMicProtocol {
   public const byte KindPresenceDown = 6;
   public const byte KindSubscribe = 0x10;
   public const byte KindCancel = 0x11;
+  // Unity -> gateway ONLY: source-preference report (game decides local vs
+  // phone per medium; gateway pushes it to phone pages so they stand down).
+  // Payload utf8 "<media>:<origin>", e.g. "mic:local" / "mic:phone".
+  // Replies nothing; malformed payloads are ignored, never fatal.
+  public const byte KindPreferLocal = 0x12;
 
   public const int HeaderBytes = 1 + 4 + 4;      // kind + serial + seq
   public const int MaxFrameBytes = 4 + HeaderBytes + 65535; // len + envelope cap
@@ -180,6 +185,7 @@ public static class PhoneMicProtocol {
       case KindPresenceDown:
       case KindSubscribe:
       case KindCancel:
+      case KindPreferLocal:
         return true;
       default:
         reason = "unknown-kind:" + frame.Kind;

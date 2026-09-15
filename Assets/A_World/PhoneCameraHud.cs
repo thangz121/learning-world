@@ -40,6 +40,7 @@ public class PhoneCameraHud : MonoBehaviour {
   Text _status;
   Text _placeholder;
   AspectRatioFitter _fitter;
+  PhoneCameraState _lastLoggedState = (PhoneCameraState)(-1);
 
   public void Bind(GameCameraStreamService service) {
     _service = service;
@@ -91,6 +92,13 @@ public class PhoneCameraHud : MonoBehaviour {
       _placeholder.gameObject.SetActive(!live);
       _placeholder.text = PlaceholderFor(state);
       _status.text = ShortStatusFor(state);
+      // One line per STATE TRANSITION only (same R10 discipline as the
+      // service): proves in Player.log what the box shows without a debugger.
+      if (state != _lastLoggedState) {
+        _lastLoggedState = state;
+        UnityEngine.Debug.Log("[PhoneCameraHud] state=" + state
+          + " video=" + (tex != null) + " showing=" + IsShowing);
+      }
     } catch (Exception) { }
   }
 
@@ -140,6 +148,10 @@ public class PhoneCameraHud : MonoBehaviour {
     boxRt.pivot = new Vector2(0f, 0f);
     boxRt.sizeDelta = BoxSize;
     boxRt.anchoredPosition = BoxPosition;
+    try {
+      UnityEngine.Debug.Log("[PhoneCameraHud] built box size=" + BoxSize
+        + " pos=" + BoxPosition + " order=" + CanvasOrder);
+    } catch (Exception) { }
     Image box = _boxGo.AddComponent<Image>();
     box.color = new Color(0.06f, 0.08f, 0.10f, 0.72f);
     box.raycastTarget = false;

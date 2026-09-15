@@ -66,6 +66,12 @@ K_UP, K_DOWN = 5, 6  # phone presence (no audio): page opened / page gone.
 # tell "user pressed STOP but page still open" (STOP seen, no DOWN) apart from
 # "phone gone mid-game" (DOWN, or our socket dying) in seconds.
 K_SUBSCRIBE, K_CANCEL = 0x10, 0x11
+# Unity -> gateway ONLY: source-preference report (game prefers plugged-in PC
+# hardware over the phone per medium). Payload utf8 "<media>:<origin>", e.g.
+# "mic:local" / "cam:phone". Gateway stores it and pushes {"type":"pc-prefer"}
+# to the matching phone sessions so their START buttons stand down. Replies
+# nothing; malformed payloads are ignored, never fatal.
+K_PREFER = 0x12
 # Camera bridge kinds (mirror PhoneCameraProtocol.cs — same numeric envelope,
 # SEPARATE socket on --camera-bridge-port so JPEGs never block speech audio).
 #   FRAME=1 (payload JPEG bytes) · STOP=2 · ERROR=3 · HELLO=4 · UP=5 · DOWN=6.
@@ -209,8 +215,78 @@ class Gateway:
         # Unified mic+camera panel (Phase 2.2 follow-up): same origin, own QR.
         self.uni_page_url = ""
         self.uni_qr_png = b""
+        # Source precedence (game decides, gateway relays): per-medium origin
+        # the GAME currently prefers ("local" = plugged-in PC hardware wins,
+        # phone must stand down; "phone" = phone may stream). Defaults allow
+        # the phone — the game reports on transitions only.
+        self.prefer = {"mic": "phone", "cam": "phone"}
+        self.mic_sockets = set()  # live /mic phone WS (for pc-prefer pushes)
+        self.cam_sockets = set()  # live /cam phone WS (for pc-prefer pushes)
 
     # -- bridge pump -------------------------------------------------
+    # Source-preference relay (game -> phone pages). The game reports
+    # "<media>:<origin>" over either bridge (parsed in the hold loops below);
+    # the matching live phone sessions get {"type":"pc-prefer"} so their START
+    # buttons stand down when the PC uses plugged-in hardware. Game-side
+    # precedence applies regardless — this signal only moves the phone UI.
+    def push_prefer(self, media):
+        with self.lock:
+            origin = self.prefer.get(media, "phone")
+            socks = list(self.mic_sockets if media == "mic" else self.cam_sockets)
+        msg = {"type": "pc-prefer", "media": media, "origin": origin}
+        for sock in socks:
+            try:
+                self.send_ctrl(sock, msg)
+            except Exception:
+                pass
+
+    def on_prefer(self, payload):
+        try:
+            text = (payload or b"").decode("utf-8")
+        except Exception:
+            return
+        parts = text.split(":")
+        if len(parts) != 2:
+            return
+        media, origin = parts[0].strip(), parts[1].strip()
+        if media not in ("mic", "cam") or origin not in ("local", "phone"):
+            return
+        with self.lock:
+            if self.prefer.get(media) == origin:
+                return
+            self.prefer[media] = origin
+        log("prefer: %s -> %s (game decision, phone pages stand down=%s)"
+            % (media, origin, origin == "local"))
+        self.push_prefer(media)
+
+    def drain_bridge_control(self, conn):
+        # Bridge hold-loop reader (shared by mic + cam bridges): reads ONE
+        # envelope frame from a subscriber. SUBSCRIBE duplicates are ignored;
+        # PREFER frames (game source-preference reports) update + relay;
+        # anything else is ignored. Returns False on close/error (caller
+        # breaks + cleans up). Never throws, never affects media flow.
+        try:
+            hdr = b""
+            while len(hdr) < 4:
+                c = conn.recv(4 - len(hdr))
+                if not c:
+                    return False
+                hdr += c
+            body_len = struct.unpack(">I", hdr)[0]
+            if body_len < 9 or body_len > 4 + 9 + CAM_MAX_BYTES:
+                return True  # misaligned window: stay alive, ignore it
+            body = b""
+            while len(body) < body_len:
+                c = conn.recv(body_len - len(body))
+                if not c:
+                    return False
+                body += c
+            if body and body[0] == K_PREFER:
+                self.on_prefer(body[9:] if len(body) > 9 else b"")
+            return True
+        except Exception:
+            return False
+
     def bridge_broadcast(self, kind, serial, seq, payload):
         frame = bridge_frame(kind, serial, seq, payload)
         dead = []
@@ -263,12 +339,8 @@ class Gateway:
             if self.args.bridge_only and self.args.inject_wav:
                 threading.Thread(target=self.inject_wav_session, daemon=True).start()
             conn.settimeout(None)
-            while True:  # hold open; read cancels (ignored except logging)
-                try:
-                    probe = conn.recv(16)
-                except Exception:
-                    break
-                if not probe:
+            while True:  # hold open; SUBSCRIBE dupes ignored, PREFER relayed
+                if not self.drain_bridge_control(conn):
                     break
         except Exception as e:
             log("bridge conn error: %s" % e)
@@ -377,12 +449,8 @@ class Gateway:
                 self.cam_subscribers.append((conn, wlock))
             log("cam bridge: subscribed (%d total, Unity/test listening)" % len(self.cam_subscribers))
             conn.settimeout(None)
-            while True:
-                try:
-                    probe = conn.recv(16)
-                except Exception:
-                    break
-                if not probe:
+            while True:  # hold open; SUBSCRIBE dupes ignored, PREFER relayed
+                if not self.drain_bridge_control(conn):
                     break
         except Exception as e:
             log("cam bridge conn error: %s" % e)
@@ -414,6 +482,16 @@ class Gateway:
     # -- camera phone side (WS /cam: JPEG frames, same lifecycle shape) ----
     def handle_cam_phone(self, sock, addr):
         sid = None
+        # Source-precedence: track this page so game reports reach it, and
+        # immediately tell it the CURRENT preference (a page opened AFTER the
+        # game already chose local must stand down without waiting).
+        with self.lock:
+            self.cam_sockets.add(sock)
+            _cam_origin = self.prefer.get("cam", "phone")
+        try:
+            self.send_ctrl(sock, {"type": "pc-prefer", "media": "cam", "origin": _cam_origin})
+        except Exception:
+            pass
         self.cam_broadcast(K_CAM_UP, 0, 0, b"ws-connected")
         try:
             while True:
@@ -461,6 +539,11 @@ class Gateway:
                     self.cam_broadcast(K_CAM_ERROR, sess["serial"], 0, b"link_down")
                     log("[CAM 4/4] cam session %s link_down (page gone mid-stream)" % sid)
             self.cam_broadcast(K_CAM_DOWN, 0, 0, b"ws-closed")
+            with self.lock:
+                try:
+                    self.cam_sockets.discard(sock)
+                except Exception:
+                    pass
             try:
                 sock.close()
             except Exception:
@@ -530,6 +613,15 @@ class Gateway:
 
     def handle_phone(self, sock, addr):
         sid = None
+        # Source-precedence: track this page + push CURRENT mic preference
+        # immediately (same contract as the cam side above).
+        with self.lock:
+            self.mic_sockets.add(sock)
+            _mic_origin = self.prefer.get("mic", "phone")
+        try:
+            self.send_ctrl(sock, {"type": "pc-prefer", "media": "mic", "origin": _mic_origin})
+        except Exception:
+            pass
         # Presence for Unity: the page is OPEN (WS up) even before any START.
         # Lets the game tell "STOP pressed, page still open" (STOP, no DOWN)
         # apart from "phone gone mid-game" (DOWN) within seconds.
@@ -597,6 +689,11 @@ class Gateway:
             # browser killed): a clean STOP already went out as K_STOP, so a
             # DOWN here always means the page is GONE, not merely idle.
             self.bridge_broadcast(K_DOWN, 0, 0, b"ws-closed")
+            with self.lock:
+                try:
+                    self.mic_sockets.discard(sock)
+                except Exception:
+                    pass
             try:
                 sock.close()
             except Exception:
@@ -992,6 +1089,27 @@ def selftest():
     check("cam-reject-nonjpeg", b"\x89PNG"[:3] != CAM_JPEG_SOI)
     check("cam-reject-empty", len(b"") == 0)
     check("cam-cap", CAM_MAX_BYTES == 300 * 1024)
+    # source-precedence (game -> gateway -> phone): K_PREFER envelope + strict
+    # "<media>:<origin>" parsing (malformed never fatal, game-side precedence
+    # applies regardless — this only moves the phone START UI).
+    _pp = bridge_frame(K_PREFER, 0, 0, b"mic:local")
+    check("prefer-envelope", _pp[4] == K_PREFER == 0x12 and _pp[13:] == b"mic:local")
+    _cp = bridge_frame(K_PREFER, 0, 0, b"cam:phone")
+    check("prefer-cam-envelope", _cp[4] == 0x12 and _cp[13:] == b"cam:phone")
+    def _prefer_ok(payload, media, origin):
+        try:
+            text = payload.decode("utf-8")
+        except Exception:
+            return False
+        parts = text.split(":")
+        if len(parts) != 2:
+            return False
+        return parts[0].strip() == media and parts[1].strip() == origin
+    check("prefer-parse-mic-local", _prefer_ok(b"mic:local", "mic", "local"))
+    check("prefer-parse-cam-phone", _prefer_ok(b"cam:phone", "cam", "phone"))
+    check("prefer-reject-bad", not _prefer_ok(b"mic:sometimes", "mic", "local")
+          and not _prefer_ok(b"", "mic", "local")
+          and not _prefer_ok(b"mic local", "mic", "local"))
     print("SELFTEST %s (%d fails)" % ("OK" if not fails else "FAILED", len(fails)))
     return 1 if fails else 0
 

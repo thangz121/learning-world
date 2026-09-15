@@ -98,6 +98,38 @@ public class MicSetupMonitor : MonoBehaviour {
   float _smoothEnergy;
   int _lastLocalPollTick = -1;
 
+  // Source-precedence report (game -> gateway -> phone START UI): the game
+  // decides local-vs-phone (local plugged-in hardware ALWAYS wins, generic
+  // presence — names are labels only); the gateway relays; the phone stands
+  // down. Reported on TRANSITIONS only (never per frame), fire-and-forget on
+  // a worker (TCP dials block; never hitch the main thread). Game-side
+  // precedence applies regardless — this only moves the phone UI.
+  string _lastReportedMicPrefer;
+  void ReportMicPreferIfChanged() {
+    try {
+      bool localReady = SafeAvailable(_local);
+      string prefer = PcSourcePrecedence.PreferMic(localReady, MicForcePhoneForTests());
+      if (string.Equals(prefer, _lastReportedMicPrefer, StringComparison.Ordinal)) return;
+      _lastReportedMicPrefer = prefer;
+      string host = _host;
+      int port = _port;
+      Task.Run(() => {
+        try { PcPreferenceReporter.Report(host, port, prefer, true); } catch (Exception) { }
+      });
+    } catch (Exception) { }
+  }
+
+  // E2E hook (-e2e-nomic): tested via gate state already (LocalMic forced
+  // empty => localReady false => mic:phone). Kept as a seam so tests can pin
+  // the force path without command-line parsing.
+  static bool MicForcePhoneForTests() {
+    try {
+      foreach (string a in System.Environment.GetCommandLineArgs())
+        if (string.Equals(a, "-e2e-nomic", StringComparison.OrdinalIgnoreCase)) return true;
+    } catch (Exception) { }
+    return false;
+  }
+
   // Injection boundary (wired by MarketBootstrap; all optional except gate).
   // Phone is IPhoneLinkDevice (kernel interface) because LWE.World must not
   // reference LWE.Audio; Bootstrap passes the D_Audio PhoneMicrophoneDevice.
@@ -131,6 +163,7 @@ public class MicSetupMonitor : MonoBehaviour {
       MicSetupState state = _gate.EvaluateAtStartup();
       if (state == MicSetupState.OfferPhone) ShowOffer();
     } catch (Exception) { }
+    try { ReportMicPreferIfChanged(); } catch (Exception) { }
   }
 
   void Update() {
@@ -560,6 +593,7 @@ public class MicSetupMonitor : MonoBehaviour {
       if (_local != null) _local.Refresh();
       _lastLocalPollTick = TickMs();
       if (_gate != null) _gate.NotifySourcesChanged();
+      try { ReportMicPreferIfChanged(); } catch (Exception) { }
       // Headset plugged while a dialog is open: recovery wins silently.
       if (_dialog != null && _dialog.IsShowing
           && (_gate.State == MicSetupState.ReadyLocal

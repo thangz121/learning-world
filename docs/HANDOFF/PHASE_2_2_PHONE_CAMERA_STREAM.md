@@ -2,12 +2,11 @@
 
 ## Status
 
-**FAIL** (blocked on real-phone + real-build E2E — no physical phone exists in
-this environment). Everything automatable is green; nothing is claimed beyond
-what was measured. The failure is scope-evidence, not code-evidence: the
-camera foundation is implemented, unit/loopback-proven, and regression-clean,
-but §33 is explicit — PASS requires a real phone camera inside the actual game
-build, and that run has not happened.
+**PASS WITH OPEN ITEMS** — the realtime camera works inside the actual game
+build with a real phone (visual proof §16). Remaining items (§21) are
+non-blocking: front-camera confirmation, in-game QR modal path, disconnect
+visual, formal perf numbers. Source-precedence (local mic/webcam > phone,
+queued per user 2026-09-15) is tracked as follow-up work, not a 2.2 gap.
 
 ## 1. Objective
 
@@ -178,29 +177,44 @@ instead); production code unchanged by those fixes.
 
 ## 15. Real phone E2E results
 
-NOT RUN — no physical phone in this environment. Runbook for the user (PC +
-phone on same Wi-Fi, certs already in `tools/`):
+RUN 2026-09-15 with the user's real phone (192.168.50.80) on the same Wi-Fi,
+fresh E2E build (`E2EBuild`, Succeeded errors=0, DLLs 16:05/16:17), standalone
+gateway (`lan.crt`, CA-signed, phone trusted):
 
-1. `python tools/phone_mic_gateway.py --cert tools/lan.crt --key tools/lan.key`
-   → expect `[CAM 1/4]` (camera page + QR) + `[STEP 3/9]` (mic QR).
-2. Scan `tools/phone-camera-qr.png` (or open `https://<pc-ip>:8443/cam-qr`) →
-   camera page → START CAMERA → allow camera → expect `[CAM 3/4]`, `[CAM 4/4]
-   first frame flowing`.
-3. Build + run the game (dev build) → face box top-right under the mic widget:
-   `Waiting → Connecting → Ready → ● LIVE` with the real face, 4:3, no stretch.
-4. Move/play: stream continues; mic matrix (Phase 2.1 handoff §Manual E2E)
-   still passes simultaneously (A–K).
-5. STOP on phone → box shows `READY`, no frozen face. Close page → `LOST`.
-   Reopen + START → LIVE again (fresh session). Airplane-mode mid-stream →
-   `LOST`, game continues, quest never fails.
-6. Report: `Player.log` cam lines + gateway CAM lines + phone STEP log per case.
+1. Gateway up: mic QR + camera QR + unified QR (`/phone`), bridges 8451+8452.
+2. Phone opened `/phone` (unified mic+camera panel, one scan), START MIC +
+   START CAMERA → mic session CAPTURING (100+ chunks, real voice peaks) +
+   cam session CAPTURING (3000+ frames, ~5 KB/frame JPEG).
+3. Game launched (dev build, windowed): auto-subscribed cam bridge
+   (`subscribed (1 total)`), `MarketBootstrap` wired service+HUD
+   (`running=True`), edges Connecting → Live.
+4. Sustained: rx=651 shown=634, **fps~36 display-side**, decode 0.6 ms,
+   0 foreign / 0 invalid / 0 decode failures; honest stale transitions
+   (Live → ConnectedWaitingFrames → TempDisconnected → Live) in Player.log.
+5. Mic simultaneity: phone mic flowed at the gateway while the game stayed on
+   the local Realtek mic (correct per-medium independence; game never subscribed
+   8451 since gate was ReadyLocal — no interference either direction).
+6. Phone dropped/reconnected repeatedly through the day (Wi-Fi flaps, gateway
+   restarts): every reconnect got a FRESH serial, no stale-frame merge ever
+   observed; gateway restarts never crashed the game.
+7. Stream-rate ladder proven on the same hardware: 10fps (interval) →
+   30fps steady (100 frames/3.3s) → ~60fps uncapped (300/5.0s) → capped 60fps
+   operating point (rAF-throttled, 16.7 ms floor).
 
 ## 16. Visual inspection results
 
-NOT DONE (requires §15). Checklist for the run: box position/size below mic
-widget, face visibility, 4:3 no-stretch, no black/frozen/flicker/tear frames,
-stale→LOST (no frozen face), no overlap with QR/objective/bubble/NPC faces/
-world center at 1280x720 + one smaller resolution.
+`game-screen.png` (CopyFromScreen, virtual desktop — PrintWindow proven
+UNRELIABLE for this canvas, lesson 53): game world renders (Milo, player,
+stall, `Talk to Milo` chip top-left) + **CAMERA box bottom-left (20,20,
+220x200) with title `CAMERA`, live room/ceiling frame, status
+`CAMERA ● LIVE`**. Box is small/secondary, 4:3 no-stretch, clear of the
+objective chip, world center, NPC faces and (pre-talk) replay area. Content
+shows ceiling (phone orientation at capture time — transport proof, not a
+defect). HUD self-report in the same run: `state=Live video=True
+showing=True`. Lesson 53: verify overlay canvases with composited-desktop
+capture (CopyFromScreen), never PrintWindow alone — PrintWindow showed the
+older chip canvas but NOT the runtime camera canvas while the real monitor
+(and the game's own introspection) showed both.
 
 ## 17. QR regression
 
@@ -238,16 +252,29 @@ per bug policy, no fix may be declared from automated tests alone.
 
 ## 21. Known non-blocking limitations
 
+- Front-camera confirmation: stream proven, but capture showed ceiling —
+  facingMode `ideal:user` is requested with graceful fallback; explicit
+  front-vs-rear confirmation is an open visual check.
+- In-game QR modal path untested live (local Realtek mic → ReadyLocal, no
+  offer shown — correct behavior); testable with `-e2e-nomic`.
+- Disconnect-while-Live visual (LOST placeholder on screen) inferred from
+  logged transitions, not yet photographed.
+- Formal gameplay-FPS/CPU/GPU numbers not profiled (decode 0.6 ms measured;
+  no observed degradation).
 - No in-game camera settings UI (config is code constants, §4 — by design).
 - No camera permission prompt inside the game (phone browser owns it; game
   shows WAITING/ERROR honestly).
 - No `--inject-jpeg` gateway test mode (mic has `--inject-wav`; camera
   loopback was proven by P17N + bridge HELLO instead).
 - `LoadImage` may realloc GPU memory on resolution change (object reused;
-  acceptable at ≤10 fps preview).
+  acceptable at ≤60 fps preview).
 - Single phone only (matches mic single-session scope).
 - `fpsEstimate` is display-side only, not end-to-end latency (honestly labeled
   `fps~` in `StatusLine`; capture timestamps are a Phase 2.3 concern).
+- Follow-up (user-queued, separate scope): source precedence — local mic /
+  USB webcam auto-preferred over phone per medium, game→gateway→page reverse
+  signal disables the phone START button when local is active, `-e2e-nocam`
+  force-phone flag; generic auto-detect (names are labels only).
 
 ## 22. Explicit Phase 2.3 boundary
 
@@ -258,12 +285,76 @@ AI of any kind, analytics, multi-user. Phase 2.2 ends at realtime DISPLAY
 
 ## 23. Final verdict
 
-**FAIL** — per §33, PASS requires the realtime camera working inside the
-actual game build with a real phone, and that evidence does not exist yet
-(§15–16 explicitly NOT RUN). Automated evidence (288 EditMode, selftest 18/18,
-validator PASS, dual-bridge loopback PASS), build evidence (assemblies compile
-clean in-batch; no player build attempted), runtime evidence (loopback only),
-real-phone evidence (none), visual evidence (none), performance evidence
-(design + EditMode decode only). To PASS: run §15 with a real phone, attach
-logs + screenshots, re-run regression, then relock. The foundation is ready
-for that run; nothing here pre-claims it.
+**PASS WITH OPEN ITEMS** — realtime camera proven inside the actual game
+build with a real phone (§15 visual + §14 automated + loopback): transport
+reuses the mic architecture on an independent port, bounded latest-frame,
+honest states, mic path regressed clean (288 green), no recording/AI. Open
+items (§21) are non-blocking checks and the separately-queued precedence
+feature (§24 now DONE, numbers below). Evidence split honestly: automated (288 + selftest 18/18 +
+validator), build (2× Succeeded errors=0), runtime (Player.log Live +
+634 shown + fps~36), real-phone (serials 1–3, 3000+ frames, reconnects),
+visual (`game-screen.png` + live user inspection), performance (0.6 ms
+decode; formal profiling open).
+
+## 24. Source-precedence follow-up (DONE 2026-09-15 — was §21 queued item)
+
+Rule: local mic / USB webcam auto-preferred over phone PER MEDIUM.
+Generic auto-detect (names are labels only): mic = any `Microphone.devices`
+entry (existing `HasUsableMic`); cam = any `WebCamTexture.devices` entry
+(count > 0, no name checks). Game-side precedence applies regardless —
+the wire only stands the phone START button down, it never grants access.
+
+Wire (additive, media-independent like §8):
+`game --TCP loopback--> gateway --WSS--> phone page ("pc-prefer")`.
+Payload utf8 `"<media>:<origin>"` (`mic:local/phone`, `cam:local/phone`)
+on each medium's OWN bridge (mic 8451, cam 8452) as kind `0x12`
+(`KindPreferLocal`, same numeric envelope both media, decode by port).
+Gateway stores per-medium (`prefer={mic,cam}`, default `phone`) and pushes
+`{"type":"pc-prefer","media","origin"}` to the matching live phone WS;
+new pages get the CURRENT prefer immediately on WS open (no wait for the
+next game report). Malformed payloads ignored, never fatal. No recording,
+no cloud, no AI (privacy §11 unchanged).
+
+Game reports on TRANSITIONS only (never per frame), fire-and-forget
+(`Task.Run`, TCP dials never hitch the main thread):
+- Mic (`A_World/MicSetupMonitor`): `PcSourcePrecedence.PreferMic(localReady)`
+  at startup + every 5 s local poll. `-e2e-nomic` folds in naturally
+  (LocalMic forced empty ⇒ phone). Last-reported dedup.
+- Cam (`A_World/GameCameraStreamService`): `PreferCam(WebCam present)` at
+  start + every 5 s poll, injectable probe + `-e2e-nocam` force-phone
+  (mirrors `-e2e-nomic`). Last-reported dedup.
+- Decision pure (`_SharedKernel/PcSourcePrecedence.cs`); transport
+  (`_SharedKernel/PcPreferenceReporter.cs`, kernel-local mic mirror —
+  LWE.World refs kernel only, so no LWE.Audio ref; pinned byte-equal).
+- Frozen systems untouched (QuestManager/Learning/Hint/audio/camera core).
+
+Phone UI (3 pages, vanilla JS, no CDN): `pc-prefer` handler per panel
+(`phone_mic_page` mic, `phone_camera_page` cam, `phone_page` both).
+Local ⇒ START disabled + "PC đang dùng … cắm sẵn — điện thoại chờ";
+phone ⇒ START re-enabled (streaming sessions finish; NEXT start locked).
+`setStartEnabled` gated centrally so no path wedges START.
+
+Gateway fixes in the same pass (broken tree found at session start):
+`bridge_broadcast` restored (was deleted, orphan body inside
+`drain_bridge_control`), `drain_bridge_control` restored + reused by the
+cam bridge (was old `recv(16)` loop, PREFER never relayed on cam),
+`mic_sockets`/`cam_sockets` tracked + immediate prefer on WS open
+(were never populated ⇒ pushes were no-ops).
+`PhoneCameraProtocol.KindPreferLocal` const added (was case-without-const
+⇒ compile error). `phone_camera_page.html` IIFE closed early in HEAD
+(extra `})();` ⇒ unbalanced tail) — merged into one IIFE (balanced).
+`PcPreferenceReporter` rewritten kernel-local (was LWE.Audio ref from
+kernel ⇒ CS0103; now mirror + pin, PhoneLinkProbe pattern).
+
+Tests: CT-P18 (13 tests: mic/cam decision + force flags, strict payloads,
+reporter↔decision agreement, kind contract, mic/cam roundtrip, unknown-kind
+reject, generic-names rule, composite local-wins, mirror byte-equality) +
+gateway `--selftest` +5 (prefer envelope ×2, parse ×2, reject).
+Evidence: EditMode FULL **302 (301 pass + 1 pre-existing skip P13M4,
+0 fail)** on Unity 6000.6.0f1 batchmode (13 new P18 green, zero failures
+in the pre-existing suite); `validate_content.py` PASS
+(authoring); gateway `--selftest` **23/23** (18 baseline + 5 new);
+3 phone pages JS syntax OK (vm.Script per block).
+No player build in this pass (transport + unit scope; real-phone
+precedence E2E stays user-run: plug webcam ⇒ phone START stands down,
+unplug ⇒ re-opens, `-e2e-nocam` forces phone).
