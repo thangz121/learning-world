@@ -141,7 +141,12 @@ public class MicSetupDialog : MonoBehaviour {
   void ClearQrTexture() {
     try {
       if (_waitQr != null && _waitQr.texture != null) {
-        try { UnityEngine.Object.Destroy(_waitQr.texture); } catch (Exception) { }
+        // EditMode-safe: Destroy() in edit mode logs an error (P15T); the
+        // player path (isPlaying) keeps the frame-safe Destroy.
+        try {
+          if (Application.isPlaying) UnityEngine.Object.Destroy(_waitQr.texture);
+          else UnityEngine.Object.DestroyImmediate(_waitQr.texture);
+        } catch (Exception) { }
         _waitQr.texture = null;
       }
     } catch (Exception) { }
@@ -190,13 +195,16 @@ public class MicSetupDialog : MonoBehaviour {
       () => SafeInvoke(_onRecheck), () => SafeInvoke(_onSkip), font, t => _waitStatus = t, 640f, out waitSkip);
     _waitSkipGo = waitSkip;
     _waitSkipGo.SetActive(false);
-    // QR image: centered square between body text and status line. Hidden
-    // until the monitor hands over the gateway PNG bytes (SetQrImage).
+    // QR image: 140px square in the free band between the body text (ends
+    // ~330 from card top) and the status line (~478): full-size 180px QRs
+    // covered body line 3 + the status (R10 photo proof). Must stay inside
+    // 340..480 from card top = -160..-20 around the middle (bottom < top,
+    // P15 inverted-offset rule).
     GameObject qrGo = new GameObject("QrImage");
     qrGo.transform.SetParent(_waitPanel.transform, false);
     _waitQr = qrGo.AddComponent<RawImage>();
     _waitQr.color = Color.white;
-    Place(qrGo, 0.5f, 0.5f, 0.5f, 0.5f, -90f, -180f, 90f, 0f);
+    Place(qrGo, 0.5f, 0.5f, 0.5f, 0.5f, -70f, -160f, 70f, -20f);
     qrGo.SetActive(false);
     _root.SetActive(false);
   }

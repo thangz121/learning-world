@@ -113,6 +113,7 @@ public class MicSetupMonitor : MonoBehaviour {
     if (!string.IsNullOrEmpty(bridgeHost)) _host = bridgeHost;
     if (bridgePort > 0) _port = bridgePort;
     if (!string.IsNullOrEmpty(toolsDir)) _toolsDir = toolsDir;
+    _lastLocalPollTick = TickMs(); // sampling starts at bind (Start re-stamps)
   }
 
   public MicSetupGate Gate => _gate;
@@ -316,6 +317,7 @@ public class MicSetupMonitor : MonoBehaviour {
 
   // Linked path: QR off, game resumes, gateway KEEPS running for captures.
   void FinishLinked() {
+    LogQrOutcome("linked");
     _waitActive = false;
     try { Time.timeScale = 1f; } catch (Exception) { }
     try { if (_dialog != null) _dialog.Hide(); } catch (Exception) { }
@@ -325,10 +327,24 @@ public class MicSetupMonitor : MonoBehaviour {
   // the gateway we started (nothing needs it while listening is skipped; a
   // later Accept starts it again).
   void EndPhoneWait(bool linked) {
+    LogQrOutcome(linked ? "linked" : "skipped");
     _waitActive = false;
     try { Time.timeScale = 1f; } catch (Exception) { }
     try { if (_dialog != null) _dialog.Hide(); } catch (Exception) { }
     if (!linked) StopGateway();
+  }
+
+  // Parent-facing diagnosis for "QR blank" reports: one line saying whether
+  // the QR ever rendered and what the file state was. Warning only when the
+  // panel ends with no QR (success is audible in the log once, at load).
+  void LogQrOutcome(string how) {
+    try {
+      if (_qrLoaded) return;
+      bool exists = false;
+      try { exists = !string.IsNullOrEmpty(_gwQrPath) && File.Exists(_gwQrPath); } catch (Exception) { }
+      Warn("[MicSetup] QR never rendered (" + how + " after " + _waitElapsed.ToString("F0")
+        + "s; path=" + _gwQrPath + " exists=" + exists + ")");
+    } catch (Exception) { }
   }
 
   void UpdateWaitSession() {
@@ -395,6 +411,9 @@ public class MicSetupMonitor : MonoBehaviour {
       byte[] png = File.ReadAllBytes(_gwQrPath);
       if (_dialog.SetQrImage(png)) {
         _qrLoaded = true;
+        try {
+          UnityEngine.Debug.Log("[MicSetup] QR shown (" + png.Length + "B) from " + _gwQrPath);
+        } catch (Exception) { }
         return true;
       }
       return false;
@@ -408,16 +427,28 @@ public class MicSetupMonitor : MonoBehaviour {
   void TryStartGateway() {
     try {
       if (IsGatewayProcessAlive()) return;
-      if (string.IsNullOrEmpty(_toolsDir) || !Directory.Exists(_toolsDir)) return;
+      if (string.IsNullOrEmpty(_toolsDir) || !Directory.Exists(_toolsDir)) {
+        Warn("[MicSetup] Gateway auto-start skipped: tools dir missing (" + _toolsDir + ")");
+        return;
+      }
       string script = Path.Combine(_toolsDir, "phone_mic_gateway.py");
       string cert = Path.Combine(_toolsDir, "lan.crt");
       string key = Path.Combine(_toolsDir, "lan.key");
-      if (!File.Exists(script) || !File.Exists(cert) || !File.Exists(key)) return;
+      if (!File.Exists(script) || !File.Exists(cert) || !File.Exists(key)) {
+        Warn("[MicSetup] Gateway auto-start skipped: missing "
+          + (!File.Exists(script) ? "gateway.py " : "")
+          + (!File.Exists(cert) ? "lan.crt " : "")
+          + (!File.Exists(key) ? "lan.key" : ""));
+        return;
+      }
       string repoRoot = Directory.GetParent(_toolsDir).FullName;
       _gwQrPath = Path.Combine(_toolsDir, "phone-mic-qr-game.png");
       try { if (File.Exists(_gwQrPath)) File.Delete(_gwQrPath); } catch (Exception) { }
       string python = FindPython();
-      if (string.IsNullOrEmpty(python)) return;
+      if (string.IsNullOrEmpty(python)) {
+        Warn("[MicSetup] Gateway auto-start skipped: no python on PATH (tried python/python3/py)");
+        return;
+      }
       string args = "\"" + script + "\" --cert \"" + cert + "\" --key \"" + key + "\""
         + " --https-port 8443 --bridge-port " + _port
         + " --qr-png \"" + _gwQrPath + "\" --no-ascii-qr";
@@ -457,6 +488,13 @@ public class MicSetupMonitor : MonoBehaviour {
       // Surface progress into the waiting status line (main thread picks it
       // up — this callback runs on a worker thread, never touch Unity here).
     } catch (Exception) { }
+  }
+
+  // Production telemetry: auto-start failures must be VISIBLE (a silent
+  // fallback to manual instructions leaves parents stuck). Warning, not
+  // error: manual mode still works.
+  static void Warn(string msg) {
+    try { UnityEngine.Debug.LogWarning(msg); } catch (Exception) { }
   }
 
   bool IsGatewayProcessAlive() {

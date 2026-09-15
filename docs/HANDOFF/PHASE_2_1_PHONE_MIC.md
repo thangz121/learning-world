@@ -333,3 +333,92 @@ E2E 2026-09-15: EditMode FULL 256 (255 pass + 1 pre-existing conditional skip P1
   GatewayDown/TransportLost re-posts.
 - Verify: EditMode FULL 256 (255 pass + 1 pre-existing skip P13M4, 0 fail),
   same as baseline — no regression.
+
+## Mic status-HUD (2026-09-15 — player-report follow-up, real phone linked)
+
+Player linked a real phone, then asked for a live corner widget proving the
+mic path is REAL (measured, never decoration) before the final E2E lock build:
+
+1. Phone-linked: 3-level signal BARS top-right (red weak / yellow medium /
+   green strong) + red CROSS slash over grey bars when the link drops.
+2. DATA dot: green = AUDIO payload bytes arrived within 3 s (real content
+   flowing — separates "content" from "link up but idle/control-only"), red
+   otherwise; UNDER the bars in phone mode.
+3. Laptop built-in mics detected (Realtek array/HDA, Conexant, HDA generic —
+   classifier hints; any listed device was already usable, this only fixes
+   the built-in LABEL + pins the gate consequence ReadyLocal).
+4. Plugged/local mic: HEADPHONE icon replaces the bars, dot BESIDE it. The
+   local dot is device-presence sampling (listed + Ready + poll fresh) — the
+   HUD never opens the mic (captures own the device), documented as presence,
+   not content, on this path.
+
+Implementation (all additive, frozen systems untouched):
+- `_SharedKernel/MicSignal.cs` (new, pure): bands Weak<0.01 / Strong>=0.05
+  (DERIVED: TooWeak 0.005 floor, ambient-room 0.0259 => Medium, close speech
+  >= 0.05), DataFreshMs 3000, peak-hold DecayPerSec 0.06, ComputeBars.
+- `_SharedKernel/PhonePresenceWatcher.cs`: per-AUDIO-payload stats —
+  frames/bytes/lastEnergy (little-endian PCM16 mean-abs, same convention as
+  Pcm16ToFloat32, allocation-free) + tick; `ReadAudioStats`.
+- `A_World/MicSetupMonitor.cs`: `CurrentSignal` snapshot (source follows gate
+  precedence, local wins; phone energy/age from watcher with peak-hold decay;
+  never throws) + local-poll tick stamping (bind/start/poll).
+- `A_World/MicStatusHud.cs` (new, code-built uGUI, order 60, no raycaster,
+  all raycastTarget=false) + `MarketBootstrap` creates + binds it when the
+  mic bundle exists (null bundle = feature off, HUD absent).
+- `D_Audio/MicDeviceClassifier.cs`: +realtek/conexant/high-definition-audio
+  built-in hints (wording only, never eligibility).
+- Tests CT-P16 (14): level/freshness/decay/bars pure matrix, laptop-name
+  classifier + gate consequence, HUD render per mode (bars/dot/cross/side),
+  no-click-eat contract, watcher content stats over loopback (0.5 tone =>
+  energy 0.5 Strong + green evidence; empty payload => lastBytes 0 red),
+  monitor snapshots local + phone-no-measurement-yet.
+- Evidence: EditMode FULL **270 (269 pass + 1 pre-existing skip P13M4,
+  0 fail)** — 256 baseline intact + 14 new green; `validate_content.py` PASS.
+
+## E2E LOCK 2026-09-15 (build thật + chạy thật, 7 vòng)
+
+Temp driver `Assets/_Bootstrap/E2ESurvey.cs` (self-spawn, real camera raycast
+qua `RouteHitForTests` + real `Button.onClick` + real gateway loopback +
+sidecar mirror, watchdog 14') — ĐÃ XÓA sau pass (0 temp files, không đụng
+asmdef). Vòng 1→7, mỗi vòng build Succeeded + chạy foreground + log realtime:
+
+- Full quest live: talk Milo → ball pickup neutral (0 wrongs) → ball-bring
+  wrong=1 + restore → find apple → bring apple completed (`Great job!`),
+  wrongs giữ 1. NPC clicks + object clicks qua raycast thật (camera, collider,
+  walk, arrival). Vòng-2 object "behind camera" trong Milo close-up → driver
+  retry tới follow view (R10 lesson), production không softlock (empty-click
+  Mia = wrong by design, quest vẫn mở).
+- Phone live: offer → real-button Accept → child gateway auto-start (pid log)
+  → tone loopback Strong e=0.255 + flowing + HUD xanh → resume. 39x log spam
+  cũ còn 1x/serial (dedup verified live).
+- Audio live: `PlayVocabularyAsync(ball)` RanToCompletion + event
+  ball/Normal/cache=True (L2 hit); `SpeakAsync("Ball please!" mia_v1)`
+  RanToCompletion + event; sfx/music stub không throw. Vòng-1 false FAILs do
+  driver block main thread (GetResult) — sửa non-blocking + drain là xanh.
+  TTS online: L2 12→14 mp3 trong lúc quest dialogue (fetch + cache thật).
+- Seed: ship 12, L2 đủ (incremental "Seeded 0/1" là healthy, không phải bug).
+- Shots: 10 PNG/vòng (flush discipline: 1 shot/frame + end-of-frame + 1.5s;
+  same-frame captures ghi đè nhau — bài 46 tái hiện + fix).
+- 0 exceptions mọi vòng (sidecar + Player.log).
+
+Bugs thật tìm ra khi soi (đã fix + verify lại bằng ảnh):
+- R10a HUD status rơi góc trái-dưới + cross X đỏ giữa màn hình (root Canvas
+  overlay bỏ qua rect tự thân) → Box 140x170 top-right + stretched containers
+  (P16N khóa) → ảnh e-hud xanh đúng chỗ.
+- R10b QR 180px đè body line 3 + status → 140px vào band 340..480 (P15T pin
+  size) → ảnh e-qr-only sạch.
+- R10c `Destroy` trong `ClearQrTexture` lỗi ở EditMode → DestroyImmediate khi
+  !isPlaying (P15T lòi ra).
+- R10d gateway auto-start fail SILENT → Warn telemetry giữ lại được
+  (tools-missing / file-missing / no-python) + "QR shown" log + "QR never
+  rendered (path/exists/elapsed)" warning.
+- Mic-qr loopback FAIL 6 vòng: RACE setup (inject link ~1s, QR file ~3-4s
+  python cold start) — telemetry "linked after 0s; exists=False" chứng minh.
+  QR path chứng minh riêng: qr-only run (không external gateway) PASS +
+  pixels (P15T real-bytes + e-qr-only.png). Real-phone flow (human 10s+)
+  không dính race này.
+
+Lock numbers (governing): EditMode **272 (271 + 1 skip P13M4, 0 fail)** trên
+cây khóa + validator PASS + FINAL clean build **Succeeded errors=4 (headless
+noise)** + boot check alive 88s+ **3×FACE_OK 0 exceptions** (build không
+driver). Temp = 0 file. Không commit (chờ user, như mọi pass trước).

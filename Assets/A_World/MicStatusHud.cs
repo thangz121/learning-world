@@ -134,7 +134,12 @@ public class MicStatusHud : MonoBehaviour {
     }
   }
 
-  // ---- code-built uGUI (container 140x170, top-right, origin bottom-left) --
+  // ---- code-built uGUI -----------------------------------------------------
+  // Root stays FULLSCREEN (a ScreenSpaceOverlay root ignores its own rect —
+  // sizing it was the R10 misplacement bug: children resolved against the
+  // wrong ancestor). A fixed 140x170 Box pinned top-right owns every child;
+  // every intermediate container is a stretched RectTransform (never a plain
+  // Transform), so all coordinates below are Box-space, origin bottom-left.
   void BuildHud() {
     _root = new GameObject("MicStatusRoot");
     _root.transform.SetParent(transform, false);
@@ -142,16 +147,19 @@ public class MicStatusHud : MonoBehaviour {
     canvas.renderMode = RenderMode.ScreenSpaceOverlay;
     canvas.sortingOrder = CanvasOrder;
     // NOTE: no GraphicRaycaster on purpose — this widget never eats clicks.
-    RectTransform rootRt = _root.GetComponent<RectTransform>();
-    if (rootRt == null) rootRt = _root.AddComponent<RectTransform>();
-    rootRt.anchorMin = new Vector2(1f, 1f);
-    rootRt.anchorMax = new Vector2(1f, 1f);
-    rootRt.pivot = new Vector2(1f, 1f);
-    rootRt.sizeDelta = new Vector2(140f, 170f);
-    rootRt.anchoredPosition = new Vector2(-20f, -20f);
+    Stretch(_root);
+
+    GameObject boxGo = new GameObject("Box");
+    boxGo.transform.SetParent(_root.transform, false);
+    RectTransform boxRt = boxGo.AddComponent<RectTransform>();
+    boxRt.anchorMin = new Vector2(1f, 1f);
+    boxRt.anchorMax = new Vector2(1f, 1f);
+    boxRt.pivot = new Vector2(1f, 1f);
+    boxRt.sizeDelta = new Vector2(140f, 170f);
+    boxRt.anchoredPosition = new Vector2(-20f, -20f);
 
     _barsGo = new GameObject("Bars");
-    _barsGo.transform.SetParent(_root.transform, false);
+    _barsGo.transform.SetParent(boxGo.transform, false);
     Stretch(_barsGo);
     _bars = new Image[3];
     float[] heights = { 34f, 54f, 74f };
@@ -172,6 +180,7 @@ public class MicStatusHud : MonoBehaviour {
 
     _crossGo = new GameObject("Cross");
     _crossGo.transform.SetParent(_barsGo.transform, false);
+    Stretch(_crossGo); // plain-Transform middlemen misplace children (R10)
     for (int i = 0; i < 2; i++) {
       GameObject slashGo = new GameObject("Slash" + i);
       slashGo.transform.SetParent(_crossGo.transform, false);
@@ -189,7 +198,7 @@ public class MicStatusHud : MonoBehaviour {
     _crossGo.SetActive(false);
 
     _phoneGo = new GameObject("Headphone");
-    _phoneGo.transform.SetParent(_root.transform, false);
+    _phoneGo.transform.SetParent(boxGo.transform, false);
     Image phoneImg = _phoneGo.AddComponent<Image>();
     phoneImg.sprite = MakeHeadphoneSprite();
     phoneImg.color = PhoneWhite;
@@ -203,7 +212,7 @@ public class MicStatusHud : MonoBehaviour {
     _phoneGo.SetActive(false);
 
     GameObject dotGo = new GameObject("DataDot");
-    dotGo.transform.SetParent(_root.transform, false);
+    dotGo.transform.SetParent(boxGo.transform, false);
     _dot = dotGo.AddComponent<Image>();
     _dot.sprite = MakeDotSprite();
     _dot.color = DotRed;

@@ -317,6 +317,42 @@ public class CT_P15_MicSetupGate {
     }
   }
 
+  [Test] public void P15T_DialogQrShowsRealPngBytes() {
+    // The live in-game QR path (gateway writes PNG -> monitor SetQrImage)
+    // was never proven with real bytes (P15Q only pins rejections). Read the
+    // repo's own QR artifact (also shipped next to player builds) and render it.
+    string qrPath = null;
+    try {
+      string root = System.IO.Directory.GetParent(UnityEngine.Application.dataPath).FullName;
+      qrPath = System.IO.Path.Combine(root, "tools", "phone-mic-qr.png");
+    } catch (Exception) { }
+    Assert.IsNotNull(qrPath);
+    Assert.IsTrue(System.IO.File.Exists(qrPath), "repo QR artifact must exist: " + qrPath);
+    byte[] png = System.IO.File.ReadAllBytes(qrPath);
+    Assert.Greater(png.Length, 100, "QR png non-trivial");
+    var dialog = new UnityEngine.GameObject("MicDlgT").AddComponent<MicSetupDialog>();
+    try {
+      dialog.BuildUiImmediate();
+      bool shown = false;
+      dialog.ShowWait("hello", () => { }, () => { });
+      try { shown = dialog.SetQrImage(png); } catch (Exception e) {
+        Assert.Fail("SetQrImage threw on real bytes: " + e.Message);
+      }
+      Assert.IsTrue(shown, "valid QR bytes must render");
+      Assert.IsTrue(dialog.IsQrShowing);
+      // Layout pin (R10 photo: 180px QR covered body line 3 + status text).
+      var qr = dialog.transform.Find("MicSetupRoot/WaitPanel/QrImage");
+      Assert.IsNotNull(qr, "QR image built");
+      var qrRt = qr.GetComponent<UnityEngine.RectTransform>();
+      Assert.AreEqual(140f, qrRt.rect.height, 0.5f, "QR fits the body/status band");
+      Assert.AreEqual(140f, qrRt.rect.width, 0.5f);
+      dialog.Hide();
+      Assert.IsFalse(dialog.IsQrShowing, "hide clears the QR");
+    } finally {
+      UnityEngine.Object.DestroyImmediate(dialog.gameObject);
+    }
+  }
+
   [Test] public void P15P_MonitorDefersExerciseOncePerToken() {
     var gate = new MicSetupGate(LocalWith(), new PhoneMicrophoneDevice());
     gate.EvaluateAtStartup();
