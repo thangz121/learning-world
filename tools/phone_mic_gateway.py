@@ -210,7 +210,11 @@ class Gateway:
         srv.listen(4)
         log("bridge TCP loopback 127.0.0.1:%d" % self.args.bridge_port)
         while True:
-            conn, addr = srv.accept()
+            try:
+                conn, addr = srv.accept()
+            except Exception as e:
+                log("bridge accept aborted (%s), still listening" % type(e).__name__)
+                continue
             threading.Thread(target=self.handle_bridge_conn,
                              args=(conn, addr), daemon=True).start()
 
@@ -391,7 +395,14 @@ class Gateway:
         srv = ctx.wrap_socket(raw, server_side=True)
         log("HTTPS+WSS on 0.0.0.0:%d (LAN only, page at /)" % self.args.https_port)
         while True:
-            conn, addr = srv.accept()
+            try:
+                conn, addr = srv.accept()
+            except Exception as e:
+                # TLS handshake aborts (user dismisses cert warning, port
+                # probes, half-open scans) must NEVER kill the gateway:
+                # handshake runs inside accept() on this thread.
+                log("https accept aborted (%s), still listening" % type(e).__name__)
+                continue
             threading.Thread(target=self.handle_https_conn,
                              args=(conn, addr, page_bytes), daemon=True).start()
 

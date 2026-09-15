@@ -38,6 +38,7 @@ Content/speech_samples/
 # (--record-dir) must never be committed (§20).
 *.pem
 *.key
+*.crt
 phone-mic-recordings/
 
 # Nested scratch Unity project (not part of this checkpoint)
