@@ -37,7 +37,9 @@ public class MarketBootstrap : MonoBehaviour {
 
   // Called ONCE by GameInstaller after MarketScene is loaded. All services are
   // constructed; the MarketBuilder (A) has built the world in its Awake.
-  public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null) {
+  // mic is optional (null = mic-setup gate off; all existing flows untouched).
+  public MicSetupMonitor MicMonitor { get; private set; }
+  public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null, MicSetupBundle mic = null) {
     if (_built) return;
     _built = true;
     _bus = bus;
@@ -127,6 +129,32 @@ public class MarketBootstrap : MonoBehaviour {
     miloPresenter.OnFirstTalk = OnFirstTalk;
     if (builder.Bubble != null) builder.Bubble.Hide();
     if (_hud != null) _hud.ShowObjective("Talk to Milo");
+
+    // Mic-setup gate (Phase 2.1, additive): startup offer when no mic, silent
+    // background rechecks, exercise-entry re-prompt. The monitor's Start()
+    // runs the startup check on the next frame; future listening exercises
+    // gate on MicMonitor.CheckBeforeListening(token) (quest #3 wiring).
+    if (mic != null && mic.Gate != null) {
+      GameObject dialogGo = new GameObject("MicSetupDialog");
+      MicSetupDialog dialog = dialogGo.AddComponent<MicSetupDialog>();
+      GameObject monitorGo = new GameObject("MicSetupMonitor");
+      MicSetupMonitor monitor = monitorGo.AddComponent<MicSetupMonitor>();
+      monitor.Bind(mic.Gate, mic.LocalMic, mic.PhoneMic, dialog,
+        mic.BridgeHost, mic.BridgePort, FindToolsDir());
+      MicMonitor = monitor;
+    }
+  }
+
+  // <repo>/tools (phone_mic_gateway.py + lan certs) for the monitor's
+  // in-game gateway auto-start. Null when not found (player builds without
+  // the dev tools folder): the monitor falls back to manual instructions.
+  static string FindToolsDir() {
+    try {
+      string root = System.IO.Directory.GetParent(Application.dataPath).FullName;
+      string td = System.IO.Path.Combine(root, "tools");
+      if (System.IO.Directory.Exists(td)) return td;
+    } catch (Exception) { }
+    return null;
   }
 
   // First talk: Milo opens the story. Same block that used to run at build;

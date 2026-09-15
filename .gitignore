@@ -40,6 +40,10 @@ Content/speech_samples/
 *.key
 *.crt
 phone-mic-recordings/
+# QR artefacts embed this machine's LAN IP — regenerate locally via the
+# gateway (STEP 3) or tools/start_phone_mic.ps1, never commit.
+tools/phone-mic-qr.png
+tools/phone-mic-qr.svg
 
 # Nested scratch Unity project (not part of this checkpoint)
 My project/

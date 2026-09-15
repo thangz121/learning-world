@@ -305,6 +305,9 @@ public sealed class TcpPhoneAudioTransport : IPhoneAudioTransport, IDisposable {
         return PhoneAudioEvent.Error(PhoneMicProtocol.Utf8(frame.Payload));
       case PhoneMicProtocol.KindHello:
         return await TakeAsync(ct).ConfigureAwait(false); // greeting, keep waiting
+      case PhoneMicProtocol.KindPresenceUp:
+      case PhoneMicProtocol.KindPresenceDown:
+        return await TakeAsync(ct).ConfigureAwait(false); // presence, keep waiting
       default:
         return PhoneAudioEvent.Error("protocol_error");
     }

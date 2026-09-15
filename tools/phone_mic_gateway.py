@@ -24,6 +24,15 @@ gitignored and MUST never be committed (§33).
 
 Bridge protocol (gateway<->Unity) is defined in
 Assets/D_Audio/PhoneMicProtocol.cs (source of truth for framing).
+
+Connection WITHOUT typing the IP (2026-09-15):
+  just run the gateway (optionally via tools/start_phone_mic.ps1) and scan
+  the printed/saved QR code with the phone camera — it encodes the full
+  https://<lan-ip>:<port>/ page URL. Startup logs are numbered
+  [STEP n/9] so you can always see how far the phone-side flow got:
+    1 lan-ip detect · 2 cert check · 3 QR ready · 4 bridge listen ·
+    5 HTTPS ready (scan now) · 6 phone WS connected · 7 session CAPTURING ·
+    8 first audio chunk · 9 stop/complete/cancel.
 """
 import argparse
 import base64
@@ -39,11 +48,23 @@ import time
 import wave
 from collections import deque
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+import lwe_qr
+
 CANON_RATE = 16000
 WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+TOTAL_STEPS = 9  # startup 1-5, phone flow 6-9 (see module docstring)
 
 # Bridge kinds (mirror PhoneMicProtocol.cs — keep in sync).
 K_AUDIO, K_STOP, K_ERROR, K_HELLO = 1, 2, 3, 4
+K_UP, K_DOWN = 5, 6  # phone presence (no audio): page opened / page gone.
+#   UP   (serial 0, payload utf8 "ws-connected")  -> phone page opened (WS up).
+#   DOWN (serial 0, payload utf8 "ws-closed")     -> phone page closed/dropped.
+# Session audio lifecycle already has AUDIO/STOP/ERROR; presence lets Unity
+# tell "user pressed STOP but page still open" (STOP seen, no DOWN) apart from
+# "phone gone mid-game" (DOWN, or our socket dying) in seconds.
 K_SUBSCRIBE, K_CANCEL = 0x10, 0x11
 
 LOG_LOCK = threading.Lock()
@@ -62,9 +83,18 @@ def ws_accept(key):
 
 
 def ws_send_text(sock, text):
+    # Server -> client frames MUST be UNMASKED (RFC6455 §5.1). The previous
+    # build set the MASK bit (0x80) on server frames; direct-LAN browsers
+    # tolerated it but Cloudflare's WS proxy validates strictly and drops
+    # the connection — phone then stuck at STEP 4-stream with START latched
+    # disabled and no "ready" ever arriving. Fixed: never set MASK bit.
     data = text.encode("utf-8")
-    sock.sendall(bytes([0x81, 0x80 | len(data)] if len(data) < 126
-                       else [0x81, 126, (len(data) >> 8) & 0xFF, len(data) & 0xFF]) + data)
+    if len(data) < 126:
+        sock.sendall(bytes([0x81, len(data)]) + data)
+    elif len(data) < 65536:
+        sock.sendall(bytes([0x81, 126, (len(data) >> 8) & 0xFF, len(data) & 0xFF]) + data)
+    else:
+        sock.sendall(bytes([0x81, 127]) + struct.pack(">Q", len(data)) + data)
 
 
 def ws_recv_exact(sock, n):
@@ -75,6 +105,16 @@ def ws_recv_exact(sock, n):
             raise ConnectionError("peer closed")
         buf += chunk
     return buf
+
+
+def ws_send_ping(sock):
+    # RFC6455 server ping (unmasked, empty payload). Browsers auto-pong;
+    # keeps Cloudflare (100 s idle timeout) + NAT from silently killing
+    # a streaming socket during quiet speech pauses.
+    try:
+        sock.sendall(b"\x89\x00")
+    except Exception:
+        pass
 
 
 def ws_recv_frame(sock):
@@ -95,7 +135,12 @@ def ws_recv_frame(sock):
     if opcode == 0x8:  # close
         raise ConnectionError("ws close")
     if opcode == 0x9:  # ping -> pong
-        sock.sendall(b"\x8a\x00")
+        try:
+            sock.sendall(b"\x8a\x00")
+        except Exception:
+            pass
+        return ws_recv_frame(sock)
+    if opcode == 0xA:  # pong (answer to our ping) -> ignore, keep reading
         return ws_recv_frame(sock)
     if opcode not in (0x1, 0x2, 0x0):
         raise ValueError("unsupported opcode %d" % opcode)
@@ -125,6 +170,7 @@ class Session:
         self.last_seq = -1
         self.t0 = time.time()
         self.record_frames = []  # only when --record-dir is set
+        self.bound_logged = False  # §18 10 s bridge bound: log once
 
 
 class Gateway:
@@ -135,6 +181,16 @@ class Gateway:
         self.serial_counter = 0
         self.subscribers = []       # list of (socket, lock)
         self.drop_counts = {"queue": 0, "slow_subscriber": 0}
+        # Filled by main() before serve_https (STEP 3); read by /qr.png + /qr.
+        self.page_url = ""
+        self.lan_ip = ""
+        self.qr_png = b""
+        # Network-resilience: all LAN candidates + optional public URL
+        # (Cloudflare Tunnel). Advertised via /health so a phone page that
+        # went stale after a proxy on/off toggle can fail over without
+        # re-scanning the QR.
+        self.candidates = []
+        self.public_url = getattr(args, "public_url", "") or ""
 
     # -- bridge pump -------------------------------------------------
     def bridge_broadcast(self, kind, serial, seq, payload):
@@ -178,10 +234,14 @@ class Gateway:
                 log("bridge: first frame not SUBSCRIBE, closing")
                 return
             wlock = threading.Lock()
+            # HELLO BEFORE joining the broadcast list: a phone session
+            # streaming at full rate could otherwise slip an AUDIO frame to
+            # this socket ahead of the greeting, and a mid-stream subscriber
+            # would read a misaligned envelope ("malformed" + lost chunks).
+            conn.sendall(bridge_frame(K_HELLO, 0, 0, b"phone-mic-gateway/1"))
             with self.lock:
                 self.subscribers.append((conn, wlock))
-            conn.sendall(bridge_frame(K_HELLO, 0, 0, b"phone-mic-gateway/1"))
-            log("bridge: subscribed (%d total)" % len(self.subscribers))
+            log("bridge: subscribed (%d total, Unity/test listening)" % len(self.subscribers))
             if self.args.bridge_only and self.args.inject_wav:
                 threading.Thread(target=self.inject_wav_session, daemon=True).start()
             conn.settimeout(None)
@@ -208,7 +268,7 @@ class Gateway:
         srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         srv.bind(("127.0.0.1", self.args.bridge_port))
         srv.listen(4)
-        log("bridge TCP loopback 127.0.0.1:%d" % self.args.bridge_port)
+        log("[STEP 4/%d] bridge TCP loopback 127.0.0.1:%d (Unity dials here)" % (TOTAL_STEPS, self.args.bridge_port))
         while True:
             try:
                 conn, addr = srv.accept()
@@ -255,6 +315,10 @@ class Gateway:
 
     def handle_phone(self, sock, addr):
         sid = None
+        # Presence for Unity: the page is OPEN (WS up) even before any START.
+        # Lets the game tell "STOP pressed, page still open" (STOP, no DOWN)
+        # apart from "phone gone mid-game" (DOWN) within seconds.
+        self.bridge_broadcast(K_UP, 0, 0, b"ws-connected")
         try:
             while True:
                 opcode, payload = ws_recv_frame(sock)
@@ -266,6 +330,25 @@ class Gateway:
                         continue
                     mtype = msg.get("type")
                     if mtype == "start":
+                        if sid:
+                            # Double-START guard (one socket = one live
+                            # session): a second START before STOP (double tap,
+                            # two tabs, auto-resume race) used to create TWO
+                            # live sessions whose audio graphs BOTH streamed
+                            # (~2x chunk rate, leaking old session). Retire
+                            # the old one cleanly first: 0-chunk sessions end
+                            # with STOP (no spurious error downstream), others
+                            # with an explicit "replaced" error.
+                            with self.lock:
+                                old = self.sessions.pop(sid, None)
+                            if old is not None:
+                                old.state = "REPLACED"
+                                if old.chunks == 0:
+                                    self.bridge_broadcast(K_STOP, old.serial, 0, b"")
+                                else:
+                                    self.bridge_broadcast(K_ERROR, old.serial, 0, b"replaced")
+                                log("[STEP 9/%d] session %s REPLACED by a new START on the same socket "
+                                    "(double-START guard — bridge never gets 2x audio)" % (TOTAL_STEPS, sid))
                         sid = self.on_start(sock, addr, msg)
                     elif mtype == "stop":
                         self.on_stop(sock, msg)
@@ -273,6 +356,17 @@ class Gateway:
                     elif mtype == "cancel":
                         self.on_cancel(sock, msg)
                         sid = None
+                    elif mtype == "ping":
+                        # Heartbeat for Cloudflare/NAT survival: CF closes
+                        # idle WS after ~100 s; phone pings every 15 s.
+                        # Also lets the phone detect a half-dead socket
+                        # (proxy toggled) within seconds instead of minutes.
+                        try:
+                            self.send_ctrl(sock, {"type": "pong", "t": msg.get("t", 0)})
+                        except Exception:
+                            pass
+                    elif mtype == "pong":
+                        pass  # answer to our ping; link is alive
                     else:
                         self.send_ctrl(sock, {"type": "error", "reason": "protocol_error:unknown-type"})
                 elif opcode == 0x2:  # binary PCM16
@@ -284,6 +378,10 @@ class Gateway:
         finally:
             if sid:
                 self.abort_session(sid, "link_down")
+            # Authoritative phone-gone signal (page closed, radio dropped,
+            # browser killed): a clean STOP already went out as K_STOP, so a
+            # DOWN here always means the page is GONE, not merely idle.
+            self.bridge_broadcast(K_DOWN, 0, 0, b"ws-closed")
             try:
                 sock.close()
             except Exception:
@@ -313,7 +411,7 @@ class Gateway:
             serial = self.serial_counter
             self.sessions[session] = Session(session, serial, rate, channels, fmt)
         self.send_ctrl(sock, {"type": "ready", "sessionSerial": serial})
-        log("session %s serial=%d CONNECTED->CAPTURING from %s" % (session, serial, addr))
+        log("[STEP 7/%d] session %s serial=%d CONNECTED->CAPTURING from %s" % (TOTAL_STEPS, session, serial, addr))
         return session
 
     def on_audio(self, sock, sid, payload):
@@ -321,6 +419,7 @@ class Gateway:
             return  # audio before start: ignore (page always starts first)
         with self.lock:
             sess = self.sessions.get(sid)
+            nsubs = len(self.subscribers)
         if sess is None or sess.state != "CAPTURING":
             return  # stale session audio never merges (§12)
         if len(payload) % 2 == 1:
@@ -329,8 +428,36 @@ class Gateway:
             return
         sess.chunks += 1
         sess.samples += len(payload) // 2
+        if sess.chunks == 1:
+            log("[STEP 8/%d] session %s first audio chunk flowing (serial=%d, %d bridge listener(s))" % (
+                TOTAL_STEPS, sid, sess.serial, nsubs))
+            if nsubs == 0:
+                log("[STEP 8/%d] NOTE: audio IS reaching the PC (phone->gateway OK) — "
+                    "no bridge listener yet, so Unity/test hears nothing. "
+                    "Open the game (or test_phone_link.py --wait) to listen." % TOTAL_STEPS)
+        elif sess.chunks % 100 == 0:
+            # Visible proof of WHAT is arriving: chunk count, audio seconds,
+            # peak mic level (0-32767), wall duration, bridge listeners.
+            # Lets the user answer "did my voice reach the PC?" from this log.
+            try:
+                n = len(payload) // 2
+                peak = 0
+                for v in struct.unpack("<%dh" % n, payload):
+                    a = v if v >= 0 else -v
+                    if a > peak:
+                        peak = a
+            except Exception:
+                peak = -1
+            dur = time.time() - sess.t0
+            log("[STEP 8/%d] session %s audio: chunks=%d (~%.1fs audio) peak=%d wall=%.1fs listeners=%d" % (
+                TOTAL_STEPS, sid, sess.chunks, sess.samples / float(CANON_RATE), peak, dur, nsubs))
         if sess.samples > CANON_RATE * 10:  # bounded (§18): ignore past 10 s
             self.drop_counts["queue"] += 1
+            if not sess.bound_logged:
+                sess.bound_logged = True
+                log("[STEP 8/%d] session %s reached the 10 s bridge bound "
+                    "(captures/probes use short windows by design) — further audio "
+                    "still arrives from the phone but is no longer forwarded." % (TOTAL_STEPS, sid))
             return
         if self.args.record_dir:
             sess.record_frames.append(payload)
@@ -346,7 +473,8 @@ class Gateway:
         dur = time.time() - sess.t0
         self.bridge_broadcast(K_STOP, sess.serial, sess.chunks + 1, b"")
         self.send_ctrl(sock, {"type": "stopped", "sessionSerial": sess.serial})
-        log("session %s COMPLETE chunks=%d samples=%d dur=%.2fs" % (sid, sess.chunks, sess.samples, dur))
+        log("[STEP 9/%d] session %s COMPLETE chunks=%d (~%.1fs audio) wall=%.2fs" % (
+            TOTAL_STEPS, sid, sess.chunks, sess.samples / float(CANON_RATE), dur))
         self.maybe_record(sess)
 
     def on_cancel(self, sock, msg):
@@ -357,7 +485,7 @@ class Gateway:
             return
         sess.state = "CANCELLED"
         self.bridge_broadcast(K_ERROR, sess.serial, 0, b"cancelled")
-        log("session %s CANCELLED by phone" % sid)
+        log("[STEP 9/%d] session %s CANCELLED by phone" % (TOTAL_STEPS, sid))
 
     def abort_session(self, sid, reason):
         with self.lock:
@@ -366,7 +494,7 @@ class Gateway:
             return
         sess.state = "DISCONNECTED"
         self.bridge_broadcast(K_ERROR, sess.serial, 0, reason.encode("utf-8"))
-        log("session %s %s (mid-speech disconnect -> env error, never WrongWord)" % (sid, reason))
+        log("[STEP 9/%d] session %s %s (mid-speech disconnect -> env error, never WrongWord)" % (TOTAL_STEPS, sid, reason))
 
     def maybe_record(self, sess):
         if not self.args.record_dir:
@@ -393,7 +521,8 @@ class Gateway:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(self.args.cert, self.args.key)
         srv = ctx.wrap_socket(raw, server_side=True)
-        log("HTTPS+WSS on 0.0.0.0:%d (LAN only, page at /)" % self.args.https_port)
+        extra = (" + public %s (Cloudflare failover on)" % self.public_url) if self.public_url else " (LAN-only; add --public-url for Cloudflare failover)"
+        log("[STEP 5/%d] HTTPS+WSS on 0.0.0.0:%d%s (page at / — SCAN THE QR NOW)" % (TOTAL_STEPS, self.args.https_port, extra))
         while True:
             try:
                 conn, addr = srv.accept()
@@ -425,7 +554,20 @@ class Gateway:
                 if ":" in line:
                     k, v = line.split(":", 1)
                     headers[k.strip().lower()] = v.strip()
-            if headers.get("upgrade", "").lower() == "websocket" and path == "/mic":
+            # Path without query (?pc=..., ?resume=1 from failover page).
+            path_only = path.split("?", 1)[0]
+            # Where did this connection really come from? Direct LAN has no
+            # CF headers; via Cloudflare Tunnel/proxy these are present.
+            # Logging them tells the user instantly whether the phone is on
+            # the LAN path or the Cloudflare path after a proxy toggle.
+            via = ""
+            cf_ip = headers.get("cf-connecting-ip", "") or headers.get("x-forwarded-for", "")
+            cf_ray = headers.get("cf-ray", "")
+            if cf_ip or cf_ray or "cloudflare" in headers.get("via", "").lower():
+                via = " via=CLOUDFLARE(cf-ip=%s ray=%s host=%s)" % (cf_ip, cf_ray, headers.get("host", ""))
+            else:
+                via = " via=LAN-DIRECT(host=%s)" % headers.get("host", "")
+            if headers.get("upgrade", "").lower() == "websocket" and path_only == "/mic":
                 key = headers.get("sec-websocket-key", "")
                 if not key:
                     return
@@ -434,18 +576,54 @@ class Gateway:
                         "Sec-WebSocket-Accept: " + ws_accept(key) + "\r\n\r\n")
                 conn.sendall(resp.encode("latin-1"))
                 conn.settimeout(None)
-                log("phone WS connected from %s" % (addr,))
+                log("[STEP 6/%d] phone WS connected from %s%s (waiting for START...)" % (TOTAL_STEPS, addr, via))
                 self.handle_phone(conn, addr)
                 return
-            if method == "GET" and path in ("/", "/index.html"):
+            if method == "GET" and path_only in ("/", "/index.html"):
                 body = page_bytes
                 conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
                               "Content-Length: %d\r\nCache-Control: no-store\r\n"
                               "Connection: close\r\n\r\n" % len(body)).encode("latin-1") + body)
-            elif method == "GET" and path == "/health":
-                body = b'{"ok":true,"service":"phone-mic-gateway"}'
+            elif method == "GET" and path_only == "/health":
+                # CORS *: after a proxy on/off toggle the stale page may
+                # poll this from a different origin (LAN IP vs public
+                # hostname). Same-origin still works; cross-origin now too.
+                body = json.dumps({"ok": True, "service": "phone-mic-gateway",
+                                   "lan_ip": self.lan_ip, "page_url": self.page_url,
+                                   "candidates": self.candidates,
+                                   "public_url": self.public_url,
+                                   "https_port": self.args.https_port,
+                                   "bridge_port": self.args.bridge_port,
+                                   "steps_total": TOTAL_STEPS}).encode("utf-8")
                 conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+                              "Access-Control-Allow-Origin: *\r\n"
                               "Content-Length: %d\r\nConnection: close\r\n\r\n" % len(body)).encode("latin-1") + body)
+            elif method == "GET" and path_only == "/qr.png":
+                # STEP 3 artefact: scannable QR of the page URL (same origin).
+                if self.qr_png:
+                    conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\n"
+                                  "Access-Control-Allow-Origin: *\r\n"
+                                  "Content-Length: %d\r\nCache-Control: no-store\r\n"
+                                  "Connection: close\r\n\r\n" % len(self.qr_png)).encode("latin-1") + self.qr_png)
+                else:
+                    conn.sendall(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+            elif method == "GET" and path_only == "/qr":
+                # Human-friendly QR display for the PC browser: show this on
+                # the PC screen and scan it with the phone camera.
+                page = ("<!doctype html><html><head><meta charset='utf-8'>"
+                        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+                        "<title>LWE PhoneMic QR</title></head>"
+                        "<body style='font-family:system-ui;text-align:center;background:#101418;color:#eee'>"
+                        "<h2>Scan with the phone camera</h2>"
+                        "<p><img src='/qr.png' style='width:min(80vw,360px);image-rendering:pixelated;"
+                        "background:#fff;padding:12px;border-radius:8px'></p>"
+                        "<p style='font-size:18px'>%s</p>"
+                        "<p><a style='color:#8cf' href='/'>open page directly (this PC)</a></p>"
+                        "</body></html>" % (self.page_url or "(starting...)"))
+                body = page.encode("utf-8")
+                conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
+                              "Content-Length: %d\r\nCache-Control: no-store\r\n"
+                              "Connection: close\r\n\r\n" % len(body)).encode("latin-1") + body)
             else:
                 conn.sendall(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
         except Exception as e:
@@ -461,8 +639,8 @@ def selftest():
     """Codec interop proof without network (mirrors PhoneMicProtocol.cs)."""
     fails = []
 
-    def check(name, cond):
-        print(("PASS " if cond else "FAIL ") + name)
+    def check(name, cond, extra=""):
+        print(("PASS " if cond else "FAIL ") + name + (" — " + extra if extra and not cond else ""))
         if not cond:
             fails.append(name)
 
@@ -479,6 +657,29 @@ def selftest():
     check("pcm16-range", abs(floats[0] + 1.0) < 1e-6 and abs(floats[3] - 32767 / 32768.0) < 1e-6)
     # ws accept vector (RFC 6455 §1.3 example)
     check("ws-accept", ws_accept("dGhlIHNhbXBsZSBub25jZQ==") == "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
+    # server frames MUST be unmasked (RFC6455 §5.1) — Cloudflare drops
+    # masked server frames, which used to wedge the phone at 4-stream.
+    import io as _io
+
+    class _FakeSock(object):
+        def __init__(self):
+            self.buf = b""
+
+        def sendall(self, b):
+            self.buf += bytes(b)
+
+    _s = _FakeSock()
+    ws_send_text(_s, "hi")
+    check("ws-server-unmasked", _s.buf[:2] == b"\x81\x02", repr(_s.buf[:2]))
+    _s2 = _FakeSock()
+    ws_send_text(_s2, "x" * 200)
+    check("ws-server-extlen", _s2.buf[1] == 126 and len(_s2.buf) == 2 + 2 + 200, repr(_s2.buf[:4]))
+    # presence kinds ride the same envelope (Unity skips them in captures,
+    # watches them for mid-game disconnect/STOP detection)
+    for _kind, _name in ((K_UP, "presence-up"), (K_DOWN, "presence-down")):
+        _p = bridge_frame(_kind, 0, 0, b"ws-connected" if _kind == K_UP else b"ws-closed")
+        _plen = struct.unpack(">I", _p[:4])[0]
+        check(_name, _p[4] == _kind and _plen == 9 + len(_p[13:]), repr(_p[:13]))
     # control-field reader parity (canonical + reject cases)
     good = '{"type":"start","session":"ph-abc","sampleRate":16000,"channels":1,"format":"pcm16"}'
     check("ctrl-canonical", "16000" in good and "pcm16" in good)
@@ -489,7 +690,7 @@ def selftest():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="LWE phone microphone gateway (LAN only, no cloud)")
+    ap = argparse.ArgumentParser(description="LWE phone microphone gateway (LAN-first, Cloudflare-tolerant, no cloud DSP)")
     ap.add_argument("--cert", default="", help="TLS certificate file (PEM)")
     ap.add_argument("--key", default="", help="TLS private key file (PEM, never commit)")
     ap.add_argument("--https-port", type=int, default=8443)
@@ -504,6 +705,26 @@ def main():
                     help="TEST ONLY with --bridge-only: play this mono16@16000 WAV as one "
                          "phone session to the first subscriber (transport proof, not a verdict).")
     ap.add_argument("--selftest", action="store_true", help="codec checks without network")
+    ap.add_argument("--lan-ip", default="",
+                    help="override auto-detected LAN IP (default: auto-pick 192.168.x > 10.x > 172.16-31.x)")
+    ap.add_argument("--public-url", default="",
+                    help="OPTIONAL public fallback URL via Cloudflare Tunnel, e.g. "
+                         "https://mic.example.com (no trailing slash). When the phone toggles "
+                         "between LAN and Cloudflare networks the page fails over to this URL "
+                         "without re-scanning. Requires a cloudflared tunnel pointing at "
+                         "https://127.0.0.1:<https-port> with --no-tls-verify (self-signed LAN cert). "
+                         "Empty = LAN-only (default, offline-first unchanged).")
+    ap.add_argument("--ecl", default="M",
+                    help="QR error-correction level L/M/Q/H (default M; higher survives dirty screens)")
+    ap.add_argument("--no-qr", action="store_true",
+                    help="skip QR generation (log the URL only)")
+    ap.add_argument("--qr-png", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                     "phone-mic-qr.png"),
+                    help="where to save the scannable QR PNG (default tools/phone-mic-qr.png)")
+    ap.add_argument("--qr-svg", default="",
+                    help="optionally also save a QR SVG file (e.g. tools/phone-mic-qr.svg)")
+    ap.add_argument("--no-ascii-qr", action="store_true",
+                    help="do not print the terminal QR fallback (URL is always printed)")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(selftest())
@@ -519,6 +740,55 @@ def main():
     if not os.path.isfile(args.page):
         print("FAIL: phone page not found: %s" % args.page)
         sys.exit(2)
+    # -- STEP 1: LAN IP (no more manual ipconfig) -------------------------
+    try:
+        lan_ip, candidates, reason = lwe_qr.pick_lan_ip(args.lan_ip.strip())
+    except RuntimeError as e:
+        print("FAIL [STEP 1/%d]: %s" % (TOTAL_STEPS, e))
+        sys.exit(2)
+    gw.lan_ip = lan_ip
+    gw.candidates = candidates
+    gw.public_url = (args.public_url or "").rstrip("/")
+    log("[STEP 1/%d] LAN IP = %s (%s; all candidates=%s)" % (TOTAL_STEPS, lan_ip, reason, candidates))
+    if gw.public_url:
+        log("[STEP 1/%d] public fallback (Cloudflare) = %s — phone auto-fails-over on proxy toggle" % (TOTAL_STEPS, gw.public_url))
+    else:
+        log("[STEP 1/%d] public fallback: none (LAN-only). To survive Cloudflare proxy on/off, "
+            "run: cloudflared tunnel --url https://127.0.0.1:%d --no-tls-verify "
+            "then restart gateway with --public-url https://<your-host>" % (TOTAL_STEPS, args.https_port))
+    # -- STEP 2: cert must cover that IP (else phone TLS fails confusingly) --
+    ok, detail = lwe_qr.cert_covers_ip(args.cert, lan_ip)
+    log("[STEP 2/%d] cert check: %s" % (TOTAL_STEPS, detail))
+    if not ok:
+        print("FAIL [STEP 2/%d]: %s" % (TOTAL_STEPS, detail))
+        print("FIX: re-issue the cert for %s, or pass --lan-ip <cert-IP> --https-port %d" % (lan_ip, args.https_port))
+        sys.exit(2)
+    # -- STEP 3: page URL + scannable QR (no more typing the IP) ------------
+    page_url = lwe_qr.build_url(lan_ip, args.https_port)
+    gw.page_url = page_url
+    if not args.no_qr:
+        try:
+            qr = lwe_qr.encode_url(page_url, ecl=args.ecl)
+            matrix = lwe_qr.matrix_of(qr)
+            _, size = lwe_qr.save_png(args.qr_png, matrix)
+            gw.qr_png = open(args.qr_png, "rb").read()
+            extra = ""
+            if args.qr_svg:
+                with open(args.qr_svg, "w", encoding="utf-8") as f:
+                    f.write(lwe_qr.svg_text(matrix))
+                extra = " + svg %s" % args.qr_svg
+            log("[STEP 3/%d] QR ready (v%d, %dx%d): %s (%d bytes%s) — scan with phone camera" % (
+                TOTAL_STEPS, qr.get_version(), len(matrix), len(matrix), args.qr_png, size, extra))
+            if not args.no_ascii_qr:
+                print("----- QR fallback (PNG file + /qr.png serve are the reliable path) -----")
+                print(lwe_qr.ascii_art(matrix))
+                print("------------------------------------------------------------------------")
+        except Exception as e:
+            print("FAIL [STEP 3/%d]: QR encode failed: %s" % (TOTAL_STEPS, e))
+            sys.exit(2)
+    else:
+        log("[STEP 3/%d] QR skipped (--no-qr); use the URL below" % TOTAL_STEPS)
+    log("PAGE URL (no typing needed — scan the QR): %s" % page_url)
     with open(args.page, "rb") as f:
         page_bytes = f.read()
     threading.Thread(target=gw.serve_bridge, daemon=True).start()

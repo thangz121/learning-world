@@ -7,7 +7,7 @@
 // evidence: it only gates eligibility (environment vs child, §10/§11).
 using System;
 
-public sealed class PhoneMicrophoneDevice : IMicrophoneDevice {
+public sealed class PhoneMicrophoneDevice : IMicrophoneDevice, IPhoneLinkDevice {
   MicStatus _status = MicStatus.NoDevice;
   string _selected; // phone link label, e.g. "phone@192.168.1.20"
 

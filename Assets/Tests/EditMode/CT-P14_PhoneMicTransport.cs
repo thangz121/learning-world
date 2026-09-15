@@ -435,4 +435,56 @@ public class CT_P14_PhoneMicTransport {
     Assert.AreEqual(1600, seg.Samples.Length);
     Assert.AreEqual(0.25f, seg.MeanEnergy, 0.02f);
   }
+
+  // ---------- presence (mid-game disconnect/STOP detection) ----------
+
+  [Test] public void P14U_PresenceFramesDecodeAndCaptureSkipsThem() {
+    // New kinds ride the same envelope (gateway<->Unity contract).
+    foreach (byte kind in new[] { PhoneMicProtocol.KindPresenceUp, PhoneMicProtocol.KindPresenceDown }) {
+      byte[] raw = PhoneMicProtocol.EncodeBridgeFrame(kind, 0, 0,
+        System.Text.Encoding.UTF8.GetBytes(kind == PhoneMicProtocol.KindPresenceUp ? "ws-connected" : "ws-closed"));
+      PhoneMicProtocol.BridgeFrame f;
+      string reason;
+      Assert.IsTrue(PhoneMicProtocol.TryDecodeBridgeFrame(raw, 0, raw.Length, out f, out reason), reason);
+      Assert.AreEqual(kind, f.Kind);
+    }
+    // A capture whose stream is interleaved with presence frames (page opened
+    // before START, page closed after STOP) still delivers the session: the
+    // transport skips presence like HELLO instead of failing protocol_error.
+    var listener = new TcpListener(IPAddress.Loopback, 0);
+    listener.Start();
+    int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+    var server = Task.Run(() => {
+      using (TcpClient c = listener.AcceptTcpClient())
+      using (NetworkStream s = c.GetStream()) {
+        var tmp = new byte[64];
+        Assert.Greater(s.Read(tmp, 0, tmp.Length), 0, "Unity subscribes first");
+        s.Write(PhoneMicProtocol.EncodeBridgeFrame(PhoneMicProtocol.KindHello, 0, 0, new byte[0]), 0, 13);
+        s.Write(PhoneMicProtocol.EncodeBridgeFrame(PhoneMicProtocol.KindPresenceUp, 0, 0,
+          System.Text.Encoding.UTF8.GetBytes("ws-connected")), 0, 13 + 12);
+        byte[] pcm = new byte[3200]; // 1600 samples const 0.25
+        for (int i = 0; i < 1600; i++) {
+          short v = (short)(0.25f * 32767f);
+          pcm[i * 2] = (byte)(v & 0xFF);
+          pcm[i * 2 + 1] = (byte)((v >> 8) & 0xFF);
+        }
+        byte[] audio = PhoneMicProtocol.EncodeBridgeFrame(PhoneMicProtocol.KindAudio, 77, 0, pcm);
+        s.Write(audio, 0, audio.Length);
+        byte[] stop = PhoneMicProtocol.EncodeBridgeFrame(PhoneMicProtocol.KindStop, 77, 1, new byte[0]);
+        s.Write(stop, 0, stop.Length);
+        s.Write(PhoneMicProtocol.EncodeBridgeFrame(PhoneMicProtocol.KindPresenceDown, 0, 0,
+          System.Text.Encoding.UTF8.GetBytes("ws-closed")), 0, 13 + 9);
+        s.Flush();
+        Task.Delay(500).GetAwaiter().GetResult(); // let the capture drain
+      }
+    });
+    CapturedSpeech seg;
+    using (var transport = new TcpPhoneAudioTransport("127.0.0.1", port)) {
+      seg = CaptureWith(transport);
+    }
+    Assert.IsTrue(server.Wait(10000), "server finished");
+    listener.Stop();
+    Assert.IsEmpty(seg.Error, "presence frames must not fail the capture");
+    Assert.AreEqual(1600, seg.Samples.Length);
+  }
 }

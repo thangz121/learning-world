@@ -207,3 +207,114 @@ transcript shown on the phone. No identity/biometrics.
 **PASS WITH OPEN ITEMS** — the open item is solely the supervised
 real-phone matrix (user-run, procedure above). Nothing in the automated
 or loopback evidence required a speech-code change, and none was made.
+
+## QR quick-start (2026-09-15 addendum — no IP typing, step logs)
+
+The manual `ipconfig` + hand-typed `https://<ip>:8443/` flow above still
+works, but the gateway now does it for you:
+
+1. Double-click (or Run with PowerShell):
+   `tools/start_phone_mic.ps1` — it auto-detects the LAN IP, checks the
+   cert, starts the gateway, and opens `https://127.0.0.1:8443/qr` on the
+   PC showing a BIG QR. (Or run the gateway directly:
+   `python tools/phone_mic_gateway.py --cert tools/lan.crt --key tools/lan.key`.)
+2. Scan that QR with the phone camera → the page opens, no typing.
+   The same QR is saved to `tools/phone-mic-qr.png` (gitignored) and
+   served live at `https://<pc-ip>:8443/qr.png` (QR payload is just the
+   page URL; offline-first, stdlib-only — engine is vendored
+   `tools/qrcodegen.py`, Project Nayuki MIT).
+3. If the PC IP changed (DHCP) and STEP 2 FAILs the cert check, either
+   re-issue the cert for the new IP (same command as §Manual E2E step 1)
+   or give the PC a DHCP reservation so the IP stops changing.
+4. Watch how far it got — PC window logs `[STEP 1/9]`…`[STEP 9/9]`
+   (1 lan-ip · 2 cert · 3 QR · 4 bridge · 5 HTTPS/scan · 6 phone WS ·
+   7 CAPTURING · 8 audio flowing · 9 stop/complete); the phone page shows
+   STEP 1/5…5/5 + a timestamped steps log mirroring PC steps 6–9.
+   `/health` now also returns `{lan_ip, page_url, steps_total}`.
+
+## Standalone link test (2026-09-15 — no game, no Unity)
+
+`tools/test_phone_link.py` plays the Unity side (bridge SUBSCRIBE + frame
+watch, stdlib only). Two flows, two windows on the PC:
+
+- Flow A — bridge path, NO phone:
+  `python tools/test_phone_link.py --gen-tone tone16k.wav` (once), then
+  window 1: `gateway --bridge-only --inject-wav tone16k.wav`, window 2:
+  `test_phone_link.py --expect-session` → PASS = HELLO + 10 AUDIO chunks
+  (16000 samples, 0 gaps) + clean STOP (verified 2026-09-15, exit 0).
+- Flow B — real phone, NO game: window 1: gateway normal (QR!), window 2:
+  `test_phone_link.py --wait 60`, then scan QR → START → speak → STOP →
+  PASS = live AUDIO + STOP (same verdict lines as Flow A).
+- Idle gateway + `--wait 3` → exit 0 informational ("gateway OK, phone
+  idle"); `--expect-session` with no session → exit 1; bridge down →
+  exit 2 ("is the gateway running?").
+
+## In-game mic-setup gate (2026-09-15 addendum — not standalone anymore)
+
+Startup prompt + periodic recheck + skip-listening now live INSIDE the game:
+
+- Game start with no mic/headset-mic listed → modal offer (parent-facing,
+  Vietnamese): "Hiện đang không có microphone kết nối, bạn có muốn kết nối
+  bằng điện thoại không?" [Có, dùng điện thoại] [Bỏ qua]. Unity's
+  `Microphone.devices` is capture-only (speakers never appear), so the
+  speaker-vs-headset distinction holds by construction; names only tune the
+  wording (`D_Audio/MicDeviceClassifier.cs`).
+- YES → instructions panel (chạy gateway → quét QR → START) + live probe of
+  the phone↔gateway↔PC link (`PhoneLinkProbe`: AUDIO/STOP frame = linked,
+  HELLO-only = gateway idle, TCP refused = gateway down) + [Kiểm tra lại] /
+  [Bỏ qua bài nghe]. Link observed → phone device Ready → play.
+- Background: PC list re-polled every 5s; phone link re-probed every 30s in
+  phone mode — all SILENT (never a mid-play popup; loss → quiet skip,
+  recovery → quiet ready). Re-prompt happens ONLY at listening-exercise
+  entry (`CheckBeforeListening`, once per exercise).
+- Decline/unavailable → frozen `SkippedNoMic`/deferral ("tạm thời bỏ qua bài
+  nghe", mastery untouched) via `CompositeMicrophoneDevice` (local wins,
+  phone fallback) as the future recognizer input.
+- Files: `_SharedKernel/MicSetupGate.cs` (+`IPhoneLinkDevice`), 
+  `_SharedKernel/PhoneLinkProbe.cs` (kernel because LWE.World refs kernel
+  only; envelope constants mirrored from `PhoneMicProtocol`, pinned by
+  CT-P15 loopback), `D_Audio/{MicDeviceClassifier,CompositeMicrophoneDevice}.cs`,
+  `A_World/{MicSetupDialog,MicSetupMonitor}.cs`, `_Bootstrap/MicSetupBundle.cs`
+  + GameInstaller/MarketBootstrap wiring (bundle null = feature off).
+- Evidence: EditMode 252 (251 pass + 1 pre-existing conditional skip),
+  CT-P15 16/16 (classifier/gate/composite/loopback-probe/frozen-skip/UI).
+
+## In-game QR + gateway auto-start (2026-09-15 addendum)
+
+Accept (Co, dung dien thoai) now: pauses the game (Time.timeScale=0), auto-starts
+tools/phone_mic_gateway.py as a child process (certs from <repo>/tools), shows its QR
+PNG inside the WAIT panel (MicSetupDialog.SetQrImage), and re-probes the bridge
+every 3 s. PhoneLinked -> QR off + resume (gateway keeps running for captures).
+30 s without link -> Skip button appears under the QR; 120 s -> auto-skip
+(gate SkipWaiting, resume, child gateway killed). All timers use unscaled time.
+Every step is try/caught: no python / no certs / player build without tools/ =
+manual instructions fallback. Driver: A_World/MicSetupMonitor.cs; UI: A_World/MicSetupDialog.cs
+(P15Q pins QR/late-skip); wiring: MarketBootstrap.FindToolsDir -> Bind(toolsDir).
+
+## Transport hardening (same day)
+
+- Double-START guard: one socket = one live session (old retired as STOP when 0-chunk,
+  else replaced error) + page starting flag. Fixes the observed ~2x chunk rate.
+- Bridge HELLO is now sent BEFORE joining the broadcast list (no AUDIO-before-HELLO
+  for mid-stream subscribers).
+- Gateway audio logs now show chunks/audio-sec/peak level/wall/listeners every 100 chunks,
+  a no-listener hint on first chunk, and a one-time 10 s bridge-bound notice.
+
+## Presence: mid-game drop/STOP detection (2026-09-15 addendum)
+
+Bridge kinds 5/6 (additive, same envelope; PhoneMicProtocol.KindPresenceUp/Down):
+- UP (ws-connected) on phone WS open; DOWN (ws-closed) on WS close. Session audio
+  lifecycle still uses AUDIO/STOP/ERROR, so STOP-without-DOWN = user pressed STOP
+  (page may stay open, next START resumes) while DOWN = phone gone mid-game.
+- Captures skip presence like HELLO (TcpPhoneAudioTransport loops); probe ignores them
+  (still needs AUDIO/STOP for PhoneLinked). P14U pins decode + skip over real sockets.
+- _SharedKernel/PhonePresenceWatcher.cs: persistent subscriber on a worker thread,
+  latest-edge-wins polling (ReadState seq), never throws, no Unity APIs. P15R/S pin
+  UP/AUDIO/STOP/DOWN over loopback + GatewayDown on refused port.
+- MicSetupMonitor runs the watcher in WaitPhoneLink/ReadyPhone: AUDIO -> linked path
+  immediately; UP -> status phone-open; STOP -> log + status (stays Ready);
+  DOWN/TransportLost/GatewayDown -> ReportLinkDown + silent skip, next exercise
+  re-offers. One-shot probes stay as backup. Live proof 2026-09-15: phone sessions
+  1x rate (93 chunks/23.8 s, 57 chunks/15.0 s), clean STOPs, raw bridge bytes verified
+  HELLO/UP/DOWN/AUDIO.
+E2E 2026-09-15: EditMode FULL 256 (255 pass + 1 pre-existing conditional skip P13M4, 0 fail) on Unity 6000.6.0f1 batchmode; P14 21/21, P15 19/19 (new P14U/P15Q/P15R/P15S green).

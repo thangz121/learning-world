@@ -28,6 +28,13 @@ public class GameInstaller : MonoBehaviour {
   public IAudioDirector Audio { get; private set; }
   public ISpeechSynthesisProvider Tts { get; private set; }
   public INpcVoiceSelector Voices { get; private set; }
+  // Phase 2.1 mic-setup gate (additive): PC mic/headset OR phone mic.
+  // SpeechMic (composite) is the future ISpeechRecognizer input so the frozen
+  // SkippedNoMic/deferral policy ("tạm thời bỏ qua bài nghe") applies as-is.
+  public MicrophoneDeviceService LocalMic { get; private set; }
+  public PhoneMicrophoneDevice PhoneMic { get; private set; }
+  public CompositeMicrophoneDevice SpeechMic { get; private set; }
+  public MicSetupGate MicGate { get; private set; }
 
   SpeechProviderRouter _speechRouter;
 
@@ -44,6 +51,19 @@ public class GameInstaller : MonoBehaviour {
     Tts = new CloudflareTranslateTtsProvider();          // Application, endpoint/config ngoài repo (Translate source)
     Audio = new AudioDirector(EventBus, Tts);         // Application, cache L1/L2 + Mixer + Focus
     Voices = new NpcVoiceProfileSelector(Save);       // Application, save.npcVoices + worldSeed
+    // E2E hook (mic-less PC simulation): launch flag "-e2e-nomic" emulates a
+    // machine with no microphone so the phone-mic offer/QR flow is reachable
+    // in-build. Inert without the flag; production behavior unchanged.
+    bool noMic = false;
+    try {
+      foreach (string a in System.Environment.GetCommandLineArgs())
+        if (string.Equals(a, "-e2e-nomic", System.StringComparison.OrdinalIgnoreCase)) { noMic = true; break; }
+    } catch (System.Exception) { }
+    LocalMic = noMic ? new MicrophoneDeviceService(() => new string[0], null)
+      : new MicrophoneDeviceService();                // Application, poll-based (no hot-plug event)
+    PhoneMic = new PhoneMicrophoneDevice();             // Application, link-gated (NoDevice until probed)
+    SpeechMic = new CompositeMicrophoneDevice(LocalMic, PhoneMic); // local wins, phone fallback
+    MicGate = new MicSetupGate(LocalMic, PhoneMic);     // startup offer + exercise-entry policy
     Milo.Bind(EventBus, Quests, Learning, Hints, Audio);
     PregenSeeder.SeedFromStreamingAssets();           // D: offline L2 seeding before first audio use
     LoadMarketSceneAndBuild();
@@ -97,7 +117,9 @@ public class GameInstaller : MonoBehaviour {
       Debug.LogError("[GameInstaller] No MarketBootstrap on the installer object; slice cannot start.", this);
       return;
     }
-    bootstrap.Build(EventBus, Quests, Hints, builder, Audio);
+    bootstrap.Build(EventBus, Quests, Hints, builder, Audio, new MicSetupBundle(
+      MicGate, LocalMic, PhoneMic, SpeechMic,
+      PhoneMicProtocol.LoopbackHost, PhoneMicProtocol.DefaultBridgePort));
   }
 
   // Runtime online->offline swap INSIDE the router: every injected consumer

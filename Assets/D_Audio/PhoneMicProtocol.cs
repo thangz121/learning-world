@@ -16,7 +16,12 @@
 //   [u32 totalLen][u8 kind][u32 sessionSerial][u32 seq][payload]
 // totalLen covers kind+sessionSerial+seq+payload (not itself).
 // Kinds gateway->Unity: AUDIO=1 (payload PCM16LE), STOP=2 (clean end),
-// ERROR=3 (payload utf8 reason), HELLO=4 (payload utf8 gateway id).
+// ERROR=3 (payload utf8 reason), HELLO=4 (payload utf8 gateway id),
+// PRESENCE_UP=5 (phone page opened, payload utf8 "ws-connected"),
+// PRESENCE_DOWN=6 (phone page gone, payload utf8 "ws-closed").
+// Presence carries NO audio: captures skip it (TakeAsync loops like HELLO);
+// the monitor's watcher uses it to tell "STOP pressed, page still open"
+// (STOP seen, no DOWN) apart from "phone gone mid-game" (DOWN) in seconds.
 // Kinds Unity->gateway: SUBSCRIBE=0x10, CANCEL=0x11 (payload empty).
 // Session isolation (§12): the capture latches the first sessionSerial seen
 // after SUBSCRIBE; frames from any other serial are dropped, never merged.
@@ -41,6 +46,8 @@ public static class PhoneMicProtocol {
   public const byte KindStop = 2;
   public const byte KindError = 3;
   public const byte KindHello = 4;
+  public const byte KindPresenceUp = 5;
+  public const byte KindPresenceDown = 6;
   public const byte KindSubscribe = 0x10;
   public const byte KindCancel = 0x11;
 
@@ -169,6 +176,8 @@ public static class PhoneMicProtocol {
       case KindStop:
       case KindError:
       case KindHello:
+      case KindPresenceUp:
+      case KindPresenceDown:
       case KindSubscribe:
       case KindCancel:
         return true;
