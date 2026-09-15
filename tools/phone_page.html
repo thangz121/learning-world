@@ -1,0 +1,831 @@
+<!doctype html>
+<!-- tools/phone_page.html — UNIFIED phone panel: MICROPHONE + CAMERA on one page.
+  Served by tools/phone_mic_gateway.py at /phone (same TLS origin as the
+  single-purpose / and /camera pages, which stay untouched as fallback).
+  Vanilla JS, zero external dependencies (offline-first).
+
+  Two INDEPENDENT media sessions on one screen (spec §8 combos A–G):
+    MIC    getUserMedia audio -> AudioContext 16 kHz -> Int16 PCM -> WSS /mic
+    CAMERA getUserMedia video (front) -> canvas 320x240 -> JPEG q0.6 -> WSS /cam
+  Each panel owns its WS, session, START/STOP, steps pills and counters —
+  stopping one never touches the other. The STEPS LOG at the bottom is SHARED:
+  both panels write here with [MIC]/[CAM] prefixes, so the whole phone→PC
+  story reads in one place (newest at the bottom, auto-scrolled).
+
+  No recording, no upload anywhere except the PC gateway on this LAN. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LWE Phone (mic + camera)</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 16px; background: #101418; color: #eee; }
+  .pill { display: inline-block; padding: 4px 10px; border-radius: 12px; margin: 2px; font-size: 14px; background: #333; }
+  .ok { background: #1c6b3a; } .bad { background: #8a2424; } .warn { background: #8a6d1c; }
+  #m-meter { width: 100%; height: 18px; background: #222; border-radius: 4px; margin: 8px 0; }
+  #m-level { height: 100%; width: 0%; background: #4caf50; border-radius: 4px; }
+  button { font-size: 18px; padding: 10px 22px; margin: 6px 4px 6px 0; }
+  button:disabled { opacity: 0.45; }
+  .row { margin: 6px 0; } code { font-size: 12px; word-break: break-all; }
+  .panel { border: 1px solid #2c343c; border-radius: 10px; padding: 10px 12px; margin: 10px 0; background: #141a20; }
+  .panel h3 { margin: 2px 0 8px 0; font-size: 16px; letter-spacing: 1px; }
+  #c-preview { width: 100%; max-width: 360px; border-radius: 8px; background: #000; }
+  .steps { font-size: 13px; margin: 8px 0; }
+  .steps span { padding: 3px 8px; border-radius: 10px; background: #333; margin-right: 4px; white-space: nowrap; }
+  .steps span.done { background: #1c6b3a; }
+  .steps span.now { background: #8a6d1c; }
+  #log { background: #0a0d10; border: 1px solid #333; border-radius: 6px; padding: 6px 8px;
+         font-size: 12px; font-family: monospace; max-height: 220px; overflow-y: auto; margin-top: 6px; }
+  #log div { margin: 1px 0; }
+  #screenoff { width: 100%; background: #5a3a10; color: #ffe9c4; }
+  #blackout { position: fixed; inset: 0; background: #000; z-index: 9999;
+              display: flex; align-items: center; justify-content: center;
+              text-align: center; color: #555; font-size: 15px; }
+  #blackout[hidden] { display: none; }
+</style>
+</head>
+<body>
+<h2>LWE PHONE <small>(mic + camera)</small></h2>
+<div class="row"><button id="screenoff" onclick="setScreenOff(true)">TẮT MÀN HÌNH (tiết kiệm pin)</button></div>
+<div id="blackout" hidden onclick="setScreenOff(false)">
+  <div>ĐANG STREAM — mic + camera vẫn chạy<br>Chạm vào màn hình để mở lại</div>
+</div>
+
+<div class="panel" id="mic-panel">
+<h3>🎤 MICROPHONE</h3>
+<div class="row">PC: <span id="m-pc" class="pill">CONNECTING</span>
+Microphone: <span id="m-mic" class="pill">UNKNOWN</span>
+State: <span id="m-state" class="pill">IDLE</span></div>
+<div class="steps"><span id="m-st1">1-connect</span><span id="m-st2">2-mic</span><span id="m-st3">3-start</span><span id="m-st4">4-stream</span><span id="m-st5">5-stop</span></div>
+<div class="row">Audio: <div id="m-meter"><div id="m-level"></div></div></div>
+<div class="row">
+<button id="m-start">START MIC</button>
+<button id="m-stop" disabled>STOP</button>
+</div>
+<div class="row">Duration: <span id="m-dur">0.00</span> sec &nbsp; Packets: <span id="m-pkts">0</span></div>
+<div class="row">Status: <span id="m-status">idle</span></div>
+<div class="row"><code id="m-srv"></code></div>
+<div class="row"><code id="m-alt" style="color:#999"></code></div>
+</div>
+
+<div class="panel" id="cam-panel">
+<h3>📷 CAMERA</h3>
+<div class="row">PC: <span id="c-pc" class="pill">CONNECTING</span>
+Camera: <span id="c-cam" class="pill">UNKNOWN</span>
+State: <span id="c-state" class="pill">IDLE</span></div>
+<div class="steps"><span id="c-st1">1-connect</span><span id="c-st2">2-camera</span><span id="c-st3">3-start</span><span id="c-st4">4-stream</span><span id="c-st5">5-stop</span></div>
+<div class="row"><video id="c-preview" muted playsinline autoplay></video></div>
+<div class="row">
+<button id="c-start">START CAMERA</button>
+<button id="c-stop" disabled>STOP</button>
+</div>
+<div class="row">Duration: <span id="c-dur">0.00</span> sec &nbsp; Frames: <span id="c-frames">0</span></div>
+<div class="row">Status: <span id="c-status">idle</span></div>
+<div class="row"><code id="c-srv"></code></div>
+</div>
+
+<div class="row">Steps log — mic + camera chung một chỗ (mới nhất ở dưới):<div id="log"></div></div>
+
+<script>
+// Shared steps log: both panels write here with [MIC]/[CAM] tags.
+function ulog(tag, n, t) {
+  var now = new Date(), ts = ("0" + now.getHours()).slice(-2) + ":" +
+    ("0" + now.getMinutes()).slice(-2) + ":" + ("0" + now.getSeconds()).slice(-2);
+  var box = document.getElementById("log");
+  if (!box) return;
+  var line = document.createElement("div");
+  line.textContent = "[" + ts + "] [" + tag + "] STEP " + n + "/5 " + t;
+  box.appendChild(line); box.scrollTop = box.scrollHeight;
+}
+// Screen-off (battery/heat saver): pure-black fullscreen overlay + preview
+// shrunk to 2px (kept PLAYING — drawImage still grabs live frames) + capture
+// capped to 30fps + mic meter paused. Streams and sockets are untouched.
+// Web pages cannot power off the physical display; on OLED black ≈ no display
+// power, on LCD the saving is the paused rendering + halved encode rate.
+// Do NOT press the power button (the OS may suspend the tab and kill both
+// streams) — use this overlay instead, tap anywhere to come back.
+window.__screenOff = false;
+function effMaxFps() { return window.__screenOff ? 30 : 60; }
+function setScreenOff(on) {
+  window.__screenOff = !!on;
+  var b = document.getElementById("blackout");
+  if (b) b.hidden = !window.__screenOff;
+  var pv = document.getElementById("c-preview");
+  if (pv) {
+    pv.style.opacity = window.__screenOff ? "0" : "1";
+    pv.style.maxWidth = window.__screenOff ? "2px" : "";
+  }
+  var btn = document.getElementById("screenoff");
+  if (btn) btn.textContent = window.__screenOff ? "MỞ MÀN HÌNH" : "TẮT MÀN HÌNH (tiết kiệm pin)";
+}
+</script>
+
+<script>
+/* ---------------- MIC panel (logic mirrors phone_mic_page.html) ---------------- */
+(function () {
+  "use strict";
+  var LS_GOOD = "lwe_last_good_ws", LS_PUB = "lwe_last_good_public";
+  var READY_TIMEOUT_MS = 6000, CONNECT_TIMEOUT_MS = 7000;
+  var PING_EVERY_MS = 15000, PONG_TIMEOUT_MS = 6000, RECONNECT_BASE_MS = 1500;
+
+  function $(id) { return document.getElementById(id); }
+  var pc = $("m-pc"), mic = $("m-mic"),
+      state = $("m-state"), status = $("m-status"),
+      level = $("m-level"), dur = $("m-dur"),
+      pkts = $("m-pkts"),
+      startBtn = $("m-start"), stopBtn = $("m-stop"),
+      srvEl = $("m-srv"), altEl = $("m-alt");
+
+  function pill(el, txt, cls) { el.textContent = txt; el.className = "pill " + (cls || ""); }
+  function say(t) { status.textContent = t; }
+  var stepIds = ["m-st1", "m-st2", "m-st3", "m-st4", "m-st5"], curStep = 0;
+  function logStep(n, t) { ulog("MIC", n, t); }
+  function setStep(n) {
+    curStep = n;
+    for (var i = 0; i < stepIds.length; i++) {
+      var el = $(stepIds[i]);
+      el.className = (i + 1 < n) ? "done" : ((i + 1 === n) ? "now" : "");
+    }
+  }
+  setStep(1); logStep(1, "connecting to PC...");
+
+  function qp(name) {
+    try {
+      var m = new RegExp("[?&]" + name + "=([^&#]*)").exec(location.search);
+      return m ? decodeURIComponent(m[1]) : "";
+    } catch (e) { return ""; }
+  }
+  function toWsUrl(httpUrl) {
+    var u = (httpUrl || "").trim();
+    if (!u) return "";
+    if (u.indexOf("://") < 0) u = (location.protocol === "https:" ? "https://" : "http://") + u;
+    u = u.replace(/^http:\/\//i, "ws://").replace(/^https:\/\//i, "wss://");
+    u = u.replace(/\/+$/, "") + "/mic";
+    return u;
+  }
+  function toHealthUrl(wsUrl) {
+    return wsUrl.replace(/\/mic\/?$/, "/health").replace(/^wss:\/\//i, "https://").replace(/^ws:\/\//i, "http://");
+  }
+  function originWs() {
+    return (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/mic";
+  }
+  function buildEndpoints() {
+    var list = [], seen = {};
+    function add(u) { if (u && !seen[u]) { seen[u] = 1; list.push(u); } }
+    add(originWs());
+    var q = qp("pc"); if (q) add(toWsUrl(q));
+    try {
+      var g = localStorage.getItem(LS_GOOD); if (g) add(g);
+      var p = localStorage.getItem(LS_PUB); if (p) add(toWsUrl(p));
+    } catch (e) {}
+    return list;
+  }
+  var endpoints = buildEndpoints();
+  var activeEndpoint = endpoints[0] || originWs();
+  function showEndpoints() {
+    srvEl.textContent = activeEndpoint;
+    var rest = endpoints.filter(function (u) { return u !== activeEndpoint; });
+    altEl.textContent = rest.length ? ("fallback: " + rest.join(" · ")) : "";
+  }
+  showEndpoints();
+
+  function learnFromHealth(baseWs) {
+    var h = toHealthUrl(baseWs);
+    if (!window.fetch) return;
+    fetch(h, { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.ok) return;
+      var added = [];
+      var port = j.https_port || 8443;
+      (j.candidates || []).forEach(function (ip) {
+        var u = "wss://" + ip + ":" + port + "/mic";
+        if (endpoints.indexOf(u) < 0) { endpoints.push(u); added.push(u); }
+      });
+      if (j.public_url) {
+        var pu = toWsUrl(j.public_url);
+        if (pu && endpoints.indexOf(pu) < 0) { endpoints.push(pu); added.push(pu); }
+        try { localStorage.setItem(LS_PUB, j.public_url); } catch (e) {}
+      }
+      if (added.length) { logStep(curStep, "learned " + added.length + " fallback endpoint(s): " + added.join(", ")); showEndpoints(); }
+    }).catch(function () { /* offline-first: health is optional */ });
+  }
+
+  var ws = null, stream = null, ctx = null, src = null, proc = null, analyser = null, analyserData = null;
+  var session = null, packets = 0, startedAt = 0;
+  var streaming = false, serverReady = false, stopped = true, starting = false;
+  var wantStreaming = false;
+  var reconnectTimer = null, readyTimer = null, pingTimer = null, pongTimer = null;
+  var lastPongAt = 0, connectAttempt = 0, manualStop = false;
+
+  function setState(s, cls) { pill(state, s, cls); }
+  function setStartEnabled(on) { startBtn.disabled = !on; }
+  function setStopEnabled(on) { stopBtn.disabled = !on; }
+
+  function clearTimers() {
+    if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+    if (pongTimer) { clearTimeout(pongTimer); pongTimer = null; }
+  }
+
+  function cleanupAudio() {
+    streaming = false; serverReady = false;
+    try { if (proc) proc.disconnect(); } catch (e) {}
+    try { if (src) src.disconnect(); } catch (e) {}
+    try { if (analyser) analyser.disconnect(); } catch (e) {}
+    try { if (ctx) ctx.close(); } catch (e) {}
+    try { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    proc = src = analyser = ctx = stream = null;
+    level.style.width = "0%";
+  }
+
+  function stopHeartbeat() { if (pingTimer) { clearInterval(pingTimer); pingTimer = null; } }
+  function startHeartbeat() {
+    stopHeartbeat(); lastPongAt = Date.now();
+    pingTimer = setInterval(function () {
+      if (!ws || ws.readyState !== 1) return;
+      try { ws.send(JSON.stringify({ type: "ping", t: Date.now() })); } catch (e) { return; }
+      if (pongTimer) clearTimeout(pongTimer);
+      pongTimer = setTimeout(function () {
+        if (Date.now() - lastPongAt > PONG_TIMEOUT_MS + PING_EVERY_MS) {
+          logStep(curStep, "heartbeat lost (no pong) — reconnecting (proxy/NAT may have toggled)");
+          try { ws.close(); } catch (e) {}
+        }
+      }, PONG_TIMEOUT_MS);
+    }, PING_EVERY_MS);
+  }
+
+  function connect() {
+    if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+    pill(pc, "CONNECTING", "warn"); setState("CONNECTING", "warn");
+    setStep(1);
+    var i = 0;
+    function tryNext() {
+      if (i >= endpoints.length) {
+        pill(pc, "DISCONNECTED", "bad"); setState("DISCONNECTED", "bad");
+        say("no route to PC — check Wi-Fi / QR / tunnel, retrying…");
+        logStep(1, "all " + endpoints.length + " endpoint(s) failed — retry in 3 s");
+        reconnectTimer = setTimeout(function () { connectAttempt++; connect(); }, 3000);
+        if (!wantStreaming) setStartEnabled(true);
+        return;
+      }
+      var url = endpoints[i++];
+      say("connecting " + url + " …");
+      var sock;
+      try { sock = new WebSocket(url); } catch (e) { tryNext(); return; }
+      sock.binaryType = "arraybuffer";
+      var done = false;
+      var to = setTimeout(function () {
+        if (done) return; done = true;
+        try { sock.close(); } catch (e) {}
+        logStep(1, "timeout: " + url);
+        tryNext();
+      }, CONNECT_TIMEOUT_MS);
+      sock.onopen = function () {
+        if (done) { try { sock.close(); } catch (e) {} return; }
+        done = true; clearTimeout(to);
+        ws = sock; activeEndpoint = url;
+        try { localStorage.setItem(LS_GOOD, url); } catch (e) {}
+        wireSocket();
+        pill(pc, "CONNECTED", "ok"); setState(wantStreaming ? "RECONNECTING" : "CONNECTED", "ok");
+        say("connected"); logStep(1, "PC connected via " + url + " — press START MIC and allow the mic"); setStep(2);
+        showEndpoints(); learnFromHealth(url);
+        startHeartbeat();
+        if (wantStreaming && !manualStop) {
+          logStep(2, "network changed — auto-resuming stream with a FRESH session…");
+          setTimeout(function () { startStreaming(true); }, 400);
+        }
+      };
+      sock.onerror = function () {
+        if (done) return;
+        logStep(1, "socket error: " + url + " (see PC STEP 6 log)");
+      };
+      sock.onclose = function () {
+        if (done) return; done = true; clearTimeout(to);
+        tryNext();
+      };
+    }
+    tryNext();
+  }
+
+  function scheduleReconnect(ms) {
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    var delay = ms || Math.min(10000, RECONNECT_BASE_MS * Math.pow(1.5, Math.min(connectAttempt, 6)));
+    reconnectTimer = setTimeout(function () { connectAttempt++; connect(); }, delay);
+  }
+
+  function wireSocket() {
+    ws.onclose = function () {
+      stopHeartbeat(); clearTimers();
+      var wasWant = wantStreaming;
+      streaming = false; serverReady = false; starting = false;
+      pill(pc, "DISCONNECTED", "bad"); setState("DISCONNECTED", "bad");
+      say("connection lost. reconnecting…");
+      logStep(curStep, "link lost — auto-reconnecting (fresh session next time)");
+      if (!wasWant || manualStop) {
+        cleanupAudio(); setStartEnabled(true); setStopEnabled(false); setStep(1);
+      } else {
+        say("mất kết nối (đổi mạng?) — đang tự kết nối lại…");
+      }
+      ws = null;
+      scheduleReconnect();
+    };
+    ws.onerror = function () { pill(pc, "ERROR", "bad"); say("socket error"); logStep(curStep, "socket error (see PC STEP 6 log)"); };
+    ws.onmessage = function (ev) {
+      var msg = "";
+      try { msg = JSON.parse(ev.data); } catch (e) { say("protocol error (bad json)"); logStep(curStep, "protocol error: bad json"); return; }
+      if (msg.type === "ready") {
+        serverReady = true;
+        if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+        say("server ready, session " + msg.sessionSerial);
+        logStep(4, "PC accepted session " + msg.sessionSerial + " — speak now");
+      }
+      else if (msg.type === "pong") { lastPongAt = Date.now(); }
+      else if (msg.type === "ping") { try { ws.send(JSON.stringify({ type: "pong", t: msg.t })); } catch (e) {} }
+      else if (msg.type === "error") {
+        pill(pc, "ERROR", "bad"); say("server: " + msg.reason); logStep(curStep, "PC rejected: " + msg.reason);
+        wantStreaming = false; streaming = false; serverReady = false; starting = false;
+        if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+        cleanupAudio(); setStartEnabled(true); setStopEnabled(false);
+      }
+      else if (msg.type === "stopped") { say("stopped ok"); logStep(5, "PC confirmed stop"); }
+    };
+  }
+
+  function startStreaming(isAuto) {
+    if (streaming || starting) return;
+    starting = true;
+    if (!ws || ws.readyState !== 1) {
+      say("not connected yet — waiting for PC…");
+      logStep(curStep, "START pressed while offline — will auto-start when linked");
+      wantStreaming = true; manualStop = false;
+      setStartEnabled(false);
+      starting = false;
+      if (!ws) connect();
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      pill(mic, "UNSUPPORTED", "bad"); say("browser needs HTTPS + microphone support");
+      setStartEnabled(true);
+      starting = false;
+      return;
+    }
+    var micAlive = stream && stream.getTracks().some(function (t) { return t.readyState === "live"; });
+    pill(mic, micAlive ? "READY" : "REQUESTING", micAlive ? "ok" : "warn");
+    setStartEnabled(false);
+    function begin(s) {
+      stream = s;
+      pill(mic, "READY", "ok"); logStep(2, (isAuto ? "auto-resume: " : "") + "mic ready — starting stream"); setStep(3);
+      ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      if (ctx && ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
+      src = ctx.createMediaStreamSource(stream);
+      analyser = ctx.createAnalyser(); analyser.fftSize = 512;
+      analyserData = new Uint8Array(analyser.frequencyBinCount);
+      proc = ctx.createScriptProcessor(4096, 1, 1);
+      session = "ph-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1e6).toString(36);
+      try {
+        ws.send(JSON.stringify({ type: "start", session: session, sampleRate: 16000, channels: 1, format: "pcm16" }));
+      } catch (e) {
+        say("send failed — reconnecting…"); logStep(3, "START send failed, will retry after reconnect");
+        wantStreaming = true; manualStop = false; cleanupAudio(); setStartEnabled(true);
+        starting = false;
+        try { ws.close(); } catch (ex) {}
+        return;
+      }
+      packets = 0; startedAt = performance.now();
+      streaming = true; serverReady = false; stopped = false; starting = false;
+      wantStreaming = true; manualStop = false;
+      setState("STREAMING", "ok"); setStartEnabled(false); setStopEnabled(false);
+      setStep(4); logStep(3, "session " + session + " START sent — waiting for PC ready (6 s timeout)…");
+      pkts.textContent = "0";
+      if (readyTimer) clearTimeout(readyTimer);
+      readyTimer = setTimeout(function () {
+        if (streaming && !serverReady) {
+          say("PC không phản hồi (proxy/mạng chặn chiều về?) — bấm START MIC để thử lại");
+          logStep(4, "READY timeout after 6 s — START re-enabled.");
+          wantStreaming = false; streaming = false; starting = false;
+          cleanupAudio(); setStartEnabled(true); setStopEnabled(false);
+        }
+      }, READY_TIMEOUT_MS);
+      src.connect(analyser);
+      proc.onaudioprocess = function (ev) {
+        if (!streaming || !ws || ws.readyState !== 1) return;
+        if (!serverReady) return;
+        var inp = ev.inputBuffer.getChannelData(0);
+        var out = new Int16Array(inp.length);
+        for (var i = 0; i < inp.length; i++) {
+          var v = inp[i]; if (v > 1) v = 1; else if (v < -1) v = -1;
+          out[i] = v < 0 ? v * 32768 : v * 32767;
+        }
+        try { ws.send(out.buffer); }
+        catch (e) { return; }
+        if (packets === 0) logStep(4, "first audio packet sent — stream is LIVE");
+        packets++;
+        pkts.textContent = packets;
+        dur.textContent = ((performance.now() - startedAt) / 1000).toFixed(2);
+        if (packets === 1) { setStopEnabled(true); }
+      };
+      src.connect(proc); proc.connect(ctx.destination);
+      setTimeout(function () { try { if (ctx && ctx.state === "suspended") ctx.resume(); } catch (e) {} }, 500);
+      (function meter() {
+        if (!stream && !streaming) { level.style.width = "0%"; return; }
+        if (window.__screenOff) { level.style.width = "0%"; if (streaming || stream) requestAnimationFrame(meter); return; }
+        if (!analyser) { requestAnimationFrame(meter); return; }
+        try {
+          analyser.getByteTimeDomainData(analyserData);
+          var peak = 0;
+          for (var i = 0; i < analyserData.length; i++) {
+            var d = Math.abs(analyserData[i] - 128) / 128;
+            if (d > peak) peak = d;
+          }
+          level.style.width = Math.min(100, peak * 100).toFixed(0) + "%";
+        } catch (e) {}
+        if (streaming || stream) requestAnimationFrame(meter);
+        else level.style.width = "0%";
+      })();
+      say(isAuto ? "auto-resumed streaming…" : "streaming…");
+    }
+    if (micAlive) { try { begin(stream); } catch (e) { starting = false; setStartEnabled(true); } }
+    else {
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(begin).catch(function (err) {
+        var name = err && err.name ? err.name : "error";
+        wantStreaming = false; starting = false;
+        setStartEnabled(true);
+        if (name === "NotAllowedError") { pill(mic, "DENIED", "bad"); say("microphone permission denied — allow it and retry"); logStep(2, "mic DENIED — allow it in the browser and press START again"); }
+        else if (name === "NotFoundError") { pill(mic, "NO_MIC", "bad"); say("no microphone found"); logStep(2, "no microphone found on this phone"); }
+        else { pill(mic, "ERROR", "bad"); say("mic error: " + name); logStep(2, "mic error: " + name); }
+      });
+    }
+  }
+
+  startBtn.onclick = function () { manualStop = false; startStreaming(false); };
+  stopBtn.onclick = function () {
+    manualStop = true; wantStreaming = false; starting = false;
+    if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+    if (streaming && ws && ws.readyState === 1 && !stopped) {
+      stopped = true;
+      try { ws.send(JSON.stringify({ type: "stop", session: session })); } catch (e) {}
+    }
+    streaming = false; serverReady = false;
+    setState("STOPPED", ""); setStartEnabled(true); setStopEnabled(false);
+    setStep(5); logStep(4, "STOP sent (" + packets + " packets) — session closing");
+    cleanupAudio(); say("stopped");
+  };
+  window.addEventListener("pagehide", function () {
+    try { if (ws && ws.readyState === 1 && streaming) ws.send(JSON.stringify({ type: "cancel", session: session })); } catch (e) {}
+  });
+  window.addEventListener("offline", function () { logStep(curStep, "OS reports OFFLINE — will resume when back"); say("offline — waiting for network…"); });
+  window.addEventListener("online", function () {
+    logStep(curStep, "OS reports ONLINE — reconnecting now");
+    connectAttempt = 0;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    if (!ws || ws.readyState > 1) connect();
+    else if (wantStreaming && !streaming) startStreaming(true);
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) {
+      try { if (ctx && ctx.state === "suspended" && streaming) ctx.resume(); } catch (e) {}
+      if (wantStreaming && (!ws || ws.readyState > 1)) { connectAttempt = 0; connect(); }
+    }
+  });
+  connect();
+})();
+</script>
+
+<script>
+/* ---------------- CAMERA panel (logic mirrors phone_camera_page.html) ---------------- */
+(function () {
+  "use strict";
+  var LS_GOOD = "lwe_last_good_cam_ws";
+  var READY_TIMEOUT_MS = 6000, CONNECT_TIMEOUT_MS = 7000;
+  var PING_EVERY_MS = 15000, PONG_TIMEOUT_MS = 6000, RECONNECT_BASE_MS = 1500;
+  // 60fps cap (average of most screens): capture runs on
+  // requestAnimationFrame but grabs at most one frame per 16.7 ms — 90/120 Hz
+  // phones save CPU/battery/bandwidth with zero visible difference. Minimum
+  // 30fps: sendBusy drops whatever the encoder cannot finish in time. The PC
+  // keeps only the latest frame (depth-ONE slot) and decodes at most once per
+  // rendered frame — so the stream can never overload PC CPU/GPU.
+  var TARGET_W = 320, TARGET_H = 240, TARGET_FPS = 60, JPEG_Q = 0.6;
+
+  function $(id) { return document.getElementById(id); }
+  var pc = $("c-pc"), cam = $("c-cam"),
+      state = $("c-state"), status = $("c-status"),
+      preview = $("c-preview"),
+      dur = $("c-dur"), framesEl = $("c-frames"),
+      startBtn = $("c-start"), stopBtn = $("c-stop"),
+      srvEl = $("c-srv");
+
+  function pill(el, txt, cls) { el.textContent = txt; el.className = "pill " + (cls || ""); }
+  function say(t) { status.textContent = t; }
+  var stepIds = ["c-st1", "c-st2", "c-st3", "c-st4", "c-st5"], curStep = 0;
+  function logStep(n, t) { ulog("CAM", n, t); }
+  function setStep(n) {
+    curStep = n;
+    for (var i = 0; i < stepIds.length; i++) {
+      var el = $(stepIds[i]);
+      el.className = (i + 1 < n) ? "done" : ((i + 1 === n) ? "now" : "");
+    }
+  }
+  setStep(1); logStep(1, "connecting to PC...");
+
+  function originWs() {
+    return (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/cam";
+  }
+  var endpoints = [originWs()];
+  try {
+    var g = localStorage.getItem(LS_GOOD);
+    if (g && endpoints.indexOf(g) < 0) endpoints.push(g);
+  } catch (e) {}
+  var activeEndpoint = endpoints[0];
+  srvEl.textContent = activeEndpoint;
+
+  var ws = null, stream = null, session = null;
+  var frameCount = 0, startedAt = 0, captureTimer = null, rafId = 0;
+  var streaming = false, serverReady = false, stopped = true, starting = false;
+  var wantStreaming = false;
+  var reconnectTimer = null, readyTimer = null, pingTimer = null, pongTimer = null;
+  var lastPongAt = 0, connectAttempt = 0, manualStop = false, sendBusy = false;
+  var canvas = document.createElement("canvas");
+  canvas.width = TARGET_W; canvas.height = TARGET_H;
+  var ctx2d = canvas.getContext("2d");
+
+  function setState(s, cls) { pill(state, s, cls); }
+  function setStartEnabled(on) { startBtn.disabled = !on; }
+  function setStopEnabled(on) { stopBtn.disabled = !on; }
+  function clearTimers() {
+    if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+    if (pongTimer) { clearTimeout(pongTimer); pongTimer = null; }
+  }
+  function stopCaptureLoop() {
+    if (captureTimer) { clearInterval(captureTimer); captureTimer = null; }
+    if (rafId) { try { cancelAnimationFrame(rafId); } catch (e) {} rafId = 0; }
+  }
+  function cleanupCamera() {
+    streaming = false; serverReady = false;
+    stopCaptureLoop();
+    try { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    stream = null;
+    try { preview.srcObject = null; } catch (e) {}
+  }
+  function stopHeartbeat() { if (pingTimer) { clearInterval(pingTimer); pingTimer = null; } }
+  function startHeartbeat() {
+    stopHeartbeat(); lastPongAt = Date.now();
+    pingTimer = setInterval(function () {
+      if (!ws || ws.readyState !== 1) return;
+      try { ws.send(JSON.stringify({ type: "ping", t: Date.now() })); } catch (e) { return; }
+      if (pongTimer) clearTimeout(pongTimer);
+      pongTimer = setTimeout(function () {
+        if (Date.now() - lastPongAt > PONG_TIMEOUT_MS + PING_EVERY_MS) {
+          logStep(curStep, "heartbeat lost (no pong) — reconnecting");
+          try { ws.close(); } catch (e) {}
+        }
+      }, PONG_TIMEOUT_MS);
+    }, PING_EVERY_MS);
+  }
+
+  function connect() {
+    if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+    pill(pc, "CONNECTING", "warn"); setState("CONNECTING", "warn");
+    setStep(1);
+    var i = 0;
+    function tryNext() {
+      if (i >= endpoints.length) {
+        pill(pc, "DISCONNECTED", "bad"); setState("DISCONNECTED", "bad");
+        say("no route to PC — check Wi-Fi / QR, retrying…");
+        logStep(1, "all endpoint(s) failed — retry in 3 s");
+        reconnectTimer = setTimeout(function () { connectAttempt++; connect(); }, 3000);
+        if (!wantStreaming) setStartEnabled(true);
+        return;
+      }
+      var url = endpoints[i++];
+      say("connecting " + url + " …");
+      var sock;
+      try { sock = new WebSocket(url); } catch (e) { tryNext(); return; }
+      sock.binaryType = "arraybuffer";
+      var done = false;
+      var to = setTimeout(function () {
+        if (done) return; done = true;
+        try { sock.close(); } catch (e) {}
+        logStep(1, "timeout: " + url);
+        tryNext();
+      }, CONNECT_TIMEOUT_MS);
+      sock.onopen = function () {
+        if (done) { try { sock.close(); } catch (e) {} return; }
+        done = true; clearTimeout(to);
+        ws = sock; activeEndpoint = url;
+        try { localStorage.setItem(LS_GOOD, url); } catch (e) {}
+        wireSocket();
+        pill(pc, "CONNECTED", "ok"); setState(wantStreaming ? "RECONNECTING" : "CONNECTED", "ok");
+        say("connected"); logStep(1, "PC connected via " + url + " — press START CAMERA and allow the camera"); setStep(2);
+        srvEl.textContent = url;
+        startHeartbeat();
+        if (wantStreaming && !manualStop) {
+          logStep(2, "network changed — auto-resuming stream with a FRESH session…");
+          setTimeout(function () { startStreaming(true); }, 400);
+        }
+      };
+      sock.onerror = function () {
+        if (done) return;
+        logStep(1, "socket error: " + url + " (see PC CAM log)");
+      };
+      sock.onclose = function () {
+        if (done) return; done = true; clearTimeout(to);
+        tryNext();
+      };
+    }
+    tryNext();
+  }
+
+  function scheduleReconnect(ms) {
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    var delay = ms || Math.min(10000, RECONNECT_BASE_MS * Math.pow(1.5, Math.min(connectAttempt, 6)));
+    reconnectTimer = setTimeout(function () { connectAttempt++; connect(); }, delay);
+  }
+
+  function wireSocket() {
+    ws.onclose = function () {
+      stopHeartbeat(); clearTimers();
+      var wasWant = wantStreaming;
+      streaming = false; serverReady = false; starting = false;
+      pill(pc, "DISCONNECTED", "bad"); setState("DISCONNECTED", "bad");
+      say("connection lost. reconnecting…");
+      logStep(curStep, "link lost — auto-reconnecting (fresh session next time)");
+      if (!wasWant || manualStop) {
+        cleanupCamera(); setStartEnabled(true); setStopEnabled(false); setStep(1);
+      } else {
+        say("mất kết nối — đang tự kết nối lại…");
+      }
+      ws = null;
+      scheduleReconnect();
+    };
+    ws.onerror = function () { pill(pc, "ERROR", "bad"); say("socket error"); logStep(curStep, "socket error (see PC CAM log)"); };
+    ws.onmessage = function (ev) {
+      var msg = "";
+      try { msg = JSON.parse(ev.data); } catch (e) { say("protocol error (bad json)"); return; }
+      if (msg.type === "cam-ready") {
+        serverReady = true;
+        if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+        say("server ready, session " + msg.sessionSerial);
+        logStep(4, "PC accepted session " + msg.sessionSerial + " — streaming frames");
+      }
+      else if (msg.type === "pong") { lastPongAt = Date.now(); }
+      else if (msg.type === "ping") { try { ws.send(JSON.stringify({ type: "pong", t: msg.t })); } catch (e) {} }
+      else if (msg.type === "error") {
+        pill(pc, "ERROR", "bad"); say("server: " + msg.reason); logStep(curStep, "PC rejected: " + msg.reason);
+        wantStreaming = false; streaming = false; serverReady = false; starting = false;
+        if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+        cleanupCamera(); setStartEnabled(true); setStopEnabled(false);
+      }
+      else if (msg.type === "cam-stopped") { say("stopped ok"); logStep(5, "PC confirmed stop"); }
+    };
+  }
+
+  function grabAndSend() {
+    if (!streaming || !ws || ws.readyState !== 1) return;
+    if (!serverReady || sendBusy) return;
+    if (!preview.videoWidth) return;
+    sendBusy = true;
+    try {
+      var vw = preview.videoWidth, vh = preview.videoHeight;
+      var targetAR = TARGET_W / TARGET_H, srcAR = vw / vh;
+      var sw, sh, sx, sy;
+      if (srcAR > targetAR) { sh = vh; sw = vh * targetAR; sx = (vw - sw) / 2; sy = 0; }
+      else { sw = vw; sh = vw / targetAR; sx = 0; sy = (vh - sh) / 2; }
+      ctx2d.drawImage(preview, sx, sy, sw, sh, 0, 0, TARGET_W, TARGET_H);
+    } catch (e) { sendBusy = false; return; }
+    function done(blob) {
+      if (!blob) { sendBusy = false; return; }
+      var fr = new FileReader();
+      fr.onload = function () {
+        try {
+          if (streaming && ws && ws.readyState === 1 && serverReady) {
+            ws.send(fr.result);
+            if (frameCount === 0) logStep(4, "first frame sent — stream is LIVE");
+            frameCount++;
+            framesEl.textContent = frameCount;
+            dur.textContent = ((performance.now() - startedAt) / 1000).toFixed(2);
+            if (frameCount === 1) setStopEnabled(true);
+          }
+        } catch (e) {}
+        sendBusy = false;
+      };
+      fr.onerror = function () { sendBusy = false; };
+      try { fr.readAsArrayBuffer(blob); } catch (e) { sendBusy = false; }
+    }
+    try {
+      if (canvas.toBlob) canvas.toBlob(done, "image/jpeg", JPEG_Q);
+      else sendBusy = false;
+    } catch (e) { sendBusy = false; }
+  }
+
+  function startStreaming(isAuto) {
+    if (streaming || starting) return;
+    starting = true;
+    if (!ws || ws.readyState !== 1) {
+      say("not connected yet — waiting for PC…");
+      logStep(curStep, "START pressed while offline — will auto-start when linked");
+      wantStreaming = true; manualStop = false;
+      setStartEnabled(false);
+      starting = false;
+      if (!ws) connect();
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      pill(cam, "UNSUPPORTED", "bad"); say("browser needs HTTPS + camera support");
+      setStartEnabled(true);
+      starting = false;
+      return;
+    }
+    var camAlive = stream && stream.getTracks().some(function (t) { return t.readyState === "live"; });
+    pill(cam, camAlive ? "READY" : "REQUESTING", camAlive ? "ok" : "warn");
+    setStartEnabled(false);
+    function begin(s) {
+      stream = s;
+      try { preview.srcObject = stream; preview.play(); } catch (e) {}
+      pill(cam, "READY", "ok"); logStep(2, (isAuto ? "auto-resume: " : "") + "camera ready — starting stream"); setStep(3);
+      session = "cam-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1e6).toString(36);
+      try {
+        ws.send(JSON.stringify({ type: "cam-start", session: session,
+          width: TARGET_W, height: TARGET_H, format: "jpeg", fps: TARGET_FPS }));
+      } catch (e) {
+        say("send failed — reconnecting…"); logStep(3, "START send failed, will retry after reconnect");
+        wantStreaming = true; manualStop = false; cleanupCamera(); setStartEnabled(true);
+        starting = false;
+        try { ws.close(); } catch (ex) {}
+        return;
+      }
+      frameCount = 0; startedAt = performance.now();
+      streaming = true; serverReady = false; stopped = false; starting = false;
+      wantStreaming = true; manualStop = false;
+      setState("STREAMING", "ok"); setStartEnabled(false); setStopEnabled(false);
+      setStep(4); logStep(3, "session " + session + " START sent — waiting for PC ready (6 s timeout)…");
+      framesEl.textContent = "0";
+      if (readyTimer) clearTimeout(readyTimer);
+      readyTimer = setTimeout(function () {
+        if (streaming && !serverReady) {
+          say("PC không phản hồi — bấm START CAMERA để thử lại");
+          logStep(4, "READY timeout after 6 s — START re-enabled.");
+          wantStreaming = false; streaming = false; starting = false;
+          cleanupCamera(); setStartEnabled(true); setStopEnabled(false);
+        }
+      }, READY_TIMEOUT_MS);
+      stopCaptureLoop();
+      // Capped capture: rAF-driven, at most effMaxFps() grabs/s (60 normal,
+      // 30 in screen-off battery mode); sendBusy drops the overflow so the
+      // effective rate = min(cap, encoder speed, network).
+      var lastGrab = 0;
+      function loop() {
+        if (!streaming) return;
+        var now = performance.now();
+        if (now - lastGrab >= 1000 / effMaxFps()) { lastGrab = now; grabAndSend(); }
+        rafId = requestAnimationFrame(loop);
+      }
+      loop();
+      say(isAuto ? "auto-resumed streaming…" : "streaming…");
+    }
+    if (camAlive) { try { begin(stream); } catch (e) { starting = false; setStartEnabled(true); } }
+    else {
+      var constraints = { audio: false,
+        video: { facingMode: { ideal: "user" }, width: { ideal: TARGET_W }, height: { ideal: TARGET_H } } };
+      navigator.mediaDevices.getUserMedia(constraints).then(begin).catch(function (err) {
+        var name = err && err.name ? err.name : "error";
+        wantStreaming = false; starting = false;
+        setStartEnabled(true);
+        if (name === "NotAllowedError" || name === "SecurityError") { pill(cam, "DENIED", "bad"); say("camera permission denied — allow it and retry"); logStep(2, "camera DENIED — allow it in the browser and press START again"); }
+        else if (name === "NotFoundError" || name === "OverconstrainedError") { pill(cam, "NO_CAMERA", "bad"); say("no camera found"); logStep(2, "no camera found on this phone"); }
+        else { pill(cam, "ERROR", "bad"); say("camera error: " + name); logStep(2, "camera error: " + name); }
+      });
+    }
+  }
+
+  startBtn.onclick = function () { manualStop = false; startStreaming(false); };
+  stopBtn.onclick = function () {
+    manualStop = true; wantStreaming = false; starting = false;
+    if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+    if (streaming && ws && ws.readyState === 1 && !stopped) {
+      stopped = true;
+      try { ws.send(JSON.stringify({ type: "cam-stop", session: session })); } catch (e) {}
+    }
+    streaming = false; serverReady = false;
+    setState("STOPPED", ""); setStartEnabled(true); setStopEnabled(false);
+    setStep(5); logStep(4, "STOP sent (" + frameCount + " frames) — session closing");
+    cleanupCamera(); say("stopped");
+  };
+  window.addEventListener("pagehide", function () {
+    try { if (ws && ws.readyState === 1 && streaming) ws.send(JSON.stringify({ type: "cancel", session: session })); } catch (e) {}
+  });
+  window.addEventListener("offline", function () { logStep(curStep, "OS reports OFFLINE — will resume when back"); say("offline — waiting for network…"); });
+  window.addEventListener("online", function () {
+    logStep(curStep, "OS reports ONLINE — reconnecting now");
+    connectAttempt = 0;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    if (!ws || ws.readyState > 1) connect();
+    else if (wantStreaming && !streaming) startStreaming(true);
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) {
+      if (wantStreaming && (!ws || ws.readyState > 1)) { connectAttempt = 0; connect(); }
+    }
+  });
+  connect();
+})();
+</script>
+</body>
+</html>

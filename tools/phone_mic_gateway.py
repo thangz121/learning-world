@@ -66,6 +66,14 @@ K_UP, K_DOWN = 5, 6  # phone presence (no audio): page opened / page gone.
 # tell "user pressed STOP but page still open" (STOP seen, no DOWN) apart from
 # "phone gone mid-game" (DOWN, or our socket dying) in seconds.
 K_SUBSCRIBE, K_CANCEL = 0x10, 0x11
+# Camera bridge kinds (mirror PhoneCameraProtocol.cs — same numeric envelope,
+# SEPARATE socket on --camera-bridge-port so JPEGs never block speech audio).
+#   FRAME=1 (payload JPEG bytes) · STOP=2 · ERROR=3 · HELLO=4 · UP=5 · DOWN=6.
+K_CAM_FRAME, K_CAM_STOP, K_CAM_ERROR, K_CAM_HELLO = 1, 2, 3, 4
+K_CAM_UP, K_CAM_DOWN = 5, 6
+# Camera payload contract (Phase 2.2, mirrors PhoneCameraProtocol.cs):
+CAM_MAX_BYTES = 300 * 1024  # envelope cap (default config allows 200 KB)
+CAM_JPEG_SOI = b"\xff\xd8\xff"  # JFIF magic every frame must start with
 
 LOG_LOCK = threading.Lock()
 
@@ -191,6 +199,16 @@ class Gateway:
         # re-scanning the QR.
         self.candidates = []
         self.public_url = getattr(args, "public_url", "") or ""
+        # Phase 2.2 camera path (independent media, shared TLS/QR/health infra):
+        # own bridge subscribers, own session serials, own page/QR artefacts.
+        self.cam_subscribers = []     # list of (socket, lock)
+        self.cam_serial_counter = 0
+        self.cam_sessions = {}        # sid -> dict(serial, frames, bytes, t0)
+        self.cam_page_url = ""
+        self.cam_qr_png = b""
+        # Unified mic+camera panel (Phase 2.2 follow-up): same origin, own QR.
+        self.uni_page_url = ""
+        self.uni_qr_png = b""
 
     # -- bridge pump -------------------------------------------------
     def bridge_broadcast(self, kind, serial, seq, payload):
@@ -308,6 +326,203 @@ class Gateway:
             _t.sleep(0.02)
         self.bridge_broadcast(K_STOP, serial, seq, b"")
         log("inject: session serial=%d COMPLETE chunks=%d" % (serial, seq))
+
+    # -- camera bridge (Phase 2.2: same envelope, SEPARATE socket) --------
+    # Media independence (§8): JPEGs ride their own loopback port so a large
+    # frame can never head-of-line-block speech audio. All patterns (HELLO-
+    # first, broadcast, bounded, presence) mirror the mic bridge above.
+    def cam_broadcast(self, kind, serial, seq, payload):
+        frame = bridge_frame(kind, serial, seq, payload)
+        dead = []
+        with self.lock:
+            subs = list(self.cam_subscribers)
+        for sock, wlock in subs:
+            try:
+                sock.settimeout(2.0)
+                with wlock:
+                    sock.sendall(frame)
+            except Exception:
+                dead.append((sock, wlock))
+        if dead:
+            with self.lock:
+                for d in dead:
+                    if d in self.cam_subscribers:
+                        self.cam_subscribers.remove(d)
+            log("cam: dropped %d slow bridge subscriber(s)" % len(dead))
+
+    def handle_cam_bridge_conn(self, conn, addr):
+        log("cam bridge subscriber from %s" % (addr,))
+        try:
+            conn.settimeout(10.0)
+            hdr = b""
+            while len(hdr) < 4:
+                c = conn.recv(4 - len(hdr))
+                if not c:
+                    return
+                hdr += c
+            body_len = struct.unpack(">I", hdr)[0]
+            body = b""
+            while len(body) < body_len:
+                c = conn.recv(body_len - len(body))
+                if not c:
+                    return
+                body += c
+            if not body or body[0] != K_SUBSCRIBE:
+                log("cam bridge: first frame not SUBSCRIBE, closing")
+                return
+            wlock = threading.Lock()
+            # HELLO BEFORE joining the broadcast list (same race as audio).
+            conn.sendall(bridge_frame(K_CAM_HELLO, 0, 0, b"phone-cam-gateway/1"))
+            with self.lock:
+                self.cam_subscribers.append((conn, wlock))
+            log("cam bridge: subscribed (%d total, Unity/test listening)" % len(self.cam_subscribers))
+            conn.settimeout(None)
+            while True:
+                try:
+                    probe = conn.recv(16)
+                except Exception:
+                    break
+                if not probe:
+                    break
+        except Exception as e:
+            log("cam bridge conn error: %s" % e)
+        finally:
+            with self.lock:
+                self.cam_subscribers = [(s, l) for s, l in self.cam_subscribers if s is not conn]
+            try:
+                conn.close()
+            except Exception:
+                pass
+            log("cam bridge subscriber left")
+
+    def serve_cam_bridge(self, port):
+        srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        srv.bind(("127.0.0.1", port))
+        srv.listen(4)
+        log("[CAM 1/4] bridge TCP loopback 127.0.0.1:%d (Unity camera dials here; mic stays on %d)"
+            % (port, self.args.bridge_port))
+        while True:
+            try:
+                conn, addr = srv.accept()
+            except Exception as e:
+                log("cam bridge accept aborted (%s), still listening" % type(e).__name__)
+                continue
+            threading.Thread(target=self.handle_cam_bridge_conn,
+                             args=(conn, addr), daemon=True).start()
+
+    # -- camera phone side (WS /cam: JPEG frames, same lifecycle shape) ----
+    def handle_cam_phone(self, sock, addr):
+        sid = None
+        self.cam_broadcast(K_CAM_UP, 0, 0, b"ws-connected")
+        try:
+            while True:
+                opcode, payload = ws_recv_frame(sock)
+                if opcode == 0x1:  # control JSON
+                    try:
+                        msg = json.loads(payload.decode("utf-8"))
+                    except Exception:
+                        self.send_ctrl(sock, {"type": "error", "reason": "protocol_error:bad-json"})
+                        continue
+                    mtype = msg.get("type")
+                    if mtype == "cam-start":
+                        if sid:
+                            with self.lock:
+                                old = self.cam_sessions.pop(sid, None)
+                            if old is not None:
+                                self.cam_broadcast(K_CAM_STOP, old["serial"], 0, b"")
+                        sid = self.on_cam_start(sock, addr, msg)
+                    elif mtype == "cam-stop":
+                        self.on_cam_stop(sock, msg)
+                        sid = None
+                    elif mtype == "cancel":
+                        self.on_cam_stop(sock, msg)
+                        sid = None
+                    elif mtype == "ping":
+                        try:
+                            self.send_ctrl(sock, {"type": "pong", "t": msg.get("t", 0)})
+                        except Exception:
+                            pass
+                    elif mtype == "pong":
+                        pass
+                    else:
+                        self.send_ctrl(sock, {"type": "error", "reason": "protocol_error:unknown-type"})
+                elif opcode == 0x2:  # binary JPEG frame
+                    self.on_cam_frame(sock, sid, payload)
+        except (ConnectionError, ValueError) as e:
+            log("cam phone %s: %s" % (addr, e))
+        except Exception as e:
+            log("cam phone %s error: %s" % (addr, e))
+        finally:
+            if sid:
+                with self.lock:
+                    sess = self.cam_sessions.pop(sid, None)
+                if sess is not None:
+                    self.cam_broadcast(K_CAM_ERROR, sess["serial"], 0, b"link_down")
+                    log("[CAM 4/4] cam session %s link_down (page gone mid-stream)" % sid)
+            self.cam_broadcast(K_CAM_DOWN, 0, 0, b"ws-closed")
+            try:
+                sock.close()
+            except Exception:
+                pass
+
+    def on_cam_start(self, sock, addr, msg):
+        session = msg.get("session") or ""
+        fmt = (msg.get("format") or "").lower()
+        if not session or len(session) > 64:
+            self.send_ctrl(sock, {"type": "error", "reason": "protocol_error:bad-session"})
+            return None
+        if fmt not in ("jpeg", "jpg", "image/jpeg"):
+            reason = "protocol_error:need jpeg, got fmt=%s" % (msg.get("format"),)
+            self.send_ctrl(sock, {"type": "error", "reason": reason})
+            log("reject cam start (%s): %s" % (addr, reason))
+            return None
+        with self.lock:
+            if session in self.cam_sessions:
+                self.send_ctrl(sock, {"type": "error", "reason": "protocol_error:duplicate-session"})
+                return None
+            self.cam_serial_counter += 1
+            serial = self.cam_serial_counter
+            self.cam_sessions[session] = {"serial": serial, "frames": 0,
+                                          "bytes": 0, "t0": time.time()}
+        self.send_ctrl(sock, {"type": "cam-ready", "sessionSerial": serial})
+        log("[CAM 3/4] cam session %s serial=%d CAPTURING from %s" % (session, serial, addr))
+        return session
+
+    def on_cam_frame(self, sock, sid, payload):
+        if not sid:
+            return  # frame before start: ignore (page always starts first)
+        with self.lock:
+            sess = self.cam_sessions.get(sid)
+            nsubs = len(self.cam_subscribers)
+        if sess is None:
+            return  # stale session frame never merges (§12 pattern)
+        if len(payload) == 0 or len(payload) > CAM_MAX_BYTES:
+            return  # oversize/empty: drop + count, never forward
+        if payload[:3] != CAM_JPEG_SOI:
+            return  # non-JPEG: drop (Phase 2.2 is JPEG-only)
+        sess["frames"] += 1
+        sess["bytes"] += len(payload)
+        if sess["frames"] == 1:
+            log("[CAM 4/4] cam session %s first frame flowing (serial=%d, %d B, %d listener(s))"
+                % (sid, sess["serial"], len(payload), nsubs))
+        elif sess["frames"] % 300 == 0:
+            dur = time.time() - sess["t0"]
+            log("[CAM 4/4] cam session %s frames=%d (~%.1f KB) wall=%.1fs listeners=%d"
+                % (sid, sess["frames"], sess["bytes"] / 1024.0, dur, nsubs))
+        # Latest-frame transport: broadcast immediately; Unity keeps depth ONE.
+        self.cam_broadcast(K_CAM_FRAME, sess["serial"], sess["frames"], payload)
+
+    def on_cam_stop(self, sock, msg):
+        sid = msg.get("session") or ""
+        with self.lock:
+            sess = self.cam_sessions.pop(sid, None)
+        if sess is None:
+            return
+        dur = time.time() - sess["t0"]
+        self.cam_broadcast(K_CAM_STOP, sess["serial"], sess["frames"] + 1, b"")
+        self.send_ctrl(sock, {"type": "cam-stopped", "sessionSerial": sess["serial"]})
+        log("[CAM 4/4] cam session %s COMPLETE frames=%d wall=%.2fs" % (sid, sess["frames"], dur))
 
     # -- phone side --------------------------------------------------
     def send_ctrl(self, sock, obj):
@@ -513,7 +728,7 @@ class Gateway:
             log("record failed: %s" % e)
 
     # -- HTTPS + WSS -------------------------------------------------
-    def serve_https(self, page_bytes):
+    def serve_https(self, page_bytes, cam_page_bytes=b"", uni_page_bytes=b""):
         raw = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         raw.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         raw.bind(("0.0.0.0", self.args.https_port))
@@ -533,9 +748,9 @@ class Gateway:
                 log("https accept aborted (%s), still listening" % type(e).__name__)
                 continue
             threading.Thread(target=self.handle_https_conn,
-                             args=(conn, addr, page_bytes), daemon=True).start()
+                             args=(conn, addr, page_bytes, cam_page_bytes, uni_page_bytes), daemon=True).start()
 
-    def handle_https_conn(self, conn, addr, page_bytes):
+    def handle_https_conn(self, conn, addr, page_bytes, cam_page_bytes=b"", uni_page_bytes=b""):
         try:
             conn.settimeout(10.0)
             req = b""
@@ -579,21 +794,55 @@ class Gateway:
                 log("[STEP 6/%d] phone WS connected from %s%s (waiting for START...)" % (TOTAL_STEPS, addr, via))
                 self.handle_phone(conn, addr)
                 return
+            if headers.get("upgrade", "").lower() == "websocket" and path_only == "/cam":
+                key = headers.get("sec-websocket-key", "")
+                if not key:
+                    return
+                resp = ("HTTP/1.1 101 Switching Protocols\r\n"
+                        "Upgrade: websocket\r\nConnection: Upgrade\r\n"
+                        "Sec-WebSocket-Accept: " + ws_accept(key) + "\r\n\r\n")
+                conn.sendall(resp.encode("latin-1"))
+                conn.settimeout(None)
+                log("[CAM 2/4] cam WS connected from %s%s (waiting for cam-start...)" % (addr, via))
+                self.handle_cam_phone(conn, addr)
+                return
             if method == "GET" and path_only in ("/", "/index.html"):
                 body = page_bytes
                 conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
                               "Content-Length: %d\r\nCache-Control: no-store\r\n"
                               "Connection: close\r\n\r\n" % len(body)).encode("latin-1") + body)
+            elif method == "GET" and path_only in ("/phone", "/phone.html"):
+                # Unified mic+camera panel (one page, two independent sessions,
+                # one shared steps log). Served only when the file is present.
+                if uni_page_bytes:
+                    conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
+                                  "Content-Length: %d\r\nCache-Control: no-store\r\n"
+                                  "Connection: close\r\n\r\n" % len(uni_page_bytes)).encode("latin-1") + uni_page_bytes)
+                else:
+                    conn.sendall(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+            elif method == "GET" and path_only in ("/camera", "/camera.html"):
+                # Phase 2.2 phone camera page (same TLS origin as the mic page;
+                # front camera -> downscaled JPEG -> WSS /cam). Served only when
+                # the operator enabled it (file present at startup).
+                if cam_page_bytes:
+                    conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
+                                  "Content-Length: %d\r\nCache-Control: no-store\r\n"
+                                  "Connection: close\r\n\r\n" % len(cam_page_bytes)).encode("latin-1") + cam_page_bytes)
+                else:
+                    conn.sendall(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
             elif method == "GET" and path_only == "/health":
                 # CORS *: after a proxy on/off toggle the stale page may
                 # poll this from a different origin (LAN IP vs public
                 # hostname). Same-origin still works; cross-origin now too.
                 body = json.dumps({"ok": True, "service": "phone-mic-gateway",
                                    "lan_ip": self.lan_ip, "page_url": self.page_url,
+                                   "cam_page_url": self.cam_page_url,
+                                   "uni_page_url": self.uni_page_url,
                                    "candidates": self.candidates,
                                    "public_url": self.public_url,
                                    "https_port": self.args.https_port,
                                    "bridge_port": self.args.bridge_port,
+                                   "camera_bridge_port": getattr(self.args, "camera_bridge_port", 8452),
                                    "steps_total": TOTAL_STEPS}).encode("utf-8")
                 conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
                               "Access-Control-Allow-Origin: *\r\n"
@@ -620,6 +869,54 @@ class Gateway:
                         "<p style='font-size:18px'>%s</p>"
                         "<p><a style='color:#8cf' href='/'>open page directly (this PC)</a></p>"
                         "</body></html>" % (self.page_url or "(starting...)"))
+                body = page.encode("utf-8")
+                conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
+                              "Content-Length: %d\r\nCache-Control: no-store\r\n"
+                              "Connection: close\r\n\r\n" % len(body)).encode("latin-1") + body)
+            elif method == "GET" and path_only == "/cam-qr.png":
+                # STEP C artefact: scannable QR of the CAMERA page URL.
+                if self.cam_qr_png:
+                    conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\n"
+                                  "Access-Control-Allow-Origin: *\r\n"
+                                  "Content-Length: %d\r\nCache-Control: no-store\r\n"
+                                  "Connection: close\r\n\r\n" % len(self.cam_qr_png)).encode("latin-1") + self.cam_qr_png)
+                else:
+                    conn.sendall(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+            elif method == "GET" and path_only == "/cam-qr":
+                page = ("<!doctype html><html><head><meta charset='utf-8'>"
+                        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+                        "<title>LWE PhoneCamera QR</title></head>"
+                        "<body style='font-family:system-ui;text-align:center;background:#101418;color:#eee'>"
+                        "<h2>Scan with the phone camera</h2>"
+                        "<p><img src='/cam-qr.png' style='width:min(80vw,360px);image-rendering:pixelated;"
+                        "background:#fff;padding:12px;border-radius:8px'></p>"
+                        "<p style='font-size:18px'>%s</p>"
+                        "<p><a style='color:#8cf' href='/camera'>open camera page directly (this PC)</a></p>"
+                        "</body></html>" % (self.cam_page_url or "(camera starting...)"))
+                body = page.encode("utf-8")
+                conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
+                              "Content-Length: %d\r\nCache-Control: no-store\r\n"
+                              "Connection: close\r\n\r\n" % len(body)).encode("latin-1") + body)
+            elif method == "GET" and path_only == "/phone-qr.png":
+                # Unified-panel QR (mic + camera on one page).
+                if self.uni_qr_png:
+                    conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\n"
+                                  "Access-Control-Allow-Origin: *\r\n"
+                                  "Content-Length: %d\r\nCache-Control: no-store\r\n"
+                                  "Connection: close\r\n\r\n" % len(self.uni_qr_png)).encode("latin-1") + self.uni_qr_png)
+                else:
+                    conn.sendall(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+            elif method == "GET" and path_only == "/phone-qr":
+                page = ("<!doctype html><html><head><meta charset='utf-8'>"
+                        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+                        "<title>LWE Phone QR (mic + camera)</title></head>"
+                        "<body style='font-family:system-ui;text-align:center;background:#101418;color:#eee'>"
+                        "<h2>Scan with the phone camera</h2>"
+                        "<p><img src='/phone-qr.png' style='width:min(80vw,360px);image-rendering:pixelated;"
+                        "background:#fff;padding:12px;border-radius:8px'></p>"
+                        "<p style='font-size:18px'>%s</p>"
+                        "<p><a style='color:#8cf' href='/phone'>open unified panel directly (this PC)</a></p>"
+                        "</body></html>" % (self.uni_page_url or "(unified panel starting...)"))
                 body = page.encode("utf-8")
                 conn.sendall(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
                               "Content-Length: %d\r\nCache-Control: no-store\r\n"
@@ -685,6 +982,16 @@ def selftest():
     check("ctrl-canonical", "16000" in good and "pcm16" in good)
     bad = '{"type":"start","session":"x","sampleRate":48000,"channels":2,"format":"pcm16"}'
     check("ctrl-reject-shape", "48000" in bad)  # gateway rejects at on_start
+    # camera envelope (same shape, separate kinds namespace — Unity decodes by
+    # port, so numeric equality with the mic kinds is INTENTIONAL, not a clash)
+    cbody = struct.pack(">BII", K_CAM_FRAME, 9, 77) + b"\xff\xd8\xff\x00"
+    cframe = struct.pack(">I", len(cbody)) + cbody
+    check("cam-bridge-kind", cframe[4] == K_CAM_FRAME)
+    check("cam-bridge-serial", struct.unpack(">I", cframe[5:9])[0] == 9)
+    check("cam-jpeg-soi", cframe[13:16] == CAM_JPEG_SOI)
+    check("cam-reject-nonjpeg", b"\x89PNG"[:3] != CAM_JPEG_SOI)
+    check("cam-reject-empty", len(b"") == 0)
+    check("cam-cap", CAM_MAX_BYTES == 300 * 1024)
     print("SELFTEST %s (%d fails)" % ("OK" if not fails else "FAILED", len(fails)))
     return 1 if fails else 0
 
@@ -697,6 +1004,20 @@ def main():
     ap.add_argument("--bridge-port", type=int, default=8451)
     ap.add_argument("--page", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                    "phone_mic_page.html"))
+    ap.add_argument("--camera-bridge-port", type=int, default=8452,
+                    help="Phase 2.2 camera JPEG bridge (loopback; mic stays on --bridge-port)")
+    ap.add_argument("--camera-page", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                          "phone_camera_page.html"),
+                    help="Phase 2.2 phone camera page (missing file = camera route 404s, mic unaffected)")
+    ap.add_argument("--camera-qr-png", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                            "phone-camera-qr.png"),
+                    help="where to save the camera-page QR PNG")
+    ap.add_argument("--unified-page", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           "phone_page.html"),
+                    help="unified mic+camera panel (missing file = /phone 404s, mic/camera unaffected)")
+    ap.add_argument("--unified-qr-png", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                             "phone-qr.png"),
+                    help="where to save the unified-panel QR PNG")
     ap.add_argument("--record-dir", default="", help="opt-in test recordings dir (explicit only)")
     ap.add_argument("--bridge-only", action="store_true",
                     help="TEST ONLY: serve just the loopback TCP bridge (no HTTPS/WSS). "
@@ -731,6 +1052,7 @@ def main():
     gw = Gateway(args)
     if args.bridge_only:
         log("BRIDGE-ONLY test mode (no HTTPS/WSS; phones never served here)")
+        threading.Thread(target=gw.serve_cam_bridge, args=(args.camera_bridge_port,), daemon=True).start()
         gw.serve_bridge()
         return
     if not args.cert or not args.key:
@@ -791,9 +1113,54 @@ def main():
     log("PAGE URL (no typing needed — scan the QR): %s" % page_url)
     with open(args.page, "rb") as f:
         page_bytes = f.read()
+    # -- STEP C: camera page URL + QR (same TLS origin, own bridge port) -----
+    cam_page_bytes = b""
+    if os.path.isfile(args.camera_page):
+        with open(args.camera_page, "rb") as f:
+            cam_page_bytes = f.read()
+        cam_page_url = "https://%s:%d/camera" % (lan_ip, args.https_port)
+        gw.cam_page_url = cam_page_url
+        if not args.no_qr:
+            try:
+                cqr = lwe_qr.encode_url(cam_page_url, ecl=args.ecl)
+                cmatrix = lwe_qr.matrix_of(cqr)
+                _, csize = lwe_qr.save_png(args.camera_qr_png, cmatrix)
+                gw.cam_qr_png = open(args.camera_qr_png, "rb").read()
+                log("[CAM 1/4] camera page %s + QR %s (%d bytes) — scan for the face stream"
+                    % (cam_page_url, args.camera_qr_png, csize))
+            except Exception as e:
+                log("[CAM 1/4] camera QR encode failed (mic QR unaffected): %s" % e)
+        else:
+            log("[CAM 1/4] camera page %s (QR skipped)" % cam_page_url)
+    else:
+        log("[CAM 1/4] camera page file missing (%s) — /camera 404s, mic path unaffected"
+            % args.camera_page)
+    # -- STEP U: unified mic+camera panel (one page, one QR, shared steps log)
+    uni_page_bytes = b""
+    if os.path.isfile(args.unified_page):
+        with open(args.unified_page, "rb") as f:
+            uni_page_bytes = f.read()
+        uni_page_url = "https://%s:%d/phone" % (lan_ip, args.https_port)
+        gw.uni_page_url = uni_page_url
+        if not args.no_qr:
+            try:
+                uqr = lwe_qr.encode_url(uni_page_url, ecl=args.ecl)
+                umatrix = lwe_qr.matrix_of(uqr)
+                _, usize = lwe_qr.save_png(args.unified_qr_png, umatrix)
+                gw.uni_qr_png = open(args.unified_qr_png, "rb").read()
+                log("[UNI] unified panel %s + QR %s (%d bytes) — ONE scan for mic + camera"
+                    % (uni_page_url, args.unified_qr_png, usize))
+            except Exception as e:
+                log("[UNI] unified QR encode failed (mic/cam QRs unaffected): %s" % e)
+        else:
+            log("[UNI] unified panel %s (QR skipped)" % uni_page_url)
+    else:
+        log("[UNI] unified page file missing (%s) — /phone 404s, mic/cam unaffected"
+            % args.unified_page)
     threading.Thread(target=gw.serve_bridge, daemon=True).start()
+    threading.Thread(target=gw.serve_cam_bridge, args=(args.camera_bridge_port,), daemon=True).start()
     try:
-        gw.serve_https(page_bytes)
+        gw.serve_https(page_bytes, cam_page_bytes, uni_page_bytes)
     except KeyboardInterrupt:
         print("\ngateway stopped")
 

@@ -364,7 +364,7 @@ public class MicSetupMonitor : MonoBehaviour {
       _gw = null;
       try {
         if (!string.IsNullOrEmpty(_toolsDir)) {
-          string fallback = Path.Combine(_toolsDir, "phone-mic-qr.png");
+          string fallback = Path.Combine(_toolsDir, "phone-qr.png");
           if (File.Exists(fallback)) _gwQrPath = fallback;
         }
       } catch (Exception) { }
@@ -442,7 +442,9 @@ public class MicSetupMonitor : MonoBehaviour {
         return;
       }
       string repoRoot = Directory.GetParent(_toolsDir).FullName;
-      _gwQrPath = Path.Combine(_toolsDir, "phone-mic-qr-game.png");
+      // Unified panel QR (mic + camera, one scan): the dialog shows this file.
+      // Mic-only QRs (phone-mic-qr*.png) stay as gateway/manual fallback.
+      _gwQrPath = Path.Combine(_toolsDir, "phone-qr-game.png");
       try { if (File.Exists(_gwQrPath)) File.Delete(_gwQrPath); } catch (Exception) { }
       string python = FindPython();
       if (string.IsNullOrEmpty(python)) {
@@ -451,7 +453,7 @@ public class MicSetupMonitor : MonoBehaviour {
       }
       string args = "\"" + script + "\" --cert \"" + cert + "\" --key \"" + key + "\""
         + " --https-port 8443 --bridge-port " + _port
-        + " --qr-png \"" + _gwQrPath + "\" --no-ascii-qr";
+        + " --unified-qr-png \"" + _gwQrPath + "\" --no-ascii-qr";
       var psi = new ProcessStartInfo {
         FileName = python,
         Arguments = args,

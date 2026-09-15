@@ -43,6 +43,7 @@ public static class E2EBuild {
       System.IO.Directory.CreateDirectory(dst);
       foreach (string f in new[] {
           "phone_mic_gateway.py", "phone_mic_page.html",
+          "phone_camera_page.html", "phone_page.html",
           "lwe_qr.py", "qrcodegen.py", "lan.crt", "lan.key" }) {
         string s = System.IO.Path.Combine(src, f);
         if (System.IO.File.Exists(s))

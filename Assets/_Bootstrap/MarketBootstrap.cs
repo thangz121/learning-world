@@ -39,6 +39,7 @@ public class MarketBootstrap : MonoBehaviour {
   // constructed; the MarketBuilder (A) has built the world in its Awake.
   // mic is optional (null = mic-setup gate off; all existing flows untouched).
   public MicSetupMonitor MicMonitor { get; private set; }
+  public GameCameraStreamService CameraStream { get; private set; }
   public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null, MicSetupBundle mic = null) {
     if (_built) return;
     _built = true;
@@ -147,6 +148,28 @@ public class MarketBootstrap : MonoBehaviour {
       GameObject hudGo = new GameObject("MicStatusHud");
       MicStatusHud hud = hudGo.AddComponent<MicStatusHud>();
       hud.Bind(monitor);
+    }
+    // Phone camera stream (Phase 2.2, additive, independent of the mic gate):
+    // realtime face preview, bottom-left. Own bridge port (8452), own thread,
+    // own frame slot — camera can never starve speech. Entry/exit logged (one
+    // line each: R10 log-spam lesson); any failure leaves the game running
+    // with CameraStream=null (gameplay never depends on camera, §17).
+    try {
+      Debug.Log("[PhoneCamera] wiring camera stream service + HUD");
+      GameObject camSvcGo = new GameObject("PhoneCameraStream");
+      GameCameraStreamService camSvc = camSvcGo.AddComponent<GameCameraStreamService>();
+      camSvc.Bind(PhoneCameraProtocol.LoopbackHost,
+        PhoneCameraProtocol.DefaultBridgePort, PhoneCameraConfig.Default);
+      camSvc.StartService();
+      GameObject camHudGo = new GameObject("PhoneCameraHud");
+      PhoneCameraHud camHud = camHudGo.AddComponent<PhoneCameraHud>();
+      camHud.Bind(camSvc);
+      CameraStream = camSvc;
+      Debug.Log("[PhoneCamera] wired (service running=" + camSvc.IsRunning
+        + " state=" + camSvc.State + ")");
+    } catch (Exception e) {
+      Debug.LogWarning("[PhoneCamera] wiring failed, game continues without camera: " + e.Message);
+      CameraStream = null;
     }
   }
 

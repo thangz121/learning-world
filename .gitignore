@@ -44,6 +44,10 @@ phone-mic-recordings/
 # gateway (STEP 3) or tools/start_phone_mic.ps1, never commit.
 tools/phone-mic-qr.png
 tools/phone-mic-qr.svg
+tools/phone-mic-qr-game.png
+tools/phone-camera-qr.png
+tools/phone-qr.png
+tools/phone-qr-game.png
 
 # Nested scratch Unity project (not part of this checkpoint)
 My project/

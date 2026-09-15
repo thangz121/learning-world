@@ -29,14 +29,14 @@ public class MicSetupDialog : MonoBehaviour {
   public const string WaitBody =
     "1. Trên máy tính: chạy phần mềm gateway (tools/start_phone_mic.ps1).\n" +
     "2. Mở trang QR trên máy tính, dùng điện thoại quét mã.\n" +
-    "3. Trên điện thoại: nhấn START và cho phép dùng micro.";
+    "3. Trên điện thoại: nhấn START MIC + START CAMERA và cho phép dùng micro + camera.";
   public const string WaitRecheck = "Đã xong, kiểm tra lại";
   public const string WaitSkip = "Bỏ qua bài nghe";
   public const string StatusWaiting = "Đang chờ kết nối...";
   public const string StatusQrStarting =
     "Đang bật phần mềm gateway trên máy tính...";
   public const string StatusQrScan =
-    "Dùng điện thoại quét mã QR, rồi nhấn START và cho phép dùng micro.";
+    "Dùng điện thoại quét mã QR, rồi nhấn START MIC và START CAMERA, cho phép dùng micro + camera.";
   public const string StatusQrManual =
     "Không tự bật được gateway. Hãy chạy tools/start_phone_mic.ps1 trên máy tính, rồi quét mã.";
   public const string StatusPhoneOpen =
