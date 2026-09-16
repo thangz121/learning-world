@@ -137,15 +137,26 @@ def _rdu32(b, o):
     return struct.unpack_from("<I", b, o)[0]
 
 
+def _rdi32(b, o):
+    return struct.unpack_from("<i", b, o)[0]
+
+
+def _rdu16(b, o):
+    return struct.unpack_from("<H", b, o)[0]
+
+
 def _parse_avi(blob):
     """Returns dict or raises ValueError. Independent implementation of the
     AVI 1.0 + MJPEG layout the game writer produces (spec-derived, not a
-    byte-copy of the C# writer)."""
+    byte-copy of the C# writer). Also parses strf (BITMAPINFOHEADER): ffmpeg
+    decodes from strf, not avih, so a corrupt strf must fail VALID even when
+    avih/idx look fine (P2X exit-22: single-40 strf passed avih checks)."""
     if len(blob) < 12 or _rdtag(blob, 0) != "RIFF" or _rdtag(blob, 8) != "AVI ":
         raise ValueError("not-riff-avi")
     pos = 12
     avih = {}
     strh = {}
+    strf = {}
     idx = []
     idx_pos = -1
     movi_base = -1
@@ -179,6 +190,14 @@ def _parse_avi(blob):
                                 rate = _rdu32(blob, r + 8 + 24)
                                 strh = {"handler": _rdtag(blob, r + 8 + 4),
                                         "scale": scale, "rate": rate}
+                            elif sst == "strf" and r + 8 + 40 <= send:
+                                strf = {"chunk": ssl,
+                                        "biSize": _rdu32(blob, r + 8),
+                                        "biWidth": _rdi32(blob, r + 8 + 4),
+                                        "biHeight": _rdi32(blob, r + 8 + 8),
+                                        "biPlanes": _rdu16(blob, r + 8 + 12),
+                                        "biBitCount": _rdu16(blob, r + 8 + 14),
+                                        "biCompression": _rdtag(blob, r + 8 + 16)}
                             r += 8 + ssl + (ssl & 1)
                     q += 8 + sl + (sl & 1)
             elif kind == "movi":
@@ -204,12 +223,23 @@ def _parse_avi(blob):
         raise ValueError("no-idx1")
     if movi_base < 0:
         raise ValueError("no-movi")
-    return {"avih": avih, "strh": strh, "idx": idx, "movi_base": movi_base}
+    if not strf:
+        raise ValueError("no-strf")
+    # strf is the decode header: chunk 40 + biSize 40, dims matching avih
+    # (raw height signed: negative = top-down), codec matching handler.
+    if strf.get("chunk") != 40 or strf.get("biSize") != 40:
+        raise ValueError("bad-strf-size")
+    if abs(strf.get("biWidth") or 0) != avih.get("width") or \
+       abs(strf.get("biHeight") or 0) != avih.get("height"):
+        raise ValueError("strf-dims-mismatch")
+    return {"avih": avih, "strh": strh, "strf": strf,
+            "idx": idx, "movi_base": movi_base}
 
 
-def _extract_frame(blob, parsed, i):
+def _extract_frame(blob, parsed, i, raw_ok=False):
     e = parsed["idx"][i]
-    if e["ckid"] != "00dc" or e["length"] == 0 or e["length"] > 8 * 1024 * 1024:
+    cap = 256 * 1024 * 1024 if raw_ok else 8 * 1024 * 1024
+    if e["ckid"] != "00dc" or e["length"] == 0 or e["length"] > cap:
         raise ValueError("bad-idx-entry")
     for base in (parsed["movi_base"] + e["offset"], e["offset"]):
         c = base
@@ -220,20 +250,53 @@ def _extract_frame(blob, parsed, i):
         if _rdu32(blob, c + 4) != e["length"]:
             continue
         payload = bytes(blob[c + 8:c + 8 + e["length"]])
+        if raw_ok and parsed.get("strh", {}).get("handler") == "DIB ":
+            w = parsed.get("avih", {}).get("width") or 0
+            h = parsed.get("avih", {}).get("height") or 0
+            if len(payload) == w * h * 4 and w >= 16 and h >= 16:
+                return payload
+            continue
         if len(payload) >= 4 and payload[0] == 0xFF and payload[1] == 0xD8 and payload[2] == 0xFF:
             return payload
     raise ValueError("chunk-unresolvable")
 
 
-def _try_pil_decode(jpeg):
-    """Optional second decoder opinion (PIL only if installed)."""
+def _raw_is_dark(payload, floor=4):
+    """Black-path tripwire mirror (see CountDarkFrame in service): raw RGBA
+    means near-zero bytes when the capture rendered black."""
+    try:
+        if not payload:
+            return True
+        s = 0
+        n = 0
+        for i in range(0, len(payload), 1024):
+            s += payload[i]
+            n += 1
+        return n > 0 and (s / n) < floor
+    except Exception:
+        return True
+
+
+def _try_pil_decode(payload, raw_shape=None):
+    """Optional second decoder opinion (PIL only if installed). raw_shape =
+    (w, h) interprets the payload as BGRA bytes (AVI BI_RGB wire order),
+    converting to RGBA for correct colors."""
     try:
         from PIL import Image  # type: ignore
     except Exception:
         return None
     try:
         import io as _io
-        im = Image.open(_io.BytesIO(jpeg))
+        if raw_shape is not None:
+            try:
+                # BGRA wire -> RGBA image (correct colors, not just shape).
+                im = Image.frombytes("RGBA", raw_shape, payload,
+                                     "raw", "BGRA")
+            except Exception:
+                im = Image.frombytes("RGBA", raw_shape, payload)
+            im.load()
+            return {"pil_size": list(im.size), "pil_mode": im.mode}
+        im = Image.open(_io.BytesIO(payload))
         im.load()
         return {"pil_size": list(im.size), "pil_mode": im.mode}
     except Exception as e:
@@ -267,6 +330,7 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
         parsed = _parse_avi(blob)
         avih = parsed["avih"]
         strh = parsed["strh"]
+        strf = parsed.get("strf", {})
         n = len(parsed["idx"])
         fps = (strh["rate"] / strh["scale"]) if strh.get("scale") else (
             1000000.0 / avih["us_per_frame"] if avih.get("us_per_frame") else 0)
@@ -274,9 +338,30 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
                        "fps": round(fps, 3) if fps else 0,
                        "frames": n,
                        "duration_sec": round(n / fps, 3) if fps else 0,
-                       "handler": strh.get("handler")}
-        shape_ok = (strh.get("handler") == "MJPG" and n >= MIN_VIDEO_FRAMES
+                       "handler": strh.get("handler"),
+                       "strf": {"chunk": strf.get("chunk"),
+                                "biSize": strf.get("biSize"),
+                                "biWidth": strf.get("biWidth"),
+                                "biHeight": strf.get("biHeight"),
+                                "biBitCount": strf.get("biBitCount"),
+                                "biCompression": strf.get("biCompression")}}
+        shape_ok = (strh.get("handler") in ("MJPG", "DIB ") and n >= MIN_VIDEO_FRAMES
                     and avih.get("total") == n)
+        # strf codec pins (decode header ffmpeg reads): DIB = BI_RGB 32-bit
+        # top-down; MJPG = MJPG 24-bit. _parse_avi already enforces chunk 40
+        # + biSize 40 + dims; here enforce the codec/top-down contract.
+        try:
+            if strh.get("handler") == "DIB ":
+                shape_ok = shape_ok and strf.get("biBitCount") == 32 \
+                    and (strf.get("biCompression") or "").replace("\x00", "") == "" \
+                    and (strf.get("biHeight") or 0) < 0
+            elif strh.get("handler") == "MJPG":
+                shape_ok = shape_ok and strf.get("biBitCount") == 24 \
+                    and strf.get("biCompression") == "MJPG"
+            else:
+                shape_ok = False
+        except Exception:
+            shape_ok = False
         dim_ok = True
         if expect_width is not None:
             dim_ok = dim_ok and (avih.get("width") == expect_width)
@@ -289,13 +374,18 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
                         strh.get("handler"), n, avih.get("width"), avih.get("height"),
                         fps or 0, (n / fps) if fps else 0)):
             ok_all = False
-        # DECODED: every index entry must resolve to a real JPEG payload;
-        # spot pixel-decode first/mid/last when PIL is available.
+        # DECODED: every index entry must resolve to a real payload; spot
+        # pixel-decode first/mid/last when PIL is available. Raw (DIB)
+        # payloads are exact-size RGBA, not JPEG.
+        is_raw = (strh.get("handler") == "DIB ")
+        raw_shape = None
+        if is_raw:
+            raw_shape = (avih.get("width"), avih.get("height"))
         bad = 0
         first = mid = last = None
         for i in range(n):
             try:
-                p = _extract_frame(blob, parsed, i)
+                p = _extract_frame(blob, parsed, i, raw_ok=is_raw)
                 if i == 0:
                     first = p
                 if i == n // 2:
@@ -308,12 +398,14 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
                     "extracted=%d/%d bad=%d" % (n - bad, n, bad)):
             ok_all = False
         else:
-            pil = _try_pil_decode(first)
+            pil = _try_pil_decode(first, raw_shape if is_raw else None)
             if pil:
                 out["info"]["pil_first"] = pil
-            # CONTENT: not blank/frozen/corrupt — the three probes must be
-            # non-trivial JPEGs and must DIFFER (a frozen single frame
-            # repeated N times hashes identically).
+            # CONTENT: not blank/frozen/corrupt. MJPEG: the three probes must
+            # be non-trivial JPEGs and must DIFFER (a frozen single frame
+            # repeated N times hashes identically). RAW lossless: identical
+            # bytes are EXPECTED when nothing moves, so frozen-detection
+            # instead rejects near-black payloads (black-path tripwire).
             hashes = {}
             for label, p in (("first", first), ("mid", mid), ("last", last)):
                 h = hashlib.sha256(p).hexdigest()[:16]
@@ -321,11 +413,18 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
                 out["info"]["len_%s" % label] = len(p)
             out["info"]["sha_first12"] = hashes
             sizes_ok = all(len(p) > 256 for p in (first, mid, last) if p)
-            distinct = len(set(hashes.values())) > 1 or n == 1
-            if not mark(out["content"], sizes_ok and distinct,
-                        "lens=%s distinct=%s" % (
-                            [len(p) for p in (first, mid, last) if p], distinct)):
-                ok_all = False
+            if is_raw:
+                dark = any(_raw_is_dark(p) for p in (first, mid, last) if p)
+                if not mark(out["content"], sizes_ok and not dark,
+                            "raw-lens=%s alldark=%s" % (
+                                [len(p) for p in (first, mid, last) if p], dark)):
+                    ok_all = False
+            else:
+                distinct = len(set(hashes.values())) > 1 or n == 1
+                if not mark(out["content"], sizes_ok and distinct,
+                            "lens=%s distinct=%s" % (
+                                [len(p) for p in (first, mid, last) if p], distinct)):
+                    ok_all = False
     except ValueError as e:
         if out["valid"]["result"] == "PENDING":
             mark(out["valid"], False, "container: %s" % e)

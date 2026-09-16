@@ -215,10 +215,13 @@ public static class FfmpegTranscodeBackend {
       string vlabel;
       if (haveGame && haveCam) {
         int pipH = Math.Max(90, s.PipWidth * 3 / 4);
+        // Main normalizes to yuv420p first: the lossless game intermediate
+        // is BI_RGB BGRA (rawvideo), the cam is MJPEG (yuvj) — overlay needs
+        // one common format or ffmpeg refuses the graph (exit 22 on raw).
         b.Append("-filter_complex \"[")
+          .Append(gi).Append(":v]format=yuv420p[main];[")
           .Append(ci).Append(":v]scale=").Append(s.PipWidth).Append(":").Append(pipH)
-          .Append(":flags=bilinear,format=yuv420p[pip];[")
-          .Append(gi).Append(":v][pip]overlay=W-w-").Append(s.PipMargin)
+          .Append(":flags=bilinear,format=yuv420p[pip];[main][pip]overlay=W-w-").Append(s.PipMargin)
           .Append(":H-h-").Append(s.PipMargin)
           .Append(":format=yuv420:eof_action=pass[v]\" ");
         vlabel = "[v]";

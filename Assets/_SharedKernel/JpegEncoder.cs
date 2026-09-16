@@ -7,6 +7,10 @@
 // This is an ESTABLISHED format implementation (like WavWriter), not a new
 // codec: every byte it emits is decoded by ffmpeg/PIL/viewers, proven by
 // the compat run (Unity writes -> real ffmpeg decodes).
+// NOTE (raw path): the GAME video path no longer uses this (q90 forensic —
+// even q90 imprinted speckle while x264 stayed transparent, so game frames
+// go raw BGRA straight to x264). Retained for format-compat tests (P21C/D)
+// and any future still-thumbnail use; NOT on the game video path.
 // API: TryEncode(rgba, width, height, quality, out jpeg). Never throws.
 using System;
 using System.IO;

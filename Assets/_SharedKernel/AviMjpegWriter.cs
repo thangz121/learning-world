@@ -26,6 +26,7 @@ public sealed class AviMjpegWriter : IDisposable {
   FileStream _fs;
   bool _open;
   bool _finalized;
+  bool _raw; // true = BI_RGB raw RGBA chunks (lossless gameplay path); false = MJPEG
   int _width;
   int _height;
   int _fps;
@@ -57,6 +58,17 @@ public sealed class AviMjpegWriter : IDisposable {
   }
 
   public bool Begin(string path, int width, int height, int fps) {
+    return BeginInner(path, width, height, fps, false);
+  }
+
+  // Lossless gameplay path (forensic finding: even q90 JPEG imprinted
+  // chroma speckle on flats while x264@CRF12 was transparent, so the lossy
+  // intermediate had to go). Identical container, BI_RGB raw RGBA chunks.
+  public bool BeginRaw(string path, int width, int height, int fps) {
+    return BeginInner(path, width, height, fps, true);
+  }
+
+  bool BeginInner(string path, int width, int height, int fps, bool raw) {
     try {
       CloseStream();
       if (string.IsNullOrEmpty(path)) return false;
@@ -66,6 +78,7 @@ public sealed class AviMjpegWriter : IDisposable {
       try { dir = Path.GetDirectoryName(path); } catch (Exception) { dir = null; }
       if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) return false;
       _fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
+      _raw = raw;
       _width = width;
       _height = height;
       _fps = fps;
@@ -74,7 +87,19 @@ public sealed class AviMjpegWriter : IDisposable {
       _idx.Clear();
 
       int usPerFrame = 1000000 / fps;
+      // Suggestion fields only (never parsed for decode), but keep them
+      // honest: raw 1080p20 is ~165 MB/s transient, not the 640 kB/s MJPEG
+      // hint. Clamped to uint range.
       uint maxBytesPerSec = (uint)(fps * 32768);
+      uint suggestedBuf = 65536;
+      if (raw) {
+        try {
+          long rawRate = (long)width * height * 4 * fps;
+          if (rawRate > 0) maxBytesPerSec = rawRate > uint.MaxValue ? uint.MaxValue : (uint)rawRate;
+          long rawFrame = (long)width * height * 4;
+          if (rawFrame > 0) suggestedBuf = rawFrame > uint.MaxValue ? uint.MaxValue : (uint)rawFrame;
+        } catch (Exception) { }
+      }
 
       WriteFourCC("RIFF");
       _riffSizePos = _fs.Position;
@@ -99,7 +124,7 @@ public sealed class AviMjpegWriter : IDisposable {
       WriteU32(0);                  // dwTotalFrames (backpatch)
       WriteU32(0);                  // dwInitialFrames
       WriteU32(1);                  // dwStreams
-      WriteU32(65536);              // dwSuggestedBufferSize
+      WriteU32(suggestedBuf);       // dwSuggestedBufferSize
       WriteU32((uint)width);        // dwWidth
       WriteU32((uint)height);       // dwHeight
       WriteU32(0); WriteU32(0); WriteU32(0); WriteU32(0); // reserved
@@ -115,7 +140,7 @@ public sealed class AviMjpegWriter : IDisposable {
       WriteFourCC("strh");
       WriteU32(56);
       WriteFourCC("vids");          // fccType
-      WriteFourCC("MJPG");          // fccHandler
+      WriteFourCC(raw ? "DIB " : "MJPG"); // fccHandler
       WriteU32(0);                  // dwFlags
       WriteU16(0); WriteU16(0);     // priority/language
       WriteU32(0);                  // dwInitialFrames
@@ -126,21 +151,30 @@ public sealed class AviMjpegWriter : IDisposable {
       WriteU32(0);                  // dwStart
       _strhLengthPos = _fs.Position;
       WriteU32(0);                  // dwLength (backpatch)
-      WriteU32(65536);              // dwSuggestedBufferSize
+      WriteU32(suggestedBuf);       // dwSuggestedBufferSize
       WriteU32(0xFFFFFFFF);         // dwQuality (-1)
       WriteU32(0);                  // dwSampleSize
       WriteU16(0); WriteU16(0); WriteU16((ushort)width); WriteU16((ushort)height); // rcFrame
 
-      // strf BITMAPINFOHEADER (40)
+      // strf BITMAPINFOHEADER (40 bytes of data: chunk size 40 + biSize 40).
+      // The double-40 is NOT a duplication: first is the chunk length, second
+      // is the BITMAPINFOHEADER.biSize field. Dropping either corrupts every
+      // offset downstream (ffmpeg: "Something went wrong during header
+      // parsing", P2X transcode exit-22 — caught live 2026-09-16).
       WriteFourCC("strf");
-      WriteU32(40);
+      WriteU32(40);                 // chunk size
       WriteU32(40);                 // biSize
       WriteI32(width);              // biWidth
-      WriteI32(height);             // biHeight
+      // Raw top-down: AsyncGPUReadback RGBA32 row 0 is the TOP row (the old
+      // JPEG path encoded it top-down and every shipped mp4 was upright), so
+      // BI_RGB declares negative height. Positive height would flip the mp4
+      // vertically. MJPEG keeps the legacy positive value (JPEG is
+      // orientation-explicit; old files must keep decoding).
+      WriteI32(raw ? -height : height); // biHeight
       WriteU16(1);                  // biPlanes
-      WriteU16(24);                 // biBitCount
-      WriteFourCC("MJPG");          // biCompression
-      WriteU32((uint)(width * height * 3)); // biSizeImage (suggestion)
+      WriteU16((ushort)(raw ? 32 : 24)); // biBitCount
+      WriteFourCC(raw ? "\0\0\0\0" : "MJPG"); // biCompression: BI_RGB vs MJPG
+      WriteU32((uint)(raw ? width * height * 4 : width * height * 3)); // biSizeImage (suggestion)
       WriteI32(0); WriteI32(0);     // XPels/YMeters
       WriteU32(0); WriteU32(0);     // clrUsed/Important
 
@@ -167,19 +201,37 @@ public sealed class AviMjpegWriter : IDisposable {
   public bool AppendJpeg(byte[] jpeg) {
     try {
       if (!_open || _finalized || _fs == null) return false;
+      if (_raw) return false; // raw track: AppendRawFrame only (never mix)
       if (jpeg == null || jpeg.Length < 4) return false;
       if (!(jpeg[0] == 0xFF && jpeg[1] == 0xD8 && jpeg[2] == 0xFF)) return false;
+      return AppendChunk(jpeg);
+    } catch (Exception) { return false; }
+  }
+
+  // Lossless gameplay append: EXACT-size RGBA only (any other length means
+  // the capture pipeline changed shape mid-session — refuse, never adapt).
+  public bool AppendRawFrame(byte[] rgba) {
+    try {
+      if (!_open || _finalized || _fs == null) return false;
+      if (!_raw) return false; // MJPEG track: AppendJpeg only (never mix)
+      if (rgba == null || rgba.Length != _width * _height * 4) return false;
+      return AppendChunk(rgba);
+    } catch (Exception) { return false; }
+  }
+
+  bool AppendChunk(byte[] payload) {
+    try {
       long chunkTagPos = _fs.Position;
       WriteFourCC("00dc");
-      WriteU32((uint)jpeg.Length);
-      _fs.Write(jpeg, 0, jpeg.Length);
-      if ((jpeg.Length & 1) == 1) _fs.WriteByte(0); // pad to even
+      WriteU32((uint)payload.Length);
+      _fs.Write(payload, 0, payload.Length);
+      if ((payload.Length & 1) == 1) _fs.WriteByte(0); // pad to even
       _idx.Add(new IdxEntry {
         OffsetFromMovi = chunkTagPos - _moviDataStart,
-        Size = jpeg.Length
+        Size = payload.Length
       });
       _frames++;
-      if (jpeg.Length > _maxChunk) _maxChunk = jpeg.Length;
+      if (payload.Length > _maxChunk) _maxChunk = payload.Length;
       return true;
     } catch (Exception) { return false; }
   }
@@ -305,82 +357,42 @@ public sealed class AviMjpegWriter : IDisposable {
   public static bool TryReadInfo(string path, out AviInfo info) {
     info = new AviInfo();
     try {
-      byte[] all = File.ReadAllBytes(path);
-      if (all.Length < 12 || RdTag(all, 0) != "RIFF" || RdTag(all, 8) != "AVI ") {
-        info.Reason = "not-riff-avi"; return false;
-      }
-      int pos = 12;
-      long totalFrames = -1;
-      int width = 0, height = 0;
-      double fps = 0;
-      string handler = string.Empty;
-      long idxCount = -1;
-      long idxPos = -1;
-      while (pos + 8 <= all.Length) {
-        string tag = RdTag(all, pos);
-        uint size = RdU32(all, pos + 4);
-        if (tag == "LIST") {
-          string kind = pos + 12 <= all.Length ? RdTag(all, pos + 8) : string.Empty;
-          if (kind == "hdrl") {
-            int end = (int)Math.Min(all.Length, pos + 8 + size);
-            int q = pos + 12;
-            while (q + 8 <= end) {
-              string st = RdTag(all, q);
-              uint ss = RdU32(all, q + 4);
-              if (st == "avih" && q + 8 + 56 <= end) {
-                totalFrames = RdU32(all, q + 8 + 16);
-                width = (int)RdU32(all, q + 8 + 32);
-                height = (int)RdU32(all, q + 8 + 36);
-                uint us = RdU32(all, q + 8);
-                if (us > 0) fps = 1000000.0 / us;
-              } else if (st == "LIST" && q + 12 <= end && RdTag(all, q + 8) == "strl") {
-                // strh/strf live one level down (standard AVI nesting).
-                int send = Math.Min(end, q + 8 + (int)ss);
-                int r = q + 12;
-                while (r + 8 <= send) {
-                  string sst = RdTag(all, r);
-                  uint ssl = RdU32(all, r + 4);
-                  if (sst == "strh" && r + 8 + 56 <= send) {
-                    handler = RdTag(all, r + 8 + 4);
-                    uint scale = RdU32(all, r + 8 + 20);
-                    uint rate = RdU32(all, r + 8 + 24);
-                    if (scale > 0) fps = (double)rate / scale;
-                  }
-                  r += 8 + (int)ssl + ((int)ssl & 1);
-                }
-              }
-              q += 8 + (int)ss + ((int)ss & 1);
-            }
-          }
-          pos += 8 + (int)size + ((int)size & 1);
-        } else if (tag == "idx1") {
-          idxCount = size / 16;
-          idxPos = pos + 8;
-          break; // idx1 is last by construction
+      AviScan s;
+      if (!ScanAvi(path, out s)) { info.Reason = s.FailReason ?? "io"; return false; }
+      if (!s.HasAvih) { info.Reason = "no-avih"; return false; }
+      if (!s.SawIdx) { info.Reason = "no-idx1"; return false; }
+      if (s.TotalFrames == 0 || s.Idx.Count == 0) { info.Reason = "empty-video"; return false; }
+      if (s.TotalFrames != s.Idx.Count) { info.Reason = "frames!=idx"; return false; }
+      // strf is what ffmpeg actually decodes from: chunk 40 + biSize 40,
+      // dims matching avih (raw height signed: negative = top-down), codec
+      // matching the handler. A single-40 strf shifts every downstream
+      // offset and ffmpeg reports "header parsing" + exit 22 (P2X 2026-09-16).
+      if (!s.SawStrf) { info.Reason = "no-strf"; return false; }
+      if (s.StrfChunkSize != 40 || s.StrfBiSize != 40) { info.Reason = "bad-strf-size"; return false; }
+      try {
+        int aw = Math.Abs(s.StrfWidth), ah = Math.Abs(s.StrfHeight);
+        if (aw != s.Width || ah != s.Height) { info.Reason = "strf-dims-mismatch"; return false; }
+      } catch (Exception) { info.Reason = "strf-dims-mismatch"; return false; }
+      try {
+        bool isRaw = s.Handler == "DIB ";
+        if (isRaw) {
+          if (s.StrfCompression != "\0\0\0\0" || s.StrfBitCount != 32) { info.Reason = "strf-codec-mismatch"; return false; }
+          if (s.StrfHeight >= 0) { info.Reason = "strf-raw-not-topdown"; return false; }
         } else {
-          pos += 8 + (int)size + ((int)size & 1);
+          if (s.StrfCompression != "MJPG" || s.StrfBitCount != 24) { info.Reason = "strf-codec-mismatch"; return false; }
         }
-        if (pos < 0 || pos > all.Length) break;
-      }
-      if (totalFrames < 0) { info.Reason = "no-avih"; return false; }
-      if (idxCount < 0) { info.Reason = "no-idx1"; return false; }
-      if (totalFrames == 0 || idxCount == 0) { info.Reason = "empty-video"; return false; }
-      if (totalFrames != idxCount) { info.Reason = "frames!=idx"; return false; }
-      // Validate every index entry points at a 00dc chunk with a JPEG SOI.
-      for (long i = 0; i < idxCount; i++) {
-        long e = idxPos + i * 16;
-        if (e + 16 > all.Length) { info.Reason = "idx-truncated"; return false; }
-        if (RdTag(all, (int)e) != "00dc") { info.Reason = "idx-not-00dc"; return false; }
-        // Chunk offset is relative to movi LIST data; resolve movi base.
-        // (Writer uses that form; accept absolute as well for tolerance.)
+      } catch (Exception) { info.Reason = "strf-codec-mismatch"; return false; }
+      // Validate every index entry points at a 00dc chunk.
+      for (int i = 0; i < s.Idx.Count; i++) {
+        if (s.Idx[i].Tag != "00dc") { info.Reason = "idx-not-00dc"; return false; }
       }
       info.Valid = true;
-      info.Width = width;
-      info.Height = height;
-      info.Fps = fps;
-      info.FrameCount = idxCount;
-      info.DurationSec = fps > 0 ? idxCount / fps : 0;
-      info.Handler = handler;
+      info.Width = s.Width;
+      info.Height = s.Height;
+      info.Fps = s.Fps;
+      info.FrameCount = s.Idx.Count;
+      info.DurationSec = s.Fps > 0 ? s.Idx.Count / s.Fps : 0;
+      info.Handler = s.Handler;
       info.Reason = null;
       return true;
     } catch (Exception e) {
@@ -389,56 +401,238 @@ public sealed class AviMjpegWriter : IDisposable {
     }
   }
 
+  // --- streaming scan (never loads the file: headers are KBs, movi GBs are
+  // skipped by seeking, idx rows are 16 B each). Same verdicts/reasons as
+  // the old whole-blob parser, so every existing test keeps passing while
+  // multi-GB raw intermediates verify fine (2 GB+ blobs OOM reliably).
+  struct AviScan {
+    public bool HasAvih;
+    public long TotalFrames;
+    public int Width;
+    public int Height;
+    public double Fps;
+    public string Handler;
+    public long MoviBase; // -1 = none
+    public bool SawIdx;
+    public List<ScanIdx> Idx;
+    public string FailReason;
+    // strf (BITMAPINFOHEADER) pins: ffmpeg parses THIS, not avih, for decode.
+    // A corrupt strf passes every avih/idx check yet fails ffmpeg (P2X
+    // exit-22: single-40 strf). Validate it here so VerifyGameTrack fails
+    // fast with a clear reason instead of shipping a file ffmpeg rejects.
+    public bool SawStrf;
+    public uint StrfChunkSize;
+    public uint StrfBiSize;
+    public int StrfWidth;
+    public int StrfHeight; // raw top-down is negative (abs compared)
+    public int StrfBitCount;
+    public string StrfCompression;
+  }
+
+  struct ScanIdx {
+    public string Tag;
+    public long OffsetFromMovi; // relative to movi LIST data (spec form)
+    public int Size;            // chunk payload bytes (no pad)
+  }
+
+  static bool ReadExactly(FileStream fs, byte[] buf, int off, int count) {
+    try {
+      while (count > 0) {
+        int n = fs.Read(buf, off, count);
+        if (n <= 0) return false;
+        off += n;
+        count -= n;
+      }
+      return true;
+    } catch (Exception) { return false; }
+  }
+
+  static bool TryReadU32At(FileStream fs, long pos, out uint v) {
+    v = 0;
+    try {
+      var b = new byte[4];
+      long save = fs.Position;
+      try {
+        fs.Seek(pos, SeekOrigin.Begin);
+        if (!ReadExactly(fs, b, 0, 4)) return false;
+        v = RdU32(b, 0);
+        return true;
+      } finally { try { fs.Seek(save, SeekOrigin.Begin); } catch (Exception) { } }
+    } catch (Exception) { return false; }
+  }
+
+  static bool TryReadTagAt(FileStream fs, long pos, out string tag) {
+    tag = string.Empty;
+    try {
+      var b = new byte[4];
+      long save = fs.Position;
+      try {
+        fs.Seek(pos, SeekOrigin.Begin);
+        if (!ReadExactly(fs, b, 0, 4)) return false;
+        tag = RdTag(b, 0);
+        return true;
+      } finally { try { fs.Seek(save, SeekOrigin.Begin); } catch (Exception) { } }
+    } catch (Exception) { return false; }
+  }
+
+  static bool ScanAvi(string path, out AviScan s) {
+    s = new AviScan { MoviBase = -1, Idx = new List<ScanIdx>(), Handler = string.Empty };
+    try {
+      using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
+        long len = 0;
+        try { len = fs.Length; } catch (Exception) { s.FailReason = "io"; return false; }
+        string t0, t8;
+        if (len < 12 || !TryReadTagAt(fs, 0, out t0) || t0 != "RIFF"
+            || !TryReadTagAt(fs, 8, out t8) || t8 != "AVI ") {
+          s.FailReason = "not-riff-avi";
+          return false;
+        }
+        long pos = 12;
+        while (pos + 8 <= len) {
+          string tag;
+          uint size;
+          if (!TryReadTagAt(fs, pos, out tag) || !TryReadU32At(fs, pos + 4, out size)) break;
+          if (tag == "LIST") {
+            string kind;
+            if (!TryReadTagAt(fs, pos + 8, out kind)) break;
+            if (kind == "hdrl") {
+              long end = Math.Min(len, pos + 8 + size);
+              long hstart = pos + 12;
+              int hlen = (int)Math.Max(0, Math.Min(end - hstart, 65536));
+              var hb = new byte[hlen];
+              try { fs.Seek(hstart, SeekOrigin.Begin); } catch (Exception) { break; }
+              if (!ReadExactly(fs, hb, 0, hlen)) break;
+              ParseHdrl(hb, ref s);
+            } else if (kind == "movi") {
+              s.MoviBase = pos + 12;
+            }
+            pos += 8 + size + (size & 1u);
+          } else if (tag == "idx1") {
+            // Entries are 16 B each (frame count scale, not byte scale).
+            long count = size / 16;
+            if (count < 0 || count > 10000000) { s.FailReason = "idx-huge"; return false; }
+            int bytes = (int)(count * 16);
+            var ib = new byte[bytes];
+            try { fs.Seek(pos + 8, SeekOrigin.Begin); } catch (Exception) { s.FailReason = "io"; return false; }
+            if (!ReadExactly(fs, ib, 0, bytes)) { s.FailReason = "idx-truncated"; return false; }
+            for (long i = 0; i < count; i++) {
+              int e = (int)(i * 16);
+              uint off, ln;
+              try {
+                string ck = RdTag(ib, e);
+                uint fl = RdU32(ib, e + 4);
+                off = RdU32(ib, e + 8);
+                ln = RdU32(ib, e + 12);
+                if ((long)e + 16 > bytes) { s.FailReason = "idx-truncated"; return false; }
+                s.Idx.Add(new ScanIdx { Tag = ck, OffsetFromMovi = off, Size = (int)ln });
+              } catch (Exception) { s.FailReason = "idx-truncated"; return false; }
+            }
+            s.SawIdx = true;
+            break; // idx1 is last by construction
+          } else {
+            pos += 8 + size + (size & 1u);
+          }
+          if (pos < 0 || pos > len) break;
+        }
+        return true;
+      }
+    } catch (Exception) { s.FailReason = "io"; return false; }
+  }
+
+  // hdrl sub-parse over a small in-memory buffer (same precedence as before:
+  // strh rate/scale wins over avih us-per-frame). Also captures strf so
+  // TryReadInfo can validate the decode header ffmpeg actually reads.
+  static int RdI32(byte[] b, int o) {
+    try { return unchecked((int)RdU32(b, o)); } catch (Exception) { return 0; }
+  }
+
+  static int RdU16(byte[] b, int o) {
+    try { return b[o] | (b[o + 1] << 8); } catch (Exception) { return 0; }
+  }
+
+  static void ParseHdrl(byte[] hb, ref AviScan s) {
+    try {
+      int end = hb.Length;
+      int q = 0;
+      while (q + 8 <= end) {
+        string st = RdTag(hb, q);
+        uint ss = RdU32(hb, q + 4);
+        if (st == "avih" && q + 8 + 56 <= end) {
+          s.HasAvih = true;
+          s.TotalFrames = RdU32(hb, q + 8 + 16);
+          s.Width = (int)RdU32(hb, q + 8 + 32);
+          s.Height = (int)RdU32(hb, q + 8 + 36);
+          uint us = RdU32(hb, q + 8);
+          if (us > 0) s.Fps = 1000000.0 / us;
+        } else if (st == "LIST" && q + 12 <= end && RdTag(hb, q + 8) == "strl") {
+          int send = Math.Min(end, q + 8 + (int)ss);
+          int r = q + 12;
+          while (r + 8 <= send) {
+            string sst = RdTag(hb, r);
+            uint ssl = RdU32(hb, r + 4);
+            if (sst == "strh" && r + 8 + 56 <= send) {
+              s.Handler = RdTag(hb, r + 8 + 4);
+              uint scale = RdU32(hb, r + 8 + 20);
+              uint rate = RdU32(hb, r + 8 + 24);
+              if (scale > 0) s.Fps = (double)rate / scale;
+            } else if (sst == "strf" && r + 8 + 40 <= send) {
+              s.SawStrf = true;
+              s.StrfChunkSize = ssl;
+              s.StrfBiSize = RdU32(hb, r + 8);
+              s.StrfWidth = RdI32(hb, r + 8 + 4);
+              s.StrfHeight = RdI32(hb, r + 8 + 8);
+              s.StrfBitCount = RdU16(hb, r + 8 + 14);
+              try { s.StrfCompression = RdTag(hb, r + 8 + 16); }
+              catch (Exception) { s.StrfCompression = string.Empty; }
+            }
+            r += 8 + (int)ssl + ((int)ssl & 1);
+          }
+        }
+        q += 8 + (int)ss + ((int)ss & 1);
+      }
+    } catch (Exception) { }
+  }
+
   // Extract frame i (0-based) via idx1. Returns false + reason unless the
   // chunk is a 00dc with a JPEG SOI — i.e. a REAL decodable still, not just
-  // an index row. Offsets are resolved against the movi base found by scan
-  // (spec-relative form) with an absolute fallback.
+  // an index row. allowRaw accepts BI_RGB payloads (exact-size RGBA, SOI
+  // check skipped): the lossless gameplay path. Offsets are resolved against
+  // the movi base found by scan (spec-relative form) with an absolute fallback.
   public static bool TryExtractFrame(string path, int index, out byte[] jpeg, out string reason) {
-    jpeg = null;
+    return TryExtractFrame(path, index, out jpeg, out reason, false);
+  }
+
+  public static bool TryExtractFrame(string path, int index, out byte[] data, out string reason, bool allowRaw) {
+    data = null;
     reason = null;
     try {
-      byte[] all = File.ReadAllBytes(path);
-      if (all.Length < 12) { reason = "too-small"; return false; }
-      // Locate movi data start + idx1.
-      int pos = 12;
-      long moviBase = -1;
-      long idxPos = -1;
-      uint idxSize = 0;
-      while (pos + 8 <= all.Length) {
-        string tag = RdTag(all, pos);
-        uint size = RdU32(all, pos + 4);
-        if (tag == "LIST" && pos + 12 <= all.Length && RdTag(all, pos + 8) == "movi") {
-          moviBase = pos + 12;
-          pos += 8 + (int)size + ((int)size & 1);
-        } else if (tag == "idx1") {
-          idxPos = pos + 8;
-          idxSize = size;
-          break;
-        } else {
-          pos += 8 + (int)size + ((int)size & 1);
-        }
-        if (pos < 0 || pos > all.Length) break;
-      }
-      if (moviBase < 0) { reason = "no-movi"; return false; }
-      if (idxPos < 0) { reason = "no-idx1"; return false; }
-      long count = idxSize / 16;
+      AviScan s;
+      if (!ScanAvi(path, out s)) { reason = s.FailReason ?? "io"; return false; }
+      if (s.MoviBase < 0) { reason = "no-movi"; return false; }
+      long count = s.Idx.Count;
       if (index < 0 || index >= count) { reason = "index-range"; return false; }
-      long e = idxPos + index * 16;
-      uint off = RdU32(all, (int)e + 8);
-      uint len = RdU32(all, (int)e + 12);
-      if (len == 0 || len > 8 * 1024 * 1024) { reason = "bad-len"; return false; }
-      // Spec-relative first, absolute fallback.
-      long[] cands = { moviBase + off, off };
-      foreach (long c in cands) {
-        if (c < 0 || c + 8 + len > all.Length) continue;
-        if (RdTag(all, (int)c) != "00dc") continue;
-        uint ckLen = RdU32(all, (int)c + 4);
-        if (ckLen != len) continue;
-        var out_ = new byte[len];
-        Buffer.BlockCopy(all, (int)c + 8, out_, 0, (int)len);
-        if (out_.Length < 4 || !(out_[0] == 0xFF && out_[1] == 0xD8 && out_[2] == 0xFF)) continue;
-        jpeg = out_;
-        return true;
+      ScanIdx e = s.Idx[index];
+      uint len = (uint)e.Size;
+      uint maxLen = allowRaw ? 256u * 1024u * 1024u : 8u * 1024u * 1024u;
+      if (len == 0 || len > maxLen) { reason = "bad-len"; return false; }
+      // Spec-relative first, absolute fallback. Single payload read only.
+      long[] cands = { s.MoviBase + e.OffsetFromMovi, e.OffsetFromMovi };
+      using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
+        long flen = 0;
+        try { flen = fs.Length; } catch (Exception) { reason = "io"; return false; }
+        foreach (long c in cands) {
+          if (c < 0 || c + 8 + len > flen) continue;
+          string ck;
+          uint ckLen;
+          if (!TryReadTagAt(fs, c, out ck) || ck != "00dc") continue;
+          if (!TryReadU32At(fs, c + 4, out ckLen) || ckLen != len) continue;
+          var out_ = new byte[len];
+          try { fs.Seek(c + 8, SeekOrigin.Begin); } catch (Exception) { continue; }
+          if (!ReadExactly(fs, out_, 0, (int)len)) continue;
+          if (!allowRaw && (out_.Length < 4 || !(out_[0] == 0xFF && out_[1] == 0xD8 && out_[2] == 0xFF))) continue;
+          data = out_;
+          return true;
+        }
       }
       reason = "chunk-unresolvable";
       return false;

@@ -621,3 +621,53 @@ motion frame crisp, ONE PiP; Player.log 0 errors. ~4x throughput.
 EditMode: 392 total, 391 pass, 0 fail, 1 skip (benign P13M4).
 Final clean build: Succeeded errors=0, boot 73 s+ alive, 3xFACE_OK,
 0 errors, MediaRec wired, 0 driver traces.
+## 37. Lossless gameplay path (2026-09-16): JPEG out of the video path
+
+Forensic finding (user rule): even q90 JPEG imprinted chroma speckle on
+flats while x264@CRF12 stayed transparent (B≈noisy, C≈B) — so the lossy
+intermediate had to go, not be tuned. Game frames now travel screen ->
+GPU RT -> AsyncGPUReadback RGBA -> worker swizzle (RGBA->BGRA for BI_RGB)
+-> `game.avi` (BI_RGB raw, top-down negative height) -> x264. No JPEG,
+no farm, one memcpy-speed writer thread sustaining the 20 Hz cap.
+
+Changes (zero frozen-system diffs):
+- `AviMjpegWriter`: `BeginRaw`/`AppendRawFrame` (exact-size RGBA only, MJPEG
+  refuses raw track and vice versa, never mixed); header honesty
+  (maxBytesPerSec/suggestedBuf sized for raw); NATIVE bug caught live:
+  the strf edit dropped the chunk-size 40, leaving single-40 — every
+  downstream offset corrupted, ffmpeg "header parsing" + transcode exit 22
+  on BOTH game+cam files of that run. Fixed (double-40 pinned) + negative
+  biHeight for top-down raw (positive would flip the mp4).
+- `MediaRecordingService.GamePump`: direct raw writes (OrderedFrameEncoder
+  farm DELETED) + R<->B swizzle (BI_RGB is BGRA on the wire; the old JPEG
+  path converted inside JpegEncoder) + start/mid-session disk guards
+  (`MinFreeDiskBytes` 4 GB refuse at Start, 1 GB graceful early-stop probe
+  per 10 s — raw 1080p20 is ~165 MB/s transient, never die mid-take).
+- `FfmpegTranscodeBackend`: filter normalizes main to yuv420p first
+  (`[gi:v]format=yuv420p[main]`, raw BGRA + MJPEG yuvj both overlay cleanly
+  — the other half of exit 22) + exact ffmpeg args logged per session.
+- Verify path hardened BOTH sides (the corrupt single-40 files had PASSED
+  every avih/idx check — ffmpeg was the only one complaining): C#
+  `TryReadInfo` + `verify_recording.py` now parse + pin strf (chunk 40 +
+  biSize 40 + dims match avih + codec/handshake match + raw top-down),
+  streaming scan (multi-GB raw verifies without OOM), PIL decodes raw as
+  BGRA for correct colors.
+- `JpegEncoder` retained for format-compat tests only (P21C/D); documented
+  NOT on the game video path. Cam stays MJPEG (phone bytes verbatim, not a
+  re-encode — no intermediate there either).
+
+Tests: P20Z (single writer thread + live CPU), P20AA (raw round-trip +
+strf double-40 + negative-height pins), P20AC (MJPEG legacy layout + filter
+pins), P20AB (disk guard). Suite: 394 total, 393 pass, 0 fail, 1 skip.
+
+Live proof, ONE E2E at MAX 1920x1080 walking, keep-intermediates:
+COMPLETE int=False err= (empty) — game 354 frames 0 drops 0 dark 0 gaps
+(19.65 fps wall), cam 180, audio 282400 samples; mp4 1920x1080 avc1 9.4 MB
+17.65 s + mp3 17.75 s; verifier OVERALL PASS on all four files (game DIB
+354/354 + cam MJPG 180/180 distinct + mp4 + mp3); Player.log 0 exceptions,
+0 EndRenderPass, 3xFACE_OK. A/B/C forensic OVERALL PASS: B/C same-frame
+PiP-masked **41.01 dB** (transparent); A/B same-scene upright balanced +
+visual inspection (raw frame pixel-perfect: Milo/Mia/player colors, labels,
+REC badge, cursor; mp4 crisp single-PiP). Pixel-exact A/B across moments is
+invalid by construction (follow-camera drift + screenshot queue latency,
+lesson 46) — documented in the forensic thresholds, not hidden.

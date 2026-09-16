@@ -12,7 +12,8 @@
 //     -> GAME MEDIA INPUT (PhonePresenceWatcher link/audio stats,
 //        GameCameraStreamService decoded Live frames)
 //     -> THIS SERVICE (bounded tap copies, worker-thread file pumps)
-//     -> STORAGE (WAV audio + AVI/MJPEG video + JSON sidecar)
+//     -> STORAGE (WAV audio + AVI video [cam MJPEG verbatim + game raw BGRA]
+//        + JSON sidecar)
 //
 // Recording boundary (§3): audio is accepted ONLY from the game-owned
 // watcher tap (bytes the game already observed for link/HUD state);
@@ -206,6 +207,13 @@ public class MediaRecordingService : MonoBehaviour {
 
   public void SetTestOutputBaseDir(string dir) {
     try { if (!string.IsNullOrEmpty(dir)) _outputBaseDir = dir; } catch (Exception) { }
+  }
+
+  // Forensic seam: keep wav/avi intermediates after a successful transcode
+  // (default deletes them). Used to compare pre-encoder frames against the
+  // decoded mp4; never enabled in normal play.
+  public void SetKeepIntermediatesForTests(bool keep) {
+    try { _baseConfig.KeepIntermediates = keep; } catch (Exception) { }
   }
 
   // Output quality preset (Preview/Standard/High/Max): drives CRF + x264
@@ -458,6 +466,8 @@ public class MediaRecordingService : MonoBehaviour {
         return "Chưa thấy camera trong game.";
       if (reason.Contains("output-dir"))
         return "Không ghi được vào chỗ lưu. Nhấn F2 2 lần liên tiếp để chọn chỗ khác.";
+      if (reason.Contains("disk-space-low"))
+        return "Ổ đĩa sắp đầy (cần trống ít nhất 4 GB cho bản thu). Dọn bớt rồi thử lại.";
       if (reason.Contains("encoder-init-failed"))
         return "Không khởi động được bộ mã hóa.";
       if (reason.Contains("transcode-timeout"))
@@ -643,6 +653,10 @@ public class MediaRecordingService : MonoBehaviour {
         if (!_audioWriter.Begin(_audioPath)) return FailStart("encoder-init-failed:audio");
       }
       if (_effective.RecordVideo) {
+        // Raw gameplay intermediates are big: refuse early with a clear
+        // message rather than corrupting a take when the disk fills mid-way.
+        if (!MediaRecording.DriveSpaceOk(dir, MediaRecording.MinFreeDiskBytes))
+          return FailStart("disk-space-low");
         _videoQueue = BoundedByteQueue.ForVideo(_effective.MaxVideoFrames);
         _videoWriter = new AviMjpegWriter();
         if (!_videoWriter.Begin(_videoPath, _effective.VideoWidth, _effective.VideoHeight, _effective.VideoFps))
@@ -653,7 +667,9 @@ public class MediaRecordingService : MonoBehaviour {
           * _effective.GameWidth * _effective.GameHeight * 4;
         _gameRawQueue = new BoundedByteQueue(MediaRecording.MaxGameRawFrames, rawCap);
         _gameWriter = new AviMjpegWriter();
-        if (!_gameWriter.Begin(_gamePath, _effective.GameWidth, _effective.GameHeight, _effective.GameFps))
+        // Lossless gameplay path (forensic finding): raw RGBA chunks, no
+        // JPEG stage anywhere between screen and x264.
+        if (!_gameWriter.BeginRaw(_gamePath, _effective.GameWidth, _effective.GameHeight, _effective.GameFps))
           return FailStart("encoder-init-failed:game");
         if (!PrepareGameCapture()) {
           // Gameplay copy unavailable (no camera/RT): the session continues
@@ -751,6 +767,7 @@ public class MediaRecordingService : MonoBehaviour {
         }
         if (_effective.RecordAudio) PollLocalMic();
         WatchAudioPresence();
+        PollDiskSpace(); // throttled inside: graceful early stop before the disk fills
       } else if (ShouldPumpStopping(_state)) {
         // Finalizing must keep pumping: the transcode thread finishes there
         // and FinishSession only runs from this pump (a session stuck in
@@ -779,6 +796,32 @@ public class MediaRecordingService : MonoBehaviour {
       } else if (_indicator.IsShowing) {
         _indicator.Hide();
       }
+    } catch (Exception) { }
+  }
+
+  // Mid-session disk guard (raw intermediates are big): stop gracefully
+  // while there is still room to finalize + transcode the partial take.
+  // Throttled to one cheap probe per 10 s. Trips once per session: sets the
+  // flag and stops normally; FinishSession converts it to an explicit
+  // disk-space-low Error (with the partial files kept), never a silent
+  // truncation and never a corrupt tail.
+  float _lastDiskCheck = -1000f;
+  bool _diskLowStop;
+
+  void PollDiskSpace() {
+    try {
+      if (_diskLowStop) return;
+      float now = 0f;
+      try { now = Time.unscaledTime; } catch (Exception) { return; }
+      if (now - _lastDiskCheck < 10f) return;
+      _lastDiskCheck = now;
+      string dir = _outputDir;
+      if (string.IsNullOrEmpty(dir)) return;
+      if (MediaRecording.DriveSpaceOk(dir, 1024L * 1024L * 1024L)) return;
+      _diskLowStop = true;
+      try { Debug.Log("[MediaRec] disk low mid-session: stopping gracefully"); }
+      catch (Exception) { }
+      try { StopRecording(); } catch (Exception) { }
     } catch (Exception) { }
   }
 
@@ -996,63 +1039,46 @@ public class MediaRecordingService : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  // Worker-side JPEG entry for the farm (pure: no Unity API, never throws).
-  static byte[] EncodeGameFrame(byte[] raw, int w, int h, int q) {
+  // Game worker (background): raw RGBA -> lossless game.avi (direct file
+  // writes, memcpy-speed — no encode stage, so one thread sustains any
+  // sample rate; the threaded JPEG farm became obsolete with the raw path).
+  // Owns _gameWriter. Counts and failure semantics unchanged (every dequeued
+  // frame appended once in order; any refusal fails the track).
+  //
+  // Color contract: capture hands us RGBA32 (R at [0]); AVI BI_RGB 32-bit is
+  // BGRA on the wire (B at [0]). The old JPEG path converted correctly
+  // inside JpegEncoder; raw must swizzle R<->B explicitly or ffmpeg decodes
+  // red/blue swapped. In-place on the worker-owned dequeue (never the
+  // shared queue slot), so the main thread pays nothing.
+  static void SwizzleRgbaToBgra(byte[] px) {
     try {
-      byte[] jpeg;
-      if (raw != null && JpegEncoder.TryEncode(raw, w, h, q, out jpeg)) return jpeg;
-      return null;
-    } catch (Exception) { return null; }
+      if (px == null) return;
+      for (int i = 0; i + 3 < px.Length; i += 4) {
+        byte r = px[i];
+        px[i] = px[i + 2];
+        px[i + 2] = r;
+      }
+    } catch (Exception) { }
   }
 
-  // Game worker (background): RGBA -> threaded C# JPEG farm -> game.avi in
-  // STRICT capture order (round-robin drain). Owns _gameWriter. Counts and
-  // failure semantics match the old single-threaded path exactly (every
-  // dequeued frame appended once in order; any refusal fails the track).
   void GamePump() {
-    OrderedFrameEncoder farm = null;
     try {
       byte[] raw;
-      int w = _effective.GameWidth, h = _effective.GameHeight, q = _effective.GameJpegQuality;
-      try { farm = new OrderedFrameEncoder(OrderedFrameEncoder.DefaultWorkerCount(), EncodeGameFrame); }
-      catch (Exception) { farm = null; }
-      if (farm == null) { _gameWriteFailed = true; return; }
-      try {
-        lock (_telLock) {
-          _telemetry.GameEncodeThreads = farm.WorkerCount;
-          try { _telemetry.CpuCount = System.Environment.ProcessorCount; } catch (Exception) { }
-        }
-      } catch (Exception) { }
-      long pushSeq = 0, nextSeq = 0, appended = 0;
-      bool pushing = true;
-      while (true) {
-        // 1. drain every consecutive ready frame (in order).
+      int expect = _effective.GameWidth * _effective.GameHeight * 4;
+      while (!_gameRawQueue.IsClosed || _gameRawQueue.Count > 0) {
         try {
-          byte[] jpeg;
-          while (!_gameWriteFailed && farm.TryTakeOrdered(nextSeq, out jpeg)) {
-            if (jpeg == null || !_gameWriter.AppendJpeg(jpeg)) { _gameWriteFailed = true; break; }
+          if (_gameRawQueue.TryDequeue(out raw)) {
+            if (raw == null || raw.Length != expect) { _gameWriteFailed = true; break; }
+            SwizzleRgbaToBgra(raw);
+            if (!_gameWriter.AppendRawFrame(raw)) {
+              _gameWriteFailed = true;
+              break;
+            }
             lock (_telLock) { _telemetry.GameFrames++; }
-            nextSeq++;
-            appended++;
+          } else {
+            Thread.Sleep(5);
           }
-        } catch (Exception) { _gameWriteFailed = true; }
-        if (_gameWriteFailed) break;
-        // 2. push the next raw frame (round-robin stripe by seq).
-        if (pushing) {
-          bool more = false;
-          try { more = (!_gameRawQueue.IsClosed || _gameRawQueue.Count > 0); } catch (Exception) { }
-          if (more && _gameRawQueue.TryDequeue(out raw)) {
-            if (raw == null || raw.Length != w * h * 4) { _gameWriteFailed = true; break; }
-            if (!farm.Push(pushSeq, raw, w, h, q)) { _gameWriteFailed = true; break; }
-            pushSeq++;
-          } else if (!more) {
-            pushing = false;
-            try { farm.Complete(); } catch (Exception) { }
-          }
-        }
-        // 3. exit when raw is exhausted and every pushed frame is appended.
-        if (!pushing && appended >= pushSeq) break;
-        Thread.Sleep(2);
+        } catch (Exception) { _gameWriteFailed = true; break; }
       }
       try {
         long frames;
@@ -1061,7 +1087,6 @@ public class MediaRecordingService : MonoBehaviour {
       } catch (Exception) { _gameWriteFailed = true; }
     } catch (Exception) { _gameWriteFailed = true; }
     finally {
-      try { if (farm != null) farm.Dispose(); } catch (Exception) { }
       try { _gameWriter.Close(); } catch (Exception) { }
       _gamePumpDone = true;
     }
@@ -1413,6 +1438,11 @@ public class MediaRecordingService : MonoBehaviour {
       try {
         Debug.Log("[MediaRec] transcode start (" + ffmpeg + ") session=" + _sessionId);
       } catch (Exception) { }
+      // Forensics (no behavior change): the exact encoder invocation, so any
+      // output file can be traced back to its arguments from the log alone.
+      try {
+        Debug.Log("[MediaRec] ffmpeg args: " + FfmpegTranscodeBackend.BuildArguments(spec));
+      } catch (Exception) { }
       t.Start();
     } catch (Exception) { _transcodeStarted = false; }
   }
@@ -1645,11 +1675,13 @@ public class MediaRecordingService : MonoBehaviour {
       if (info.Width != _effective.GameWidth || info.Height != _effective.GameHeight) return false;
       if (info.FrameCount <= 0) return false;
       int n = (int)Math.Min(info.FrameCount, int.MaxValue);
+      // Lossless path: exact-size RGBA payloads (SOI check skipped).
+      long expectLen = (long)_effective.GameWidth * _effective.GameHeight * 4;
       foreach (int p in new[] { 0, n / 2, n - 1 }) {
-        byte[] jpeg;
+        byte[] raw;
         string why;
-        if (!AviMjpegWriter.TryExtractFrame(_gamePath, p, out jpeg, out why)) return false;
-        if (jpeg == null || jpeg.Length == 0) return false;
+        if (!AviMjpegWriter.TryExtractFrame(_gamePath, p, out raw, out why, true)) return false;
+        if (raw == null || raw.Length != expectLen) return false;
       }
       return true;
     } catch (Exception) { return false; }
@@ -1774,10 +1806,18 @@ public class MediaRecordingService : MonoBehaviour {
     } catch (Exception) { return null; }
   }
 
+  // Machine evidence for the sidecar (per-machine sizing traceability).
+  // Never throws; 0 = unknown.
+  static int CpuCountNow() {
+    try {
+      int c = System.Environment.ProcessorCount;
+      return c > 0 ? c : 0;
+    } catch (Exception) { return 0; }
+  }
+
   string ResolveOutputDir() {
     try {
-      if (!string.IsNullOrEmpty(_effective.OutputDirOverride)) return _effective.OutputDirOverride;
-      // Remembered choice wins over the hardcoded default (F2/F4 flow).
+      if (!string.IsNullOrEmpty(_effective.OutputDirOverride)) return _effective.OutputDirOverride;      // Remembered choice wins over the hardcoded default (F2/F4 flow).
       try {
         string saved = SavedOutputDir();
         if (!string.IsNullOrEmpty(saved)) return saved;
@@ -1813,6 +1853,8 @@ public class MediaRecordingService : MonoBehaviour {
           Quality = _effective.Quality.ToString(),
           VideoCrf = _effective.VideoCrf,
           VideoPreset = _effective.VideoPreset,
+          GameEncodeThreads = 1, // raw path: single writer thread, memcpy-speed
+          CpuCount = CpuCountNow(),
         };
         _lastError = string.Empty;
       }
@@ -2012,6 +2054,11 @@ public class MediaRecordingService : MonoBehaviour {
           GameWidth = _telemetry.GameWidth,
           GameHeight = _telemetry.GameHeight,
           GameFps = _telemetry.GameFps,
+          Quality = _telemetry.Quality,
+          VideoCrf = _telemetry.VideoCrf,
+          VideoPreset = _telemetry.VideoPreset,
+          GameEncodeThreads = _telemetry.GameEncodeThreads,
+          CpuCount = _telemetry.CpuCount,
           AudioPath = _telemetry.AudioPath,
           VideoPath = _telemetry.VideoPath,
           AudioBytes = _telemetry.AudioBytes,
@@ -2068,7 +2115,7 @@ public class MediaRecordingService : MonoBehaviour {
   }
 
   // Gameplay test hook: raw RGBA frame through the REAL worker path
-  // (C# JPEG encode -> game.avi). Bytes must be W*H*4 (config game size).
+  // (swizzle + raw BGRA -> game.avi). Bytes must be W*H*4 (config game size).
   public bool TestEnqueueGameRaw(uint serial, byte[] rgba) {
     try {
       if (_state != RecordingState.Recording || !_effective.RecordVideo) return false;

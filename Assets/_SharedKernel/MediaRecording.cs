@@ -109,10 +109,13 @@ public static class MediaRecording {
 
   // Full-session deliverables (Phase 2.3b): gameplay + camera PiP + audio,
   // transcoded by the isolated FFmpeg backend when available.
-  public const string GameExtension = ".avi"; // intermediate (MJPEG, C# JPEG)
+  // Cam intermediate stays MJPEG (phone JPEG bytes verbatim, not a re-encode;
+  // local-cam source encodes once at capture). Game intermediate is LOSSLESS
+  // raw BGRA (no JPEG stage anywhere between screen and x264 — q90 forensic).
+  public const string GameExtension = ".avi"; // intermediate (raw BGRA BI_RGB)
   public const string Mp4Extension = ".mp4";  // deliverable (H.264 + MP3)
   public const string Mp3Extension = ".mp3";  // deliverable (LAME VBR)
-  public const string GameBackendName = "avi-mjpeg(csharp-jpeg)";
+  public const string GameBackendName = "avi-raw-bgra(top-down)";
   public const string DeliverBackendName = "mp4-h264+mp3(ffmpeg)";
   public const int DefaultGameWidth = 1280; // match the typical window: no
   public const int DefaultGameHeight = 720; // downscale softening (user rule)
@@ -120,10 +123,32 @@ public static class MediaRecording {
   public const int MaxGameWidth = 1920;
   public const int MinGameHeight = 180;
   public const int MaxGameHeight = 1080;
-  public const int DefaultGameFps = 20; // worker JPEG sustains ~19 fps here;
-                                  // cap 20 keeps header rate ≈ wall rate
-  public const int DefaultGameJpegQuality = 90; // intermediate is deleted
-                                   // after transcode: stay near-lossless here
+  public const int DefaultGameFps = 20; // sample cadence cap (raw writes are
+                                  // memcpy-speed, so the pump sustains it)
+  // Raw gameplay intermediates are big (1080p20 ~= 165 MB/s transient):
+  // refuse to start a video session below this free space rather than
+  // dying mid-take with corrupt files.
+  public const long MinFreeDiskBytes = 4L * 1024L * 1024L * 1024L;
+
+  // True when the drive holding dir has enough free space. False (never
+  // throws) for empty/missing paths and unresolvable drives.
+  public static bool DriveSpaceOk(string dir, long minFreeBytes) {
+    try {
+      if (string.IsNullOrEmpty(dir)) return false;
+      string root;
+      try { root = System.IO.Path.GetPathRoot(dir); } catch (Exception) { return false; }
+      if (string.IsNullOrEmpty(root)) return false;
+      var drive = new System.IO.DriveInfo(root);
+      long free = 0;
+      try { free = drive.AvailableFreeSpace; } catch (Exception) { return false; }
+      return free >= minFreeBytes;
+    } catch (Exception) { return false; }
+  }
+  // LEGACY (kept for config compat; the game video path is raw since the
+  // q90-forensic: even q90 JPEG imprinted chroma speckle on flats while
+  // x264@CRF12 stayed transparent, so no JPEG stage remains between screen
+  // and x264). New code must NOT read this for game frames.
+  public const int DefaultGameJpegQuality = 90;
   public const int MaxGameRawFrames = 6; // RGBA handoff cap (bounded memcpy)
   public const int DefaultVideoCrf = 19; // x264: lower = better (10..32);
                                    // 19 ~= transparent (user rule: squeeze
@@ -174,7 +199,8 @@ public struct MediaRecordingConfig {
   public int GameWidth;           // gameplay capture width (default 1280)
   public int GameHeight;          // gameplay capture height (default 720)
   public int GameFps;             // gameplay sample rate (default 24)
-  public int GameJpegQuality;     // worker-side C# JPEG for game frames
+  // LEGACY (config compat only; game frames are raw — never read this).
+  public int GameJpegQuality;
   public int VideoCrf;            // x264 CRF 10..32 (default 19: transparent,
                                   // bigger file by user rule)
   public string VideoPreset;      // x264 preset allowlist (default medium:
@@ -514,11 +540,11 @@ public sealed class RecordingTelemetry {
   public long VideoGapSamples; // sample ticks with no Live frame while recording
   public long GameFrames;
   public long GameDroppedRaw;   // RGBA handoff over cap (worker lagging)
-  public long GameDroppedQueue; // JPEG backlog over cap
+  public long GameDroppedQueue; // raw backlog over cap (bounded, counted)
   public long GameDroppedForeign;
   public long GameGapSamples;   // sample ticks with no readback while recording
   public long GameDarkFrames;   // readbacks with near-zero brightness (black-path tripwire)
-  public int GameEncodeThreads; // JPEG farm width for the session (0 = single-thread legacy)
+  public int GameEncodeThreads; // game writer threads (raw path = 1, memcpy-speed)
   public int CpuCount;          // machine logical processors seen at session start
   public bool Transcoded;       // ffmpeg deliverables produced
   public string Mp4Path = string.Empty;

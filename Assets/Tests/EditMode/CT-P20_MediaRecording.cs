@@ -684,54 +684,123 @@ public class CT_P20_MediaRecording {
     }
   }
 
-  [Test] public void P20Y_ThreadedEncoderKeepsCaptureOrder() {
-    // The farm may finish frames out of order (slow lane forced here by
-    // seq-dependent sleeps); the round-robin drain must still emit 0..N-1.
-    // Mirrors the pump: push and drain concurrently (bounded lanes refuse a
-    // push flood with nobody draining).
-    const int n = 24;
-    var farm = new OrderedFrameEncoder(4, (byte[] raw, int w, int h, int q) => {
-      try { Thread.Sleep((raw[0] % 4) * 15); } catch (Exception) { }
-      return new byte[] { 0xFF, 0xD8, 0xFF, raw[0] }; // tag carries the seq
-    });
+  [Test] public void P20Z_EncoderThreadCountStaysSane() {
+    // Raw path runs single-threaded (memcpy-speed writes need no farm):
+    // a full session must report exactly 1 writer thread + live CPU count.
+    string dir = TempDir();
+    MediaRecordingService rec = null;
     try {
-      Assert.AreEqual(4, farm.WorkerCount);
-      long pushed = 0, next = 0;
-      var order = new System.Collections.Generic.List<byte>();
-      bool completed = false;
-      int spins = 0;
-      while (next < n && spins < 4000) {
-        spins++;
-        if (pushed < n) {
-          if (farm.Push(pushed, new byte[] { (byte)pushed }, 64, 48, 90)) pushed++;
-        } else if (!completed) {
-          farm.Complete();
-          completed = true;
-        }
-        byte[] jpeg;
-        while (farm.TryTakeOrdered(next, out jpeg)) {
-          Assert.IsNotNull(jpeg);
-          order.Add(jpeg[3]);
-          next++;
-        }
-        if (next < n) Thread.Sleep(2);
-      }
-      Assert.AreEqual(n, next, "all frames drained");
-      Assert.AreEqual(n, order.Count);
-      for (int i = 0; i < n; i++)
-        Assert.AreEqual((byte)i, order[i], "content proves order, not luck");
-      Assert.IsTrue(farm.IsIdle(), "all lanes drained");
+      rec = NewService(dir);
+      Assert.IsTrue(rec.StartRecording(RecordingMode.MicAndCamera), rec.LastError);
+      Assert.IsTrue(rec.TestEnqueueGameRaw(1, TestRgba(3)));
+      Assert.IsTrue(rec.StopRecording());
+      Assert.IsTrue(WaitTerminal(rec, 20000));
+      Assert.AreEqual(RecordingState.Completed, rec.CurrentState);
+      var t = rec.ReadTelemetrySnapshot();
+      Assert.AreEqual(1, t.GameEncodeThreads);
+      Assert.GreaterOrEqual(t.CpuCount, 1);
     } finally {
-      try { farm.Dispose(); } catch (Exception) { }
+      KillService(rec);
+      WipeDir(dir);
     }
   }
 
-  [Test] public void P20Z_EncoderThreadCountStaysSane() {
-    // Per-machine sizing on the real formula (live cores; ProcessorCount
-    // cannot be injected, so the rule itself is pinned in the farm's doc
-    // comment): a weak laptop keeps its gameplay core, a big rig caps out.
-    int live = OrderedFrameEncoder.DefaultWorkerCount();
-    Assert.GreaterOrEqual(live, 1, "floor: a 2-core laptop behaves single-threaded");
-    Assert.LessOrEqual(live, 8, "ceiling: the bus, not cores, is the JPEG limit");
+  [Test] public void P20AA_RawWriterRoundTripRestamp() {
+    // Lossless gameplay container: exact-size RGBA in/out, header restamps
+    // to the measured rate, handler reads back DIB (not MJPG).
+    string dir = TempDir();
+    try {
+      string path = Path.Combine(dir, "raw.avi");
+      var w = new AviMjpegWriter();
+      Assert.IsTrue(w.BeginRaw(path, 64, 48, 20));
+      byte[] rgba = new byte[64 * 48 * 4];
+      for (int i = 0; i < rgba.Length; i++) rgba[i] = (byte)(i & 0xFF);
+      Assert.IsTrue(w.AppendRawFrame(rgba));
+      Assert.IsTrue(w.AppendRawFrame(rgba));
+      // Wrong-size payloads are refused, never adapted.
+      Assert.IsFalse(w.AppendRawFrame(new byte[10]));
+      // MJPEG appends are refused on a raw track (never mix).
+      Assert.IsFalse(w.AppendJpeg(FakeJpeg(500, 0x60)));
+      long frames;
+      Assert.IsTrue(w.Finalize(out frames, 10.0));
+      Assert.AreEqual(2, frames);
+      try { w.Close(); } catch (Exception) { }
+      AviMjpegWriter.AviInfo info;
+      Assert.IsTrue(AviMjpegWriter.TryReadInfo(path, out info), info.Reason);
+      Assert.AreEqual(64, info.Width);
+      Assert.AreEqual(48, info.Height);
+      Assert.AreEqual(2, info.FrameCount);
+      Assert.AreEqual(10.0, info.Fps, 0.01);
+      Assert.AreEqual("DIB ", info.Handler);
+      // Default (MJPEG) extract refuses raw payloads; allowRaw returns them.
+      byte[] out_;
+      string why;
+      Assert.IsFalse(AviMjpegWriter.TryExtractFrame(path, 0, out out_, out why));
+      Assert.IsTrue(AviMjpegWriter.TryExtractFrame(path, 1, out out_, out why, true), why);
+      Assert.IsNotNull(out_);
+      Assert.AreEqual(64 * 48 * 4, out_.Length);
+      CollectionAssert.AreEqual(rgba, out_, "lossless: bit-exact round trip");
+      // Header layout pin (P2X exit-22 root cause): strf chunk size 40 +
+      // biSize 40 (double-40, not a duplication) + negative biHeight for
+      // top-down raw. Read the bytes directly, independent of the writer.
+      byte[] blob = File.ReadAllBytes(path);
+      int at = FindTag(blob, "strf");
+      Assert.GreaterOrEqual(at, 0, "strf present");
+      Assert.AreEqual(40u, RdU32(blob, at + 4), "strf chunk size");
+      Assert.AreEqual(40u, RdU32(blob, at + 8), "biSize");
+      Assert.AreEqual(64, RdI32(blob, at + 12), "biWidth");
+      Assert.AreEqual(-48, RdI32(blob, at + 16), "raw biHeight negative (top-down)");
+    } finally { WipeDir(dir); }
+  }
+
+  static uint RdU32(byte[] b, int o) {
+    return (uint)(b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24));
+  }
+
+  static int RdI32(byte[] b, int o) {
+    return unchecked((int)RdU32(b, o));
+  }
+
+  [Test] public void P20AC_RawHeadersStayFfmpegReadable() {
+    // MJPEG keeps the legacy positive height; raw declares top-down.
+    // Both keep the double-40 strf layout (chunk + biSize).
+    string dir = TempDir();
+    try {
+      string mj = Path.Combine(dir, "mj.avi");
+      var w = new AviMjpegWriter();
+      Assert.IsTrue(w.Begin(mj, 64, 48, 20));
+      Assert.IsTrue(w.AppendJpeg(FakeJpeg(500, 0x60)));
+      long n;
+      Assert.IsTrue(w.Finalize(out n));
+      try { w.Close(); } catch (Exception) { }
+      byte[] blob = File.ReadAllBytes(mj);
+      int at = FindTag(blob, "strf");
+      Assert.GreaterOrEqual(at, 0);
+      Assert.AreEqual(40u, RdU32(blob, at + 4));
+      Assert.AreEqual(40u, RdU32(blob, at + 8));
+      Assert.AreEqual(48, RdI32(blob, at + 16), "mjpeg keeps positive height");
+      // Transcode graph normalizes the main to yuv420p so BI_RGB BGRA and
+      // MJPEG yuvj both overlay cleanly (raw exit-22 pin).
+      var spec = new TranscodeSpec {
+        GameAvi = "g.avi", CamAvi = "c.avi", MicWav = "m.wav",
+        OutMp4 = "s.mp4", OutMp3 = "s.mp3",
+        GameFpsActual = 20, CamFpsActual = 10,
+        PipWidth = 240, PipMargin = 16, Crf = 12,
+        Preset = "slow", Mp3Quality = 4,
+      };
+      string args = FfmpegTranscodeBackend.BuildArguments(spec);
+      StringAssert.Contains("[0:v]format=yuv420p[main]", args);
+      StringAssert.Contains("[main][pip]overlay=", args);
+    } finally { WipeDir(dir); }
+  }
+
+  [Test] public void P20AB_DriveSpaceGuardHonest() {
+    string dir = TempDir();
+    try {
+      Assert.IsTrue(MediaRecording.DriveSpaceOk(dir, 1), "temp dir has bytes free");
+      Assert.IsFalse(MediaRecording.DriveSpaceOk(null, 1));
+      Assert.IsFalse(MediaRecording.DriveSpaceOk(string.Empty, 1));
+      Assert.IsFalse(MediaRecording.DriveSpaceOk("::bogus-drive::", 1));
+    } finally { WipeDir(dir); }
   }
 }
