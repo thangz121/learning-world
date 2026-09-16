@@ -671,3 +671,56 @@ visual inspection (raw frame pixel-perfect: Milo/Mia/player colors, labels,
 REC badge, cursor; mp4 crisp single-PiP). Pixel-exact A/B across moments is
 invalid by construction (follow-camera drift + screenshot queue latency,
 lesson 46) — documented in the forensic thresholds, not hidden.
+## 38. Real 30 fps gameplay (2026-09-16): per-stage measurement, no metadata trust
+
+User bar: gameplay recording REAL >= 30 fps with stage numbers
+(Source/Capture/Composer/Encoder/Output), no duplicate/metadata fakery,
+1080p untouched, no JPEG back — else FAIL, never lower the bar.
+
+Instrumentation (all probes, never logic; additive only): render frames +
+ms mean/max in Update; capture request counter + completion pacing online
+stats (mean/max/holes>50 ms, no per-frame lists); composer-side adjacent
+sample-hash duplicates (FNV-1a stride 4096, ~2K ops/frame); transcode
+elapsed/fps; process CPU % over the wall (GPU has no vendor API in-player,
+render-ms is the documented proxy). Pinned by P20AD/AE/AF (+P20AG/AH/AI).
+
+Baseline 30 Hz take PROVED the probes by catching two real bugs:
+- (1) OUTPUT 10 fps: the 4.39 GB game.avi crossed AVI's 4 GB 32-bit size
+  ceiling — every size field wrapped (avi_walk.py: movi size 92,774,540,
+  idx1 unreachable), so in-game verify failed and the game track silently
+  dropped out of the transcode (mp4 came out at the cam rate: 176 samples).
+  Fix: `.rawvid` stream container (frames at byte 0 + 24 B footer with
+  magic/dims/count; no size fields, no ceiling) + `-frames:v` exact cap.
+- (2) 6 px SHIFT: a 24-byte header would offset every ffmpeg frame (rawvideo
+  demuxer starts at byte 0, no skip) — invisible to the eye, 23 dB to PSNR
+  (forensic caught it). Fix: footer layout (byte 0 = frame 0) — the "Packet
+  too small (24)" line in transcode logs is the expected footer probe, exit 0.
+- (3) Rate anchoring: start-anchored walls include ~0.34 s warmup with zero
+  frames and understate steady 30 Hz cadence as 29.37 (pacing 33.5 ms proved
+  the cadence). Fix: active-span anchoring (frames/(wall-firstOffset)) for
+  -framerate/-r + 0.5 Hz nominal oversample (measured rate stamps outputs;
+  duplicates guard fakery). Pinned by P20AH.
+Suite: 400 total, 399 pass, 0 fail, 1 skip (P20AG/AH/AI green).
+
+Live proof, ONE E2E at MAX 1920x1080 walking (footer .rawvid, keep):
+COMPLETE int=False err= (empty) — stage table OVERALL PASS:
+Source render 58.85 fps (msMean 17.0, one 281 ms hitch) / Capture 540
+requests, gaps 0, pacing mean 32.7 ms, holes 12/539 / Composer 540 appended
+(30.56 active), drops 0, dup 0 (second implementation confirms in tool:
+dup_pairs 0, max_run 1) / Encoder x264 55 fps offline / Output mp4 540
+samples 30.57 fps 17.67 s / CPU 9.1% / header~measured + mp4~measured agree.
+Verifier OVERALL PASS on all four files. Quality re-verified at 30 fps:
+static-moment B/C **40.43 dB** PASS + source step-uniformity (rawvid diffs
+1.1-2.4 whole take) + visual crisp on B/C/tail frames. Player.log 0
+exceptions, 0 EndRenderPass.
+Watch items (non-blocking, open): 12/539 pacing holes (2.2%, hitch-forgiven
+ticks — impact proven negligible on the deliverable: output steps p99 1.7x
+median, no scattered anomalies); mp4-tail micro-steps (transcode-boundary,
+source smooth, frames crisp); hole-timestamp instrumentation proposed as the
+next probe if holes ever matter.
+Incident during lockdown (own bug, fixed, pinned): the flat 8 GB start floor
+reddened 10/10 session tests with `disk-space-low` on a healthy-but-tight
+dev disk — the guard must scale with the CONFIGURED take, not punish 100 KB
+unit sessions. Fix: `RequiredFreeBytes` (90 s of configured raw rate,
+clamped [256 MB .. 8 GB]) + quarter mid-session tripwire + GB-aware toast
+text; pinned by P20AJ. Suite after fix: 401 total, 400 pass, 0 fail, 1 skip.

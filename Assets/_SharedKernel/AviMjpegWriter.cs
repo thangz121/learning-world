@@ -77,7 +77,11 @@ public sealed class AviMjpegWriter : IDisposable {
       string dir;
       try { dir = Path.GetDirectoryName(path); } catch (Exception) { dir = null; }
       if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) return false;
-      _fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
+      // 1 MB stream buffer + SequentialScan: at 1080p30 each frame is one
+      // 8.3 MB write at 30 Hz (~249 MB/s); the default 4 KB buffer would
+      // syscall-chop every frame. Behavior identical, fewer kernel crossings.
+      _fs = new FileStream(path, FileMode.Create, FileAccess.Write,
+        FileShare.Read, 1 << 20, FileOptions.SequentialScan);
       _raw = raw;
       _width = width;
       _height = height;
@@ -617,7 +621,8 @@ public sealed class AviMjpegWriter : IDisposable {
       if (len == 0 || len > maxLen) { reason = "bad-len"; return false; }
       // Spec-relative first, absolute fallback. Single payload read only.
       long[] cands = { s.MoviBase + e.OffsetFromMovi, e.OffsetFromMovi };
-      using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
+      using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read,
+        FileShare.ReadWrite, 1 << 20, FileOptions.SequentialScan)) {
         long flen = 0;
         try { flen = fs.Length; } catch (Exception) { reason = "io"; return false; }
         foreach (long c in cands) {

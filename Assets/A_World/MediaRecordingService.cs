@@ -126,7 +126,7 @@ public class MediaRecordingService : MonoBehaviour {
 
   WavWriter _audioWriter;
   AviMjpegWriter _videoWriter;
-  AviMjpegWriter _gameWriter;
+  RawVideoWriter _gameWriter;
   Thread _audioThread;
   Thread _videoThread;
   Thread _gameThread;
@@ -150,6 +150,13 @@ public class MediaRecordingService : MonoBehaviour {
   DateTime _stopUtc;
   float _videoSampleTimer;
   float _gameSampleTimer;
+  // Real-fps instrumentation state (all reset per session in ResetSessionState;
+  // every accumulation is lock-guarded + never-throw — probes, not logic).
+  float _lastCaptureTickTime = -1f; // unscaled time of last enqueued readback
+  uint _prevGameHash;
+  bool _hasPrevGameHash;
+  double _cpuStartSec;
+  double _cpuWallStartSec; // SessionDurationSec at START (wall anchor for CPU %)
   bool _interruptedLogged;
   bool _testForceSources;
   bool _testDisableTranscode;
@@ -455,6 +462,25 @@ public class MediaRecordingService : MonoBehaviour {
   }
 
   // Technical reason -> parent-facing hint (toast + log share it).
+  // disk-space-low carries the required GB ("disk-space-low:8GB"); parse it
+  // defensively, fall back to the full-size wording on any shape mismatch.
+  static string DiskNeedText(string reason) {
+    try {
+      int i = reason.IndexOf("disk-space-low:", StringComparison.Ordinal);
+      if (i >= 0) {
+        int s = i + "disk-space-low:".Length;
+        int e = reason.IndexOf("GB", s, StringComparison.OrdinalIgnoreCase);
+        if (e > s && e - s <= 4) {
+          string num = reason.Substring(s, e - s).Trim();
+          int gb;
+          if (int.TryParse(num, out gb) && gb > 0 && gb <= 1024)
+            return "cần trống ít nhất " + gb + " GB";
+        }
+      }
+    } catch (Exception) { }
+    return "cần trống ít nhất 8 GB";
+  }
+
   static string FriendlyReason(string reason) {
     try {
       if (string.IsNullOrEmpty(reason)) return "lỗi không rõ.";
@@ -467,7 +493,8 @@ public class MediaRecordingService : MonoBehaviour {
       if (reason.Contains("output-dir"))
         return "Không ghi được vào chỗ lưu. Nhấn F2 2 lần liên tiếp để chọn chỗ khác.";
       if (reason.Contains("disk-space-low"))
-        return "Ổ đĩa sắp đầy (cần trống ít nhất 4 GB cho bản thu). Dọn bớt rồi thử lại.";
+        return "Ổ đĩa sắp đầy (" + DiskNeedText(reason)
+          + " cho bản thu). Dọn bớt rồi thử lại.";
       if (reason.Contains("encoder-init-failed"))
         return "Không khởi động được bộ mã hóa.";
       if (reason.Contains("transcode-timeout"))
@@ -655,8 +682,12 @@ public class MediaRecordingService : MonoBehaviour {
       if (_effective.RecordVideo) {
         // Raw gameplay intermediates are big: refuse early with a clear
         // message rather than corrupting a take when the disk fills mid-way.
-        if (!MediaRecording.DriveSpaceOk(dir, MediaRecording.MinFreeDiskBytes))
-          return FailStart("disk-space-low");
+        // Requirement scales with the configured take (unit sessions need
+        // only the floor, real 1080p30 needs the full 8 GB).
+        long needStart = MediaRecording.RequiredFreeBytes(
+          _effective.GameWidth, _effective.GameHeight, _effective.GameFps);
+        if (!MediaRecording.DriveSpaceOk(dir, needStart))
+          return FailStart("disk-space-low:" + (needStart / (1024L * 1024L * 1024L)) + "GB");
         _videoQueue = BoundedByteQueue.ForVideo(_effective.MaxVideoFrames);
         _videoWriter = new AviMjpegWriter();
         if (!_videoWriter.Begin(_videoPath, _effective.VideoWidth, _effective.VideoHeight, _effective.VideoFps))
@@ -666,10 +697,10 @@ public class MediaRecordingService : MonoBehaviour {
         long rawCap = (long)MediaRecording.MaxGameRawFrames
           * _effective.GameWidth * _effective.GameHeight * 4;
         _gameRawQueue = new BoundedByteQueue(MediaRecording.MaxGameRawFrames, rawCap);
-        _gameWriter = new AviMjpegWriter();
-        // Lossless gameplay path (forensic finding): raw RGBA chunks, no
+        _gameWriter = new RawVideoWriter();
+        // Lossless gameplay path (forensic finding): raw BGRA chunks, no
         // JPEG stage anywhere between screen and x264.
-        if (!_gameWriter.BeginRaw(_gamePath, _effective.GameWidth, _effective.GameHeight, _effective.GameFps))
+        if (!_gameWriter.Begin(_gamePath, _effective.GameWidth, _effective.GameHeight))
           return FailStart("encoder-init-failed:game");
         if (!PrepareGameCapture()) {
           // Gameplay copy unavailable (no camera/RT): the session continues
@@ -711,6 +742,12 @@ public class MediaRecordingService : MonoBehaviour {
       } catch (Exception) { return FailStart("worker-start-failed"); }
 
       SetState(RecordingState.Recording);
+      // Real-fps anchors: process CPU seconds at START (FinishSession diffs
+      // it over the wall); pacing/dup/render probes were zeroed in reset.
+      try {
+        _cpuStartSec = CpuUtil.ProcessCpuSec();
+        _cpuWallStartSec = SessionDurationSec();
+      } catch (Exception) { }
       // One face in the file (user rule): the in-game camera box steps aside
       // while recording (the PiP carries the face); it returns on Stop.
       // Placed AFTER all FailStart gates: a refused start never hides the box.
@@ -761,6 +798,18 @@ public class MediaRecordingService : MonoBehaviour {
         if (fire) StartRecordingSmart();
       }
       if (_state == RecordingState.Recording) {
+        // Source-rate probe (2 float ops/frame, lock-guarded): how fast the
+        // game itself renders while recording. Capture can never outrun this.
+        try {
+          float ms = 0f;
+          try { ms = Time.unscaledDeltaTime * 1000f; } catch (Exception) { }
+          if (ms < 0) ms = 0;
+          lock (_telLock) {
+            _telemetry.RenderFrames++;
+            _telemetry.RenderMsSum += ms;
+            if (ms > _telemetry.RenderMsMax) _telemetry.RenderMsMax = ms;
+          }
+        } catch (Exception) { }
         if (_effective.RecordVideo) {
           SampleVideo();
           SampleGame();
@@ -817,7 +866,9 @@ public class MediaRecordingService : MonoBehaviour {
       _lastDiskCheck = now;
       string dir = _outputDir;
       if (string.IsNullOrEmpty(dir)) return;
-      if (MediaRecording.DriveSpaceOk(dir, 1024L * 1024L * 1024L)) return;
+      long needMid = MediaRecording.RequiredFreeBytesMid(
+        _effective.GameWidth, _effective.GameHeight, _effective.GameFps);
+      if (MediaRecording.DriveSpaceOk(dir, needMid)) return;
       _diskLowStop = true;
       try { Debug.Log("[MediaRec] disk low mid-session: stopping gracefully"); }
       catch (Exception) { }
@@ -915,13 +966,21 @@ public class MediaRecordingService : MonoBehaviour {
       if (_shotArmed) {
         _shotArmed = false;
         try {
+          lock (_telLock) { _telemetry.GameCaptureRequests++; }
           AsyncGPUReadback.Request(_recordRT, 0, TextureFormat.RGBA32, OnGameReadback);
         } catch (Exception) {
           lock (_telLock) { _telemetry.GameGapSamples++; }
         }
       }
       _gameSampleTimer += Time.deltaTime;
-      float interval = 1f / Math.Max(1, _effective.GameFps);
+      // Nominal tick runs GameFps+OverHz (P30: 30.5): warmup, stop-boundary
+      // partial ticks and hitch forgiveness all cost frames against a bare
+      // 30.0 nominal, netting ~29.4 measured. The +0.5 nets >= 30 measured;
+      // the measured rate (never nominal) stamps outputs, and the duplicate
+      // detector proves every counted frame is a distinct capture.
+      float tickHz = _effective.GameFps + MediaRecording.GameSampleOverHz;
+      if (tickHz < 1f) tickHz = 1f;
+      float interval = 1f / tickHz;
       if (_gameSampleTimer >= interval) {
         _gameSampleTimer = interval > 0 ? _gameSampleTimer - interval : 0;
         try {
@@ -1016,6 +1075,22 @@ public class MediaRecordingService : MonoBehaviour {
         lock (_telLock) {
           if (_telemetry.FirstGameOffsetMs < 0)
             _telemetry.FirstGameOffsetMs = _clock.OffsetMs();
+          // Pacing probe: interval between capture completions. Online
+          // aggregates only (no per-frame lists in the sidecar).
+          try {
+            float now = Time.unscaledTime;
+            if (_lastCaptureTickTime >= 0f) {
+              double dt = (now - _lastCaptureTickTime) * 1000.0;
+              if (dt >= 0 && dt <= 60000) {
+                _telemetry.GamePacingN++;
+                _telemetry.GamePacingSumMs += dt;
+                _telemetry.GamePacingSumSqMs += dt * dt;
+                if (dt > _telemetry.GamePacingMaxMs) _telemetry.GamePacingMaxMs = dt;
+                if (dt > 50) _telemetry.GamePacingOver50++;
+              }
+            }
+            _lastCaptureTickTime = now;
+          } catch (Exception) { }
         }
       }
     } catch (Exception) { }
@@ -1039,17 +1114,17 @@ public class MediaRecordingService : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  // Game worker (background): raw RGBA -> lossless game.avi (direct file
+  // Game worker (background): raw RGBA -> lossless game.rawvid (direct file
   // writes, memcpy-speed — no encode stage, so one thread sustains any
   // sample rate; the threaded JPEG farm became obsolete with the raw path).
   // Owns _gameWriter. Counts and failure semantics unchanged (every dequeued
   // frame appended once in order; any refusal fails the track).
   //
-  // Color contract: capture hands us RGBA32 (R at [0]); AVI BI_RGB 32-bit is
-  // BGRA on the wire (B at [0]). The old JPEG path converted correctly
-  // inside JpegEncoder; raw must swizzle R<->B explicitly or ffmpeg decodes
-  // red/blue swapped. In-place on the worker-owned dequeue (never the
-  // shared queue slot), so the main thread pays nothing.
+  // Color contract: capture hands us RGBA32 (R at [0]); the rawvid stream is
+  // BGRA on the wire (B at [0], ffmpeg rawvideo native). The old JPEG path
+  // converted correctly inside JpegEncoder; raw must swizzle R<->B explicitly
+  // or ffmpeg decodes red/blue swapped. In-place on the worker-owned dequeue
+  // (never the shared queue slot), so the main thread pays nothing.
   static void SwizzleRgbaToBgra(byte[] px) {
     try {
       if (px == null) return;
@@ -1070,7 +1145,19 @@ public class MediaRecordingService : MonoBehaviour {
           if (_gameRawQueue.TryDequeue(out raw)) {
             if (raw == null || raw.Length != expect) { _gameWriteFailed = true; break; }
             SwizzleRgbaToBgra(raw);
-            if (!_gameWriter.AppendRawFrame(raw)) {
+            // Duplicate-frame tripwire (anti-fake-fps): adjacent-identical
+            // FILE bytes mean the pipeline re-emitted one capture twice.
+            // Sample-hashed (2K samples, noise-cheap); a walking scene must
+            // never trip it. Counted under the same lock as GameFrames.
+            try {
+              uint h = FrameSampleHash.Hash(raw, 4096);
+              lock (_telLock) {
+                if (_hasPrevGameHash && h != 0 && h == _prevGameHash)
+                  _telemetry.GameDuplicateFrames++;
+                if (h != 0) { _prevGameHash = h; _hasPrevGameHash = true; }
+              }
+            } catch (Exception) { }
+            if (!_gameWriter.AppendFrame(raw)) {
               _gameWriteFailed = true;
               break;
             }
@@ -1082,8 +1169,10 @@ public class MediaRecordingService : MonoBehaviour {
       }
       try {
         long frames;
-        double gFps = MeasuredStreamFps(_gameWriter != null ? _gameWriter.FrameCount : 0);
-        if (!_gameWriter.Finalize(out frames, gFps)) _gameWriteFailed = true;
+        // .rawvid carries no header rate (stream, no size/rate fields by
+        // design) — the measured active-span rate travels as the ffmpeg
+        // -framerate input flag instead (see BuildTranscodeSpec).
+        if (!_gameWriter.Finalize(out frames)) _gameWriteFailed = true;
       } catch (Exception) { _gameWriteFailed = true; }
     } catch (Exception) { _gameWriteFailed = true; }
     finally {
@@ -1448,11 +1537,23 @@ public class MediaRecordingService : MonoBehaviour {
   }
 
   void TranscodePump(string ffmpeg, TranscodeSpec spec) {
+    DateTime t0 = DateTime.UtcNow;
     try {
       _transcodeResult = FfmpegTranscodeBackend.Run(ffmpeg, spec, _transcodeTimeoutMs);
     } catch (Exception e) {
       _transcodeResult = new TranscodeResult { Error = "pump:" + e.GetType().Name };
     } finally {
+      // Encoder throughput (offline x264: informational, never gating):
+      // game frames per transcode second.
+      try {
+        double ms = (DateTime.UtcNow - t0).TotalMilliseconds;
+        if (ms < 0) ms = 0;
+        lock (_telLock) {
+          _telemetry.TranscodeElapsedMs = (long)ms;
+          long gf = _telemetry.GameFrames;
+          _telemetry.TranscodeFps = (gf > 0 && ms > 0) ? gf / (ms / 1000.0) : 0;
+        }
+      } catch (Exception) { }
       _transcodeDone = true;
     }
   }
@@ -1474,8 +1575,15 @@ public class MediaRecordingService : MonoBehaviour {
       double dur = SessionDurationSec();
       lock (_telLock) {
         long gf = _telemetry.GameFrames, vf = _telemetry.VideoFrames;
-        s.GameFpsActual = dur > 0.5 ? gf / dur : _effective.GameFps;
+        // Game rate anchors on the ACTIVE span (first game frame -> stop):
+        // start-anchored walls include ~0.3 s of capture warmup with zero
+        // frames and understate a steady 30 Hz cadence as ~29.4 (P30: pacing
+        // mean 33.5 ms proved the cadence while the wall said 29.37).
+        s.GameFpsActual = RecordingRates.ActiveStreamFps(
+          gf, dur, _telemetry.FirstGameOffsetMs);
+        if (s.GameFpsActual <= 0) s.GameFpsActual = _effective.GameFps;
         s.CamFpsActual = dur > 0.5 ? vf / dur : _effective.VideoFps;
+        s.GameFrames = gf;
       }
       s.GameWidth = _effective.GameWidth;
       s.GameHeight = _effective.GameHeight;
@@ -1529,6 +1637,15 @@ public class MediaRecordingService : MonoBehaviour {
             || (!_telemetry.GameComplete && _effective.RecordVideo))
           _telemetry.Interrupted = true;
         _telemetry.State = RecordingState.Completed;
+        // Process CPU % over the session wall (probe-grade: TotalProcessorTime
+        // deltas; GPU has no vendor API in-player, render-ms is the proxy).
+        try {
+          double cpuNow = CpuUtil.ProcessCpuSec();
+          double wall = SessionDurationSec() - _cpuWallStartSec;
+          int cores = 1;
+          try { cores = System.Environment.ProcessorCount; } catch (Exception) { }
+          _telemetry.ProcessCpuPct = CpuUtil.Pct(cpuNow - _cpuStartSec, wall, cores);
+        } catch (Exception) { }
       }
       WriteSidecar();
 
@@ -1551,6 +1668,30 @@ public class MediaRecordingService : MonoBehaviour {
           + " mp4=" + (_telemetry.Transcoded ? _telemetry.Mp4Bytes + "B" : "<" + _telemetry.TranscodeError + ">")
           + " mp3=" + (_telemetry.Mp3Complete ? _telemetry.Mp3Bytes + "B" : "<off>")
           + " interrupted=" + _telemetry.Interrupted);
+      } catch (Exception) { }
+      // Real-fps stage line (log evidence for the fps gate; same numbers as
+      // the sidecar, one line for grep): source/render, capture requests,
+      // measured game rate, pacing, duplicates, CPU, encoder throughput.
+      try {
+        double wall = SessionDurationSec();
+        if (wall < 0.5) wall = 0.5;
+        double renderFps = _telemetry.RenderFrames / wall;
+        double reqFps = _telemetry.GameCaptureRequests / wall;
+        double gameFps = _telemetry.GameFrames / wall;
+        double paceMean = _telemetry.GamePacingN > 0
+          ? _telemetry.GamePacingSumMs / _telemetry.GamePacingN : 0;
+        Debug.Log("[MediaRec] FPS session=" + _sessionId
+          + " render=" + renderFps.ToString("0.0") + "fps"
+          + " capReq=" + reqFps.ToString("0.0") + "fps"
+          + " game=" + gameFps.ToString("0.0") + "fps"
+          + " paceMean=" + paceMean.ToString("0.0") + "ms"
+          + " paceMax=" + _telemetry.GamePacingMaxMs.ToString("0.0") + "ms"
+          + " over50=" + _telemetry.GamePacingOver50
+          + " gaps=" + _telemetry.GameGapSamples
+          + " drops=" + (_telemetry.GameDroppedRaw + _telemetry.GameDroppedQueue)
+          + " dup=" + _telemetry.GameDuplicateFrames
+          + " cpu=" + _telemetry.ProcessCpuPct.ToString("0.0") + "%"
+          + " x264=" + _telemetry.TranscodeFps.ToString("0.0") + "fps");
       } catch (Exception) { }
       // Plain log (never a warning/error: those pop the dev-player console
       // overlay on screen): every captured gameplay frame was near-black, so
@@ -1670,18 +1811,18 @@ public class MediaRecordingService : MonoBehaviour {
       var fi = new FileInfo(_gamePath);
       lock (_telLock) { _telemetry.GameBytes = fi.Exists ? fi.Length : 0; }
       if (!fi.Exists || fi.Length <= 0) return false;
-      AviMjpegWriter.AviInfo info;
-      if (!AviMjpegWriter.TryReadInfo(_gamePath, out info) || !info.Valid) return false;
+      RawVideoReader.RawInfo info;
+      if (!RawVideoReader.TryReadInfo(_gamePath, out info) || !info.Valid) return false;
       if (info.Width != _effective.GameWidth || info.Height != _effective.GameHeight) return false;
       if (info.FrameCount <= 0) return false;
-      int n = (int)Math.Min(info.FrameCount, int.MaxValue);
-      // Lossless path: exact-size RGBA payloads (SOI check skipped).
-      long expectLen = (long)_effective.GameWidth * _effective.GameHeight * 4;
+      int n = info.FrameCount > int.MaxValue ? int.MaxValue : (int)info.FrameCount;
+      // Lossless path: exact-size BGRA payloads at computed offsets.
       foreach (int p in new[] { 0, n / 2, n - 1 }) {
         byte[] raw;
         string why;
-        if (!AviMjpegWriter.TryExtractFrame(_gamePath, p, out raw, out why, true)) return false;
-        if (raw == null || raw.Length != expectLen) return false;
+        if (!RawVideoReader.TryExtractFrame(_gamePath, p,
+            _effective.GameWidth, _effective.GameHeight, out raw, out why)) return false;
+        if (raw == null || raw.Length != info.FrameBytes) return false;
       }
       return true;
     } catch (Exception) { return false; }
@@ -1871,6 +2012,11 @@ public class MediaRecordingService : MonoBehaviour {
       _gameRawQueue = null;
       _videoSampleTimer = 0;
       _gameSampleTimer = 0;
+      _lastCaptureTickTime = -1f;
+      _prevGameHash = 0;
+      _hasPrevGameHash = false;
+      _cpuStartSec = 0;
+      _cpuWallStartSec = 0;
       _interruptedLogged = false;
       _intermediatesVerified = false;
       _transcodeStarted = false;
@@ -2039,6 +2185,19 @@ public class MediaRecordingService : MonoBehaviour {
           GameDroppedForeign = _telemetry.GameDroppedForeign,
           GameGapSamples = _telemetry.GameGapSamples,
           GameDarkFrames = _telemetry.GameDarkFrames,
+          RenderFrames = _telemetry.RenderFrames,
+          RenderMsSum = _telemetry.RenderMsSum,
+          RenderMsMax = _telemetry.RenderMsMax,
+          GameCaptureRequests = _telemetry.GameCaptureRequests,
+          GameDuplicateFrames = _telemetry.GameDuplicateFrames,
+          GamePacingN = _telemetry.GamePacingN,
+          GamePacingSumMs = _telemetry.GamePacingSumMs,
+          GamePacingSumSqMs = _telemetry.GamePacingSumSqMs,
+          GamePacingMaxMs = _telemetry.GamePacingMaxMs,
+          GamePacingOver50 = _telemetry.GamePacingOver50,
+          TranscodeElapsedMs = _telemetry.TranscodeElapsedMs,
+          TranscodeFps = _telemetry.TranscodeFps,
+          ProcessCpuPct = _telemetry.ProcessCpuPct,
           Transcoded = _telemetry.Transcoded,
           Mp4Path = _telemetry.Mp4Path,
           Mp3Path = _telemetry.Mp3Path,
@@ -2115,7 +2274,7 @@ public class MediaRecordingService : MonoBehaviour {
   }
 
   // Gameplay test hook: raw RGBA frame through the REAL worker path
-  // (swizzle + raw BGRA -> game.avi). Bytes must be W*H*4 (config game size).
+  // (swizzle + raw BGRA -> game.rawvid). Bytes must be W*H*4 (config game size).
   public bool TestEnqueueGameRaw(uint serial, byte[] rgba) {
     try {
       if (_state != RecordingState.Recording || !_effective.RecordVideo) return false;

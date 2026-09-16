@@ -383,6 +383,13 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
             raw_shape = (avih.get("width"), avih.get("height"))
         bad = 0
         first = mid = last = None
+        # Anti-fake-fps scan (raw only): stride-hash EVERY frame while it is
+        # in hand; adjacent-identical payloads = the pipeline re-emitted one
+        # capture twice. Cheap (2K samples/frame) next to the extract itself.
+        dup_pairs = 0
+        max_run = 1
+        run = 1
+        prev_h = None
         for i in range(n):
             try:
                 p = _extract_frame(blob, parsed, i, raw_ok=is_raw)
@@ -392,8 +399,20 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
                     mid = p
                 if i == n - 1:
                     last = p
+                if is_raw and p:
+                    h = hashlib.sha256(p[::4096]).hexdigest()[:16]
+                    if prev_h is not None:
+                        if h == prev_h:
+                            dup_pairs += 1
+                            run += 1
+                            max_run = max(max_run, run)
+                        else:
+                            run = 1
+                    prev_h = h
             except ValueError:
                 bad += 1
+                run = 1
+                prev_h = None
         if not mark(out["decoded"], bad == 0 and first is not None,
                     "extracted=%d/%d bad=%d" % (n - bad, n, bad)):
             ok_all = False
@@ -415,9 +434,14 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
             sizes_ok = all(len(p) > 256 for p in (first, mid, last) if p)
             if is_raw:
                 dark = any(_raw_is_dark(p) for p in (first, mid, last) if p)
-                if not mark(out["content"], sizes_ok and not dark,
-                            "raw-lens=%s alldark=%s" % (
-                                [len(p) for p in (first, mid, last) if p], dark)):
+                out["info"]["dup_pairs"] = dup_pairs
+                out["info"]["dup_max_run"] = max_run
+                out["info"]["dup_rate"] = round(dup_pairs / n, 4) if n else 0
+                frozen = (n > 1 and max_run >= n)
+                if not mark(out["content"], sizes_ok and not dark and not frozen,
+                            "raw-lens=%s alldark=%s dup_pairs=%d max_run=%d" % (
+                                [len(p) for p in (first, mid, last) if p],
+                                dark, dup_pairs, max_run)):
                     ok_all = False
             else:
                 distinct = len(set(hashes.values())) > 1 or n == 1
@@ -432,6 +456,153 @@ def verify_video(path, expect_frames=None, expect_width=None, expect_height=None
             mark(out["decoded"], False, "no decode")
         mark(out["content"], False, "no decode")
         ok_all = False
+    except Exception as e:
+        mark(out["valid"], False, "io: %s" % type(e).__name__)
+        mark(out["decoded"], False, "io: %s" % type(e).__name__)
+        mark(out["content"], False, "io: %s" % type(e).__name__)
+        ok_all = False
+    mark(out["correct"], False, "needs human view: face/session content? (E2E runbook)")
+    out["overall"] = "PASS" if ok_all else "FAIL"
+    return out
+
+
+# ---------------- rawvid stream (lossless game intermediate) ----------------
+
+RAWVID_MAGIC = b"LWRV"
+RAWVID_VERSION = 1
+RAWVID_FOOTER = 24
+
+
+def _parse_rawvid_footer(tail24, total_len):
+    """24-byte footer (byte 0 = frame 0, dims+count at the END so ffmpeg's
+    headerless rawvideo demuxer reads frames with zero shift) or raise
+    ValueError. Independent of the C# writer."""
+    if len(tail24) < RAWVID_FOOTER:
+        raise ValueError("too-small")
+    if bytes(tail24[0:4]) != RAWVID_MAGIC:
+        raise ValueError("no-footer")
+    ver = struct.unpack_from("<I", tail24, 4)[0]
+    if ver != RAWVID_VERSION:
+        raise ValueError("bad-version")
+    w = struct.unpack_from("<I", tail24, 8)[0]
+    h = struct.unpack_from("<I", tail24, 12)[0]
+    count = struct.unpack_from("<I", tail24, 16)[0]
+    if w < 16 or w > 4096 or h < 16 or h > 4096:
+        raise ValueError("bad-dims")
+    fb = w * h * 4
+    if total_len - RAWVID_FOOTER != count * fb:
+        raise ValueError("tail-truncated")
+    if count <= 0:
+        raise ValueError("empty-video")
+    return {"width": w, "height": h, "frame_bytes": fb, "frames": count}
+
+
+def verify_rawvid(path, expect_frames=None, expect_width=None, expect_height=None):
+    out = {"medium": "rawvid", "path": path,
+           "created": verdict("created"), "valid": verdict("valid"),
+           "decoded": verdict("decoded"), "content": verdict("content"),
+           "correct": verdict("correct"), "info": {}}
+    ok_all = True
+    if not path or not os.path.isfile(path):
+        mark(out["created"], False, "missing file")
+        for k in ("valid", "decoded", "content"):
+            mark(out[k], False, "no file")
+        mark(out["correct"], False, "needs human view (E2E runbook)")
+        out["overall"] = "FAIL"
+        return out
+    size = os.path.getsize(path)
+    if not mark(out["created"], size > RAWVID_FOOTER + 256, "bytes=%d" % size):
+        ok_all = False
+        for k in ("valid", "decoded", "content"):
+            mark(out[k], False, "no file")
+        mark(out["correct"], False, "needs human view (E2E runbook)")
+        out["overall"] = "FAIL"
+        return out
+    try:
+        with open(path, "rb") as f:
+            f.seek(max(0, size - RAWVID_FOOTER))
+            tail = f.read(RAWVID_FOOTER)
+            try:
+                hdr = _parse_rawvid_footer(tail, size)
+            except ValueError as e:
+                mark(out["valid"], False, "footer: %s" % e)
+                mark(out["decoded"], False, "no decode")
+                mark(out["content"], False, "no decode")
+                mark(out["correct"], False, "needs human view (E2E runbook)")
+                out["overall"] = "FAIL"
+                return out
+            w, h, fb = hdr["width"], hdr["height"], hdr["frame_bytes"]
+            n = hdr["frames"]
+            out["info"] = {"width": w, "height": h, "frames": n,
+                           "frame_bytes": fb, "torn_tail": False}
+            shape_ok = (n >= MIN_VIDEO_FRAMES)
+            dim_ok = True
+            if expect_width is not None:
+                dim_ok = dim_ok and (w == expect_width)
+            if expect_height is not None:
+                dim_ok = dim_ok and (h == expect_height)
+            if expect_frames is not None:
+                dim_ok = dim_ok and (n == expect_frames)
+            if not mark(out["valid"], shape_ok and dim_ok,
+                        "rawvid %dx%d frames=%d" % (w, h, n)):
+                ok_all = False
+            # Single sequential pass from byte 0 (frame 0 lives at offset 0):
+            # retain first/mid/last, stride-hash all.
+            f.seek(0)
+            first = mid = last = None
+            bad = 0
+            dup_pairs = 0
+            max_run = 1
+            run = 1
+            prev_h = None
+            mid_idx = n // 2
+            for i in range(n):
+                chunk = f.read(fb)
+                if len(chunk) != fb:
+                    bad += 1
+                    run = 1
+                    prev_h = None
+                    break
+                if i == 0:
+                    first = chunk
+                if i == mid_idx:
+                    mid = bytes(chunk)
+                if i == n - 1:
+                    last = chunk
+                hh = hashlib.sha256(chunk[::4096]).hexdigest()[:16]
+                if prev_h is not None:
+                    if hh == prev_h:
+                        dup_pairs += 1
+                        run += 1
+                        max_run = max(max_run, run)
+                    else:
+                        run = 1
+                prev_h = hh
+            # Keep only small probe copies (first/mid/last already bytes).
+            if not mark(out["decoded"], bad == 0 and first is not None,
+                        "scanned=%d/%d bad=%d" % (n - bad, n, bad)):
+                ok_all = False
+            else:
+                pil = _try_pil_decode(first, (w, h))
+                if pil:
+                    out["info"]["pil_first"] = pil
+                hashes = {}
+                for label, p in (("first", first), ("mid", mid), ("last", last)):
+                    hh = hashlib.sha256(p).hexdigest()[:16]
+                    hashes[label] = hh
+                    out["info"]["len_%s" % label] = len(p)
+                out["info"]["sha_first12"] = hashes
+                out["info"]["dup_pairs"] = dup_pairs
+                out["info"]["dup_max_run"] = max_run
+                out["info"]["dup_rate"] = round(dup_pairs / n, 4) if n else 0
+                dark = any(_raw_is_dark(p) for p in (first, mid, last) if p)
+                frozen = (n > 1 and max_run >= n)
+                if not mark(out["content"],
+                            all(len(p) > 256 for p in (first, mid, last) if p)
+                            and not dark and not frozen,
+                            "alldark=%s dup_pairs=%d max_run=%d" % (
+                                dark, dup_pairs, max_run)):
+                    ok_all = False
     except Exception as e:
         mark(out["valid"], False, "io: %s" % type(e).__name__)
         mark(out["decoded"], False, "io: %s" % type(e).__name__)
@@ -1085,6 +1256,26 @@ def _selftest_avi(path, nframes=10, width=320, height=240, fps=10, frame_step=50
         fh.write(out.getvalue())
 
 
+def _selftest_rawvid(path, nframes=6, width=64, height=48, step=37):
+    """Minimal rawvid writer (spec-derived, independent of the C# writer):
+    back-to-back BGRA frames + 24-byte footer. step=0 writes identical
+    frames (frozen negative)."""
+    with open(path, "wb") as f:
+        for i in range(nframes):
+            # Bright on every stride the tripwire/dup scans use (j*13 spreads
+            # values so no 1024-stride aliases to zero).
+            body = bytes([(i * step + j * 13 + 64) & 0xFF for j in range(width * height * 4)])
+            if step == 0:
+                body = bytes([0x40 + (j & 0x3F) for j in range(width * height * 4)])
+            f.write(body)
+        f.write(RAWVID_MAGIC)
+        f.write(struct.pack("<I", RAWVID_VERSION))
+        f.write(struct.pack("<I", width))
+        f.write(struct.pack("<I", height))
+        f.write(struct.pack("<I", nframes))
+        f.write(struct.pack("<I", 0))
+
+
 def run_selftest():
     tmp = tempfile.mkdtemp(prefix="rec-verify-")
     fails = []
@@ -1149,6 +1340,25 @@ def run_selftest():
         check("frozen video decoded-but-content-fails",
               rf["decoded"]["result"] == "PASS" and rf["content"]["result"] == "FAIL",
               json.dumps(rf["info"].get("sha_first12")))
+        # rawvid stream: good clip passes all machine verdicts with dup stats;
+        # torn tails and fully-frozen clips fail loudly.
+        good_raw = os.path.join(tmp, "game.rawvid")
+        _selftest_rawvid(good_raw, nframes=6, width=64, height=48, step=37)
+        rr = verify_rawvid(good_raw, expect_frames=6, expect_width=64, expect_height=48)
+        check("selftest rawvid overall", rr["overall"] == "PASS", json.dumps(rr["info"]))
+        check("selftest rawvid dup clean", rr["info"].get("dup_pairs") == 0)
+        torn_raw = os.path.join(tmp, "torn.rawvid")
+        with open(good_raw, "rb") as f:
+            rb = f.read()
+        with open(torn_raw, "wb") as f:
+            f.write(rb + b"\x00" * 100)
+        check("torn rawvid fails", verify_rawvid(torn_raw)["overall"] == "FAIL")
+        frozen_raw = os.path.join(tmp, "frozen.rawvid")
+        _selftest_rawvid(frozen_raw, nframes=4, width=64, height=48, step=0)
+        rz = verify_rawvid(frozen_raw)
+        check("frozen rawvid decoded-but-content-fails",
+              rz["decoded"]["result"] == "PASS" and rz["content"]["result"] == "FAIL",
+              json.dumps({k: rz["info"].get(k) for k in ("dup_pairs", "dup_max_run")}))
         # MP4/MP3 deliverables: needs a real ffmpeg (SKIP without it — the
         # parsers still get negative coverage on mutated copies below).
         _selftest_deliverables(tmp, check)
@@ -1224,8 +1434,12 @@ def main(argv=None):
         ra["ffmpeg"] = ffmpeg_opinion(args.audio, "audio")
         results.append(ra)
     if args.video:
-        rv = verify_video(args.video, args.expect_video_frames,
-                          args.expect_width, args.expect_height)
+        if args.video.lower().endswith(".rawvid"):
+            rv = verify_rawvid(args.video, args.expect_video_frames,
+                               args.expect_width, args.expect_height)
+        else:
+            rv = verify_video(args.video, args.expect_video_frames,
+                              args.expect_width, args.expect_height)
         rv["ffmpeg"] = ffmpeg_opinion(args.video, "video")
         results.append(rv)
     if args.mp4:

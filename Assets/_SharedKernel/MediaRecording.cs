@@ -109,13 +109,15 @@ public static class MediaRecording {
 
   // Full-session deliverables (Phase 2.3b): gameplay + camera PiP + audio,
   // transcoded by the isolated FFmpeg backend when available.
-  // Cam intermediate stays MJPEG (phone JPEG bytes verbatim, not a re-encode;
-  // local-cam source encodes once at capture). Game intermediate is LOSSLESS
-  // raw BGRA (no JPEG stage anywhere between screen and x264 — q90 forensic).
-  public const string GameExtension = ".avi"; // intermediate (raw BGRA BI_RGB)
+  // Cam intermediate stays MJPEG AVI (phone JPEG bytes verbatim, ~1 MB/take,
+  // nowhere near any container ceiling). Game intermediate is a LOSSLESS
+  // raw BGRA stream (.rawvid — rawvideo demuxer input, no JPEG stage
+  // anywhere between screen and x264; AVI was retired for game frames when
+  // a 1080p30 take crossed its 4 GB 32-bit size ceiling, P30).
+  public const string GameExtension = ".rawvid"; // intermediate (rawvideo BGRA)
   public const string Mp4Extension = ".mp4";  // deliverable (H.264 + MP3)
   public const string Mp3Extension = ".mp3";  // deliverable (LAME VBR)
-  public const string GameBackendName = "avi-raw-bgra(top-down)";
+  public const string GameBackendName = "rawvideo-bgra(top-down)";
   public const string DeliverBackendName = "mp4-h264+mp3(ffmpeg)";
   public const int DefaultGameWidth = 1280; // match the typical window: no
   public const int DefaultGameHeight = 720; // downscale softening (user rule)
@@ -123,12 +125,47 @@ public static class MediaRecording {
   public const int MaxGameWidth = 1920;
   public const int MinGameHeight = 180;
   public const int MaxGameHeight = 1080;
-  public const int DefaultGameFps = 20; // sample cadence cap (raw writes are
-                                  // memcpy-speed, so the pump sustains it)
-  // Raw gameplay intermediates are big (1080p20 ~= 165 MB/s transient):
-  // refuse to start a video session below this free space rather than
-  // dying mid-take with corrupt files.
-  public const long MinFreeDiskBytes = 4L * 1024L * 1024L * 1024L;
+  public const int DefaultGameFps = 30; // sample cadence cap: raw writes are
+                                  // memcpy-speed and the pump sustains 30 Hz
+                                  // on SSD-class disks (~249 MB/s transient
+                                  // at 1080p); drops stay counted + honest
+  // Nominal tick oversample (warmup/boundary/hitch compensation): the
+  // capture timer runs GameFps+OverHz so the MEASURED rate nets >= GameFps
+  // after unavoidable losses (first-frame warmup ~0.3 s, stop-boundary
+  // partial tick, hitch forgiveness). The measured rate — never the nominal
+  // — is what headers, -r and gates use, and the duplicate detector guards
+  // against any re-emission fakery. P30: +0.5 nets ~30.5 measured.
+  public const float GameSampleOverHz = 0.5f;
+  // Raw gameplay intermediates are big (1080p30 ~= 249 MB/s transient,
+  // ~4.5 GB per 18 s take): refuse to start a video session below this
+  // free space rather than dying mid-take with corrupt files.
+  public const long MinFreeDiskBytes = 8L * 1024L * 1024L * 1024L;
+  public const long FloorFreeDiskBytes = 256L * 1024L * 1024L;
+  public const long FloorFreeDiskBytesMid = 64L * 1024L * 1024L;
+
+  // Size-proportional guard (P30 lesson: a FLAT 8 GB floor blocked 100 KB
+  // unit-test sessions on a healthy-but-tight dev disk — the guard must
+  // scale with the CONFIGURED take, not punish small sessions).
+  // Estimate: 90 s of raw gameplay at the configured size/rate (60 s take +
+  // transcode headroom with margin), clamped to [256 MB .. 8 GB].
+  public static long RequiredFreeBytes(int w, int h, int fps) {
+    try {
+      long perSec = (long)Math.Max(16, w) * Math.Max(16, h) * 4 * Math.Max(1, fps);
+      long est = perSec * 90;
+      if (est < FloorFreeDiskBytes) est = FloorFreeDiskBytes;
+      if (est > MinFreeDiskBytes) est = MinFreeDiskBytes;
+      return est;
+    } catch (Exception) { return MinFreeDiskBytes; }
+  }
+
+  // Mid-session tripwire scales the same way (quarter of start requirement,
+  // 64 MB floor): stop gracefully while room remains to finalize.
+  public static long RequiredFreeBytesMid(int w, int h, int fps) {
+    try {
+      long q = RequiredFreeBytes(w, h, fps) / 4;
+      return q < FloorFreeDiskBytesMid ? FloorFreeDiskBytesMid : q;
+    } catch (Exception) { return FloorFreeDiskBytesMid; }
+  }
 
   // True when the drive holding dir has enough free space. False (never
   // throws) for empty/missing paths and unresolvable drives.
@@ -149,7 +186,9 @@ public static class MediaRecording {
   // x264@CRF12 stayed transparent, so no JPEG stage remains between screen
   // and x264). New code must NOT read this for game frames.
   public const int DefaultGameJpegQuality = 90;
-  public const int MaxGameRawFrames = 6; // RGBA handoff cap (bounded memcpy)
+  public const int MaxGameRawFrames = 10; // RGBA handoff cap (~83 MB at 1080p):
+                                    // absorbs disk jitter at 30 Hz without
+                                    // touching the render thread
   public const int DefaultVideoCrf = 19; // x264: lower = better (10..32);
                                    // 19 ~= transparent (user rule: squeeze
                                    // size, keep near-original quality)
@@ -198,7 +237,7 @@ public struct MediaRecordingConfig {
   // shape the recorded OUTPUT, which prioritizes fps + compression).
   public int GameWidth;           // gameplay capture width (default 1280)
   public int GameHeight;          // gameplay capture height (default 720)
-  public int GameFps;             // gameplay sample rate (default 24)
+  public int GameFps;             // gameplay sample rate (default 30)
   // LEGACY (config compat only; game frames are raw — never read this).
   public int GameJpegQuality;
   public int VideoCrf;            // x264 CRF 10..32 (default 19: transparent,
@@ -544,6 +583,20 @@ public sealed class RecordingTelemetry {
   public long GameDroppedForeign;
   public long GameGapSamples;   // sample ticks with no readback while recording
   public long GameDarkFrames;   // readbacks with near-zero brightness (black-path tripwire)
+  // --- real-fps instrumentation (stage-by-stage, no metadata trust) ---
+  public long RenderFrames;     // Unity Update ticks while Recording (source rate)
+  public double RenderMsSum;    // sum of unscaled delta ms (mean = sum/frames)
+  public double RenderMsMax;    // worst single Update while Recording (proxy for GPU+main cost)
+  public long GameCaptureRequests; // AsyncGPUReadback requests issued (capture attempts)
+  public long GameDuplicateFrames; // composer-side adjacent-identical raw frames (sample-hashed)
+  public long GamePacingN;      // capture-completion intervals measured
+  public double GamePacingSumMs;
+  public double GamePacingSumSqMs;
+  public double GamePacingMaxMs;
+  public long GamePacingOver50; // intervals > 50 ms (missed 30 Hz tick, pacing hole)
+  public long TranscodeElapsedMs; // offline x264 wall time (encoder throughput base)
+  public double TranscodeFps;   // game frames per transcode second (offline, informational)
+  public double ProcessCpuPct;  // process CPU % over the session wall (0.1 precision)
   public int GameEncodeThreads; // game writer threads (raw path = 1, memcpy-speed)
   public int CpuCount;          // machine logical processors seen at session start
   public bool Transcoded;       // ffmpeg deliverables produced
@@ -616,6 +669,18 @@ public sealed class RecordingTelemetry {
       N(b, "gameDroppedForeign", GameDroppedForeign, false);
       N(b, "gameGapSamples", GameGapSamples, false);
       N(b, "gameDarkFrames", GameDarkFrames, false);
+      N(b, "renderFrames", RenderFrames, false);
+      F(b, "renderMsMean", RenderFrames > 0 ? RenderMsSum / RenderFrames : 0, false);
+      F(b, "renderMsMax", RenderMsMax, false);
+      N(b, "gameCaptureRequests", GameCaptureRequests, false);
+      N(b, "gameDuplicateFrames", GameDuplicateFrames, false);
+      N(b, "gamePacingN", GamePacingN, false);
+      F(b, "gamePacingMeanMs", GamePacingN > 0 ? GamePacingSumMs / GamePacingN : 0, false);
+      F(b, "gamePacingMaxMs", GamePacingMaxMs, false);
+      N(b, "gamePacingOver50", GamePacingOver50, false);
+      N(b, "transcodeElapsedMs", TranscodeElapsedMs, false);
+      F(b, "transcodeFps", TranscodeFps, false);
+      F(b, "processCpuPct", ProcessCpuPct, false);
       N(b, "gameEncodeThreads", GameEncodeThreads, false);
       N(b, "cpuCount", CpuCount, false);
       B(b, "transcoded", Transcoded, false);
@@ -667,6 +732,114 @@ public sealed class RecordingTelemetry {
   static void B(StringBuilder b, string k, bool v, bool first) {
     if (!first) b.Append(",");
     b.Append("\"").Append(k).Append("\":").Append(v ? "true" : "false");
+  }
+
+  static void F(StringBuilder b, string k, double v, bool first) {
+    try {
+      if (!first) b.Append(",");
+      double r = v;
+      try {
+        if (double.IsNaN(r) || double.IsInfinity(r)) r = 0;
+      } catch (System.Exception) { r = 0; }
+      b.Append("\"").Append(k).Append("\":")
+        .Append(r.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+    } catch (System.Exception) {
+      try { b.Append("\"").Append(k).Append("\":0"); } catch (System.Exception) { }
+    }
+  }
+}
+
+// Capture pacing accumulator (pure, unit-tested): online mean/variance/max
+// of completion intervals + count of pacing holes. No lists, no Unity API,
+// never throws — the service feeds it one sample per captured frame.
+public sealed class RecordingPacing {
+  public long N;
+  public double SumMs;
+  public double SumSqMs;
+  public double MaxMs;
+  public long Over50;
+  public void AddSample(double ms) {
+    try {
+      if (double.IsNaN(ms) || double.IsInfinity(ms)) return;
+      if (ms < 0 || ms > 60000) return;
+      N++;
+      SumMs += ms;
+      SumSqMs += ms * ms;
+      if (ms > MaxMs) MaxMs = ms;
+      if (ms > 50) Over50++;
+    } catch (System.Exception) { }
+  }
+  public double MeanMs() {
+    try { return N > 0 ? SumMs / N : 0; } catch (System.Exception) { return 0; }
+  }
+  public double StdMs() {
+    try {
+      if (N <= 0) return 0;
+      double m = SumMs / N;
+      double v = SumSqMs / N - m * m;
+      return v > 0 ? System.Math.Sqrt(v) : 0;
+    } catch (System.Exception) { return 0; }
+  }
+}
+
+// Adjacent-frame duplicate detector input (pure, unit-tested): FNV-1a over a
+// stride of the payload. Full-frame hashing at 1080p30 would cost an extra
+// 8 MB pass per frame; a 4 KB stride catches any real content change in a
+// walking scene while staying noise-cheap next to the swizzle pass.
+public static class FrameSampleHash {
+  public static uint Hash(byte[] px, int stride) {
+    try {
+      if (px == null || px.Length == 0) return 0;
+      if (stride < 1) stride = 1;
+      uint h = 2166136261u;
+      for (int i = 0; i < px.Length; i += stride) {
+        h ^= px[i];
+        h *= 16777619u;
+      }
+      return h == 0 ? 1u : h;
+    } catch (System.Exception) { return 0; }
+  }
+}
+
+// Process CPU reader (pure math + one guarded OS read, unit-tested math):// cpu% = processCpuSec / wallSec / cores * 100. Reader never throws (0 = unknown).
+public static class CpuUtil {
+  public static double Pct(double cpuSec, double wallSec, int cores) {
+    try {
+      if (cpuSec < 0 || wallSec <= 0 || cores <= 0) return 0;
+      double p = cpuSec / wallSec / cores * 100.0;
+      if (double.IsNaN(p) || double.IsInfinity(p) || p < 0) return 0;
+      return System.Math.Round(System.Math.Min(p, 100.0 * cores), 1);
+    } catch (System.Exception) { return 0; }
+  }
+  public static double ProcessCpuSec() {
+    try {
+      using (var p = System.Diagnostics.Process.GetCurrentProcess()) {
+        return p.TotalProcessorTime.TotalSeconds;
+      }
+    } catch (System.Exception) { return 0; }
+  }
+}
+
+// Active-span stream rate (pure, unit-tested): frames over the span that
+// actually contains frames (wall minus first-frame offset). Start-anchored
+// walls include capture warmup (~0.3 s of lead-in with zero frames) and
+// understate a steady 30 Hz cadence as ~29.4 — the pacing stats are the
+// ground truth, this anchoring just reports the same truth as a rate.
+// Returns 0 when the span is too short to mean anything (caller falls back
+// to the declared cap, same as the old wall-only path).
+public static class RecordingRates {
+  public static double ActiveStreamFps(long frames, double wallSec, long firstOffsetMs) {
+    try {
+      if (frames <= 0) return 0;
+      double span = wallSec;
+      try {
+        if (firstOffsetMs > 0) span = wallSec - firstOffsetMs / 1000.0;
+      } catch (System.Exception) { }
+      if (span < 1.0) return 0;
+      double fps = frames / span;
+      if (fps < 1 || fps > 120) return 0;
+      return fps;
+    } catch (System.Exception) { return 0; }
   }
 }
 

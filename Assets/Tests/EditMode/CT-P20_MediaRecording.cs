@@ -351,7 +351,7 @@ public class CT_P20_MediaRecording {
       Assert.IsFalse(t.Transcoded, "unit env disables transcode; intermediates are the verdict");
       Assert.IsTrue(File.Exists(rec.AudioPath) && new FileInfo(rec.AudioPath).Length > 0);
       Assert.IsTrue(File.Exists(rec.VideoPath) && new FileInfo(rec.VideoPath).Length > 0);
-      string gamePath = Path.Combine(dir, rec.SessionId + "_game.avi");
+      string gamePath = Path.Combine(dir, MediaRecordingNaming.GameFileName(rec.SessionId));
       Assert.IsTrue(File.Exists(gamePath) && new FileInfo(gamePath).Length > 0);
       string sidecar = Path.Combine(dir, rec.SessionId + ".json");
       Assert.IsTrue(File.Exists(sidecar), "traceable sidecar per session");
@@ -488,7 +488,8 @@ public class CT_P20_MediaRecording {
       Assert.IsTrue(t.GameComplete);
       Assert.IsFalse(t.AudioComplete);
       Assert.AreEqual(1, Directory.GetFiles(dir, "*.wav").Length, "session-1 wav retained, none new");
-      Assert.AreEqual(2, Directory.GetFiles(dir, "*.avi").Length, "cam.avi + game.avi");
+      Assert.AreEqual(1, Directory.GetFiles(dir, "*.avi").Length, "cam.avi only");
+      Assert.AreEqual(1, Directory.GetFiles(dir, "*.rawvid").Length, "game.rawvid");
     } finally {
       KillService(rec);
       WipeDir(dir);
@@ -802,5 +803,203 @@ public class CT_P20_MediaRecording {
       Assert.IsFalse(MediaRecording.DriveSpaceOk(string.Empty, 1));
       Assert.IsFalse(MediaRecording.DriveSpaceOk("::bogus-drive::", 1));
     } finally { WipeDir(dir); }
+  }
+
+  [Test] public void P20AD_PacingStatsHonest() {
+    // 30 Hz steady: mean ~33.3, max ~33.3, zero holes. One hitch: max + over.
+    var p = new RecordingPacing();
+    for (int i = 0; i < 90; i++) p.AddSample(1000.0 / 30.0);
+    Assert.AreEqual(90, p.N);
+    Assert.AreEqual(1000.0 / 30.0, p.MeanMs(), 0.001);
+    Assert.AreEqual(1000.0 / 30.0, p.MaxMs, 0.001);
+    Assert.AreEqual(0, p.Over50);
+    Assert.AreEqual(0.0, p.StdMs(), 0.5);
+    p.AddSample(120.0);
+    Assert.AreEqual(1, p.Over50);
+    Assert.AreEqual(120.0, p.MaxMs, 0.001);
+    Assert.Greater(p.StdMs(), 0.0);
+    // Garbage in, no-throw out (never let a probe break a session).
+    p.AddSample(-5.0);
+    p.AddSample(double.NaN);
+    p.AddSample(double.PositiveInfinity);
+    Assert.AreEqual(91, p.N);
+    var q = new RecordingPacing();
+    Assert.AreEqual(0, q.N);
+    Assert.AreEqual(0.0, q.MeanMs());
+    Assert.AreEqual(0.0, q.StdMs());
+  }
+
+  [Test] public void P20AE_FrameSampleHashDetectsDuplicates() {
+    byte[] a = new byte[64 * 48 * 4];
+    for (int i = 0; i < a.Length; i++) a[i] = (byte)(i & 0xFF);
+    byte[] same = (byte[])a.Clone();
+    byte[] diff = (byte[])a.Clone();
+    diff[4096] ^= 0xFF; // one sampled byte flips -> different content
+    Assert.AreEqual(FrameSampleHash.Hash(a, 4096), FrameSampleHash.Hash(same, 4096));
+    Assert.AreNotEqual(FrameSampleHash.Hash(a, 4096), FrameSampleHash.Hash(diff, 4096));
+    Assert.AreEqual(0u, FrameSampleHash.Hash(null, 4096));
+    Assert.AreEqual(0u, FrameSampleHash.Hash(new byte[0], 4096));
+    Assert.AreNotEqual(0u, FrameSampleHash.Hash(a, 4096));
+  }
+
+  [Test] public void P20AG_RawvidRoundTripRefusals() {
+    // Stream container: exact-size BGRA in/out, count from length math,
+    // torn tails and wrong sizes refused (the >4GB AVI failure mode cannot
+    // exist here — there are no 32-bit size fields to wrap).
+    string dir = TempDir();
+    try {
+      string path = Path.Combine(dir, "g.rawvid");
+      var w = new RawVideoWriter();
+      Assert.IsTrue(w.Begin(path, 64, 48));
+      // Refusal probes use a dedicated instance (a refused Begin must never
+      // disturb a live session).
+      var badBegin = new RawVideoWriter();
+      Assert.IsFalse(badBegin.Begin(null, 64, 48));
+      Assert.IsFalse(badBegin.Begin("", 64, 48));
+      Assert.IsFalse(badBegin.Begin(Path.Combine(dir, "x.rawvid"), 4, 4), "dims floor");
+      byte[] bgra = new byte[64 * 48 * 4];
+      for (int i = 0; i < bgra.Length; i++) bgra[i] = (byte)((i * 7) & 0xFF);
+      Assert.IsTrue(w.AppendFrame(bgra));
+      Assert.IsTrue(w.AppendFrame(bgra));
+      Assert.IsTrue(w.AppendFrame(bgra));
+      Assert.IsFalse(w.AppendFrame(new byte[10]), "wrong size refused, never adapted");
+      Assert.IsFalse(w.AppendFrame(null));
+      long frames;
+      Assert.IsTrue(w.Finalize(out frames));
+      Assert.AreEqual(3, frames);
+      Assert.AreEqual(3, w.FrameCount);
+      try { w.Close(); } catch (Exception) { }
+      RawVideoReader.RawInfo info;
+      Assert.IsTrue(RawVideoReader.TryReadInfo(path, out info), info.Reason);
+      Assert.IsTrue(info.Valid);
+      Assert.AreEqual(64, info.Width);
+      Assert.AreEqual(48, info.Height);
+      Assert.AreEqual(3, info.FrameCount);
+      Assert.AreEqual(64 * 48 * 4, info.FrameBytes);
+      // Footer contract: byte 0 = frame 0 (no header shift, P30 forensic);
+      // last 24 B carry magic + dims + exact count.
+      byte[] blob = File.ReadAllBytes(path);
+      Assert.AreEqual(3 * 64 * 48 * 4 + 24, blob.Length);
+      int f0 = blob.Length - 24;
+      Assert.AreEqual("LWRV", System.Text.Encoding.ASCII.GetString(blob, f0, 4));
+      Assert.AreEqual(1u, (uint)(blob[f0 + 4] | (blob[f0 + 5] << 8)
+        | (blob[f0 + 6] << 16) | (blob[f0 + 7] << 24)));
+      Assert.AreEqual(3u, (uint)(blob[f0 + 16] | (blob[f0 + 17] << 8)
+        | (blob[f0 + 18] << 16) | (blob[f0 + 19] << 24)), "footer count");
+      for (int i = 0; i < 3; i++) {
+        byte[] out_;
+        string why;
+        Assert.IsTrue(RawVideoReader.TryExtractFrame(path, i, 64, 48, out out_, out why), why);
+        CollectionAssert.AreEqual(bgra, out_, "lossless frame " + i);
+      }
+      byte[] miss;
+      string whyMiss;
+      Assert.IsFalse(RawVideoReader.TryExtractFrame(path, 3, 64, 48, out miss, out whyMiss));
+      Assert.IsFalse(RawVideoReader.TryExtractFrame(path, 0, 32, 48, out miss, out whyMiss),
+        "dims mismatch refused");
+      // Torn tail: one byte short of a full frame fails info, loudly.
+      string torn = Path.Combine(dir, "torn.rawvid");
+      var w2 = new RawVideoWriter();
+      Assert.IsTrue(w2.Begin(torn, 64, 48));
+      Assert.IsTrue(w2.AppendFrame(bgra));
+      long n2;
+      Assert.IsTrue(w2.Finalize(out n2));
+      try { w2.Close(); } catch (Exception) { }
+      using (var fs = new FileStream(torn, FileMode.Append, FileAccess.Write)) {
+        fs.Write(new byte[100], 0, 100);
+      }
+      RawVideoReader.RawInfo ti;
+      Assert.IsFalse(RawVideoReader.TryReadInfo(torn, out ti) && ti.Valid, ti.Reason);
+      // Non-rawvid bytes are refused with an explicit reason, never_valid.
+      string fake = Path.Combine(dir, "fake.rawvid");
+      File.WriteAllBytes(fake, new byte[64]);
+      RawVideoReader.RawInfo fi2;
+      Assert.IsFalse(RawVideoReader.TryReadInfo(fake, out fi2) && fi2.Valid);
+      Assert.IsNotEmpty(fi2.Reason);
+    } finally { WipeDir(dir); }
+  }
+
+  [Test] public void P20AH_ActiveSpanRateHonest() {
+    // 529 frames over an 18.01 s start-anchored wall with a 0.36 s warmup =
+    // 29.97 active, not 29.37: the pacing ground truth, reported as a rate.
+    Assert.AreEqual(29.97, RecordingRates.ActiveStreamFps(529, 18.01, 360), 0.01);
+    Assert.AreEqual(0.0, RecordingRates.ActiveStreamFps(0, 18.0, 360), "no frames = no rate");
+    Assert.AreEqual(0.0, RecordingRates.ActiveStreamFps(10, 0.4, 0), "short wall means nothing");
+    Assert.AreEqual(0.0, RecordingRates.ActiveStreamFps(10, 18.0, 18000), "warmup eating the wall guards");
+    // Oversample tick: nominal 30.5 so measured nets >= 30 after losses.
+    Assert.AreEqual(0.5f, MediaRecording.GameSampleOverHz);
+    Assert.Greater(1f / (30 + MediaRecording.GameSampleOverHz), 0f);
+    Assert.Less(1f / (30 + MediaRecording.GameSampleOverHz), 1f / 30f);
+  }
+
+  [Test] public void P20AI_RawvidTranscodeArgsDeclared() {
+    // Headerless input: pix_fmt + size + measured rate declared per input.
+    var s = new TranscodeSpec {
+      GameAvi = Path.Combine("D:", "r", "g.rawvid"),
+      CamAvi = Path.Combine("D:", "r", "c.avi"),
+      MicWav = Path.Combine("D:", "r", "m.wav"),
+      OutMp4 = Path.Combine("D:", "r", "s.mp4"),
+      OutMp3 = Path.Combine("D:", "r", "s.mp3"),
+      GameFpsActual = 30.5, CamFpsActual = 10,
+      GameFrames = 540,
+      GameWidth = 1920, GameHeight = 1080,
+      PipWidth = 240, PipMargin = 16, Crf = 12,
+      Preset = "slow", Mp3Quality = 4,
+    };
+    Assert.IsTrue(FfmpegTranscodeBackend.IsRawVideoInput(s.GameAvi));
+    Assert.IsFalse(FfmpegTranscodeBackend.IsRawVideoInput(s.CamAvi));
+    Assert.IsFalse(FfmpegTranscodeBackend.IsRawVideoInput(null));
+    string args = FfmpegTranscodeBackend.BuildArguments(s);
+    StringAssert.Contains("-f rawvideo", args);
+    StringAssert.Contains("-pix_fmt bgra", args);
+    StringAssert.Contains("-s 1920x1080", args);
+    StringAssert.Contains("-framerate 30.5", args);
+    StringAssert.Contains("-frames:v 540", args);
+    StringAssert.Contains("[0:v]format=yuv420p[main]", args);
+    StringAssert.Contains("[main][pip]overlay=", args);
+    // Legacy AVI game input keeps the plain -i form (old evidence still builds).
+    s.GameAvi = Path.Combine("D:", "r", "g.avi");
+    string args2 = FfmpegTranscodeBackend.BuildArguments(s);
+    Assert.IsFalse(args2.Contains("-f rawvideo"), "avi keeps header-probed input");
+    Assert.IsFalse(args2.Contains("-frames:v"), "frame cap is rawvideo-only");
+    StringAssert.Contains("-i", args2);
+  }
+
+  [Test] public void P20AJ_DiskGuardScalesWithTake() {
+    // Real 1080p30 takes need the full 8 GB ceiling; 100 KB unit sessions
+    // need only the floor — a flat floor blocked healthy small sessions
+    // (P30-final: 10 session tests red on disk-space-low with GBs free).
+    Assert.AreEqual(8L * 1024 * 1024 * 1024,
+      MediaRecording.RequiredFreeBytes(1920, 1080, 30));
+    Assert.AreEqual(256L * 1024 * 1024,
+      MediaRecording.RequiredFreeBytes(64, 48, 20));
+    Assert.AreEqual(256L * 1024 * 1024,
+      MediaRecording.RequiredFreeBytes(0, 0, 0), "degenerate clamps to floor");
+    Assert.AreEqual(8L * 1024 * 1024 * 1024,
+      MediaRecording.RequiredFreeBytes(4096, 4096, 120), "ceiling holds");
+    Assert.AreEqual(2L * 1024 * 1024 * 1024,
+      MediaRecording.RequiredFreeBytesMid(1920, 1080, 30));
+    Assert.AreEqual(64L * 1024 * 1024,
+      MediaRecording.RequiredFreeBytesMid(64, 48, 20));
+  }
+
+  [Test] public void P20AF_CpuMathAndSidecarKeys() {
+    // 12-thread box, process burned 36 cpu-sec over 18 s wall = 16.7%.
+    Assert.AreEqual(16.7, CpuUtil.Pct(36.0, 18.0, 12), 0.05);
+    Assert.AreEqual(0.0, CpuUtil.Pct(1.0, 0.0, 8), "zero wall guards div0");
+    Assert.AreEqual(0.0, CpuUtil.Pct(-1.0, 10.0, 8), "negative cpu clamps");
+    Assert.AreEqual(0.0, CpuUtil.Pct(1.0, 10.0, 0), "zero cores guards div0");
+    double read = 0;
+    Assert.DoesNotThrow(() => { read = CpuUtil.ProcessCpuSec(); });
+    Assert.GreaterOrEqual(read, 0.0);
+    // The fps gate reads these sidecar keys: fail the build if a rename drops one.
+    string json = new RecordingTelemetry().ToJson();
+    foreach (string k in new[] {
+        "renderFrames", "renderMsMean", "renderMsMax",
+        "gameCaptureRequests", "gameDuplicateFrames",
+        "gamePacingN", "gamePacingMeanMs", "gamePacingMaxMs", "gamePacingOver50",
+        "transcodeElapsedMs", "transcodeFps", "processCpuPct" }) {
+      StringAssert.Contains("\"" + k + "\"", json);
+    }
   }
 }

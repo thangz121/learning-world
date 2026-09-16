@@ -101,7 +101,7 @@ public class CT_P21_SessionDeliverables {
     Assert.IsTrue(d.Validate(out reason), reason);
     Assert.AreEqual(1280, d.GameWidth);
     Assert.AreEqual(720, d.GameHeight);
-    Assert.AreEqual(20, d.GameFps);
+    Assert.AreEqual(30, d.GameFps);
     Assert.AreEqual(90, d.GameJpegQuality);
     Assert.AreEqual(19, d.VideoCrf);
     Assert.AreEqual("medium", d.VideoPreset);
@@ -128,7 +128,7 @@ public class CT_P21_SessionDeliverables {
   [Test] public void P21B_NamingCoversDeliverables() {
     string s = MediaRecordingNaming.NewSessionId(new DateTime(2026, 9, 16, 12, 0, 0, DateTimeKind.Utc));
     Assert.IsTrue(MediaRecordingNaming.GameFileName(s).StartsWith(s));
-    Assert.IsTrue(MediaRecordingNaming.GameFileName(s).EndsWith(".avi"));
+    Assert.IsTrue(MediaRecordingNaming.GameFileName(s).EndsWith(".rawvid"));
     Assert.IsTrue(MediaRecordingNaming.Mp4FileName(s).StartsWith(s));
     Assert.IsTrue(MediaRecordingNaming.Mp4FileName(s).EndsWith(".mp4"));
     Assert.IsTrue(MediaRecordingNaming.Mp3FileName(s).StartsWith(s));

@@ -1,5 +1,5 @@
 // _SharedKernel/FfmpegTranscodeBackend.cs — Lead owns. Phase 2.3b deliverable
-// backend: session intermediates (game.avi + cam.avi + mic.wav) -> MP4
+// backend: session intermediates (game.rawvid + cam.avi + mic.wav) -> MP4
 // (H.264 + MP3, gameplay with camera PiP) + MP3 (LAME VBR). Pure C#
 // (NO UnityEngine): locator + argument builder + process runner. The ONLY
 // place in the codebase that knows ffmpeg exists — gameplay code never
@@ -34,6 +34,8 @@ public struct TranscodeSpec {
   public string OutMp3;    // null when video-only session
   public double GameFpsActual; // measured frames/duration (fallback: config)
   public double CamFpsActual;
+  public long GameFrames;    // exact game frame count (pumps done at spec time):
+                             // caps the headerless rawvideo input via -frames:v
   public int GameWidth;
   public int GameHeight;
   public int PipWidth;     // 4:3 overlay width (height derived)
@@ -185,6 +187,16 @@ public static class FfmpegTranscodeBackend {
     catch (Exception) { return "\"\""; }
   }
 
+  // The game intermediate is a headerless rawvideo stream (.rawvid): size +
+  // rate must be DECLARED as input options (the demuxer cannot probe them).
+  // Extension sniffing keeps every call site unchanged; pinned by P20AI.
+  public static bool IsRawVideoInput(string path) {
+    try {
+      return !string.IsNullOrEmpty(path)
+        && path.EndsWith(".rawvid", StringComparison.OrdinalIgnoreCase);
+    } catch (Exception) { return false; }
+  }
+
   public static string BuildArguments(TranscodeSpec s) {
     try {
       bool haveGame = !string.IsNullOrEmpty(s.GameAvi);
@@ -195,13 +207,30 @@ public static class FfmpegTranscodeBackend {
       var b = new StringBuilder(1024);
       b.Append("-y -hide_banner -v error ");
       // Inputs: game is ALWAYS index 0 when present (filter assumes it).
-      // NOTE: no -framerate prefixes — AVI carries its declared rate in the
-      // header (written by our writers from the record config); -framerate
-      // belongs to image demuxers and ffmpeg refuses it here. Measured
-      // actuals (GameFpsActual/CamFpsActual) go to the sidecar for honesty.
+      // AVI inputs carry their declared rate in the header (no -framerate:
+      // it belongs to image demuxers and ffmpeg refuses it there); the
+      // headerless .rawvid game stream NEEDS -f/-pix_fmt/-s/-framerate
+      // declared per input (see branch below). Measured actuals
+      // (GameFpsActual/CamFpsActual) go to the sidecar for honesty.
       int gi = -1, ci = -1, ai = -1, n = 0;
       if (haveGame) {
-        b.Append("-i ").Append(Q(s.GameAvi)).Append(" ");
+        if (IsRawVideoInput(s.GameAvi)) {
+          // No header to probe: declare pix_fmt + size + measured rate.
+          // Rate omission would silently default to 25 fps (a fake rate) —
+          // refuse the flag only when nothing sane is known (ffmpeg then
+          // fails loudly instead of stamping a lie).
+          if (s.GameWidth >= 16 && s.GameHeight >= 16)
+            b.Append("-f rawvideo -pix_fmt bgra -s ")
+              .Append(s.GameWidth).Append("x").Append(s.GameHeight).Append(" ");
+          else
+            b.Append("-f rawvideo -pix_fmt bgra ");
+          if (s.GameFpsActual >= 1 && s.GameFpsActual <= 120)
+            b.Append("-framerate ").Append(s.GameFpsActual.ToString("0.###",
+              System.Globalization.CultureInfo.InvariantCulture)).Append(" ");
+          b.Append("-i ").Append(Q(s.GameAvi)).Append(" ");
+        } else {
+          b.Append("-i ").Append(Q(s.GameAvi)).Append(" ");
+        }
         gi = n++;
       }
       if (haveCam) {
@@ -241,15 +270,20 @@ public static class FfmpegTranscodeBackend {
         else b.Append("-an ");
         b.Append("-c:v libx264 -preset ").Append(preset)
           .Append(" -crf ").Append(crf).Append(" -pix_fmt yuv420p ");
-        // Wall-clock honesty: the game header declares the RECORD rate, but
-        // the worker may sustain slightly less (drops counted in telemetry).
-        // Re-stamping the output to the MEASURED rate keeps mp4 duration ==
-        // wall duration (P23 loopback finding: 14.2 s vs 18 s wall).
+        // Wall-clock honesty: stamp the output at the MEASURED active-span
+        // rate (frames/active-wall), never the nominal cap (P23 loopback
+        // finding: 14.2 s vs 18 s wall; P30: start-anchored 29.37 vs
+        // active-anchored 30.56 for the same 540 distinct frames).
         double actual = s.GameFpsActual > 0 ? s.GameFpsActual
           : (s.CamFpsActual > 0 ? s.CamFpsActual : 0);
         if (haveGame && actual >= 1 && actual <= 60)
           b.Append("-r ").Append(actual.ToString("0.###",
             System.Globalization.CultureInfo.InvariantCulture)).Append(" ");
+        // Exact video frame cap for the headerless rawvideo game input: the
+        // trailing footer bytes must never be read as a torn frame.
+        if (haveGame && IsRawVideoInput(s.GameAvi)
+            && s.GameFrames > 0 && s.GameFrames <= 1000000)
+          b.Append("-frames:v ").Append(s.GameFrames).Append(" ");
         if (haveAudio) b.Append("-c:a libmp3lame -q:a ").Append(mq).Append(" -ar 16000 -ac 1 ");
         b.Append("-shortest -movflags +faststart ").Append(Q(s.OutMp4)).Append(" ");
       }
