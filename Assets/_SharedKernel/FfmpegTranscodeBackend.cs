@@ -12,10 +12,10 @@
 // composite itself runs inside ffmpeg (overlay filter), so the game pays
 // zero blend cost during play.
 //
-// Encoder choice (user-facing balance: strongest sane compression):
-// libx264 (open-source, GPL) preset veryfast + CRF 24: cartoon/game
-// content compresses hard at CRF 24 with no visible loss; preset steps
-// (ultrafast..medium) trade transcode time, never quality-at-CRF.
+// Encoder choice (user rule: quality first, size second):
+// libx264 (open-source, GPL) preset medium + CRF 19: near-transparent
+// stills AND clean motion handling; preset steps (ultrafast..medium) trade
+// transcode time (post-session, never gameplay); CRF steps trade size.
 // libmp3lame VBR -q:a 4: voice-transparent at roughly half of 128k CBR.
 // Both ship in the same open-source binary (Gyan full build verified).
 // Requires ffmpeg on the machine once (winget: Gyan.FFmpeg); after setup

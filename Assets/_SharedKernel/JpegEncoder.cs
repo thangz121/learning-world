@@ -3,7 +3,7 @@
 // raw RGBA pixels. Runs on the recorder's worker thread — Unity's
 // ImageConversion must stay on the main thread, and gameplay frames must
 // never stall it. Standard Annex-K tables (quant + Huffman) with IJG
-// quality scaling; quality comes from MediaRecordingConfig (30..85).
+// quality scaling; quality comes from MediaRecordingConfig (30..100).
 // This is an ESTABLISHED format implementation (like WavWriter), not a new
 // codec: every byte it emits is decoded by ffmpeg/PIL/viewers, proven by
 // the compat run (Unity writes -> real ffmpeg decodes).

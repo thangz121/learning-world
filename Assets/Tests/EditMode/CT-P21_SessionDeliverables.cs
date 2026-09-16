@@ -104,7 +104,7 @@ public class CT_P21_SessionDeliverables {
     Assert.AreEqual(20, d.GameFps);
     Assert.AreEqual(90, d.GameJpegQuality);
     Assert.AreEqual(19, d.VideoCrf);
-    Assert.AreEqual("veryfast", d.VideoPreset);
+    Assert.AreEqual("medium", d.VideoPreset);
     Assert.AreEqual(4, d.AudioMp3Quality);
     Assert.AreEqual(240, d.PipWidth);
     Assert.AreEqual(16, d.PipMargin);
@@ -240,7 +240,7 @@ public class CT_P21_SessionDeliverables {
     s.Mp3Quality = -3;
     string args = FfmpegTranscodeBackend.BuildArguments(s);
     StringAssert.Contains("-crf 19", args);
-    StringAssert.Contains("-preset veryfast", args);
+    StringAssert.Contains("-preset medium", args);
     StringAssert.Contains("-q:a 4", args);
   }
 

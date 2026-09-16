@@ -70,7 +70,9 @@ public static class MediaRecording {
   public const int DefaultVideoCrf = 19; // x264: lower = better (18..32);
                                    // 19 ~= transparent (user rule: squeeze
                                    // size, keep near-original quality)
-  public const string DefaultVideoPreset = "veryfast";
+  public const string DefaultVideoPreset = "medium"; // x264 preset: motion
+                                   // quality first (user rule); transcode runs
+                                   // post-STOP, never during gameplay
   public const int DefaultMp3Quality = 4; // LAME VBR -q:a (0..9, lower = better)
   public const int DefaultPipWidth = 240; // 4:3 camera overlay
   public const int DefaultPipMargin = 16;
@@ -117,7 +119,9 @@ public struct MediaRecordingConfig {
   public int GameJpegQuality;     // worker-side C# JPEG for game frames
   public int VideoCrf;            // x264 CRF 18..32 (default 19: transparent,
                                   // bigger file by user rule)
-  public string VideoPreset;      // x264 preset allowlist (default veryfast)
+  public string VideoPreset;      // x264 preset allowlist (default medium:
+                                  // best motion handling; transcode is
+                                  // post-session so speed is secondary)
   public int AudioMp3Quality;     // LAME VBR -q:a 0..9 (default 4 ≈ voice-
                                   // transparent, roughly half of 128k CBR)
   public int PipWidth;            // camera overlay width (4:3, default 240)
