@@ -63,6 +63,7 @@ public class CT_P21_SessionDeliverables {
       (Func<PhonePresenceWatcher>)(() => (PhonePresenceWatcher)null), dir);
     rec.SetTestForceSourcesAvailable(true);
     rec.SetTestDisableTranscode(true);
+    rec.SetPrefsKeyForTests("LWE.Test.P21." + Guid.NewGuid().ToString("N"));
     return rec;
   }
 
@@ -100,7 +101,7 @@ public class CT_P21_SessionDeliverables {
     Assert.IsTrue(d.Validate(out reason), reason);
     Assert.AreEqual(960, d.GameWidth);
     Assert.AreEqual(540, d.GameHeight);
-    Assert.AreEqual(24, d.GameFps);
+    Assert.AreEqual(20, d.GameFps);
     Assert.AreEqual(65, d.GameJpegQuality);
     Assert.AreEqual(24, d.VideoCrf);
     Assert.AreEqual("veryfast", d.VideoPreset);
@@ -204,6 +205,7 @@ public class CT_P21_SessionDeliverables {
     StringAssert.Contains("-q:a 4", args);
     StringAssert.Contains("-shortest", args);
     StringAssert.Contains("+faststart", args);
+    StringAssert.Contains("-r 24", args); // wall-clock: measured game rate
     StringAssert.Contains("s.mp4", args);
     StringAssert.Contains("s.mp3", args);
   }

@@ -342,4 +342,30 @@ public class CT_P16_MicStatusHud {
       UnityEngine.Object.DestroyImmediate(monitor.gameObject);
     }
   }
+
+  [Test] public void P16O_HeadphoneUpright() {
+    // Regression: the band arc was drawn in the lower half (upside-down).
+    // Upright = white arc pixels up top, empty rows at the very bottom.
+    UnityEngine.Sprite sprite = MicStatusHud.MakeHeadphoneSprite();
+    try {
+      Assert.IsNotNull(sprite);
+      UnityEngine.Texture2D tex = sprite.texture;
+      Assert.IsNotNull(tex);
+      UnityEngine.Color[] px = tex.GetPixels();
+      Assert.AreEqual(64 * 64, px.Length);
+      int top = 0, bottom = 0;
+      for (int y = 0; y < 64; y++) {
+        for (int x = 0; x < 64; x++) {
+          if (px[y * 64 + x].a > 0.5f) {
+            if (y >= 40) top++;
+            if (y < 8) bottom++;
+          }
+        }
+      }
+      Assert.Greater(top, 0, "arc lives in the upper half");
+      Assert.AreEqual(0, bottom, "nothing below the earcups");
+    } finally {
+      try { UnityEngine.Object.DestroyImmediate(sprite.texture); } catch (System.Exception) { }
+    }
+  }
 }

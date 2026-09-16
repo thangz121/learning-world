@@ -268,8 +268,11 @@ public class MicStatusHud : MonoBehaviour {
     return Sprite.Create(tex, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f);
   }
 
-  // Headphone silhouette (band arc + two earcups), procedural.
-  static Sprite MakeHeadphoneSprite() {
+  // Headphone silhouette (band arc on TOP + two earcups hanging below),
+  // procedural. Texture y=0 is the BOTTOM row: the arc must live in the
+  // upper half and the cups below its ends, or the icon reads upside-down.
+  // Public as a test seam (P16O pins upright orientation by pixels).
+  public static Sprite MakeHeadphoneSprite() {
     const int size = 64;
     Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
     tex.wrapMode = TextureWrapMode.Clamp;
@@ -280,9 +283,9 @@ public class MicStatusHud : MonoBehaviour {
         Vector2 p = new Vector2(x + 0.5f, y + 0.5f);
         bool band = false;
         float d = Vector2.Distance(p, c);
-        if (d >= 19f && d <= 25f && p.y <= 32f) band = true;
-        bool cupL = p.x >= 5f && p.x <= 14f && p.y >= 24f && p.y <= 48f;
-        bool cupR = p.x >= 50f && p.x <= 59f && p.y >= 24f && p.y <= 48f;
+        if (d >= 19f && d <= 25f && p.y >= 30f) band = true;
+        bool cupL = p.x >= 5f && p.x <= 14f && p.y >= 8f && p.y <= 31f;
+        bool cupR = p.x >= 50f && p.x <= 59f && p.y >= 8f && p.y <= 31f;
         tex.SetPixel(x, y, (band || cupL || cupR) ? Color.white : clear);
       }
     }

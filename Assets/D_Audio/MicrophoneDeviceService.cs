@@ -65,8 +65,28 @@ public sealed class MicrophoneDeviceService : IMicrophoneDevice {
       SetStatus(MicStatus.NoDevice);
       return;
     }
-    if (_selected == null || Array.IndexOf(_devices, _selected) < 0)
-      _selected = _devices[0]; // default device; gameplay may pin another later
+    if (_selected == null || Array.IndexOf(_devices, _selected) < 0) {
+      _selected = MicDeviceClassifier.PickDevice(_devices); // ranked default
+    } else {
+      // Hot-plug takeover (user rule): a strictly better-ranked newcomer
+      // wins (plug a USB mic => the game uses it); equal rank never flaps
+      // the active device mid-session.
+      string best = null;
+      try { best = MicDeviceClassifier.PickDevice(_devices); } catch (Exception) { }
+      if (!string.IsNullOrEmpty(best) && best != _selected) {
+        int br = 99, cr = 99;
+        try { br = MicDeviceClassifier.Rank(best); } catch (Exception) { }
+        try { cr = MicDeviceClassifier.Rank(_selected); } catch (Exception) { }
+        if (br < cr) {
+          _selected = best;
+          try { Debug.Log("[MicSetup] local mic selected: " + _selected); }
+          catch (Exception) { }
+          if (_status == MicStatus.Ready) {
+            try { StatusChanged?.Invoke(_status); } catch (Exception) { }
+          }
+        }
+      }
+    }
     if (_permissionProbe != null) {
       bool ok = false;
       try { ok = _permissionProbe(_selected); } catch (Exception) { ok = false; }

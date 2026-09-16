@@ -212,9 +212,36 @@ public class MarketBootstrap : MonoBehaviour {
       }
       rec.Bind(MediaRecordingConfig.Default, CameraStream, LocalCamera,
         () => MicMonitor != null ? MicMonitor.CurrentAudioWatcher : null, null,
-        gameCam, FindToolsDir());
+        gameCam, FindToolsDir(),
+        () => {
+          try {
+            return MicMonitor != null && MicMonitor.Gate != null
+              && MicMonitor.Gate.State == MicSetupState.ReadyLocal;
+          } catch (Exception) { return false; }
+        },
+        () => {
+          try {
+            if (mic != null && mic.LocalMic != null) {
+              var cap = mic.LocalMic.Capability;
+              if (cap.IsAvailable()) return mic.LocalMic.SelectedDevice ?? string.Empty;
+            }
+          } catch (Exception) { }
+          return null;
+        });
+      GameObject recLocGo = new GameObject("RecordingLocationDialog");
+      RecordingLocationDialog recLoc = recLocGo.AddComponent<RecordingLocationDialog>();
+      rec.BindLocationDialog(recLoc);
+      GameObject recConfirmGo = new GameObject("RecordingConfirmDialog");
+      RecordingConfirmDialog recConfirm = recConfirmGo.AddComponent<RecordingConfirmDialog>();
+      rec.BindConfirmDialog(recConfirm);
+      GameObject recIndGo = new GameObject("RecordingIndicator");
+      RecordingIndicator recInd = recIndGo.AddComponent<RecordingIndicator>();
+      rec.BindIndicator(recInd);
+      GameObject recToastGo = new GameObject("RecordingToast");
+      RecordingToast recToast = recToastGo.AddComponent<RecordingToast>();
+      rec.BindToast(recToast);
       MediaRecorder = rec;
-      Debug.Log("[MediaRec] wired (explicit start only; F2 toggles mic+camera)");
+      Debug.Log("[MediaRec] wired (explicit start only; F2 toggles, double-F2 changes save folder)");
     } catch (Exception e) {
       Debug.LogWarning("[MediaRec] wiring failed, game continues without recording: " + e.Message);
       MediaRecorder = null;

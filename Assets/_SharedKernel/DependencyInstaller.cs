@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression; // ZipFileExtensions.ExtractToFile (portable fallback)
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -390,6 +391,15 @@ public static class DependencyInstaller {
   }
 
   // ---------------- LAN certificate (generated locally, no download) ----------
+  //
+  // Runtime reality (probed 2026-09-16 on this Unity profile): CertificateRequest
+  // does NOT exist (TypeLoad), ExportPkcs8/SPKI throw PlatformNotSupported,
+  // and RSA.Create caps at 1024 (browsers/phones reject 1024-bit today).
+  // What DOES work: RSACryptoServiceProvider(2048) + ExportParameters +
+  // SHA256 + X509 parse. So this builder hand-rolls the DER (TBSCertificate
+  // + PKCS#1/SPKI/PKCS#8, standard OIDs) and signs with the platform RSA.
+  // Every byte it emits is re-validated below by an independent parse
+  // (subject/expiry/key-size) plus the python-ssl load in compat.
 
   public static bool GenerateLanCert(string primaryIp, List<string> extraIps,
       string crtPath, string keyPath, out string error) {
@@ -399,32 +409,84 @@ public static class DependencyInstaller {
         error = "no-lan-ip";
         return false;
       }
-      using (var rsa = System.Security.Cryptography.RSA.Create(2048)) {
-        var req = new CertificateRequest(
-          "CN=" + primaryIp,
-          rsa,
-          System.Security.Cryptography.HashAlgorithmName.SHA256,
-          System.Security.Cryptography.RSASignaturePadding.Pkcs1);
-        req.CertificateExtensions.Add(
-          new X509BasicConstraintsExtension(false, false, 0, false));
-        req.CertificateExtensions.Add(
-          new X509KeyUsageExtension(
-            X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, false));
-        var san = new SubjectAlternativeNameBuilder();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var all = new List<string> { primaryIp };
-        if (extraIps != null) all.AddRange(extraIps);
-        foreach (string ip in all) {
-          if (string.IsNullOrEmpty(ip) || !seen.Add(ip)) continue;
-          IPAddress addr;
-          if (IPAddress.TryParse(ip, out addr)) san.AddIpAddress(addr);
-          else san.AddDnsName(ip);
+      System.Security.Cryptography.RSA rsa = MintRsa2048();
+      if (rsa == null) {
+        error = "weak-key-unavailable (refusing 1024-bit cert)";
+        return false;
+      }
+      using (rsa) {
+        System.Security.Cryptography.RSAParameters p;
+        try {
+          p = rsa.ExportParameters(true);
+        } catch (Exception e) {
+          error = "export-parameters:" + e.GetType().Name;
+          return false;
         }
-        req.CertificateExtensions.Add(san.Build());
-        var cert = req.CreateSelfSigned(
-          DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(825));
-        byte[] certDer = cert.Export(X509ContentType.Cert);
-        byte[] keyDer = rsa.ExportPkcs8PrivateKey();
+        if (p.Modulus == null || p.Modulus.Length != 256 || p.Exponent == null) {
+          error = "bad-key-material";
+          return false;
+        }
+        DateTime notBefore, notAfter;
+        try {
+          notBefore = DateTime.UtcNow.AddDays(-1);
+          notAfter = DateTime.UtcNow.AddDays(825);
+        } catch (Exception e) {
+          error = "validity:" + e.GetType().Name;
+          return false;
+        }
+        byte[] serial;
+        try {
+          serial = new byte[8];
+          using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            rng.GetBytes(serial);
+          serial[0] &= 0x7F;
+        } catch (Exception e) {
+          error = "serial:" + e.GetType().Name;
+          return false;
+        }
+        byte[] tbs;
+        try {
+          tbs = BuildTbs(primaryIp, extraIps, notBefore, notAfter, serial, p.Modulus, p.Exponent);
+        } catch (Exception e) {
+          error = "tbs:" + e.GetType().Name;
+          return false;
+        }
+        byte[] sig;
+        string signStep;
+        if (!TrySignTbs(rsa, tbs, p.Modulus.Length, out sig, out signStep)) {
+          error = "sign:" + signStep;
+          return false;
+        }
+        byte[] certDer, keyDer;
+        try {
+          certDer = BuildCert(tbs, sig);
+          keyDer = BuildPkcs8(p);
+        } catch (Exception e) {
+          error = "assemble:" + e.GetType().Name;
+          return false;
+        }
+        // Independent self-verify (parse works on this runtime — probed):
+        // never write a cert we cannot read back as 2048-bit with our dates.
+        try {
+          var chk = new X509Certificate2(certDer);
+          if (chk.PublicKey == null || chk.PublicKey.Key == null
+              || chk.PublicKey.Key.KeySize != 2048) {
+            error = "self-verify:keysize";
+            return false;
+          }
+          double days = (chk.NotAfter.ToUniversalTime() - DateTime.UtcNow).TotalDays;
+          if (days < 800 || days > 830) {
+            error = "self-verify:validity";
+            return false;
+          }
+          if (chk.Subject == null || chk.Subject.IndexOf(primaryIp, StringComparison.Ordinal) < 0) {
+            error = "self-verify:subject";
+            return false;
+          }
+        } catch (Exception e) {
+          error = "self-verify:" + e.GetType().Name;
+          return false;
+        }
         string dir = null;
         try { dir = Path.GetDirectoryName(crtPath); } catch (Exception) { }
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
@@ -436,6 +498,277 @@ public static class DependencyInstaller {
       error = "generate:" + e.GetType().Name;
       return false;
     }
+  }
+
+  // RSA-2048 or nothing (1024-bit is refused, never silently shipped).
+  static System.Security.Cryptography.RSA MintRsa2048() {
+    try {
+      var csp = new System.Security.Cryptography.RSACryptoServiceProvider(2048);
+      try {
+        if (csp.KeySize == 2048) return csp;
+      } catch (Exception) { }
+      try { csp.Dispose(); } catch (Exception) { }
+    } catch (Exception) { }
+    try {
+      var r = System.Security.Cryptography.RSA.Create();
+      try {
+        r.KeySize = 2048;
+        if (r.KeySize == 2048) return r;
+      } catch (Exception) { }
+      try { r.Dispose(); } catch (Exception) { }
+    } catch (Exception) { }
+    return null;
+  }
+
+  // Signer ladder: SignData (hashes internally) -> manual PKCS#1 v1.5 pad +
+  // raw private op -> base SignHash. First success wins; failures name steps.
+  static bool TrySignTbs(System.Security.Cryptography.RSA rsa, byte[] tbs,
+      int modLen, out byte[] sig, out string step) {
+    sig = null;
+    step = "none";
+    var csp = rsa as System.Security.Cryptography.RSACryptoServiceProvider;
+    if (csp != null) {
+      try {
+        byte[] s = csp.SignData(tbs, "SHA256");
+        sig = NormalizeSig(s, modLen);
+        if (sig != null) return true;
+        step = "signdata-length";
+      } catch (Exception e) { step = "signdata:" + e.GetType().Name; }
+      try {
+        byte[] hash;
+        using (var sha = System.Security.Cryptography.SHA256.Create())
+          hash = sha.ComputeHash(tbs);
+        byte[] pad = Pkcs1V15Encode(hash, modLen);
+        if (pad != null) {
+          byte[] s = csp.EncryptValue(pad);
+          sig = NormalizeSig(s, modLen);
+          if (sig != null) return true;
+          step = "manual-length";
+        } else step = "manual-pad";
+      } catch (Exception e) { step = "manual:" + e.GetType().Name; }
+    }
+    try {
+      byte[] hash;
+      using (var sha = System.Security.Cryptography.SHA256.Create())
+        hash = sha.ComputeHash(tbs);
+      byte[] s = rsa.SignHash(hash,
+        System.Security.Cryptography.HashAlgorithmName.SHA256,
+        System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+      sig = NormalizeSig(s, modLen);
+      if (sig != null) return true;
+      step = "signhash-length";
+    } catch (Exception e) { step = "signhash:" + e.GetType().Name; }
+    sig = null;
+    return false;
+  }
+
+  static byte[] NormalizeSig(byte[] s, int modLen) {
+    try {
+      if (s == null || s.Length > modLen) return null;
+      if (s.Length == modLen) return s;
+      var out_ = new byte[modLen];
+      Buffer.BlockCopy(s, 0, out_, modLen - s.Length, s.Length);
+      return out_;
+    } catch (Exception) { return null; }
+  }
+
+  // PKCS#1 v1.5 signature padding for SHA-256 (RFC 8017, DigestInfo prefix).
+  static byte[] Pkcs1V15Encode(byte[] hash32, int modLen) {
+    try {
+      if (hash32 == null || hash32.Length != 32 || modLen < 64) return null;
+      byte[] prefix = {
+        0x30, 0x31, 0x30, 0x0D, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01,
+        0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20
+      };
+      int tLen = prefix.Length + 32;
+      if (modLen < tLen + 11) return null;
+      var em = new byte[modLen];
+      em[0] = 0x00;
+      em[1] = 0x01;
+      for (int i = 2; i < modLen - tLen - 1; i++) em[i] = 0xFF;
+      em[modLen - tLen - 1] = 0x00;
+      Buffer.BlockCopy(prefix, 0, em, modLen - tLen, prefix.Length);
+      Buffer.BlockCopy(hash32, 0, em, modLen - 32, 32);
+      return em;
+    } catch (Exception) { return null; }
+  }
+
+  // ---------------- minimal DER builder (standard OIDs only) ------------------
+
+  static byte[] D_Len(int n) {
+    if (n < 0) return new byte[] { 0x00 };
+    if (n < 128) return new byte[] { (byte)n };
+    var tmp = new System.Collections.Generic.List<byte>();
+    int v = n;
+    while (v > 0) { tmp.Insert(0, (byte)(v & 0xFF)); v >>= 8; }
+    var out_ = new byte[tmp.Count + 1];
+    out_[0] = (byte)(0x80 | tmp.Count);
+    for (int i = 0; i < tmp.Count; i++) out_[i + 1] = tmp[i];
+    return out_;
+  }
+
+  static byte[] D_Tlv(byte tag, byte[] content) {
+    byte[] len = D_Len(content != null ? content.Length : 0);
+    var out_ = new byte[1 + len.Length + (content != null ? content.Length : 0)];
+    out_[0] = tag;
+    Buffer.BlockCopy(len, 0, out_, 1, len.Length);
+    if (content != null && content.Length > 0)
+      Buffer.BlockCopy(content, 0, out_, 1 + len.Length, content.Length);
+    return out_;
+  }
+
+  static byte[] D_Concat(params byte[][] parts) {
+    int n = 0;
+    foreach (byte[] p in parts) n += p != null ? p.Length : 0;
+    var out_ = new byte[n];
+    int o = 0;
+    foreach (byte[] p in parts) {
+      if (p == null || p.Length == 0) continue;
+      Buffer.BlockCopy(p, 0, out_, o, p.Length);
+      o += p.Length;
+    }
+    return out_;
+  }
+
+  static byte[] D_Seq(params byte[][] parts) {
+    return D_Tlv(0x30, D_Concat(parts));
+  }
+
+  static byte[] D_Set(byte[] part) {
+    return D_Tlv(0x31, part);
+  }
+
+  static byte[] D_Int(byte[] be) {
+    int i = 0;
+    while (i + 1 < be.Length && be[i] == 0x00) i++;
+    int n = be.Length - i;
+    bool hi = (be[i] & 0x80) != 0;
+    var out_ = new byte[n + (hi ? 1 : 0)];
+    if (hi) out_[0] = 0x00;
+    Buffer.BlockCopy(be, i, out_, hi ? 1 : 0, n);
+    return D_Tlv(0x02, out_);
+  }
+
+  static byte[] D_IntSmall(int v) {
+    if (v == 0) return D_Tlv(0x02, new byte[] { 0x00 });
+    var tmp = new System.Collections.Generic.List<byte>();
+    int x = v;
+    while (x > 0) { tmp.Insert(0, (byte)(x & 0xFF)); x >>= 8; }
+    return D_Int(tmp.ToArray());
+  }
+
+  static byte[] D_Oid(string dotted) {
+    string[] parts = dotted.Split('.');
+    var body = new System.Collections.Generic.List<byte>();
+    int a = int.Parse(parts[0]), b = int.Parse(parts[1]);
+    body.Add((byte)(a * 40 + b));
+    for (int i = 2; i < parts.Length; i++) {
+      long v = long.Parse(parts[i]);
+      var st = new System.Collections.Generic.List<byte>();
+      st.Insert(0, (byte)(v & 0x7F));
+      v >>= 7;
+      while (v > 0) { st.Insert(0, (byte)((v & 0x7F) | 0x80)); v >>= 7; }
+      foreach (byte bb in st) body.Add(bb);
+    }
+    return D_Tlv(0x06, body.ToArray());
+  }
+
+  static byte[] D_Null() {
+    return new byte[] { 0x05, 0x00 };
+  }
+
+  static byte[] D_Utf8(string s) {
+    return D_Tlv(0x0C, Encoding.UTF8.GetBytes(s));
+  }
+
+  static byte[] D_UtcTime(DateTime utc) {
+    string t = utc.ToUniversalTime().ToString("yyMMddHHmmss") + "Z";
+    return D_Tlv(0x17, Encoding.ASCII.GetBytes(t));
+  }
+
+  static byte[] D_BitStr(byte[] content) {
+    return D_Tlv(0x03, D_Concat(new byte[] { 0x00 }, content));
+  }
+
+  static byte[] D_Octet(byte[] content) {
+    return D_Tlv(0x04, content);
+  }
+
+  static byte[] D_Explicit(int tag, byte[] content) {
+    return D_Tlv((byte)(0xA0 | tag), content);
+  }
+
+  static byte[] SigAlg() {
+    return D_Seq(D_Oid("1.2.840.113549.1.1.11"), D_Null()); // sha256WithRSAEncryption
+  }
+
+  static byte[] Pkcs1Pub(byte[] n, byte[] e) {
+    return D_Seq(D_Int(n), D_Int(e));
+  }
+
+  static byte[] Spki(byte[] n, byte[] e) {
+    return D_Seq(
+      D_Seq(D_Oid("1.2.840.113549.1.1.1"), D_Null()), // rsaEncryption
+      D_BitStr(Pkcs1Pub(n, e)));
+  }
+
+  static byte[] NameOf(string cn) {
+    return D_Seq(D_Set(D_Seq(D_Oid("2.5.4.3"), D_Utf8(cn))));
+  }
+
+  static byte[] SanOf(List<string> ips) {
+    var parts = new System.Collections.Generic.List<byte[]>();
+    foreach (string ip in ips) {
+      IPAddress addr;
+      if (IPAddress.TryParse(ip, out addr)) {
+        byte[] raw = addr.GetAddressBytes();
+        if (raw != null && raw.Length == 4)
+          parts.Add(D_Concat(new byte[] { 0x87, 0x04 }, raw));
+      } else if (!string.IsNullOrEmpty(ip)) {
+        byte[] dns = Encoding.ASCII.GetBytes(ip);
+        parts.Add(D_Concat(new byte[] { 0x82 }, D_Len(dns.Length), dns));
+      }
+    }
+    return D_Seq(parts.ToArray());
+  }
+
+  static byte[] BuildTbs(string primaryIp, List<string> extraIps,
+      DateTime notBefore, DateTime notAfter, byte[] serial,
+      byte[] modulus, byte[] exponent) {
+    var ips = new List<string> { primaryIp };
+    if (extraIps != null) {
+      var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { primaryIp };
+      foreach (string ip in extraIps) {
+        if (!string.IsNullOrEmpty(ip) && seen.Add(ip)) ips.Add(ip);
+      }
+    }
+    byte[] exts = D_Seq(
+      D_Seq(D_Oid("2.5.29.19"), D_Octet(D_Seq())),                       // basicConstraints CA:false
+      D_Seq(D_Oid("2.5.29.15"), D_Octet(D_Tlv(0x03, new byte[] { 0x05, 0xA0 }))), // keyUsage digSig+keyEnc
+      D_Seq(D_Oid("2.5.29.17"), D_Octet(SanOf(ips))));                    // subjectAltName
+    return D_Seq(
+      D_Explicit(0, D_Tlv(0x02, new byte[] { 0x02 })),                    // version v3
+      D_Int(serial),
+      SigAlg(),
+      NameOf(primaryIp),
+      D_Seq(D_UtcTime(notBefore), D_UtcTime(notAfter)),
+      NameOf(primaryIp),
+      Spki(modulus, exponent),
+      D_Explicit(3, exts));
+  }
+
+  static byte[] BuildCert(byte[] tbs, byte[] sig) {
+    return D_Seq(tbs, SigAlg(), D_BitStr(sig));
+  }
+
+  static byte[] BuildPkcs8(System.Security.Cryptography.RSAParameters p) {
+    byte[] pkcs1 = D_Seq(
+      D_IntSmall(0), D_Int(p.Modulus), D_Int(p.Exponent), D_Int(p.D),
+      D_Int(p.P), D_Int(p.Q), D_Int(p.DP), D_Int(p.DQ), D_Int(p.InverseQ));
+    return D_Seq(
+      D_IntSmall(0),
+      D_Seq(D_Oid("1.2.840.113549.1.1.1"), D_Null()),
+      D_Octet(pkcs1));
   }
 
   public static string ToPem(string header, byte[] der) {

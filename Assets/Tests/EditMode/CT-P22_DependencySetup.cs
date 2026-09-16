@@ -116,6 +116,20 @@ public class CT_P22_DependencySetup {
       string pem = File.ReadAllText(key);
       Assert.IsTrue(pem.Contains("-----BEGIN PRIVATE KEY-----"), "unencrypted PKCS#8 for gateway ssl");
       Assert.IsTrue(File.ReadAllText(crt).Contains("-----BEGIN CERTIFICATE-----"));
+      // Independent re-parse teeth: real 2048-bit key, our CN, our validity.
+      var parsed = new System.Security.Cryptography.X509Certificates.X509Certificate2(
+        File.ReadAllBytes(crt));
+      Assert.AreEqual(2048, parsed.PublicKey.Key.KeySize, "never ship 1024-bit certs");
+      Assert.IsTrue(parsed.Subject.Contains("127.0.0.1"), parsed.Subject);
+      double days = (parsed.NotAfter.ToUniversalTime() - DateTime.UtcNow).TotalDays;
+      Assert.Greater(days, 800, "825-day validity");
+      Assert.Less(days, 830, "825-day validity");
+      // SAN IPs land in the DER (87 04 <4 bytes>): 127.0.0.1 + 192.168.1.50.
+      // NOTE: scan the base64-DECODED body — the .crt file itself is PEM text.
+      byte[] der = PemBody(File.ReadAllText(crt));
+      Assert.IsNotNull(der, "pem decodes");
+      Assert.IsTrue(ContainsSeq(der, new byte[] { 0x87, 0x04, 0x7F, 0x00, 0x00, 0x01 }), "SAN 127.0.0.1");
+      Assert.IsTrue(ContainsSeq(der, new byte[] { 0x87, 0x04, 192, 168, 1, 50 }), "SAN 192.168.1.50");
       DependencyCheck c = DependencyInstaller.CheckLanCert(dir);
       Assert.IsTrue(c.Ready, c.Detail);
       // Missing dir / missing files never throw, never claim ready.
@@ -127,6 +141,30 @@ public class CT_P22_DependencySetup {
       Assert.IsFalse(DependencyInstaller.GenerateLanCert(null, null, crt, key, out err2));
       Assert.IsNotEmpty(err2);
     } finally { WipeDir(dir); }
+  }
+
+  static byte[] PemBody(string pem) {
+    try {
+      var sb = new System.Text.StringBuilder();
+      foreach (string line in pem.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)) {
+        string t = line.Trim();
+        if (t.StartsWith("-----")) continue;
+        sb.Append(t);
+      }
+      return Convert.FromBase64String(sb.ToString());
+    } catch (Exception) { return null; }
+  }
+
+  static bool ContainsSeq(byte[] hay, byte[] needle) {    try {
+      for (int i = 0; i + needle.Length <= hay.Length; i++) {
+        bool ok = true;
+        for (int k = 0; k < needle.Length; k++) {
+          if (hay[i + k] != needle[k]) { ok = false; break; }
+        }
+        if (ok) return true;
+      }
+    } catch (Exception) { }
+    return false;
   }
 
   [Test] public void P22G_LanIpNeverThrows() {
@@ -206,12 +244,23 @@ public class CT_P22_DependencySetup {
     }
   }
 
-  [Test] public void P22K_VersionLooks() {
-    Assert.IsTrue(MediaDependencySpecs.LooksLikeVersion("9.0.1"));
+  [Test] public void P22K_VersionLooks() {    Assert.IsTrue(MediaDependencySpecs.LooksLikeVersion("9.0.1"));
     Assert.IsTrue(MediaDependencySpecs.LooksLikeVersion(" 8.1 "));
     Assert.IsFalse(MediaDependencySpecs.LooksLikeVersion("abc"));
     Assert.IsFalse(MediaDependencySpecs.LooksLikeVersion("1"));
     Assert.IsFalse(MediaDependencySpecs.LooksLikeVersion("1.2.3.4.5"));
     Assert.IsFalse(MediaDependencySpecs.LooksLikeVersion(null));
+  }
+
+  // P23 loopback-E2E finding: Update() pumped Stopping only, so sessions
+  // stranded in Finalizing after the transcode finished (mp4+mp3 on disk,
+  // state never COMPLETED). Both states must pump.
+  [Test] public void P22L_FinalizingKeepsPumping() {
+    Assert.IsTrue(MediaRecordingService.ShouldPumpStopping(RecordingState.Stopping));
+    Assert.IsTrue(MediaRecordingService.ShouldPumpStopping(RecordingState.Finalizing));
+    Assert.IsFalse(MediaRecordingService.ShouldPumpStopping(RecordingState.Idle));
+    Assert.IsFalse(MediaRecordingService.ShouldPumpStopping(RecordingState.Recording));
+    Assert.IsFalse(MediaRecordingService.ShouldPumpStopping(RecordingState.Completed));
+    Assert.IsFalse(MediaRecordingService.ShouldPumpStopping(RecordingState.Error));
   }
 }

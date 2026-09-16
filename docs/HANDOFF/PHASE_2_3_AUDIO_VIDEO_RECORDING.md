@@ -2,12 +2,14 @@
 
 ## Status
 
-**PASS WITH OPEN ITEMS** — the full-session recording layer is implemented,
-tested, and proven at every level short of the supervised real-phone run:
-press F2 → gameplay + camera + mic recorded → Stop → MP4 (H.264 + camera
-PiP) + MP3 (LAME) → independent decode → content evidence. The ONE open
-item is the supervised real-phone E2E (procedure in §22), which needs a
-physical phone on the user's LAN. Same precedent as Phase 2.1 M6.
+**PASS WITH OPEN ITEMS** — proven in a FRESH shipping build (Succeeded,
+errors=0) with loopback transport standing in for the phone: offer Accept →
+ReadyPhone + camera Live → 18 s record → STOP → transcode → `P23SURVEY
+COMPLETE`, then `verify_recording.py` decoded both deliverables and verified
+content (mp4 960×540 avc1, 338 samples, pixel-probe PASS through real H.264;
+mp3 501 frames, 0 bad, 18.00 s, Xing-agreeing). The REMAINING open items
+need a physical phone + human: real F2 keypress, spoken phrase, visible
+face, phone-origin bytes (procedure in §22). Same precedent as Phase 2.1 M6.
 
 Scope note (user request, 2026-09-16): record the WHOLE play session —
 gameplay video AND camera/phone stream AND audio — on ONE toggle key (F2),
@@ -194,56 +196,69 @@ LAN + local files + local ffmpeg. No cloud dependency by construction
 
 ## 20. Performance baseline
 
-Design budget (formal game-build numbers = §22 E2E, then 2.4 stress):
-game render ×1 (unchanged); per game sample one 2 MB memcpy + async
-readback; JPEG/x264/LAME/overlay entirely off the main thread; cam sample
-≤ 1 slot copy @10 fps; audio memcpy 32 KB/s. Telemetry hooks: queue
-depths/drops, write-fail flags, game gaps, camera decode ms/fps, session
-durations, transcode time. Measured here: worker JPEG 320×240 ≪ frame
-budget; transcode of a 1 s fixture ≈ instant; veryfast 540p24 encodes
-faster than realtime on this class of CPU (formal numbers in E2E).
+Design budget + LOOPBACK-BUILD measurements (formal phone-run numbers stay
+§22, then 2.4 stress). Session `rec-20260916-030717` (18 s wall, shipping
+build, foreground): audio 179 chunks / 0 drops, cam 182 frames / 0 drops /
+0 gaps, game 348 frames / 12 raw drops (worker JPEG sustains ≈19 fps, so
+the default record cap is 20 — header rate ≈ wall rate), transcode seconds,
+gameplay FPS unaffected path (3×FACE_OK during record, no freeze).
+Telemetry hooks for everything above travel in every sidecar. First loopback
+run caught a REAL duration bug (header 24 fps vs 19 sustained → mp4 14.2 s
+vs 18 s wall); fixed by cap-20 + output `-r <measured>` re-stamp (second
+run: mp4 17.48 s vs 18.00 s wall).
 
 ## 21. Automated test results
 
-CT-P20 (21) + CT-P21 (13) + full EditMode, Unity 6000.6.0f1 batchmode:
-**349 total — 348 pass, 0 fail, 1 skip** (pre-existing `P13M4`). P21 covers:
-output-config matrix, deliverable naming, C# JPEG validity (SOI/EOI/SOF0
-dims) + input rejection + quality-monotonic sizes, transcode arg matrix
-(full/audio-only/video-only/sanitized), locator-explicit-missing,
-runner-missing-binary, game session fallback (intermediates kept,
-`transcoded=false`), game serial-change flagging. Gateway `--selftest` OK;
-`validate_content.py` authoring PASS.
+CT-P20 (21) + CT-P21 (13) + CT-P22 (12: specs, winget cmd, SHA, locator,
+cert round-trip, zip extract, dialog states, Finalizing-pump) + full
+EditMode, Unity 6000.6.0f1 batchmode, FINAL run on the clean tree:
+**361 total — 360 pass, 0 fail, 1 skip** (pre-existing `P13M4`). Gateway
+`--selftest` OK; `validate_content.py` authoring PASS.
 
 ## 22. Real game E2E results
 
-Proven without hardware (loopback + REAL ffmpeg 9 full build):
+LOOPBACK E2E (fresh `LWE-E2E` build, `result=Succeeded errors=0`, real
+bridges/gateway-envelope/game/recorder/ffmpeg; phone origin simulated):
 
-- P20T: fake bridge → real watcher → tap bytes identical.
-- Compat (Unity `-executeMethod`, temp script, deleted after): REAL
-  `JpegEncoder` + writers → `mic.wav`/`cam.avi`/`game.avi` → REAL
-  `FfmpegTranscodeBackend.Run` (exit 0) → `tools/verify_recording.py`:
-  - audio 16000/16000 decoded, peak 0.25, ffprobe `pcm_s16le`;
-  - cam 10/10 extracted, **PIL decodes to 320×240 RGB**, ffprobe `mjpeg`;
-  - mp4: `avc1` + audio, 10/10 samples resolved, **pixel probe PASS**
-    (frame extracted THROUGH H.264), ffprobe `h264`+`mp3`;
-  - mp3: 31 frames, Xing-agreeing duration, ffprobe `mp3`.
-- Bugs the proof caught: `-framerate` rejected for AVI inputs (builder
-  fixed — headers carry the rate); magic-only fake JPEGs refused by the
-  real decoder (fixtures upgraded to real JPEGs); MP4 parser offsets
-  (stsd/tkhd/mvhd) fixed against ffmpeg output.
+- Run A (driver API), session `rec-20260916-030717`: offer Accept click →
+  ReadyPhone + cam Live → START → 18 s → STOP → transcode → COMPLETE,
+  `interrupted=false`, `transcoded=true` (ffmpeg 9.0.1): audio 286400
+  samples, cam 183 frames, game 348 frames, mp4 419124 B, mp3 24884 B.
+  Verifier: mp4 960×540 avc1, 338 samples resolved, pixel-probe PASS,
+  17.48 s; mp3 501 frames, 0 bad, 18.00 s, Xing-agreeing. OVERALL PASS.
+- Two REAL bugs caught by run A: (1) `Update()` pumped Stopping only →
+  sessions stranded in Finalizing with mp4+mp3 already on disk (fixed +
+  pinned P22L); (2) header-24 vs sustained-19 fps → mp4 14.2 s vs 18 s
+  wall (fixed: cap-20 default + `-r <measured>`; second run 17.48 s).
+- Dependency setup in-build: `[DepSetup] wired`, all present → silent, no
+  prompt (correct behavior, logged).
+- Earlier compat (Unity `-executeMethod`, temp script, deleted after): REAL
+  `JpegEncoder` + writers → intermediates → REAL transcode (exit 0) →
+  verifier: audio 16000/16000 peak 0.25; cam 10/10, **PIL 320×240 RGB**;
+  mp4 avc1 + pixel-probe PASS; mp3 31 frames Xing-agreeing. Bugs it caught:
+  `-framerate` refused for AVI inputs; magic-only fake JPEGs refused by the
+  real decoder; MP4 parser offsets (stsd/tkhd/mvhd) fixed vs ffmpeg output.
+- Run B (physical-key path): INCONCLUSIVE-harness, NOT game FAIL. ~30
+  synthetic F2 injections (SendKeys, keybd_event, SendInput+scancode, 3 s
+  holds) into the verified-foreground game window: device present
+  (`kbNull=False`, 89 diag samples), `f2wasPressed` never true. Synthetic
+  OS input does not reach InputSystem in this automation environment;
+  the production 5-line key path calls the run-A-proven API. Verdict on F2
+  moves to the phone run (physical keypress — zero injection doubt).
 
-Supervised real-phone run (OPEN ITEM — user procedure):
+Supervised real-phone run (OPEN ITEMS — user procedure):
 
 ```
-0. Once per PC: winget install -e --id Gyan.FFmpeg  (internet once)
+0. Once per PC: winget install -e --id Gyan.FFmpeg  (internet once;
+   or accept the in-game prompt — it installs silently on consent)
 1. Fresh build (Assets/Editor/E2EBuild.cs) -> LWE.exe; launch foreground
 2. PC + phone SAME Wi-Fi; gateway up (in-game QR auto-start or tools/)
 3. Scan ONE unified QR (/phone); START MIC + START CAMERA
 4. Launch flags: -e2e-nomic -e2e-nocam (phone paths past local devices)
 5. VERIFY mic (HUD bars + green DATA) + camera (box LIVE)
-6. F2 -> [MediaRec] START session=...  (F2 again = STOP; F2 = toggle)
+6. Press PHYSICAL F2 -> [MediaRec] START  (F2 again = STOP; F2 = toggle)
 7. PLAY: talk Milo -> find -> bring; SPEAK "ball"; face to camera; move
-8. F2 -> STOP -> wait for [MediaRec] COMPLETE (transcode runs, seconds)
+8. Press PHYSICAL F2 -> STOP -> wait for [MediaRec] COMPLETE
 9. Collect MediaRecordings/rec-* : session.mp4 + session.mp3 (+ .json;
    intermediates only if KeepIntermediates or no-ffmpeg fallback)
 10. python tools/verify_recording.py --mp4 ... --mp3 ... --expect-width 960
@@ -255,8 +270,10 @@ Supervised real-phone run (OPEN ITEM — user procedure):
 
 ## 23. Real phone results
 
-NOT YET RUN (single open item). All machinery short of the phone is proven
-above with real binaries.
+NOT YET RUN (open items: physical F2 keypress, spoken "ball", visible face,
+phone-origin bytes, disconnect/reconnect live, offline-LAN rerun). The
+loopback E2E above proves everything downstream of the phone; the phone run
+proves origin + human content.
 
 ## 24/25. File verification
 
@@ -302,17 +319,82 @@ FPS stability with everything on, recovery paths, full 2.x regression.
 
 ## 30. Final verdict
 
-**PASS WITH OPEN ITEMS** — open item: solely the supervised real-phone E2E
-(§22). Full-session capture (gameplay + camera + mic → MP4 + MP3) is proven
-with real encoders/decoders and zero locked-system rewrites. No AI, no
-cloud, no phone-side encoding/storage, no second QR/page/transport, no
-display-quality regression (capture is a copy), no 2.4 stress scope.
+**PASS WITH OPEN ITEMS — NOT LOCKED.** Open items (all need the physical
+phone + human): physical F2 keypress, spoken "ball", visible face,
+phone-origin bytes, live disconnect/reconnect + offline rerun. Everything
+downstream of the phone is proven in a fresh shipping build with real
+binaries (offer → link → record → transcode → decode → content), with
+production bugs found and fixed by that proof. No AI, no cloud, no
+phone-side encoding/storage, no second QR/page/transport, no
+display-quality regression, no 2.4 stress scope.
+
+## 31. Closing deltas (post-2.3b, same gate)
+
+- Save-location chooser (user ask): first F2 opens an animated in-game
+  panel (default dir shown + native Windows folder picker); ANY choice —
+  explicit dir or remembered-default sentinel — asks exactly once.
+  Double-F2 re-opens it (F4 removed per user call). Remembered dir wins
+  over the default, validated writable on every start; stale dirs re-ask.
+- Result toast (user ask): non-modal, click-through, auto-hiding notice
+  with saved filenames + dir on COMPLETE, and a Vietnamese reason on any
+  failure (e.g. no-phone-audio tells the user to connect the phone —
+  previously this failed log-only and looked "done with no files").
+- Headphone icon was upside-down (arc in the lower half): flipped, pinned
+  by pixel test P16O (arc rows occupied up top, zero pixels below cups).
+- Closing loopback run (fresh build, Succeeded errors=0, session
+  `rec-20260916-035156`): 18 s wall → COMPLETE, interrupted=false,
+  transcoded=true — audio 286400 samples, cam 183 frames, game 335 frames,
+  files landed in the DRIVER-CHOSEN dir (remembered-dir-wins proven
+  end-to-end). Verifier: mp4 960×540 avc1, 313 samples resolved,
+  pixel-probe PASS, 16.82 s; mp3 501 frames, 0 bad, 18.00 s,
+  Xing-agreeing; ffprobe h264+mp3. OVERALL PASS (machine verdicts;
+  `correct` stays human-gated for phrase/face).
+- F2 synthetic delivery: INCONCLUSIVE-harness, NOT game FAIL (device
+  present, verified foreground, ~30 injections incl. scancode-correct
+  SendInput and 3 s holds, zero `wasPressedThisFrame`; lifecycle itself
+  proven via API on the same build). Verdict moves to the physical key.
+- Audio-source detection + video-only proposal (user ask): the game now
+  distinguishes phone-audio (recordable) vs local-mic-only (detected via
+  the mic gate, NOT recordable this phase — stated plainly) vs none. F2
+  with video but no recordable audio shows an explicit proposal ("Quay
+  video không tiếng?") instead of a log-only fail that looked "done with
+  no files". Local-mic CAPTURE stays out of scope (new capture path +
+  resampling + device ownership — a separate decision, not smuggled in).
+- Dependency setup ran silent-correct inside the shipping build
+  (`[DepSetup] wired`, all present, no prompt).
+- Final EditMode on the clean tree: **371 total — 370 pass, 0 fail,
+  1 skip** (`P13M4_RealSamplesIfPresent`: conditional Ignore, needs
+  curated human voice samples; speech-benchmark only, masks no recording
+  coverage). Temp survey driver deleted (0 temp files).
+- Precedence correction (user rule, both media): USB discrete > built-in
+  laptop > phone, game-wide. Camera already obeyed it; mic selection took
+  `devices[0]` and ignored rank — now `MicDeviceClassifier.Rank/PickDevice`
+  + hot-plug takeover in the service (strictly-better rank wins, equal rank
+  never flaps) + selection logged. The recorder feeds the same order
+  (local-selected-handle first, phone tap parks while local feeds, no
+  mixing; switches flag interrupted). `-e2e-nomic` forces local-empty so
+  the phone chain proof is preserved exactly. Speech input follows
+  automatically (same selected device).
+- Closing loopback run #2 (fresh build Succeeded errors=0, session
+  `rec-20260916-043531`, 18 s wall → COMPLETE, interrupted=false):
+  audio 284800 samples, cam 182, game 292 (60 raw drops under load —
+  bounded, counted; mp4 duration reflects captured frames), files in the
+  driver-chosen dir. Verifier: mp4 960×540 avc1, 239 samples resolved,
+  pixel-probe PASS, 14.73 s; mp3 498 frames, 0 bad, 17.89 s,
+  Xing-agreeing. OVERALL PASS (machine verdicts).
+- Suite after precedence work: **384 total — 383 pass, 0 fail, 1 skip**
+  (same benign P13M4). Two wounds from the round, both fixed at the true
+  cause: P23 brace surplus (CS1022, file re-verified on disk) and converter
+  guard semantics (channels<1 rejects instead of silent-clamp).
 
 ## Evidence table
 
 | Evidence | Result |
 |---|---|
-| Fresh game build | OPEN (E2E step 1) |
+| Fresh game build | PASS (LWE-E2E, Succeeded errors=0, DLLs fresh, no temp driver) |
+| Save-location chooser | PASS unit + live panel (animated, native picker, remembered incl. default, double-F2) |
+| Result toast | PASS unit + live wiring (filenames+dir on COMPLETE, VI reason on failure, click-through) |
+| Headphone icon | PASS upright (P16O pixel-pinned) |
 | Phone connection / unified web | PASS untouched + gateway selftest OK / OPEN live |
 | Microphone in game | PASS transport / OPEN live |
 | Camera in game | PASS transport / OPEN live |
@@ -324,14 +406,14 @@ display-quality regression (capture is a copy), no 2.4 stress scope.
 | Transcode (ffmpeg real) | PASS (exit 0, libx264 veryfast CRF24 + LAME q4) |
 | MP4 decoding | PASS (samples resolved + pixel probe + ffprobe h264) |
 | MP3 decoding | PASS (31 frames, Xing duration + ffprobe mp3) |
-| Audio/video content (auto) | PASS (peak / distinct / durations) |
+| Loopback session (18 s wall) | PASS COMPLETE (286400 samples, 183 cam, 348 game, mp4+mp3, interrupted=false) |
 | Content correct (human) | OPEN (phrase + PiP face + gameplay) |
 | Mic+cam+game simultaneous | PASS (independent queues/pumps/threads) |
-| F2 toggle | PASS (no key conflict; explicit start/stop) |
+| F2 toggle (synthetic) | INCONCLUSIVE-harness, NOT game FAIL (device present, focus verified, 0 hits; verdict moves to physical key) |
 | QR regression | PASS (zero QR/page/gateway diff) |
 | Disconnect/reconnect | PASS automated (flagged, media kept) / OPEN live |
 | Offline LAN | PASS by construction / OPEN live rerun |
 | ffmpeg-missing fallback | PASS design + unit (verified intermediates, honest flags) |
 | Performance baseline | DESIGN + hooks + instant 1 s transcode |
-| Phase 2.1 regression | PASS (P12–P16 green in 349) |
-| Phase 2.2 regression | PASS (P17–P19 green in 349) |
+| Phase 2.1 regression | PASS (P12–P16 green in 384) |
+| Phase 2.2 regression | PASS (P17–P19 green in 384) |

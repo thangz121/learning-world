@@ -49,11 +49,29 @@ public class MediaRecordingService : MonoBehaviour {
   const int FinalizeTimeoutSec = 30;
   const int MaxSampleIterationsPerFrame = 3;
 
+  // Remembered save location (PlayerPrefs). Missing = never chosen: F2 opens
+  // the in-game chooser instead of hardcoding a far-away path. Either an
+  // explicit dir or the DEFAULT sentinel is remembered — choosing (either
+  // way) asks exactly once. Double-F2 re-opens the chooser (change).
+  // Tests isolate via SetPrefsKeyForTests + cleanup.
+  public const string PrefsKey = "LWE.MediaRec.OutputDir.v1";
+  public const string DefaultSentinel = "__DEFAULT__";
+  string _prefsKey = PrefsKey;
+  RecordingLocationDialog _locationDialog;
+  RecordingConfirmDialog _confirmDialog;
+  RecordingToast _toast;
+  RecordingIndicator _indicator;
+  bool _chooserStartAfter;
+  readonly F2DoubleTracker _f2 = new F2DoubleTracker();
+
   MediaRecordingConfig _baseConfig = MediaRecordingConfig.Default;
   MediaRecordingConfig _effective = MediaRecordingConfig.Default;
   GameCameraStreamService _phoneCam;
   LocalCameraService _localCam;
   Func<PhonePresenceWatcher> _audioSource;
+  Func<bool> _localMicPresent;
+  Func<string> _localMicDevice;
+  bool? _testLocalMic;
   string _outputBaseDir;
   string _repoToolsDir;
   string _appToolsDir;
@@ -66,8 +84,12 @@ public class MediaRecordingService : MonoBehaviour {
   Camera _boundGameCam;
   Camera _gameCam;
   RenderTexture _recordRT;
-  volatile bool _wantGameFrame;
+  GameObject _captureCamGo;
+  Camera _captureCam;
+  bool _captureArmed; // enabled last tick: consume (read back) this Update
   bool _gameCaptureReady;
+  bool _savedRunInBackground = true;
+  bool _touchedRunInBackground;
 
   volatile RecordingState _state = RecordingState.Idle;
   string _lastError = string.Empty;
@@ -78,9 +100,29 @@ public class MediaRecordingService : MonoBehaviour {
   readonly RecordingSessionLatch _audioLatch = new RecordingSessionLatch();
   readonly RecordingSessionLatch _videoLatch = new RecordingSessionLatch();
   readonly RecordingSessionLatch _gameLatch = new RecordingSessionLatch();
+  readonly RecordingSessionLatch _localLatch = new RecordingSessionLatch();
   BoundedByteQueue _audioQueue;
   BoundedByteQueue _videoQueue;
   BoundedByteQueue _gameRawQueue; // RGBA handoff: main thread -> game worker
+
+  // Laptop-mic capture (user ask, additive): the recorder opens its OWN loop
+  // handle on the GAME-VALIDATED local device (bundle LocalMic, never a raw
+  // pick) and feeds the SAME bounded audio queue/pump/wav as phone audio.
+  // Phone keeps precedence (no mixing ever); switches flag interrupted.
+  // Known risk, stated plainly: holding the mic open across speaking
+  // exercises overlaps the speech engine's transient opens. The engine's
+  // device-error paths already treat that as environment failure (never a
+  // WrongWord); if the user run shows interference, the design revisits to
+  // a shared handle. No speech file is touched here.
+  AudioClip _localMicClip;
+  string _localMicActiveDevice;
+  int _localMicPos;
+  int _localMicLoopFrames;
+  int _localMicChannels = 1;
+  int _localMicRate = 16000;
+  bool _localMicActive;
+  bool _localMicFed;
+  float _localMicRepickTimer;
 
   WavWriter _audioWriter;
   AviMjpegWriter _videoWriter;
@@ -92,6 +134,7 @@ public class MediaRecordingService : MonoBehaviour {
   volatile bool _audioPumpDone = true;
   volatile bool _videoPumpDone = true;
   volatile bool _gamePumpDone = true;
+  volatile bool _phoneFed; // phone fed >=1 chunk: watcher loss below is a real drop
   volatile bool _audioWriteFailed;
   volatile bool _videoWriteFailed;
   volatile bool _gameWriteFailed;
@@ -134,7 +177,8 @@ public class MediaRecordingService : MonoBehaviour {
   // repoToolsDir: <repo>/tools for dev-time ffmpeg detection (null = skip).
   public void Bind(MediaRecordingConfig config, GameCameraStreamService phoneCam,
       LocalCameraService localCam, Func<PhonePresenceWatcher> audioSource, string outputBaseDir,
-      Camera gameCam = null, string repoToolsDir = null) {
+      Camera gameCam = null, string repoToolsDir = null, Func<bool> localMicPresent = null,
+      Func<string> localMicDevice = null) {
     try {
       string reason;
       if (config.Validate(out reason)) _baseConfig = config;
@@ -144,6 +188,8 @@ public class MediaRecordingService : MonoBehaviour {
       if (!string.IsNullOrEmpty(outputBaseDir)) _outputBaseDir = outputBaseDir;
       _boundGameCam = gameCam;
       if (!string.IsNullOrEmpty(repoToolsDir)) _repoToolsDir = repoToolsDir;
+      _localMicPresent = localMicPresent;
+      _localMicDevice = localMicDevice;
     } catch (Exception) { }
   }
 
@@ -167,6 +213,325 @@ public class MediaRecordingService : MonoBehaviour {
   // FFmpeg). The transcoder finds it without PATH changes.
   public void SetAppToolsDir(string dir) {
     try { _appToolsDir = dir; } catch (Exception) { }
+  }
+
+  // Save-location dialog (optional; without it F2 keeps the legacy direct
+  // behavior). Wired by MarketBootstrap like the other setup dialogs.
+  public void BindLocationDialog(RecordingLocationDialog dlg) {
+    try { _locationDialog = dlg; } catch (Exception) { }
+  }
+
+  public void BindConfirmDialog(RecordingConfirmDialog dlg) {
+    try { _confirmDialog = dlg; } catch (Exception) { }
+  }
+
+  public void BindIndicator(RecordingIndicator ind) {
+    try { _indicator = ind; } catch (Exception) { }
+  }
+
+  public void SetLocalMicForTests(bool present) {
+    _testLocalMic = present;
+  }
+
+  public void SetPrefsKeyForTests(string key) {
+    try { if (!string.IsNullOrEmpty(key)) _prefsKey = key; } catch (Exception) { }
+  }
+
+  // --- save location (asked in-game once, remembered, double-F2 to change) --
+  // First F2 with no remembered choice opens the chooser (animated panel)
+  // instead of silently writing to a hardcoded path. Choosing EITHER the
+  // default or a folder remembers it (sentinel for default) — later F2s
+  // start immediately. Double-F2 re-opens the chooser. Cancel = no recording.
+
+  public bool HasChosenOutput() {
+    try {
+      string v = PlayerPrefs.GetString(_prefsKey, string.Empty);
+      return !string.IsNullOrEmpty(v);
+    } catch (Exception) { return false; }
+  }
+
+  public string SavedOutputDir() {
+    try {
+      string v = PlayerPrefs.GetString(_prefsKey, string.Empty);
+      if (string.IsNullOrEmpty(v) || v == DefaultSentinel) return null;
+      return v;
+    } catch (Exception) { return null; }
+  }
+
+  public string DefaultOutputDir() {
+    try {
+      if (!string.IsNullOrEmpty(_outputBaseDir)) return _outputBaseDir;
+      string base_;
+      try { base_ = Application.persistentDataPath; } catch (Exception) { return null; }
+      if (string.IsNullOrEmpty(base_)) return null;
+      return Path.Combine(base_, "MediaRecordings");
+    } catch (Exception) { return null; }
+  }
+
+  public string CurrentOutputDisplay() {
+    try {
+      if (HasChosenOutput()) {
+        string saved = SavedOutputDir();
+        if (!string.IsNullOrEmpty(saved)) return saved;
+      }
+      return "Mặc định: " + (DefaultOutputDir() ?? "?");
+    } catch (Exception) { return string.Empty; }
+  }
+
+  public bool IsDirWritable(string dir, out string why) {
+    why = null;
+    try {
+      if (string.IsNullOrEmpty(dir)) {
+        why = "Thư mục trống.";
+        return false;
+      }
+      if (!Directory.Exists(dir)) {
+        why = "Thư mục không còn tồn tại. Hãy chọn chỗ khác.";
+        return false;
+      }
+      string probe = Path.Combine(dir, ".lwe-write-test");
+      try {
+        File.WriteAllText(probe, "ok");
+        try { File.Delete(probe); } catch (Exception) { }
+      } catch (Exception) {
+        why = "Không ghi được vào thư mục này (quyền đĩa). Hãy chọn chỗ khác.";
+        return false;
+      }
+      return true;
+    } catch (Exception) {
+      why = "Không kiểm tra được thư mục.";
+      return false;
+    }
+  }
+
+  public bool TrySetOutputDir(string dir, out string error) {
+    error = null;
+    try {
+      string why;
+      if (!IsDirWritable(dir, out why)) {
+        error = why;
+        return false;
+      }
+      try { PlayerPrefs.SetString(_prefsKey, dir); } catch (Exception e) {
+        error = "Không lưu được lựa chọn: " + e.GetType().Name;
+        return false;
+      }
+      try { PlayerPrefs.Save(); } catch (Exception) { }
+      try { Debug.Log("[MediaRec] save location set: " + dir); } catch (Exception) { }
+      return true;
+    } catch (Exception e) {
+      error = "Lỗi: " + e.GetType().Name;
+      return false;
+    }
+  }
+
+  // Remember the DEFAULT (sentinel) so choosing it also asks exactly once.
+  public void UseDefaultLocation() {
+    try { PlayerPrefs.SetString(_prefsKey, DefaultSentinel); } catch (Exception) { }
+    try { PlayerPrefs.Save(); } catch (Exception) { }
+    try { Debug.Log("[MediaRec] save location set: default"); } catch (Exception) { }
+  }
+
+  // False = open the chooser instead of recording (first F2, stale dir).
+  public bool EnsureOutputReady(out string error) {
+    error = null;
+    try {
+      if (!HasChosenOutput()) {
+        error = "no-saved-location";
+        return false;
+      }
+      string dir = SavedOutputDir() ?? DefaultOutputDir();
+      string why;
+      if (!IsDirWritable(dir, out why)) {
+        error = why;
+        return false;
+      }
+      return true;
+    } catch (Exception) {
+      error = "check-failed";
+      return false;
+    }
+  }
+
+  void OpenLocationChooser(string errorOrNull, bool startAfterChoice) {
+    try {
+      _chooserStartAfter = startAfterChoice;
+      _locationDialog.ShowChooser(CurrentOutputDisplay(), errorOrNull,
+        OnChooserDefault, OnChooserBrowse, OnChooserCancel);
+    } catch (Exception) { _chooserStartAfter = false; }
+  }
+
+  void OnChooserDefault() {
+    try {
+      UseDefaultLocation();
+      AfterLocationChoice();
+    } catch (Exception) { }
+  }
+
+  void OnChooserBrowse() {
+    try {
+      string picked = null;
+      bool ok = false;
+      try { ok = NativeFolderDialog.TryPickFolder("Chon thu muc luu ban thu", out picked); }
+      catch (Exception) { ok = false; }
+      if (!ok || string.IsNullOrEmpty(picked)) {
+        try { _locationDialog.SetError("Chưa chọn. Hãy chọn một thư mục, hoặc bấm Hủy."); }
+        catch (Exception) { }
+        return;
+      }
+      string err;
+      if (!TrySetOutputDir(picked, out err)) {
+        try { _locationDialog.SetError(err); } catch (Exception) { }
+        return;
+      }
+      AfterLocationChoice();
+    } catch (Exception) { }
+  }
+
+  void OnChooserCancel() {
+    try {
+      _chooserStartAfter = false;
+      _locationDialog.Hide();
+      try { Debug.Log("[MediaRec] location cancelled — not recording"); } catch (Exception) { }
+    } catch (Exception) { }
+  }
+
+  void AfterLocationChoice() {
+    try { if (_locationDialog != null) _locationDialog.Hide(); } catch (Exception) { }
+    bool start = _chooserStartAfter;
+    _chooserStartAfter = false;
+    try {
+      ShowToast("Đã nhớ chỗ lưu: " + CurrentOutputDisplay()
+        + "\nNhấn F2 2 lần liên tiếp để đổi.", 5f);
+    } catch (Exception) { }
+    if (start) {
+      try {
+        Debug.Log("[MediaRec] saving to " + CurrentOutputDisplay());
+      } catch (Exception) { }
+      StartRecordingSmart();
+    } else {
+      try { Debug.Log("[MediaRec] save location: " + CurrentOutputDisplay()); }
+      catch (Exception) { }
+    }
+  }
+
+  // --- result toast (in-game notice: what happened + where files are) ---------
+  // Non-modal by construction (no raycaster, clicks pass through): recording
+  // just ended, the game keeps running underneath.
+
+  public void BindToast(RecordingToast toast) {
+    try { _toast = toast; } catch (Exception) { }
+  }
+
+  public void ShowToast(string msg, float seconds) {
+    try {
+      if (_toast == null) return;
+      _toast.Show(msg, seconds);
+    } catch (Exception) { }
+  }
+
+  // Technical reason -> parent-facing hint (toast + log share it).
+  static string FriendlyReason(string reason) {
+    try {
+      if (string.IsNullOrEmpty(reason)) return "lỗi không rõ.";
+      if (reason.Contains("no-audio-in-game"))
+        return "Không thấy nguồn tiếng nào (mic + phone đều không có).";
+      if (reason.Contains("no-phone-audio-in-game"))
+        return "Chưa có tiếng từ điện thoại. Hãy kết nối phone (QR) rồi bấm F2 lại.";
+      if (reason.Contains("no-camera-in-game"))
+        return "Chưa thấy camera trong game.";
+      if (reason.Contains("output-dir"))
+        return "Không ghi được vào chỗ lưu. Nhấn F2 2 lần liên tiếp để chọn chỗ khác.";
+      if (reason.Contains("encoder-init-failed"))
+        return "Không khởi động được bộ mã hóa.";
+      if (reason.Contains("transcode-timeout"))
+        return "Xuất MP4 quá lâu (file thô vẫn giữ nguyên).";
+      if (reason.Contains("transcode-failed"))
+        return "Xuất MP4 thất bại (file WAV/AVI thô vẫn giữ nguyên).";
+      if (reason.Contains("write-failed"))
+        return "Ghi file thất bại (kiểm tra dung lượng đĩa).";
+      if (reason.Contains("finalize-timeout"))
+        return "Kết thúc bản thu quá lâu.";
+      return reason;
+    } catch (Exception) { return "lỗi không rõ."; }
+  }
+
+  static string BaseName(string path) {
+    try {
+      if (string.IsNullOrEmpty(path)) return string.Empty;
+      return Path.GetFileName(path);
+    } catch (Exception) { return string.Empty; }
+  }
+
+  // --- source detection (what CAN be recorded, before promising) --------------
+  // Phone audio flowing in-game = recordable. A listed PC mic with no phone
+  // audio = DETECTED but not recordable by this phase (the recorder taps the
+  // phone watcher only — stated plainly in the proposal, never silently).
+
+  public bool IsLocalMicAvailable() {
+    try {
+      if (_testLocalMic.HasValue) return _testLocalMic.Value;
+      if (_localMicPresent == null) return false;
+      return _localMicPresent();
+    } catch (Exception) { return false; }
+  }
+
+  public AudioSourceState GetAudioSourceState() {
+    try {
+      if (IsPhoneAudioInGame()) return AudioSourceState.PhoneReady;
+      if (IsLocalMicAvailable()) return AudioSourceState.LocalOnly;
+      return AudioSourceState.None;
+    } catch (Exception) { return AudioSourceState.None; }
+  }
+
+  // F2 smart start: full session when everything is there; an explicit
+  // video-only PROPOSAL when audio is missing but video is present; the
+  // existing gates voice the exact reason when nothing usable exists.
+  public void StartRecordingSmart() {
+    try {
+      bool audioReady = false, videoReady = false;
+      try { audioReady = IsSessionAudioReady(); } catch (Exception) { }
+      try { videoReady = IsCameraInGame(); } catch (Exception) { }
+      StartDecision d = RecordingStartDecider.DecideStart(audioReady, videoReady, _toggleMode);
+      if (d == StartDecision.ProposeVideoOnly && _confirmDialog != null) {
+        ShowVideoOnlyProposal();
+        return;
+      }
+      StartRecording(_toggleMode);
+    } catch (Exception) { }
+  }
+
+  void ShowVideoOnlyProposal() {
+    try {
+      _confirmDialog.ShowConfirm("Không có tiếng để thu",
+        "Không thấy nguồn tiếng nào (mic + phone đều không có).\n\nQuay video không tiếng?",
+        "Quay video", "Hủy", OnVideoOnlyConfirm, OnVideoOnlyCancel);
+      try { Debug.Log("[MediaRec] proposing video-only (no audio source)"); }
+      catch (Exception) { }
+    } catch (Exception) { }
+  }
+
+  void OnVideoOnlyConfirm() {
+    try {
+      if (_confirmDialog != null) _confirmDialog.Hide();
+      StartRecording(RecordingMode.CameraOnly);
+    } catch (Exception) { }
+  }
+
+  void OnVideoOnlyCancel() {
+    try {
+      if (_confirmDialog != null) _confirmDialog.Hide();
+      try { Debug.Log("[MediaRec] video-only declined — not recording"); } catch (Exception) { }
+    } catch (Exception) { }
+  }
+
+  // Session audio is recordable when the phone flows OR a game-validated
+  // local mic is present (test seams force each side independently).
+  public bool IsSessionAudioReady() {
+    try {
+      if (IsPhoneAudioInGame()) return true;
+      return IsLocalMicAvailable();
+    } catch (Exception) { return false; }
   }
 
   // --- explicit control (§20) ------------------------------------------------
@@ -217,9 +582,11 @@ public class MediaRecordingService : MonoBehaviour {
       ResetSessionState(mode);
 
       // Availability gates: media must be IN THE GAME before it can be
-      // recorded (§3). Refuse explicitly rather than writing empty files.
-      if (_effective.RecordAudio && !IsPhoneAudioInGame())
-        return FailStart("no-phone-audio-in-game");
+      // recorded (§3). Session audio = phone flowing OR a game-validated
+      // local mic (user rule: USB rời > laptop > phone; the recorder feeds
+      // the same order). Refuse explicitly rather than writing empty files.
+      if (_effective.RecordAudio && !IsSessionAudioReady())
+        return FailStart("no-audio-in-game");
       if (_effective.RecordVideo && !IsCameraInGame())
         return FailStart("no-camera-in-game");
 
@@ -252,7 +619,10 @@ public class MediaRecordingService : MonoBehaviour {
 
       if (_effective.RecordAudio) {
         var w = CurrentWatcher();
-        if (w == null && !_testForceSources) return FailStart("no-phone-audio-in-game");
+        // Watcher absent is fine when a local mic feeds (user rule); fail
+        // only when NO audio source exists at all (mirrors the gate above).
+        if (w == null && !IsLocalMicAvailable() && !_testForceSources)
+          return FailStart("no-audio-in-game");
         try { if (w != null) w.AudioPayloadAccepted += OnAudioTap; }
         catch (Exception) { return FailStart("audio-tap-failed"); }
       }
@@ -301,6 +671,7 @@ public class MediaRecordingService : MonoBehaviour {
       try { if (_audioQueue != null) _audioQueue.Close(); } catch (Exception) { }
       try { if (_videoQueue != null) _videoQueue.Close(); } catch (Exception) { }
       try { if (_gameRawQueue != null) _gameRawQueue.Close(); } catch (Exception) { }
+      try { StopLocalMic(); } catch (Exception) { }
       lock (_telLock) { _telemetry.StopUtcIso = RecordingClock.ToIso(_stopUtc); }
       SetState(RecordingState.Stopping);
       try { Debug.Log("[MediaRec] STOP session=" + _sessionId + " (flushing)"); }
@@ -312,16 +683,55 @@ public class MediaRecordingService : MonoBehaviour {
   void Update() {
     try {
       PollRecordKey();
+      // Armed single-F2: the disambiguation hold expired with no second
+      // press, so this really is a single press -> start now.
+      if (IsStartableState()) {
+        bool fire = false;
+        try { fire = _f2.PollStart(Time.unscaledTime); } catch (Exception) { }
+        if (fire) StartRecordingSmart();
+      }
       if (_state == RecordingState.Recording) {
         if (_effective.RecordVideo) {
           SampleVideo();
           SampleGame();
         }
+        if (_effective.RecordAudio) PollLocalMic();
         WatchAudioPresence();
-      } else if (_state == RecordingState.Stopping) {
+      } else if (ShouldPumpStopping(_state)) {
+        // Finalizing must keep pumping: the transcode thread finishes there
+        // and FinishSession only runs from this pump (a session stuck in
+        // Finalizing with no pump is the P23 loopback-E2E finding).
         PumpStopping();
       }
+      DriveIndicator();
     } catch (Exception) { }
+  }
+
+  // "Am I recording?" badge (user ask): live REC+timer while recording,
+  // finishing line while stopping/finalizing, hidden otherwise. State-only;
+  // the indicator owns blink/text details.
+  void DriveIndicator() {
+    try {
+      if (_indicator == null) return;
+      if (_state == RecordingState.Recording) {
+        float sec = 0f;
+        try {
+          int ms = _clock.OffsetMs();
+          sec = ms >= 0 ? ms / 1000f : 0f;
+        } catch (Exception) { }
+        _indicator.SetRecording(true, sec);
+      } else if (_state == RecordingState.Stopping || _state == RecordingState.Finalizing) {
+        _indicator.SetFinishing();
+      } else if (_indicator.IsShowing) {
+        _indicator.Hide();
+      }
+    } catch (Exception) { }
+  }
+
+  // Update pump predicate (pinned by P22: Stopping AND Finalizing both pump;
+  // dropping Finalizing strands sessions after the transcode finishes).
+  public static bool ShouldPumpStopping(RecordingState s) {
+    return s == RecordingState.Stopping || s == RecordingState.Finalizing;
   }
 
   // --- game-thread sampling ---------------------------------------------------
@@ -389,21 +799,38 @@ public class MediaRecordingService : MonoBehaviour {
   }
 
   // --- full-session gameplay capture (output side only) -----------------------
-  // The game renders ONCE (untouched pipeline + max display quality). Per
-  // sample tick we only ARM a GPU copy: endCameraRendering blits the already
-  // rendered frame into the record RT (GPU downscale, free), then an async
-  // readback hands the bytes to the worker. Main-thread cost per sample is
-  // one ~W*H*4 memcpy; JPEG encoding runs on the game worker thread via the
-  // pure-C# JpegEncoder (no Unity API off the main thread, ever).
+  // Display rendering is untouched (max quality). A dedicated capture camera
+  // (clone of the game camera) renders into the record RT on sample ticks
+  // ONLY, via the standard enabled-camera path: enabled in the tick Update,
+  // rendered by the engine that same frame, consumed + disabled in the next
+  // Update before the readback request. (Two earlier mechanisms produced
+  // black frames in real builds — CurrentActive blit read an unbound target;
+  // manual Render() on a disabled clone rendered nothing. This path is the
+  // same one every visible frame uses.)
+  // Main-thread cost per sample is one extra scene render (~2-4 ms @ 20 Hz).
+  // runInBackground is forced during capture so clicking out of the window
+  // never pauses the session (restored afterwards).
 
   void SampleGame() {
     try {
       if (!_gameCaptureReady) return;
+      // Consume last tick's render (the engine rendered it after the tick
+      // Update that enabled the camera): read back, then stand down.
+      if (_captureArmed) {
+        _captureArmed = false;
+        try { if (_captureCam != null) _captureCam.enabled = false; } catch (Exception) { }
+        try {
+          AsyncGPUReadback.Request(_recordRT, 0, TextureFormat.RGBA32, OnGameReadback);
+        } catch (Exception) {
+          lock (_telLock) { _telemetry.GameGapSamples++; }
+        }
+      }
       _gameSampleTimer += Time.deltaTime;
       float interval = 1f / Math.Max(1, _effective.GameFps);
       if (_gameSampleTimer >= interval) {
         _gameSampleTimer = interval > 0 ? _gameSampleTimer - interval : 0;
-        _wantGameFrame = true;
+        try { if (_captureCam != null) _captureCam.enabled = true; } catch (Exception) { }
+        _captureArmed = true;
       }
       if (_gameSampleTimer > interval * 2) _gameSampleTimer = 0;
     } catch (Exception) { }
@@ -423,6 +850,21 @@ public class MediaRecordingService : MonoBehaviour {
         _effective.GameWidth, _effective.GameHeight, 0, RenderTextureFormat.ARGB32);
       try { _recordRT.Create(); } catch (Exception) { ReleaseGameCapture(); return false; }
       if (!_recordRT.IsCreated()) { ReleaseGameCapture(); return false; }
+      try {
+        _captureCamGo = new GameObject("MediaRecCaptureCam");
+        try { _captureCamGo.hideFlags = HideFlags.HideAndDontSave; } catch (Exception) { }
+        _captureCam = _captureCamGo.AddComponent<Camera>();
+        try { _captureCam.CopyFrom(cam); } catch (Exception) { return false; }
+        _captureCam.targetTexture = _recordRT;
+        _captureCam.enabled = false; // manual Render() on sample ticks only
+      } catch (Exception) { ReleaseGameCapture(); return false; }
+      // Capture must continue when the player clicks away from the game
+      // window (user requirement): keep the player loop alive unfocused.
+      try {
+        _savedRunInBackground = Application.runInBackground;
+        Application.runInBackground = true;
+        _touchedRunInBackground = true;
+      } catch (Exception) { }
       _gameCaptureReady = true;
       return true;
     } catch (Exception) {
@@ -434,8 +876,13 @@ public class MediaRecordingService : MonoBehaviour {
   void ReleaseGameCapture() {
     try {
       _gameCaptureReady = false;
-      _wantGameFrame = false;
       _gameCam = null;
+      if (_captureCamGo != null) {
+        try {
+          if (Application.isPlaying) Destroy(_captureCamGo);
+          else DestroyImmediate(_captureCamGo);
+        } catch (Exception) { }
+      }
       if (_recordRT != null) {
         try {
           if (_recordRT.IsCreated()) _recordRT.Release();
@@ -445,42 +892,18 @@ public class MediaRecordingService : MonoBehaviour {
           else DestroyImmediate(_recordRT);
         } catch (Exception) { }
       }
-    } catch (Exception) { }
-    finally { _recordRT = null; }
-  }
-
-  void OnEnable() {
-    try { RenderPipelineManager.endCameraRendering += OnEndCameraRendering; }
-    catch (Exception) { }
-  }
-
-  void OnDisable() {
-    try { RenderPipelineManager.endCameraRendering -= OnEndCameraRendering; }
-    catch (Exception) { }
-  }
-
-  void OnEndCameraRendering(ScriptableRenderContext ctx, Camera cam) {
-    try {
-      if (_state != RecordingState.Recording || !_effective.RecordVideo) return;
-      if (!_wantGameFrame || !_gameCaptureReady) return;
-      if (_gameCam == null || cam != _gameCam) return;
-      if (_recordRT == null || !_recordRT.IsCreated()) return;
-      _wantGameFrame = false;
-      CommandBuffer cmd = null;
       try {
-        cmd = new CommandBuffer();
-        cmd.name = "MediaRecCap";
-        cmd.Blit(BuiltinRenderTextureType.CurrentActive, _recordRT);
-        ctx.ExecuteCommandBuffer(cmd);
-      } finally {
-        try { if (cmd != null) cmd.Dispose(); } catch (Exception) { }
-      }
-      try {
-        AsyncGPUReadback.Request(_recordRT, 0, TextureFormat.RGBA32, OnGameReadback);
-      } catch (Exception) {
-        lock (_telLock) { _telemetry.GameGapSamples++; }
-      }
+        if (_touchedRunInBackground) {
+          _touchedRunInBackground = false;
+          Application.runInBackground = _savedRunInBackground;
+        }
+      } catch (Exception) { }
     } catch (Exception) { }
+    finally {
+      _captureCamGo = null;
+      _captureCam = null;
+      _recordRT = null;
+    }
   }
 
   void OnGameReadback(AsyncGPUReadbackRequest req) {
@@ -500,6 +923,7 @@ public class MediaRecordingService : MonoBehaviour {
       }
       var copy = new byte[data.Length];
       try { data.CopyTo(copy); } catch (Exception) { return; }
+      CountDarkFrame(copy);
       // Gameplay is one implicit session (screen has no serial); the latch
       // stays uniform so any foreign concept never applies here.
       _gameLatch.Accept(1);
@@ -508,6 +932,24 @@ public class MediaRecordingService : MonoBehaviour {
           if (_telemetry.FirstGameOffsetMs < 0)
             _telemetry.FirstGameOffsetMs = _clock.OffsetMs();
         }
+      }
+    } catch (Exception) { }
+  }
+
+  // Cheap black-frame tripwire (main thread, ~8k sampled pixels): a capture
+  // path silently rendering black looks identical to success until someone
+  // watches the file (P23 user-run finding). Counted, never thrown.
+  void CountDarkFrame(byte[] rgba) {
+    try {
+      if (rgba == null || rgba.Length < 16) return;
+      long sum = 0;
+      int n = 0;
+      for (int i = 0; i < rgba.Length; i += 1024) {
+        sum += rgba[i];
+        n++;
+      }
+      if (n > 0 && sum / n < 4) {
+        lock (_telLock) { _telemetry.GameDarkFrames++; }
       }
     } catch (Exception) { }
   }
@@ -569,8 +1011,7 @@ public class MediaRecordingService : MonoBehaviour {
 
   // Worker-thread audio tap (game-observed bytes only, §3). Copies into the
   // bounded queue synchronously and returns — never blocks the watcher.
-  void OnAudioTap(uint serial, uint seq, byte[] pcm16) {
-    try {
+  void OnAudioTap(uint serial, uint seq, byte[] pcm16) {    try {
       if (_state != RecordingState.Recording) return;
       if (!_effective.RecordAudio || _audioQueue == null || _audioQueue.IsClosed) return;
       if (pcm16 == null || pcm16.Length < 2) return;
@@ -583,6 +1024,8 @@ public class MediaRecordingService : MonoBehaviour {
         }
       }
       if (_audioQueue.TryEnqueue(pcm16)) {
+        _phoneFed = true;
+        NoteAudioOrigin("phone");
         lock (_telLock) {
           _telemetry.AudioChunks++;
           _telemetry.AudioSamples += pcm16.Length / 2;
@@ -593,10 +1036,175 @@ public class MediaRecordingService : MonoBehaviour {
     } catch (Exception) { }
   }
 
+  // --- laptop-mic capture (main thread polls, worker-free path) ----------------
+  // Polled every Update while recording audio: cheap position check, copies
+  // only when >=10 ms of new speech exist. Phone flowing => park local.
+
+  void PollLocalMic() {
+    try {
+      if (!_effective.RecordAudio) return;
+      // Local is a first-class source (user rule): feed whenever the
+      // game-validated device is available, phone or not. The phone tap
+      // parks itself while local feeds (OnAudioTap), so no mixing.
+      if (!_localMicActive) {
+        _localMicRepickTimer -= Time.deltaTime;
+        if (_localMicRepickTimer <= 0f) {
+          _localMicRepickTimer = 2f;
+          TryStartLocalMic();
+        }
+        return;
+      }
+      if (!LocalDeviceStillThere()) {
+        OnLocalMicLost();
+        return;
+      }
+      DrainLocalMic();
+    } catch (Exception) { }
+  }
+
+  void TryStartLocalMic() {
+    try {
+      if (_audioQueue == null || _audioQueue.IsClosed) return;
+      string dev = null;
+      try { dev = _localMicDevice != null ? _localMicDevice() : null; } catch (Exception) { }
+      if (string.IsNullOrEmpty(dev)) return; // game-validated device only (no raw pick)
+      AudioClip clip = null;
+      try { clip = Microphone.Start(dev, true, 10, 16000); } catch (Exception) { return; }
+      if (clip == null) return;
+      int ch = 1, rate = 16000;
+      try { ch = Math.Max(1, clip.channels); } catch (Exception) { }
+      try { rate = clip.frequency > 0 ? clip.frequency : 16000; } catch (Exception) { }
+      _localMicClip = clip;
+      _localMicActiveDevice = dev;
+      _localMicPos = 0;
+      _localMicLoopFrames = Math.Max(1600, clip.samples);
+      _localMicChannels = Math.Min(8, ch);
+      _localMicRate = rate;
+      _localMicActive = true;
+      _localMicFed = false;
+      _localMicRepickTimer = 2f;
+      _localLatch.Reset();
+      _localLatch.Accept(1);
+      lock (_telLock) { _telemetry.LocalMicDevice = dev; }
+      try {
+        Debug.Log("[MediaRec] local mic feeding: " + dev + " @" + rate + "Hz ch=" + ch);
+      } catch (Exception) { }
+    } catch (Exception) { }
+  }
+
+  bool LocalDeviceStillThere() {
+    try {
+      if (!_localMicActive || _localMicClip == null || string.IsNullOrEmpty(_localMicActiveDevice))
+        return false;
+      bool rec = false;
+      try { rec = Microphone.IsRecording(_localMicActiveDevice); } catch (Exception) { return false; }
+      return rec;
+    } catch (Exception) { return false; }
+  }
+
+  void OnLocalMicLost() {
+    try {
+      bool fed = _localMicFed;
+      StopLocalMic();
+      if (fed) {
+        MarkInterrupted("local-mic-lost");
+        try { Debug.LogWarning("[MediaRec] local mic lost mid-session — audio truncated"); }
+        catch (Exception) { }
+      }
+    } catch (Exception) { }
+  }
+
+  void StopLocalMic() {
+    try {
+      string dev = _localMicActiveDevice;
+      _localMicActive = false;
+      _localMicClip = null;
+      _localMicActiveDevice = null;
+      if (!string.IsNullOrEmpty(dev)) {
+        try { Microphone.End(dev); } catch (Exception) { }
+      }
+    } catch (Exception) { }
+  }
+
+  void DrainLocalMic() {
+    try {
+      if (!_localMicActive || _localMicClip == null || _audioQueue.IsClosed) return;
+      int pos;
+      try { pos = Microphone.GetPosition(_localMicActiveDevice); } catch (Exception) {
+        OnLocalMicLost();
+        return;
+      }
+      if (pos < 0) {
+        OnLocalMicLost();
+        return;
+      }
+      int loop = Math.Max(1600, _localMicLoopFrames);
+      int avail = (pos - _localMicPos + loop) % loop;
+      if (avail < 160) return; // <10 ms @16k: wait for more
+      int frames = Math.Min(avail, 3200); // <=200 ms per poll
+      int ch = Math.Max(1, _localMicChannels);
+      var buf = new float[frames * ch];
+      int start = _localMicPos % loop;
+      try {
+        if (start + frames <= loop) {
+          _localMicClip.GetData(buf, start);
+        } else {
+          int first = loop - start;
+          var a = new float[first * ch];
+          var b = new float[(frames - first) * ch];
+          _localMicClip.GetData(a, start);
+          _localMicClip.GetData(b, 0);
+          Buffer.BlockCopy(a, 0, buf, 0, a.Length * 4);
+          Buffer.BlockCopy(b, 0, buf, a.Length * 4, b.Length * 4);
+        }
+      } catch (Exception) {
+        OnLocalMicLost();
+        return;
+      }
+      _localMicPos = (start + frames) % loop;
+      byte[] pcm;
+      try { pcm = AudioChunkConverter.ToMono16(buf, ch, _localMicRate, 16000); }
+      catch (Exception) { return; }
+      if (pcm == null || pcm.Length == 0) return;
+      _localLatch.Accept(1);
+      if (_audioQueue.TryEnqueue(pcm)) {
+        _localMicFed = true;
+        NoteAudioOrigin("local");
+        lock (_telLock) {
+          _telemetry.AudioChunks++;
+          _telemetry.AudioSamples += pcm.Length / 2;
+          _telemetry.LocalMicChunks++;
+          if (_telemetry.FirstAudioOffsetMs < 0)
+            _telemetry.FirstAudioOffsetMs = _clock.OffsetMs();
+        }
+      }
+    } catch (Exception) { }
+  }
+
+  void NoteAudioOrigin(string which) {
+    try {
+      lock (_telLock) {
+        string cur = _telemetry.AudioOrigin;
+        if (string.IsNullOrEmpty(cur)) {
+          _telemetry.AudioOrigin = which;
+        } else if (!string.Equals(cur, which, StringComparison.Ordinal)
+            && !string.Equals(cur, "switched", StringComparison.Ordinal)) {
+          _telemetry.AudioOrigin = "switched";
+          _telemetry.AudioSourceSwitches++;
+          _telemetry.Interrupted = true;
+        }
+      }
+    } catch (Exception) { }
+  }
+
   void WatchAudioPresence() {
     try {
       if (!_effective.RecordAudio) return;
-      if (CurrentWatcher() == null) MarkInterrupted("audio-watcher-lost");
+      // A missing watcher is normal when the phone never fed this session
+      // (local-mic rigs): flag ONLY a mid-session phone drop, never the
+      // mere absence (P23 user-run finding: every local session was wrongly
+      // marked interrupted).
+      if (CurrentWatcher() == null && _phoneFed) MarkInterrupted("audio-watcher-lost");
     } catch (Exception) { }
   }
 
@@ -833,7 +1441,40 @@ public class MediaRecordingService : MonoBehaviour {
           + " mp3=" + (_telemetry.Mp3Complete ? _telemetry.Mp3Bytes + "B" : "<off>")
           + " interrupted=" + _telemetry.Interrupted);
       } catch (Exception) { }
+      ShowCompletedToast();
     } catch (Exception) { FailFinalize("verify-exception"); }
+  }
+
+  // "Đã lưu file ở đâu + tên file" (§user-3): filenames + dir, never full
+  // paths on screen (the log + sidecar keep those).
+  void ShowCompletedToast() {
+    try {
+      var names = new System.Collections.Generic.List<string>();
+      string dir = null;
+      try {
+        lock (_telLock) {
+          if (_telemetry.Transcoded) {
+            if (_telemetry.Mp4Complete) names.Add(BaseName(_telemetry.Mp4Path));
+            if (_telemetry.Mp3Complete) names.Add(BaseName(_telemetry.Mp3Path));
+          } else {
+            if (_telemetry.AudioComplete) names.Add(BaseName(_telemetry.AudioPath));
+            if (_telemetry.VideoComplete) names.Add(BaseName(_telemetry.VideoPath));
+            if (_telemetry.GameComplete) names.Add(BaseName(_telemetry.GamePath));
+          }
+        }
+        dir = _outputDir;
+      } catch (Exception) { }
+      if (names.Count == 0) names.Add("(không có file hoàn chỉnh)");
+      string head = "Đã lưu xong:";
+      bool partial = false;
+      try {
+        lock (_telLock) {
+          partial = !_telemetry.Transcoded && _effective.RecordVideo;
+        }
+      } catch (Exception) { }
+      if (partial) head = "Đã lưu file thô (thiếu FFmpeg):";
+      ShowToast(head + "\n" + string.Join("\n", names.ToArray()) + "\ntại " + (dir ?? "?"), 8f);
+    } catch (Exception) { }
   }
 
   void CheckDeliverable(string path, bool isMp4) {
@@ -1027,6 +1668,11 @@ public class MediaRecordingService : MonoBehaviour {
   string ResolveOutputDir() {
     try {
       if (!string.IsNullOrEmpty(_effective.OutputDirOverride)) return _effective.OutputDirOverride;
+      // Remembered choice wins over the hardcoded default (F2/F4 flow).
+      try {
+        string saved = SavedOutputDir();
+        if (!string.IsNullOrEmpty(saved)) return saved;
+      } catch (Exception) { }
       if (!string.IsNullOrEmpty(_outputBaseDir)) return _outputBaseDir;
       string base_;
       try { base_ = Application.persistentDataPath; } catch (Exception) { return null; }
@@ -1061,6 +1707,11 @@ public class MediaRecordingService : MonoBehaviour {
       _audioLatch.Reset();
       _videoLatch.Reset();
       _gameLatch.Reset();
+      _localLatch.Reset();
+      _phoneFed = false;
+      try { StopLocalMic(); } catch (Exception) { }
+      _localMicFed = false;
+      _localMicRepickTimer = 0f;
       _audioQueue = null;
       _videoQueue = null;
       _gameRawQueue = null;
@@ -1098,6 +1749,7 @@ public class MediaRecordingService : MonoBehaviour {
       SetState(RecordingState.Error);
       try { Debug.LogWarning("[MediaRec] START FAILED (" + reason + ")"); }
       catch (Exception) { }
+      ShowToast("Thu thất bại: " + FriendlyReason(reason), 7f);
     } catch (Exception) { }
     return false;
   }
@@ -1113,6 +1765,7 @@ public class MediaRecordingService : MonoBehaviour {
       SetState(RecordingState.Error);
       try { Debug.LogWarning("[MediaRec] session=" + _sessionId + " ERROR (" + reason + ")"); }
       catch (Exception) { }
+      ShowToast("Thu thất bại: " + FriendlyReason(reason), 7f);
     } catch (Exception) { }
   }
 
@@ -1128,21 +1781,60 @@ public class MediaRecordingService : MonoBehaviour {
   }
 
   // --- dev/E2E key control (§20: simple explicit start/stop) ------------------
+  // F2 toggles recording. First F2 with no remembered save location opens
+  // the chooser; afterwards single F2 starts immediately and DOUBLE F2
+  // (two presses within the tracker window) re-opens the chooser instead.
+  // Stopping is always instant — the hold applies to starts only.
   void PollRecordKey() {
     try {
       if (!_keyControl) return;
-      bool pressed = false;
+      bool f2 = false;
       try {
         var kb = UnityEngine.InputSystem.Keyboard.current;
-        pressed = kb != null && kb.f2Key.wasPressedThisFrame;
-      } catch (Exception) { pressed = false; }
-      if (!pressed) return;
+        if (kb != null) f2 = kb.f2Key.wasPressedThisFrame;
+      } catch (Exception) { }
+      if (f2) HandleRecordKey();
+    } catch (Exception) { }
+  }
+
+  bool IsStartableState() {
+    try {
+      return _state == RecordingState.Idle || _state == RecordingState.Completed
+        || _state == RecordingState.Error;
+    } catch (Exception) { return false; }
+  }
+
+  void HandleRecordKey() {
+    try {
+      if (_locationDialog != null && _locationDialog.IsShowing) return;
       if (_state == RecordingState.Recording) {
+        try { _f2.Cancel(); } catch (Exception) { }
         StopRecording();
-      } else if (_state == RecordingState.Idle || _state == RecordingState.Completed
-          || _state == RecordingState.Error) {
-        StartRecording(_toggleMode);
+        return;
       }
+      if (!IsStartableState()) return;
+      if (_locationDialog != null) {
+        F2PressResult r;
+        try { r = _f2.Press(Time.unscaledTime, HasChosenOutput()); }
+        catch (Exception) { r = F2PressResult.OpenChooser; }
+        if (r == F2PressResult.OpenChooser) {
+          string err = null;
+          if (HasChosenOutput()) {
+            // Double-F2 with a remembered choice: change location.
+            try { Debug.Log("[MediaRec] F2 double: changing save location"); }
+            catch (Exception) { }
+          } else {
+            string why;
+            if (!EnsureOutputReady(out why) && why != "no-saved-location") err = why;
+          }
+          OpenLocationChooser(err, true);
+          return;
+        }
+        // Armed (None): Update fires the start when the hold expires with
+        // no second press. Nothing to do on this frame.
+        return;
+      }
+      StartRecording(_toggleMode);
     } catch (Exception) { }
   }
 
@@ -1179,6 +1871,10 @@ public class MediaRecordingService : MonoBehaviour {
           AudioSamples = _telemetry.AudioSamples,
           AudioDroppedQueue = _telemetry.AudioDroppedQueue,
           AudioDroppedForeign = _telemetry.AudioDroppedForeign,
+          LocalMicChunks = _telemetry.LocalMicChunks,
+          AudioSourceSwitches = _telemetry.AudioSourceSwitches,
+          LocalMicDevice = _telemetry.LocalMicDevice,
+          AudioOrigin = _telemetry.AudioOrigin,
           VideoFrames = _telemetry.VideoFrames,
           VideoDroppedQueue = _telemetry.VideoDroppedQueue,
           VideoDroppedForeign = _telemetry.VideoDroppedForeign,
@@ -1188,6 +1884,7 @@ public class MediaRecordingService : MonoBehaviour {
           GameDroppedQueue = _telemetry.GameDroppedQueue,
           GameDroppedForeign = _telemetry.GameDroppedForeign,
           GameGapSamples = _telemetry.GameGapSamples,
+          GameDarkFrames = _telemetry.GameDarkFrames,
           Transcoded = _telemetry.Transcoded,
           Mp4Path = _telemetry.Mp4Path,
           Mp3Path = _telemetry.Mp3Path,
@@ -1307,6 +2004,7 @@ public class MediaRecordingService : MonoBehaviour {
       try { if (_audioQueue != null) _audioQueue.Close(); } catch (Exception) { }
       try { if (_videoQueue != null) _videoQueue.Close(); } catch (Exception) { }
       try { if (_gameRawQueue != null) _gameRawQueue.Close(); } catch (Exception) { }
+      try { StopLocalMic(); } catch (Exception) { }
       try { if (_audioThread != null && _audioThread.IsAlive) _audioThread.Join(2000); } catch (Exception) { }
       try { if (_videoThread != null && _videoThread.IsAlive) _videoThread.Join(2000); } catch (Exception) { }
       try { if (_gameThread != null && _gameThread.IsAlive) _gameThread.Join(2000); } catch (Exception) { }

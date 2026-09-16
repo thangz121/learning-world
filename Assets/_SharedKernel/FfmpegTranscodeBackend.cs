@@ -238,6 +238,15 @@ public static class FfmpegTranscodeBackend {
         else b.Append("-an ");
         b.Append("-c:v libx264 -preset ").Append(preset)
           .Append(" -crf ").Append(crf).Append(" -pix_fmt yuv420p ");
+        // Wall-clock honesty: the game header declares the RECORD rate, but
+        // the worker may sustain slightly less (drops counted in telemetry).
+        // Re-stamping the output to the MEASURED rate keeps mp4 duration ==
+        // wall duration (P23 loopback finding: 14.2 s vs 18 s wall).
+        double actual = s.GameFpsActual > 0 ? s.GameFpsActual
+          : (s.CamFpsActual > 0 ? s.CamFpsActual : 0);
+        if (haveGame && actual >= 1 && actual <= 60)
+          b.Append("-r ").Append(actual.ToString("0.###",
+            System.Globalization.CultureInfo.InvariantCulture)).Append(" ");
         if (haveAudio) b.Append("-c:a libmp3lame -q:a ").Append(mq).Append(" -ar 16000 -ac 1 ");
         b.Append("-shortest -movflags +faststart ").Append(Q(s.OutMp4)).Append(" ");
       }

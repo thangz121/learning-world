@@ -62,7 +62,8 @@ public static class MediaRecording {
   public const int MaxGameWidth = 1920;
   public const int MinGameHeight = 180;
   public const int MaxGameHeight = 1080;
-  public const int DefaultGameFps = 24;
+  public const int DefaultGameFps = 20; // worker JPEG sustains ~19 fps here;
+                                  // cap 20 keeps header rate ≈ wall rate
   public const int DefaultGameJpegQuality = 65;
   public const int MaxGameRawFrames = 6; // RGBA handoff cap (bounded memcpy)
   public const int DefaultVideoCrf = 24; // x264: lower = better (18..32)
@@ -225,7 +226,6 @@ public static class MediaRecordingNaming {
   public static string AudioFileName(string sessionId) {
     return sessionId + "_audio" + MediaRecording.AudioExtension;
   }
-
   public static string VideoFileName(string sessionId) {
     return sessionId + "_video" + MediaRecording.VideoExtension;
   }
@@ -432,6 +432,10 @@ public sealed class RecordingTelemetry {
   public long AudioSamples;
   public long AudioDroppedQueue;
   public long AudioDroppedForeign;
+  public long LocalMicChunks;      // chunks fed from the laptop mic (Phase 2.3e)
+  public long AudioSourceSwitches; // phone<->local transitions mid-session
+  public string LocalMicDevice = string.Empty;
+  public string AudioOrigin = string.Empty; // phone | local | switched | (empty=none)
   public long VideoFrames;
   public long VideoDroppedQueue;
   public long VideoDroppedForeign;
@@ -441,6 +445,7 @@ public sealed class RecordingTelemetry {
   public long GameDroppedQueue; // JPEG backlog over cap
   public long GameDroppedForeign;
   public long GameGapSamples;   // sample ticks with no readback while recording
+  public long GameDarkFrames;   // readbacks with near-zero brightness (black-path tripwire)
   public bool Transcoded;       // ffmpeg deliverables produced
   public string Mp4Path = string.Empty;
   public string Mp3Path = string.Empty;
@@ -494,6 +499,10 @@ public sealed class RecordingTelemetry {
       N(b, "audioSamples", AudioSamples, false);
       N(b, "audioDroppedQueue", AudioDroppedQueue, false);
       N(b, "audioDroppedForeign", AudioDroppedForeign, false);
+      N(b, "localMicChunks", LocalMicChunks, false);
+      N(b, "audioSourceSwitches", AudioSourceSwitches, false);
+      P(b, "localMicDevice", LocalMicDevice, false);
+      P(b, "audioOrigin", AudioOrigin, false);
       N(b, "videoFrames", VideoFrames, false);
       N(b, "videoDroppedQueue", VideoDroppedQueue, false);
       N(b, "videoDroppedForeign", VideoDroppedForeign, false);
@@ -503,6 +512,7 @@ public sealed class RecordingTelemetry {
       N(b, "gameDroppedQueue", GameDroppedQueue, false);
       N(b, "gameDroppedForeign", GameDroppedForeign, false);
       N(b, "gameGapSamples", GameGapSamples, false);
+      N(b, "gameDarkFrames", GameDarkFrames, false);
       B(b, "transcoded", Transcoded, false);
       P(b, "mp4Path", Mp4Path, false);
       P(b, "mp3Path", Mp3Path, false);
@@ -549,5 +559,76 @@ public sealed class RecordingTelemetry {
   static void B(StringBuilder b, string k, bool v, bool first) {
     if (!first) b.Append(",");
     b.Append("\"").Append(k).Append("\":").Append(v ? "true" : "false");
+  }
+}
+
+// F2 double-press tracker (pure, unit-tested): first F2 with no remembered
+// choice opens the chooser immediately; otherwise single F2 arms a short
+// disambiguation hold (PollStart fires the start) and a second F2 inside
+// the window opens the chooser instead (change location, no F4 needed).
+public enum F2PressResult {
+  None,        // armed: wait to disambiguate (caller polls PollStart)
+  OpenChooser, // open the save-location chooser now
+}
+
+public sealed class F2DoubleTracker {
+  public const float WindowSec = 0.45f;
+  float _armedUntil = -1f;
+
+  public F2PressResult Press(float now, bool hasChoice) {
+    if (!hasChoice) return F2PressResult.OpenChooser;
+    if (_armedUntil > 0f && now < _armedUntil) {
+      _armedUntil = -1f;
+      return F2PressResult.OpenChooser;
+    }
+    _armedUntil = now + WindowSec;
+    return F2PressResult.None;
+  }
+
+  public bool PollStart(float now) {
+    if (_armedUntil > 0f && now >= _armedUntil) {
+      _armedUntil = -1f;
+      return true;
+    }
+    return false;
+  }
+
+  public void Cancel() {
+    _armedUntil = -1f;
+  }
+}
+
+// Detected audio origins (game-side truth, never assumed):
+// PhoneReady = phone audio flowing in-game (recordable);
+// LocalOnly  = a PC mic is listed/ready but no phone audio (detected, NOT
+//   recordable by this phase: the recorder taps the phone watcher only);
+// None      = no audio source anywhere.
+public enum AudioSourceState {
+  None,
+  LocalOnly,
+  PhoneReady,
+}
+
+// F2 start decision (pure, unit-tested): full session when everything is
+// there; an explicit video-only PROPOSAL when audio is missing but video
+// is present (never a silent fallback, never a bare fail); refusal only
+// when nothing usable exists (the Start gates then voice the exact reason).
+public enum StartDecision {
+  StartAsRequested,
+  ProposeVideoOnly,
+  RefuseNoMedia,
+}
+
+public static class RecordingStartDecider {
+  public static StartDecision DecideStart(bool audioReady, bool videoReady, RecordingMode mode) {
+    try {
+      if (mode == RecordingMode.MicOnly)
+        return audioReady ? StartDecision.StartAsRequested : StartDecision.RefuseNoMedia;
+      if (mode == RecordingMode.CameraOnly)
+        return videoReady ? StartDecision.StartAsRequested : StartDecision.RefuseNoMedia;
+      if (audioReady && videoReady) return StartDecision.StartAsRequested;
+      if (!audioReady && videoReady) return StartDecision.ProposeVideoOnly;
+      return StartDecision.RefuseNoMedia;
+    } catch (System.Exception) { return StartDecision.RefuseNoMedia; }
   }
 }

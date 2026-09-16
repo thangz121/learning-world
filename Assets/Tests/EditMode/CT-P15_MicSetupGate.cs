@@ -480,4 +480,64 @@ public class CT_P15_MicSetupGate {
     }
     Assert.IsFalse(watcher.IsRunning);
   }
+
+  [Test] public void P15V_MicRankUsbFirst() {
+    // User rule (mirrors LocalCameraClassifier for video): discrete USB /
+    // headset mic (0) > anything-else-listed (1) > laptop built-in incl.
+    // webcam mics (2). The phone stays last resort game-side, off this list.
+    Assert.AreEqual(0, MicDeviceClassifier.Rank("Studio USB Mic"));
+    Assert.AreEqual(0, MicDeviceClassifier.Rank("USB Headset Microphone"));
+    Assert.AreEqual(0, MicDeviceClassifier.Rank("WH-1000XM4 Hands-Free AG Audio"));
+    Assert.AreEqual(1, MicDeviceClassifier.Rank("Steam Streaming Microphone"));
+    Assert.AreEqual(1, MicDeviceClassifier.Rank("mic-a"));
+    Assert.AreEqual(2, MicDeviceClassifier.Rank("Microphone Array (Realtek Audio)"));
+    Assert.AreEqual(2, MicDeviceClassifier.Rank("Built-in Microphone"));
+    Assert.AreEqual(2, MicDeviceClassifier.Rank("USB2.0 Webcam Mic"));
+    Assert.AreEqual(99, MicDeviceClassifier.Rank(null));
+    Assert.AreEqual(99, MicDeviceClassifier.Rank("   "));
+  }
+
+  [Test] public void P15W_MicPickDevice() {
+    // Lowest rank wins; ties keep list order; single built-in still wins
+    // alone (eligibility untouched by rank).
+    Assert.AreEqual("Studio USB Mic", MicDeviceClassifier.PickDevice(
+      new[] { "Microphone Array (Realtek Audio)", "Studio USB Mic" }));
+    Assert.AreEqual("Studio USB Mic", MicDeviceClassifier.PickDevice(
+      new[] { "Studio USB Mic", "Microphone Array (Realtek Audio)" }));
+    Assert.AreEqual("Weird Foo", MicDeviceClassifier.PickDevice(
+      new[] { "Microphone Array (Realtek Audio)", "Weird Foo" }));
+    Assert.AreEqual("Microphone Array (Realtek Audio)", MicDeviceClassifier.PickDevice(
+      new[] { "Microphone Array (Realtek Audio)" }));
+    Assert.IsNull(MicDeviceClassifier.PickDevice(null));
+    Assert.IsNull(MicDeviceClassifier.PickDevice(new string[0]));
+    Assert.IsNull(MicDeviceClassifier.PickDevice(new[] { "", "  " }));
+  }
+
+  [Test] public void P15X_ServiceTakeoverUsb() {
+    // Plug a USB mic => the game switches to it; unplug => falls back.
+    // Equal rank never flaps the active device mid-session.
+    string[] live = { "Microphone Array (Realtek Audio)" };
+    var svc = new MicrophoneDeviceService(() => (string[])live.Clone(), null);
+    try {
+      Assert.AreEqual("Microphone Array (Realtek Audio)", svc.SelectedDevice);
+      live = new[] { "Microphone Array (Realtek Audio)", "Studio USB Mic" };
+      svc.Refresh();
+      Assert.AreEqual("Studio USB Mic", svc.SelectedDevice, "USB take-over");
+      live = new[] { "Studio USB Mic", "Microphone Array (Realtek Audio)" };
+      svc.Refresh();
+      Assert.AreEqual("Studio USB Mic", svc.SelectedDevice, "order-independent");
+      live = new[] { "Microphone Array (Realtek Audio)" };
+      svc.Refresh();
+      Assert.AreEqual("Microphone Array (Realtek Audio)", svc.SelectedDevice, "fallback");
+      live = new[] { "Microphone Array (Realtek Audio)", "Microphone Array (Conexant)" };
+      svc.Refresh();
+      Assert.AreEqual("Microphone Array (Realtek Audio)", svc.SelectedDevice, "equal rank: no flap");
+      live = new string[0];
+      svc.Refresh();
+      Assert.IsNull(svc.SelectedDevice);
+      Assert.AreEqual(MicStatus.NoDevice, svc.Status);
+    } finally {
+      // service holds no Unity objects; nothing to destroy.
+    }
+  }
 }

@@ -51,6 +51,7 @@ public class CT_P20_MediaRecording {
       (Func<PhonePresenceWatcher>)(() => (PhonePresenceWatcher)null), dir);
     rec.SetTestForceSourcesAvailable(true);
     rec.SetTestDisableTranscode(true); // unit env: intermediates ARE the verdict
+    rec.SetPrefsKeyForTests("LWE.Test.P20." + Guid.NewGuid().ToString("N"));
     return rec;
   }
 
@@ -372,7 +373,7 @@ public class CT_P20_MediaRecording {
       // No force flag: no watcher, no cameras -> explicit refusal.
       Assert.IsFalse(rec.StartRecording(RecordingMode.MicAndCamera));
       Assert.AreEqual(RecordingState.Error, rec.CurrentState);
-      Assert.IsTrue(rec.LastError.Contains("no-phone-audio-in-game"), rec.LastError);
+      Assert.IsTrue(rec.LastError.Contains("no-audio-in-game"), rec.LastError);
       // Error is recoverable by the next explicit Start (no wedged encoder).
       Assert.IsFalse(rec.StartRecording(RecordingMode.CameraOnly));
       Assert.AreEqual(RecordingState.Error, rec.CurrentState);
