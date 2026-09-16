@@ -38,9 +38,9 @@ public enum RecordingMode {
 // proven behavior: 720p / CRF 19 / medium).
 public enum VideoQuality {
   Preview = 0,  // fast + light: 480p cap, CRF 24, superfast
-  Standard = 1, // moderate: 720p cap, CRF 21, veryfast
-  High = 2,     // high + balanced: 720p cap, CRF 19, medium
-  Max = 3,      // best: 1080p cap, CRF 17, slow (transcode is post-session)
+  Standard = 1, // moderate: 720p cap, CRF 21, medium
+  High = 2,     // full HD: 1080p cap, CRF 19, slow
+  Max = 3,      // best: 1080p cap, CRF 12 (near-raw), slow (transcode is post-session)
 }
 
 public struct QualityTierParams {
@@ -56,11 +56,11 @@ public static class QualityTier {
       case VideoQuality.Preview:
         return new QualityTierParams { Crf = 24, Preset = "superfast", CapWidth = 854, CapHeight = 480 };
       case VideoQuality.Standard:
-        return new QualityTierParams { Crf = 21, Preset = "veryfast", CapWidth = 1280, CapHeight = 720 };
+        return new QualityTierParams { Crf = 21, Preset = "medium", CapWidth = 1280, CapHeight = 720 };
       case VideoQuality.Max:
-        return new QualityTierParams { Crf = 17, Preset = "slow", CapWidth = 1920, CapHeight = 1080 };
+        return new QualityTierParams { Crf = 12, Preset = "slow", CapWidth = 1920, CapHeight = 1080 };
       default: // High + any garbage value fail safe to the proven tier
-        return new QualityTierParams { Crf = 19, Preset = "medium", CapWidth = 1280, CapHeight = 720 };
+        return new QualityTierParams { Crf = 19, Preset = "slow", CapWidth = 1920, CapHeight = 1080 };
     }
   }
 
@@ -125,7 +125,7 @@ public static class MediaRecording {
   public const int DefaultGameJpegQuality = 90; // intermediate is deleted
                                    // after transcode: stay near-lossless here
   public const int MaxGameRawFrames = 6; // RGBA handoff cap (bounded memcpy)
-  public const int DefaultVideoCrf = 19; // x264: lower = better (16..32);
+  public const int DefaultVideoCrf = 19; // x264: lower = better (10..32);
                                    // 19 ~= transparent (user rule: squeeze
                                    // size, keep near-original quality)
   public const string DefaultVideoPreset = "medium"; // x264 preset: motion
@@ -175,7 +175,7 @@ public struct MediaRecordingConfig {
   public int GameHeight;          // gameplay capture height (default 720)
   public int GameFps;             // gameplay sample rate (default 24)
   public int GameJpegQuality;     // worker-side C# JPEG for game frames
-  public int VideoCrf;            // x264 CRF 16..32 (default 19: transparent,
+  public int VideoCrf;            // x264 CRF 10..32 (default 19: transparent,
                                   // bigger file by user rule)
   public string VideoPreset;      // x264 preset allowlist (default medium:
                                   // best motion handling; transcode is
@@ -258,8 +258,8 @@ public struct MediaRecordingConfig {
     if (GameJpegQuality < 30 || GameJpegQuality > 100) {
       reason = "gameJpegQuality 30..100"; return false;
     }
-    if (VideoCrf < 16 || VideoCrf > 32) {
-      reason = "videoCrf 16..32"; return false;
+    if (VideoCrf < 10 || VideoCrf > 32) {
+      reason = "videoCrf 10..32"; return false;
     }
     if (!MediaRecording.IsAllowedPreset(VideoPreset)) {
       reason = "videoPreset ultrafast..slow"; return false;

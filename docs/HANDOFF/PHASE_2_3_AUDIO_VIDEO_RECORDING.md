@@ -558,3 +558,27 @@ frame crisp (no macroblocking), ONE PiP, REC badge; Player.log 0 errors.
 to the native window (no upscale) by the same pinned math.
 Final clean build: Succeeded errors=0, boot 73 s+ alive, 3xFACE_OK,
 0 errors, MediaRec wired, 0 driver traces.
+## 35. Tier rebalance (2026-09-16): HIGH goes 1080p/slow, MAX near-raw, STANDARD medium
+
+User rule change: HIGH must be 1080p too (was 720p); MAX keeps 1080p but
+pushes quality to near-raw at the same resolution; STANDARD moves to
+medium; HIGH preset must be slow.
+
+New mapping (CRF / x264 / cap): PREVIEW 24/superfast/480p (unchanged);
+STANDARD 21/medium/720p; HIGH 19/slow/1080p; MAX 12/slow/1080p.
+MAX vs HIGH now differ purely in CRF (12 vs 19, roughly 3-4x bits).
+Validate + backend sanitize CRF floor widened 16..32 to 10..32 (the MAX
+prove-run caught the refusal live: START FAILED bad-config, fixed before
+any file was written). Pins updated (P21N/P21O); nothing else weakened.
+
+Live proof, ONE E2E at MAX, 1920x1080 window, walking: COMPLETE
+int=False err= (empty) - sidecar quality=Max crf=12 preset=slow; game
+1920x1080, 88 frames, 0 dark, 0 gaps (266 raw drops: 1080p worker
+throughput, counted, duration honest); cam 180 q0/d0; audio 700 chunks;
+mp4 1920x1080 avc1, 17.69 s vs ~18 s wall, 13.2 MB (near-raw size, by
+design); mp3 17.78 s; verifier OVERALL PASS; motion frame crisp, ONE PiP;
+Player.log 0 errors. Note: 1080p worker sustains ~5 fps, so MAX/HIGH
+review footage is sharp but steppy on this machine class.
+EditMode: 390 total, 389 pass, 0 fail, 1 skip (benign P13M4).
+Final clean build: Succeeded errors=0, boot 73 s+ alive, 3xFACE_OK,
+0 errors, MediaRec wired, 0 driver traces.

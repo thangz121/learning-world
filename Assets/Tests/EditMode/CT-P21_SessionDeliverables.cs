@@ -321,16 +321,16 @@ public class CT_P21_SessionDeliverables {
     Assert.AreEqual(480, pv.CapHeight);
     var st = QualityTier.For(VideoQuality.Standard);
     Assert.AreEqual(21, st.Crf);
-    Assert.AreEqual("veryfast", st.Preset);
+    Assert.AreEqual("medium", st.Preset);
     Assert.AreEqual(1280, st.CapWidth);
     Assert.AreEqual(720, st.CapHeight);
     var hi = QualityTier.For(VideoQuality.High);
     Assert.AreEqual(19, hi.Crf);
-    Assert.AreEqual("medium", hi.Preset);
-    Assert.AreEqual(1280, hi.CapWidth);
-    Assert.AreEqual(720, hi.CapHeight);
+    Assert.AreEqual("slow", hi.Preset);
+    Assert.AreEqual(1920, hi.CapWidth);
+    Assert.AreEqual(1080, hi.CapHeight);
     var mx = QualityTier.For(VideoQuality.Max);
-    Assert.AreEqual(17, mx.Crf);
+    Assert.AreEqual(12, mx.Crf);
     Assert.AreEqual("slow", mx.Preset);
     Assert.AreEqual(1920, mx.CapWidth);
     Assert.AreEqual(1080, mx.CapHeight);
@@ -343,7 +343,7 @@ public class CT_P21_SessionDeliverables {
     // Garbage fails safe to the proven High tier, never throws.
     var g = QualityTier.For((VideoQuality)99);
     Assert.AreEqual(19, g.Crf);
-    Assert.AreEqual("medium", g.Preset);
+    Assert.AreEqual("slow", g.Preset);
     // Config validation accepts every real tier, rejects garbage.
     string reason;
     foreach (VideoQuality q in new[] { VideoQuality.Preview, VideoQuality.Standard, VideoQuality.High, VideoQuality.Max }) {
@@ -362,8 +362,12 @@ public class CT_P21_SessionDeliverables {
     QualityTier.ResolveGameSize(VideoQuality.Max, 1920, 1080, out w, out h);
     Assert.AreEqual(1920, w);
     Assert.AreEqual(1080, h);
-    // Same source on High steps down to the 720p cap.
+    // High is full-HD too since the user rule (was 720p before).
     QualityTier.ResolveGameSize(VideoQuality.High, 1920, 1080, out w, out h);
+    Assert.AreEqual(1920, w);
+    Assert.AreEqual(1080, h);
+    // Standard still steps the same source down to its 720p cap.
+    QualityTier.ResolveGameSize(VideoQuality.Standard, 1920, 1080, out w, out h);
     Assert.AreEqual(1280, w);
     Assert.AreEqual(720, h);
     // A smaller source is NEVER upscaled to the cap.
