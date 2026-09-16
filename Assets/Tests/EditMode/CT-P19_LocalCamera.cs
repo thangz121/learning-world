@@ -189,4 +189,29 @@ public class CT_P19_LocalCamera {
     Assert.AreEqual("cam:phone", PcSourcePrecedence.PreferCam(false, true),
       "-e2e-nocam still forces the phone path end to end");
   }
+
+  // ---------- recording hide: one face in the file (user rule) ----------
+
+  [Test] public void P19N_RecordingHideHoldsBoxHiddenUntilReleased() {
+    var hud = FreshHud();
+    try {
+      var tex = TestTexture();
+      try {
+        hud.RefreshLocalForTests(PhoneCameraState.Live, tex);
+        Assert.IsTrue(hud.IsShowing, "live box shows normally");
+        Assert.IsFalse(hud.IsRecordingHidden);
+        hud.SetRecordingHide(true);
+        Assert.IsTrue(hud.IsRecordingHidden);
+        Assert.IsFalse(hud.IsShowing, "box steps aside while recording");
+        hud.RefreshLocalForTests(PhoneCameraState.Live, tex);
+        Assert.IsFalse(hud.IsShowing, "state machine must not re-show mid-record");
+        hud.SetRecordingHide(false);
+        Assert.IsFalse(hud.IsRecordingHidden);
+        hud.RefreshLocalForTests(PhoneCameraState.Live, tex);
+        Assert.IsTrue(hud.IsShowing, "release resumes normal display");
+      } finally {
+        try { UnityEngine.Object.DestroyImmediate(tex); } catch (Exception) { }
+      }
+    } finally { DropHud(hud); }
+  }
 }

@@ -55,7 +55,7 @@ public class CT_P20_MediaRecording {
     return rec;
   }
 
-  // Synthetic gameplay frame (RGBA gradient, default 960x540 config size).
+  // Synthetic gameplay frame (RGBA gradient, default config size).
   static byte[] TestRgba(int step) {
     int w = MediaRecording.DefaultGameWidth, h = MediaRecording.DefaultGameHeight;
     var b = new byte[w * h * 4];
@@ -602,5 +602,63 @@ public class CT_P20_MediaRecording {
     } finally {
       try { UnityEngine.Object.DestroyImmediate(go); } catch (Exception) { }
     }
+  }
+
+  [Test] public void P20V_RecordingHidesCameraBoxRestoresOnStop() {
+    // One face in the file (user rule): the service hides the bound camera
+    // box on entering Recording and shows it back on Stop.
+    string dir = TempDir();
+    MediaRecordingService rec = null;
+    PhoneCameraHud hud = null;
+    try {
+      rec = NewService(dir);
+      var hudGo = new UnityEngine.GameObject("HudP20V");
+      hud = hudGo.AddComponent<PhoneCameraHud>();
+      hud.BuildHudImmediate();
+      rec.BindCameraHud(hud);
+      Assert.IsFalse(hud.IsRecordingHidden);
+      Assert.IsTrue(rec.StartRecording(RecordingMode.MicAndCamera), rec.LastError);
+      Assert.IsTrue(hud.IsRecordingHidden, "box steps aside while recording");
+      Assert.IsFalse(hud.IsShowing, "hidden box stays hidden");
+      Assert.IsTrue(rec.StopRecording());
+      Assert.IsFalse(hud.IsRecordingHidden, "box returns on stop");
+      Assert.IsTrue(WaitTerminal(rec, 15000));
+      Assert.AreEqual(RecordingState.Completed, rec.CurrentState);
+    } finally {
+      KillService(rec);
+      try { if (hud != null) UnityEngine.Object.DestroyImmediate(hud.gameObject); } catch (Exception) { }
+      WipeDir(dir);
+    }
+  }
+
+  [Test] public void P20W_AviHeaderRestampsToMeasuredRate() {
+    // Wall-clock honesty: a short-count file re-stamps its header so duration
+    // == wall (else -shortest truncates the sibling streams in transcode).
+    string dir = TempDir();
+    try {
+      string path = Path.Combine(dir, "restamp.avi");
+      var w = new AviMjpegWriter();
+      Assert.IsTrue(w.Begin(path, 64, 48, 20));
+      byte[] jpeg = FakeJpeg(2000, 0x50);
+      for (int i = 0; i < 10; i++) Assert.IsTrue(w.AppendJpeg(jpeg));
+      long frames;
+      Assert.IsTrue(w.Finalize(out frames, 10.0));
+      Assert.AreEqual(10, frames);
+      try { w.Close(); } catch (Exception) { }
+      AviMjpegWriter.AviInfo info;
+      Assert.IsTrue(AviMjpegWriter.TryReadInfo(path, out info), info.Reason);
+      Assert.AreEqual(10, info.FrameCount);
+      Assert.AreEqual(10.0, info.Fps, 0.01);
+      Assert.AreEqual(1.0, info.DurationSec, 0.01, "10 frames @ measured 10fps == 1 s wall");
+      // Declared-rate path untouched (old behavior for unit-speed sessions).
+      string path2 = Path.Combine(dir, "declared.avi");
+      var w2 = new AviMjpegWriter();
+      Assert.IsTrue(w2.Begin(path2, 64, 48, 20));
+      for (int i = 0; i < 10; i++) Assert.IsTrue(w2.AppendJpeg(jpeg));
+      Assert.IsTrue(w2.Finalize(out frames));
+      try { w2.Close(); } catch (Exception) { }
+      Assert.IsTrue(AviMjpegWriter.TryReadInfo(path2, out info), info.Reason);
+      Assert.AreEqual(20.0, info.Fps, 0.01);
+    } finally { WipeDir(dir); }
   }
 }

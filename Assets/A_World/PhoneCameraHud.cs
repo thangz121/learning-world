@@ -46,6 +46,9 @@ public class PhoneCameraHud : MonoBehaviour {
   AspectRatioFitter _fitter;
   PhoneCameraState _lastLoggedState = (PhoneCameraState)(-1);
   bool _lastLoggedLocal;
+  bool _recordHide; // true while a session records: the box stays hidden so
+                    // the gameplay file carries exactly ONE face (the PiP).
+                    // The drive (MediaRecordingService) owns this flag.
 
   public void Bind(GameCameraStreamService service) {
     _service = service;
@@ -75,7 +78,25 @@ public class PhoneCameraHud : MonoBehaviour {
 
   public string StatusText => _status != null ? _status.text : string.Empty;
 
+  // Recording hide (user rule: one face in the file): while hidden the box
+  // never forces itself visible; releasing resumes normal state-driven
+  // display on the next Update (no forced show, never fights the machine).
+  // Hidden state is observable via IsShowing == false.
+  public void SetRecordingHide(bool hide) {
+    _recordHide = hide;
+    try {
+      if (_root == null) BuildHudImmediate();
+      if (hide && _root != null && _root.activeSelf) _root.SetActive(false);
+    } catch (Exception) { }
+  }
+
+  public bool IsRecordingHidden => _recordHide;
+
   void Update() {
+    if (_recordHide) {
+      try { if (_root != null && _root.activeSelf) _root.SetActive(false); } catch (Exception) { }
+      return;
+    }
     if (_service == null && _local == null) return;
     // Local wins while REALLY live (texture gate inside the service); any
     // other local state falls through to the phone path untouched.
@@ -118,6 +139,7 @@ public class PhoneCameraHud : MonoBehaviour {
   void ApplyState(PhoneCameraState state, Texture tex) {
     if (_root == null) return;
     try {
+      if (_recordHide) return; // recording owns visibility (see SetRecordingHide)
       if (!_root.activeSelf) _root.SetActive(true);
       bool live = state == PhoneCameraState.Live && tex != null;
       _video.texture = live ? tex : null;
@@ -141,6 +163,7 @@ public class PhoneCameraHud : MonoBehaviour {
   void ApplyLocal(Texture tex) {
     if (_root == null || tex == null) return;
     try {
+      if (_recordHide) return; // recording owns visibility (see SetRecordingHide)
       if (!_root.activeSelf) _root.SetActive(true);
       _video.texture = tex;
       _video.gameObject.SetActive(true);

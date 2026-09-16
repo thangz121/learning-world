@@ -37,6 +37,9 @@ public sealed class AviMjpegWriter : IDisposable {
   long _moviSizePos = -1;
   long _moviDataStart = -1;
   long _avihFramesPos = -1;
+  long _avihUsecPos = -1;
+  long _strhScalePos = -1;
+  long _strhRatePos = -1;
   long _strhLengthPos = -1;
   bool _disposed;
 
@@ -87,6 +90,7 @@ public sealed class AviMjpegWriter : IDisposable {
       // avih (56)
       WriteFourCC("avih");
       WriteU32(56);
+      _avihUsecPos = _fs.Position;
       WriteU32((uint)usPerFrame);   // dwMicroSecPerFrame
       WriteU32(maxBytesPerSec);     // dwMaxBytesPerSec
       WriteU32(0);                  // dwPaddingGranularity
@@ -115,7 +119,9 @@ public sealed class AviMjpegWriter : IDisposable {
       WriteU32(0);                  // dwFlags
       WriteU16(0); WriteU16(0);     // priority/language
       WriteU32(0);                  // dwInitialFrames
+      _strhScalePos = _fs.Position;
       WriteU32(1);                  // dwScale
+      _strhRatePos = _fs.Position;
       WriteU32((uint)fps);          // dwRate
       WriteU32(0);                  // dwStart
       _strhLengthPos = _fs.Position;
@@ -179,6 +185,16 @@ public sealed class AviMjpegWriter : IDisposable {
   }
 
   public bool Finalize(out long frames) {
+    return Finalize(out frames, 0);
+  }
+
+  // Wall-clock honesty: frames dribble in slower than the declared rate
+  // (worker JPEG, slow devices), but AVI duration = frames/header-rate, so a
+  // short-count file would play SHORTER than the wall session (and -shortest
+  // would then truncate the sibling streams). Passing the measured rate
+  // (frames/wall) re-stamps the header so duration == wall. actualFps <= 0
+  // keeps the declared rate (old behavior, unit default).
+  public bool Finalize(out long frames, double actualFps) {
     frames = _frames;
     try {
       if (!_open || _fs == null) return false;
@@ -196,6 +212,15 @@ public sealed class AviMjpegWriter : IDisposable {
         _fs.Flush();
         PatchU32(_avihFramesPos, (uint)_frames);
         PatchU32(_strhLengthPos, (uint)_frames);
+        if (actualFps >= 1 && actualFps <= 120) {
+          uint scale = 1000;
+          uint rate = (uint)Math.Round(actualFps * 1000);
+          if (rate < 1000) rate = 1000;
+          uint usec = (uint)Math.Max(1, Math.Round(1000000.0 / actualFps));
+          PatchU32(_strhScalePos, scale);
+          PatchU32(_strhRatePos, rate);
+          PatchU32(_avihUsecPos, usec);
+        }
         // movi LIST size covers 'movi' fourcc through the last 00dc chunk.
         PatchU32(_moviSizePos, (uint)(idx1Start - (_moviSizePos + 4)));
         PatchU32(_riffSizePos, (uint)(_fs.Length - 8));

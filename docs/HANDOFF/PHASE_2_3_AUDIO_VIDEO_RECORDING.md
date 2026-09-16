@@ -418,40 +418,85 @@ display-quality regression, no 2.4 stress scope.
 | Phase 2.1 regression | PASS (P12â€“P16 green in 384) |
 | Phase 2.2 regression | PASS (P17â€“P19 green in 384) |
 
-## 32. P2X user-run follow-up (2026-09-16): 3 player reports -> root-caused + fixed + re-proven
+## 32. P2X user-run follow-up (2026-09-16): 3 player reports, root-caused + fixed + re-proven
 
 Player reports on the 12:50 play (stale 11:27 binary): (1) mp4 had audio +
 webcam but NO gameplay video; (2) no recording indicator on screen;
 (3) red error lines on screen ("Development Console" overlay photo:
-`DrawOpaqueObjects/...: Fake or uninitialized surface ... BlitToSubPass` +
-`EndRenderPass: Not inside a Renderpass`, spammed).
+DrawOpaqueObjects/... Fake or uninitialized surface ... BlitToSubPass +
+EndRenderPass: Not inside a Renderpass, spammed).
 
-Root causes (all proven from that run`s Player.log):
+Root causes (all proven from that run's Player.log):
 - (1)+(3): the played binary was built from uncommitted working-tree code
-  (`CaptureGameFrameOnce` + manual `Camera.Render()`, never committed) that
-  broke URP`s render-pass bookkeeping: 634x EndRenderPass spam + black game
-  frames. The "Development Console" is Unity`s built-in dev-build error
-  overlay (NOT project code — grep-verified): it appears only while errors
+  (CaptureGameFrameOnce + manual Camera.Render(), never committed) that
+  broke URP's render-pass bookkeeping: 634x EndRenderPass spam + black game
+  frames. The "Development Console" is Unity's built-in dev-build error
+  overlay (NOT project code, grep-verified): it appears only while errors
   exist, and never in non-dev builds.
-- (2): `RecordingIndicator` did not exist in that binary yet.
+- (2): RecordingIndicator did not exist in that binary yet.
 
 Fix iterations on current source (each built fresh + run in a real player):
-- (a) enabled-clone-camera path: 0 URP errors BUT `gameDarkFrames` = ALL
-  288 samples (clone renders black under URP 17) — caught by the tripwire.
-- (b) endCameraRendering `CameraTarget` blit: 0 errors BUT still all-dark.
-- (c) FINAL: `ScreenCapture.CaptureScreenshotIntoRenderTexture(_recordRT)`
+- (a) enabled-clone-camera path: 0 URP errors BUT gameDarkFrames = ALL
+  288 samples (clone renders black under URP 17), caught by the tripwire.
+- (b) endCameraRendering CameraTarget blit: 0 errors BUT still all-dark.
+- (c) FINAL: ScreenCapture.CaptureScreenshotIntoRenderTexture(_recordRT)
   per sample tick + readback next Update (no extra scene render, no URP
   camera/hook surface). All-dark NOTICE log added (plain Log, never a
-  warning/error so it can`t pop the dev overlay).
+  warning/error so it cannot pop the dev overlay).
 
 P2X proof run (fresh build Succeeded errors=0, local Realtek mic + local USB
-cam, 15 s wall, driver deleted after): COMPLETE `int=False err=` —
+cam, 15 s wall, driver deleted after): COMPLETE int=False err= (empty) -
 audio 664 chunks q0/d0 (mp3 412 frames, peak 0.234 room audio), cam 150
 frames q0/d0 (PiP face visible), game 252 frames 0 dark 0 gaps (mp4
 960x540 avc1, extracted frame: bright world + player + HUD + in-game cam box
 + ffmpeg PiP). Player.log: 0 EndRenderPass, 0 exceptions. Screenshots:
-`p2x-indicator.png` ("DANG QUAY 00:07" badge live) + `p2x-toast.png`
+p2x-indicator.png ("DANG QUAY 00:07" badge live) + p2x-toast.png
 ("Da luu xong" + filenames + dir, badge hidden post-complete).
 EditMode after the fix: 384 total, 383 pass, 0 fail, 1 skip (benign P13M4).
 Final clean build (driver-free): Succeeded errors=0, boot 73 s+ alive,
 3xFACE_OK, 0 errors, MediaRec wired, 0 driver traces.
+
+## 33. P2X follow-up 2 (2026-09-16): blurry gameplay + double PiP + short mp4
+
+Player reports on the new mp4 (photo): (1) gameplay BLURRY (heavy banding/
+blockiness); (2) the face TWICE (in-game CAMERA box bottom-left + ffmpeg PiP
+bottom-right), core bug; plus a latent find: mp4 only ~8 s for a 15 s wall.
+
+Causes:
+- (1) Double lossy chain: worker C# JPEG q65, then x264 CRF 24, on a 960x540
+  downscale of the window.
+- (2) Regression from the screen-capture switch: with the old clone camera,
+  overlay UI never entered the file (PiP was single by construction);
+  screen capture pulls the HUD box in too.
+- (3) AVI duration = frames/header-rate: 158 frames stamped at 20 fps = 7.9 s
+  of timeline, so -shortest truncated audio+video to ~8 s. (The earlier
+  -r <measured> output flag only relabels the rate, never stretches time.)
+
+Fixes (all in the ONE config + isolated writer/backend, zero frozen-system
+diffs):
+- Quality (user rule: squeeze size, keep near-original): capture 1280x720
+  (no downscale softening), worker JPEG q65 to 90 (intermediate is deleted
+  after transcode, nearly free; Validate bound 30..85 widened to 30..100),
+  x264 CRF 24 to 19 (near-transparent). Pins updated (P21A/P21I).
+- Single PiP (user pick): PhoneCameraHud.SetRecordingHide, the service
+  hides the box on entering Recording, shows it back on Stop (hide placed
+  AFTER all FailStart gates; release resumes state-driven display; never
+  fights the machine). MarketBootstrap binds it null-safe. Pinned by
+  P19N (HUD level) + P20V (service drives hide/show through a real session).
+- Duration honesty: AviMjpegWriter.Finalize(out, actualFps) re-stamps
+  strh scale/rate + avih usec (positions recorded at Begin; old overload
+  keeps declared rate). Pumps pass frames/wall via MeasuredStreamFps
+  (wall under 1 s or unset gives 0 = no restamp, so unit-speed sessions stay
+  deterministic). Pinned by P20W (10 frames at 10.0 gives Fps 10.0,
+  Duration 1 s; declared path still 20).
+
+Proof run (fresh build Succeeded errors=0, 15 s wall, driver deleted after):
+COMPLETE int=False err= (empty) - game 1280x720, 158 frames, 0 dark,
+0 gaps; cam 150 q0/d0; audio 672 chunks; mp4 1280x720 avc1,
+14.68 s vs 15 s wall (was 7.9 s), 154 samples; mp3 ~14.7 s.
+Extracted frame: crisp edges, no banding, ONE PiP (ffmpeg, bottom-right),
+no camera box; live shot: REC badge + box hidden + world intact.
+Player.log: 0 renderpass errors, 0 exceptions.
+EditMode: 387 total, 386 pass, 0 fail, 1 skip (P19N/P20V/P20W green).
+Final clean build: Succeeded errors=0, boot 73 s+ alive, 3xFACE_OK,
+0 errors, MediaRec wired, 0 driver traces.

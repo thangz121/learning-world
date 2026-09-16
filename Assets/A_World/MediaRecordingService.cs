@@ -61,6 +61,7 @@ public class MediaRecordingService : MonoBehaviour {
   RecordingConfirmDialog _confirmDialog;
   RecordingToast _toast;
   RecordingIndicator _indicator;
+  PhoneCameraHud _cameraHud;
   bool _chooserStartAfter;
   readonly F2DoubleTracker _f2 = new F2DoubleTracker();
 
@@ -225,6 +226,13 @@ public class MediaRecordingService : MonoBehaviour {
 
   public void BindIndicator(RecordingIndicator ind) {
     try { _indicator = ind; } catch (Exception) { }
+  }
+
+  // Camera box hide (user rule: exactly ONE face in the file — the PiP).
+  // Wired by MarketBootstrap like the other dialogs; null-safe (camera path
+  // may be absent while recording still runs on gameplay + audio).
+  public void BindCameraHud(PhoneCameraHud hud) {
+    try { _cameraHud = hud; } catch (Exception) { }
   }
 
   public void SetLocalMicForTests(bool present) {
@@ -646,6 +654,10 @@ public class MediaRecordingService : MonoBehaviour {
       } catch (Exception) { return FailStart("worker-start-failed"); }
 
       SetState(RecordingState.Recording);
+      // One face in the file (user rule): the in-game camera box steps aside
+      // while recording (the PiP carries the face); it returns on Stop.
+      // Placed AFTER all FailStart gates: a refused start never hides the box.
+      try { if (_cameraHud != null) _cameraHud.SetRecordingHide(true); } catch (Exception) { }
       try {
         Debug.Log("[MediaRec] START session=" + _sessionId + " mode=" + mode
           + " audio=" + (_effective.RecordAudio ? _audioPath : "<off>")
@@ -672,6 +684,9 @@ public class MediaRecordingService : MonoBehaviour {
       try { StopLocalMic(); } catch (Exception) { }
       lock (_telLock) { _telemetry.StopUtcIso = RecordingClock.ToIso(_stopUtc); }
       SetState(RecordingState.Stopping);
+      // Recording ended (STOP): the camera box returns immediately while the
+      // session finalizes in the background (see toast "finishing…").
+      try { if (_cameraHud != null) _cameraHud.SetRecordingHide(false); } catch (Exception) { }
       try { Debug.Log("[MediaRec] STOP session=" + _sessionId + " (flushing)"); }
       catch (Exception) { }
       return true;
@@ -963,7 +978,8 @@ public class MediaRecordingService : MonoBehaviour {
       }
       try {
         long frames;
-        if (!_gameWriter.Finalize(out frames)) _gameWriteFailed = true;
+        double gFps = MeasuredStreamFps(_gameWriter != null ? _gameWriter.FrameCount : 0);
+        if (!_gameWriter.Finalize(out frames, gFps)) _gameWriteFailed = true;
       } catch (Exception) { _gameWriteFailed = true; }
     } catch (Exception) { _gameWriteFailed = true; }
     finally {
@@ -1611,13 +1627,32 @@ public class MediaRecordingService : MonoBehaviour {
       }
       try {
         long frames;
-        if (!_videoWriter.Finalize(out frames)) _videoWriteFailed = true;
+        double vFps = MeasuredStreamFps(_videoWriter != null ? _videoWriter.FrameCount : 0);
+        if (!_videoWriter.Finalize(out frames, vFps)) _videoWriteFailed = true;
       } catch (Exception) { _videoWriteFailed = true; }
     } catch (Exception) { _videoWriteFailed = true; }
     finally {
       try { _videoWriter.Close(); } catch (Exception) { }
       _videoPumpDone = true;
     }
+  }
+
+  // Measured stream rate (frames/wall) for the AVI header re-stamp: without
+  // it a short-count file plays SHORTER than the wall session (duration =
+  // frames/header-rate) and -shortest truncates the sibling streams. Returns
+  // 0 (= keep the declared rate) when the wall is too short to mean anything
+  // (unit-speed sessions) or unset. Never throws, never negative.
+  double MeasuredStreamFps(long frames) {
+    try {
+      if (frames <= 0) return 0;
+      DateTime stop = _stopUtc == DateTime.MinValue ? DateTime.UtcNow : _stopUtc;
+      double wall = 0;
+      try { wall = (stop - _clock.StartUtc).TotalSeconds; } catch (Exception) { }
+      if (wall < 1.0) return 0;
+      double fps = frames / wall;
+      if (fps < 1 || fps > 120) return 0;
+      return fps;
+    } catch (Exception) { return 0; }
   }
 
   // --- availability gates (§3: game-first, explicit refusal) ------------------

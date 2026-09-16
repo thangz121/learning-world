@@ -240,6 +240,10 @@ public class MarketBootstrap : MonoBehaviour {
       GameObject recToastGo = new GameObject("RecordingToast");
       RecordingToast recToast = recToastGo.AddComponent<RecordingToast>();
       rec.BindToast(recToast);
+      // One face in the file (user rule): the recorder hides this box while
+      // recording (the PiP carries the face). Null when the camera path
+      // failed to wire — Bind is null-safe.
+      try { rec.BindCameraHud(camHud); } catch (Exception) { }
       MediaRecorder = rec;
       Debug.Log("[MediaRec] wired (explicit start only; F2 toggles, double-F2 changes save folder)");
     } catch (Exception e) {

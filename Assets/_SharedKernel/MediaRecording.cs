@@ -56,17 +56,20 @@ public static class MediaRecording {
   public const string Mp3Extension = ".mp3";  // deliverable (LAME VBR)
   public const string GameBackendName = "avi-mjpeg(csharp-jpeg)";
   public const string DeliverBackendName = "mp4-h264+mp3(ffmpeg)";
-  public const int DefaultGameWidth = 960;
-  public const int DefaultGameHeight = 540;
+  public const int DefaultGameWidth = 1280; // match the typical window: no
+  public const int DefaultGameHeight = 720; // downscale softening (user rule)
   public const int MinGameWidth = 320;
   public const int MaxGameWidth = 1920;
   public const int MinGameHeight = 180;
   public const int MaxGameHeight = 1080;
   public const int DefaultGameFps = 20; // worker JPEG sustains ~19 fps here;
                                   // cap 20 keeps header rate ≈ wall rate
-  public const int DefaultGameJpegQuality = 65;
+  public const int DefaultGameJpegQuality = 90; // intermediate is deleted
+                                   // after transcode: stay near-lossless here
   public const int MaxGameRawFrames = 6; // RGBA handoff cap (bounded memcpy)
-  public const int DefaultVideoCrf = 24; // x264: lower = better (18..32)
+  public const int DefaultVideoCrf = 19; // x264: lower = better (18..32);
+                                   // 19 ~= transparent (user rule: squeeze
+                                   // size, keep near-original quality)
   public const string DefaultVideoPreset = "veryfast";
   public const int DefaultMp3Quality = 4; // LAME VBR -q:a (0..9, lower = better)
   public const int DefaultPipWidth = 240; // 4:3 camera overlay
@@ -108,12 +111,12 @@ public struct MediaRecordingConfig {
   // Full-session deliverables (display/input quality stays max — see the
   // Phase 2.2 camera config and the untouched render pipeline; these ONLY
   // shape the recorded OUTPUT, which prioritizes fps + compression).
-  public int GameWidth;           // gameplay capture width (default 960)
-  public int GameHeight;          // gameplay capture height (default 540)
+  public int GameWidth;           // gameplay capture width (default 1280)
+  public int GameHeight;          // gameplay capture height (default 720)
   public int GameFps;             // gameplay sample rate (default 24)
   public int GameJpegQuality;     // worker-side C# JPEG for game frames
-  public int VideoCrf;            // x264 CRF 18..32 (default 24: strong
-                                  // compression, near-transparent cartoon)
+  public int VideoCrf;            // x264 CRF 18..32 (default 19: transparent,
+                                  // bigger file by user rule)
   public string VideoPreset;      // x264 preset allowlist (default veryfast)
   public int AudioMp3Quality;     // LAME VBR -q:a 0..9 (default 4 ≈ voice-
                                   // transparent, roughly half of 128k CBR)
@@ -186,8 +189,8 @@ public struct MediaRecordingConfig {
     if (GameFps < MediaRecording.MinVideoFps || GameFps > MediaRecording.MaxVideoFps) {
       reason = "gameFps 1..30"; return false;
     }
-    if (GameJpegQuality < 30 || GameJpegQuality > 85) {
-      reason = "gameJpegQuality 30..85"; return false;
+    if (GameJpegQuality < 30 || GameJpegQuality > 100) {
+      reason = "gameJpegQuality 30..100"; return false;
     }
     if (VideoCrf < 18 || VideoCrf > 32) {
       reason = "videoCrf 18..32"; return false;
