@@ -996,26 +996,63 @@ public class MediaRecordingService : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  // Game worker (background): RGBA -> C# JPEG -> game.avi. Owns _gameWriter.
+  // Worker-side JPEG entry for the farm (pure: no Unity API, never throws).
+  static byte[] EncodeGameFrame(byte[] raw, int w, int h, int q) {
+    try {
+      byte[] jpeg;
+      if (raw != null && JpegEncoder.TryEncode(raw, w, h, q, out jpeg)) return jpeg;
+      return null;
+    } catch (Exception) { return null; }
+  }
+
+  // Game worker (background): RGBA -> threaded C# JPEG farm -> game.avi in
+  // STRICT capture order (round-robin drain). Owns _gameWriter. Counts and
+  // failure semantics match the old single-threaded path exactly (every
+  // dequeued frame appended once in order; any refusal fails the track).
   void GamePump() {
+    OrderedFrameEncoder farm = null;
     try {
       byte[] raw;
       int w = _effective.GameWidth, h = _effective.GameHeight, q = _effective.GameJpegQuality;
-      while (!_gameRawQueue.IsClosed || _gameRawQueue.Count > 0) {
+      try { farm = new OrderedFrameEncoder(OrderedFrameEncoder.DefaultWorkerCount(), EncodeGameFrame); }
+      catch (Exception) { farm = null; }
+      if (farm == null) { _gameWriteFailed = true; return; }
+      try {
+        lock (_telLock) {
+          _telemetry.GameEncodeThreads = farm.WorkerCount;
+          try { _telemetry.CpuCount = System.Environment.ProcessorCount; } catch (Exception) { }
+        }
+      } catch (Exception) { }
+      long pushSeq = 0, nextSeq = 0, appended = 0;
+      bool pushing = true;
+      while (true) {
+        // 1. drain every consecutive ready frame (in order).
         try {
-          if (_gameRawQueue.TryDequeue(out raw)) {
-            byte[] jpeg;
-            if (raw == null || raw.Length != w * h * 4
-                || !JpegEncoder.TryEncode(raw, w, h, q, out jpeg)
-                || !_gameWriter.AppendJpeg(jpeg)) {
-              _gameWriteFailed = true;
-              break;
-            }
+          byte[] jpeg;
+          while (!_gameWriteFailed && farm.TryTakeOrdered(nextSeq, out jpeg)) {
+            if (jpeg == null || !_gameWriter.AppendJpeg(jpeg)) { _gameWriteFailed = true; break; }
             lock (_telLock) { _telemetry.GameFrames++; }
-          } else {
-            Thread.Sleep(5);
+            nextSeq++;
+            appended++;
           }
-        } catch (Exception) { _gameWriteFailed = true; break; }
+        } catch (Exception) { _gameWriteFailed = true; }
+        if (_gameWriteFailed) break;
+        // 2. push the next raw frame (round-robin stripe by seq).
+        if (pushing) {
+          bool more = false;
+          try { more = (!_gameRawQueue.IsClosed || _gameRawQueue.Count > 0); } catch (Exception) { }
+          if (more && _gameRawQueue.TryDequeue(out raw)) {
+            if (raw == null || raw.Length != w * h * 4) { _gameWriteFailed = true; break; }
+            if (!farm.Push(pushSeq, raw, w, h, q)) { _gameWriteFailed = true; break; }
+            pushSeq++;
+          } else if (!more) {
+            pushing = false;
+            try { farm.Complete(); } catch (Exception) { }
+          }
+        }
+        // 3. exit when raw is exhausted and every pushed frame is appended.
+        if (!pushing && appended >= pushSeq) break;
+        Thread.Sleep(2);
       }
       try {
         long frames;
@@ -1024,6 +1061,7 @@ public class MediaRecordingService : MonoBehaviour {
       } catch (Exception) { _gameWriteFailed = true; }
     } catch (Exception) { _gameWriteFailed = true; }
     finally {
+      try { if (farm != null) farm.Dispose(); } catch (Exception) { }
       try { _gameWriter.Close(); } catch (Exception) { }
       _gamePumpDone = true;
     }

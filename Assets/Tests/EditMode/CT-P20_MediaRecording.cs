@@ -683,4 +683,55 @@ public class CT_P20_MediaRecording {
       WipeDir(dir);
     }
   }
+
+  [Test] public void P20Y_ThreadedEncoderKeepsCaptureOrder() {
+    // The farm may finish frames out of order (slow lane forced here by
+    // seq-dependent sleeps); the round-robin drain must still emit 0..N-1.
+    // Mirrors the pump: push and drain concurrently (bounded lanes refuse a
+    // push flood with nobody draining).
+    const int n = 24;
+    var farm = new OrderedFrameEncoder(4, (byte[] raw, int w, int h, int q) => {
+      try { Thread.Sleep((raw[0] % 4) * 15); } catch (Exception) { }
+      return new byte[] { 0xFF, 0xD8, 0xFF, raw[0] }; // tag carries the seq
+    });
+    try {
+      Assert.AreEqual(4, farm.WorkerCount);
+      long pushed = 0, next = 0;
+      var order = new System.Collections.Generic.List<byte>();
+      bool completed = false;
+      int spins = 0;
+      while (next < n && spins < 4000) {
+        spins++;
+        if (pushed < n) {
+          if (farm.Push(pushed, new byte[] { (byte)pushed }, 64, 48, 90)) pushed++;
+        } else if (!completed) {
+          farm.Complete();
+          completed = true;
+        }
+        byte[] jpeg;
+        while (farm.TryTakeOrdered(next, out jpeg)) {
+          Assert.IsNotNull(jpeg);
+          order.Add(jpeg[3]);
+          next++;
+        }
+        if (next < n) Thread.Sleep(2);
+      }
+      Assert.AreEqual(n, next, "all frames drained");
+      Assert.AreEqual(n, order.Count);
+      for (int i = 0; i < n; i++)
+        Assert.AreEqual((byte)i, order[i], "content proves order, not luck");
+      Assert.IsTrue(farm.IsIdle(), "all lanes drained");
+    } finally {
+      try { farm.Dispose(); } catch (Exception) { }
+    }
+  }
+
+  [Test] public void P20Z_EncoderThreadCountStaysSane() {
+    // Per-machine sizing on the real formula (live cores; ProcessorCount
+    // cannot be injected, so the rule itself is pinned in the farm's doc
+    // comment): a weak laptop keeps its gameplay core, a big rig caps out.
+    int live = OrderedFrameEncoder.DefaultWorkerCount();
+    Assert.GreaterOrEqual(live, 1, "floor: a 2-core laptop behaves single-threaded");
+    Assert.LessOrEqual(live, 8, "ceiling: the bus, not cores, is the JPEG limit");
+  }
 }

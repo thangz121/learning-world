@@ -582,3 +582,42 @@ review footage is sharp but steppy on this machine class.
 EditMode: 390 total, 389 pass, 0 fail, 1 skip (benign P13M4).
 Final clean build: Succeeded errors=0, boot 73 s+ alive, 3xFACE_OK,
 0 errors, MediaRec wired, 0 driver traces.
+## 36. Threaded JPEG farm (2026-09-16): fps up without touching tiers
+
+User ask: raise capture fps WITHOUT changing any tier (CRF/preset/res
+stay), high CPU/GPU load accepted, soak the hardware - but size the farm
+per MACHINE, never baked for one rig.
+
+Bottleneck (measured): the single C# JPEG worker sustained ~5 fps at
+1080p q90 (~10 at 720p) while sampling ticks at 20 Hz -> hundreds of
+bounded raw drops per take (counted, duration-honest, but steppy video).
+
+Design (OrderedFrameEncoder, SharedKernel-pure, no Unity API): striped
+lanes, frame seq S owned by worker (S % N), each lane its own bounded
+in/out FIFOs; the pump pushes in seq order and drains round-robin from
+seq 0, so order falls out of the topology (no shared sorted structure).
+No Monitor.Wait chains anywhere - every wait is try + short sleep, so no
+deadlock shape exists; a refused push fails the TRACK (never skips a seq,
+which would wedge the drain behind the gap). Encoder threads run
+BelowNormal so gameplay keeps its cores.
+
+Per-machine sizing (user rule, read live at session start):
+DefaultWorkerCount = clamp(cpus - max(1, cpus/4), 1, 8) ->
+2c=1 (behaves exactly like the old single thread), 4c=3, 8c=6, 12c=8,
+64c=8. Sidecar records cpuCount + gameEncodeThreads as evidence.
+Failure/count semantics identical to the old path (every dequeued frame
+appended once in order; any refusal fails the track).
+
+Tests: P20Y pumps 24 frames through a 4-lane farm with forced out-of-order
+completion and asserts exact 0..23 content order; P20Z pins live bounds
+1..8. Counts/bytes identical by construction, so P20M/P21L/P21M/P20V and
+the whole suite stay green untouched.
+
+Live proof, ONE E2E at MAX 1080p walking (Ryzen 6c/12t -> 8 workers):
+COMPLETE int=False err= (empty) - game 353 frames (was 88), 0 dark,
+0 gaps, 0 raw drops (was 266) = 19.6 fps wall, sustaining the 20 Hz cap;
+mp4 1920x1080, 346 samples, 17.66 s; mp3 normal; verifier OVERALL PASS;
+motion frame crisp, ONE PiP; Player.log 0 errors. ~4x throughput.
+EditMode: 392 total, 391 pass, 0 fail, 1 skip (benign P13M4).
+Final clean build: Succeeded errors=0, boot 73 s+ alive, 3xFACE_OK,
+0 errors, MediaRec wired, 0 driver traces.

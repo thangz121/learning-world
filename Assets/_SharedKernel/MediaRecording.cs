@@ -518,6 +518,8 @@ public sealed class RecordingTelemetry {
   public long GameDroppedForeign;
   public long GameGapSamples;   // sample ticks with no readback while recording
   public long GameDarkFrames;   // readbacks with near-zero brightness (black-path tripwire)
+  public int GameEncodeThreads; // JPEG farm width for the session (0 = single-thread legacy)
+  public int CpuCount;          // machine logical processors seen at session start
   public bool Transcoded;       // ffmpeg deliverables produced
   public string Mp4Path = string.Empty;
   public string Mp3Path = string.Empty;
@@ -588,6 +590,8 @@ public sealed class RecordingTelemetry {
       N(b, "gameDroppedForeign", GameDroppedForeign, false);
       N(b, "gameGapSamples", GameGapSamples, false);
       N(b, "gameDarkFrames", GameDarkFrames, false);
+      N(b, "gameEncodeThreads", GameEncodeThreads, false);
+      N(b, "cpuCount", CpuCount, false);
       B(b, "transcoded", Transcoded, false);
       P(b, "mp4Path", Mp4Path, false);
       P(b, "mp3Path", Mp3Path, false);
