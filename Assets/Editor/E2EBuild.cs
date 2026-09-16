@@ -7,7 +7,17 @@ using UnityEngine;
 
 public static class E2EBuild {
   public static void BuildWindows() {
-    string outDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "opencode", "LWE-E2E");
+    BuildTo("LWE-E2E", BuildOptions.Development | BuildOptions.AllowDebugging);
+  }
+
+  // Release cho máy nhà (user ask): KHÔNG Development/AllowDebugging (hết
+  // console overlay + debug socket), còn lại giống hệt E2E (scenes, tools).
+  public static void BuildRelease() {
+    BuildTo("LWE-Release", BuildOptions.None);
+  }
+
+  static void BuildTo(string outName, BuildOptions options) {
+    string outDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "opencode", outName);
     System.IO.Directory.CreateDirectory(outDir);
     string exe = System.IO.Path.Combine(outDir, "LWE.exe");
     var opts = new BuildPlayerOptions {
@@ -17,7 +27,7 @@ public static class E2EBuild {
       },
       locationPathName = exe,
       target = BuildTarget.StandaloneWindows64,
-      options = BuildOptions.Development | BuildOptions.AllowDebugging,
+      options = options,
     };
     var report = BuildPipeline.BuildPlayer(opts);
     Debug.Log("[E2EBuild] result=" + report.summary.result
