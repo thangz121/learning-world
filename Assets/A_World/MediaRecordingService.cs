@@ -84,9 +84,7 @@ public class MediaRecordingService : MonoBehaviour {
   Camera _boundGameCam;
   Camera _gameCam;
   RenderTexture _recordRT;
-  GameObject _captureCamGo;
-  Camera _captureCam;
-  bool _captureArmed; // enabled last tick: consume (read back) this Update
+  bool _shotArmed; // asked Unity for a screen capture this tick: read it back next Update
   bool _gameCaptureReady;
   bool _savedRunInBackground = true;
   bool _touchedRunInBackground;
@@ -799,26 +797,24 @@ public class MediaRecordingService : MonoBehaviour {
   }
 
   // --- full-session gameplay capture (output side only) -----------------------
-  // Display rendering is untouched (max quality). A dedicated capture camera
-  // (clone of the game camera) renders into the record RT on sample ticks
-  // ONLY, via the standard enabled-camera path: enabled in the tick Update,
-  // rendered by the engine that same frame, consumed + disabled in the next
-  // Update before the readback request. (Two earlier mechanisms produced
-  // black frames in real builds — CurrentActive blit read an unbound target;
-  // manual Render() on a disabled clone rendered nothing. This path is the
-  // same one every visible frame uses.)
-  // Main-thread cost per sample is one extra scene render (~2-4 ms @ 20 Hz).
-  // runInBackground is forced during capture so clicking out of the window
-  // never pauses the session (restored afterwards).
-
+  // Display rendering is untouched (max quality, zero extra scene renders).
+  // On sample ticks SampleGame asks Unity for a screen capture straight into
+  // the record RT (GPU-side, free downscale to output size); the NEXT Update
+  // consumes it via AsyncGPUReadback. Screen capture is the only scope in
+  // which the finished frame is reliably readable: Update-scope blits read an
+  // unbound target, a runtime-cloned camera broke URP's render-pass
+  // bookkeeping (EndRenderPass errors + black frames), and an
+  // endCameraRendering blit of CameraTarget stayed black (P2X findings).
+  // Main-thread cost per sample is one 2 MB memcpy; encode NEVER touches the
+  // main thread. runInBackground is forced during capture so clicking out of
+  // the window never pauses the session (restored afterwards).
   void SampleGame() {
     try {
       if (!_gameCaptureReady) return;
-      // Consume last tick's render (the engine rendered it after the tick
-      // Update that enabled the camera): read back, then stand down.
-      if (_captureArmed) {
-        _captureArmed = false;
-        try { if (_captureCam != null) _captureCam.enabled = false; } catch (Exception) { }
+      // Consume last tick's capture (Unity finished it at end of that
+      // frame): read back, then stand down until the next tick.
+      if (_shotArmed) {
+        _shotArmed = false;
         try {
           AsyncGPUReadback.Request(_recordRT, 0, TextureFormat.RGBA32, OnGameReadback);
         } catch (Exception) {
@@ -829,8 +825,12 @@ public class MediaRecordingService : MonoBehaviour {
       float interval = 1f / Math.Max(1, _effective.GameFps);
       if (_gameSampleTimer >= interval) {
         _gameSampleTimer = interval > 0 ? _gameSampleTimer - interval : 0;
-        try { if (_captureCam != null) _captureCam.enabled = true; } catch (Exception) { }
-        _captureArmed = true;
+        try {
+          ScreenCapture.CaptureScreenshotIntoRenderTexture(_recordRT);
+          _shotArmed = true;
+        } catch (Exception) {
+          lock (_telLock) { _telemetry.GameGapSamples++; }
+        }
       }
       if (_gameSampleTimer > interval * 2) _gameSampleTimer = 0;
     } catch (Exception) { }
@@ -850,14 +850,7 @@ public class MediaRecordingService : MonoBehaviour {
         _effective.GameWidth, _effective.GameHeight, 0, RenderTextureFormat.ARGB32);
       try { _recordRT.Create(); } catch (Exception) { ReleaseGameCapture(); return false; }
       if (!_recordRT.IsCreated()) { ReleaseGameCapture(); return false; }
-      try {
-        _captureCamGo = new GameObject("MediaRecCaptureCam");
-        try { _captureCamGo.hideFlags = HideFlags.HideAndDontSave; } catch (Exception) { }
-        _captureCam = _captureCamGo.AddComponent<Camera>();
-        try { _captureCam.CopyFrom(cam); } catch (Exception) { return false; }
-        _captureCam.targetTexture = _recordRT;
-        _captureCam.enabled = false; // manual Render() on sample ticks only
-      } catch (Exception) { ReleaseGameCapture(); return false; }
+      _shotArmed = false;
       // Capture must continue when the player clicks away from the game
       // window (user requirement): keep the player loop alive unfocused.
       try {
@@ -876,13 +869,8 @@ public class MediaRecordingService : MonoBehaviour {
   void ReleaseGameCapture() {
     try {
       _gameCaptureReady = false;
+      _shotArmed = false;
       _gameCam = null;
-      if (_captureCamGo != null) {
-        try {
-          if (Application.isPlaying) Destroy(_captureCamGo);
-          else DestroyImmediate(_captureCamGo);
-        } catch (Exception) { }
-      }
       if (_recordRT != null) {
         try {
           if (_recordRT.IsCreated()) _recordRT.Release();
@@ -900,8 +888,6 @@ public class MediaRecordingService : MonoBehaviour {
       } catch (Exception) { }
     } catch (Exception) { }
     finally {
-      _captureCamGo = null;
-      _captureCam = null;
       _recordRT = null;
     }
   }
@@ -1440,6 +1426,15 @@ public class MediaRecordingService : MonoBehaviour {
           + " mp4=" + (_telemetry.Transcoded ? _telemetry.Mp4Bytes + "B" : "<" + _telemetry.TranscodeError + ">")
           + " mp3=" + (_telemetry.Mp3Complete ? _telemetry.Mp3Bytes + "B" : "<off>")
           + " interrupted=" + _telemetry.Interrupted);
+      } catch (Exception) { }
+      // Plain log (never a warning/error: those pop the dev-player console
+      // overlay on screen): every captured gameplay frame was near-black, so
+      // the file's main video is blind even though the session completed.
+      try {
+        if (_effective.RecordVideo && _telemetry.GameFrames > 0
+            && _telemetry.GameDarkFrames >= _telemetry.GameFrames)
+          Debug.Log("[MediaRec] NOTICE session=" + _sessionId
+            + " all " + _telemetry.GameFrames + " gameplay frames dark — check capture path");
       } catch (Exception) { }
       ShowCompletedToast();
     } catch (Exception) { FailFinalize("verify-exception"); }
