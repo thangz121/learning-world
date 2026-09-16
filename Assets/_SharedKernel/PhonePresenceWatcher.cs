@@ -67,6 +67,18 @@ public sealed class PhonePresenceWatcher : IDisposable {
   int _lastAudioBytes;
   int _lastAudioTick = -1;
 
+  // Phase 2.3 recording tap (additive, game-side boundary §3): the game
+  // ALREADY observes every AUDIO payload here for link/HUD state, so the
+  // recorder subscribes to receive the SAME bytes the game saw — never a
+  // separate capture path. Invoked on the worker thread: handlers must NOT
+  // block, must NOT mutate the payload (the recorder copies into its own
+  // bounded queue synchronously), and must never throw (exceptions are
+  // swallowed and counted). Null = no recording (zero overhead, zero
+  // behavior change for speech/HUD).
+  public event Action<uint, uint, byte[]> AudioPayloadAccepted;
+  long _tapInvocations;
+  long _tapErrors;
+
   public PhonePresenceWatcher(string host, int port) {
     _host = string.IsNullOrEmpty(host) ? "127.0.0.1" : host;
     _port = port > 0 ? port : 8451;
@@ -156,6 +168,26 @@ public sealed class PhonePresenceWatcher : IDisposable {
     }
   }
 
+  // Best-effort forward to the Phase 2.3 recorder (worker thread; the
+  // recorder copies into its own bounded queue synchronously and returns).
+  void EmitAudioTap(uint serial, uint seq, byte[] payload) {
+    try {
+      var h = AudioPayloadAccepted;
+      if (h == null) return;
+      lock (_mutex) { _tapInvocations++; }
+      try { h(serial, seq, payload); }
+      catch (Exception) { lock (_mutex) { _tapErrors++; } }
+    } catch (Exception) { }
+  }
+
+  public void ReadTapStats(out long invocations, out long errors) {
+    try {
+      lock (_mutex) { invocations = _tapInvocations; errors = _tapErrors; return; }
+    } catch (Exception) { }
+    invocations = 0;
+    errors = 0;
+  }
+
   void Post(WatcherEvent ev, uint serial, string reason) {
     lock (_mutex) {
       _lastEvent = ev;
@@ -195,6 +227,7 @@ public sealed class PhonePresenceWatcher : IDisposable {
           switch (f.Value.Kind) {
             case KindAudio:
               RecordAudio(f.Value.Payload);
+              EmitAudioTap(f.Value.Serial, f.Value.Seq, f.Value.Payload);
               Post(WatcherEvent.PhoneAudio, f.Value.Serial, string.Empty);
               break;
             case KindStop:
@@ -257,6 +290,7 @@ public sealed class PhonePresenceWatcher : IDisposable {
   struct Decoded {
     public byte Kind;
     public uint Serial;
+    public uint Seq;
     public byte[] Payload;
   }
 
@@ -297,9 +331,11 @@ public sealed class PhonePresenceWatcher : IDisposable {
     }
     uint serial = ((uint)body[1] << 24) | ((uint)body[2] << 16)
       | ((uint)body[3] << 8) | body[4];
+    uint seq = ((uint)body[5] << 24) | ((uint)body[6] << 16)
+      | ((uint)body[7] << 8) | body[8];
     var payload = new byte[Math.Max(0, bodyLen - 9)];
     if (payload.Length > 0) Buffer.BlockCopy(body, 9, payload, 0, payload.Length);
-    return new Decoded { Kind = kind, Serial = serial, Payload = payload };
+    return new Decoded { Kind = kind, Serial = serial, Seq = seq, Payload = payload };
   }
 
   // Distinguishes read TIMEOUT (quiet: null) from real failure (null + flag).

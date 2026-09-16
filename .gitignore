@@ -49,5 +49,12 @@ tools/phone-camera-qr.png
 tools/phone-qr.png
 tools/phone-qr-game.png
 
+# Phase 2.3: local recording output (WAV + AVI + sidecar JSON) is LOCAL ONLY
+# (privacy: raw voice/video never in the repo). Runtime default is
+# <persistentDataPath>/MediaRecordings (outside the repo); this covers
+# repo-relative dev/test overrides.
+Recordings/
+MediaRecordings/
+
 # Nested scratch Unity project (not part of this checkpoint)
 My project/

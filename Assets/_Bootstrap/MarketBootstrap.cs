@@ -41,6 +41,8 @@ public class MarketBootstrap : MonoBehaviour {
   public MicSetupMonitor MicMonitor { get; private set; }
   public GameCameraStreamService CameraStream { get; private set; }
   public LocalCameraService LocalCamera { get; private set; }
+  public MediaRecordingService MediaRecorder { get; private set; }
+  public DependencySetupService DependencySetup { get; private set; }
   public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null, MicSetupBundle mic = null) {
     if (_built) return;
     _built = true;
@@ -188,6 +190,59 @@ public class MarketBootstrap : MonoBehaviour {
     } catch (Exception e) {
       Debug.LogWarning("[LocalCamera] wiring failed, phone camera path unchanged: " + e.Message);
       LocalCamera = null;
+    }
+    // Media recording (Phase 2.3, additive): PC-side session recorder —
+    // gameplay capture + phone-camera stream + phone-mic audio -> WAV/AVI
+    // intermediates -> MP4 (H.264 + camera PiP) + MP3 (LAME) via the isolated
+    // FFmpeg backend when available (verified-intermediate fallback when
+    // not). Explicit control only (F2 dev/E2E toggle + public Start/Stop
+    // API); nothing auto-records on connect or game start. Any failure
+    // leaves the game running with MediaRecorder=null (gameplay never
+    // depends on recording).
+    try {
+      Debug.Log("[MediaRec] wiring recording service");
+      GameObject recGo = new GameObject("MediaRecorder");
+      MediaRecordingService rec = recGo.AddComponent<MediaRecordingService>();
+      Camera gameCam = null;
+      try {
+        if (builder.WorldCamera != null) gameCam = builder.WorldCamera.GetComponent<Camera>();
+      } catch (Exception) { }
+      if (gameCam == null) {
+        try { gameCam = Camera.main; } catch (Exception) { }
+      }
+      rec.Bind(MediaRecordingConfig.Default, CameraStream, LocalCamera,
+        () => MicMonitor != null ? MicMonitor.CurrentAudioWatcher : null, null,
+        gameCam, FindToolsDir());
+      MediaRecorder = rec;
+      Debug.Log("[MediaRec] wired (explicit start only; F2 toggles mic+camera)");
+    } catch (Exception e) {
+      Debug.LogWarning("[MediaRec] wiring failed, game continues without recording: " + e.Message);
+      MediaRecorder = null;
+    }
+    // Startup dependency setup (Phase 2.3c, additive): checks FFmpeg /
+    // Python / LAN cert shortly after boot and offers one-click install.
+    // All missing = silent when everything is present; declining never
+    // blocks gameplay (fallbacks stay active). Any failure leaves
+    // DependencySetup=null and the game runs exactly as before.
+    try {
+      string appTools = null;
+      try { appTools = System.IO.Path.Combine(Application.persistentDataPath, "Tools"); }
+      catch (Exception) { }
+      GameObject depDlgGo = new GameObject("DependencySetupDialog");
+      DependencySetupDialog depDlg = depDlgGo.AddComponent<DependencySetupDialog>();
+      GameObject depSvcGo = new GameObject("DependencySetupService");
+      DependencySetupService depSvc = depSvcGo.AddComponent<DependencySetupService>();
+      depSvc.Bind(FindToolsDir(), appTools, depDlg);
+      DependencySetup = depSvc;
+      // The recorder's transcoder also learns the app-local tools dir, so an
+      // auto-installed portable FFmpeg is found without PATH changes.
+      try {
+        if (MediaRecorder != null) MediaRecorder.SetAppToolsDir(appTools);
+      } catch (Exception) { }
+      Debug.Log("[DepSetup] wired (startup check in background)");
+    } catch (Exception e) {
+      Debug.LogWarning("[DepSetup] wiring failed, game continues without setup check: " + e.Message);
+      DependencySetup = null;
     }
   }
 

@@ -150,6 +150,15 @@ public class MicSetupMonitor : MonoBehaviour {
 
   public MicSetupGate Gate => _gate;
 
+  // Phase 2.3 recording tap (additive): the game-owned phone-audio watcher
+  // (persistent bridge subscriber driving link state + HUD signal). Null
+  // unless the game currently holds a phone-audio path (WaitPhoneLink /
+  // ReadyPhone) — the recorder treats null as "no phone audio in game" and
+  // refuses audio recording explicitly instead of recording silence.
+  public PhonePresenceWatcher CurrentAudioWatcher {
+    get { return _watcher; }
+  }
+
   // Listening may proceed right now (false = defer/skip the exercise).
   public bool IsListeningAvailable => _gate != null && !_gate.ShouldSkipListening();
 

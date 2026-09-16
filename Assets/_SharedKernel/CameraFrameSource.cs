@@ -120,6 +120,30 @@ public sealed class CameraFrameSource {
     } catch (Exception) { return false; }
   }
 
+  // Peek without consuming (Phase 2.3 recording tap + state machine
+  // freshness checks). Unlike TryTakeLatest this never marks the slot read,
+  // so the display path's DisplayedFrames accounting is untouched no matter
+  // how often the recorder samples. Returns the latest game-ACCEPTED frame
+  // (session-latched, JPEG-validated) — the recording boundary (§3).
+  public bool TryPeekLatest(out uint serial, out uint seq, out byte[] jpeg, out int ageMs) {
+    serial = 0;
+    seq = 0;
+    jpeg = null;
+    ageMs = -1;
+    try {
+      lock (_mutex) {
+        if (_latest == null) return false;
+        serial = _serial;
+        seq = _lastSeq;
+        jpeg = _latest;
+        int now = 0;
+        try { now = Environment.TickCount; } catch (Exception) { }
+        ageMs = _latestTick == 0 ? 0 : unchecked(now - _latestTick);
+        return true;
+      }
+    } catch (Exception) { return false; }
+  }
+
   // Peek without consuming (state machine freshness checks).
   public bool HasFreshFrame(int staleMs, out int ageMs) {
     ageMs = -1;

@@ -1,0 +1,1319 @@
+// A_World/MediaRecordingService.cs — Agent A (World & Visual).
+// Phase 2.3 PC-side recording layer: full play-session capture. Records
+// GAMEPLAY video (GPU copy + async readback at OUTPUT size/fps — the render
+// pipeline and max display quality are untouched) + CAMERA stream (phone/
+// local, same box the HUD shows) + PHONE-MIC audio, then delivers MP4
+// (H.264 + camera PiP overlay) + MP3 (LAME VBR) via the isolated FFmpeg
+// backend when available, with verified WAV/AVI intermediates as the honest
+// fallback when it is not. Architecture (§1 hard rule):
+//
+//   PHONE (capture + realtime transport only, no encoding)
+//     -> PC gateway bridges (8451 audio PCM16 / 8452 camera JPEG)
+//     -> GAME MEDIA INPUT (PhonePresenceWatcher link/audio stats,
+//        GameCameraStreamService decoded Live frames)
+//     -> THIS SERVICE (bounded tap copies, worker-thread file pumps)
+//     -> STORAGE (WAV audio + AVI/MJPEG video + JSON sidecar)
+//
+// Recording boundary (§3): audio is accepted ONLY from the game-owned
+// watcher tap (bytes the game already observed for link/HUD state);
+// video is accepted ONLY from slot-accepted, freshly-decoded game frames
+// (phone) or the live local texture (fallback, same box the HUD shows).
+// The recorder NEVER dials its own bridge socket and NEVER re-encodes:
+// phone JPEGs are stored verbatim, phone PCM16 is stored bit-exact.
+//
+// Threading (§11): the game thread only copies bounded samples into
+// bounded queues; two background pumps own the file writers. Expensive
+// work NEVER runs on the Unity main thread. Queues are bounded
+// (drop-oldest + counted); audio drops are telemetered, video drops are
+// observable via counters + gaps. Stop flushes deterministically:
+// no "complete" is reported before finalization + verification succeed.
+//
+// Lifecycle (§14): Idle -> Starting -> Recording -> Stopping ->
+// Finalizing -> Completed, with Error from Starting/Recording/Stopping/
+// Finalizing. No boolean soup: CurrentState is the single owner.
+//
+// Privacy (§19): local files only, no upload, no cloud, no face/AI code,
+// no raw media in logs (telemetry scalars + paths only).
+// Control (§20): explicit StartRecording/StopRecording + F2 toggle for
+// dev/E2E. Nothing auto-records on connect or game start.
+using System;
+using System.IO;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.Rendering;
+using Unity.Collections;
+
+[DisallowMultipleComponent]
+public class MediaRecordingService : MonoBehaviour {
+  const int PhoneFreshnessMs = 3000; // mirrors PhoneCameraConfig.StaleMs default
+  const int FinalizeTimeoutSec = 30;
+  const int MaxSampleIterationsPerFrame = 3;
+
+  MediaRecordingConfig _baseConfig = MediaRecordingConfig.Default;
+  MediaRecordingConfig _effective = MediaRecordingConfig.Default;
+  GameCameraStreamService _phoneCam;
+  LocalCameraService _localCam;
+  Func<PhonePresenceWatcher> _audioSource;
+  string _outputBaseDir;
+  string _repoToolsDir;
+  string _appToolsDir;
+  bool _keyControl = true;
+  RecordingMode _toggleMode = RecordingMode.MicAndCamera;
+
+  // Full-session gameplay capture (output side only — the render pipeline
+  // and display quality are untouched; this is a GPU copy + async readback
+  // at the configured OUTPUT size/fps, never a re-render).
+  Camera _boundGameCam;
+  Camera _gameCam;
+  RenderTexture _recordRT;
+  volatile bool _wantGameFrame;
+  bool _gameCaptureReady;
+
+  volatile RecordingState _state = RecordingState.Idle;
+  string _lastError = string.Empty;
+
+  readonly object _telLock = new object();
+  RecordingTelemetry _telemetry = new RecordingTelemetry();
+  readonly RecordingClock _clock = new RecordingClock();
+  readonly RecordingSessionLatch _audioLatch = new RecordingSessionLatch();
+  readonly RecordingSessionLatch _videoLatch = new RecordingSessionLatch();
+  readonly RecordingSessionLatch _gameLatch = new RecordingSessionLatch();
+  BoundedByteQueue _audioQueue;
+  BoundedByteQueue _videoQueue;
+  BoundedByteQueue _gameRawQueue; // RGBA handoff: main thread -> game worker
+
+  WavWriter _audioWriter;
+  AviMjpegWriter _videoWriter;
+  AviMjpegWriter _gameWriter;
+  Thread _audioThread;
+  Thread _videoThread;
+  Thread _gameThread;
+  Thread _transcodeThread;
+  volatile bool _audioPumpDone = true;
+  volatile bool _videoPumpDone = true;
+  volatile bool _gamePumpDone = true;
+  volatile bool _audioWriteFailed;
+  volatile bool _videoWriteFailed;
+  volatile bool _gameWriteFailed;
+
+  string _sessionId = string.Empty;
+  string _audioPath = string.Empty;
+  string _videoPath = string.Empty;
+  string _gamePath = string.Empty;
+  string _mp4Path = string.Empty;
+  string _mp3Path = string.Empty;
+  string _sidecarPath = string.Empty;
+  string _outputDir = string.Empty;
+  DateTime _stopUtc;
+  float _videoSampleTimer;
+  float _gameSampleTimer;
+  bool _interruptedLogged;
+  bool _testForceSources;
+  bool _testDisableTranscode;
+
+  // Transcode stage bookkeeping (Finalizing sub-phases, main-thread owned).
+  bool _intermediatesVerified;
+  bool _transcodeStarted;
+  volatile bool _transcodeDone;
+  TranscodeResult _transcodeResult;
+  DateTime _transcodeStartUtc;
+  int _transcodeTimeoutMs;
+
+  public RecordingState CurrentState => _state;
+  public string LastError {
+    get { try { lock (_telLock) { return _lastError; } } catch (Exception) { return string.Empty; } }
+  }
+  public string SessionId => _sessionId;
+  public string AudioPath => _audioPath;
+  public string VideoPath => _videoPath;
+
+  // Injection boundary (wired by MarketBootstrap; all optional except the
+  // services actually needed for the requested mode — missing pieces fail
+  // StartRecording explicitly, never silently). gameCam: gameplay camera to
+  // copy for session capture (null = Camera.main fallback at Start).
+  // repoToolsDir: <repo>/tools for dev-time ffmpeg detection (null = skip).
+  public void Bind(MediaRecordingConfig config, GameCameraStreamService phoneCam,
+      LocalCameraService localCam, Func<PhonePresenceWatcher> audioSource, string outputBaseDir,
+      Camera gameCam = null, string repoToolsDir = null) {
+    try {
+      string reason;
+      if (config.Validate(out reason)) _baseConfig = config;
+      _phoneCam = phoneCam;
+      _localCam = localCam;
+      _audioSource = audioSource;
+      if (!string.IsNullOrEmpty(outputBaseDir)) _outputBaseDir = outputBaseDir;
+      _boundGameCam = gameCam;
+      if (!string.IsNullOrEmpty(repoToolsDir)) _repoToolsDir = repoToolsDir;
+    } catch (Exception) { }
+  }
+
+  public void SetToggleModeForTests(RecordingMode mode) {
+    _toggleMode = mode;
+  }
+
+  public void SetTestForceSourcesAvailable(bool force) {
+    _testForceSources = force;
+  }
+
+  public void SetTestDisableTranscode(bool disable) {
+    _testDisableTranscode = disable;
+  }
+
+  public void SetTestOutputBaseDir(string dir) {
+    try { if (!string.IsNullOrEmpty(dir)) _outputBaseDir = dir; } catch (Exception) { }
+  }
+
+  // App-local tools dir (dependency auto-install target for portable
+  // FFmpeg). The transcoder finds it without PATH changes.
+  public void SetAppToolsDir(string dir) {
+    try { _appToolsDir = dir; } catch (Exception) { }
+  }
+
+  // --- explicit control (§20) ------------------------------------------------
+  public bool StartRecording(RecordingMode mode) {
+    try {
+      RecordingState s = _state;
+      if (s == RecordingState.Recording || s == RecordingState.Starting
+          || s == RecordingState.Stopping || s == RecordingState.Finalizing) {
+        SetError("already-running");
+        return false;
+      }
+      SetState(RecordingState.Starting);
+      _effective = _baseConfig;
+      _effective.RecordAudio = mode == RecordingMode.MicOnly || mode == RecordingMode.MicAndCamera;
+      _effective.RecordVideo = mode == RecordingMode.CameraOnly || mode == RecordingMode.MicAndCamera;
+      string reason;
+      if (!_effective.Validate(out reason)) return FailStart("bad-config:" + reason);
+
+      string dir = ResolveOutputDir();
+      if (string.IsNullOrEmpty(dir)) return FailStart("output-dir-unavailable");
+      try {
+        if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+      } catch (Exception) { return FailStart("output-dir-unavailable"); }
+      _outputDir = dir;
+
+      _clock.Start();
+      _sessionId = MediaRecordingNaming.NewSessionId(_clock.StartUtc);
+      if (!MediaRecordingNaming.TryJoin(dir, MediaRecordingNaming.AudioFileName(_sessionId), out _audioPath))
+        return FailStart("naming-failed");
+      if (!MediaRecordingNaming.TryJoin(dir, MediaRecordingNaming.VideoFileName(_sessionId), out _videoPath))
+        return FailStart("naming-failed");
+      if (!MediaRecordingNaming.TryJoin(dir, MediaRecordingNaming.SidecarFileName(_sessionId), out _sidecarPath))
+        return FailStart("naming-failed");
+      if (!MediaRecordingNaming.TryJoin(dir, MediaRecordingNaming.GameFileName(_sessionId), out _gamePath))
+        return FailStart("naming-failed");
+      if (!MediaRecordingNaming.TryJoin(dir, MediaRecordingNaming.Mp4FileName(_sessionId), out _mp4Path))
+        return FailStart("naming-failed");
+      if (!MediaRecordingNaming.TryJoin(dir, MediaRecordingNaming.Mp3FileName(_sessionId), out _mp3Path))
+        return FailStart("naming-failed");
+      if (!_effective.RecordAudio) _audioPath = string.Empty;
+      if (!_effective.RecordVideo) {
+        _videoPath = string.Empty;
+        _gamePath = string.Empty;
+        _mp4Path = string.Empty;
+      }
+      if (!_effective.RecordAudio) _mp3Path = string.Empty;
+
+      ResetSessionState(mode);
+
+      // Availability gates: media must be IN THE GAME before it can be
+      // recorded (§3). Refuse explicitly rather than writing empty files.
+      if (_effective.RecordAudio && !IsPhoneAudioInGame())
+        return FailStart("no-phone-audio-in-game");
+      if (_effective.RecordVideo && !IsCameraInGame())
+        return FailStart("no-camera-in-game");
+
+      if (_effective.RecordAudio) {
+        _audioQueue = BoundedByteQueue.ForAudio(_effective.MaxAudioQueueSec);
+        _audioWriter = new WavWriter();
+        if (!_audioWriter.Begin(_audioPath)) return FailStart("encoder-init-failed:audio");
+      }
+      if (_effective.RecordVideo) {
+        _videoQueue = BoundedByteQueue.ForVideo(_effective.MaxVideoFrames);
+        _videoWriter = new AviMjpegWriter();
+        if (!_videoWriter.Begin(_videoPath, _effective.VideoWidth, _effective.VideoHeight, _effective.VideoFps))
+          return FailStart("encoder-init-failed:video");
+        // Gameplay intermediate (same session, own queue/pump/thread):
+        // RGBA handoff cap bounds the main-thread memcpy cost.
+        long rawCap = (long)MediaRecording.MaxGameRawFrames
+          * _effective.GameWidth * _effective.GameHeight * 4;
+        _gameRawQueue = new BoundedByteQueue(MediaRecording.MaxGameRawFrames, rawCap);
+        _gameWriter = new AviMjpegWriter();
+        if (!_gameWriter.Begin(_gamePath, _effective.GameWidth, _effective.GameHeight, _effective.GameFps))
+          return FailStart("encoder-init-failed:game");
+        if (!PrepareGameCapture()) {
+          // Gameplay copy unavailable (no camera/RT): the session continues
+          // with the camera stream alone — transcode bases on cam.avi.
+          _gameCaptureReady = false;
+          try { Debug.Log("[MediaRec] gameplay capture unavailable; camera-only video"); }
+          catch (Exception) { }
+        }
+      }
+
+      if (_effective.RecordAudio) {
+        var w = CurrentWatcher();
+        if (w == null && !_testForceSources) return FailStart("no-phone-audio-in-game");
+        try { if (w != null) w.AudioPayloadAccepted += OnAudioTap; }
+        catch (Exception) { return FailStart("audio-tap-failed"); }
+      }
+
+      _audioPumpDone = !_effective.RecordAudio;
+      _videoPumpDone = !_effective.RecordVideo;
+      _gamePumpDone = !_effective.RecordVideo;
+      _audioWriteFailed = false;
+      _videoWriteFailed = false;
+      _gameWriteFailed = false;
+      _transcodeDone = false;
+      try {
+        if (_effective.RecordAudio) {
+          _audioThread = new Thread(AudioPump) { IsBackground = true, Name = "MediaRecAudio" };
+          _audioThread.Start();
+        }
+        if (_effective.RecordVideo) {
+          _videoThread = new Thread(VideoPump) { IsBackground = true, Name = "MediaRecVideo" };
+          _videoThread.Start();
+          _gameThread = new Thread(GamePump) { IsBackground = true, Name = "MediaRecGame" };
+          _gameThread.Start();
+        }
+      } catch (Exception) { return FailStart("worker-start-failed"); }
+
+      SetState(RecordingState.Recording);
+      try {
+        Debug.Log("[MediaRec] START session=" + _sessionId + " mode=" + mode
+          + " audio=" + (_effective.RecordAudio ? _audioPath : "<off>")
+          + " video=" + (_effective.RecordVideo ? _videoPath + "+" + _gamePath : "<off>")
+          + " key=F2 toggles mic+camera");
+      } catch (Exception) { }
+      return true;
+    } catch (Exception) { return FailStart("start-exception"); }
+  }
+
+  public bool StopRecording() {
+    try {
+      if (_state != RecordingState.Recording) return false;
+      _stopUtc = DateTime.UtcNow;
+      try {
+        var w = CurrentWatcher();
+        if (w != null) {
+          try { w.AudioPayloadAccepted -= OnAudioTap; } catch (Exception) { }
+        }
+      } catch (Exception) { }
+      try { if (_audioQueue != null) _audioQueue.Close(); } catch (Exception) { }
+      try { if (_videoQueue != null) _videoQueue.Close(); } catch (Exception) { }
+      try { if (_gameRawQueue != null) _gameRawQueue.Close(); } catch (Exception) { }
+      lock (_telLock) { _telemetry.StopUtcIso = RecordingClock.ToIso(_stopUtc); }
+      SetState(RecordingState.Stopping);
+      try { Debug.Log("[MediaRec] STOP session=" + _sessionId + " (flushing)"); }
+      catch (Exception) { }
+      return true;
+    } catch (Exception) { return false; }
+  }
+
+  void Update() {
+    try {
+      PollRecordKey();
+      if (_state == RecordingState.Recording) {
+        if (_effective.RecordVideo) {
+          SampleVideo();
+          SampleGame();
+        }
+        WatchAudioPresence();
+      } else if (_state == RecordingState.Stopping) {
+        PumpStopping();
+      }
+    } catch (Exception) { }
+  }
+
+  // --- game-thread sampling ---------------------------------------------------
+  void SampleVideo() {
+    try {
+      _videoSampleTimer += Time.deltaTime;
+      float interval = 1f / Math.Max(1, _effective.VideoFps);
+      int iters = 0;
+      while (_videoSampleTimer >= interval && iters < MaxSampleIterationsPerFrame) {
+        _videoSampleTimer -= interval;
+        iters++;
+        SampleVideoOnce();
+      }
+      if (_videoSampleTimer > interval * 2) _videoSampleTimer = 0; // don't spiral after hitches
+    } catch (Exception) { }
+  }
+
+  void SampleVideoOnce() {
+    try {
+      if (_videoQueue == null || _videoQueue.IsClosed) return;
+      uint serial = 0, seq = 0;
+      byte[] jpeg = null;
+      // Precedence mirrors the HUD: live local wins, phone is the fallback.
+      bool fromLocal = false;
+      try {
+        if (_localCam != null && _localCam.HasLiveTexture) {
+          jpeg = EncodeLocalFrame(_localCam.CurrentTexture);
+          fromLocal = jpeg != null;
+          if (fromLocal) serial = 0; // local path: single implicit session
+        }
+      } catch (Exception) { fromLocal = false; }
+      if (!fromLocal) {
+        try {
+          if (_phoneCam != null) {
+            int age;
+            if (_phoneCam.TryPeekAcceptedJpegForRecording(out serial, out seq, out jpeg, out age)) {
+              if (!(age >= 0 && age <= PhoneFreshnessMs)) jpeg = null;
+            }
+          }
+        } catch (Exception) { jpeg = null; }
+        if (jpeg == null) {
+          lock (_telLock) { _telemetry.VideoGapSamples++; }
+          return;
+        }
+      }
+      if (!AcceptVideoSerial(serial)) return;
+      if (_videoQueue.TryEnqueue(jpeg)) {
+        lock (_telLock) {
+          _telemetry.VideoFrames++;
+          if (_telemetry.FirstVideoOffsetMs < 0)
+            _telemetry.FirstVideoOffsetMs = _clock.OffsetMs();
+        }
+      }
+    } catch (Exception) { }
+  }
+
+  bool AcceptVideoSerial(uint serial) {
+    try {
+      if (_videoLatch.Accept(serial)) return true;
+      _videoLatch.Reset();
+      _videoLatch.Accept(serial);
+      MarkInterrupted("video-serial-change");
+      return true;
+    } catch (Exception) { return false; }
+  }
+
+  // --- full-session gameplay capture (output side only) -----------------------
+  // The game renders ONCE (untouched pipeline + max display quality). Per
+  // sample tick we only ARM a GPU copy: endCameraRendering blits the already
+  // rendered frame into the record RT (GPU downscale, free), then an async
+  // readback hands the bytes to the worker. Main-thread cost per sample is
+  // one ~W*H*4 memcpy; JPEG encoding runs on the game worker thread via the
+  // pure-C# JpegEncoder (no Unity API off the main thread, ever).
+
+  void SampleGame() {
+    try {
+      if (!_gameCaptureReady) return;
+      _gameSampleTimer += Time.deltaTime;
+      float interval = 1f / Math.Max(1, _effective.GameFps);
+      if (_gameSampleTimer >= interval) {
+        _gameSampleTimer = interval > 0 ? _gameSampleTimer - interval : 0;
+        _wantGameFrame = true;
+      }
+      if (_gameSampleTimer > interval * 2) _gameSampleTimer = 0;
+    } catch (Exception) { }
+  }
+
+  bool PrepareGameCapture() {
+    _gameCaptureReady = false;
+    try {
+      ReleaseGameCapture();
+      Camera cam = _boundGameCam;
+      if (cam == null) {
+        try { cam = Camera.main; } catch (Exception) { }
+      }
+      if (cam == null) return false;
+      _gameCam = cam;
+      _recordRT = new RenderTexture(
+        _effective.GameWidth, _effective.GameHeight, 0, RenderTextureFormat.ARGB32);
+      try { _recordRT.Create(); } catch (Exception) { ReleaseGameCapture(); return false; }
+      if (!_recordRT.IsCreated()) { ReleaseGameCapture(); return false; }
+      _gameCaptureReady = true;
+      return true;
+    } catch (Exception) {
+      try { ReleaseGameCapture(); } catch (Exception) { }
+      return false;
+    }
+  }
+
+  void ReleaseGameCapture() {
+    try {
+      _gameCaptureReady = false;
+      _wantGameFrame = false;
+      _gameCam = null;
+      if (_recordRT != null) {
+        try {
+          if (_recordRT.IsCreated()) _recordRT.Release();
+        } catch (Exception) { }
+        try {
+          if (Application.isPlaying) Destroy(_recordRT);
+          else DestroyImmediate(_recordRT);
+        } catch (Exception) { }
+      }
+    } catch (Exception) { }
+    finally { _recordRT = null; }
+  }
+
+  void OnEnable() {
+    try { RenderPipelineManager.endCameraRendering += OnEndCameraRendering; }
+    catch (Exception) { }
+  }
+
+  void OnDisable() {
+    try { RenderPipelineManager.endCameraRendering -= OnEndCameraRendering; }
+    catch (Exception) { }
+  }
+
+  void OnEndCameraRendering(ScriptableRenderContext ctx, Camera cam) {
+    try {
+      if (_state != RecordingState.Recording || !_effective.RecordVideo) return;
+      if (!_wantGameFrame || !_gameCaptureReady) return;
+      if (_gameCam == null || cam != _gameCam) return;
+      if (_recordRT == null || !_recordRT.IsCreated()) return;
+      _wantGameFrame = false;
+      CommandBuffer cmd = null;
+      try {
+        cmd = new CommandBuffer();
+        cmd.name = "MediaRecCap";
+        cmd.Blit(BuiltinRenderTextureType.CurrentActive, _recordRT);
+        ctx.ExecuteCommandBuffer(cmd);
+      } finally {
+        try { if (cmd != null) cmd.Dispose(); } catch (Exception) { }
+      }
+      try {
+        AsyncGPUReadback.Request(_recordRT, 0, TextureFormat.RGBA32, OnGameReadback);
+      } catch (Exception) {
+        lock (_telLock) { _telemetry.GameGapSamples++; }
+      }
+    } catch (Exception) { }
+  }
+
+  void OnGameReadback(AsyncGPUReadbackRequest req) {
+    try {
+      if (_state != RecordingState.Recording || !_effective.RecordVideo) return;
+      if (req.hasError) {
+        lock (_telLock) { _telemetry.GameGapSamples++; }
+        return;
+      }
+      if (_gameRawQueue == null || _gameRawQueue.IsClosed || !_gameCaptureReady) return;
+      int expect = _effective.GameWidth * _effective.GameHeight * 4;
+      NativeArray<byte> data;
+      try { data = req.GetData<byte>(); } catch (Exception) { return; }
+      if (data.Length != expect) {
+        lock (_telLock) { _telemetry.GameGapSamples++; }
+        return;
+      }
+      var copy = new byte[data.Length];
+      try { data.CopyTo(copy); } catch (Exception) { return; }
+      // Gameplay is one implicit session (screen has no serial); the latch
+      // stays uniform so any foreign concept never applies here.
+      _gameLatch.Accept(1);
+      if (_gameRawQueue.TryEnqueue(copy)) {
+        lock (_telLock) {
+          if (_telemetry.FirstGameOffsetMs < 0)
+            _telemetry.FirstGameOffsetMs = _clock.OffsetMs();
+        }
+      }
+    } catch (Exception) { }
+  }
+
+  // Game worker (background): RGBA -> C# JPEG -> game.avi. Owns _gameWriter.
+  void GamePump() {
+    try {
+      byte[] raw;
+      int w = _effective.GameWidth, h = _effective.GameHeight, q = _effective.GameJpegQuality;
+      while (!_gameRawQueue.IsClosed || _gameRawQueue.Count > 0) {
+        try {
+          if (_gameRawQueue.TryDequeue(out raw)) {
+            byte[] jpeg;
+            if (raw == null || raw.Length != w * h * 4
+                || !JpegEncoder.TryEncode(raw, w, h, q, out jpeg)
+                || !_gameWriter.AppendJpeg(jpeg)) {
+              _gameWriteFailed = true;
+              break;
+            }
+            lock (_telLock) { _telemetry.GameFrames++; }
+          } else {
+            Thread.Sleep(5);
+          }
+        } catch (Exception) { _gameWriteFailed = true; break; }
+      }
+      try {
+        long frames;
+        if (!_gameWriter.Finalize(out frames)) _gameWriteFailed = true;
+      } catch (Exception) { _gameWriteFailed = true; }
+    } catch (Exception) { _gameWriteFailed = true; }
+    finally {
+      try { _gameWriter.Close(); } catch (Exception) { }
+      _gamePumpDone = true;
+    }
+  }
+
+  byte[] EncodeLocalFrame(Texture tex) {
+    WebCamTexture wct = null;
+    try { wct = tex as WebCamTexture; } catch (Exception) { return null; }
+    if (wct == null) return null;
+    Texture2D tmp = null;
+    try {
+      int w = wct.width, h = wct.height;
+      if (w < 16 || h < 16 || w > 1280 || h > 960) return null;
+      tmp = new Texture2D(w, h, TextureFormat.RGB24, false);
+      tmp.SetPixels(wct.GetPixels());
+      tmp.Apply();
+      return ImageConversion.EncodeToJPG(tmp, _effective.VideoJpegQuality);
+    } catch (Exception) { return null; }
+    finally {
+      try {
+        if (tmp != null) {
+          if (Application.isPlaying) Destroy(tmp);
+          else DestroyImmediate(tmp);
+        }
+      } catch (Exception) { }
+    }
+  }
+
+  // Worker-thread audio tap (game-observed bytes only, §3). Copies into the
+  // bounded queue synchronously and returns — never blocks the watcher.
+  void OnAudioTap(uint serial, uint seq, byte[] pcm16) {
+    try {
+      if (_state != RecordingState.Recording) return;
+      if (!_effective.RecordAudio || _audioQueue == null || _audioQueue.IsClosed) return;
+      if (pcm16 == null || pcm16.Length < 2) return;
+      if (pcm16.Length > 1024 * 1024) return; // sanity: ~32 s in one chunk is not real
+      lock (_telLock) {
+        if (!_audioLatch.Accept(serial)) {
+          _audioLatch.Reset();
+          _audioLatch.Accept(serial);
+          _telemetry.Interrupted = true;
+        }
+      }
+      if (_audioQueue.TryEnqueue(pcm16)) {
+        lock (_telLock) {
+          _telemetry.AudioChunks++;
+          _telemetry.AudioSamples += pcm16.Length / 2;
+          if (_telemetry.FirstAudioOffsetMs < 0)
+            _telemetry.FirstAudioOffsetMs = _clock.OffsetMs();
+        }
+      }
+    } catch (Exception) { }
+  }
+
+  void WatchAudioPresence() {
+    try {
+      if (!_effective.RecordAudio) return;
+      if (CurrentWatcher() == null) MarkInterrupted("audio-watcher-lost");
+    } catch (Exception) { }
+  }
+
+  void MarkInterrupted(string why) {
+    try {
+      lock (_telLock) {
+        if (!_telemetry.Interrupted) {
+          _telemetry.Interrupted = true;
+          if (!_interruptedLogged) {
+            _interruptedLogged = true;
+            try { Debug.Log("[MediaRec] session=" + _sessionId + " interrupted (" + why + ") — partial flags apply"); }
+            catch (Exception) { }
+          }
+        }
+      }
+    } catch (Exception) { }
+  }
+
+  // --- stopping pump (main thread; workers finalize their own writers) -------
+  void PumpStopping() {
+    try {
+      bool audioDone = !_effective.RecordAudio || _audioPumpDone;
+      bool videoDone = !_effective.RecordVideo || _videoPumpDone;
+      bool gameDone = !_effective.RecordVideo || _gamePumpDone;
+      if (!(audioDone && videoDone && gameDone)) {
+        // Bounded wait: never hang the game on a stuck pump (§31).
+        double waitSec = 0;
+        try { waitSec = (DateTime.UtcNow - _stopUtc).TotalSeconds; } catch (Exception) { }
+        if (waitSec > FinalizeTimeoutSec) {
+          FailFinalize("finalize-timeout");
+        }
+        return;
+      }
+      if (!_intermediatesVerified) {
+        _intermediatesVerified = true;
+        SetState(RecordingState.Finalizing);
+        VerifyIntermediates();
+        MaybeStartTranscode();
+        if (_transcodeStarted) return; // transcode thread owns the wait now
+      }
+      if (_transcodeStarted && !_transcodeDone) {
+        double tsec = 0;
+        try { tsec = (DateTime.UtcNow - _transcodeStartUtc).TotalSeconds; } catch (Exception) { }
+        if (tsec > (_transcodeTimeoutMs / 1000 + 60)) FailFinalize("transcode-stall");
+        return;
+      }
+      FinishSession();
+    } catch (Exception) { FailFinalize("finalize-exception"); }
+  }
+
+  // Intermediates: queue counters + latch foreigns + header verifies.
+  // No sidecar yet — the transcode stage may still add deliverables.
+  void VerifyIntermediates() {
+    try {
+      long enq, drop, deq;
+      int cnt;
+      if (_effective.RecordAudio && _audioQueue != null) {
+        try {
+          _audioQueue.ReadCounters(out enq, out drop, out deq, out cnt);
+          lock (_telLock) { _telemetry.AudioDroppedQueue = drop; }
+        } catch (Exception) { }
+      }
+      if (_effective.RecordVideo && _videoQueue != null) {
+        try {
+          _videoQueue.ReadCounters(out enq, out drop, out deq, out cnt);
+          lock (_telLock) { _telemetry.VideoDroppedQueue = drop; }
+        } catch (Exception) { }
+      }
+      if (_effective.RecordVideo && _gameRawQueue != null) {
+        try {
+          _gameRawQueue.ReadCounters(out enq, out drop, out deq, out cnt);
+          lock (_telLock) { _telemetry.GameDroppedRaw = drop; }
+        } catch (Exception) { }
+      }
+      lock (_telLock) {
+        _telemetry.AudioDroppedForeign = _audioLatch.DroppedForeign;
+        _telemetry.VideoDroppedForeign = _videoLatch.DroppedForeign;
+        _telemetry.GameDroppedForeign = _gameLatch.DroppedForeign;
+      }
+
+      bool audioOk = true, videoOk = true, gameOk = true;
+      if (_effective.RecordAudio) audioOk = VerifyAudioFile();
+      if (_effective.RecordVideo) {
+        videoOk = VerifyVideoFile();
+        gameOk = VerifyGameFile();
+      }
+      lock (_telLock) {
+        _telemetry.AudioComplete = _effective.RecordAudio && audioOk;
+        _telemetry.VideoComplete = _effective.RecordVideo && videoOk;
+        _telemetry.GameComplete = _effective.RecordVideo && gameOk;
+      }
+    } catch (Exception) { }
+  }
+
+  // Transcode stage: intermediates -> MP4 (+MP3) on a worker thread.
+  // Missing ffmpeg is NOT an error (verified intermediates ARE the honest
+  // fallback, §10); a FAILED transcode run IS (clear error, §32).
+  void MaybeStartTranscode() {
+    _transcodeStarted = false;
+    try {
+      if (_testDisableTranscode) return;
+      TranscodeSpec spec = BuildTranscodeSpec();
+      if (string.IsNullOrEmpty(spec.OutMp4) && string.IsNullOrEmpty(spec.OutMp3)) return;
+      string ffmpeg = FfmpegTranscodeBackend.FindExecutable(
+        _effective.FfmpegPathOverride, ExeDir(), _repoToolsDir, _appToolsDir);
+      if (string.IsNullOrEmpty(ffmpeg)) {
+        lock (_telLock) {
+          _telemetry.Transcoded = false;
+          _telemetry.TranscodeError = "ffmpeg-not-found (intermediates kept)";
+        }
+        try { Debug.Log("[MediaRec] ffmpeg not found — session keeps verified wav/avi intermediates"); }
+        catch (Exception) { }
+        return;
+      }
+      double dur = SessionDurationSec();
+      _transcodeTimeoutMs = Math.Max(120000, (int)(Math.Max(1, dur) * 4000));
+      _transcodeResult = new TranscodeResult();
+      _transcodeStartUtc = DateTime.UtcNow;
+      _transcodeStarted = true;
+      _transcodeDone = false;
+      var t = new Thread(() => TranscodePump(ffmpeg, spec)) {
+        IsBackground = true, Name = "MediaRecTranscode"
+      };
+      _transcodeThread = t;
+      try {
+        Debug.Log("[MediaRec] transcode start (" + ffmpeg + ") session=" + _sessionId);
+      } catch (Exception) { }
+      t.Start();
+    } catch (Exception) { _transcodeStarted = false; }
+  }
+
+  void TranscodePump(string ffmpeg, TranscodeSpec spec) {
+    try {
+      _transcodeResult = FfmpegTranscodeBackend.Run(ffmpeg, spec, _transcodeTimeoutMs);
+    } catch (Exception e) {
+      _transcodeResult = new TranscodeResult { Error = "pump:" + e.GetType().Name };
+    } finally {
+      _transcodeDone = true;
+    }
+  }
+
+  TranscodeSpec BuildTranscodeSpec() {
+    var s = new TranscodeSpec();
+    try {
+      bool haveGame, haveCam, haveAudio;
+      lock (_telLock) {
+        haveGame = _telemetry.GameComplete;
+        haveCam = _telemetry.VideoComplete;
+        haveAudio = _telemetry.AudioComplete;
+      }
+      if (haveGame) s.GameAvi = _gamePath;
+      if (haveCam) s.CamAvi = _videoPath;
+      if (haveAudio) s.MicWav = _audioPath;
+      if (haveGame || haveCam) s.OutMp4 = _mp4Path;
+      if (haveAudio) s.OutMp3 = _mp3Path;
+      double dur = SessionDurationSec();
+      lock (_telLock) {
+        long gf = _telemetry.GameFrames, vf = _telemetry.VideoFrames;
+        s.GameFpsActual = dur > 0.5 ? gf / dur : _effective.GameFps;
+        s.CamFpsActual = dur > 0.5 ? vf / dur : _effective.VideoFps;
+      }
+      s.GameWidth = _effective.GameWidth;
+      s.GameHeight = _effective.GameHeight;
+      s.PipWidth = _effective.PipWidth;
+      s.PipMargin = _effective.PipMargin;
+      s.Crf = _effective.VideoCrf;
+      s.Preset = _effective.VideoPreset;
+      s.Mp3Quality = _effective.AudioMp3Quality;
+    } catch (Exception) { }
+    return s;
+  }
+
+  double SessionDurationSec() {
+    try {
+      DateTime stop = _stopUtc == DateTime.MinValue ? DateTime.UtcNow : _stopUtc;
+      return Math.Max(0, (stop - _clock.StartUtc).TotalSeconds);
+    } catch (Exception) { return 0; }
+  }
+
+  string ExeDir() {
+    try {
+      using (var p = System.Diagnostics.Process.GetCurrentProcess()) {
+        string exe = p.MainModule.FileName;
+        return Path.GetDirectoryName(exe);
+      }
+    } catch (Exception) { return null; }
+  }
+
+  void FinishSession() {
+    try {
+      bool ioOk = !_audioWriteFailed && !_videoWriteFailed && !_gameWriteFailed;
+      bool transcodeFailed = false;
+      if (_transcodeStarted && _transcodeDone) {
+        var r = _transcodeResult;
+        lock (_telLock) {
+          _telemetry.FfmpegVersion = r.FfmpegVersion ?? string.Empty;
+          _telemetry.TranscodeError = r.Ok ? string.Empty : (r.Error ?? "transcode-failed");
+          _telemetry.Transcoded = r.Ok;
+        }
+        if (r.Ok) {
+          CheckDeliverable(_mp4Path, true);
+          CheckDeliverable(_mp3Path, false);
+          MaybeDeleteIntermediates();
+        } else {
+          transcodeFailed = true;
+        }
+      }
+      lock (_telLock) {
+        if ((!_telemetry.AudioComplete && _effective.RecordAudio)
+            || (!_telemetry.VideoComplete && _effective.RecordVideo)
+            || (!_telemetry.GameComplete && _effective.RecordVideo))
+          _telemetry.Interrupted = true;
+        _telemetry.State = RecordingState.Completed;
+      }
+      WriteSidecar();
+
+      if (!ioOk) {
+        FailFinalize(_audioWriteFailed && _videoWriteFailed ? "write-failed:av"
+          : _audioWriteFailed ? "write-failed:audio"
+          : _videoWriteFailed ? "write-failed:video" : "write-failed:game");
+        return;
+      }
+      if (transcodeFailed) {
+        FailFinalize("transcode-failed");
+        return;
+      }
+      SetState(RecordingState.Completed);
+      try {
+        Debug.Log("[MediaRec] COMPLETE session=" + _sessionId
+          + " audio=" + (_effective.RecordAudio ? _telemetry.AudioSamples + "samples/" + _telemetry.AudioBytes + "B" : "<off>")
+          + " cam=" + (_effective.RecordVideo ? _telemetry.VideoFrames + "frames" : "<off>")
+          + " game=" + (_effective.RecordVideo ? _telemetry.GameFrames + "frames" : "<off>")
+          + " mp4=" + (_telemetry.Transcoded ? _telemetry.Mp4Bytes + "B" : "<" + _telemetry.TranscodeError + ">")
+          + " mp3=" + (_telemetry.Mp3Complete ? _telemetry.Mp3Bytes + "B" : "<off>")
+          + " interrupted=" + _telemetry.Interrupted);
+      } catch (Exception) { }
+    } catch (Exception) { FailFinalize("verify-exception"); }
+  }
+
+  void CheckDeliverable(string path, bool isMp4) {
+    try {
+      long size = 0;
+      bool ok = false;
+      if (!string.IsNullOrEmpty(path)) {
+        var fi = new FileInfo(path);
+        if (fi.Exists && fi.Length > 0) {
+          size = fi.Length;
+          ok = true;
+        }
+      }
+      lock (_telLock) {
+        if (isMp4) { _telemetry.Mp4Complete = ok; _telemetry.Mp4Bytes = size; }
+        else { _telemetry.Mp3Complete = ok; _telemetry.Mp3Bytes = size; }
+      }
+    } catch (Exception) { }
+  }
+
+  void MaybeDeleteIntermediates() {
+    try {
+      if (!_telemetry.Transcoded || _effective.KeepIntermediates) return;
+      foreach (string p in new[] { _audioPath, _videoPath, _gamePath }) {
+        try { if (!string.IsNullOrEmpty(p) && File.Exists(p)) File.Delete(p); }
+        catch (Exception) { }
+      }
+      try { Debug.Log("[MediaRec] intermediates deleted after transcode session=" + _sessionId); }
+      catch (Exception) { }
+    } catch (Exception) { }
+  }
+
+  bool VerifyAudioFile() {
+    try {
+      if (string.IsNullOrEmpty(_audioPath)) return false;
+      var fi = new FileInfo(_audioPath);
+      lock (_telLock) { _telemetry.AudioBytes = fi.Exists ? fi.Length : 0; }
+      if (!fi.Exists || fi.Length <= 0) return false;
+      WavWriter.WavInfo info;
+      if (!WavWriter.TryReadInfo(_audioPath, out info) || !info.Valid) return false;
+      if (info.SampleRate != MediaRecording.AudioSampleRate || info.Channels != 1) return false;
+      return info.SampleCount > 0;
+    } catch (Exception) { return false; }
+  }
+
+  bool VerifyVideoFile() {
+    try {
+      if (string.IsNullOrEmpty(_videoPath)) return false;
+      var fi = new FileInfo(_videoPath);
+      lock (_telLock) { _telemetry.VideoBytes = fi.Exists ? fi.Length : 0; }
+      if (!fi.Exists || fi.Length <= 0) return false;
+      AviMjpegWriter.AviInfo info;
+      if (!AviMjpegWriter.TryReadInfo(_videoPath, out info) || !info.Valid) return false;
+      if (info.Width != _effective.VideoWidth || info.Height != _effective.VideoHeight) return false;
+      if (info.FrameCount <= 0) return false;
+      // Real decode spot-checks: first, middle, last stills must resolve to
+      // JPEG SOI payloads (not just index rows).
+      int n = (int)Math.Min(info.FrameCount, int.MaxValue);
+      int[] picks = { 0, n / 2, n - 1 };
+      foreach (int p in picks) {
+        byte[] jpeg;
+        string why;
+        if (!AviMjpegWriter.TryExtractFrame(_videoPath, p, out jpeg, out why)) return false;
+        if (jpeg == null || jpeg.Length == 0) return false;
+      }
+      return true;
+    } catch (Exception) { return false; }
+  }
+
+  bool VerifyGameFile() {
+    try {
+      if (string.IsNullOrEmpty(_gamePath)) return false;
+      var fi = new FileInfo(_gamePath);
+      lock (_telLock) { _telemetry.GameBytes = fi.Exists ? fi.Length : 0; }
+      if (!fi.Exists || fi.Length <= 0) return false;
+      AviMjpegWriter.AviInfo info;
+      if (!AviMjpegWriter.TryReadInfo(_gamePath, out info) || !info.Valid) return false;
+      if (info.Width != _effective.GameWidth || info.Height != _effective.GameHeight) return false;
+      if (info.FrameCount <= 0) return false;
+      int n = (int)Math.Min(info.FrameCount, int.MaxValue);
+      foreach (int p in new[] { 0, n / 2, n - 1 }) {
+        byte[] jpeg;
+        string why;
+        if (!AviMjpegWriter.TryExtractFrame(_gamePath, p, out jpeg, out why)) return false;
+        if (jpeg == null || jpeg.Length == 0) return false;
+      }
+      return true;
+    } catch (Exception) { return false; }
+  }
+
+  void WriteSidecar() {
+    try {
+      if (string.IsNullOrEmpty(_sidecarPath)) return;
+      string json;
+      lock (_telLock) { json = _telemetry.ToJson(); }
+      File.WriteAllText(_sidecarPath, json);
+    } catch (Exception) {
+      try { Debug.LogWarning("[MediaRec] sidecar write failed for session=" + _sessionId); }
+      catch (Exception) { }
+    }
+  }
+
+  // --- worker pumps (background threads; file I/O only) ----------------------
+  void AudioPump() {
+    try {
+      byte[] chunk;
+      while (!_audioQueue.IsClosed || _audioQueue.Count > 0) {
+        try {
+          if (_audioQueue.TryDequeue(out chunk)) {
+            int n;
+            if (!_audioWriter.AppendPcm16(chunk)) { _audioWriteFailed = true; break; }
+          } else {
+            Thread.Sleep(5);
+          }
+        } catch (Exception) { _audioWriteFailed = true; break; }
+      }
+      try {
+        long dataBytes;
+        if (!_audioWriter.Finalize(out dataBytes)) _audioWriteFailed = true;
+      } catch (Exception) { _audioWriteFailed = true; }
+    } catch (Exception) { _audioWriteFailed = true; }
+    finally {
+      try { _audioWriter.Close(); } catch (Exception) { }
+      _audioPumpDone = true;
+    }
+  }
+
+  void VideoPump() {
+    try {
+      byte[] frame;
+      while (!_videoQueue.IsClosed || _videoQueue.Count > 0) {
+        try {
+          if (_videoQueue.TryDequeue(out frame)) {
+            if (!_videoWriter.AppendJpeg(frame)) { _videoWriteFailed = true; break; }
+          } else {
+            Thread.Sleep(5);
+          }
+        } catch (Exception) { _videoWriteFailed = true; break; }
+      }
+      try {
+        long frames;
+        if (!_videoWriter.Finalize(out frames)) _videoWriteFailed = true;
+      } catch (Exception) { _videoWriteFailed = true; }
+    } catch (Exception) { _videoWriteFailed = true; }
+    finally {
+      try { _videoWriter.Close(); } catch (Exception) { }
+      _videoPumpDone = true;
+    }
+  }
+
+  // --- availability gates (§3: game-first, explicit refusal) ------------------
+  bool IsPhoneAudioInGame() {
+    try {
+      if (_testForceSources) return true;
+      var w = CurrentWatcher();
+      if (w == null) return false;
+      long frames, bytes;
+      float energy;
+      int lastBytes, ageMs;
+      w.ReadAudioStats(out frames, out bytes, out energy, out lastBytes, out ageMs);
+      return lastBytes > 0 && ageMs >= 0 && ageMs <= 3000;
+    } catch (Exception) { return false; }
+  }
+
+  bool IsCameraInGame() {
+    try {
+      if (_testForceSources) return true;
+      try {
+        if (_localCam != null && _localCam.HasLiveTexture) return true;
+      } catch (Exception) { }
+      try {
+        if (_phoneCam != null) {
+          uint serial, seq;
+          byte[] jpeg;
+          int age;
+          if (_phoneCam.TryPeekAcceptedJpegForRecording(out serial, out seq, out jpeg, out age))
+            return jpeg != null && age >= 0 && age <= PhoneFreshnessMs;
+        }
+      } catch (Exception) { }
+      return false;
+    } catch (Exception) { return false; }
+  }
+
+  PhonePresenceWatcher CurrentWatcher() {
+    try {
+      if (_audioSource == null) return null;
+      return _audioSource();
+    } catch (Exception) { return null; }
+  }
+
+  string ResolveOutputDir() {
+    try {
+      if (!string.IsNullOrEmpty(_effective.OutputDirOverride)) return _effective.OutputDirOverride;
+      if (!string.IsNullOrEmpty(_outputBaseDir)) return _outputBaseDir;
+      string base_;
+      try { base_ = Application.persistentDataPath; } catch (Exception) { return null; }
+      if (string.IsNullOrEmpty(base_)) return null;
+      return Path.Combine(base_, "MediaRecordings");
+    } catch (Exception) { return null; }
+  }
+
+  // --- state/error plumbing ----------------------------------------------------
+  void ResetSessionState(RecordingMode mode) {
+    try {
+      lock (_telLock) {
+        _telemetry = new RecordingTelemetry {
+          SessionId = _sessionId,
+          Mode = mode,
+          State = RecordingState.Starting,
+          StartUtcIso = RecordingClock.ToIso(_clock.StartUtc),
+          AudioPath = _audioPath,
+          VideoPath = _videoPath,
+          GamePath = _gamePath,
+          Mp4Path = _mp4Path,
+          Mp3Path = _mp3Path,
+          VideoWidth = _effective.VideoWidth,
+          VideoHeight = _effective.VideoHeight,
+          VideoFps = _effective.VideoFps,
+          GameWidth = _effective.GameWidth,
+          GameHeight = _effective.GameHeight,
+          GameFps = _effective.GameFps,
+        };
+        _lastError = string.Empty;
+      }
+      _audioLatch.Reset();
+      _videoLatch.Reset();
+      _gameLatch.Reset();
+      _audioQueue = null;
+      _videoQueue = null;
+      _gameRawQueue = null;
+      _videoSampleTimer = 0;
+      _gameSampleTimer = 0;
+      _interruptedLogged = false;
+      _intermediatesVerified = false;
+      _transcodeStarted = false;
+      _transcodeDone = false;
+      _transcodeResult = new TranscodeResult();
+      _stopUtc = DateTime.MinValue;
+    } catch (Exception) { }
+  }
+
+  bool FailStart(string reason) {
+    try {
+      try {
+        var w = CurrentWatcher();
+        if (w != null) {
+          try { w.AudioPayloadAccepted -= OnAudioTap; } catch (Exception) { }
+        }
+      } catch (Exception) { }
+      try { if (_audioWriter != null) _audioWriter.Close(); } catch (Exception) { }
+      try { if (_videoWriter != null) _videoWriter.Close(); } catch (Exception) { }
+      try { if (_gameWriter != null) _gameWriter.Close(); } catch (Exception) { }
+      try { ReleaseGameCapture(); } catch (Exception) { }
+      _audioWriter = null;
+      _videoWriter = null;
+      _gameWriter = null;
+      lock (_telLock) {
+        _lastError = reason ?? "start-failed";
+        _telemetry.Error = _lastError;
+        _telemetry.State = RecordingState.Error;
+      }
+      SetState(RecordingState.Error);
+      try { Debug.LogWarning("[MediaRec] START FAILED (" + reason + ")"); }
+      catch (Exception) { }
+    } catch (Exception) { }
+    return false;
+  }
+
+  void FailFinalize(string reason) {
+    try {
+      lock (_telLock) {
+        _lastError = reason ?? "finalize-failed";
+        _telemetry.Error = _lastError;
+        _telemetry.State = RecordingState.Error;
+      }
+      WriteSidecar();
+      SetState(RecordingState.Error);
+      try { Debug.LogWarning("[MediaRec] session=" + _sessionId + " ERROR (" + reason + ")"); }
+      catch (Exception) { }
+    } catch (Exception) { }
+  }
+
+  void SetState(RecordingState s) {
+    try {
+      _state = s;
+      lock (_telLock) { _telemetry.State = s; }
+    } catch (Exception) { }
+  }
+
+  void SetError(string reason) {
+    try { lock (_telLock) { _lastError = reason ?? string.Empty; } } catch (Exception) { }
+  }
+
+  // --- dev/E2E key control (§20: simple explicit start/stop) ------------------
+  void PollRecordKey() {
+    try {
+      if (!_keyControl) return;
+      bool pressed = false;
+      try {
+        var kb = UnityEngine.InputSystem.Keyboard.current;
+        pressed = kb != null && kb.f2Key.wasPressedThisFrame;
+      } catch (Exception) { pressed = false; }
+      if (!pressed) return;
+      if (_state == RecordingState.Recording) {
+        StopRecording();
+      } else if (_state == RecordingState.Idle || _state == RecordingState.Completed
+          || _state == RecordingState.Error) {
+        StartRecording(_toggleMode);
+      }
+    } catch (Exception) { }
+  }
+
+  public string StatusLine() {
+    try {
+      long aq = 0, ad = 0, vq = 0, vd = 0, gq = 0, gd = 0;
+      lock (_telLock) {
+        aq = _telemetry.AudioChunks; ad = _telemetry.AudioDroppedQueue;
+        vq = _telemetry.VideoFrames; vd = _telemetry.VideoDroppedQueue;
+        gq = _telemetry.GameFrames; gd = _telemetry.GameDroppedRaw;
+      }
+      int aqn = _audioQueue != null ? _audioQueue.Count : 0;
+      int vqn = _videoQueue != null ? _videoQueue.Count : 0;
+      int gqn = _gameRawQueue != null ? _gameRawQueue.Count : 0;
+      return string.Format("rec {0} session={1} achunks={2}(q{3}/d{4}) vframes={5}(q{6}/d{7}) gframes={8}(q{9}/d{10}) tc={11} int={12} err={13}",
+        _state, _sessionId, aq, aqn, ad, vq, vqn, vd, gq, gqn, gd,
+        _telemetry.Transcoded, _telemetry.Interrupted, _lastError);
+    } catch (Exception) { return "rec " + _state; }
+  }
+
+  public RecordingTelemetry ReadTelemetrySnapshot() {
+    try {
+      lock (_telLock) {
+        return new RecordingTelemetry {
+          SessionId = _telemetry.SessionId,
+          Mode = _telemetry.Mode,
+          State = _telemetry.State,
+          StartUtcIso = _telemetry.StartUtcIso,
+          StopUtcIso = _telemetry.StopUtcIso,
+          FirstAudioOffsetMs = _telemetry.FirstAudioOffsetMs,
+          FirstVideoOffsetMs = _telemetry.FirstVideoOffsetMs,
+          FirstGameOffsetMs = _telemetry.FirstGameOffsetMs,
+          AudioChunks = _telemetry.AudioChunks,
+          AudioSamples = _telemetry.AudioSamples,
+          AudioDroppedQueue = _telemetry.AudioDroppedQueue,
+          AudioDroppedForeign = _telemetry.AudioDroppedForeign,
+          VideoFrames = _telemetry.VideoFrames,
+          VideoDroppedQueue = _telemetry.VideoDroppedQueue,
+          VideoDroppedForeign = _telemetry.VideoDroppedForeign,
+          VideoGapSamples = _telemetry.VideoGapSamples,
+          GameFrames = _telemetry.GameFrames,
+          GameDroppedRaw = _telemetry.GameDroppedRaw,
+          GameDroppedQueue = _telemetry.GameDroppedQueue,
+          GameDroppedForeign = _telemetry.GameDroppedForeign,
+          GameGapSamples = _telemetry.GameGapSamples,
+          Transcoded = _telemetry.Transcoded,
+          Mp4Path = _telemetry.Mp4Path,
+          Mp3Path = _telemetry.Mp3Path,
+          Mp4Bytes = _telemetry.Mp4Bytes,
+          Mp3Bytes = _telemetry.Mp3Bytes,
+          Mp4Complete = _telemetry.Mp4Complete,
+          Mp3Complete = _telemetry.Mp3Complete,
+          FfmpegVersion = _telemetry.FfmpegVersion,
+          TranscodeError = _telemetry.TranscodeError,
+          GamePath = _telemetry.GamePath,
+          GameBytes = _telemetry.GameBytes,
+          GameComplete = _telemetry.GameComplete,
+          GameWidth = _telemetry.GameWidth,
+          GameHeight = _telemetry.GameHeight,
+          GameFps = _telemetry.GameFps,
+          AudioPath = _telemetry.AudioPath,
+          VideoPath = _telemetry.VideoPath,
+          AudioBytes = _telemetry.AudioBytes,
+          VideoBytes = _telemetry.VideoBytes,
+          AudioComplete = _telemetry.AudioComplete,
+          VideoComplete = _telemetry.VideoComplete,
+          Interrupted = _telemetry.Interrupted,
+          Error = _telemetry.Error,
+          AudioBackend = _telemetry.AudioBackend,
+          VideoBackend = _telemetry.VideoBackend,
+          VideoWidth = _telemetry.VideoWidth,
+          VideoHeight = _telemetry.VideoHeight,
+          VideoFps = _telemetry.VideoFps,
+        };
+      }
+    } catch (Exception) { return new RecordingTelemetry(); }
+  }
+
+  // --- test hooks (hardware-free; drive the real queues/writers/files) -------
+  // EditMode has no Update pump: tests drive the stopping pipeline by
+  // calling PumpForTests() until the state leaves Stopping (bounded by the
+  // test's own timeout). Recording-state sampling is driven via
+  // TestEnqueue* below (no cameras/watcher needed).
+  public void PumpForTests() {
+    try {
+      if (_state == RecordingState.Stopping) PumpStopping();
+    } catch (Exception) { }
+  }
+  public bool TestEnqueueAudio(uint serial, byte[] pcm16) {
+    try {
+      if (_state != RecordingState.Recording || !_effective.RecordAudio) return false;
+      OnAudioTap(serial, 0, pcm16);
+      return true;
+    } catch (Exception) { return false; }
+  }
+
+  public bool TestEnqueueVideo(uint serial, byte[] jpeg) {
+    try {
+      if (_state != RecordingState.Recording || !_effective.RecordVideo) return false;
+      if (jpeg == null || jpeg.Length < 4) return false;
+      if (!(jpeg[0] == 0xFF && jpeg[1] == 0xD8 && jpeg[2] == 0xFF)) return false;
+      if (_videoQueue == null || _videoQueue.IsClosed) return false;
+      if (!AcceptVideoSerial(serial)) return false;
+      if (_videoQueue.TryEnqueue(jpeg)) {
+        lock (_telLock) {
+          _telemetry.VideoFrames++;
+          if (_telemetry.FirstVideoOffsetMs < 0)
+            _telemetry.FirstVideoOffsetMs = _clock.OffsetMs();
+        }
+        return true;
+      }
+      return false;
+    } catch (Exception) { return false; }
+  }
+
+  // Gameplay test hook: raw RGBA frame through the REAL worker path
+  // (C# JPEG encode -> game.avi). Bytes must be W*H*4 (config game size).
+  public bool TestEnqueueGameRaw(uint serial, byte[] rgba) {
+    try {
+      if (_state != RecordingState.Recording || !_effective.RecordVideo) return false;
+      if (rgba == null || rgba.Length != _effective.GameWidth * _effective.GameHeight * 4) return false;
+      if (_gameRawQueue == null || _gameRawQueue.IsClosed) return false;
+      lock (_telLock) {
+        if (!_gameLatch.Accept(serial)) {
+          _gameLatch.Reset();
+          _gameLatch.Accept(serial);
+          _telemetry.Interrupted = true;
+        }
+      }
+      if (_gameRawQueue.TryEnqueue(rgba)) {
+        lock (_telLock) {
+          if (_telemetry.FirstGameOffsetMs < 0)
+            _telemetry.FirstGameOffsetMs = _clock.OffsetMs();
+        }
+        return true;
+      }
+      return false;
+    } catch (Exception) { return false; }
+  }
+
+  // Best-effort graceful close on exit (§30): bounded join, never throws.
+  // No crash-safe recovery is claimed: an uncontrolled kill may leave an
+  // unfinalized file, documented as a limitation in the handoff.
+  void OnApplicationQuit() {
+    TryGracefulShutdown();
+  }
+
+  void OnDestroy() {
+    TryGracefulShutdown();
+    try { ReleaseGameCapture(); } catch (Exception) { }
+  }
+
+  void TryGracefulShutdown() {
+    try {
+      if (_state != RecordingState.Recording && _state != RecordingState.Stopping) return;
+      try {
+        var w = CurrentWatcher();
+        if (w != null) {
+          try { w.AudioPayloadAccepted -= OnAudioTap; } catch (Exception) { }
+        }
+      } catch (Exception) { }
+      try { if (_audioQueue != null) _audioQueue.Close(); } catch (Exception) { }
+      try { if (_videoQueue != null) _videoQueue.Close(); } catch (Exception) { }
+      try { if (_gameRawQueue != null) _gameRawQueue.Close(); } catch (Exception) { }
+      try { if (_audioThread != null && _audioThread.IsAlive) _audioThread.Join(2000); } catch (Exception) { }
+      try { if (_videoThread != null && _videoThread.IsAlive) _videoThread.Join(2000); } catch (Exception) { }
+      try { if (_gameThread != null && _gameThread.IsAlive) _gameThread.Join(2000); } catch (Exception) { }
+      try { if (_audioWriter != null) _audioWriter.Close(); } catch (Exception) { }
+      try { if (_videoWriter != null) _videoWriter.Close(); } catch (Exception) { }
+      try { if (_gameWriter != null) _gameWriter.Close(); } catch (Exception) { }
+      try { ReleaseGameCapture(); } catch (Exception) { }
+    } catch (Exception) { }
+  }
+}

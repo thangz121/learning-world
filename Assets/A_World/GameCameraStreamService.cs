@@ -335,6 +335,23 @@ public class GameCameraStreamService : MonoBehaviour {
     } catch (Exception) { }
   }
 
+  // Phase 2.3 recording tap (additive, game-side boundary §3): exposes the
+  // latest game-ACCEPTED frame (session-latched slot, decoded to Live at
+  // least once per the state machine) WITHOUT consuming it — the HUD path
+  // is untouched. The recorder copies the bytes synchronously into its own
+  // bounded queue. False = no game-accepted frame available right now.
+  public bool TryPeekAcceptedJpegForRecording(
+      out uint serial, out uint seq, out byte[] jpeg, out int ageMs) {
+    serial = 0;
+    seq = 0;
+    jpeg = null;
+    ageMs = -1;
+    try {
+      if (!_running || _source == null) return false;
+      return _source.TryPeekLatest(out serial, out seq, out jpeg, out ageMs);
+    } catch (Exception) { return false; }
+  }
+
   // Test seam: drive decode deterministically with caller-made JPEG bytes.
   public bool DecodeForTests(byte[] jpeg) {
     if (_source == null) _source = new CameraFrameSource(_config.MaxFrameBytes);
