@@ -105,6 +105,7 @@ public class CT_P21_SessionDeliverables {
     Assert.AreEqual(90, d.GameJpegQuality);
     Assert.AreEqual(19, d.VideoCrf);
     Assert.AreEqual("medium", d.VideoPreset);
+    Assert.AreEqual(VideoQuality.High, d.Quality);
     Assert.AreEqual(4, d.AudioMp3Quality);
     Assert.AreEqual(240, d.PipWidth);
     Assert.AreEqual(16, d.PipMargin);
@@ -308,5 +309,91 @@ public class CT_P21_SessionDeliverables {
       KillService(rec);
       WipeDir(dir);
     }
+  }
+
+  // ---------- quality tiers (one choice drives CRF + preset + resolution) ----------
+
+  [Test] public void P21N_TierMappingExactPerLevel() {
+    var pv = QualityTier.For(VideoQuality.Preview);
+    Assert.AreEqual(24, pv.Crf);
+    Assert.AreEqual("superfast", pv.Preset);
+    Assert.AreEqual(854, pv.CapWidth);
+    Assert.AreEqual(480, pv.CapHeight);
+    var st = QualityTier.For(VideoQuality.Standard);
+    Assert.AreEqual(21, st.Crf);
+    Assert.AreEqual("veryfast", st.Preset);
+    Assert.AreEqual(1280, st.CapWidth);
+    Assert.AreEqual(720, st.CapHeight);
+    var hi = QualityTier.For(VideoQuality.High);
+    Assert.AreEqual(19, hi.Crf);
+    Assert.AreEqual("medium", hi.Preset);
+    Assert.AreEqual(1280, hi.CapWidth);
+    Assert.AreEqual(720, hi.CapHeight);
+    var mx = QualityTier.For(VideoQuality.Max);
+    Assert.AreEqual(17, mx.Crf);
+    Assert.AreEqual("slow", mx.Preset);
+    Assert.AreEqual(1920, mx.CapWidth);
+    Assert.AreEqual(1080, mx.CapHeight);
+    // Every tier preset must survive the backend allowlist (else the
+    // transcode silently substitutes the default and the tier lies).
+    Assert.IsTrue(MediaRecording.IsAllowedPreset(pv.Preset));
+    Assert.IsTrue(MediaRecording.IsAllowedPreset(st.Preset));
+    Assert.IsTrue(MediaRecording.IsAllowedPreset(hi.Preset));
+    Assert.IsTrue(MediaRecording.IsAllowedPreset(mx.Preset));
+    // Garbage fails safe to the proven High tier, never throws.
+    var g = QualityTier.For((VideoQuality)99);
+    Assert.AreEqual(19, g.Crf);
+    Assert.AreEqual("medium", g.Preset);
+    // Config validation accepts every real tier, rejects garbage.
+    string reason;
+    foreach (VideoQuality q in new[] { VideoQuality.Preview, VideoQuality.Standard, VideoQuality.High, VideoQuality.Max }) {
+      var c = MediaRecordingConfig.Default;
+      c.Quality = q;
+      Assert.IsTrue(c.Validate(out reason), q + ": " + reason);
+    }
+    var bad = MediaRecordingConfig.Default;
+    bad.Quality = (VideoQuality)99;
+    Assert.IsFalse(bad.Validate(out reason));
+  }
+
+  [Test] public void P21O_ResolveGameSizeNeverUpscales() {
+    int w, h;
+    // MAX keeps a 1080p source at 1080p (the user rule).
+    QualityTier.ResolveGameSize(VideoQuality.Max, 1920, 1080, out w, out h);
+    Assert.AreEqual(1920, w);
+    Assert.AreEqual(1080, h);
+    // Same source on High steps down to the 720p cap.
+    QualityTier.ResolveGameSize(VideoQuality.High, 1920, 1080, out w, out h);
+    Assert.AreEqual(1280, w);
+    Assert.AreEqual(720, h);
+    // A smaller source is NEVER upscaled to the cap.
+    QualityTier.ResolveGameSize(VideoQuality.Max, 1280, 720, out w, out h);
+    Assert.AreEqual(1280, w);
+    Assert.AreEqual(720, h);
+    QualityTier.ResolveGameSize(VideoQuality.Max, 960, 540, out w, out h);
+    Assert.AreEqual(960, w);
+    Assert.AreEqual(540, h);
+    // Aspect preserved inside the cap (4:3 source stays 4:3).
+    QualityTier.ResolveGameSize(VideoQuality.Max, 1024, 768, out w, out h);
+    Assert.AreEqual(1024, w);
+    Assert.AreEqual(768, h);
+    // Odd source dims snap down to even (x264/yuv420p requirement).
+    QualityTier.ResolveGameSize(VideoQuality.Max, 1281, 721, out w, out h);
+    Assert.AreEqual(1280, w);
+    Assert.AreEqual(720, h);
+    Assert.AreEqual(0, w & 1);
+    Assert.AreEqual(0, h & 1);
+    // Unknown/degenerate source falls back to the tier cap, never throws.
+    QualityTier.ResolveGameSize(VideoQuality.Max, 0, 0, out w, out h);
+    Assert.AreEqual(1920, w);
+    Assert.AreEqual(1080, h);
+    QualityTier.ResolveGameSize(VideoQuality.Preview, -5, 10, out w, out h);
+    Assert.AreEqual(854, w);
+    Assert.AreEqual(480, h);
+    // Preview cap on a big source (aspect-fit lands 852 wide, never 854:
+    // 854x480 is not exactly 16:9, so the even-snapped fit wins).
+    QualityTier.ResolveGameSize(VideoQuality.Preview, 1920, 1080, out w, out h);
+    Assert.AreEqual(852, w);
+    Assert.AreEqual(480, h);
   }
 }

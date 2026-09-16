@@ -500,3 +500,61 @@ Player.log: 0 renderpass errors, 0 exceptions.
 EditMode: 387 total, 386 pass, 0 fail, 1 skip (P19N/P20V/P20W green).
 Final clean build: Succeeded errors=0, boot 73 s+ alive, 3xFACE_OK,
 0 errors, MediaRec wired, 0 driver traces.
+## 34. Quality presets (2026-09-16): MAX / HIGH / STANDARD / PREVIEW
+
+User ask: one quality preset driving CRF + encoder preset + resolution
+together; MAX must keep a 1080p source at 1080p (never downscale a capable
+source, never upscale a small one).
+
+Pipeline trace (before touching code) - 720p appears at EXACTLY one place:
+- Game Render: URP main camera to the screen backbuffer at WINDOW size.
+  No recording code touches it.
+- Capture: PrepareGameCapture allocated _recordRT at _effective.GameWidth x
+  Height = config default 1280x720; CaptureScreenshotIntoRenderTexture
+  scales screen into that RT (downscale loss when the window is bigger,
+  fake pixels when smaller). THIS is the 720p choke point.
+- Composer: raw queue (cap 6, drop-oldest) -> worker C# JPEG q90 ->
+  game.avi (dims = RT dims, header restamped to measured fps); cam.avi;
+  mic.wav. Verify enforces avi dims == _effective dims.
+- Encoder: ffmpeg passes the game input through UNTOUCHED (only the PiP is
+  scaled + overlaid) -> mp4 res = RT res. x264 CRF/preset from spec <-
+  _effective <- config defaults. So fixing the RT size fixes the file.
+
+Implementation (zero frozen-system diffs):
+- MediaRecording.cs (pure): VideoQuality enum (Preview/Standard/High/Max,
+  default High = proven behavior) + QualityTier.For (CRF/preset/cap per
+  tier: 24/superfast/480p, 21/veryfast/720p, 19/medium/720p, 17/slow/1080p;
+  garbage fails safe to High) + ResolveGameSize (fit source inside cap,
+  scale <= 1 so never upscale, aspect preserved, even dims, floor 16,
+  degenerate source falls back to cap). AllowedVideoPresets gains "slow";
+  Validate CRF bound widened 18..32 to 16..32 (MAX needs 17; caught live by
+  the E2E run refusing start, not by unit tests) + Quality defined-check.
+- MediaRecordingConfig.Quality (default High) + service SetQuality (refuses
+  garbage, keeps running default).
+- MediaRecordingService: StartRecording fans tier CRF/preset into _effective
+  (pure, unit-safe); capture size resolves from the LIVE screen in
+  StartRecording BEFORE ResetSessionState + writers Begin (so telemetry,
+  queues, writers, readback, transcode all see ONE size), gated on
+  isPlaying + camera + sane screen dims (batch scenes carry cameras, so an
+  ungated resolve broke P20M/P20R/P21L/P21M - pinned by new P20X).
+- Telemetry/sidecar gains quality + videoCrf + videoPreset (additive only).
+
+Tests (nothing weakened - pins only added/updated for intended new
+defaults): P21N tier mapping exact + allowlist survival + validate matrix;
+P21O resolve matrix (1080p+Max=1080p, 1080p+High=720p, small sources never
+upscaled, 4:3 aspect kept, odd dims evened, degenerate falls back to cap);
+P20X ambient-screen-ignored-while-not-playing; P21A gains the High default
+pin. Suite: 390 total, 389 pass, 0 fail, 1 skip (benign P13M4).
+
+Live proof, ONE E2E recording at MAX, 1920x1080 window (machine desktop is
+only 1280x800, but the windowed backbuffer really was 1920x1080 - logged):
+COMPLETE int=False err= (empty) - sidecar quality=Max crf=17 preset=slow;
+game 1920x1080, 88 frames, 0 dark, 0 gaps (266 raw drops: 1080p worker
+throughput tradeoff, counted, duration honest); cam 180 q0/d0; audio 783
+chunks; mp4 1920x1080 avc1 at 4.887 measured fps, 17.65 s vs ~18 s wall,
+9.4 MB; mp3 17.75 s, 494 frames; verifier OVERALL PASS; extracted motion
+frame crisp (no macroblocking), ONE PiP, REC badge; Player.log 0 errors.
+1080p-output on a >=1080p display is proven; on smaller screens MAX resolves
+to the native window (no upscale) by the same pinned math.
+Final clean build: Succeeded errors=0, boot 73 s+ alive, 3xFACE_OK,
+0 errors, MediaRec wired, 0 driver traces.

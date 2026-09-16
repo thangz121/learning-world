@@ -31,6 +31,64 @@ public enum RecordingMode {
   MicAndCamera
 }
 
+// Output quality preset (user rule): one choice drives CRF + x264 preset +
+// capture resolution together (never scattered knobs). MAX keeps a 1080p
+// source at 1080p (never downscales a capable source, never upscales a
+// small one); lower tiers cap the capture box. Default = High (current
+// proven behavior: 720p / CRF 19 / medium).
+public enum VideoQuality {
+  Preview = 0,  // fast + light: 480p cap, CRF 24, superfast
+  Standard = 1, // moderate: 720p cap, CRF 21, veryfast
+  High = 2,     // high + balanced: 720p cap, CRF 19, medium
+  Max = 3,      // best: 1080p cap, CRF 17, slow (transcode is post-session)
+}
+
+public struct QualityTierParams {
+  public int Crf;
+  public string Preset;
+  public int CapWidth;
+  public int CapHeight;
+}
+
+public static class QualityTier {
+  public static QualityTierParams For(VideoQuality q) {
+    switch (q) {
+      case VideoQuality.Preview:
+        return new QualityTierParams { Crf = 24, Preset = "superfast", CapWidth = 854, CapHeight = 480 };
+      case VideoQuality.Standard:
+        return new QualityTierParams { Crf = 21, Preset = "veryfast", CapWidth = 1280, CapHeight = 720 };
+      case VideoQuality.Max:
+        return new QualityTierParams { Crf = 17, Preset = "slow", CapWidth = 1920, CapHeight = 1080 };
+      default: // High + any garbage value fail safe to the proven tier
+        return new QualityTierParams { Crf = 19, Preset = "medium", CapWidth = 1280, CapHeight = 720 };
+    }
+  }
+
+  // Resolve the capture size for a source frame: fit srcW x srcH inside the
+  // tier cap, NEVER upscale (scale <= 1), aspect preserved, even dims
+  // (x264/yuv420p requirement), floor 16. Unknown/degenerate source falls
+  // back to the tier cap itself. Pure + never throws (unit-pinned).
+  public static void ResolveGameSize(VideoQuality q, int srcW, int srcH, out int w, out int h) {
+    QualityTierParams t = For(q);
+    w = t.CapWidth;
+    h = t.CapHeight;
+    try {
+      if (srcW < 16 || srcH < 16) return;
+      double scale = Math.Min(1.0, Math.Min(t.CapWidth / (double)srcW, t.CapHeight / (double)srcH));
+      int rw = (int)(srcW * scale);
+      int rh = (int)(srcH * scale);
+      rw &= ~1;
+      rh &= ~1;
+      if (rw < 16 || rh < 16) return;
+      w = rw;
+      h = rh;
+    } catch (Exception) {
+      w = t.CapWidth;
+      h = t.CapHeight;
+    }
+  }
+}
+
 public static class MediaRecording {
   public const int DefaultVideoFps = 10;
   public const int MinVideoFps = 1;
@@ -67,7 +125,7 @@ public static class MediaRecording {
   public const int DefaultGameJpegQuality = 90; // intermediate is deleted
                                    // after transcode: stay near-lossless here
   public const int MaxGameRawFrames = 6; // RGBA handoff cap (bounded memcpy)
-  public const int DefaultVideoCrf = 19; // x264: lower = better (18..32);
+  public const int DefaultVideoCrf = 19; // x264: lower = better (16..32);
                                    // 19 ~= transparent (user rule: squeeze
                                    // size, keep near-original quality)
   public const string DefaultVideoPreset = "medium"; // x264 preset: motion
@@ -78,7 +136,7 @@ public static class MediaRecording {
   public const int DefaultPipMargin = 16;
 
   public static readonly string[] AllowedVideoPresets = {
-    "ultrafast", "superfast", "veryfast", "faster", "medium"
+    "ultrafast", "superfast", "veryfast", "faster", "medium", "slow"
   };
 
   public static bool IsAllowedPreset(string p) {
@@ -117,7 +175,7 @@ public struct MediaRecordingConfig {
   public int GameHeight;          // gameplay capture height (default 720)
   public int GameFps;             // gameplay sample rate (default 24)
   public int GameJpegQuality;     // worker-side C# JPEG for game frames
-  public int VideoCrf;            // x264 CRF 18..32 (default 19: transparent,
+  public int VideoCrf;            // x264 CRF 16..32 (default 19: transparent,
                                   // bigger file by user rule)
   public string VideoPreset;      // x264 preset allowlist (default medium:
                                   // best motion handling; transcode is
@@ -129,6 +187,9 @@ public struct MediaRecordingConfig {
   public string FfmpegPathOverride; // explicit ffmpeg binary (null = detect)
   public bool KeepIntermediates;  // keep wav/avis after a successful
                                   // transcode (default false: save disk)
+  public VideoQuality Quality;    // output quality preset (default High):
+                                  // drives CRF + x264 preset + capture
+                                  // resolution together at session start
 
   public static MediaRecordingConfig Default {
     get {
@@ -153,6 +214,7 @@ public struct MediaRecordingConfig {
         PipMargin = MediaRecording.DefaultPipMargin,
         FfmpegPathOverride = null,
         KeepIntermediates = false,
+        Quality = VideoQuality.High,
       };
     }
   }
@@ -196,11 +258,11 @@ public struct MediaRecordingConfig {
     if (GameJpegQuality < 30 || GameJpegQuality > 100) {
       reason = "gameJpegQuality 30..100"; return false;
     }
-    if (VideoCrf < 18 || VideoCrf > 32) {
-      reason = "videoCrf 18..32"; return false;
+    if (VideoCrf < 16 || VideoCrf > 32) {
+      reason = "videoCrf 16..32"; return false;
     }
     if (!MediaRecording.IsAllowedPreset(VideoPreset)) {
-      reason = "videoPreset ultrafast..medium"; return false;
+      reason = "videoPreset ultrafast..slow"; return false;
     }
     if (AudioMp3Quality < 0 || AudioMp3Quality > 9) {
       reason = "audioMp3Quality 0..9"; return false;
@@ -210,6 +272,9 @@ public struct MediaRecordingConfig {
     }
     if (PipMargin < 0 || PipMargin > 64) {
       reason = "pipMargin 0..64"; return false;
+    }
+    if (!System.Enum.IsDefined(typeof(VideoQuality), Quality)) {
+      reason = "quality Preview..Max"; return false;
     }
     reason = null;
     return true;
@@ -468,6 +533,9 @@ public sealed class RecordingTelemetry {
   public int GameWidth;
   public int GameHeight;
   public int GameFps;
+  public string Quality = string.Empty; // VideoQuality tier that ran (traceability)
+  public int VideoCrf;                  // resolved x264 CRF for the session
+  public string VideoPreset = string.Empty; // resolved x264 preset
   public string AudioPath = string.Empty;
   public string VideoPath = string.Empty;
   public long AudioBytes;
@@ -535,6 +603,9 @@ public sealed class RecordingTelemetry {
       N(b, "gameWidth", GameWidth, false);
       N(b, "gameHeight", GameHeight, false);
       N(b, "gameFps", GameFps, false);
+      P(b, "quality", Quality, false);
+      N(b, "videoCrf", VideoCrf, false);
+      P(b, "videoPreset", VideoPreset, false);
       P(b, "audioPath", AudioPath, false);
       P(b, "videoPath", VideoPath, false);
       N(b, "audioBytes", AudioBytes, false);

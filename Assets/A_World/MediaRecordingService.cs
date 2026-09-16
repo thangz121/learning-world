@@ -208,6 +208,16 @@ public class MediaRecordingService : MonoBehaviour {
     try { if (!string.IsNullOrEmpty(dir)) _outputBaseDir = dir; } catch (Exception) { }
   }
 
+  // Output quality preset (Preview/Standard/High/Max): drives CRF + x264
+  // preset + capture resolution together at the next StartRecording. Invalid
+  // values are refused (the running default is kept), never applied half-way.
+  public void SetQuality(VideoQuality q) {
+    try {
+      if (!System.Enum.IsDefined(typeof(VideoQuality), q)) return;
+      _baseConfig.Quality = q;
+    } catch (Exception) { }
+  }
+
   // App-local tools dir (dependency auto-install target for portable
   // FFmpeg). The transcoder finds it without PATH changes.
   public void SetAppToolsDir(string dir) {
@@ -553,6 +563,14 @@ public class MediaRecordingService : MonoBehaviour {
       _effective = _baseConfig;
       _effective.RecordAudio = mode == RecordingMode.MicOnly || mode == RecordingMode.MicAndCamera;
       _effective.RecordVideo = mode == RecordingMode.CameraOnly || mode == RecordingMode.MicAndCamera;
+      // Quality preset fans out here (CRF + x264 preset now; capture
+      // resolution follows in PrepareGameCapture from the live screen size,
+      // so unit/test envs without a screen keep deterministic behavior).
+      try {
+        QualityTierParams tier = QualityTier.For(_effective.Quality);
+        _effective.VideoCrf = tier.Crf;
+        _effective.VideoPreset = tier.Preset;
+      } catch (Exception) { }
       string reason;
       if (!_effective.Validate(out reason)) return FailStart("bad-config:" + reason);
 
@@ -584,6 +602,29 @@ public class MediaRecordingService : MonoBehaviour {
         _mp4Path = string.Empty;
       }
       if (!_effective.RecordAudio) _mp3Path = string.Empty;
+
+      // Capture resolution (user rule): fit the LIVE screen inside the
+      // quality-tier cap — a 1080p source stays 1080p on Max, a small window
+      // is never upscaled, aspect preserved, even dims. Playing-gated:
+      // EditMode batch scenes may contain cameras/screens, but ambient
+      // hardware reads apply ONLY while playing, so unit behavior stays
+      // deterministic. Runs BEFORE ResetSessionState + writers Begin so
+      // telemetry, queues, writers, readback and transcode all see the SAME
+      // resolved size.
+      try {
+        bool playing = false;
+        try { playing = Application.isPlaying; } catch (Exception) { }
+        bool hasCam = false;
+        try { hasCam = (_boundGameCam != null || Camera.main != null); } catch (Exception) { }
+        int sw = 0, sh = 0;
+        try { sw = Screen.width; sh = Screen.height; } catch (Exception) { }
+        if (_effective.RecordVideo && playing && hasCam && sw >= 16 && sh >= 16) {
+          int rw, rh;
+          QualityTier.ResolveGameSize(_effective.Quality, sw, sh, out rw, out rh);
+          _effective.GameWidth = rw;
+          _effective.GameHeight = rh;
+        }
+      } catch (Exception) { }
 
       ResetSessionState(mode);
 
@@ -1731,6 +1772,9 @@ public class MediaRecordingService : MonoBehaviour {
           GameWidth = _effective.GameWidth,
           GameHeight = _effective.GameHeight,
           GameFps = _effective.GameFps,
+          Quality = _effective.Quality.ToString(),
+          VideoCrf = _effective.VideoCrf,
+          VideoPreset = _effective.VideoPreset,
         };
         _lastError = string.Empty;
       }

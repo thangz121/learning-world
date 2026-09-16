@@ -38,7 +38,7 @@ public struct TranscodeSpec {
   public int GameHeight;
   public int PipWidth;     // 4:3 overlay width (height derived)
   public int PipMargin;
-  public int Crf;          // 18..32
+  public int Crf;          // 16..32
   public string Preset;    // allowlist (validated by config)
   public int Mp3Quality;   // 0..9
 }
@@ -230,7 +230,7 @@ public static class FfmpegTranscodeBackend {
         vlabel = null;
       }
       string preset = MediaRecording.IsAllowedPreset(s.Preset) ? s.Preset : MediaRecording.DefaultVideoPreset;
-      int crf = s.Crf >= 18 && s.Crf <= 32 ? s.Crf : MediaRecording.DefaultVideoCrf;
+      int crf = s.Crf >= 16 && s.Crf <= 32 ? s.Crf : MediaRecording.DefaultVideoCrf;
       int mq = s.Mp3Quality >= 0 && s.Mp3Quality <= 9 ? s.Mp3Quality : MediaRecording.DefaultMp3Quality;
       if (wantMp4 && vlabel != null) {
         b.Append("-map ").Append(vlabel).Append(" ");

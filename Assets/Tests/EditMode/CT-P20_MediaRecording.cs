@@ -661,4 +661,26 @@ public class CT_P20_MediaRecording {
       Assert.AreEqual(20.0, info.Fps, 0.01);
     } finally { WipeDir(dir); }
   }
+
+  [Test] public void P20X_AmbientScreenIgnoredWhileNotPlaying() {
+    // Batch scenes may carry cameras/screens: capture-size resolve applies
+    // ONLY while playing, so default-sized injections always match in unit
+    // env (regression: an ungated resolve broke P20M/P20R/P21L/P21M).
+    string dir = TempDir();
+    MediaRecordingService rec = null;
+    try {
+      rec = NewService(dir);
+      Assert.IsTrue(rec.StartRecording(RecordingMode.MicAndCamera), rec.LastError);
+      Assert.IsTrue(rec.TestEnqueueGameRaw(1, TestRgba(7)), "default-size buffer must fit");
+      var t = rec.ReadTelemetrySnapshot();
+      Assert.AreEqual(MediaRecording.DefaultGameWidth, t.GameWidth);
+      Assert.AreEqual(MediaRecording.DefaultGameHeight, t.GameHeight);
+      Assert.IsTrue(rec.StopRecording());
+      Assert.IsTrue(WaitTerminal(rec, 20000));
+      Assert.AreEqual(RecordingState.Completed, rec.CurrentState);
+    } finally {
+      KillService(rec);
+      WipeDir(dir);
+    }
+  }
 }
