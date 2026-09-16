@@ -40,6 +40,7 @@ public class MarketBootstrap : MonoBehaviour {
   // mic is optional (null = mic-setup gate off; all existing flows untouched).
   public MicSetupMonitor MicMonitor { get; private set; }
   public GameCameraStreamService CameraStream { get; private set; }
+  public LocalCameraService LocalCamera { get; private set; }
   public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null, MicSetupBundle mic = null) {
     if (_built) return;
     _built = true;
@@ -154,6 +155,7 @@ public class MarketBootstrap : MonoBehaviour {
     // own frame slot — camera can never starve speech. Entry/exit logged (one
     // line each: R10 log-spam lesson); any failure leaves the game running
     // with CameraStream=null (gameplay never depends on camera, §17).
+    PhoneCameraHud camHud = null;
     try {
       Debug.Log("[PhoneCamera] wiring camera stream service + HUD");
       GameObject camSvcGo = new GameObject("PhoneCameraStream");
@@ -162,7 +164,7 @@ public class MarketBootstrap : MonoBehaviour {
         PhoneCameraProtocol.DefaultBridgePort, PhoneCameraConfig.Default);
       camSvc.StartService();
       GameObject camHudGo = new GameObject("PhoneCameraHud");
-      PhoneCameraHud camHud = camHudGo.AddComponent<PhoneCameraHud>();
+      camHud = camHudGo.AddComponent<PhoneCameraHud>();
       camHud.Bind(camSvc);
       CameraStream = camSvc;
       Debug.Log("[PhoneCamera] wired (service running=" + camSvc.IsRunning
@@ -170,6 +172,22 @@ public class MarketBootstrap : MonoBehaviour {
     } catch (Exception e) {
       Debug.LogWarning("[PhoneCamera] wiring failed, game continues without camera: " + e.Message);
       CameraStream = null;
+    }
+    // Local PC camera (precedence follow-up, additive): the laptop/integrated
+    // camera — or a plugged-in USB webcam, which outranks it — plays DIRECTLY
+    // in the same HUD box (local Live wins, phone is the fallback). Own
+    // capture, own polling, no LAN, no gateway. Any failure (no camera,
+    // denied, headless) leaves the phone path exactly as before.
+    try {
+      GameObject localCamGo = new GameObject("LocalCameraStream");
+      LocalCameraService localCam = localCamGo.AddComponent<LocalCameraService>();
+      localCam.StartService();
+      LocalCamera = localCam;
+      if (camHud != null) camHud.BindLocal(localCam);
+      Debug.Log("[LocalCamera] wired (service running=" + localCam.IsRunning + ")");
+    } catch (Exception e) {
+      Debug.LogWarning("[LocalCamera] wiring failed, phone camera path unchanged: " + e.Message);
+      LocalCamera = null;
     }
   }
 

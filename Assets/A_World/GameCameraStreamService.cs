@@ -90,9 +90,15 @@ public class GameCameraStreamService : MonoBehaviour {
       if (_localCamPresentFn != null) {
         try { return _localCamPresentFn(); } catch (Exception) { return false; }
       }
+      // Generic presence (names are labels only): ANY usable local camera —
+      // integrated laptop cam or USB webcam — keeps the phone stood down.
+      // Ranking (which one the game SHOWS) lives in LocalCameraClassifier.
       try {
         var devs = UnityEngine.WebCamTexture.devices;
-        return devs != null && devs.Length > 0;
+        if (devs == null) return false;
+        var names = new string[devs.Length];
+        for (int i = 0; i < devs.Length; i++) names[i] = devs[i].name;
+        return LocalCameraClassifier.HasUsableCamera(names);
       } catch (Exception) { return false; }
     } catch (Exception) { return false; }
   }

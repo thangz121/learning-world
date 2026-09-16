@@ -358,3 +358,42 @@ in the pre-existing suite); `validate_content.py` PASS
 No player build in this pass (transport + unit scope; real-phone
 precedence E2E stays user-run: plug webcam ⇒ phone START stands down,
 unplug ⇒ re-opens, `-e2e-nocam` forces phone).
+
+## 25. Local PC camera in-game (DONE 2026-09-15 — user-asked follow-up)
+
+User rule: the integrated laptop camera counts as a webcam and its stream
+must play INSIDE the game; a plugged-in USB webcam outranks it (laptop cam
+skipped); phone stays the fallback. Verified live on the user's machine
+(USB2.0 HD UVC WebCam): build `Succeeded errors=4` (headless noise),
+payload DLLs fresh, foregrounded player.
+
+- New `A_World/LocalCameraClassifier.cs` (pure, no UnityEngine): external
+  outranks integrated (tight hints + documented bare-UVC trade-off: ASUS
+  stock modules enumerate as UVC; a no-name external UVC ranks integrated
+  too — only matters at 2+ bare-UVC cameras, single/brand cases exact),
+  ties keep list order, null-safe. Names rank only; presence stays generic.
+- New `A_World/LocalCameraService.cs` (MonoBehaviour): `WebCamTexture`
+  320x240@30 direct to the HUD (zero copies, RAM-only, no record — §11),
+  5 s hot-plug repick (USB plug switches up, unplug falls back),
+  `-e2e-nocam` forces phone, never throws, states reuse
+  `PhoneCameraState` (local Live/Connecting/Error honest; no frozen face).
+- `PhoneCameraHud`: optional `BindLocal` (null = phone-only, old behavior
+  byte-identical); local-Live wins the same box/layout with `PC CAM ● LIVE`
+  labels (never phone strings); any other local state falls through to the
+  phone path untouched. No-click-eat contract holds with local bound.
+- `GameCameraStreamService.HasLocalCam` now routes through the shared
+  classifier (same usable-definition); `MarketBootstrap` wires the local
+  service + binds it (try/caught, null-safe; phone path unchanged on any
+  failure). Gateway/phone pages untouched (cam:local already stood them
+  down in §24).
+- Live proof (player build, foreground): `[LocalCamera] localcam Live
+  dev="USB2.0 HD UVC WebCam" playing=True 320x240@30` +
+  `[PhoneCameraHud] state=Live(PC) video=True showing=True`, 0 exceptions.
+  USB-webcam-outranks-laptop is unit-pinned (CT-P19D, both orders), NOT
+  live-proven (no 2nd camera on this machine).
+- Tests CT-P19 (13): classifier matrix incl. the exact UVC name, null-safe,
+  determinism, frozen phone strings re-pinned, local label, fallback,
+  no-click-eat, hardware-free service idle/force paths, precedence glue.
+  Full suite green (below). Remote screenshot of the box was blocked by
+  the user's foreground terminal over the game corner — visual confirmation
+  is the on-screen box + user report, log lines above govern.

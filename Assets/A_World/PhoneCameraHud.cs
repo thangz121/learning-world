@@ -15,9 +15,12 @@
 //     Canvas order 55: above the setup dialog (50) and HUD chip (10), below
 //       mic HUD (60) and cursor (100).
 //
-// Presentation ONLY: polls GameCameraStreamService (read-only State +
+// Presentation ONLY: polls the camera services (read-only State +
 // CurrentTexture), owns no network state, fires no events, touches no camera
-// APIs. Never eats clicks: no GraphicRaycaster, every Graphic
+// APIs. Source priority: LOCAL PC camera Live wins (the user asked the laptop
+// feed to play in this box); otherwise the phone path shows exactly as
+// before (same strings, same layout — the phone contract is frozen).
+// Never eats clicks: no GraphicRaycaster, every Graphic
 // raycastTarget=false (same contract as CursorPresenter/MicStatusHud, pinned
 // by tests). Code-built uGUI, no assets. Privacy (§11): shows RAM frames only,
 // writes nothing to disk.
@@ -33,6 +36,7 @@ public class PhoneCameraHud : MonoBehaviour {
   public static readonly Vector2 VideoSize = new Vector2(200f, 140f);
 
   GameCameraStreamService _service;
+  LocalCameraService _local;
 
   GameObject _root;
   GameObject _boxGo;
@@ -41,9 +45,15 @@ public class PhoneCameraHud : MonoBehaviour {
   Text _placeholder;
   AspectRatioFitter _fitter;
   PhoneCameraState _lastLoggedState = (PhoneCameraState)(-1);
+  bool _lastLoggedLocal;
 
   public void Bind(GameCameraStreamService service) {
     _service = service;
+  }
+
+  // Optional local source (null = phone-only, exactly the old behavior).
+  public void BindLocal(LocalCameraService local) {
+    _local = local;
   }
 
   void Awake() {
@@ -66,6 +76,21 @@ public class PhoneCameraHud : MonoBehaviour {
   public string StatusText => _status != null ? _status.text : string.Empty;
 
   void Update() {
+    if (_service == null && _local == null) return;
+    // Local wins while REALLY live (texture gate inside the service); any
+    // other local state falls through to the phone path untouched.
+    if (_local != null) {
+      Texture localTex = null;
+      PhoneCameraState localState = PhoneCameraState.Disabled;
+      try {
+        localState = _local.State;
+        localTex = _local.CurrentTexture; // null unless Live
+      } catch (Exception) { }
+      if (localState == PhoneCameraState.Live && localTex != null) {
+        ApplyLocal(localTex);
+        return;
+      }
+    }
     if (_service == null) return;
     PhoneCameraState state;
     Texture tex;
@@ -77,9 +102,17 @@ public class PhoneCameraHud : MonoBehaviour {
   }
 
   // Test seam: drive rendering deterministically (no live service).
+  // Phone path — behavior frozen (existing tests pin these strings).
   public void RefreshForTests(PhoneCameraState state, Texture tex) {
     if (_root == null) BuildHudImmediate();
     ApplyState(state, tex);
+  }
+
+  // Test seam for the local path (new): local-Live rendering + labels.
+  public void RefreshLocalForTests(PhoneCameraState state, Texture tex) {
+    if (_root == null) BuildHudImmediate();
+    if (state == PhoneCameraState.Live && tex != null) ApplyLocal(tex);
+    else ApplyState(state, tex);
   }
 
   void ApplyState(PhoneCameraState state, Texture tex) {
@@ -94,10 +127,30 @@ public class PhoneCameraHud : MonoBehaviour {
       _status.text = ShortStatusFor(state);
       // One line per STATE TRANSITION only (same R10 discipline as the
       // service): proves in Player.log what the box shows without a debugger.
-      if (state != _lastLoggedState) {
+      if (state != _lastLoggedState || _lastLoggedLocal) {
         _lastLoggedState = state;
+        _lastLoggedLocal = false;
         UnityEngine.Debug.Log("[PhoneCameraHud] state=" + state
           + " video=" + (tex != null) + " showing=" + IsShowing);
+      }
+    } catch (Exception) { }
+  }
+
+  // Local-live rendering: same box/layout, PC source labels (never the phone
+  // strings, so screenshots + logs tell the sources apart at a glance).
+  void ApplyLocal(Texture tex) {
+    if (_root == null || tex == null) return;
+    try {
+      if (!_root.activeSelf) _root.SetActive(true);
+      _video.texture = tex;
+      _video.gameObject.SetActive(true);
+      _placeholder.gameObject.SetActive(false);
+      _placeholder.text = string.Empty;
+      _status.text = "PC CAM ● LIVE";
+      if (_lastLoggedState != PhoneCameraState.Live || !_lastLoggedLocal) {
+        _lastLoggedState = PhoneCameraState.Live;
+        _lastLoggedLocal = true;
+        UnityEngine.Debug.Log("[PhoneCameraHud] state=Live(PC) video=True showing=" + IsShowing);
       }
     } catch (Exception) { }
   }
