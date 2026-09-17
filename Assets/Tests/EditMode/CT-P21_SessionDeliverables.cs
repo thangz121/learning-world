@@ -101,7 +101,7 @@ public class CT_P21_SessionDeliverables {
     Assert.IsTrue(d.Validate(out reason), reason);
     Assert.AreEqual(1280, d.GameWidth);
     Assert.AreEqual(720, d.GameHeight);
-    Assert.AreEqual(30, d.GameFps);
+    Assert.AreEqual(MediaRecording.DefaultGameFps, d.GameFps);
     Assert.AreEqual(90, d.GameJpegQuality);
     Assert.AreEqual(19, d.VideoCrf);
     Assert.AreEqual("medium", d.VideoPreset);

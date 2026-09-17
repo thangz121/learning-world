@@ -96,6 +96,31 @@ public class GameInstaller : MonoBehaviour {
     BuildFromScene(scene);
   }
 
+  // Phase 2.4: persisted gender (Boy default for migration). Applied to the
+  // already-built PlayerVisual via re-tint (same mesh, no rebuild) so no
+  // gameplay interrupts. Public API lets future UI or G-key toggle persist.
+  MarketBuilder _activeBuilder;
+
+  public PlayerGender CurrentGender {
+    get {
+      try { return Load().PlayerGender; } catch (System.Exception) { return PlayerGender.Boy; }
+    }
+  }
+
+  PlayerProgress Load() {
+    try { return Save != null ? Save.Load() : new PlayerProgress(); } catch (System.Exception) { return new PlayerProgress(); }
+  }
+
+  public void SetPlayerGender(PlayerGender gender) {
+    try {
+      PlayerProgress p = Load();
+      p.PlayerGender = gender;
+      if (Save != null) Save.Save(p);
+      if (_activeBuilder != null) _activeBuilder.SetPlayerGender(gender);
+      Debug.Log("[GameInstaller] Player gender set to " + gender, this);
+    } catch (System.Exception e) { Debug.LogWarning("[GameInstaller] SetPlayerGender failed: " + e.Message, this); }
+  }
+
   void BuildFromScene(Scene market) {
     if (_sliceBuilt) return;
     _sliceBuilt = true;
@@ -110,6 +135,12 @@ public class GameInstaller : MonoBehaviour {
       Debug.LogError("[GameInstaller] MarketScene has no MarketBuilder; slice cannot start.", this);
       return;
     }
+    _activeBuilder = builder;
+    // Apply persisted gender to the already-spawned player (re-tint only).
+    try {
+      PlayerGender g = Load().PlayerGender;
+      builder.SetPlayerGender(g);
+    } catch (System.Exception) { }
     builder.BuildServices(EventBus, Audio);
     builder.WireQuestService(Quests, Hints);
     MarketBootstrap bootstrap = GetComponent<MarketBootstrap>();
@@ -120,6 +151,17 @@ public class GameInstaller : MonoBehaviour {
     bootstrap.Build(EventBus, Quests, Hints, builder, Audio, new MicSetupBundle(
       MicGate, LocalMic, PhoneMic, SpeechMic,
       PhoneMicProtocol.LoopbackHost, PhoneMicProtocol.DefaultBridgePort));
+  }
+
+  void Update() {
+    // Phase 2.4 QA: G toggles Boy/Girl live (same session, persisted).
+    try {
+      if (Input.GetKeyDown(KeyCode.G)) {
+        PlayerGender cur = Load().PlayerGender;
+        PlayerGender next = cur == PlayerGender.Boy ? PlayerGender.Girl : PlayerGender.Boy;
+        SetPlayerGender(next);
+      }
+    } catch (System.Exception) { }
   }
 
   // Runtime online->offline swap INSIDE the router: every injected consumer

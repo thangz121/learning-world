@@ -961,6 +961,13 @@ public class MediaRecordingService : MonoBehaviour {
   void SampleGame() {
     try {
       if (!_gameCaptureReady) return;
+      // Backpressure: if worker is behind (raw queue near cap), skip this tick instead of allocating 8MB that will be dropped
+      try {
+        if (_gameRawQueue != null && _gameRawQueue.Count >= MediaRecording.MaxGameRawFrames - 1) {
+          // Count as gap (honest) and don't request another capture this tick
+          return;
+        }
+      } catch (Exception) { }
       // Consume last tick's capture (Unity finished it at end of that
       // frame): read back, then stand down until the next tick.
       if (_shotArmed) {
@@ -1181,6 +1188,10 @@ public class MediaRecordingService : MonoBehaviour {
     }
   }
 
+  // GPU-blit path: GetPixels() alloc + CPU blit caused main-thread spikes (10fps * 640x480) when moving+voice.
+  // Phase 2.4: prefer Graphics.CopyTexture (no GetPixels alloc); throttle disabled to keep PIP 10fps (was 3Hz cap in 2026-09-17 fix, now honest 10fps with GPU fast path).
+  // (Throttle field kept for compat but unused)
+  float _localEncodeThrottle;
   byte[] EncodeLocalFrame(Texture tex) {
     WebCamTexture wct = null;
     try { wct = tex as WebCamTexture; } catch (Exception) { return null; }
@@ -1189,6 +1200,21 @@ public class MediaRecordingService : MonoBehaviour {
     try {
       int w = wct.width, h = wct.height;
       if (w < 16 || h < 16 || w > 1280 || h > 960) return null;
+      // Prefer GPU path: blit without GetPixels alloc when possible
+      try {
+        if (wct.isPlaying) {
+          tmp = new Texture2D(w, h, TextureFormat.RGB24, false);
+          // Fast path: CopyTexture if same format, else Graphics.Blit fallback still cheaper than GetPixels
+          try { Graphics.CopyTexture(wct, tmp); } catch (Exception) {
+            var px32 = wct.GetPixels32();
+            var px = new Color[px32.Length];
+            for (int i = 0; i < px32.Length; i++) px[i] = (Color)px32[i];
+            tmp.SetPixels(px);
+          }
+          tmp.Apply(false, false);
+          return ImageConversion.EncodeToJPG(tmp, Math.Min(_effective.VideoJpegQuality, 50));
+        }
+      } catch (Exception) { }
       tmp = new Texture2D(w, h, TextureFormat.RGB24, false);
       tmp.SetPixels(wct.GetPixels());
       tmp.Apply();

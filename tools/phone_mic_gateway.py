@@ -763,13 +763,16 @@ class Gateway:
             dur = time.time() - sess.t0
             log("[STEP 8/%d] session %s audio: chunks=%d (~%.1fs audio) peak=%d wall=%.1fs listeners=%d" % (
                 TOTAL_STEPS, sid, sess.chunks, sess.samples / float(CANON_RATE), peak, dur, nsubs))
-        if sess.samples > CANON_RATE * 10:  # bounded (§18): ignore past 10 s
+        if sess.samples > CANON_RATE * 60:  # bounded (§18): 60 s window (was 10 s)
+            # Camera streams 60fps continuously with no wall cap; mic capped at 10 s
+            # caused HUD "mất" after 10 s of continuous START (gateway stops
+            # forwarding, watcher goes stale, bars cross-grey) while camera stays
+            # Live. 60 s matches max exercise + probe windows without unbounded RAM.
             self.drop_counts["queue"] += 1
             if not sess.bound_logged:
                 sess.bound_logged = True
-                log("[STEP 8/%d] session %s reached the 10 s bridge bound "
-                    "(captures/probes use short windows by design) — further audio "
-                    "still arrives from the phone but is no longer forwarded." % (TOTAL_STEPS, sid))
+                log("[STEP 8/%d] session %s reached the 60 s bridge bound "
+                    "(long session — further audio still arrives but is no longer forwarded)." % (TOTAL_STEPS, sid))
             return
         if self.args.record_dir:
             sess.record_frames.append(payload)

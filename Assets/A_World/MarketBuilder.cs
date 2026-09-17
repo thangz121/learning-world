@@ -78,6 +78,7 @@ public class MarketBuilder : MonoBehaviour {
     BuildNavMesh();
     BuildNavCarves();
     BuildMiloMat(); // R5V-b: post-NavMesh so the bake never sees it
+    BuildAmbientDecor(); // Phase 2.4: post-bake ambient (pure visual, no carve)
     BuildPlayer();
     BuildCamera();
     BuildFrameServices();
@@ -588,7 +589,96 @@ public class MarketBuilder : MonoBehaviour {
     if (c != null) Destroy(c);
   }
 
+  // Phase 2.4 FINAL POLISH: ambient world dressing (post-NavMesh, pure visual).
+  // Fills empty lawn patches without cluttering gameplay or touching carves.
+  // Keeps the 4yo-readable rule: path stays clear, quest items (red apple vs
+  // blue ball) keep high contrast, decorations stay low (<=0.6m) and off paths.
+  void BuildAmbientDecor() {
+    // Small grass tufts near hedge (deterministic, low, matte)
+    AddGrassTuft(new Vector3(-4f, 0f, 5.2f), 0.9f);
+    AddGrassTuft(new Vector3(3f, 0f, -5f), 1f);
+    AddGrassTuft(new Vector3(6.5f, 0f, 1.5f), 0.85f);
+    // Smooth rocks at path edge (grey, flattened, never on path)
+    AddRock(new Vector3(1.2f, 0f, 2.8f), 0.5f);
+    AddRock(new Vector3(-1.3f, 0f, 0.2f), 0.45f);
+    // Extra flower patch north lawn (mirrors hedge tuft palette, 3 blooms)
+    AddFlowerPatch(new Vector3(2f, 0f, 4.8f));
+    // Barrel beside apple crate (wood, non-interactive dressing)
+    AddBarrel(new Vector3(CrateAnchorPos.x + 0.9f, 0f, CrateAnchorPos.z + 0.3f));
+  }
+
+  void AddGrassTuft(Vector3 pos, float s) {
+    GameObject tuft = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    tuft.name = "GrassTuft";
+    tuft.transform.SetParent(transform);
+    tuft.transform.position = pos + new Vector3(0f, 0.18f, 0f);
+    tuft.transform.localScale = new Vector3(0.7f * s, 0.35f * s, 0.7f * s);
+    tuft.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.30f, 0.58f, 0.32f));
+    Collider c = tuft.GetComponent<Collider>();
+    if (c != null) Destroy(c);
+  }
+
+  void AddRock(Vector3 pos, float s) {
+    GameObject rock = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    rock.name = "Rock";
+    rock.transform.SetParent(transform);
+    rock.transform.position = pos + new Vector3(0f, 0.12f, 0f);
+    rock.transform.localScale = new Vector3(0.55f * s, 0.30f * s, 0.65f * s);
+    rock.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.55f, 0.55f, 0.58f));
+    Collider c = rock.GetComponent<Collider>();
+    if (c != null) Destroy(c);
+  }
+
+  void AddFlowerPatch(Vector3 pos) {
+    Color[] blooms = { new Color(0.95f, 0.55f, 0.65f), new Color(0.98f, 0.82f, 0.30f), new Color(0.96f, 0.95f, 0.90f) };
+    for (int i = 0; i < 3; i++) {
+      float ox = (i - 1) * 0.18f;
+      GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      stem.name = "PatchStem";
+      stem.transform.SetParent(transform);
+      stem.transform.position = pos + new Vector3(ox, 0.22f, 0f);
+      stem.transform.localScale = new Vector3(0.04f, 0.22f, 0.04f);
+      stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.55f, 0.28f));
+      Collider sc = stem.GetComponent<Collider>();
+      if (sc != null) Destroy(sc);
+      GameObject bloom = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      bloom.name = "PatchBloom";
+      bloom.transform.SetParent(transform);
+      bloom.transform.position = pos + new Vector3(ox, 0.38f, 0f);
+      bloom.transform.localScale = new Vector3(0.14f, 0.14f, 0.14f);
+      bloom.GetComponent<Renderer>().sharedMaterial = Lit(blooms[i % 3]);
+      Collider bc = bloom.GetComponent<Collider>();
+      if (bc != null) Destroy(bc);
+    }
+  }
+
+  void AddBarrel(Vector3 pos) {
+    GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    barrel.name = "Barrel";
+    barrel.transform.SetParent(transform);
+    barrel.transform.position = pos + new Vector3(0f, 0.35f, 0f);
+    barrel.transform.localScale = new Vector3(0.45f, 0.70f, 0.45f);
+    barrel.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.52f, 0.36f, 0.22f));
+    Collider c = barrel.GetComponent<Collider>();
+    if (c != null) Destroy(c);
+    // Wood hoops
+    for (int i = 0; i < 2; i++) {
+      GameObject hoop = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      hoop.name = "BarrelHoop";
+      hoop.transform.SetParent(barrel.transform);
+      hoop.transform.localPosition = new Vector3(0f, (i == 0 ? 0.25f : -0.25f), 0f);
+      hoop.transform.localScale = new Vector3(1.05f, 0.06f, 1.05f);
+      hoop.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.35f, 0.35f, 0.38f));
+      Collider hc = hoop.GetComponent<Collider>();
+      if (hc != null) Destroy(hc);
+    }
+  }
+
   // ---- player capsule + anchors -------------------------------------------------
+
+  // Phase 2.4: gender is applied to PlayerVisual before BuildVisual runs
+  // (Awake order), so MarketBuilder stamps Gender first then adds the component.
+  PlayerGender _pendingGender = PlayerGender.Boy;
 
   void BuildPlayer() {
     GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -617,7 +707,12 @@ public class MarketBuilder : MonoBehaviour {
     agent.radius = 0.4f;
 
     Player = player.AddComponent<ClickToMove>();
-    PlayerViz = player.AddComponent<PlayerVisual>(); // presentation child (capsule stays for physics, hidden)
+    // Gender must be set BEFORE PlayerVisual.Awake calls BuildVisual.
+    var viz = player.AddComponent<PlayerVisual>();
+    // Apply pending gender via reflection-free path: set field before Awake already ran,
+    // but Awake already built with default Boy, so re-tint if needed.
+    if (_pendingGender != PlayerGender.Boy) viz.SetGender(_pendingGender);
+    PlayerViz = viz;
 
     GameObject hand = new GameObject("HandAnchor");
     hand.transform.SetParent(player.transform);
@@ -626,6 +721,12 @@ public class MarketBuilder : MonoBehaviour {
 
     MiloAnchor = NewAnchor("MiloAnchor", MiloAnchorPos);
     MiaAnchor = NewAnchor("MiaAnchor", MiaAnchorPos);
+  }
+
+  // Called by GameInstaller before Awake (via pending) or live to switch.
+  public void SetPlayerGender(PlayerGender gender) {
+    _pendingGender = gender;
+    if (PlayerViz != null) PlayerViz.SetGender(gender);
   }
 
   Transform NewAnchor(string anchorName, Vector3 pos) {

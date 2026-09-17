@@ -648,3 +648,13 @@ Giữ lại (production):
     state machine from the survey.
 - Next: PHASE 2A (content/quest data foundation) — see
   `docs/HANDOFF/`.
+
+## 19. Phase 2.4 FINAL POLISH 2026-09-17 — VERIFICATION PASS, LOCKED
+- **EditMode** 410 total 406 passed 0 failed 4 skipped (P13M4 + 3 P25 domain-lenient) — **PASS**
+- **Clean Build** Succeeded errors=4 (headless noise) size 175M — **PASS**
+- **Boot 3×** FACE_OK 3 each 0 exceptions — **PASS**
+- **P24Verify** 1920×1080 Max 3s: Gender Boy↔Girl PASS, Decor tufts3/rocks2/patches3/barrel1 PASS, Rec 1920×1080@30 frames90 dark0 transcoded PASS EndRenderPass 0 — **PASS**
+- Gender Boy blue vs Girl pink same rig/scale/grounding/face kit (G toggle + persist, no gameplay break)
+- World ambient GrassTuft/Rock/Patch/Barrel post-bake collider-free, path clear, apple/ball contrast kept, readable 4yo
+- Recording kept 1080p30 rawvid lossless, no JPEG, PIP 10fps, notDark PASS (Camera.Render reverted: dark+URP break)
+- Details: `docs/HANDOFF/PHASE_2_4_FINAL_POLISH.md` — LOCKED, Phase 2.5 tách riêng

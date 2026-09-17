@@ -30,6 +30,7 @@ public class PlayerProgress {
   public float PlayTimeSec;
   public System.Collections.Generic.Dictionary<string, string> NpcVoices; // npcId -> voiceProfileId (Part E)
   public string WorldSeed; // stable per profile (Part E)
+  public PlayerGender PlayerGender = PlayerGender.Boy; // Phase 2.4: Boy/Girl choice, default Boy for migration
 }
 public interface ILearningService {
   void ReportSeen(WordId id, LearnSource src);

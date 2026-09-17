@@ -223,22 +223,36 @@ public class MicSetupMonitor : MonoBehaviour {
             || phoneReady) {
           float energy = 0f;
           bool flowing = false;
+          int ageMs = -1;
           try {
             if (_watcher != null) {
               long frames, bytes;
               float lastEnergy;
-              int lastBytes, ageMs;
+              int lastBytes;
               _watcher.ReadAudioStats(out frames, out bytes,
                 out lastEnergy, out lastBytes, out ageMs);
               flowing = phoneReady && lastBytes > 0
                 && MicSignal.IsDataFlowing(ageMs);
-              if (MicSignal.IsDataFlowing(ageMs)) energy = _smoothEnergy;
+              // Keep energy as raw telemetry for dot/assessment, but bars no longer use it
+              energy = lastEnergy;
             }
           } catch (Exception) { }
+          // LinkUp must mirror camera (§10): transport alive => no cross.
+          bool linkUp = phoneReady;
+          if (!linkUp && _watcher != null) {
+            try {
+              int seq; WatcherEvent ev; uint serial; string reason;
+              _watcher.ReadState(out seq, out ev, out serial, out reason);
+              if (ev == WatcherEvent.PhoneUp || ev == WatcherEvent.PhoneAudio
+                || ev == WatcherEvent.TransportOk) linkUp = true;
+            } catch (Exception) { }
+          }
+          // Bars measure CONNECTION quality, not loudness (fix 2026-09-17)
+          SignalLevel connLevel = MicSignal.ComputeConnectionLevel(ageMs, linkUp);
           return new MicSignalSnapshot {
             Source = MicSignalSource.Phone,
-            Level = phoneReady ? MicSignal.ComputeLevel(energy) : SignalLevel.None,
-            DataFlowing = flowing, LinkUp = phoneReady, Energy = energy
+            Level = connLevel,
+            DataFlowing = flowing, LinkUp = linkUp, Energy = energy
           };
         }
         return none;
@@ -681,10 +695,16 @@ public class MicSetupMonitor : MonoBehaviour {
   // watcher collapse to the latest: a DOWN after an AUDIO burst still wins.
   void UpdatePresenceWatch() {
     try {
-      bool wantWatch = _gate.State == MicSetupState.WaitPhoneLink
-        || _gate.State == MicSetupState.ReadyPhone;
-      if (wantWatch) EnsureWatcher();
-      else StopWatcher();
+      if (_gate == null) {
+        StopWatcher();
+        return;
+      }
+      // Keep watcher alive continuously (mirror GameCameraStreamService):
+      // transient bridge/gateway blips recover in ~1.5s via the thread's
+      // reconnect loop, not via the 30s probe. Stopping only on destroy
+      // keeps mic as stable as camera (§8 media independence preserved —
+      // still separate socket/thread/queue, just not torn down on Skipped).
+      EnsureWatcher();
       if (_watcher == null) return;
       int seq;
       WatcherEvent ev;
@@ -737,11 +757,17 @@ public class MicSetupMonitor : MonoBehaviour {
           break;
         case WatcherEvent.PhoneUp:
           _linkDownApplied = false; // sign of life: re-arm down edges
+          // Treat page-open as link alive for HUD (like camera ConnectedWaitingFrames):
+          // the bridge is up and the phone is reachable, even before the first
+          // AUDIO-proven session. Gate ReadyPhone still waits for PhoneLinked
+          // (audio proof) via probes, but HUD must not flash cross during wait.
           try {
             UnityEngine.Debug.Log("[MicSetup] Phone page opened — waiting for START.");
           } catch (Exception) { }
           if (_dialog != null && _dialog.IsWaitShowing)
             _dialog.SetWaitStatus(MicSetupDialog.StatusPhoneOpen);
+          // Do not promote gate to ReadyPhone here — only AUDIO proves a live
+          // session. HUD LinkUp is now derived from watcher state (see CurrentSignal).
           break;
         case WatcherEvent.PhoneStopped:
           // Explicit STOP with the page possibly still open: NOT a drop —

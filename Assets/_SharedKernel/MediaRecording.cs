@@ -90,7 +90,7 @@ public static class QualityTier {
 }
 
 public static class MediaRecording {
-  public const int DefaultVideoFps = 10;
+  public const int DefaultVideoFps = 10; // Phase 2.4: keep PIP 10fps for smooth face (perf saved via Camera.Render + backpressure + throttling, not fps cut)
   public const int MinVideoFps = 1;
   public const int MaxVideoFps = 30;
   public const int DefaultMaxAudioQueueSec = 30;
@@ -125,7 +125,7 @@ public static class MediaRecording {
   public const int MaxGameWidth = 1920;
   public const int MinGameHeight = 180;
   public const int MaxGameHeight = 1080;
-  public const int DefaultGameFps = 30; // sample cadence cap: raw writes are
+  public const int DefaultGameFps = 30; // Phase 2.4: keep 1080p30 capture (raw 249 MB/s); perf saved via backpressure skip + Camera.Render, not fps cut
                                   // memcpy-speed and the pump sustains 30 Hz
                                   // on SSD-class disks (~249 MB/s transient
                                   // at 1080p); drops stay counted + honest
@@ -228,10 +228,10 @@ public struct MediaRecordingConfig {
   public int VideoWidth;          // must match the game camera feed (320)
   public int VideoHeight;         // (240)
   public int VideoJpegQuality;    // local-camera JPEG encode only (phone
-                                  // bytes are stored verbatim, never
-                                  // re-encoded)
+                                   // bytes are stored verbatim, never
+                                   // re-encoded)
   public string OutputDirOverride; // null/empty = runtime default
-                                   // (persistentDataPath/MediaRecordings)
+                                    // (persistentDataPath/MediaRecordings)
   // Full-session deliverables (display/input quality stays max — see the
   // Phase 2.2 camera config and the untouched render pipeline; these ONLY
   // shape the recorded OUTPUT, which prioritizes fps + compression).

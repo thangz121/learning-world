@@ -13,6 +13,10 @@ using UnityEngine.AI;
 
 [DisallowMultipleComponent]
 public sealed class PlayerVisual : MonoBehaviour {
+  // Phase 2.4 FINAL POLISH: Boy/Girl share the same rig + face kit + grounding.
+  // The ONLY difference is the instance tints (shirt/skin/hair) applied after
+  // instantiate. GameplayRoot (collider, agent, quest) never sees gender.
+  public PlayerGender Gender { get; private set; } = PlayerGender.Boy;
   const float VisualScale = 0.5f; // quaternius 100x armature -> ~1.6m character
   // R6 grounding (FINAL POLISH 2026-09-13): the 0.340 lift descends from the
   // same discredited BakeMesh minMapped era as the NPC 0.493. Trusted
@@ -93,6 +97,30 @@ public sealed class PlayerVisual : MonoBehaviour {
     if (_presentation != null) _presentation.SetLiftOffset(moving ? WalkLiftLocal : 0f);
   }
 
+  // Phase 2.4: gender switch (presentation only). Safe to call before or
+  // after BuildVisual — if the visual already exists it re-tints in place;
+  // otherwise the next BuildVisual will use the new gender.
+  public void SetGender(PlayerGender gender) {
+    Gender = gender;
+    if (_skinForFace != null) ApplyGenderTint(_skinForFace, gender);
+  }
+
+  static void ApplyGenderTint(SkinnedMeshRenderer skin, PlayerGender gender) {
+    if (skin == null) return;
+    // Boy: blue shirt (existing identity, distinct from Milo orange / Mia coral)
+    // Girl: pink/coral shirt + slightly warmer hair tint if a Hair submesh exists.
+    // All tints are instance copies; imported sub-assets stay pristine.
+    // TryTint is no-op when nameFragment not found, so this is safe on both rigs.
+    if (gender == PlayerGender.Girl) {
+      TryTint(skin, "Shirt", new Color(0.95f, 0.42f, 0.62f));
+      TryTint(skin, "Pants", new Color(0.60f, 0.40f, 0.80f));
+      TryTint(skin, "Hair", new Color(0.35f, 0.22f, 0.12f));
+    } else {
+      TryTint(skin, "Shirt", new Color(0.25f, 0.5f, 0.95f));
+      // Pants tint not needed for Boy (keeps import), but ensure Hair stays default.
+    }
+  }
+
   // Future avatar-swap seam: expression/gesture API for dialogue/story code.
   public void SetExpression(CharacterExpression e) {
     if (_presentation != null) _presentation.SetExpression(e);
@@ -127,18 +155,13 @@ public sealed class PlayerVisual : MonoBehaviour {
     SkinnedMeshRenderer skin = visual.GetComponentInChildren<SkinnedMeshRenderer>(true);
     Transform headBone = null;
     if (skin != null) {
-      // Player identity: blue shirt (distinct from Milo's orange / Mia's coral),
-      // warm tan face, warm mid-brown skin. Instance copies only.
-      TryTint(skin, "Shirt", new Color(0.25f, 0.5f, 0.95f));
-      // R5-A material test (2026-09-13): Face 0.45 -> 0.25, Skin 0.50 -> 0.30
-      // to kill the glossy brow/cheek separation (specular on sculpt ridges
-      // reading as detached white ellipses). Candidate values only: macro +
-      // gameplay photos decide. Revert/tune if the face goes chalky or flat.
-      // R5c (brows persisted after R5-A => diffuse sculpt, not specular):
-      // deepen Face tan one step to integrate the lid/brow ridges. If the
-      // face loses identity or goes muddy in photos, revert this line only.
+      // Base face/skin (shared, gender-agnostic) — warm tan face, warm mid-brown
+      // skin tuned in R5-A/R5c for matte readability at gameplay distance.
       TryTint(skin, "Face", new Color(0.93f, 0.70f, 0.52f), 0.25f);
       TryTint(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.3f);
+      // Gender clothing tint (Boy blue vs Girl pink). Kept after Face/Skin so
+      // Girl pink Shirt wins over any default.
+      ApplyGenderTint(skin, Gender);
       if (skin.bones != null) {
         foreach (Transform bone in skin.bones) {
           if (bone == null) continue;

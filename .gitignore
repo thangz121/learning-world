@@ -56,5 +56,10 @@ tools/phone-qr-game.png
 Recordings/
 MediaRecordings/
 
+# Python cache — never commit
+__pycache__/
+*.pyc
+*.pyo
+
 # Nested scratch Unity project (not part of this checkpoint)
 My project/

@@ -96,7 +96,7 @@ public class CT_P20_MediaRecording {
     Assert.IsTrue(d.Validate(out reason), reason);
     Assert.AreEqual(320, d.VideoWidth);
     Assert.AreEqual(240, d.VideoHeight);
-    Assert.AreEqual(10, d.VideoFps);
+    Assert.AreEqual(MediaRecording.DefaultVideoFps, d.VideoFps);
     var mic = MediaRecordingConfig.ForMode(RecordingMode.MicOnly);
     Assert.IsTrue(mic.RecordAudio);
     Assert.IsFalse(mic.RecordVideo);
