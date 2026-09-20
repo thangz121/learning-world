@@ -52,8 +52,16 @@ public class WorldNameLabel : MonoBehaviour {
     if (_text == null) BuildLabel();
     _follow = follow;
     _height = heightAboveRoot;
-    if (_text != null && !string.IsNullOrWhiteSpace(displayName))
-      _text.text = displayName.Trim();
+    if (_text != null && !string.IsNullOrWhiteSpace(displayName)) {
+      string clean = displayName.Trim();
+      _text.text = clean;
+      // Fit guarantee (user round: Vietnamese subject names must show FULLY,
+      // never wrap/truncate): the 600px pill @112pt fits ~9 chars on one
+      // line; longer names ("Tiếng Việt" 10, "Về sảnh chính" 12) step down
+      // to 88pt so they stay on a single uncut line. Same LegacyRuntime
+      // font (Vietnamese diacritics proven in player builds), same pill.
+      _text.fontSize = clean.Length > 9 ? 88 : 112;
+    }
     if (_follow != null) transform.position = _follow.position + Vector3.up * _height;
   }
 

@@ -64,11 +64,21 @@ public class CT_P31_WorldFoundation {
   }
 
   [Test] public void CT_P31F_GateEntryReturnGeometry() {
-    foreach (SubjectDefinition def in SubjectCatalog.All) {
-      // Gate sits on the hedge line (inner boundary), entry just inside it.
-      bool onHedgeX = Math.Abs(Math.Abs(def.GatePos.x) - 8.8f) < 0.01f;
-      bool onHedgeZ = Math.Abs(Math.Abs(def.GatePos.z) - 6.8f) < 0.01f;
-      Assert.IsTrue(onHedgeX || onHedgeZ, def.DisplayName + " gate must sit on the hedge line");
+    // HUB-ARC contract (user round): the 4 entry gates stand TOGETHER hugging
+    // the yard (~7m apart) so neighbours never occlude each other — all in
+    // front of the spawn camera (never behind it). Entry sits just past its
+    // gate toward the district; return sits inside its playground, away from
+    // the entry gate.
+    for (int i = 0; i < SubjectCatalog.All.Length; i++) {
+      SubjectDefinition def = SubjectCatalog.All[i];
+      Assert.LessOrEqual(Math.Abs(def.GatePos.x), 16f, def.DisplayName + " gate inside the outer bounds (x)");
+      Assert.Greater(def.GatePos.z, -10.5f, def.DisplayName + " gate inside the outer bounds (z)");
+      Assert.Less(def.GatePos.z, 5f, def.DisplayName + " gate in front of the spawn camera, never behind it");
+      for (int j = i + 1; j < SubjectCatalog.All.Length; j++) {
+        float gap = (def.GatePos - SubjectCatalog.All[j].GatePos).magnitude;
+        Assert.Greater(gap, 6f, def.DisplayName + " vs " + SubjectCatalog.All[j].DisplayName
+          + " arc spacing: neighbours must never occlude each other");
+      }
       float gateToCenter = (def.GatePos - def.PlaygroundCenter).magnitude;
       float entryToCenter = (def.EntryPoint - def.PlaygroundCenter).magnitude;
       float gateToEntry = (def.GatePos - def.EntryPoint).magnitude;

@@ -31,17 +31,26 @@ public class SubjectDefinition {
 }
 
 // Single source of truth for the 4 Phase 3.0 subjects. Coordinates are in the
-// MarketBuilder world contract (metres): Main World X[-8,8] Z[-6,6] untouched;
-// districts sit outside it, roads cross the hedge through 2.4m gaps.
+// MarketBuilder world contract (metres).
+// HUB-ARC layout (user round): the 4 entry gates stand TOGETHER in a wide
+// arc hugging the yard (outer gates at x=±10.5/z=-4, inner at x=±3.5/z=-5),
+// ~7m apart so neighbours never occlude each other — close to spawn, all in
+// front of the spawn camera (never behind it). Each gate gets a brick
+// walkway from the lawn. Districts + roads + return triggers are UNTOUCHED:
+// travel is walk-in (no teleport), the old roads still guide feet outward.
+// Entry labels are Vietnamese (same WorldNameLabel font that renders "Về").
 public static class SubjectCatalog {
-  // East road runs at z=1.8 (clear of BallCrate z2.6..3.8 and Pedestal z0.15..1.05).
+  // Hub reference: gates face the hub; walkways fan out from the yard.
+  public static readonly Vector3 HubCenter = new Vector3(0f, 0f, 0.5f);
+  // Arc slots, left -> right from spawn (west -> east), ~7m spacing:
+  // Thinking(-10.5,-4) English(-3.5,-5) Vietnamese(3.5,-5) Math(10.5,-4).
   public static readonly SubjectDefinition Math = new SubjectDefinition {
     Id = SubjectIds.Math,
-    DisplayName = "Math",
+    DisplayName = "Toán",
     Landmark = SubjectLandmarkKind.Blocks,
-    GatePos = new Vector3(8.8f, 0f, 1.8f),
+    GatePos = new Vector3(10.5f, 0f, -4f),
     PlaygroundCenter = new Vector3(12.2f, 0f, 1.8f),
-    EntryPoint = new Vector3(9.9f, 0f, 1.8f),
+    EntryPoint = new Vector3(10.84f, 0f, -2.85f), // just past the gate toward the district
     // NE corner: off the entry axis AND the follow sightline (user round:
     // gates must not occlude each other).
     ReturnPoint = new Vector3(13.6f, 0f, -0.9f),
@@ -52,11 +61,11 @@ public static class SubjectCatalog {
 
   public static readonly SubjectDefinition Thinking = new SubjectDefinition {
     Id = SubjectIds.Thinking,
-    DisplayName = "Thinking",
+    DisplayName = "Tư duy",
     Landmark = SubjectLandmarkKind.Gears,
-    GatePos = new Vector3(-8.8f, 0f, 1.8f),
+    GatePos = new Vector3(-10.5f, 0f, -4f),
     PlaygroundCenter = new Vector3(-12.2f, 0f, 1.8f),
-    EntryPoint = new Vector3(-9.9f, 0f, 1.8f),
+    EntryPoint = new Vector3(-10.84f, 0f, -2.85f), // just past the gate toward the district
     // NE corner mirrored (same anti-occlusion reason as Math).
     ReturnPoint = new Vector3(-13.6f, 0f, -0.9f),
     Primary = new Color(0.25f, 0.62f, 0.35f),
@@ -66,13 +75,14 @@ public static class SubjectCatalog {
 
   public static readonly SubjectDefinition English = new SubjectDefinition {
     Id = SubjectIds.English,
-    DisplayName = "English",
+    DisplayName = "Tiếng Anh",
     Landmark = SubjectLandmarkKind.Books,
-    GatePos = new Vector3(0f, 0f, -6.8f),
+    GatePos = new Vector3(-3.5f, 0f, -5f),
     PlaygroundCenter = new Vector3(0f, 0f, -10.0f),
-    EntryPoint = new Vector3(0f, 0f, -7.9f),
-    // Further east + toward the gate (user round: no mutual occlusion).
-    ReturnPoint = new Vector3(3.0f, 0f, -9.2f),
+    EntryPoint = new Vector3(-2.81f, 0f, -5.98f), // just past the gate toward the district
+    // West of the core, clear of the neighbouring Vietnamese gate walkway
+    // (user round: the old east spot tangled the VN gate view).
+    ReturnPoint = new Vector3(-2.5f, 0f, -11.5f),
     Primary = new Color(0.85f, 0.30f, 0.28f),
     Secondary = new Color(0.99f, 0.94f, 0.84f),
     GroundTint = new Color(0.90f, 0.68f, 0.62f),
@@ -82,12 +92,12 @@ public static class SubjectCatalog {
     Id = SubjectIds.Vietnamese,
     DisplayName = "Tiếng Việt",
     Landmark = SubjectLandmarkKind.Scrolls,
-    // East of the spawn axis: the south spawn camera (z=9.1) looks straight
-    // down x=0, so a road on x=0 would put the gate between camera and player
-    // on frame one. x=3.5 keeps first impression (path + Milo) intact.
-    GatePos = new Vector3(3.5f, 0f, 6.8f),
+    // Hub-arc slot: together with the other 3 gates in front of the spawn
+    // camera (the old x=3.5 south-gate offset is obsolete — no gate stands
+    // between the spawn camera and the player anymore).
+    GatePos = new Vector3(3.5f, 0f, -5f),
     PlaygroundCenter = new Vector3(3.5f, 0f, 10.0f),
-    EntryPoint = new Vector3(3.5f, 0f, 7.9f),
+    EntryPoint = new Vector3(3.5f, 0f, -3.8f), // just past the gate toward the district
     ReturnPoint = new Vector3(5.8f, 0f, 10.0f),
     Primary = new Color(0.55f, 0.35f, 0.75f),
     Secondary = new Color(0.96f, 0.60f, 0.75f),

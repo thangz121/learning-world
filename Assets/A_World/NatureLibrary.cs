@@ -51,13 +51,22 @@ public static class NatureLibrary {
     Color foliageDark = new Color(foliage.r * 0.78f, foliage.g * 0.82f, foliage.b * 0.80f);
     GameObject go = Object.Instantiate(prefab, pos, Quaternion.Euler(0f, yawDeg, 0f));
     go.transform.SetParent(parent, true);
-    // Height normalization on the DEPLOYED instance (active renderers report
-    // valid world bounds; converges from any authoring unit in ≤4 passes).
+    // Height normalization on the DEPLOYED instance, iterated from FRESH
+    // field-only measurements (MeshLocalHeight includes the CURRENT root
+    // scale, so every pass measures what the previous pass actually did).
+    // Why not single-pass, and why not Renderer.bounds: (1) legit models
+    // need up to ~58x total (CommonTree_1 is authored 2.77cm tall — one
+    // clamped 20x step undershoots to 0.55m); (2) Renderer.bounds depends
+    // on the cull pass, so within one frame it can read stale/partial
+    // values and a loop then COMPOUNDS the error (survey photo proof: a
+    // 36x bush swallowing a gate while EditMode stayed green). Field-only
+    // measurement has no staleness source, so iteration converges exactly
+    // (normally 2 passes) instead of compounding.
     go.transform.localScale = Vector3.one;
-    for (int k = 0; k < 4; k++) {
-      float deployed = DeployedHeight(go);
-      if (deployed < 0.001f) break;
-      float corr = Mathf.Clamp(targetHeight / deployed, 0.05f, 20f);
+    for (int k = 0; k < 6; k++) {
+      float local = MeshLocalHeight(go);
+      if (local < 0.001f) break;
+      float corr = Mathf.Clamp(targetHeight / local, 0.05f, 20f);
       go.transform.localScale = go.transform.localScale * corr;
       if (Mathf.Abs(corr - 1f) < 0.02f) break;
     }
@@ -83,6 +92,67 @@ public static class NatureLibrary {
       else { b = r.bounds; any = true; }
     }
     return any ? b.size.y : 0f;
+  }
+
+  // Synchronous local-space height: max over every RENDERED mesh's own bounds
+  // pushed through MANUALLY COMPOSED local matrices up to (excluding) the
+  // spawned root. Manual composition from plain local fields is the whole
+  // point: Unity's cached world matrices (localToWorld/worldToLocal) and
+  // Renderer.bounds do NOT update synchronously with field writes inside
+  // one frame, so measuring with them right after resetting scale to one
+  // silently reads the PREFAB's authored scale instead (a tree read 2.885x
+  // big and shrank to 0.55m; a bush compounded to 36x and swallowed a gate
+  // — both while EditMode stayed green). Local fields are the source of
+  // truth and are fresh by definition, in editor and player alike.
+  // Rendered-only mirrors the renderer set: MeshFilters with no enabled
+  // Renderer (LOD leftovers / editor shells) must never drive the scale.
+  static float MeshLocalHeight(GameObject go) {
+    float top = float.NegativeInfinity, bottom = float.PositiveInfinity;
+    bool any = false;
+    foreach (MeshFilter mf in go.GetComponentsInChildren<MeshFilter>()) {
+      if (mf == null || mf.sharedMesh == null) continue;
+      if (!mf.gameObject.activeInHierarchy) continue;
+      Renderer r = mf.GetComponent<Renderer>();
+      if (r == null || !r.enabled) continue;
+      if (AccumulateMesh(ref top, ref bottom, go.transform, mf.transform, mf.sharedMesh.bounds)) any = true;
+    }
+    foreach (SkinnedMeshRenderer smr in go.GetComponentsInChildren<SkinnedMeshRenderer>()) {
+      if (smr == null || smr.sharedMesh == null) continue;
+      if (!smr.enabled || !smr.gameObject.activeInHierarchy) continue;
+      if (AccumulateMesh(ref top, ref bottom, go.transform, smr.transform, smr.sharedMesh.bounds)) any = true;
+    }
+    if (!any) return 0f;
+    return Mathf.Max(0.001f, top - bottom);
+  }
+
+  // Compose mesh-local -> PARENT-local from plain local TRS fields only,
+  // INCLUDING the spawned root's own (just-set, always fresh) scale — so a
+  // pass measures exactly what the previous pass applied, and iteration
+  // converges instead of compounding. Returns false when the mesh is not
+  // under root (cap: 64 levels).
+  static bool AccumulateMesh(ref float top, ref float bottom,
+      Transform root, Transform mesh, Bounds b) {
+    Transform stop = (root != null) ? root.parent : null;
+    Matrix4x4 m = Matrix4x4.identity;
+    Transform t = mesh;
+    int guard = 0;
+    while (t != null && t != stop && guard < 64) {
+      Matrix4x4 local;
+      try { local = Matrix4x4.TRS(t.localPosition, t.localRotation, t.localScale); }
+      catch (System.Exception) { return false; }
+      m = local * m;
+      t = t.parent;
+      guard++;
+    }
+    if (stop != null && t != stop) return false;
+    for (int i = 0; i < 8; i++) {
+      Vector3 corner = b.center + Vector3.Scale(b.extents, new Vector3(
+        (i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+      Vector3 p = m.MultiplyPoint3x4(corner);
+      if (p.y > top) top = p.y;
+      if (p.y < bottom) bottom = p.y;
+    }
+    return true;
   }
 
   static Material MapSlot(string slot, Color foliage, Color foliageDark, Color a1, Color a2, bool doubleSided) {

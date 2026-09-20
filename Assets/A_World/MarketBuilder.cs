@@ -11,6 +11,7 @@
 // the Lead can re-wire/verify from other agents' components.
 // C# 9.0 only. No legacy Input. No TTS/Worker calls (audio via IAudioDirector).
 using Unity.AI.Navigation;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -19,6 +20,25 @@ using UnityEngine.InputSystem.UI;
 
 [DisallowMultipleComponent]
 public class MarketBuilder : MonoBehaviour {
+  // Hub-selection mode (user round: gate-selection hall). The PLAYER BUILD
+  // runs hub-only: no NPCs (Milo/Mia), no market stall, no quest props
+  // (apple/ball crates, pedestal, flower bed, distractor ball, question
+  // bubble, Milo mat, barrel). Gates, player, camera, mic, recorder and all
+  // services stay. EditMode tests keep the FULL world (default false), so
+  // the whole quest/presenter suite stays green; -fullworld forces full
+  // even in player builds (debug escape hatch).
+  public static bool HubSelectionOnly = false;
+
+  [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+  static void DetectHubMode() {
+    try {
+      bool full = false;
+      foreach (string a in Environment.GetCommandLineArgs()) {
+        if (string.Equals(a, "-fullworld", StringComparison.OrdinalIgnoreCase)) { full = true; break; }
+      }
+      HubSelectionOnly = !full && !Application.isEditor;
+    } catch (Exception) { HubSelectionOnly = false; }
+  }
   // Fixed world contract (metres). Single source of truth for W1 coordinates.
   // Phase-1 closure: Milo hosts the market stall front (his place; Mia keeps
   // the counter as shopkeeper), so spawn path + onboarding lead southwest.
@@ -69,13 +89,17 @@ public class MarketBuilder : MonoBehaviour {
 
   void Awake() {
     BuildEnvironment();
-    BuildStall();
+    if (!HubSelectionOnly) {
+      BuildStall();
+    }
     BuildTreeAndHedge();
-    BuildAppleCrate();
-    BuildBallCrate();
-    BuildFlowerBed();
-    BuildDistractor();
-    BuildBubble();
+    if (!HubSelectionOnly) {
+      BuildAppleCrate();
+      BuildBallCrate();
+      BuildFlowerBed();
+      BuildDistractor();
+      BuildBubble();
+    }
     // Phase 3.0: Learning World shell BEFORE the bake (roads + medallions are
     // walkable; pillars/cores/trees bake as geometry and get runtime carves).
     _worldResult = SubjectWorldBuilder.BuildShell(transform);
@@ -85,7 +109,9 @@ public class MarketBuilder : MonoBehaviour {
     BuildNavMesh();
     BuildNavCarves();
     SubjectWorldBuilder.BuildCarves(_worldResult, AddCarve); // Phase 3.0: gate/core/tree/boundary/outer carves
-    BuildMiloMat(); // R5V-b: post-NavMesh so the bake never sees it
+    if (!HubSelectionOnly) {
+      BuildMiloMat(); // R5V-b: post-NavMesh so the bake never sees it
+    }
     BuildAmbientDecor(); // Phase 2.4: post-bake ambient (pure visual, no carve)
     SubjectWorldBuilder.BuildDecor(transform); // Phase 3.0: post-bake dressing (collider-free)
     BuildPlayer();
@@ -311,7 +337,10 @@ public class MarketBuilder : MonoBehaviour {
     // garden edge inside a larger world (foreground path / midground play /
     // background green), plus three small bushes inside corners for charm.
     // Each answers WHY: orientation + horizon depth, never clutter.
-    BuildTree(new Vector3(-11f, -0.1f, -3f), 1.6f);
+    // Hub round 5 (user: tree swallowed the Thinking gate): the (-11,-3)
+    // tree stood 1.1m from the arc gate — moved deep west, clear of gates,
+    // walkways and districts.
+    BuildTree(new Vector3(-14f, -0.1f, -9f), 1.6f);
     // Phase 3.0: the old east backdrop tree stood at (10.5, 4.5) — its canopy
     // crossed the Math follow sightline x=12 (P3 visual QA: obstruction
     // pull-in parked the playground camera 1.6m behind the player). Parked
@@ -380,9 +409,12 @@ public class MarketBuilder : MonoBehaviour {
     // Deterministic alternation (never Random: every build is identical).
     // Phase 3.0: gaps where the 4 subject roads cross (|x|<1.65 on N/E/W,
     // Vietnamese S road runs at x=3.5 so the spawn camera axis stays clear).
+    // Hub-arc round: the 2 middle gate walkways cross the north hedge at
+    // x≈±4.3 — gaps there too (outer walkways thread the open hedge corners,
+    // no gap needed).
     int n = 0;
     for (float x = -8f; x <= 8.01f; x += 1.6f) {
-      bool gapN = Mathf.Abs(x) < 1.65f;
+      bool gapN = Mathf.Abs(x) < 1.65f || Mathf.Abs(Mathf.Abs(x) - 4.3f) < 1.5f;
       bool gapS = Mathf.Abs(x - 3.5f) < 1.65f;
       if (!gapN) AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, -6f), n);
       if (!gapS) AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, 6f), n + 1);
@@ -390,7 +422,9 @@ public class MarketBuilder : MonoBehaviour {
       n++;
     }
     for (float z = -4.4f; z <= 4.41f; z += 1.6f) {
-      if (Mathf.Abs(z - 1.8f) >= 1.65f) {
+      // Hub-arc round: the outer gate walkways cross the side hedge at
+      // z≈-1.2 — a window there (the road gap covers z 0.15..3.45).
+      if (Mathf.Abs(z - 1.8f) >= 1.65f && Mathf.Abs(z + 2.0f) >= 1.4f) {
         AddHedgeBush(hedge.transform, new Vector3(-8f, 0.28f, z), n);
         AddHedgeBush(hedge.transform, new Vector3(8f, 0.28f, z), n + 1);
       }
@@ -398,6 +432,7 @@ public class MarketBuilder : MonoBehaviour {
     }
 
     void AddHedgeBush(Transform parent, Vector3 pos, int seed) {
+      if (IsInGatePlaza(pos)) return; // gate plazas stay clean (gap-edge bushes included)
       GameObject bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
       bush.name = "HedgeBush";
       bush.transform.SetParent(parent);
@@ -664,8 +699,14 @@ public class MarketBuilder : MonoBehaviour {
   // only intra-cluster jitter (rotation/scale/offset) uses the seeded RNG, so
   // every build is identical. GameplayClearZone stays empty: player spawn,
   // path corridor, Milo/Mia anchors, both crates, pedestal, flower bed.
+  // Hub round (gate-selection hub): this space is the start area where the
+  // player picks a subject gate — NOT a garden to wander. Ambient decor is
+  // thinned to quiet framing (a few anchors + low edges) so gates, path and
+  // characters read first. The generators (NatureLibrary/LwGrass/Add*)
+  // stay FULLY intact: districts and future areas reuse them.
   void BuildAmbientDecor() {
     var rng = new System.Random(20260918);
+    BuildHubWalkways(rng); // FIRST: registers walkway segments so later decor stays off them
     BuildGroundVariation(rng);
     BuildGrassClusters(rng);
     BuildFlowerClusters(rng);
@@ -676,7 +717,10 @@ public class MarketBuilder : MonoBehaviour {
     BuildPathTransition(rng);
     BuildStoryProps(rng);
     // Legacy focal: wooden barrel beside the apple crate (non-interactive).
-    AddBarrel(new Vector3(CrateAnchorPos.x + 0.9f, 0f, CrateAnchorPos.z + 0.3f));
+    // Hub-selection mode: the crate is gone, so the barrel goes too.
+    if (!HubSelectionOnly) {
+      AddBarrel(new Vector3(CrateAnchorPos.x + 0.9f, 0f, CrateAnchorPos.z + 0.3f));
+    }
   }
 
   // GameplayClearZone: decor with volume (trees/bushes/rocks/barrel) must stay
@@ -714,21 +758,101 @@ public class MarketBuilder : MonoBehaviour {
     return new Vector2(pa.x - ba.x * t, pa.y - ba.y * t).magnitude;
   }
 
+  // ---- hub walkways: brick-paved entrances to the 4 arc gates ------------
+  // One walkway per gate, fanning from the path area to the gate front.
+  // User round: NO flowers/grass/trees/bushes/rocks ON the walkways — every
+  // planting helper consults IsOnWalkway below. Walkways are flat ground
+  // treatment (no colliders, feet walk over); the bake still sees the meshes.
+  static readonly List<Vector3[]> WalkwaySegs = new List<Vector3[]>();
+
+  static bool IsOnWalkway(Vector3 pos, float margin) {
+    if (WalkwaySegs == null) return false;
+    foreach (Vector3[] s in WalkwaySegs) {
+      if (s == null || s.Length < 2) continue;
+      if (DistToSegment(pos, s[0], s[1]) < margin) return true;
+    }
+    return false;
+  }
+
+  // Hub-arc gate plazas (user round): a 2.6m calm disc around every gate
+  // where NO solid decor spawns (bushes/trees/flowers/rocks/plants/tufts/
+  // pebbles/backdrop) — gates + walkways + labels read clean from every
+  // angle (player report: bush IN the English gate). Flat ground patches may
+  // stay (walkable tint, zero volume).
+  static bool IsInGatePlaza(Vector3 pos) {
+    if (SubjectCatalog.All == null) return false;
+    foreach (SubjectDefinition def in SubjectCatalog.All) {
+      if (def == null) continue;
+      float dx = pos.x - def.GatePos.x, dz = pos.z - def.GatePos.z;
+      if (dx * dx + dz * dz < 2.6f * 2.6f) return true;
+    }
+    return false;
+  }
+
+  void BuildHubWalkways(System.Random rng) {
+    WalkwaySegs.Clear();
+    foreach (SubjectDefinition def in SubjectCatalog.All) {
+      Vector3 face = SubjectCatalog.HubCenter - def.GatePos;
+      face.y = 0f;
+      if (face.sqrMagnitude < 0.001f) face = new Vector3(0f, 0f, 1f);
+      face.Normalize();
+      // Walkway from the open lawn to the gate front. Outer gates (|x|>10)
+      // start near the lawn edge so the strip threads the open hedge corner
+      // (no hedge crossing); middle gates start mid-lawn. Lengths stay short
+      // now the arc hugs the yard.
+      float sx = Mathf.Sign(def.GatePos.x) * (Mathf.Abs(def.GatePos.x) > 10f ? 7.5f : 4.0f);
+      Vector3 a = new Vector3(sx, 0f, -0.5f);
+      Vector3 b = def.GatePos + face * 0.6f;
+      WalkwaySegs.Add(new Vector3[] { a, b });
+      BuildBrickWalkway(a, b, rng);
+    }
+  }
+
+  void BuildBrickWalkway(Vector3 a, Vector3 b, System.Random rng) {
+    Vector3 d = b - a;
+    d.y = 0f;
+    float len = d.magnitude;
+    if (len < 0.5f) return;
+    d /= len;
+    Vector3 side = new Vector3(-d.z, 0f, d.x);
+    Color brickA = new Color(0.78f, 0.62f, 0.42f);
+    Color brickB = new Color(0.70f, 0.54f, 0.36f);
+    float yaw = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg;
+    int row = 0;
+    for (float t = 0.2f; t < len - 0.1f; t += 0.34f, row++) {
+      Vector3 center = a + d * t;
+      for (int k = -1; k <= 1; k += 2) {
+        GameObject brick = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        brick.name = "WalkBrick";
+        brick.transform.SetParent(transform);
+        float jyaw = yaw + (rng != null ? (float)(rng.NextDouble() * 4.0 - 2.0) : 0f);
+        brick.transform.position = center + side * (k * 0.22f) + new Vector3(0f, 0.025f, 0f);
+        brick.transform.localRotation = Quaternion.Euler(0f, jyaw, 0f);
+        brick.transform.localScale = new Vector3(0.40f, 0.05f, 0.30f);
+        brick.GetComponent<Renderer>().sharedMaterial =
+          Lit(((row + (k > 0 ? 1 : 0)) % 2 == 0) ? brickA : brickB);
+        Collider c = brick.GetComponent<Collider>();
+        if (c != null) Destroy(c);
+      }
+    }
+  }
+
   // ---- ground: soft value/hue breakup so the lawn is a stage, not a sheet --
   void BuildGroundVariation(System.Random rng) {
     // Irregular flat discs (y just above grass, collider-free, walkable).
+    // Hub round: 9 -> 6, lawn reads calm behind the gates.
     AddGroundPatch(new Vector3(-5.5f, 0f, 2.5f), new Vector3(2.2f, 1f, 1.6f), new Color(0.36f, 0.66f, 0.33f), rng);
     AddGroundPatch(new Vector3(-4.0f, 0f, -4.0f), new Vector3(2.0f, 1f, 1.5f), new Color(0.30f, 0.58f, 0.28f), rng);
-    AddGroundPatch(new Vector3(4.5f, 0f, -4.5f), new Vector3(2.4f, 1f, 1.7f), new Color(0.36f, 0.66f, 0.33f), rng);
+    // Hub round: (-1.5,-4.6) sat under the English arc gate and (4.5,-4.5)
+    // under the Math gate — moved to open lawn (walkway guard backstops).
+    AddGroundPatch(new Vector3(-3.0f, 0f, 0.8f), new Vector3(2.0f, 1f, 1.3f), new Color(0.38f, 0.64f, 0.32f), rng);
+    AddGroundPatch(new Vector3(6.5f, 0f, -1.5f), new Vector3(2.4f, 1f, 1.7f), new Color(0.36f, 0.66f, 0.33f), rng);
     AddGroundPatch(new Vector3(5.5f, 0f, 1.8f), new Vector3(1.8f, 1f, 1.4f), new Color(0.38f, 0.64f, 0.32f), rng);
-    AddGroundPatch(new Vector3(-2.4f, 0f, 1.2f), new Vector3(1.5f, 1f, 1.2f), new Color(0.30f, 0.58f, 0.28f), rng);
-    AddGroundPatch(new Vector3(2.6f, 0f, 1.2f), new Vector3(1.6f, 1f, 1.3f), new Color(0.36f, 0.66f, 0.33f), rng);
-    AddGroundPatch(new Vector3(-1.5f, 0f, -4.6f), new Vector3(2.0f, 1f, 1.3f), new Color(0.38f, 0.64f, 0.32f), rng);
-    AddGroundPatch(new Vector3(-6.5f, 0f, -0.5f), new Vector3(1.7f, 1f, 1.4f), new Color(0.30f, 0.58f, 0.28f), rng);
     AddGroundPatch(new Vector3(0.6f, 0f, 4.9f), new Vector3(1.4f, 1f, 1.0f), new Color(0.36f, 0.66f, 0.33f), rng);
   }
 
   void AddGroundPatch(Vector3 pos, Vector3 size, Color color, System.Random rng) {
+    if (IsOnWalkway(pos, 1.0f)) return; // hub walkways stay clean
     GameObject patch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     patch.name = "GrassPatch";
     patch.transform.SetParent(transform);
@@ -743,16 +867,13 @@ public class MarketBuilder : MonoBehaviour {
 
   // ---- low vegetation: irregular tuft clusters, walkable, off-path rhythm --
   // User round (thoáng): thinned 14 -> 8, kept as breathing accents.
+  // Hub round: 8 -> 4 corner accents (P25H needs >= 3 tufts — still green).
+  // The old (-5.0,-4.2) tuft sat inside the Thinking arc gate — moved west.
   void BuildGrassClusters(System.Random rng) {
-    // Legacy trio (kept at exact positions) + dead-zone clusters.
     AddGrassTuft(new Vector3(-4f, 0f, 5.2f), 0.9f, rng);
     AddGrassTuft(new Vector3(3f, 0f, -5f), 1f, rng);
     AddGrassTuft(new Vector3(6.5f, 0f, 1.5f), 0.85f, rng);
-    AddGrassTuft(new Vector3(-5.0f, 0f, -4.2f), 1.05f, rng);
-    AddGrassTuft(new Vector3(-2.2f, 0f, -4.8f), 0.9f, rng);
-    AddGrassTuft(new Vector3(4.0f, 0f, -0.2f), 0.85f, rng);
-    AddGrassTuft(new Vector3(-1.7f, 0f, 3.0f), 0.8f, rng);
-    AddGrassTuft(new Vector3(1.7f, 0f, 3.2f), 0.9f, rng);
+    AddGrassTuft(new Vector3(-6.6f, 0f, -5.3f), 1.05f, rng);
   }
 
   // ---- flowers: pastel clusters (never carpets), at focal adjacencies ------
@@ -765,19 +886,19 @@ public class MarketBuilder : MonoBehaviour {
   };
 
   void BuildFlowerClusters(System.Random rng) {
-    // Legacy north-lawn patch (kept) + composition clusters near
-    // tree bases / rocks / hedge / landmarks — always with breathing room.
-    // User round (thoáng): 8 -> 5 clusters, fewer blooms each.
+    // Legacy north-lawn patch (kept: 3 blooms = P25H patch pin) + 2 quiet
+    // corner clusters. Hub round: 5 -> 2 clusters, 2 blooms each.
+    // (The old (3.2, 5.0) meadow call sat inside the Vietnamese road
+    // clear-zone and never planted — dropped, not moved.)
     AddFlowerPatch(new Vector3(2f, 0f, 4.8f), rng);
-    AddFlowerCluster(new Vector3(-5.5f, 0f, 4.2f), 3, 0, rng); // NW tree base
-    AddFlowerCluster(new Vector3(3.2f, 0f, 5.0f), 3, 1, rng);  // north meadow
-    AddFlowerCluster(new Vector3(-1.8f, 0f, 2.5f), 3, 2, rng); // west of path
+    AddFlowerCluster(new Vector3(-5.5f, 0f, 4.2f), 2, 0, rng); // NW tree base
     AddFlowerCluster(new Vector3(-6.5f, 0f, -5.2f), 2, 0, rng); // SW corner
-    AddFlowerCluster(new Vector3(1.7f, 0f, -4.6f), 2, 2, rng);  // south border
   }
 
   void AddFlowerCluster(Vector3 pos, int blooms, int paletteOffset, System.Random rng) {
     if (IsInGameplayClearZone(pos)) return;
+    if (IsOnWalkway(pos, 0.9f)) return; // hub walkways stay clean
+    if (IsInGatePlaza(pos)) return; // gate plazas stay clean
     // Premium path: one sculpted Quaternius cluster, pastel-pair tinted.
     Color a1 = PastelBlooms[paletteOffset % PastelBlooms.Length];
     Color a2 = PastelBlooms[(paletteOffset + 2) % PastelBlooms.Length];
@@ -836,24 +957,19 @@ public class MarketBuilder : MonoBehaviour {
   }
 
   // ---- bushes: edge/corner/landmark accents that break empty lawns ---------
+  // Hub round 2 (user: still too many bushes): 5 -> 2 far-corner accents.
+  // Hedge + district rings keep their structural roles; these were extras.
   void BuildBushClusters(System.Random rng) {
     AddDecorBush(new Vector3(-7.0f, 0f, 0.5f), 1.0f, false, rng);
-    AddDecorBush(new Vector3(-5.2f, 0f, -5.0f), 1.1f, false, rng);
-    AddDecorBush(new Vector3(5.0f, 0f, -5.0f), 1.0f, false, rng);
-    AddDecorBush(new Vector3(2.5f, 0f, 5.1f), 0.9f, false, rng);
-    AddDecorBush(new Vector3(-6.0f, 0f, 2.0f), 0.85f, false, rng); // NW tree base
-    AddDecorBush(new Vector3(-5.4f, 0f, -3.4f), 0.9f, false, rng); // stall west
-    AddDecorBush(new Vector3(-1.4f, 0f, -3.2f), 0.85f, false, rng); // stall east
-    AddDecorBush(new Vector3(-1.9f, 0f, -0.6f), 0.8f, false, rng);  // path bend
-    AddDecorBush(new Vector3(-7.0f, 0f, -4.5f), 1.0f, true, rng);   // flowering SW
     AddDecorBush(new Vector3(7.0f, 0f, 4.5f), 0.95f, true, rng);    // flowering NE
-    AddDecorBush(new Vector3(-6.9f, 0f, 5.0f), 0.9f, true, rng);    // flowering NW
   }
 
   static readonly string[] BushModels = { "Bush_1", "Bush_2" };
 
   void AddDecorBush(Vector3 pos, float s, bool flowering, System.Random rng) {
     if (IsInGameplayClearZone(pos)) return;
+    if (IsOnWalkway(pos, 1.0f)) return; // hub walkways stay clean
+    if (IsInGatePlaza(pos)) return; // gate plazas stay clean
     // Premium path: sculpted bushes; berries become pastel blooms.
     string model = flowering ? "BushBerries_1" : BushModels[rng.Next(BushModels.Length)];
     Color leaf = (rng.NextDouble() < 0.5)
@@ -895,22 +1011,21 @@ public class MarketBuilder : MonoBehaviour {
   // ---- trees: 3 scale classes; inside = small/medium anchors, outside = BG --
   // Premium path: curated Quaternius silhouettes (round/pine/willow) with
   // runtime height normalization; primitive fallback keeps domains green.
+  // Hub round 4 (user: yard trees covered the gates + Math label from spawn):
+  // NO inside trees anymore — background silhouettes + district trees keep
+  // the depth. The mechanism (AddDecorTree) stays for future areas.
   void BuildTreeComposition(System.Random rng) {
-    // Inside-boundary anchors (carved in BuildNavCarves, visuals here).
-    AddDecorTree(new Vector3(-6.5f, 0f, -2.8f), "CommonTree_1", 1.6f, new Color(0.25f, 0.58f, 0.28f), rng);
-    AddDecorTree(new Vector3(6.8f, 0f, -3.2f), "PineTree_2", 1.7f, new Color(0.26f, 0.57f, 0.29f), rng);
-    AddDecorTree(new Vector3(-2.8f, 0f, 4.9f), "Willow_2", 2.3f, new Color(0.30f, 0.62f, 0.30f), rng);
     // Background silhouettes outside play (soft, lower-contrast greens).
     AddDecorTree(new Vector3(-2f, -0.1f, -11f), "CommonTree_5", 4.2f, new Color(0.24f, 0.53f, 0.30f), rng);
     AddDecorTree(new Vector3(12f, -0.1f, -2f), "CommonTree_3", 3.6f, new Color(0.24f, 0.53f, 0.30f), rng);
-    AddDecorTree(new Vector3(-12f, -0.1f, 5f), "CommonTree_1", 3.8f, new Color(0.24f, 0.53f, 0.30f), rng);
-    AddDecorTree(new Vector3(7f, -0.1f, 10f), "PineTree_2", 3.4f, new Color(0.24f, 0.53f, 0.30f), rng);
     AddDecorTree(new Vector3(-7f, -0.1f, 10.5f), "CommonTree_5", 3.6f, new Color(0.24f, 0.53f, 0.30f), rng);
   }
 
   void AddDecorTree(Vector3 pos, string model, float height, Color leaf, System.Random rng) {
     bool inside = Mathf.Abs(pos.x) < BoundX && Mathf.Abs(pos.z) < BoundZ;
     if (inside && IsInGameplayClearZone(pos)) return;
+    if (inside && IsOnWalkway(pos, 1.2f)) return; // hub walkways stay clean
+    if (inside && IsInGatePlaza(pos)) return; // gate plazas stay clean
     float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
     GameObject grown = NatureLibrary.Spawn(transform, model, pos, yaw, height,
       leaf, leaf, leaf);
@@ -951,18 +1066,19 @@ public class MarketBuilder : MonoBehaviour {
   }
 
   // ---- rocks: always grouped with vegetation, never lone obstacles ---------
+  // Hub round: 6 -> 4 placements (P25H needs >= 2 rocks — still green).
   void BuildRockClusters(System.Random rng) {
     // Legacy path-edge pair (kept) + grouped clusters.
     AddRock(new Vector3(1.2f, 0f, 2.8f), 0.5f, rng);
     AddRock(new Vector3(-1.3f, 0f, 0.2f), 0.45f, rng);
     AddRockWithGreens(new Vector3(-5.8f, 0f, 1.0f), 0.6f, rng); // NW tree base
     AddRockWithGreens(new Vector3(4.8f, 0f, -3.5f), 0.55f, rng); // apple nook
-    AddRockWithGreens(new Vector3(-2.0f, 0f, -4.5f), 0.5f, rng); // south mid
-    AddRockWithGreens(new Vector3(6.7f, 0f, 1.8f), 0.5f, rng);   // east mid
   }
 
   void AddRockWithGreens(Vector3 pos, float s, System.Random rng) {
     if (IsInGameplayClearZone(pos)) return;
+    if (IsOnWalkway(pos, 1.0f)) return; // hub walkways stay clean
+    if (IsInGatePlaza(pos)) return; // gate plazas stay clean
     AddRock(pos, s, rng);
     // Pebble companions + one grass sprig + one tiny bloom: a composed group.
     for (int i = 0; i < 2; i++) {
@@ -976,6 +1092,8 @@ public class MarketBuilder : MonoBehaviour {
   }
 
   void AddPebble(Vector3 pos, float s) {
+    if (IsOnWalkway(pos, 0.7f)) return; // hub walkways stay clean
+    if (IsInGatePlaza(pos)) return; // gate plazas stay clean
     GameObject grown = NatureLibrary.Spawn(transform, "Rock_6", pos, 0f, 0.13f * s,
       Color.white, Color.white, Color.white);
     if (grown != null) { grown.name = "Pebble"; return; }
@@ -1005,17 +1123,17 @@ public class MarketBuilder : MonoBehaviour {
         new Color(0.28f, 0.58f, 0.30f), Color.white, Color.white);
       if (log != null) log.name = "WoodLogProp";
     }
-    // Tiny leafy plants: tree bases, stall corners, rock groups.
+    // Tiny leafy plants: keep 2 (NW nook + east edge). Hub round: 4 -> 2.
     AddGroundPlant(new Vector3(-5.9f, 0f, 3.3f), rng);
     AddGroundPlant(new Vector3(6.4f, 0f, -2.7f), rng);
-    AddGroundPlant(new Vector3(-5.5f, 0f, -1.8f), rng);
-    AddGroundPlant(new Vector3(4.9f, 0f, -3.3f), rng);
   }
 
   static readonly string[] PlantModels = { "Plant_2", "Plant_4" };
 
   void AddGroundPlant(Vector3 pos, System.Random rng) {
     if (IsInGameplayClearZone(pos)) return;
+    if (IsOnWalkway(pos, 0.8f)) return; // hub walkways stay clean
+    if (IsInGatePlaza(pos)) return; // gate plazas stay clean
     Color leaf = new Color(0.29f, 0.59f, 0.30f);
     GameObject grown = NatureLibrary.Spawn(transform, PlantModels[rng.Next(PlantModels.Length)],
       pos, (float)(rng.NextDouble() * 360.0), 0.30f, leaf, leaf, leaf, true);
@@ -1028,21 +1146,22 @@ public class MarketBuilder : MonoBehaviour {
   }
 
   // ---- boundary: turn the hedge line into garden depth, hide the void ------
+  // Hub round: bushes 3 -> 2, hedge-side flower clusters dropped (the 2
+  // corner clusters in BuildFlowerClusters carry the color), blobs 4 -> 2.
   void BuildBoundaryVegetation(System.Random rng) {
     // Inside accents just off the hedge (fill hedge gaps, keep sightlines low).
+    // Hub round 2 (user: still too many bushes): keep the south one only.
     AddDecorBush(new Vector3(-3.0f, 0f, 5.4f), 0.8f, false, rng);
-    AddDecorBush(new Vector3(5.8f, 0f, -5.3f), 0.85f, false, rng);
-    AddDecorBush(new Vector3(-7.3f, 0f, -2.0f), 0.8f, false, rng);
-    AddFlowerCluster(new Vector3(4.5f, 0f, 5.3f), 2, 1, rng);
-    AddFlowerCluster(new Vector3(-4.2f, 0f, -5.3f), 2, 3, rng);
     // Outside backdrop blobs on the dark skirt (soft depth behind the hedge).
+    // Hub round: the old (5,-8.5) blob sat exactly ON the Vietnamese gate —
+    // moved west; plaza/walkway guards backstop anyway.
     AddBackdropBlob(new Vector3(-4f, -0.1f, 8.5f), 2.2f);
-    AddBackdropBlob(new Vector3(5f, -0.1f, -8.5f), 2.6f);
-    AddBackdropBlob(new Vector3(-10.5f, -0.1f, 0f), 2.4f);
-    AddBackdropBlob(new Vector3(10.5f, -0.1f, 1f), 2.0f);
+    AddBackdropBlob(new Vector3(-9.5f, -0.1f, -8.5f), 2.6f);
   }
 
   void AddBackdropBlob(Vector3 pos, float s) {
+    if (IsOnWalkway(pos, 2.2f * s * 0.5f)) return; // hub walkways stay clean
+    if (IsInGatePlaza(pos)) return; // gate plazas stay clean (a blob sat ON the VN gate)
     GameObject blob = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     blob.name = "BackdropBlob";
     blob.transform.SetParent(transform);
@@ -1056,11 +1175,14 @@ public class MarketBuilder : MonoBehaviour {
   // ---- path: worn-edge transition so the road feels walked, not pasted -----
   void BuildPathTransition(System.Random rng) {
     // User round (thoáng): 6 -> 4 accents per side, wider rhythm.
+    // Hub round: 4 -> 2 per side (quiet shoulders for a start area), shifted
+    // south of the gate walkways (z 0.6/2.8) + walkway guard backstop.
     for (int side = -1; side <= 1; side += 2) {
-      for (int i = 0; i < 4; i++) {
-        float z = -0.5f + i * 1.1f + (float)(rng.NextDouble() * 0.3 - 0.15);
+      for (int i = 0; i < 2; i++) {
+        float z = 0.6f + i * 2.2f + (float)(rng.NextDouble() * 0.3 - 0.15);
         float x = side * (1.28f + (float)rng.NextDouble() * 0.18f);
         Vector3 p = new Vector3(x, 0f, z);
+        if (IsOnWalkway(p, 0.7f)) continue; // hub walkways stay clean
         if (IsInGameplayClearZone(p) && Mathf.Abs(x) < 1.5f && z > -1.7f && z < 5.2f) {
           // Path corridor is clear-zone by definition; edge accents live JUST
           // outside it — nudge outward instead of skipping (keeps rhythm).
@@ -1106,6 +1228,8 @@ public class MarketBuilder : MonoBehaviour {
   // (Grass uses the LW clump system above — external blades lack normals.)
 
   void AddGrassTuft(Vector3 pos, float s, System.Random rng) {
+    if (IsOnWalkway(pos, 0.85f)) return; // hub walkways stay clean
+    if (IsInGatePlaza(pos)) return; // gate plazas stay clean
     float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
     float sv = rng != null ? 0.8f + (float)rng.NextDouble() * 0.4f : 1f;
     Color leaf = (rng != null && rng.NextDouble() < 0.5)
@@ -1131,6 +1255,8 @@ public class MarketBuilder : MonoBehaviour {
 
   void AddRock(Vector3 pos, float s, System.Random rng) {
     // Hand-placed (path-edge pair kept); low profile, collider-free.
+    if (IsOnWalkway(pos, 0.8f)) return; // hub walkways stay clean
+    if (IsInGatePlaza(pos)) return; // gate plazas stay clean
     float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
     string model = RockModels[rng != null ? rng.Next(RockModels.Length) : 0];
     GameObject grown = NatureLibrary.Spawn(transform, model, pos,
@@ -1347,16 +1473,18 @@ public class MarketBuilder : MonoBehaviour {
   // (apple 2.5m, NPC clicks) is unaffected: carves only deny foot placement.
   void BuildNavCarves() {
     CarveBox("TreeCarve", new Vector3(-6.2f, 1f, 3.8f), new Vector3(1.4f, 2f, 1.4f));
-    // Phase 2.4 landscape polish: carves for the three new inside-boundary
-    // decor trees (same pattern as TreeCarve — deny foot placement only,
-    // interaction reach untouched; runtime carving, no rebake needed).
-    CarveBox("DecorTreeCarveW", new Vector3(-6.5f, 1f, -2.8f), new Vector3(1.2f, 2f, 1.2f));
-    CarveBox("DecorTreeCarveE", new Vector3(6.8f, 1f, -3.2f), new Vector3(1.2f, 2f, 1.2f));
-    CarveBox("DecorTreeCarveN", new Vector3(-2.8f, 1f, 4.9f), new Vector3(1.4f, 2f, 1.4f));
-    CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 1.4f), new Vector3(2.6f, 1f, 1.4f));
-    CarveBox("CrateCarve", new Vector3(CrateAnchorPos.x, 0.3f, CrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
-    CarveBox("BallCrateCarve", new Vector3(BallCrateAnchorPos.x, 0.3f, BallCrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
-    CarveBox("PedestalCarve", new Vector3(5.4f, 0.4f, 0.6f), new Vector3(0.9f, 0.8f, 0.9f));
+    // (Inside decor-tree carves removed with their trees — hub round 4:
+    // no yard trees, no invisible walls.)
+    // (DecorTreeCarveN removed: its willow was thinned in the hub round —
+    // a carve without a tree is an invisible wall.)
+    // Hub-selection mode: no stall/crates/pedestal exist, so their carves
+    // go too (frees the lawn; interaction reach untouched).
+    if (!HubSelectionOnly) {
+      CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 1.4f), new Vector3(2.6f, 1f, 1.4f));
+      CarveBox("CrateCarve", new Vector3(CrateAnchorPos.x, 0.3f, CrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
+      CarveBox("BallCrateCarve", new Vector3(BallCrateAnchorPos.x, 0.3f, BallCrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
+      CarveBox("PedestalCarve", new Vector3(5.4f, 0.4f, 0.6f), new Vector3(0.9f, 0.8f, 0.9f));
+    }
     // R9: fence -> hedge (same footprint, renamed with the visuals).
     // Phase 3.0: the 4 subject roads cross the inner hedge through 2m+ gaps
     // (N/S gap at x[-1,1], E/W gap at z[0.5,3.1] around the 1.8 axis).

@@ -44,6 +44,15 @@ public class SmartCamera : MonoBehaviour {
   public float minFollowDistance = 2.6f;
   [Tooltip("Default cinematic sweep duration (s) for quest-start intros.")]
   public float cinematicDuration = 2.5f;
+  [Header("Wheel zoom (Follow only)")]
+  [Tooltip("Mouse-wheel zoom multiplier on the follow offset. 1 = frozen default framing (all authored beats untouched).")]
+  public float zoomFactor = 1f;
+  [Tooltip("Closest wheel zoom (multiplier on the follow offset).")]
+  public float minZoomFactor = 0.45f;
+  [Tooltip("Farthest wheel zoom (multiplier on the follow offset).")]
+  public float maxZoomFactor = 3.2f;
+  [Tooltip("Zoom change per wheel notch.")]
+  public float zoomStep = 0.15f;
 
   public CameraMode Mode { get; private set; } = CameraMode.Follow;
 
@@ -195,7 +204,10 @@ public class SmartCamera : MonoBehaviour {
   void LateUpdate() {
     switch (Mode) {
       case CameraMode.Follow:
-        if (_hasFollowTarget && _followTarget != null) TickFollow();
+        if (_hasFollowTarget && _followTarget != null) {
+          PollWheelZoom(); // Follow only: authored beats keep frozen framing
+          TickFollow();
+        }
         break;
       case CameraMode.Interaction:
         if (_hasFocus) TickInteraction();
@@ -214,11 +226,39 @@ public class SmartCamera : MonoBehaviour {
   }
 
   void TickFollow() {
+    Vector3 offset = ZoomedOffset(_followOffset, zoomFactor);
     Vector3 desired = ClampAboveGround(EnforceFollowFloor(
       _followTarget.position,
-      ResolveObstruction(_followTarget.position, _followTarget.position + _followOffset)));
+      ResolveObstruction(_followTarget.position, _followTarget.position + offset)));
     transform.position = Vector3.SmoothDamp(transform.position, desired, ref _positionVelocity, positionSmoothTime);
     LookTowards(_followTarget.position);
+  }
+
+  // Wheel zoom (user round: free zoom in/out, no hard camera). Scroll up =
+  // closer, scroll down = farther. Pure multiplier; 1.0 reproduces the
+  // frozen default framing byte-for-byte, so all beat/camera tests hold.
+  void PollWheelZoom() {
+    float wheel = ReadWheelDelta();
+    if (Mathf.Abs(wheel) < 0.001f) return;
+    zoomFactor = ClampZoomFactor(zoomFactor - Mathf.Sign(wheel) * zoomStep, minZoomFactor, maxZoomFactor);
+  }
+
+  static float ReadWheelDelta() {
+    try {
+      var mouse = UnityEngine.InputSystem.Mouse.current;
+      if (mouse == null) return 0f;
+      return mouse.scroll.ReadValue().y;
+    } catch (Exception) { return 0f; }
+  }
+
+  // Pure seams (EditMode cover without a live frame).
+  public static float ClampZoomFactor(float z, float min, float max) {
+    if (min > max) { float t = min; min = max; max = t; }
+    return Mathf.Clamp(z, min, max);
+  }
+
+  public static Vector3 ZoomedOffset(Vector3 baseOffset, float zoom) {
+    return baseOffset * zoom;
   }
 
   // Follow floor (Phase-1 closure): obstruction pull-in must never park the

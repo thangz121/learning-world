@@ -64,19 +64,29 @@ public class MarketBootstrap : MonoBehaviour {
     _builder = builder;
 
 // B presenters (Unity instantiates via AddComponent; Bind injects services).
-    var miloGo = new GameObject("Milo");
-    MiloPresenter miloPresenter = miloGo.AddComponent<MiloPresenter>();
-    miloPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
-    miloPresenter.Bind(bus, quests, hints);
-    miloPresenter.OnFirstTalk = OnFirstTalk;
-    miloPresenter.OnTalk = OnTalk;
+    // Hub-selection mode: NO NPCs in the gate-selection hall (quests live in
+    // subject worlds now). Milo/Mia presenters + labels are skipped entirely;
+    // everything below null-guards them, and the quest loop never starts
+    // without a first talk.
+    MiloPresenter miloPresenter = null;
+    MiaPresenter miaPresenter = null;
+    GameObject miloGo = null;
+    GameObject miaGo = null;
+    if (!MarketBuilder.HubSelectionOnly) {
+      miloGo = new GameObject("Milo");
+      miloPresenter = miloGo.AddComponent<MiloPresenter>();
+      miloPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
+      miloPresenter.Bind(bus, quests, hints);
+      miloPresenter.OnFirstTalk = OnFirstTalk;
+      miloPresenter.OnTalk = OnTalk;
 
-    var miaGo = new GameObject("Mia");
-    MiaPresenter miaPresenter = miaGo.AddComponent<MiaPresenter>();
-    miaPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
-    miaPresenter.Bind(bus, quests, hints);
-    _miloT = miloGo.transform;
-    _miaT = miaGo.transform;
+      miaGo = new GameObject("Mia");
+      miaPresenter = miaGo.AddComponent<MiaPresenter>();
+      miaPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
+      miaPresenter.Bind(bus, quests, hints);
+      _miloT = miloGo.transform;
+      _miaT = miaGo.transform;
+    }
 
     // Shop-counter click proxy (Phase-1 closure): tapping Mia's counter reaches
     // Mia herself, so players never need pixel taps on her body behind the
@@ -87,9 +97,12 @@ public class MarketBootstrap : MonoBehaviour {
       counterFwd.Bind(miaPresenter);
     }
 
-    // In-world identity (reusable for future chapters): Milo is named from
-    // frame one (he is the first action target); Mia stays unlabeled until
-    // the story introduces her, so frame one never splits attention.
+    // In-world identity (reusable for future chapters): skipped entirely in
+    // hub-selection mode (no NPCs, no labels).
+    if (!MarketBuilder.HubSelectionOnly) {
+    // Milo is named from frame one (he is the first action target); Mia stays
+    // unlabeled until the story introduces her, so frame one never splits
+    // attention.
     // Labels live on CHILD objects: WorldNameLabel drives its own world
     // position every frame, so it must never sit on the NPC root itself
     // (it would fight the presenter's transform).
@@ -117,6 +130,7 @@ public class MarketBootstrap : MonoBehaviour {
     // Player report: Mia's name shows from frame one, like Milo's (no more
     // hidden-until-introduction — the child should always read who is who).
     _miaLabel.Show();
+    }
 
     // HUD: objective text + replay delegates to Milo (no World->Brain reference).
     _hud = builder.Hud;
@@ -143,13 +157,17 @@ public class MarketBootstrap : MonoBehaviour {
     // action ("Talk to Milo"); Milo's proximity greet + name label do the
     // inviting. The quest (bubble, instruction voice, HUD action line) starts
     // when the player actually talks to him — never before.
-    miloPresenter.OnFirstTalk = OnFirstTalk;
+    // Hub-selection mode: no Milo, no quest — the hall invites gate-picking
+    // instead ("Choose a gate!"), and the quest guide stays home.
+    if (miloPresenter != null) miloPresenter.OnFirstTalk = OnFirstTalk;
     if (builder.Bubble != null) builder.Bubble.Hide();
-    if (_hud != null) _hud.ShowObjective("Talk to Milo");
-    // Guide starts at Milo (the one pre-talk action).
-    GameObject guideGo = new GameObject("QuestGuideLine");
-    _guide = guideGo.AddComponent<QuestGuideLine>();
-    _guide.SetStage(GuideStage.ToMilo, _miloT);
+    if (_hud != null) _hud.ShowObjective(MarketBuilder.HubSelectionOnly ? "Choose a gate!" : "Talk to Milo");
+    if (!MarketBuilder.HubSelectionOnly) {
+      // Guide starts at Milo (the one pre-talk action).
+      GameObject guideGo = new GameObject("QuestGuideLine");
+      _guide = guideGo.AddComponent<QuestGuideLine>();
+      _guide.SetStage(GuideStage.ToMilo, _miloT);
+    }
 
     // Mic-setup gate (Phase 2.1, additive): startup offer when no mic, silent
     // background rechecks, exercise-entry re-prompt. The monitor's Start()

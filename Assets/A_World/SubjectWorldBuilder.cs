@@ -122,9 +122,12 @@ public static class SubjectWorldBuilder {
     root.transform.SetParent(parent);
     root.transform.position = def.GatePos;
 
-    // Lateral axis (perpendicular to the road direction).
-    bool eastWest = def.Id == SubjectIds.Math || def.Id == SubjectIds.Thinking;
-    Vector3 lat = eastWest ? new Vector3(0f, 0f, 1f) : new Vector3(1f, 0f, 0f);
+    // Hub-arc facing: the arch faces the hub (players approach from the
+    // yard), NOT the district. Lateral axis fans outward from the arc middle
+    // so each gate's side dressing trails AWAY from its neighbours.
+    Vector3 face = FaceOf(def);
+    Vector3 lat = new Vector3(-face.z, 0f, face.x);
+    if (lat.x * def.GatePos.x < 0f) lat = -lat;
     // Pillars at ±1.6 (bake erosion 0.5 + carves leave a 1.4m+ corridor).
     Vector3 pillarA = def.GatePos + lat * 1.6f;
     Vector3 pillarB = def.GatePos - lat * 1.6f;
@@ -137,25 +140,27 @@ public static class SubjectWorldBuilder {
     }
 
     // Tinted medallion under the gate (walkable ground treatment).
+    // Hub-arc size (2.6m): full 3.2m discs would touch on the ~3.6m spacing.
     GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     disc.name = name + "GateDisc";
     disc.transform.SetParent(parent);
     disc.transform.position = def.GatePos + new Vector3(0f, 0.012f, 0f);
-    disc.transform.localScale = new Vector3(3.2f, 0.024f, 3.2f);
+    disc.transform.localScale = new Vector3(2.6f, 0.024f, 2.6f);
     disc.GetComponent<Renderer>().sharedMaterial = Lit(def.GroundTint);
 
     // In-world name (reuses the frozen WorldNameLabel contract). The anchor
-    // sits 2.2m OFF the road axis: the label pill is 1.2m wide at head height,
-    // exactly where the follow camera looks through (P3 visual QA: the camera
-    // stood correctly yet stared through its own gate label). Y-billboard
-    // keeps it readable from every approach angle.
+    // sits BEHIND the arch (district side, 1.3m off the gate line) at 3.2m:
+    // the pill floats above every gate topper (VN straw hat peaks at 2.63m,
+    // English crown at 2.3m) so low hub-side cameras read it OVER the beam
+    // instead of through the dressing. Y-billboard keeps it readable from
+    // every approach angle.
     GameObject anchor = new GameObject(name + "GateAnchor");
     anchor.transform.SetParent(parent);
-    anchor.transform.position = def.GatePos + lat * 2.2f;
+    anchor.transform.position = def.GatePos - face * 1.3f;
     GameObject labelGo = new GameObject(name + "GateLabel");
     labelGo.transform.SetParent(parent);
     WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.Setup(def.DisplayName, anchor.transform, 2.7f);
+    label.Setup(def.DisplayName, anchor.transform, 3.2f);
     label.Show();
 
     result.Carves.Add(new CarveSpec { Name = name + "PillarCarveA", Pos = pillarA + new Vector3(0f, 1f, 0f), Size = new Vector3(0.8f, 2f, 0.8f) });
@@ -176,9 +181,12 @@ public static class SubjectWorldBuilder {
     lintel.name = "MathLintel";
     lintel.transform.SetParent(parent);
     lintel.transform.position = mid;
-    lintel.transform.localScale = new Vector3(0.36f, 3.4f, 0.36f);
-    if (Math.Abs(lat.x) > 0.5f) lintel.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-    else lintel.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+    // Beam spans the pillars with a short overhang (was 6.8m: filled every
+    // closeup frame once gates became the hub stars — survey photo proof).
+    lintel.transform.localScale = new Vector3(0.36f, 1.95f, 0.36f);
+    // Exact beam axis (was an X/Z snap: connected from the front, floated
+    // from the side on diagonal hub-arc gates).
+    lintel.transform.localRotation = Quaternion.FromToRotation(Vector3.up, lat);
     lintel.GetComponent<Renderer>().sharedMaterial = Lit(def.Secondary);
     // Headroom rule (P3 survey telemetry: PathPartial at the gate line):
     // the runtime bake rasterizes RENDER MESHES with agentHeight 2m, so ANY
@@ -187,39 +195,12 @@ public static class SubjectWorldBuilder {
     // ignoreFromBuild, feet pass under, pillars keep meshes + carves.
     StripCollider(lintel);
     IgnoreFromBuild(lintel);
-    // Shape trio (geometry family): cube + sphere finials under a cylinder
-    // beam — the Math gate reads as shapes before any color does.
+    // Shape duo (geometry family): cube + sphere finials — the Math gate
+    // reads as shapes before any color does. (User round: counting cubes +
+    // abacus row removed — side clutter around a hub gate.)
     Box(parent, "MathFinialA", a + new Vector3(0f, 1.85f, 0f),
       new Vector3(0.36f, 0.36f, 0.36f), def.Primary, false);
     Ball(parent, "MathFinialB", b + new Vector3(0f, 1.85f, 0f), 0.42f, def.Secondary, false);
-    // Abacus row under the beam (counting motif, echoes the playground core).
-    // Visual-only: the rod hangs over the road (ignoreFromBuild).
-    Vector3 rodMid = (a + b) * 0.5f + new Vector3(0f, 1.45f, 0f);
-    GameObject rod = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    rod.name = "MathGateRod";
-    rod.transform.SetParent(parent);
-    rod.transform.position = rodMid;
-    rod.transform.localScale = new Vector3(0.1f, 2.4f, 0.1f);
-    if (Math.Abs(lat.x) > 0.5f) rod.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-    else rod.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-    rod.GetComponent<Renderer>().sharedMaterial = Lit(TrunkC);
-    StripCollider(rod);
-    IgnoreFromBuild(rod);
-    for (int bi = -2; bi <= 2; bi++) {
-      GameObject bead = Ball(parent, "MathGateBead" + bi,
-        rodMid + lat * (bi * 0.45f), 0.16f,
-        bi % 2 == 0 ? def.Secondary : def.Primary, false);
-      StripCollider(bead);
-      IgnoreFromBuild(bead);
-    }
-    // Counting cubes: ascending sizes stepping away from the road.
-    for (int i = 0; i < 3; i++) {
-      float s = 0.30f + i * 0.14f;
-      Vector3 p = a + lat * (0.9f + i * 0.55f) + new Vector3(0f, s * 0.5f, 0f);
-      GameObject cube = Box(parent, "MathCube" + i, p, new Vector3(s, s, s),
-        i % 2 == 0 ? def.Primary : def.Secondary, false);
-      StripCollider(cube);
-    }
   }
 
   static void BuildCubePillar(Transform parent, string pillarName, Vector3 basePos, Color color) {
@@ -242,27 +223,39 @@ public static class SubjectWorldBuilder {
       SlabScale(along, 1.5f), def.Secondary, false);
     GameObject lintelR = Box(parent, "ThinkingLintelR", mid - along * 0.95f + new Vector3(0f, 1.95f, 0f),
       SlabScale(along, 1.5f), def.Secondary, false);
+    lintelL.transform.localRotation = Quaternion.Euler(0f, YawAlongX(along), 0f);
+    lintelR.transform.localRotation = Quaternion.Euler(0f, YawAlongX(along), 0f);
     IgnoreFromBuild(lintelL);
     IgnoreFromBuild(lintelR);
     // Puzzle tab locking the center notch (interlock motif, visual-only).
+    // (User round: ground maze ring removed — side clutter around a hub gate.)
     GameObject tab = Box(parent, "ThinkingTab", mid + new Vector3(0f, 2.15f, 0f),
       new Vector3(0.3f, 0.5f, 0.3f), def.Primary, false);
     IgnoreFromBuild(tab);
-    // Maze ring: 4 flat bars forming a broken square around the gate.
-    for (int i = 0; i < 4; i++) {
-      float ang = i * 90f + 45f;
-      Vector3 dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
-      GameObject bar = Box(parent, "ThinkingMaze" + i, def.GatePos + dir * 2.1f + new Vector3(0f, 0.03f, 0f),
-        new Vector3(1.1f, 0.06f, 0.25f), def.Primary, false);
-      bar.transform.localRotation = Quaternion.Euler(0f, -ang, 0f);
-      StripCollider(bar);
-    }
   }
 
   static Vector3 SlabScale(Vector3 along, float len) {
-    // Slab long axis follows the gate lateral.
-    if (Math.Abs(along.x) > 0.5f) return new Vector3(len, 0.3f, 0.5f);
-    return new Vector3(0.5f, 0.3f, len);
+    // Long axis is ALWAYS local X; callers yaw the slab onto `along` with
+    // YawAlongX (exact for diagonal hub-arc gates — axis snaps looked
+    // connected from the front but floated from the side).
+    return new Vector3(len, 0.3f, 0.5f);
+  }
+
+  // Hub-arc facing shared by every gate (players approach from the yard).
+  static Vector3 FaceOf(SubjectDefinition def) {
+    Vector3 f = SubjectCatalog.HubCenter - def.GatePos;
+    f.y = 0f;
+    if (f.sqrMagnitude < 0.001f) f = new Vector3(0f, 0f, 1f);
+    return f.normalized;
+  }
+
+  // Yaw (degrees about Y) sending local +X onto `lat`, / local +Z onto `dir`.
+  static float YawAlongX(Vector3 lat) {
+    return Mathf.Atan2(-lat.z, lat.x) * Mathf.Rad2Deg;
+  }
+
+  static float YawFaceZ(Vector3 dir) {
+    return Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
   }
 
   static void BuildGearPillar(Transform parent, string gearName, Vector3 basePos, Color color) {
@@ -288,8 +281,9 @@ public static class SubjectWorldBuilder {
   // English: open-book pillars (two tilted slabs) + slab lintel + ascending
   // blocks + speech-bubble sign (sphere + tail) on a post beside the road.
   static void BuildBooksGate(Transform parent, SubjectDefinition def, Vector3 a, Vector3 b, Vector3 lat) {
-    BuildBookPillar(parent, "EnglishBookA", a, def.Primary, def.Secondary, lat);
-    BuildBookPillar(parent, "EnglishBookB", b, def.Primary, def.Secondary, lat);
+    Vector3 face = FaceOf(def);
+    BuildBookPillar(parent, "EnglishBookA", a, def.Primary, def.Secondary, lat, face);
+    BuildBookPillar(parent, "EnglishBookB", b, def.Primary, def.Secondary, lat, face);
     Vector3 mid = (a + b) * 0.5f;
     // Lowered 1.9 -> 1.7 (P3 visual QA: the slab filled the playground
     // follow frame; the sightline clears its top by ~0.8m now). Slimmed
@@ -297,10 +291,11 @@ public static class SubjectWorldBuilder {
     GameObject engLintel = Box(parent, "EnglishLintel", mid + new Vector3(0f, 1.7f, 0f),
       SlabScale(lat, 3.4f), def.Secondary, false);
     engLintel.transform.localScale = new Vector3(3.4f, 0.18f, 0.3f);
+    engLintel.transform.localRotation = Quaternion.Euler(0f, YawAlongX(lat), 0f);
     IgnoreFromBuild(engLintel);
     // Open-book crown (reading motif): two slabs meeting over the beam.
     // Visual-only: crowns the road (ignoreFromBuild).
-    float crownYaw = Math.Abs(lat.x) > 0.5f ? 0f : 90f;
+    float crownYaw = YawFaceZ(FaceOf(def));
     GameObject crownL = Box(parent, "EnglishCrownL", mid + new Vector3(0f, 2.05f, 0f),
       new Vector3(0.7f, 0.5f, 0.07f), def.Primary, false);
     crownL.transform.localRotation = Quaternion.Euler(0f, crownYaw + 22f, 0f);
@@ -309,52 +304,14 @@ public static class SubjectWorldBuilder {
       new Vector3(0.7f, 0.5f, 0.07f), def.Secondary, false);
     crownR.transform.localRotation = Quaternion.Euler(0f, crownYaw - 22f, 0f);
     IgnoreFromBuild(crownR);
-    // Pencil prop (school motif) leaning on the second pillar (roadside).
-    Vector3 pencilBase = b - lat * 0.9f + new Vector3(0f, 0.7f, 0f);
-    GameObject pencil = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    pencil.name = "EnglishPencil";
-    pencil.transform.SetParent(parent);
-    pencil.transform.position = pencilBase;
-    pencil.transform.localScale = new Vector3(0.09f, 1.4f, 0.09f);
-    if (Math.Abs(lat.x) > 0.5f) pencil.transform.localRotation = Quaternion.Euler(0f, 0f, 18f);
-    else pencil.transform.localRotation = Quaternion.Euler(18f, 0f, 0f);
-    pencil.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.98f, 0.78f, 0.25f));
-    StripCollider(pencil);
-    GameObject eraser = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    eraser.name = "EnglishEraser";
-    eraser.transform.SetParent(parent);
-    eraser.transform.position = pencilBase + new Vector3(0f, 0.72f, 0f) + lat * 0.22f;
-    eraser.transform.localScale = new Vector3(0.095f, 0.12f, 0.095f);
-    eraser.transform.localRotation = pencil.transform.localRotation;
-    eraser.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.95f, 0.55f, 0.65f));
-    StripCollider(eraser);
-    for (int i = 0; i < 3; i++) {
-      float s = 0.28f + i * 0.12f;
-      Color c = i == 0 ? def.Primary : (i == 1 ? new Color(0.25f, 0.45f, 0.85f) : def.Secondary);
-      Vector3 p = b - lat * (0.9f + i * 0.5f) + new Vector3(0f, s * 0.5f, 0f);
-      GameObject cube = Box(parent, "EnglishBlock" + i, p, new Vector3(s, s, s), c, false);
-      StripCollider(cube);
-    }
-    // Speech-bubble sign: white sphere + tail wedge on a post.
-    Vector3 signBase = a + lat * 1.1f;
-    GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    post.name = "EnglishSignPost";
-    post.transform.SetParent(parent);
-    post.transform.position = signBase + new Vector3(0f, 0.6f, 0f);
-    post.transform.localScale = new Vector3(0.12f, 1.2f, 0.12f);
-    post.GetComponent<Renderer>().sharedMaterial = Lit(TrunkC);
-    Ball(parent, "EnglishBubble", signBase + new Vector3(0f, 1.6f, 0f), 0.55f,
-      new Color(0.98f, 0.98f, 0.97f), true);
-    GameObject tail = Box(parent, "EnglishBubbleTail", signBase + new Vector3(0f, 1.15f, 0f),
-      new Vector3(0.16f, 0.35f, 0.16f), new Color(0.98f, 0.98f, 0.97f), false);
-    tail.transform.localRotation = Quaternion.Euler(0f, 0f, 25f);
-    StripCollider(tail);
+    // (User round: pencil + blocks + bubble sign removed — side clutter
+    // around a hub gate. Pillars + lintel + crown carry the identity.)
   }
 
-  static void BuildBookPillar(Transform parent, string bookName, Vector3 basePos, Color cover, Color pages, Vector3 lat) {
+  static void BuildBookPillar(Transform parent, string bookName, Vector3 basePos, Color cover, Color pages, Vector3 lat, Vector3 face) {
     Box(parent, bookName + "Base", basePos + new Vector3(0f, 0.15f, 0f),
       new Vector3(0.8f, 0.3f, 0.8f), cover, true);
-    float yaw = Math.Abs(lat.x) > 0.5f ? 0f : 90f;
+    float yaw = YawFaceZ(face);
     GameObject left = Box(parent, bookName + "PageL", basePos + new Vector3(0f, 1.0f, 0f),
       new Vector3(0.55f, 1.30f, 0.08f), pages, true);
     left.transform.localRotation = Quaternion.Euler(0f, yaw + 18f, 0f);
@@ -372,6 +329,7 @@ public static class SubjectWorldBuilder {
     // Banner + rolls + hat are visual-only (headroom rule: road passes under).
     GameObject banner = Box(parent, "VietnameseBanner", mid + new Vector3(0f, 1.95f, 0f),
       SlabScale(lat, 3.2f), def.Secondary, false);
+    banner.transform.localRotation = Quaternion.Euler(0f, YawAlongX(lat), 0f);
     IgnoreFromBuild(banner);
     // Scroll ends: two short vertical rolls hanging at the banner tips.
     GameObject rollL = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -423,36 +381,8 @@ public static class SubjectWorldBuilder {
     knob.GetComponent<Renderer>().sharedMaterial = Lit(def.Secondary);
     StripCollider(knob);
     IgnoreFromBuild(knob);
-    // Tassels hanging under the banner tips (festival motif, visual-only).
-    for (int side = -1; side <= 1; side += 2) {
-      Vector3 hang = mid + lat * (side * 1.0f);
-      GameObject cord = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-      cord.name = "VietnameseTassel" + side;
-      cord.transform.SetParent(parent);
-      cord.transform.position = hang + new Vector3(0f, 1.52f, 0f);
-      cord.transform.localScale = new Vector3(0.07f, 0.28f, 0.07f);
-      cord.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.99f, 0.94f, 0.84f));
-      StripCollider(cord);
-      IgnoreFromBuild(cord);
-      GameObject bead = Ball(parent, "VietnameseTasselBead" + side,
-        hang + new Vector3(0f, 1.32f, 0f), 0.12f, def.Secondary, false);
-      StripCollider(bead);
-      IgnoreFromBuild(bead);
-    }
-    // Side drum (music motif, roadside prop).
-    GameObject drum = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    drum.name = "VietnameseGateDrum";
-    drum.transform.SetParent(parent);
-    drum.transform.position = a + lat * 1.5f + new Vector3(0f, 0.25f, 0f);
-    drum.transform.localScale = new Vector3(0.4f, 0.5f, 0.4f);
-    drum.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.80f, 0.42f, 0.25f));
-    StripCollider(drum);
-    // Dot stones stepping away from the road (diacritic-dot motif, abstract).
-    for (int i = 0; i < 3; i++) {
-      Vector3 p = b - lat * (1.0f + i * 0.6f) + new Vector3(0f, 0.09f, 0f);
-      GameObject dot = Ball(parent, "VietnameseDot" + i, p, 0.18f, def.Secondary, false);
-      StripCollider(dot);
-    }
+    // (User round: tassels + side drum + dot stones removed — side clutter
+    // around a hub gate. Pillars + banner + rolls + hat carry the identity.)
   }
 
   static void BuildTabletPillar(Transform parent, string tabletName, Vector3 basePos, Color body, Color cap) {
@@ -589,8 +519,12 @@ public static class SubjectWorldBuilder {
   }
 
   // ---- return arches ------------------------------------------------------------
-  // Shared GOLD language ("the way home") in every playground: mini pillars +
-  // lintel + disc + "Main" label + one-way return trigger (subject -> Main).
+  // User round (hub declutter): the selection hub IS the main hall, so NO
+  // return arch may appear in the current world: no gold pillars, no lintel,
+  // no disc, no way-home label. The one-way return TRIGGER stays (invisible,
+  // same position/radius): walking back out of a district still returns to
+  // Main exactly as before (mechanics preserved, gate tests green). The full
+  // gold arch returns with the subject worlds.
 
   static void BuildReturnArch(Transform parent, SubjectDefinition def, BuildResult result) {
     string name = def.DisplayName;
@@ -598,33 +532,6 @@ public static class SubjectWorldBuilder {
     GameObject root = new GameObject(name + "Return");
     root.transform.SetParent(parent);
     root.transform.position = rp;
-
-    bool eastWest = def.Id == SubjectIds.Math || def.Id == SubjectIds.Thinking;
-    Vector3 lat = eastWest ? new Vector3(0f, 0f, 1f) : new Vector3(1f, 0f, 0f);
-    Box(parent, name + "ReturnPillarA", rp + lat * 0.9f + new Vector3(0f, 0.8f, 0f),
-      new Vector3(0.35f, 1.6f, 0.35f), ReturnGoldDark, true);
-    Box(parent, name + "ReturnPillarB", rp - lat * 0.9f + new Vector3(0f, 0.8f, 0f),
-      new Vector3(0.35f, 1.6f, 0.35f), ReturnGoldDark, true);
-    // Visual-only lintel (headroom rule: the return path passes under).
-    GameObject retLintel = Box(parent, name + "ReturnLintel", rp + new Vector3(0f, 1.7f, 0f),
-      SlabScale(lat, 2.1f), ReturnGold, false);
-    IgnoreFromBuild(retLintel);
-
-    GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    disc.name = name + "ReturnDisc";
-    disc.transform.SetParent(parent);
-    disc.transform.position = rp + new Vector3(0f, 0.012f, 0f);
-    disc.transform.localScale = new Vector3(2.4f, 0.024f, 2.4f);
-    disc.GetComponent<Renderer>().sharedMaterial = Lit(ReturnGold);
-
-    GameObject anchor = new GameObject(name + "ReturnAnchor");
-    anchor.transform.SetParent(parent);
-    anchor.transform.position = rp;
-    GameObject labelGo = new GameObject(name + "ReturnLabel");
-    labelGo.transform.SetParent(parent);
-    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.Setup("Về", anchor.transform, 1.9f);
-    label.Show();
 
     SubjectGate gate = root.AddComponent<SubjectGate>();
     gate.fireRadius = 1.3f;
@@ -638,8 +545,11 @@ public static class SubjectWorldBuilder {
   static void BuildPlaygroundTree(Transform parent, SubjectDefinition def, BuildResult result) {
     string name = def.DisplayName;
     Vector3 tp;
-    if (def.Id == SubjectIds.Math) tp = new Vector3(14.9f, 0f, -0.7f);
-    else if (def.Id == SubjectIds.Thinking) tp = new Vector3(-14.9f, 0f, -0.7f);
+    // Hub round 3 (user: district trees covered their gates from the yard):
+    // trees sit deep in-district, off the gate sightlines (Math/Thinking
+    // trees used to stand 6m south of their gates, right in the view).
+    if (def.Id == SubjectIds.Math) tp = new Vector3(9.5f, 0f, 3.5f);
+    else if (def.Id == SubjectIds.Thinking) tp = new Vector3(-9.5f, 0f, 3.5f);
     else if (def.Id == SubjectIds.English) tp = new Vector3(3.4f, 0f, -12.3f);
     else tp = new Vector3(0.3f, 0f, 12.4f); // VN district NW corner (off its x=3.5 road)
     GameObject tree = new GameObject(name + "Tree");
@@ -671,11 +581,12 @@ public static class SubjectWorldBuilder {
 
   static void BuildSignpost(Transform parent, SubjectDefinition def) {
     string name = def.DisplayName;
-    Vector3 sp;
-    if (def.Id == SubjectIds.Math) sp = new Vector3(5.9f, 0f, 0.3f);
-    else if (def.Id == SubjectIds.Thinking) sp = new Vector3(-5.9f, 0f, 0.3f);
-    else if (def.Id == SubjectIds.English) sp = new Vector3(1.3f, 0f, -3.9f);
-    else sp = new Vector3(2.0f, 0f, 3.9f); // west of the VN road (open lawn)
+    // Hub-arc placement: beside its own gate, hub-side, fanned outward —
+    // the post never stands in a neighbour's sightline or walkway.
+    Vector3 face = FaceOf(def);
+    Vector3 lat = new Vector3(-face.z, 0f, face.x);
+    if (lat.x * def.GatePos.x < 0f) lat = -lat;
+    Vector3 sp = def.GatePos + face * 2.8f + lat * 1.6f;
     GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     post.name = name + "SignPost";
     post.transform.SetParent(parent);
@@ -732,10 +643,11 @@ public static class SubjectWorldBuilder {
     toGate.y = 0f;
     toGate.Normalize();
     float gateAng = Mathf.Atan2(toGate.x, toGate.z) * Mathf.Rad2Deg;
-    for (int i = 0; i < 12; i++) {
-      float ang = i * 30f;
+    // Hub round 2 (user: still too many bushes): 12 -> 8 ring bushes.
+    for (int i = 0; i < 8; i++) {
+      float ang = i * 45f;
       float dAng = Mathf.DeltaAngle(ang, gateAng);
-      if (Math.Abs(dAng) < 32f) continue; // opening toward the entry road
+      if (Math.Abs(dAng) < 20f) continue; // opening toward the entry road
       Vector3 dir = new Vector3(Mathf.Sin(ang * Mathf.Deg2Rad), 0f, Mathf.Cos(ang * Mathf.Deg2Rad));
       Vector3 p = c + dir * 3.3f;
       GameObject bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -747,7 +659,7 @@ public static class SubjectWorldBuilder {
         : new Vector3(0.95f, 0.55f, 0.95f);
       bush.GetComponent<Renderer>().sharedMaterial = Lit(i % 2 == 0 ? LeafA : LeafB);
       StripCollider(bush);
-      if (i % 3 == 0) {
+      if (i % 4 == 0) {
         GameObject bloom = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         bloom.name = def.DisplayName + "EdgeBloom";
         bloom.transform.SetParent(parent);
