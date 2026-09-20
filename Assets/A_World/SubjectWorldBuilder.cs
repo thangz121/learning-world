@@ -302,20 +302,30 @@ public static class SubjectWorldBuilder {
   }
 
   static void BuildGearPillar(Transform parent, string gearName, Vector3 basePos, Color color) {
+    // (User round: solid green columns read as TREE TRUNKS from hub views.
+    // Restyle: light-stone wheel (rock/metal gear, zero foliage read) + green
+    // chunkier teeth keep the Thinking identity + cream hub. Same coords,
+    // carves and colliders (new bits are visual-only) — bake/nav untouched.)
+    Color stone = new Color(0.80f, 0.78f, 0.72f);
+    GameObject foot = Box(parent, gearName + "Foot", basePos + new Vector3(0f, 0.15f, 0f),
+      new Vector3(0.7f, 0.3f, 0.7f), stone, true);
+    StripCollider(foot);
+    IgnoreFromBuild(foot);
     GameObject wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     wheel.name = gearName + "Wheel";
     wheel.transform.SetParent(parent);
     wheel.transform.position = basePos + new Vector3(0f, 1.0f, 0f);
     wheel.transform.localScale = new Vector3(0.9f, 1.6f, 0.9f);
-    wheel.GetComponent<Renderer>().sharedMaterial = Lit(color);
+    wheel.GetComponent<Renderer>().sharedMaterial = Lit(stone);
     for (int i = 0; i < 6; i++) {
       float ang = i * 60f;
       Vector3 dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
       GameObject tooth = Box(parent, gearName + "Tooth" + i,
         basePos + dir * 0.52f + new Vector3(0f, 1.0f, 0f),
-        new Vector3(0.18f, 1.2f, 0.18f), color, false);
+        new Vector3(0.24f, 1.2f, 0.24f), color, false);
       tooth.transform.localRotation = Quaternion.Euler(0f, -ang, 0f);
       StripCollider(tooth);
+      IgnoreFromBuild(tooth);
     }
     Ball(parent, gearName + "Hub", basePos + new Vector3(0f, 1.0f, 0f), 0.30f,
       new Color(0.96f, 0.95f, 0.90f), false).transform.SetParent(parent);
@@ -588,6 +598,10 @@ public static class SubjectWorldBuilder {
   static void BuildPlaygroundTree(Transform parent, SubjectDefinition def, BuildResult result) {
     string name = def.DisplayName;
     Vector3 tp;
+    // (User round: "clear every tree around the Thinking gate" — no Thinking
+    // playground tree at all. Early return skips the tree AND its carve, so no
+    // invisible wall is left behind. Medallion + core + return arch stay.)
+    if (def.Id == SubjectIds.Thinking) return;
     // Hub beauty round (user: trees covered gates from the yard): district
     // trees sit deep in-district, off every gate sightline and walkway.
     if (def.Id == SubjectIds.Math) tp = new Vector3(14.5f, 0f, 4.5f);

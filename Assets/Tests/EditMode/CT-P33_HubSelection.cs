@@ -114,4 +114,51 @@ public class CT_P33_HubSelection {
         "full world keeps the frozen default framing (CT-P32)");
     } finally { MarketBuilder.HubSelectionOnly = prev; }
   }
+
+  [Test] public void P33H_GateClicksSnapToMouth() {
+    // Clicking the arch/pillars must walk the corridor centre (reachable), not
+    // the raw collider point (unreachable stall outside the poll radius).
+    SubjectDefinition th = SubjectCatalog.Thinking;
+    Vector3 mouth;
+    Vector3 pillarClick = th.GatePos + new Vector3(1.6f, 1f, 0f);
+    Assert.IsTrue(ClickRouter.TrySnapToGateMouth(pillarClick, out mouth), "pillar click must snap");
+    float mouthDist = Vector3.Distance(new Vector3(mouth.x, 0f, mouth.z), new Vector3(th.GatePos.x, 0f, th.GatePos.z));
+    Assert.AreEqual(0.6f, mouthDist, 1e-4f, "mouth sits 0.6m hub-side of the gate (walkway end)");
+    float gateHub = Vector3.Distance(new Vector3(th.GatePos.x, 0f, th.GatePos.z), SubjectCatalog.HubCenter);
+    float mouthHub = Vector3.Distance(new Vector3(mouth.x, 0f, mouth.z), SubjectCatalog.HubCenter);
+    Assert.Less(mouthHub, gateHub, "mouth must be hub-side so the walk reads up the bricks");
+    Vector3 retClick = th.ReturnPoint + new Vector3(0.5f, 0f, 0.5f);
+    Assert.IsTrue(ClickRouter.TrySnapToGateMouth(retClick, out mouth), "return-arch click must snap");
+    Assert.AreEqual(th.ReturnPoint.x, mouth.x, 1e-6f);
+    Assert.AreEqual(th.ReturnPoint.z, mouth.z, 1e-6f);
+    Assert.IsFalse(ClickRouter.TrySnapToGateMouth(MarketBuilder.PlayerSpawn, out mouth),
+      "spawn clicks must walk raw (no force-enter)");
+    Vector3 sign = th.GatePos + new Vector3(2.38f, 0f, 0f);
+    Assert.IsFalse(ClickRouter.TrySnapToGateMouth(sign, out mouth),
+      "signpost clicks (2.38m out) must not force-enter");
+  }
+
+  [Test] public void P33I_ThroughOpeningClicksSnapToMouth() {
+    // Clicking the gate MIDDLE hits district ground behind — the ray still
+    // threads the gate, so it must enter (not overshoot out the back).
+    SubjectDefinition th2 = SubjectCatalog.Thinking;
+    Vector3 org = new Vector3(0f, 3.2f, 9.1f);
+    Vector3 toHub = SubjectCatalog.HubCenter - th2.GatePos;
+    toHub.y = 0f;
+    toHub.Normalize();
+    Vector3 farHit = th2.GatePos - toHub * 4f; // district ground past the gate
+    farHit.y = 0f;
+    Ray through = new Ray(org, th2.GatePos - org);
+    Vector3 mouth2;
+    Assert.IsTrue(ClickRouter.TrySnapGateOnRay(through, farHit, out mouth2),
+      "through-opening click must snap");
+    float md = Vector3.Distance(new Vector3(mouth2.x, 0f, mouth2.z),
+      new Vector3(th2.GatePos.x, 0f, th2.GatePos.z));
+    Assert.AreEqual(0.6f, md, 1e-4f, "through click lands at the mouth, not behind");
+    // Lawn click whose ray only passes the gate far beyond the hit: no snap.
+    Vector3 lawnHit = new Vector3(2f, 0f, 2f);
+    Ray lawn = new Ray(org, lawnHit - org);
+    Assert.IsFalse(ClickRouter.TrySnapGateOnRay(lawn, lawnHit, out mouth2),
+      "gate beyond the clicked lawn must not hijack the walk");
+  }
 }

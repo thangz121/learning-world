@@ -121,8 +121,108 @@ public class ClickRouter : MonoBehaviour {
       return;
     }
 
-    _player.MoveTo(hit.point); // (b) ground / player / scenery
+    Vector3 dest = hit.point; // (b) ground / player / scenery
+    Vector3 mouth;
+    if (TrySnapToGateMouth(hit.point, out mouth)) dest = mouth; // structure clicks enter
+    else if (TrySnapGateOnRay(ray, hit.point, out mouth)) dest = mouth; // through-opening clicks enter
+    _player.MoveTo(dest);
     ClearPending();
+  }
+
+  // Gate-click snapping (user round: clicking the arch/pillars never entered —
+  // the raw hit sits inside collider geometry, the agent stalls short of the
+  // 1.2m poll radius; then aiming at the corridor CENTRE still routed around
+  // it instead of up the brick walkway). A scenery click aimed AT a gate
+  // (within 2m of its center, entry or return) retargets to the gate MOUTH:
+  // entry = corridor centre pushed 0.6m hub-side (walkway end — the walk reads
+  // "up the bricks" and arrival at 0.6m is inside the trigger), return = arch
+  // centre. Pure SubjectCatalog data, no hierarchy walk, EditMode-testable.
+  // Radius 2m covers pillars/beam centre clicks but NOT the signpost (2.38m
+  // out): inspecting the sign never force-enters.
+  public static bool TrySnapToGateMouth(Vector3 hitPoint, out Vector3 mouth) {
+    mouth = hitPoint;
+    if (SubjectCatalog.All == null) return false;
+    float best2 = 2.0f * 2.0f;
+    bool found = false;
+    bool isReturn = false;
+    SubjectDefinition bestDef = null;
+    foreach (SubjectDefinition def in SubjectCatalog.All) {
+      if (def == null) continue;
+      for (int i = 0; i < 2; i++) {
+        Vector3 c = i == 0 ? def.GatePos : def.ReturnPoint;
+        float dx = hitPoint.x - c.x;
+        float dz = hitPoint.z - c.z;
+        float d2 = dx * dx + dz * dz;
+        if (d2 < best2) {
+          best2 = d2;
+          bestDef = def;
+          isReturn = i == 1;
+          found = true;
+        }
+      }
+    }
+    if (!found) return false;
+    mouth = MouthFor(bestDef, isReturn);
+    return true;
+  }
+
+  // Through-opening clicks (user round: clicking the gate MIDDLE hits district
+  // ground metres behind — point-only snap misses, the walk overshoots out the
+  // back; NOT a flipped entry direction, the destination just lands behind).
+  // If the click RAY itself threads within 1.2m of a gate centre with the gate
+  // AT or BEFORE the hit along the ray (aimed at/through the gate, never past
+  // it), treat as a gate click. Pure XZ ground math, EditMode-testable.
+  public static bool TrySnapGateOnRay(Ray ray, Vector3 hitPoint, out Vector3 mouth) {
+    mouth = hitPoint;
+    if (SubjectCatalog.All == null) return false;
+    Vector3 o = new Vector3(ray.origin.x, 0f, ray.origin.z);
+    Vector3 d = new Vector3(ray.direction.x, 0f, ray.direction.z);
+    if (d.sqrMagnitude < 1e-6f) return false;
+    d.Normalize();
+    float tHit = Vector3.Dot(new Vector3(hitPoint.x, 0f, hitPoint.z) - o, d);
+    float bestT = float.MaxValue;
+    bool found = false;
+    bool isReturn = false;
+    SubjectDefinition bestDef = null;
+    foreach (SubjectDefinition def in SubjectCatalog.All) {
+      if (def == null) continue;
+      for (int i = 0; i < 2; i++) {
+        Vector3 c = i == 0 ? def.GatePos : def.ReturnPoint;
+        Vector3 rel = new Vector3(c.x, 0f, c.z) - o;
+        float t = Vector3.Dot(rel, d);
+        if (t < 0f || t > tHit + 1.0f) continue; // gate must be at/before the hit
+        Vector3 closest = o + d * t;
+        float dx = closest.x - c.x;
+        float dz = closest.z - c.z;
+        if (dx * dx + dz * dz < 1.2f * 1.2f && t < bestT) {
+          bestT = t;
+          bestDef = def;
+          isReturn = i == 1;
+          found = true;
+        }
+      }
+    }
+    if (!found) return false;
+    mouth = MouthFor(bestDef, isReturn);
+    return true;
+  }
+
+  // Mouth target shared by both snappers: entry = corridor centre 0.6m toward
+  // the hub (walkway end), return = arch centre.
+  static Vector3 MouthFor(SubjectDefinition def, bool isReturn) {
+    if (isReturn || def == null) {
+      Vector3 rc = def != null ? def.ReturnPoint : Vector3.zero;
+      return new Vector3(rc.x, 0f, rc.z);
+    }
+    // Gate mouth: corridor centre 0.6m toward the hub (== FaceOf in
+    // SubjectWorldBuilder: HubCenter - GatePos, normalized).
+    Vector3 toHub = SubjectCatalog.HubCenter - def.GatePos;
+    toHub.y = 0f;
+    if (toHub.sqrMagnitude < 0.001f) toHub = new Vector3(0f, 0f, 1f);
+    toHub.Normalize();
+    Vector3 m = def.GatePos + toHub * 0.6f;
+    m.y = 0f;
+    return m;
   }
 
   void TickPending() {
@@ -221,7 +321,10 @@ public class ClickRouter : MonoBehaviour {
       _pendingPoint = point;
       return;
     }
-    _player.MoveTo(point);
+    Vector3 dest = point;
+    Vector3 mouth2;
+    if (TrySnapToGateMouth(point, out mouth2)) dest = mouth2;
+    _player.MoveTo(dest);
     ClearPending();
   }
 }

@@ -291,4 +291,119 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
   là phụ. Build incremental thật chỉ ~60s.
 - PUSH GitHub (user lệnh về máy nhà làm tiếp): commit + push origin/main.
   Library/ + Temp/ ignored — máy nhà mở project sẽ import lại từ đầu (lâu lần đầu).
-  Không commit (chờ lệnh).
+  (Đã push xong 3ba1494 — user về máy nhà được.)
+  Không commit (chờ lệnh — đã push, cây làm việc sạch).
+
+## 12. XÓA CÂY TƯ DUY + FIX BẤM CỔNG KHÔNG VÀO (2026-09-20, máy ASUS)
+
+- User + ảnh: (1) xóa HẾT cây khu vực cổng Tư duy; (2) bấm vào cổng không vào được.
+- Fix (1): xóa cây backdrop (-15,-11.5) + early-return bỏ cây district Tư duy
+  (kèm carve của nó — không tường vô hình). Medallion + core + return arch giữ.
+- Root cause (2): bấm vào cột/vòm (có collider) → MoveTo trúng điểm trong vật cản
+  → agent kẹt ngoài poll radius 1.2m → cổng không kích (survey cũ chỉ đi bằng
+  waypoint tính sẵn, chưa từng bấm thật — đúng mục "cần user" còn nợ).
+  Fix: ClickRouter.TrySnapToGateMouth — click scenery trong 2m tâm cổng (cổng vào
+  + return arch) thì retarget về tâm hành lang XZ (đi bộ được) để đi xuyên trigger.
+  Bán kính 2m KHÔNG chạm biển (2.38m): ngắm biển không bị ép vào. Không đụng
+  Interactable/IClickTarget quest. Test mới P33H (cột/return snap, spawn + biển
+  không snap).
+- Verify: EditMode 472/469/0/5 exit 0 (P33H xanh) → build xong 22:24:43 (World.dll
+  + Bootstrap.dll + level0/1 tươi). Boot: FACE_OK, 0 exception.
+- TỰ KIỂM ĐIỂM (user mắng đúng, lần 2): build xong 22:24:43 nhưng tới 22:43 tôi
+  mới kết luận — vì watch đòi CẢ dòng UTP success (flush chậm) CẢ DLL tươi, và
+  16 phút đầu không chạy watch nào. Từ nay: (1) launch + watch LÀ MỘT lệnh duy
+  nhất, không khoe "BUILD-LAUNCHED" riêng; (2) watch CHỈ nhìn timestamp DLL/level,
+  deadline 180s, UTP chỉ để đọc thêm — đã viết ở §11 mà không làm theo.
+- Game mới đang chạy — user bấm thử vào cổng Tư duy + nhìn quanh còn cây nào không.
+- (Update: user bảo CHƯA xóa cây nào — rà số lại, xem §13.)
+  Chưa push (chờ user gom lệnh).
+
+## 13. BLOB 5.2M + QUY TRÌNH ATOMIC (2026-09-20, máy ASUS)
+
+- User: chưa hề xóa cây nào ở cổng Tư duy. Đúng — tôi đã xóa nhầm 2 cây ở xa
+  (SW corner + district), còn thủ phạm thật chưa đụng.
+- Rà tọa độ bằng số: blob trang trí (-9.5,-8.5) scale 2.6 = khối tròn RỘNG 5.2m
+  CAO 1.8m, cách cổng chỉ 4.6m — từ camera thấp nó đè cả 2 cột (đúng ảnh user).
+  (Từng whack-a-mole: blob này trước nằm TRÊN cổng VN, bị dời sang đây.)
+- Fix: chặt blob (-9.5,-8.5) + bụi tây (-6.8,-4.8) cách cổng 3.8m. Blob không
+  collider/carve (thuần visual) nên bake chỉ nhẹ đi. Bụi đông/nam giữ.
+- Verify: EditMode 472/469/0/5 exit 0 → build SUCCESS một nhịp 37s (level0/1 tươi
+  22:49:23). Boot: FACE_OK, 0 exception.
+- QUY TRÌNH MỚI (user mắng "suốt ngày treo" — đúng): launch + watch + kill GỘP
+  CHUNG MỘT lệnh, deadline gắn trong lệnh, không khoe trạng thái giữa chừng.
+  Watch build CHỈ bằng timestamp DLL/level. Đã áp dụng từ nhịp này (test + build
+  đều một nhịp, không gap).
+- Game mới đang chạy — user nhìn cổng Tư duy: nếu còn "thân cây" nào thì chụp
+  lại giúp (quanh cổng giờ không còn cây code nào — muốn định danh chính xác).
+- (Update: user báo bấm cổng thì đi vòng ra sau → snap ra miệng cổng; rồi mắng
+  treo 2 lần vì tôi tách build/relaunch — xem §14.)
+  Chưa push (chờ user gom lệnh).
+
+## 14. SNAP RA MIỆNG CỔNG + ATOMIC THẬT SỰ (2026-09-20, máy ASUS)
+
+- User: bấm cổng Tư duy thì đi vòng ra sau, không đi thẳng theo đường gạch.
+  Giải thích: NavMesh đi đường chim bay (cỏ đi được hết), không bám gạch; snap cũ
+  nhắm tâm cổng khiến đường cắt qua cột → pathfinder vòng tránh.
+- Fix: TrySnapToGateMouth retarget về MIỆNG cổng = tâm + 0.6m về hub (đầu đường
+  gạch — đi "lên gạch" + arrival 0.6m nằm trong trigger 1.2m). Return arch giữ
+  tâm. P33H cập nhật (mouth cách tâm 0.6 + phía hub).
+- Verify: EditMode 472/469/0/5 (P33H xanh) → build SUCCESS một nhịp 30s (22:56:15,
+  World.dll tươi). Boot: FACE_OK, 0 exception.
+- QUY TRÌNH (user mắng "lại treo" 2 lần — đúng cả 2): BUILD-WATCH=SUCCESS 22:56:15
+  nhưng tôi vẫn tách relaunch riêng → user nhìn gap treo. Từ nay pipeline
+  build-watch → kill → relaunch → boot-verify GỘP MỘT lệnh duy nhất. Nhịp này đã
+  làm đúng vậy (kill 13876 + launch + 45s verify một lệnh).
+- Game mới đang chạy — user bấm cổng Tư duy: phải đi lên đường gạch vào thẳng cửa.
+- (Update: user báo bấm GIỮA cổng vẫn chui ra sau + "2 cây trụ cổng như 2 cây xanh"
+  → hóa ra cột gear xanh đọc như thân cây + click xuyên cổng — xem §15.)
+  Chưa push (chờ user gom lệnh).
+
+## 15. CỘT GEAR HẾT GIỐNG CÂY + SNAP CLICK XUYÊN (2026-09-20, máy ASUS)
+
+- User + ảnh: (1) bấm GIỮA cổng vẫn chui ra sau — "có lộn chiều vào không, đổi
+  chiều thử"; (2) 2 trụ cổng Tư duy nhìn như 2 cây xanh.
+- Xác minh (2): đúng là cột cổng — trụ gear là cột xanh đặc cao 3.2m + răng mỏng,
+  nhìn từ sân ra y thân cây. Không phải cây (quanh cổng đã hết cây code).
+  Fix: bánh xe đổi sang đá sáng (hết đọc lá cây) + răng xanh to hơn giữ identity +
+  đế đá + hub cream giữ; cùng tọa độ/carve/collider (chi tiết mới visual-only) —
+  bake/nav không đổi.
+- Root cause (1): KHÔNG lộn chiều — bấm giữa cổng = tia xuyên qua vòm, trúng đất
+  khu sau cổng 3-5m (ngoài bán kính snap 2m) → điểm đến rơi sau cổng. Fix:
+  TrySnapGateOnRay — tia click xuyên trong 1.2m tâm cổng VÀ cổng nằm tại/trước
+  điểm trúng (không bắt click đất xa mà cổng nằm sau) thì về miệng cổng.
+  P33I chốt cả 2 chiều (xuyên → snap, bãi cỏ → không cướp).
+- Verify: EditMode 472/470/0/5 (P33I fail 1 lần do test ngắm lệch 1.55m — sửa tia
+  ngắm thẳng tâm, xanh; code đúng từ đầu). Build SUCCESS một nhịp 30s (World.dll
+  + level0/1 tươi 23:33). Boot: FACE_OK, 0 exception. (Một nhịp check tưởng crash
+  vì Get-Process hụt race lúc khởi động — check lại process vẫn chạy khỏe.)
+- Game mới đang chạy — user bấm giữa cổng Tư duy (dừng ở cửa, không chui sau nữa)
+  + nhìn cột đã ra chất cổng đá chưa.
+- (Update: user bắt đúng — có tường VÔ HÌNH lớn chắn lối gạch → đi vòng. Xem §16.)
+  Chưa push (chờ user gom lệnh).
+
+## 16. TƯỜNG CARVE VÔ HÌNH CHẮN ĐƯỜNG GẠCH (2026-09-20, máy ASUS)
+
+- User: có vật vô hình KHÁ LỚN chắn giữa lối từ sân vào cổng → phải đi vòng.
+- Root cause: EdgeCarveW_N/E_N — 2 tường carve dài 6.7m chống hàng rào cũ x=±8,
+  nhưng đường gạch + đường môn đi xuyên x=±8 ở z≈-2.9/-4 (cổng đã dời ra
+  ngoài bounds cũ từ Phase 3.0 mà carve không mở cửa). Đường gạch Tư duy cắt
+  tường đúng giữa (-8,-2.93). Chân đi vòng qua đầu tường ("ra đằng sau").
+  (Survey cũ vẫn pass vì waypoint đi vòng đầu bắc mà vẫn tới nơi.)
+- Fix: chẻ W_N/E_N làm đôi, mở cửa sổ z∈[-5,-1.9] ôm đường môn + đường gạch;
+  bụi rào ở đó đã trống sẵn (veto/plaza). W_S/E_S không vướng, giữ nguyên.
+  Carve runtime (không bake) nên hiệu lực ngay khi boot, không rủi ro bake.
+- Verify: EditMode 472/470/0/5 exit 0 → build SUCCESS một nhịp 30s (level0/1 tươi
+  23:42:55). Boot: FACE_OK, 0 exception.
+- Game mới đang chạy — user bấm cổng Tư duy: giờ phải đi THẲNG theo gạch vào cửa
+  (không vòng nữa). Bấm thử cả cổng Toán (đông cũng được mở).
+- (Update: user báo ỔN → push + tag 3.0.0.1, xem §17.)
+  Chưa push (chờ user gom lệnh).
+
+## 17. PUSH + TAG 3.0.0.1 (2026-09-20/21, máy ASUS)
+
+- User xác nhận ổn → push hết + đánh dấu bản 3.0.0.1.
+- Nội dung từ sau push 3ba1494: snap miệng cổng + snap ray xuyên (P33H/I),
+  chặt blob/bụi/cây Tư duy, cột gear đá, chẻ tường carve Đông/Tây, HANDOFF §12-16.
+- Verify cuối: EditMode 472/470/0/5 exit 0, build SUCCESS, boot FACE_OK 0 exc.
+- Tag: 3.0.0.1 (theo quy ước tag trần như hub-base). bundleVersion trong
+  ProjectSettings giữ 1.0 (chưa đụng — user chưa lệnh).

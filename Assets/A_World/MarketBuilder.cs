@@ -349,16 +349,17 @@ public class MarketBuilder : MonoBehaviour {
     // Hub round 5 (user: tree swallowed the Thinking gate): the (-11,-3)
     // tree stood 1.1m from the arc gate — moved deep west, clear of gates,
     // walkways and districts.
-    // (User round: trunk+canopy still crossed the Thinking pillars from hub
-    // views — parked in the deep SW corner, off every gate sightline.)
-    BuildTree(new Vector3(-15f, -0.1f, -11.5f), 1.6f);
+    // (User round: trunk+canopy crossed the Thinking pillars from hub views —
+    // exiled to the SW corner, then FELLED outright ("clear every tree here").
+    // No replacement; boundary + other district trees stay.)
     // Phase 3.0: the old east backdrop tree stood at (10.5, 4.5) — its canopy
     // crossed the Math follow sightline x=12 (P3 visual QA: obstruction
     // pull-in parked the playground camera 1.6m behind the player). Parked
     // clear of the road, the sightline and the playground.
     BuildTree(new Vector3(14.5f, -0.1f, 6.5f), 1.0f);
     BuildTree(new Vector3(3f, -0.1f, -10.5f), 1.8f);
-    BuildBush(new Vector3(-6.8f, 0f, -4.8f));
+    // (User round: "clear every tree around the Thinking gate" — the west bush
+    // 3.8m from the gate goes too. East/south bushes stay.)
     BuildBush(new Vector3(6.8f, 0f, -4.8f));
     BuildBush(new Vector3(6.8f, 0f, 4.8f));
     BuildHedgeEdge();
@@ -1205,7 +1206,8 @@ public class MarketBuilder : MonoBehaviour {
     // Hub round: the old (5,-8.5) blob sat exactly ON the Vietnamese gate —
     // moved west; plaza/walkway guards backstop anyway.
     AddBackdropBlob(new Vector3(-4f, -0.1f, 8.5f), 2.2f);
-    AddBackdropBlob(new Vector3(-9.5f, -0.1f, -8.5f), 2.6f);
+    // (User round: the (-9.5,-8.5) 2.6x blob 4.6m from the Thinking gate is
+    // FELLED — a 5.2m-wide round cover over the pillars from hub views.)
   }
 
   void AddBackdropBlob(Vector3 pos, float s) {
@@ -1550,9 +1552,17 @@ public class MarketBuilder : MonoBehaviour {
     // S gap follows the Vietnamese road at x=3.5 (gap x[2.3,4.7]).
     CarveBox("EdgeCarveS_L", new Vector3(-2.95f, 0.5f, 6f), new Vector3(10.5f, 1f, 0.4f));
     CarveBox("EdgeCarveS_R", new Vector3(6.45f, 0.5f, 6f), new Vector3(3.5f, 1f, 0.4f));
-    CarveBox("EdgeCarveW_N", new Vector3(-8f, 0.5f, -2.85f), new Vector3(0.4f, 1f, 6.7f));
+    // (User round: a LARGE INVISIBLE wall sat across the brick walkways — the
+    // 6.7m W_N/E_N carves back the old-bounds hedge, but hub-arc walkways +
+    // subject roads thread x=±8 at z≈-2.9/-4, so feet detoured around the wall
+    // ends ("walks around to the back"). Split with a window z∈[-5,-1.9]
+    // covering road + walkway; hedge bushes there are already gone
+    // (plaza-vetoed / window-skipped), so the gap shows only bricks.)
+    CarveBox("EdgeCarveW_Na", new Vector3(-8f, 0.5f, -0.7f), new Vector3(0.4f, 1f, 2.4f));
+    CarveBox("EdgeCarveW_Nb", new Vector3(-8f, 0.5f, -5.6f), new Vector3(0.4f, 1f, 1.2f));
+    CarveBox("EdgeCarveE_Na", new Vector3(8f, 0.5f, -0.7f), new Vector3(0.4f, 1f, 2.4f));
+    CarveBox("EdgeCarveE_Nb", new Vector3(8f, 0.5f, -5.6f), new Vector3(0.4f, 1f, 1.2f));
     CarveBox("EdgeCarveW_S", new Vector3(-8f, 0.5f, 4.65f), new Vector3(0.4f, 1f, 3.1f));
-    CarveBox("EdgeCarveE_N", new Vector3(8f, 0.5f, -2.85f), new Vector3(0.4f, 1f, 6.7f));
     CarveBox("EdgeCarveE_S", new Vector3(8f, 0.5f, 4.65f), new Vector3(0.4f, 1f, 3.1f));
   }
 
