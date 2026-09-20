@@ -29,12 +29,15 @@ public class ClickRouter : MonoBehaviour {
   // R5V-2 (§18): 2.5 -> 1.9m from the CLICK point on the NPC body. With a
   // 0.4m body radius + ~1m click height, arrival lands ~1.6-2.0m from the NPC
   // CENTER (target 1.8m) instead of on top of the NPC.
-  // R8 (player report: NPC commands fire from too far): 1.9 -> 1.5m — the
-  // child walks right up to Milo/Mia/the ball (arrival lands ~1.2-1.6m from
-  // center: conversational distance, faces readable, taps feel earned).
-  public float arrivalRange = 1.5f;
-  public float boundX = 8f;
-  public float boundZ = 6f;
+  // R8 (player report: NPC commands fire from too far): 1.9 -> 1.5m.
+  // Player report follow-up: halved again 1.5 -> 0.75m — the child walks
+  // right up to Milo/Mia (close handover, faces fill the frame, taps feel
+  // earned, no across-the-lawn triggering). Converges with the 0.75m
+  // proximity bring (R8 principle: click + proximity meet at the counter).
+  public float arrivalRange = 0.75f;
+  // Phase 3.0: extended Learning World (districts at |x|<=12.2+3.3, |z|<=10+3.3).
+  public float boundX = 16f;
+  public float boundZ = 14f;
 
   IGameEventBus _bus;
   IAudioDirector _audio;
@@ -60,6 +63,16 @@ public class ClickRouter : MonoBehaviour {
   // Lead introspection (also keeps the injected bus referenced, not just stored).
   public IGameEventBus Bus {
     get { return _bus; }
+  }
+
+  // Arrival is a GROUND concept (walk up TO someone): horizontal distance
+  // only. Click points ride ~1m up the body while feet stay on the grass —
+  // 3D distance would bake the height gap into every arrival (a 0.75m range
+  // with a 0.9m height gap can never trip). Pure so tests pin it.
+  public static bool InArrivalRange(Vector3 playerPos, Vector3 point, float range) {
+    float dx = playerPos.x - point.x;
+    float dz = playerPos.z - point.z;
+    return dx * dx + dz * dz <= range * range;
   }
 
   public bool HasPending {
@@ -130,13 +143,23 @@ public class ClickRouter : MonoBehaviour {
     if (target == null) { ClearPending(); return; } // destroyed mid-walk
     MonoBehaviour targetBehaviour = target as MonoBehaviour;
     if (targetBehaviour == null) { ClearPending(); return; }
-    if (Vector3.Distance(playerPos, _pendingPoint) > arrivalRange) return;
+    if (!InArrivalRange(playerPos, _pendingPoint, arrivalRange)) return;
     ClearPending();
     _player.Stop(); // arrival: halt AT range before the callback
     try {
       target.OnClicked();
     } catch (Exception e) {
       Debug.LogWarning("[ClickRouter] OnClicked callback failed: " + e.Message, this);
+    }
+    // Player rule: every clickable reads its name. Interactables speak
+    // through their own arrival-interact path; IClickTarget NPCs speak for
+    // themselves (Milo/Mia voice lines) — EXCEPT the wordless distractor
+    // prop, which borrows the shared vocab channel here (same-assembly).
+    try {
+      DistractorChoice distractor = target as DistractorChoice;
+      if (distractor != null) PlayVocabFireAndForget(distractor.SpeakWord);
+    } catch (Exception e) {
+      Debug.LogWarning("[ClickRouter] Distractor readout failed: " + e.Message, this);
     }
   }
 

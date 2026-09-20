@@ -78,6 +78,13 @@ public class DistractorChoice : MonoBehaviour, IClickTarget {
     get { return _carryingBall; }
   }
 
+  // Spoken readout (player rule: every clickable reads its name). The router
+  // plays this through the shared vocab path on arrival (same audio the
+  // crates get — an IClickTarget carries no vocab channel of its own).
+  public WordId SpeakWord {
+    get { return _ballWord; }
+  }
+
   public bool IsBallHome {
     get { return gameObject.activeSelf; }
   }
@@ -163,6 +170,8 @@ public class DistractorChoice : MonoBehaviour, IClickTarget {
   }
 
   void OnWordSeen(WordSeenEvent e) {
+    // Player rule: pre-quest taps arm nothing (mirrors the pickup gate above).
+    if (!_questStarted) return;
     if (e.WordId.Value == AppleWord) {
       _appleCarried = true;
       // SWAP: the quest item takes the hands; the ball hops home so the item

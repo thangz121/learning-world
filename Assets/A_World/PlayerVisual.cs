@@ -37,9 +37,15 @@ public sealed class PlayerVisual : MonoBehaviour {
   CharacterPresentation _presentation;
   SkinnedMeshRenderer _skinForFace;
   Transform _headForFace;
+  Transform _hipsBone;
   Transform _footLForShoe;
   Transform _footRForShoe;
   Transform _visualForFace;
+  GameObject _visualRootGo;
+  // Phase 2.5 separate Girl mesh (acceptance 2026-09-18): chibi parts riding
+  // the same rig; the male mesh hides while Girl is active (Boy untouched).
+  readonly System.Collections.Generic.List<GameObject> _girlParts =
+    new System.Collections.Generic.List<GameObject>();
   // R6 gait compensation (Build-A PROVEN, sign flipped): the old -0.03 assumed
   // the walk clip poses feet HIGHER than idle (BakeMesh-era claim). Build-A
   // photos prove the opposite: f6-22 mid-stride support planted with total
@@ -97,28 +103,32 @@ public sealed class PlayerVisual : MonoBehaviour {
     if (_presentation != null) _presentation.SetLiftOffset(moving ? WalkLiftLocal : 0f);
   }
 
-  // Phase 2.4: gender switch (presentation only). Safe to call before or
-  // after BuildVisual — if the visual already exists it re-tints in place;
-  // otherwise the next BuildVisual will use the new gender.
+  // REMOVED 2026-09-18 by user order (girl visual failed gate): Boy-only.
+  // Any Girl request coerces to Boy so a failed visual can never spawn.
   public void SetGender(PlayerGender gender) {
-    Gender = gender;
-    if (_skinForFace != null) ApplyGenderTint(_skinForFace, gender);
+    if (gender != PlayerGender.Boy) {
+      try { Debug.Log("[PlayerVisual] Girl unavailable (removed) — staying Boy.", this); }
+      catch (Exception) { }
+    }
+    Gender = PlayerGender.Boy;
+    if (_skinForFace != null) ApplyGenderTint(_skinForFace);
+    ApplyFaceFlags();
+    if (_presentation != null) {
+      try { _presentation.RebuildFaceNow(); } catch (Exception) { }
+      if (_presentation.IsFaceBuilt) {
+        try { _presentation.SetExpression(CharacterExpression.Neutral); } catch (Exception) { }
+      }
+    }
+    RefreshGirlBody();
   }
 
-  static void ApplyGenderTint(SkinnedMeshRenderer skin, PlayerGender gender) {
+  public int GirlPartCount => _girlParts != null ? _girlParts.Count : 0;
+
+  // Boy identity: blue shirt (distinct from Milo orange / Mia coral).
+  // Instance material copies; imported sub-assets stay pristine.
+  static void ApplyGenderTint(SkinnedMeshRenderer skin) {
     if (skin == null) return;
-    // Boy: blue shirt (existing identity, distinct from Milo orange / Mia coral)
-    // Girl: pink/coral shirt + slightly warmer hair tint if a Hair submesh exists.
-    // All tints are instance copies; imported sub-assets stay pristine.
-    // TryTint is no-op when nameFragment not found, so this is safe on both rigs.
-    if (gender == PlayerGender.Girl) {
-      TryTint(skin, "Shirt", new Color(0.95f, 0.42f, 0.62f));
-      TryTint(skin, "Pants", new Color(0.60f, 0.40f, 0.80f));
-      TryTint(skin, "Hair", new Color(0.35f, 0.22f, 0.12f));
-    } else {
-      TryTint(skin, "Shirt", new Color(0.25f, 0.5f, 0.95f));
-      // Pants tint not needed for Boy (keeps import), but ensure Hair stays default.
-    }
+    TryTint(skin, "Shirt", new Color(0.25f, 0.5f, 0.95f));
   }
 
   // Future avatar-swap seam: expression/gesture API for dialogue/story code.
@@ -159,13 +169,13 @@ public sealed class PlayerVisual : MonoBehaviour {
       // skin tuned in R5-A/R5c for matte readability at gameplay distance.
       TryTint(skin, "Face", new Color(0.93f, 0.70f, 0.52f), 0.25f);
       TryTint(skin, "Skin", new Color(0.42f, 0.27f, 0.17f), 0.3f);
-      // Gender clothing tint (Boy blue vs Girl pink). Kept after Face/Skin so
-      // Girl pink Shirt wins over any default.
-      ApplyGenderTint(skin, Gender);
+      // Boy blue shirt (gender selection removed — always Boy).
+      ApplyGenderTint(skin);
       if (skin.bones != null) {
         foreach (Transform bone in skin.bones) {
           if (bone == null) continue;
           if (headBone == null && bone.name == "Head") headBone = bone;
+          if (_hipsBone == null && bone.name == "Hips") _hipsBone = bone;
           if (_footLForShoe == null && bone.name == "Foot.L") _footLForShoe = bone;
           if (_footRForShoe == null && bone.name == "Foot.R") _footRForShoe = bone;
           if (HandBone == null && bone.name == "Fist.R") HandBone = bone;
@@ -177,12 +187,42 @@ public sealed class PlayerVisual : MonoBehaviour {
       return;
     }
     _presentation = gameObject.AddComponent<CharacterPresentation>();
+    ApplyFaceFlags();
     // Final polish footwear (shared helper, Foot.L/R proven on all rigs).
     _presentation.QueueShoe(_footLForShoe, "ShoeL");
     _presentation.QueueShoe(_footRForShoe, "ShoeR");
     _skinForFace = skin;
     _headForFace = headBone;
     _visualForFace = visual.transform;
+    _visualRootGo = visual;
+    RefreshGirlBody();
+  }
+
+  // Kit face flags (removal order): golden doll always (the girl bright-eye
+  // path is retired with the visual).
+  void ApplyFaceFlags() {
+    try {
+      if (_presentation == null) return;
+      _presentation.FaceBoost = 1f;
+      _presentation.MouthScale = 1f;
+      _presentation.BrightEyes = false;
+    } catch (Exception) { }
+  }
+
+  // Girl-part lifecycle (removal order): teardown only — nothing ever builds.
+  // Kept so GirlPartCount stays a truthful zero and any stray parts die.
+  void RefreshGirlBody() {
+    ClearGirlParts();
+  }
+
+  void ClearGirlParts() {
+    try {
+      foreach (GameObject go in _girlParts) {
+        if (go == null) continue;
+        try { CharacterPresentation.DestroyNow(go); } catch (Exception) { }
+      }
+    } catch (Exception) { }
+    _girlParts.Clear();
   }
 
   // Final polish: optional smoothness override (skin 0.5 soft sheen vs matte

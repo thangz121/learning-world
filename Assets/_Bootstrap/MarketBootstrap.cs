@@ -22,11 +22,19 @@ public class MarketBootstrap : MonoBehaviour {
   MarketBuilder _builder;
   WorldNameLabel _miloLabel;
   WorldNameLabel _miaLabel;
+  // Ground guidance line (player report): pre-talk/post-complete -> Milo,
+  // bring -> Mia, find (answer step) -> hidden. Driven next to the HUD
+  // objective text so the two can never disagree.
+  QuestGuideLine _guide;
+  Transform _miloT;
+  Transform _miaT;
   bool _built;
   // Track which quest is active (only one at a time in W1)
   QuestId? _activeQuest;
   // R7: pre-talk finds must not narrate. Set by QuestStartedEvent.
   bool _questStarted;
+  // Phase 3.0: objective cached before a world entry, restored on return —
+  // quest text is never clobbered by world navigation.
 
   // 2F ball-quest dialogue (data-driven, NOT new literals): exact manifest
   // texts, pinned to Content/dialogues/manifest.json by CT-P10 (code mirrors
@@ -67,6 +75,8 @@ public class MarketBootstrap : MonoBehaviour {
     MiaPresenter miaPresenter = miaGo.AddComponent<MiaPresenter>();
     miaPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
     miaPresenter.Bind(bus, quests, hints);
+    _miloT = miloGo.transform;
+    _miaT = miaGo.transform;
 
     // Shop-counter click proxy (Phase-1 closure): tapping Mia's counter reaches
     // Mia herself, so players never need pixel taps on her body behind the
@@ -104,7 +114,9 @@ public class MarketBootstrap : MonoBehaviour {
     miaLabelGo.transform.SetParent(miaGo.transform, false);
     _miaLabel = miaLabelGo.AddComponent<WorldNameLabel>();
     _miaLabel.Setup(miaName, miaGo.transform, miaHeight);
-    _miaLabel.Hide();
+    // Player report: Mia's name shows from frame one, like Milo's (no more
+    // hidden-until-introduction — the child should always read who is who).
+    _miaLabel.Show();
 
     // HUD: objective text + replay delegates to Milo (no World->Brain reference).
     _hud = builder.Hud;
@@ -125,6 +137,7 @@ public class MarketBootstrap : MonoBehaviour {
     bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted);
     bus.Subscribe<StoryMomentEvent>(OnStoryMoment);
     bus.Subscribe<QuestStartedEvent>(OnQuestStartedFlag);
+    bus.Subscribe<WorldChangedEvent>(OnWorldChanged); // Phase 3.0: world-transition presentation
 
     // Opening is talk-gated (first-time readability): the HUD names the one
     // action ("Talk to Milo"); Milo's proximity greet + name label do the
@@ -133,24 +146,19 @@ public class MarketBootstrap : MonoBehaviour {
     miloPresenter.OnFirstTalk = OnFirstTalk;
     if (builder.Bubble != null) builder.Bubble.Hide();
     if (_hud != null) _hud.ShowObjective("Talk to Milo");
+    // Guide starts at Milo (the one pre-talk action).
+    GameObject guideGo = new GameObject("QuestGuideLine");
+    _guide = guideGo.AddComponent<QuestGuideLine>();
+    _guide.SetStage(GuideStage.ToMilo, _miloT);
 
     // Mic-setup gate (Phase 2.1, additive): startup offer when no mic, silent
     // background rechecks, exercise-entry re-prompt. The monitor's Start()
     // runs the startup check on the next frame; future listening exercises
     // gate on MicMonitor.CheckBeforeListening(token) (quest #3 wiring).
+    // NOTE 2026-09-18: gender selection removed by user order (girl visual
+    // failed gate) — Boy-only, mic wires immediately, no identity panel.
     if (mic != null && mic.Gate != null) {
-      GameObject dialogGo = new GameObject("MicSetupDialog");
-      MicSetupDialog dialog = dialogGo.AddComponent<MicSetupDialog>();
-      GameObject monitorGo = new GameObject("MicSetupMonitor");
-      MicSetupMonitor monitor = monitorGo.AddComponent<MicSetupMonitor>();
-      monitor.Bind(mic.Gate, mic.LocalMic, mic.PhoneMic, dialog,
-        mic.BridgeHost, mic.BridgePort, FindToolsDir());
-      MicMonitor = monitor;
-      // Corner status widget (measured signal bars / headphone + data dot).
-      // Presentation-only: polls the monitor snapshot, never eats clicks.
-      GameObject hudGo = new GameObject("MicStatusHud");
-      MicStatusHud hud = hudGo.AddComponent<MicStatusHud>();
-      hud.Bind(monitor);
+      WireMic(mic);
     }
     // Phone camera stream (Phase 2.2, additive, independent of the mic gate):
     // realtime face preview, bottom-left. Own bridge port (8452), own thread,
@@ -244,6 +252,8 @@ public class MarketBootstrap : MonoBehaviour {
       // recording (the PiP carries the face). Null when the camera path
       // failed to wire — Bind is null-safe.
       try { rec.BindCameraHud(camHud); } catch (Exception) { }
+      // Phase 2.5: voice+gameplay mix in exports (null-safe: mic-only legacy when absent).
+      try { rec.BindGameAudioTap(builder.GameTap); } catch (Exception) { }
       MediaRecorder = rec;
       Debug.Log("[MediaRec] wired (explicit start only; F2 toggles, double-F2 changes save folder)");
     } catch (Exception e) {
@@ -293,6 +303,27 @@ public class MarketBootstrap : MonoBehaviour {
   // quest rules, bubble, HUD and voice are untouched, only re-sequenced.
   // This is also Mia's introduction beat: her label appears together with
   // the question bubble over her stall, so the player can locate her.
+  // Mic flow wiring (extracted for the Phase 2.5 identity gate: runs at Build
+  // when gender is chosen, or right after the child's first gender pick).
+  // Future listening exercises gate on MicMonitor.CheckBeforeListening(token).
+  void WireMic(MicSetupBundle mic) {
+    try {
+      if (mic == null || mic.Gate == null) return;
+      GameObject dialogGo = new GameObject("MicSetupDialog");
+      MicSetupDialog dialog = dialogGo.AddComponent<MicSetupDialog>();
+      GameObject monitorGo = new GameObject("MicSetupMonitor");
+      MicSetupMonitor monitor = monitorGo.AddComponent<MicSetupMonitor>();
+      monitor.Bind(mic.Gate, mic.LocalMic, mic.PhoneMic, dialog,
+        mic.BridgeHost, mic.BridgePort, FindToolsDir());
+      MicMonitor = monitor;
+      // Corner status widget (measured signal bars / headphone + data dot).
+      // Presentation-only: polls the monitor snapshot, never eats clicks.
+      GameObject hudGo = new GameObject("MicStatusHud");
+      MicStatusHud hud = hudGo.AddComponent<MicStatusHud>();
+      hud.Bind(monitor);
+    } catch (Exception) { }
+  }
+
   void OnFirstTalk() {
     if (_bus == null || _quests == null) return;
     
@@ -309,6 +340,8 @@ public class MarketBootstrap : MonoBehaviour {
       _hud.ShowObjective(objective);
       _hud.SetReplayVisible(true);
     }
+    // Answer step (find apple-vs-ball unaided): guide hides.
+    if (_guide != null) _guide.SetStage(GuideStage.Hidden, null);
     Milo.SetInstructionTarget(0);
     // Attention guidance: Milo's line names Mia, so camera takes player to her stall front
     if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null && _builder.MiloAnchor != null) {
@@ -345,6 +378,8 @@ public class MarketBootstrap : MonoBehaviour {
           _hud.ShowObjective(objective);
           _hud.SetReplayVisible(true);
         }
+        // Next answer step: guide hides again.
+        if (_guide != null) _guide.SetStage(GuideStage.Hidden, null);
         if (nextQuest.Value == W1QuestBall) {
           // 2F entry-driven narration: the ASK comes from manifest data
           // (mia voice per roster), not Milo's apple-worded instruction.
@@ -372,12 +407,14 @@ public class MarketBootstrap : MonoBehaviour {
       Milo.PraiseFound();
       Milo.SetInstructionTarget(1);
       if (_hud != null) _hud.ShowObjective("Bring the apple to Mia");
+      if (_guide != null) _guide.SetStage(GuideStage.ToMia, _miaT);
     } else if (e.WordId.Value == BallWord.Value && _activeQuest.Value == W1QuestBall.Value) {
       // 2F entry-driven praise: manifest correct-response line (Mia voice),
       // mirroring Milo.PraiseFound's role in the apple branch — word-free
       // generic praise would misname the target, manifest data names it.
       SayQuestLine(BallPraiseText, MiaVoice(), AudioPriority.P4_Feedback);
       if (_hud != null) _hud.ShowObjective("Bring the ball to Mia");
+      if (_guide != null) _guide.SetStage(GuideStage.ToMia, _miaT);
     }
   }
 
@@ -408,6 +445,64 @@ public class MarketBootstrap : MonoBehaviour {
     }
   }
 
+  // Phase 3.0: objective cached before a world entry, restored on return —
+  // quest text is never clobbered by world navigation.
+  string _preWorldObjective;
+
+  // Phase 3.0 world-transition presentation (additive; quest narration is
+  // untouched). Enter: HUD names the new world + camera frames the entry
+  // beat, then auto-returns to Follow (the child walked in, no teleport).
+  // Return: the player is warped to the main-side road head (same GameObjects,
+  // same services — nothing duplicated, nothing leaked), HUD restores the
+  // exact pre-entry objective, camera re-anchors Follow on the player.
+  void OnWorldChanged(WorldChangedEvent e) {
+    if (_builder == null) return;
+    SubjectDefinition to = SubjectCatalog.Get(e.To);
+    if (to != null) {
+      if (_hud != null) {
+        // Cache discipline (chaos survey: cross-subject switches broke a
+        // single-slot cache): only an entry FROM Main overwrites the cached
+        // Main-world objective; subject-to-subject switches keep it.
+        if (e.From == SubjectIds.Main) {
+          try { _preWorldObjective = _hud.CurrentObjective; } catch (Exception) { }
+        }
+        _hud.ShowObjective(to.DisplayName + " World");
+      }
+      if (_builder.WorldCamera != null) {
+        Vector3 look = to.EntryPoint + new Vector3(0f, 1.0f, 0f);
+        Vector3 outDir = to.GatePos - to.PlaygroundCenter;
+        outDir.y = 0f;
+        if (outDir.sqrMagnitude < 0.001f) outDir = new Vector3(0f, 0f, 1f);
+        outDir.Normalize();
+        // Three-quarter beat (P3 visual QA: an on-axis camera looks straight
+        // through its own lintel and the obstruction pull-in parks it inside
+        // the beam). Offset laterally so the arch + road + playground frame.
+        Vector3 lateral = new Vector3(outDir.z, 0f, -outDir.x);
+        Vector3 camPos = to.GatePos + outDir * 3.2f + lateral * 2.4f + new Vector3(0f, 2.6f, 0f);
+        _builder.WorldCamera.FramePointFor(camPos, look, 2.0f);
+      }
+      return;
+    }
+    if (e.To == SubjectIds.Main) {
+      SubjectDefinition from = SubjectCatalog.Get(e.From);
+      if (from != null && _builder.Player != null) {
+        Vector3 outDir = from.GatePos - from.PlaygroundCenter;
+        outDir.y = 0f;
+        if (outDir.sqrMagnitude < 0.001f) outDir = new Vector3(0f, 0f, 1f);
+        outDir.Normalize();
+        try { _builder.Player.WarpTo(from.GatePos + outDir * 2.0f); } catch (Exception) { }
+      }
+      if (_hud != null) {
+        if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
+        else _hud.ShowObjective("Look around!");
+      }
+      if (_builder.WorldCamera != null && _builder.Player != null) {
+        try { _builder.WorldCamera.Follow(_builder.Player.transform, _builder.WorldCamera.defaultOffset); }
+        catch (Exception) { }
+      }
+    }
+  }
+
   void OnQuestStartedFlag(QuestStartedEvent e) {
     if (e.QuestId.Value == W1QuestApple.Value || e.QuestId.Value == W1QuestBall.Value) {
       _questStarted = true;
@@ -427,6 +522,8 @@ public class MarketBootstrap : MonoBehaviour {
     if (e.QuestId.Value == W1QuestApple.Value) {
       Milo.Celebrate();
       if (_builder != null && _builder.Bubble != null) _builder.Bubble.Hide();
+      // Quest closed: guide returns to Milo (next talk / replay invitation).
+      if (_guide != null) _guide.SetStage(GuideStage.ToMilo, _miloT);
       if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.QuestComplete, DateTime.UtcNow));
       if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null) {
         Vector3 miaPlayerMid = _builder.MiaAnchor.position + new Vector3(0.1f, 1.0f, 0.35f);
@@ -435,6 +532,7 @@ public class MarketBootstrap : MonoBehaviour {
     } else if (e.QuestId.Value == W1QuestBall.Value) {
       Milo.Celebrate();
       if (_builder != null && _builder.Bubble != null) _builder.Bubble.Hide();
+      if (_guide != null) _guide.SetStage(GuideStage.ToMilo, _miloT);
       if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.QuestComplete, DateTime.UtcNow));
       if (_builder != null && _builder.WorldCamera != null && _builder.MiaAnchor != null) {
         Vector3 miaPlayerMid = _builder.MiaAnchor.position + new Vector3(0.1f, 1.0f, 0.35f);

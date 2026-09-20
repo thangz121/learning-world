@@ -29,6 +29,16 @@ public class ClickToMove : MonoBehaviour {
   // Consumed by the hint system (visual L1 ~8s, Milo point L2 ~15s — owned by B/D).
   public float IdleSeconds { get; private set; }
 
+  // Destination introspection (DestinationMarker presenter): where the player
+  // is currently walking to. Valid only while HasDestination is true.
+  public bool HasDestination {
+    get { return _hasDestination; }
+  }
+
+  public Vector3 Destination {
+    get { return _agent != null ? _agent.destination : transform.position; }
+  }
+
   // Injection boundary (wired by GameInstaller). MonoBehaviours cannot use
   // constructor injection (Unity instantiates them), so Bind is the pattern.
   public void Bind(IGameEventBus bus) { _bus = bus; }
@@ -61,6 +71,22 @@ public class ClickToMove : MonoBehaviour {
     _hasDestination = false;
     _hasTarget = false;
     if (_agent != null && _agent.isOnNavMesh) _agent.ResetPath();
+  }
+
+  // Phase 3.0: deterministic reposition for world returns (return arch ->
+  // main-world road head). Uses NavMeshAgent.Warp (never transform.position)
+  // so the agent stays on the NavMesh; snaps to the nearest valid point
+  // within 1m and drops any pending destination/target. Same GameObjects
+  // throughout: no duplication, no event churn, no state loss.
+  public bool WarpTo(Vector3 destination) {
+    if (_agent == null || !_agent.isOnNavMesh) return false;
+    NavMeshHit hit;
+    if (!NavMesh.SamplePosition(destination, out hit, 1.0f, NavMesh.AllAreas)) return false;
+    _hasDestination = false;
+    _hasTarget = false;
+    _agent.Warp(hit.position);
+    ResetIdle();
+    return true;
   }
 
   void Update() {

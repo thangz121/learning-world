@@ -103,8 +103,10 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   // Click entry point for A's router (no input code in this file).
   // Visible friendly response: short wave on every click. Post-completion
   // clicks are inert (narrative context: no more wrongs after the quest).
+  // Every click also reads her name (player rule: clickables speak).
   public void OnMiaClicked() {
     _waveT = WaveDuration;
+    Mia.SayName();
     if (!_questStarted) return; // pre-talk: wave only, quest state untouched
     if (_quests != null && _quests.GetState(_activeQuest).Completed) return;
     bool isBallQuest = _activeQuest.Value == "w1_mia_ball";
@@ -140,6 +142,9 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     if (!_questStarted) return;
     _carryingBall = false;
     _bringJustResolved = true; // the trailing arrival tap is echo, not intent
+    // Player rule: Mia says the mistake gently herself (sad face lands via
+    // the WrongChoice moment below; Milo's encouragement stays untouched).
+    Mia.SayRetry();
     if (_hints != null) _hints.ReportWrong(_activeQuest);
     if (_bus != null) _bus.Publish(new StoryMomentEvent(StoryMoment.WrongChoice, DateTime.UtcNow));
   }
@@ -167,11 +172,12 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     if (!_carryingApple && !_carryingBall) return;
     if (_quests == null) return;
     if (_quests.GetState(_activeQuest).Completed) return;
-    // R8 (player report: bring fires from too far): 1.8 -> 1.5m — the child
-    // hands the item OVER THE COUNTER, not across the lawn. Matches the
-    // tightened click arrivalRange (1.5m): both paths converge at the counter.
+    // Player report follow-up (NPC auto-interaction too generous): halved
+    // 1.5 -> 0.75m — the child hands the item OVER THE COUNTER, cheek to
+    // cheek with Mia. Converges with the 0.75m click arrivalRange (R8
+    // principle: both paths meet at the counter).
     // The active quest determines whether the carried item is correct or wrong.
-    if (Vector3.Distance(playerPos, transform.position) > 1.5f) return;
+    if (Vector3.Distance(playerPos, transform.position) > 0.75f) return;
     bool isBallQuest = _activeQuest.Value == "w1_mia_ball";
     if ((_carryingBall && isBallQuest) || (_carryingApple && !isBallQuest)) {
       CompleteBring();
@@ -181,6 +187,9 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   }
 
   void OnWordSeen(WordSeenEvent e) {
+    // Player rule: pre-quest taps arm nothing (no pickup before Talk, so no
+    // carry context either — the quest start resets hands anyway).
+    if (!_questStarted) return;
     if (e.WordId.Value == _appleWord.Value) {
       _carryingApple = true;
       _carryingBall = false; // SWAP: the quest item takes the hands (mirrors the ball hopping home)

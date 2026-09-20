@@ -1,7 +1,10 @@
 // A_World/RecordingIndicator.cs — Agent A (World & Visual).
-// "Am I recording?" answer (user ask): a small non-modal badge, top-center,
-// with a blinking red dot + REC + elapsed timer while recording, and a
-// "finishing…" line while the session finalizes. Deliberately NOT a dialog:
+// "Am I recording?" answer (user ask): a small non-modal badge, top-center.
+// While RECORDING only a blinking red DOT shows — player rule (no "Đang quay"
+// text in the exported file: view capture composites overlay, so any text
+// would burn in; the dot keeps the live cue with near-zero export footprint).
+// While FINALIZING the full "finishing…" line shows (transient, and capture
+// has stopped by then). Deliberately NOT a dialog:
 // no GraphicRaycaster anywhere, every Graphic has raycastTarget=false, so
 // gameplay clicks pass straight through. The driver (MediaRecordingService)
 // owns state and only calls SetRecording/SetFinishing/Hide here.
@@ -12,6 +15,7 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class RecordingIndicator : MonoBehaviour {
   GameObject _root;
+  Image _box;
   Image _dot;
   Text _text;
   bool _recording;
@@ -34,8 +38,13 @@ public class RecordingIndicator : MonoBehaviour {
     try {
       _recording = recording;
       _finishing = false;
-      if (_text != null)
-        _text.text = recording ? "ĐANG QUAY " + FormatElapsed(elapsedSec) : string.Empty;
+      // Dot-only while recording (player rule: no text in the export).
+      // NOTE: only the box IMAGE is disabled — the dot/text ride on the box
+      // object, so deactivating the object would kill the dot too.
+      // Elapsed param kept for the API (callers already compute it).
+      if (_text != null) _text.text = string.Empty;
+      if (_box != null) _box.enabled = false;
+      if (_dot != null && !_dot.gameObject.activeSelf) _dot.gameObject.SetActive(true);
       _root.SetActive(recording);
     } catch (Exception) { }
   }
@@ -45,6 +54,7 @@ public class RecordingIndicator : MonoBehaviour {
     try {
       _recording = false;
       _finishing = true;
+      if (_box != null && !_box.enabled) _box.enabled = true;
       if (_text != null) _text.text = "Đang kết thúc bản thu...";
       _root.SetActive(true);
     } catch (Exception) { }
@@ -100,6 +110,7 @@ public class RecordingIndicator : MonoBehaviour {
     Image box = boxGo.AddComponent<Image>();
     box.color = new Color(0f, 0f, 0f, 0.72f);
     box.raycastTarget = false;
+    _box = box;
     RectTransform rt = boxGo.GetComponent<RectTransform>();
     rt.anchorMin = new Vector2(0.5f, 1f);
     rt.anchorMax = new Vector2(0.5f, 1f);

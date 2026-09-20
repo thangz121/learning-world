@@ -11,6 +11,7 @@
 // the Lead can re-wire/verify from other agents' components.
 // C# 9.0 only. No legacy Input. No TTS/Worker calls (audio via IAudioDirector).
 using Unity.AI.Navigation;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.EventSystems;
@@ -34,8 +35,10 @@ public class MarketBuilder : MonoBehaviour {
   // behind the default follow camera — a reward nook, never an occluder.
   // R9b: 2m clear of the west tree (was hugging its trunk, stalks unreadable).
   public static readonly Vector3 FlowerAnchorPos = new Vector3(-4.6f, 0f, 5.0f);
-  public const float BoundX = 8f;
-  public const float BoundZ = 6f;
+  // Phase 3.0: extended Learning World bounds (districts + outer hedge).
+  // Main World X[-8,8] Z[-6,6] is untouched; these cover roads + playgrounds.
+  public const float BoundX = 16f;
+  public const float BoundZ = 14f;
 
   // Lead wiring surface (assigned in Awake; bound in BuildServices).
   public ClickToMove Player { get; private set; }
@@ -60,6 +63,7 @@ public class MarketBuilder : MonoBehaviour {
   public CursorPresenter Cursor { get; private set; }
   public ProximityDiscovery AppleDiscovery { get; private set; }
   public ProximityDiscovery BallDiscovery { get; private set; }
+  public GameAudioTap GameTap { get; private set; }
 
   IGameEventBus _bus;
 
@@ -72,13 +76,18 @@ public class MarketBuilder : MonoBehaviour {
     BuildFlowerBed();
     BuildDistractor();
     BuildBubble();
+    // Phase 3.0: Learning World shell BEFORE the bake (roads + medallions are
+    // walkable; pillars/cores/trees bake as geometry and get runtime carves).
+    _worldResult = SubjectWorldBuilder.BuildShell(transform);
     // NavMesh bakes BEFORE the player exists: the agent enables against a
     // valid NavMesh (no "failed to create agent"), and the player capsule
     // itself is excluded from the baked geometry.
     BuildNavMesh();
     BuildNavCarves();
+    SubjectWorldBuilder.BuildCarves(_worldResult, AddCarve); // Phase 3.0: gate/core/tree/boundary/outer carves
     BuildMiloMat(); // R5V-b: post-NavMesh so the bake never sees it
     BuildAmbientDecor(); // Phase 2.4: post-bake ambient (pure visual, no carve)
+    SubjectWorldBuilder.BuildDecor(transform); // Phase 3.0: post-bake dressing (collider-free)
     BuildPlayer();
     BuildCamera();
     BuildFrameServices();
@@ -138,6 +147,39 @@ public class MarketBuilder : MonoBehaviour {
     if (Distractor != null) Distractor.Bind(_bus, hints, quests);
   }
 
+  // ---- Phase 3.0 Learning World wiring ----------------------------------------
+  // The shell result is built in Awake (pre-NavMesh); gates are bound here,
+  // after scene load, when the nav service + player both exist.
+
+  SubjectWorldBuilder.BuildResult _worldResult;
+  IWorldNavService _worldNav;
+
+  public IWorldNavService WorldNav {
+    get { return _worldNav; }
+  }
+
+  // Runtime carve entry point for SubjectWorldBuilder (same obstacle pattern
+  // as BuildNavCarves: stationary carving, no rebake).
+  public void AddCarve(string carveName, Vector3 pos, Vector3 size) {
+    CarveBox(carveName, pos, size);
+  }
+
+  // Pushes the nav service into every subject gate (entry one-way in, return
+  // one-way out). Null-safe: an unbound world runs exactly as before.
+  public void SetWorldNav(IWorldNavService nav) {
+    _worldNav = nav;
+    if (_worldResult == null || nav == null || Player == null) return;
+    Transform playerT = Player.transform;
+    for (int i = 0; i < SubjectCatalog.All.Length && i < _worldResult.EntryGates.Count; i++) {
+      SubjectGate g = _worldResult.EntryGates[i];
+      if (g != null) g.Bind(nav, SubjectCatalog.All[i].Id, false, playerT);
+    }
+    for (int i = 0; i < SubjectCatalog.All.Length && i < _worldResult.ReturnGates.Count; i++) {
+      SubjectGate g = _worldResult.ReturnGates[i];
+      if (g != null) g.Bind(nav, SubjectCatalog.All[i].Id, true, playerT);
+    }
+  }
+
   // ---- environment: sky, light, ground, path --------------------------------
 
   void BuildEnvironment() {
@@ -173,7 +215,7 @@ public class MarketBuilder : MonoBehaviour {
     ground.name = "Ground";
     ground.transform.SetParent(transform);
     ground.transform.position = Vector3.zero;
-    ground.transform.localScale = new Vector3(1.6f, 1f, 1.2f); // 10m plane -> 16x12m
+    ground.transform.localScale = new Vector3(3.8f, 1f, 3.2f); // 10m plane -> 38x32m (Phase 3.0: covers districts)
     // R5V-1: toned down (0.35,0.68,0.32 glowed neon under sun+ambient).
     ground.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.33f, 0.62f, 0.30f));
 
@@ -184,7 +226,7 @@ public class MarketBuilder : MonoBehaviour {
     outer.name = "OuterGround";
     outer.transform.SetParent(transform);
     outer.transform.position = new Vector3(0f, -0.12f, 0f);
-    outer.transform.localScale = new Vector3(6f, 1f, 6f);
+    outer.transform.localScale = new Vector3(8f, 1f, 8f);
     outer.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.24f, 0.47f, 0.33f));
 
     // Warm path stripe from spawn toward Milo's place (onboarding: the
@@ -270,7 +312,11 @@ public class MarketBuilder : MonoBehaviour {
     // background green), plus three small bushes inside corners for charm.
     // Each answers WHY: orientation + horizon depth, never clutter.
     BuildTree(new Vector3(-11f, -0.1f, -3f), 1.6f);
-    BuildTree(new Vector3(10.5f, -0.1f, 4.5f), 1.4f);
+    // Phase 3.0: the old east backdrop tree stood at (10.5, 4.5) — its canopy
+    // crossed the Math follow sightline x=12 (P3 visual QA: obstruction
+    // pull-in parked the playground camera 1.6m behind the player). Parked
+    // clear of the road, the sightline and the playground.
+    BuildTree(new Vector3(14.5f, -0.1f, 6.5f), 1.0f);
     BuildTree(new Vector3(3f, -0.1f, -10.5f), 1.8f);
     BuildBush(new Vector3(-6.8f, 0f, -4.8f));
     BuildBush(new Vector3(6.8f, 0f, -4.8f));
@@ -332,16 +378,22 @@ public class MarketBuilder : MonoBehaviour {
       new Color(0.96f, 0.95f, 0.90f),
     };
     // Deterministic alternation (never Random: every build is identical).
+    // Phase 3.0: gaps where the 4 subject roads cross (|x|<1.65 on N/E/W,
+    // Vietnamese S road runs at x=3.5 so the spawn camera axis stays clear).
     int n = 0;
     for (float x = -8f; x <= 8.01f; x += 1.6f) {
-      AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, -6f), n);
-      AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, 6f), n + 1);
-      if (n % 4 == 1) AddFlowerTuft(hedge.transform, new Vector3(x, 0f, -6f), tuft[(n / 4) % 3]);
+      bool gapN = Mathf.Abs(x) < 1.65f;
+      bool gapS = Mathf.Abs(x - 3.5f) < 1.65f;
+      if (!gapN) AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, -6f), n);
+      if (!gapS) AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, 6f), n + 1);
+      if (!gapN && n % 4 == 1) AddFlowerTuft(hedge.transform, new Vector3(x, 0f, -6f), tuft[(n / 4) % 3]);
       n++;
     }
     for (float z = -4.4f; z <= 4.41f; z += 1.6f) {
-      AddHedgeBush(hedge.transform, new Vector3(-8f, 0.28f, z), n);
-      AddHedgeBush(hedge.transform, new Vector3(8f, 0.28f, z), n + 1);
+      if (Mathf.Abs(z - 1.8f) >= 1.65f) {
+        AddHedgeBush(hedge.transform, new Vector3(-8f, 0.28f, z), n);
+        AddHedgeBush(hedge.transform, new Vector3(8f, 0.28f, z), n + 1);
+      }
       n++;
     }
 
@@ -430,10 +482,13 @@ public class MarketBuilder : MonoBehaviour {
     Apple.wordId = "apple";
     Apple.interactionId = "take_apple";
     Apple.npcId = "mia";
-    // R8 (player report: range feels too generous): 2.5 -> 2.0m — the child
-    // must walk visibly UP TO the crate, not snipe it across the lawn. Still
-    // forgiving (no pixel-hunting); proximity discovery follows automatically.
-    Apple.interactionDistance = 2.0f;
+    // Player report follow-up (pickup radius too generous): 2.0 -> 1.3m.
+    // FLOOR (measured live 2026-09-19): CrateCarve denies feet within ~1.1m
+    // of the crate center, so anything below ~1.2m softlocks the find (the
+    // walker can never get closer). 1.3m is the smallest working radius —
+    // the child still stands AT the crate. Proximity discovery follows
+    // automatically (same IsInRange gate).
+    Apple.interactionDistance = 1.3f;
     Apple.ParseIds(); // fields assigned post-Awake: re-parse or events drop
     AppleDiscovery = apple.AddComponent<ProximityDiscovery>();
   }
@@ -453,13 +508,26 @@ public class MarketBuilder : MonoBehaviour {
     crate.transform.localScale = new Vector3(1.2f, 0.4f, 1.2f);
     crate.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.65f, 0.45f, 0.3f));
 
-    // Blue ball on the crate (quest target)
+    // BIG ORANGE quest ball with a white equatorial band (player report: the
+    // old small blue sphere was identical to the distractor ball — same color,
+    // same size, and SQUASHED by this crate's non-uniform scale (1.2,0.4,1.2),
+    // so children could not tell which ball counts). Now unmistakable: orange
+    // vs blue, big vs small, banded vs plain, and counter-scaled to a TRUE
+    // sphere in world space (0.8 diameter: local = world / parent scale).
     GameObject ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     ball.name = "QuestBall";
     ball.transform.SetParent(crate.transform);
-    ball.transform.localPosition = new Vector3(0f, 0.62f, 0f);
-    ball.transform.localScale = new Vector3(0.56f, 0.56f, 0.56f);
-    ball.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.20f, 0.42f, 0.90f)); // blue ball
+    ball.transform.localPosition = new Vector3(0f, 1.5f, 0f);
+    ball.transform.localScale = new Vector3(0.667f, 2.0f, 0.667f);
+    ball.GetComponent<Renderer>().sharedMaterial = Lit(new Color(1.0f, 0.55f, 0.10f)); // quest orange
+    GameObject band = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    band.name = "QuestBallBand";
+    band.transform.SetParent(ball.transform);
+    band.transform.localPosition = Vector3.zero;
+    band.transform.localScale = new Vector3(1.04f, 0.06f, 1.04f);
+    band.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.96f, 0.96f, 0.97f));
+    Collider bandCollider = band.GetComponent<Collider>();
+    if (bandCollider != null) Destroy(bandCollider); // one click volume (the ball) per quest item
 
     CrateBall = ball;
     // 2F click-robustness: the Interactable rides the CRATE root (not the
@@ -472,7 +540,7 @@ public class MarketBuilder : MonoBehaviour {
     Ball.wordId = "ball";
     Ball.interactionId = "take_ball";
     Ball.npcId = "mia";
-    Ball.interactionDistance = 2.0f;
+    Ball.interactionDistance = 1.3f; // same carve-floor physics as the apple crate
     Ball.ParseIds();
     BallDiscovery = crate.AddComponent<ProximityDiscovery>();
     BallDiscovery.questIdValue = "w1_mia_ball"; // arms on the ball quest only
@@ -589,47 +657,498 @@ public class MarketBuilder : MonoBehaviour {
     if (c != null) Destroy(c);
   }
 
-  // Phase 2.4 FINAL POLISH: ambient world dressing (post-NavMesh, pure visual).
-  // Fills empty lawn patches without cluttering gameplay or touching carves.
-  // Keeps the 4yo-readable rule: path stays clear, quest items (red apple vs
-  // blue ball) keep high contrast, decorations stay low (<=0.6m) and off paths.
+  // Phase 2.4 FINAL POLISH — stylized preschool world dressing (post-NavMesh,
+  // pure visual, collider-free, no rebake). Composed as illustration layers
+  // (foreground accents / midground play / background silhouettes), NOT as a
+  // uniform scatter. Every anchor is hand-placed (deterministic, seed-pinned);
+  // only intra-cluster jitter (rotation/scale/offset) uses the seeded RNG, so
+  // every build is identical. GameplayClearZone stays empty: player spawn,
+  // path corridor, Milo/Mia anchors, both crates, pedestal, flower bed.
   void BuildAmbientDecor() {
-    // Small grass tufts near hedge (deterministic, low, matte)
-    AddGrassTuft(new Vector3(-4f, 0f, 5.2f), 0.9f);
-    AddGrassTuft(new Vector3(3f, 0f, -5f), 1f);
-    AddGrassTuft(new Vector3(6.5f, 0f, 1.5f), 0.85f);
-    // Smooth rocks at path edge (grey, flattened, never on path)
-    AddRock(new Vector3(1.2f, 0f, 2.8f), 0.5f);
-    AddRock(new Vector3(-1.3f, 0f, 0.2f), 0.45f);
-    // Extra flower patch north lawn (mirrors hedge tuft palette, 3 blooms)
-    AddFlowerPatch(new Vector3(2f, 0f, 4.8f));
-    // Barrel beside apple crate (wood, non-interactive dressing)
+    var rng = new System.Random(20260918);
+    BuildGroundVariation(rng);
+    BuildGrassClusters(rng);
+    BuildFlowerClusters(rng);
+    BuildBushClusters(rng);
+    BuildTreeComposition(rng);
+    BuildRockClusters(rng);
+    BuildBoundaryVegetation(rng);
+    BuildPathTransition(rng);
+    BuildStoryProps(rng);
+    // Legacy focal: wooden barrel beside the apple crate (non-interactive).
     AddBarrel(new Vector3(CrateAnchorPos.x + 0.9f, 0f, CrateAnchorPos.z + 0.3f));
   }
 
-  void AddGrassTuft(Vector3 pos, float s) {
+  // GameplayClearZone: decor with volume (trees/bushes/rocks/barrel) must stay
+  // out; flat ground patches and walkable grass may sit anywhere. Radii cover
+  // interaction reach + agent footprint + camera framing margin.
+  static bool IsInGameplayClearZone(Vector3 pos) {
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(PlayerSpawn.x, 0f, PlayerSpawn.z)) < 1.4f) return true;
+    if (Mathf.Abs(pos.x) < 1.5f && pos.z > -1.7f && pos.z < 5.2f) return true; // path corridor
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(MiloAnchorPos.x, 0f, MiloAnchorPos.z)) < 1.7f) return true;
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(MiaAnchorPos.x, 0f, MiaAnchorPos.z)) < 1.9f) return true;
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(CrateAnchorPos.x, 0f, CrateAnchorPos.z)) < 1.5f) return true;
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(BallCrateAnchorPos.x, 0f, BallCrateAnchorPos.z)) < 1.5f) return true;
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(5.4f, 0f, 0.6f)) < 1.3f) return true; // pedestal
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(FlowerAnchorPos.x, 0f, FlowerAnchorPos.z)) < 1.3f) return true;
+    // Milo->Mia and Milo->apple walking corridors (keep solid decor off them).
+    if (DistToSegment(pos, MiloAnchorPos, MiaAnchorPos) < 0.9f) return true;
+    if (DistToSegment(pos, MiloAnchorPos, CrateAnchorPos) < 0.9f) return true;
+    // Phase 3.0: subject roads + playgrounds stay furniture-free for ambient
+    // decor (roads are ground treatment; districts are composed separately).
+    if (Mathf.Abs(pos.z - 1.8f) < 1.3f && pos.x > 5.3f && pos.x < 15.8f) return true; // Math road
+    if (Mathf.Abs(pos.z - 1.8f) < 1.3f && pos.x < -5.3f && pos.x > -15.8f) return true; // Thinking road
+    if (Mathf.Abs(pos.x) < 1.3f && pos.z < -3.3f && pos.z > -13.8f) return true; // English road
+    if (Mathf.Abs(pos.x - 3.5f) < 1.3f && pos.z > 3.3f && pos.z < 13.8f) return true; // Vietnamese road (x=3.5)
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(12.2f, 0f, 1.8f)) < 4.4f) return true;
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(-12.2f, 0f, 1.8f)) < 4.4f) return true;
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(0f, 0f, -10.0f)) < 4.4f) return true;
+    if (Vector3.Distance(new Vector3(pos.x, 0f, pos.z), new Vector3(3.5f, 0f, 10.0f)) < 4.4f) return true;
+    return false;
+  }
+
+  static float DistToSegment(Vector3 p, Vector3 a, Vector3 b) {
+    Vector2 pa = new Vector2(p.x - a.x, p.z - a.z);
+    Vector2 ba = new Vector2(b.x - a.x, b.z - a.z);
+    float t = Mathf.Clamp01((pa.x * ba.x + pa.y * ba.y) / Mathf.Max(0.001f, ba.sqrMagnitude));
+    return new Vector2(pa.x - ba.x * t, pa.y - ba.y * t).magnitude;
+  }
+
+  // ---- ground: soft value/hue breakup so the lawn is a stage, not a sheet --
+  void BuildGroundVariation(System.Random rng) {
+    // Irregular flat discs (y just above grass, collider-free, walkable).
+    AddGroundPatch(new Vector3(-5.5f, 0f, 2.5f), new Vector3(2.2f, 1f, 1.6f), new Color(0.36f, 0.66f, 0.33f), rng);
+    AddGroundPatch(new Vector3(-4.0f, 0f, -4.0f), new Vector3(2.0f, 1f, 1.5f), new Color(0.30f, 0.58f, 0.28f), rng);
+    AddGroundPatch(new Vector3(4.5f, 0f, -4.5f), new Vector3(2.4f, 1f, 1.7f), new Color(0.36f, 0.66f, 0.33f), rng);
+    AddGroundPatch(new Vector3(5.5f, 0f, 1.8f), new Vector3(1.8f, 1f, 1.4f), new Color(0.38f, 0.64f, 0.32f), rng);
+    AddGroundPatch(new Vector3(-2.4f, 0f, 1.2f), new Vector3(1.5f, 1f, 1.2f), new Color(0.30f, 0.58f, 0.28f), rng);
+    AddGroundPatch(new Vector3(2.6f, 0f, 1.2f), new Vector3(1.6f, 1f, 1.3f), new Color(0.36f, 0.66f, 0.33f), rng);
+    AddGroundPatch(new Vector3(-1.5f, 0f, -4.6f), new Vector3(2.0f, 1f, 1.3f), new Color(0.38f, 0.64f, 0.32f), rng);
+    AddGroundPatch(new Vector3(-6.5f, 0f, -0.5f), new Vector3(1.7f, 1f, 1.4f), new Color(0.30f, 0.58f, 0.28f), rng);
+    AddGroundPatch(new Vector3(0.6f, 0f, 4.9f), new Vector3(1.4f, 1f, 1.0f), new Color(0.36f, 0.66f, 0.33f), rng);
+  }
+
+  void AddGroundPatch(Vector3 pos, Vector3 size, Color color, System.Random rng) {
+    GameObject patch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    patch.name = "GrassPatch";
+    patch.transform.SetParent(transform);
+    float yaw = (float)(rng.NextDouble() * 360.0);
+    patch.transform.position = pos + new Vector3(0f, 0.012f, 0f);
+    patch.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+    patch.transform.localScale = new Vector3(size.x, 0.012f, size.z);
+    patch.GetComponent<Renderer>().sharedMaterial = Lit(color);
+    Collider c = patch.GetComponent<Collider>();
+    if (c != null) Destroy(c);
+  }
+
+  // ---- low vegetation: irregular tuft clusters, walkable, off-path rhythm --
+  // User round (thoáng): thinned 14 -> 8, kept as breathing accents.
+  void BuildGrassClusters(System.Random rng) {
+    // Legacy trio (kept at exact positions) + dead-zone clusters.
+    AddGrassTuft(new Vector3(-4f, 0f, 5.2f), 0.9f, rng);
+    AddGrassTuft(new Vector3(3f, 0f, -5f), 1f, rng);
+    AddGrassTuft(new Vector3(6.5f, 0f, 1.5f), 0.85f, rng);
+    AddGrassTuft(new Vector3(-5.0f, 0f, -4.2f), 1.05f, rng);
+    AddGrassTuft(new Vector3(-2.2f, 0f, -4.8f), 0.9f, rng);
+    AddGrassTuft(new Vector3(4.0f, 0f, -0.2f), 0.85f, rng);
+    AddGrassTuft(new Vector3(-1.7f, 0f, 3.0f), 0.8f, rng);
+    AddGrassTuft(new Vector3(1.7f, 0f, 3.2f), 0.9f, rng);
+  }
+
+  // ---- flowers: pastel clusters (never carpets), at focal adjacencies ------
+  static readonly Color[] PastelBlooms = {
+    new Color(0.95f, 0.55f, 0.65f), // pink
+    new Color(0.96f, 0.95f, 0.90f), // white
+    new Color(0.98f, 0.82f, 0.30f), // yellow
+    new Color(0.75f, 0.60f, 0.90f), // lavender
+    new Color(0.98f, 0.65f, 0.40f), // light orange
+  };
+
+  void BuildFlowerClusters(System.Random rng) {
+    // Legacy north-lawn patch (kept) + composition clusters near
+    // tree bases / rocks / hedge / landmarks — always with breathing room.
+    // User round (thoáng): 8 -> 5 clusters, fewer blooms each.
+    AddFlowerPatch(new Vector3(2f, 0f, 4.8f), rng);
+    AddFlowerCluster(new Vector3(-5.5f, 0f, 4.2f), 3, 0, rng); // NW tree base
+    AddFlowerCluster(new Vector3(3.2f, 0f, 5.0f), 3, 1, rng);  // north meadow
+    AddFlowerCluster(new Vector3(-1.8f, 0f, 2.5f), 3, 2, rng); // west of path
+    AddFlowerCluster(new Vector3(-6.5f, 0f, -5.2f), 2, 0, rng); // SW corner
+    AddFlowerCluster(new Vector3(1.7f, 0f, -4.6f), 2, 2, rng);  // south border
+  }
+
+  void AddFlowerCluster(Vector3 pos, int blooms, int paletteOffset, System.Random rng) {
+    if (IsInGameplayClearZone(pos)) return;
+    // Premium path: one sculpted Quaternius cluster, pastel-pair tinted.
+    Color a1 = PastelBlooms[paletteOffset % PastelBlooms.Length];
+    Color a2 = PastelBlooms[(paletteOffset + 2) % PastelBlooms.Length];
+    GameObject grown = NatureLibrary.Spawn(transform, "Flowers", pos,
+      rng != null ? (float)(rng.NextDouble() * 360.0) : 0f,
+      0.40f + (blooms - 3) * 0.03f,
+      new Color(0.28f, 0.58f, 0.30f), a1, a2, true);
+    if (grown != null) {
+      grown.name = "FlowerCluster";
+      grown.AddComponent<NatureSway>().amplitudeDeg = 0.8f;
+      // Extra filler blooms around the sculpted core (primitive, harmonized).
+      GameObject filler = new GameObject("ClusterFiller");
+      filler.transform.SetParent(grown.transform);
+      filler.transform.localPosition = Vector3.zero;
+      for (int i = 0; i < blooms; i++) {
+        float ang = (float)(rng.NextDouble() * Mathf.PI * 2f);
+        float rad = 0.30f + (float)rng.NextDouble() * 0.18f;
+        AddTinyBloomAt(filler.transform,
+          grown.transform.position + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad),
+          PastelBlooms[(paletteOffset + i) % PastelBlooms.Length],
+          "ClusterSprig", "ClusterBloom");
+      }
+      return;
+    }
+    LegacyFlowerCluster(pos, blooms, paletteOffset, rng);
+  }
+
+  void LegacyFlowerCluster(Vector3 pos, int blooms, int paletteOffset, System.Random rng) {
+    GameObject cluster = new GameObject("FlowerCluster");
+    cluster.transform.SetParent(transform);
+    cluster.transform.position = pos;
+    for (int i = 0; i < blooms; i++) {
+      float ang = (float)(rng.NextDouble() * Mathf.PI * 2f);
+      float rad = 0.12f + (float)rng.NextDouble() * 0.22f;
+      Vector3 off = new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+      float h = 0.30f + (float)rng.NextDouble() * 0.14f;
+      Color bloom = PastelBlooms[(paletteOffset + i) % PastelBlooms.Length];
+      GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      stem.name = "ClusterStem";
+      stem.transform.SetParent(cluster.transform);
+      stem.transform.position = pos + off + new Vector3(0f, h * 0.5f, 0f);
+      stem.transform.localScale = new Vector3(0.04f, h * 0.5f, 0.04f);
+      stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.55f, 0.28f));
+      Collider sc = stem.GetComponent<Collider>();
+      if (sc != null) Destroy(sc);
+      GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      head.name = "ClusterBloom";
+      head.transform.SetParent(cluster.transform);
+      head.transform.position = pos + off + new Vector3(0f, h, 0f);
+      float bs = 0.12f + (float)rng.NextDouble() * 0.05f;
+      head.transform.localScale = new Vector3(bs, bs, bs);
+      head.GetComponent<Renderer>().sharedMaterial = Lit(bloom);
+      Collider bc = head.GetComponent<Collider>();
+      if (bc != null) Destroy(bc);
+    }
+  }
+
+  // ---- bushes: edge/corner/landmark accents that break empty lawns ---------
+  void BuildBushClusters(System.Random rng) {
+    AddDecorBush(new Vector3(-7.0f, 0f, 0.5f), 1.0f, false, rng);
+    AddDecorBush(new Vector3(-5.2f, 0f, -5.0f), 1.1f, false, rng);
+    AddDecorBush(new Vector3(5.0f, 0f, -5.0f), 1.0f, false, rng);
+    AddDecorBush(new Vector3(2.5f, 0f, 5.1f), 0.9f, false, rng);
+    AddDecorBush(new Vector3(-6.0f, 0f, 2.0f), 0.85f, false, rng); // NW tree base
+    AddDecorBush(new Vector3(-5.4f, 0f, -3.4f), 0.9f, false, rng); // stall west
+    AddDecorBush(new Vector3(-1.4f, 0f, -3.2f), 0.85f, false, rng); // stall east
+    AddDecorBush(new Vector3(-1.9f, 0f, -0.6f), 0.8f, false, rng);  // path bend
+    AddDecorBush(new Vector3(-7.0f, 0f, -4.5f), 1.0f, true, rng);   // flowering SW
+    AddDecorBush(new Vector3(7.0f, 0f, 4.5f), 0.95f, true, rng);    // flowering NE
+    AddDecorBush(new Vector3(-6.9f, 0f, 5.0f), 0.9f, true, rng);    // flowering NW
+  }
+
+  static readonly string[] BushModels = { "Bush_1", "Bush_2" };
+
+  void AddDecorBush(Vector3 pos, float s, bool flowering, System.Random rng) {
+    if (IsInGameplayClearZone(pos)) return;
+    // Premium path: sculpted bushes; berries become pastel blooms.
+    string model = flowering ? "BushBerries_1" : BushModels[rng.Next(BushModels.Length)];
+    Color leaf = (rng.NextDouble() < 0.5)
+      ? new Color(0.28f, 0.60f, 0.30f)
+      : new Color(0.32f, 0.63f, 0.32f);
+    GameObject grown = NatureLibrary.Spawn(transform, model, pos,
+      (float)(rng.NextDouble() * 360.0), 0.62f * s, leaf,
+      new Color(0.95f, 0.55f, 0.65f), new Color(0.98f, 0.82f, 0.30f));
+    if (grown != null) { grown.name = "DecorBush"; return; }
+    LegacyDecorBush(pos, s, flowering, rng, leaf);
+  }
+
+  void LegacyDecorBush(Vector3 pos, float s, bool flowering, System.Random rng, Color leaf) {
+    GameObject bush = new GameObject("DecorBush");
+    GameObject leafGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    leafGo.name = "DecorBushLeaf";
+    leafGo.transform.SetParent(bush.transform);
+    leafGo.transform.localPosition = new Vector3(0f, 0.32f * s, 0f);
+    leafGo.transform.localScale = new Vector3(1.05f * s, 0.62f * s, 1.05f * s);
+    leafGo.GetComponent<Renderer>().sharedMaterial = Lit(leaf);
+    Collider c = leafGo.GetComponent<Collider>();
+    if (c != null) Destroy(c);
+    if (flowering) {
+      for (int i = 0; i < 3; i++) {
+        float ang = (float)(rng.NextDouble() * Mathf.PI * 2f);
+        Vector3 off = new Vector3(Mathf.Cos(ang) * 0.32f * s, 0.52f * s, Mathf.Sin(ang) * 0.32f * s);
+        GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        dot.name = "DecorBushBloom";
+        dot.transform.SetParent(bush.transform);
+        dot.transform.localPosition = off;
+        dot.transform.localScale = new Vector3(0.13f, 0.13f, 0.13f);
+        dot.GetComponent<Renderer>().sharedMaterial = Lit(PastelBlooms[(i * 2) % PastelBlooms.Length]);
+        Collider bc = dot.GetComponent<Collider>();
+        if (bc != null) Destroy(bc);
+      }
+    }
+  }
+
+  // ---- trees: 3 scale classes; inside = small/medium anchors, outside = BG --
+  // Premium path: curated Quaternius silhouettes (round/pine/willow) with
+  // runtime height normalization; primitive fallback keeps domains green.
+  void BuildTreeComposition(System.Random rng) {
+    // Inside-boundary anchors (carved in BuildNavCarves, visuals here).
+    AddDecorTree(new Vector3(-6.5f, 0f, -2.8f), "CommonTree_1", 1.6f, new Color(0.25f, 0.58f, 0.28f), rng);
+    AddDecorTree(new Vector3(6.8f, 0f, -3.2f), "PineTree_2", 1.7f, new Color(0.26f, 0.57f, 0.29f), rng);
+    AddDecorTree(new Vector3(-2.8f, 0f, 4.9f), "Willow_2", 2.3f, new Color(0.30f, 0.62f, 0.30f), rng);
+    // Background silhouettes outside play (soft, lower-contrast greens).
+    AddDecorTree(new Vector3(-2f, -0.1f, -11f), "CommonTree_5", 4.2f, new Color(0.24f, 0.53f, 0.30f), rng);
+    AddDecorTree(new Vector3(12f, -0.1f, -2f), "CommonTree_3", 3.6f, new Color(0.24f, 0.53f, 0.30f), rng);
+    AddDecorTree(new Vector3(-12f, -0.1f, 5f), "CommonTree_1", 3.8f, new Color(0.24f, 0.53f, 0.30f), rng);
+    AddDecorTree(new Vector3(7f, -0.1f, 10f), "PineTree_2", 3.4f, new Color(0.24f, 0.53f, 0.30f), rng);
+    AddDecorTree(new Vector3(-7f, -0.1f, 10.5f), "CommonTree_5", 3.6f, new Color(0.24f, 0.53f, 0.30f), rng);
+  }
+
+  void AddDecorTree(Vector3 pos, string model, float height, Color leaf, System.Random rng) {
+    bool inside = Mathf.Abs(pos.x) < BoundX && Mathf.Abs(pos.z) < BoundZ;
+    if (inside && IsInGameplayClearZone(pos)) return;
+    float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
+    GameObject grown = NatureLibrary.Spawn(transform, model, pos, yaw, height,
+      leaf, leaf, leaf);
+    if (grown != null) { grown.name = "DecorTree"; return; }
+    LegacyDecorTree(pos, height * 0.45f, leaf, rng);
+  }
+
+  void LegacyDecorTree(Vector3 pos, float s, Color leaf, System.Random rng) {
+    GameObject tree = new GameObject("DecorTree");
+    tree.transform.SetParent(transform);
+    tree.transform.position = pos;
+    tree.transform.localScale = Vector3.one * s;
+    tree.transform.localRotation = Quaternion.Euler(0f, (float)(rng.NextDouble() * 360.0), 0f);
+    Color trunkC = new Color(0.45f, 0.30f, 0.16f);
+    GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    trunk.name = "DecorTrunk";
+    trunk.transform.SetParent(tree.transform);
+    trunk.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+    trunk.transform.localScale = new Vector3(0.5f, 1.8f, 0.5f);
+    trunk.GetComponent<Renderer>().sharedMaterial = Lit(trunkC);
+    Collider tc = trunk.GetComponent<Collider>();
+    if (tc != null) Destroy(tc);
+    Vector3[] canopyAt = {
+      new Vector3(0f, 2.3f, 0f),
+      new Vector3(0.7f, 1.9f, 0.3f),
+      new Vector3(-0.6f, 2.0f, -0.3f),
+    };
+    for (int i = 0; i < canopyAt.Length; i++) {
+      GameObject canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      canopy.name = "DecorCanopy";
+      canopy.transform.SetParent(tree.transform);
+      canopy.transform.localPosition = canopyAt[i];
+      canopy.transform.localScale = new Vector3(1.6f, 1.3f, 1.6f);
+      canopy.GetComponent<Renderer>().sharedMaterial = Lit(leaf);
+      Collider cc = canopy.GetComponent<Collider>();
+      if (cc != null) Destroy(cc);
+    }
+  }
+
+  // ---- rocks: always grouped with vegetation, never lone obstacles ---------
+  void BuildRockClusters(System.Random rng) {
+    // Legacy path-edge pair (kept) + grouped clusters.
+    AddRock(new Vector3(1.2f, 0f, 2.8f), 0.5f, rng);
+    AddRock(new Vector3(-1.3f, 0f, 0.2f), 0.45f, rng);
+    AddRockWithGreens(new Vector3(-5.8f, 0f, 1.0f), 0.6f, rng); // NW tree base
+    AddRockWithGreens(new Vector3(4.8f, 0f, -3.5f), 0.55f, rng); // apple nook
+    AddRockWithGreens(new Vector3(-2.0f, 0f, -4.5f), 0.5f, rng); // south mid
+    AddRockWithGreens(new Vector3(6.7f, 0f, 1.8f), 0.5f, rng);   // east mid
+  }
+
+  void AddRockWithGreens(Vector3 pos, float s, System.Random rng) {
+    if (IsInGameplayClearZone(pos)) return;
+    AddRock(pos, s, rng);
+    // Pebble companions + one grass sprig + one tiny bloom: a composed group.
+    for (int i = 0; i < 2; i++) {
+      float ang = (float)(rng.NextDouble() * Mathf.PI * 2f);
+      Vector3 off = new Vector3(Mathf.Cos(ang) * 0.45f, 0f, Mathf.Sin(ang) * 0.45f);
+      AddPebble(pos + off, 0.5f + (float)rng.NextDouble() * 0.4f);
+    }
+    float gang = (float)(rng.NextDouble() * Mathf.PI * 2f);
+    Vector3 goff = new Vector3(Mathf.Cos(gang) * 0.55f, 0f, Mathf.Sin(gang) * 0.55f);
+    if (!IsInGameplayClearZone(pos + goff)) AddGrassTuft(pos + goff, 0.7f, rng);
+  }
+
+  void AddPebble(Vector3 pos, float s) {
+    GameObject grown = NatureLibrary.Spawn(transform, "Rock_6", pos, 0f, 0.13f * s,
+      Color.white, Color.white, Color.white);
+    if (grown != null) { grown.name = "Pebble"; return; }
+    GameObject pebble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    pebble.name = "Pebble";
+    pebble.transform.SetParent(transform);
+    pebble.transform.position = pos + new Vector3(0f, 0.06f, 0f);
+    pebble.transform.localScale = new Vector3(0.22f * s, 0.12f * s, 0.26f * s);
+    pebble.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.60f, 0.60f, 0.62f));
+    Collider c = pebble.GetComponent<Collider>();
+    if (c != null) Destroy(c);
+  }
+
+  // ---- storytelling props: stump + log seats with a reason to exist --------
+  void BuildStoryProps(System.Random rng) {
+    // Stump beside the NW tree nook (nature seat) + flowers already cluster it.
+    if (!IsInGameplayClearZone(new Vector3(-6.0f, 0f, 2.6f))) {
+      GameObject stump = NatureLibrary.Spawn(transform, "TreeStump",
+        new Vector3(-6.0f, 0f, 2.6f), (float)(rng.NextDouble() * 360.0), 0.42f,
+        new Color(0.28f, 0.58f, 0.30f), Color.white, Color.white);
+      if (stump != null) stump.name = "TreeStumpProp";
+    }
+    // Fallen log bench at the north meadow edge (story corner, off the path).
+    if (!IsInGameplayClearZone(new Vector3(-2.0f, 0f, 5.3f))) {
+      GameObject log = NatureLibrary.Spawn(transform, "WoodLog",
+        new Vector3(-2.0f, 0f, 5.3f), 25f + (float)(rng.NextDouble() * 20.0), 0.35f,
+        new Color(0.28f, 0.58f, 0.30f), Color.white, Color.white);
+      if (log != null) log.name = "WoodLogProp";
+    }
+    // Tiny leafy plants: tree bases, stall corners, rock groups.
+    AddGroundPlant(new Vector3(-5.9f, 0f, 3.3f), rng);
+    AddGroundPlant(new Vector3(6.4f, 0f, -2.7f), rng);
+    AddGroundPlant(new Vector3(-5.5f, 0f, -1.8f), rng);
+    AddGroundPlant(new Vector3(4.9f, 0f, -3.3f), rng);
+  }
+
+  static readonly string[] PlantModels = { "Plant_2", "Plant_4" };
+
+  void AddGroundPlant(Vector3 pos, System.Random rng) {
+    if (IsInGameplayClearZone(pos)) return;
+    Color leaf = new Color(0.29f, 0.59f, 0.30f);
+    GameObject grown = NatureLibrary.Spawn(transform, PlantModels[rng.Next(PlantModels.Length)],
+      pos, (float)(rng.NextDouble() * 360.0), 0.30f, leaf, leaf, leaf, true);
+    if (grown != null) {
+      grown.name = "GroundPlant";
+      grown.AddComponent<NatureSway>();
+      return;
+    }
+    AddGrassTuft(pos, 0.6f, rng);
+  }
+
+  // ---- boundary: turn the hedge line into garden depth, hide the void ------
+  void BuildBoundaryVegetation(System.Random rng) {
+    // Inside accents just off the hedge (fill hedge gaps, keep sightlines low).
+    AddDecorBush(new Vector3(-3.0f, 0f, 5.4f), 0.8f, false, rng);
+    AddDecorBush(new Vector3(5.8f, 0f, -5.3f), 0.85f, false, rng);
+    AddDecorBush(new Vector3(-7.3f, 0f, -2.0f), 0.8f, false, rng);
+    AddFlowerCluster(new Vector3(4.5f, 0f, 5.3f), 2, 1, rng);
+    AddFlowerCluster(new Vector3(-4.2f, 0f, -5.3f), 2, 3, rng);
+    // Outside backdrop blobs on the dark skirt (soft depth behind the hedge).
+    AddBackdropBlob(new Vector3(-4f, -0.1f, 8.5f), 2.2f);
+    AddBackdropBlob(new Vector3(5f, -0.1f, -8.5f), 2.6f);
+    AddBackdropBlob(new Vector3(-10.5f, -0.1f, 0f), 2.4f);
+    AddBackdropBlob(new Vector3(10.5f, -0.1f, 1f), 2.0f);
+  }
+
+  void AddBackdropBlob(Vector3 pos, float s) {
+    GameObject blob = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    blob.name = "BackdropBlob";
+    blob.transform.SetParent(transform);
+    blob.transform.position = pos + new Vector3(0f, 0.35f * s, 0f);
+    blob.transform.localScale = new Vector3(2.0f * s, 0.7f * s, 2.0f * s);
+    blob.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.26f, 0.50f, 0.34f));
+    Collider c = blob.GetComponent<Collider>();
+    if (c != null) Destroy(c);
+  }
+
+  // ---- path: worn-edge transition so the road feels walked, not pasted -----
+  void BuildPathTransition(System.Random rng) {
+    // User round (thoáng): 6 -> 4 accents per side, wider rhythm.
+    for (int side = -1; side <= 1; side += 2) {
+      for (int i = 0; i < 4; i++) {
+        float z = -0.5f + i * 1.1f + (float)(rng.NextDouble() * 0.3 - 0.15);
+        float x = side * (1.28f + (float)rng.NextDouble() * 0.18f);
+        Vector3 p = new Vector3(x, 0f, z);
+        if (IsInGameplayClearZone(p) && Mathf.Abs(x) < 1.5f && z > -1.7f && z < 5.2f) {
+          // Path corridor is clear-zone by definition; edge accents live JUST
+          // outside it — nudge outward instead of skipping (keeps rhythm).
+          p.x = side * 1.62f;
+        }
+        int pick = rng.Next(3);
+        if (pick == 0) AddPebble(p, 0.6f + (float)rng.NextDouble() * 0.5f);
+        else if (pick == 1) AddGrassTuft(p, 0.55f + (float)rng.NextDouble() * 0.2f, rng);
+        else AddTinyBloom(p, PastelBlooms[rng.Next(PastelBlooms.Length)]);
+      }
+    }
+    // Subtle dirt variation ON the path shoulders (flat, underfoot, no block).
+    AddGroundPatch(new Vector3(1.05f, 0f, 1.5f), new Vector3(0.5f, 1f, 2.2f), new Color(0.72f, 0.56f, 0.38f), rng);
+    AddGroundPatch(new Vector3(-1.05f, 0f, 2.8f), new Vector3(0.45f, 1f, 1.8f), new Color(0.72f, 0.56f, 0.38f), rng);
+  }
+
+  void AddTinyBloom(Vector3 pos, Color bloom) {
+    AddTinyBloomAt(transform, pos, bloom, "PathSprig", "PathTinyBloom");
+  }
+
+  void AddTinyBloomAt(Transform parent, Vector3 pos, Color bloom, string stemName, string bloomName) {
+    GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    stem.name = stemName;
+    stem.transform.SetParent(parent);
+    stem.transform.position = pos + new Vector3(0f, 0.10f, 0f);
+    stem.transform.localScale = new Vector3(0.03f, 0.10f, 0.03f);
+    stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.55f, 0.28f));
+    Collider sc = stem.GetComponent<Collider>();
+    if (sc != null) Destroy(sc);
+    GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    head.name = bloomName;
+    head.transform.SetParent(parent);
+    head.transform.position = pos + new Vector3(0f, 0.19f, 0f);
+    head.transform.localScale = new Vector3(0.09f, 0.09f, 0.09f);
+    head.GetComponent<Renderer>().sharedMaterial = Lit(bloom);
+    Collider bc = head.GetComponent<Collider>();
+    if (bc != null) Destroy(bc);
+  }
+
+  // Legacy helpers (kept names/shapes; scale/rotation now vary via seeded RNG).
+  // Premium path first: harmonized Quaternius CC0 clumps; primitive fallback
+  // keeps EditMode-batch and missing-Resources domains green.
+  // (Grass uses the LW clump system above — external blades lack normals.)
+
+  void AddGrassTuft(Vector3 pos, float s, System.Random rng) {
+    float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
+    float sv = rng != null ? 0.8f + (float)rng.NextDouble() * 0.4f : 1f;
+    Color leaf = (rng != null && rng.NextDouble() < 0.5)
+      ? new Color(0.30f, 0.58f, 0.32f)
+      : new Color(0.27f, 0.55f, 0.30f);
+    // LW clump system (guaranteed normals/lighting); Quaternius blades stay
+    // out — their meshes carry no usable normals under URP/Lit (black).
+    GameObject grown = LwGrass.SpawnTuft(transform, pos + new Vector3(0f, 0.02f, 0f),
+      yaw, 0.34f * s * sv, leaf);
+    if (grown != null) return;
     GameObject tuft = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     tuft.name = "GrassTuft";
     tuft.transform.SetParent(transform);
     tuft.transform.position = pos + new Vector3(0f, 0.18f, 0f);
-    tuft.transform.localScale = new Vector3(0.7f * s, 0.35f * s, 0.7f * s);
-    tuft.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.30f, 0.58f, 0.32f));
+    tuft.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+    tuft.transform.localScale = new Vector3(0.7f * s * sv, 0.35f * s * sv, 0.7f * s * sv);
+    tuft.GetComponent<Renderer>().sharedMaterial = Lit(leaf);
     Collider c = tuft.GetComponent<Collider>();
     if (c != null) Destroy(c);
   }
 
-  void AddRock(Vector3 pos, float s) {
+  static readonly string[] RockModels = { "Rock_2", "Rock_4", "Rock_6", "Rock_Moss_2" };
+
+  void AddRock(Vector3 pos, float s, System.Random rng) {
+    // Hand-placed (path-edge pair kept); low profile, collider-free.
+    float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
+    string model = RockModels[rng != null ? rng.Next(RockModels.Length) : 0];
+    GameObject grown = NatureLibrary.Spawn(transform, model, pos,
+      yaw, 0.30f * s, Color.white, Color.white, Color.white);
+    if (grown != null) { grown.name = "Rock"; return; }
     GameObject rock = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     rock.name = "Rock";
     rock.transform.SetParent(transform);
     rock.transform.position = pos + new Vector3(0f, 0.12f, 0f);
+    rock.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
     rock.transform.localScale = new Vector3(0.55f * s, 0.30f * s, 0.65f * s);
     rock.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.55f, 0.55f, 0.58f));
     Collider c = rock.GetComponent<Collider>();
     if (c != null) Destroy(c);
   }
 
-  void AddFlowerPatch(Vector3 pos) {
+  void AddFlowerPatch(Vector3 pos, System.Random rng) {
+    // Legacy north-lawn trio (kept): 3 blooms = P25H patch pin.
     Color[] blooms = { new Color(0.95f, 0.55f, 0.65f), new Color(0.98f, 0.82f, 0.30f), new Color(0.96f, 0.95f, 0.90f) };
     for (int i = 0; i < 3; i++) {
       float ox = (i - 1) * 0.18f;
@@ -647,12 +1166,13 @@ public class MarketBuilder : MonoBehaviour {
       bloom.transform.position = pos + new Vector3(ox, 0.38f, 0f);
       bloom.transform.localScale = new Vector3(0.14f, 0.14f, 0.14f);
       bloom.GetComponent<Renderer>().sharedMaterial = Lit(blooms[i % 3]);
-      Collider bc = bloom.GetComponent<Collider>();
-      if (bc != null) Destroy(bc);
+      Collider bcc = bloom.GetComponent<Collider>();
+      if (bcc != null) Destroy(bcc);
     }
   }
 
   void AddBarrel(Vector3 pos) {
+    // Hand-placed beside the crate (outside its carve, non-interactive).
     GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     barrel.name = "Barrel";
     barrel.transform.SetParent(transform);
@@ -750,6 +1270,9 @@ public class MarketBuilder : MonoBehaviour {
     cam.nearClipPlane = 0.1f;
     cam.farClipPlane = 100f;
     camGo.AddComponent<AudioListener>();
+    // Phase 2.5: game-audio tap for recordings (MUST sit on the listener
+    // object for OnAudioFilterRead; read-only copy, armed only while recording).
+    GameTap = camGo.AddComponent<GameAudioTap>();
     WorldCamera = camGo.AddComponent<SmartCamera>();
     camGo.transform.position = PlayerSpawn + WorldCamera.defaultOffset;
     camGo.transform.LookAt(PlayerSpawn + Vector3.up);
@@ -799,6 +1322,13 @@ public class MarketBuilder : MonoBehaviour {
     GameObject cursorGo = new GameObject("MouseCursor");
     cursorGo.transform.SetParent(transform);
     Cursor = cursorGo.AddComponent<CursorPresenter>();
+
+    // Player-report follow-up (ground click -> gold plus at the destination
+    // while walking). Built with the frame services (post-NavMesh-bake, like
+    // the cursor marker, so its geometry never touches the bake).
+    GameObject destGo = new GameObject("DestinationMarker");
+    destGo.transform.SetParent(transform);
+    destGo.AddComponent<DestinationMarker>();
   }
 
   void BuildNavMesh() {
@@ -817,15 +1347,28 @@ public class MarketBuilder : MonoBehaviour {
   // (apple 2.5m, NPC clicks) is unaffected: carves only deny foot placement.
   void BuildNavCarves() {
     CarveBox("TreeCarve", new Vector3(-6.2f, 1f, 3.8f), new Vector3(1.4f, 2f, 1.4f));
+    // Phase 2.4 landscape polish: carves for the three new inside-boundary
+    // decor trees (same pattern as TreeCarve — deny foot placement only,
+    // interaction reach untouched; runtime carving, no rebake needed).
+    CarveBox("DecorTreeCarveW", new Vector3(-6.5f, 1f, -2.8f), new Vector3(1.2f, 2f, 1.2f));
+    CarveBox("DecorTreeCarveE", new Vector3(6.8f, 1f, -3.2f), new Vector3(1.2f, 2f, 1.2f));
+    CarveBox("DecorTreeCarveN", new Vector3(-2.8f, 1f, 4.9f), new Vector3(1.4f, 2f, 1.4f));
     CarveBox("StallCarve", new Vector3(MiaAnchorPos.x, 0.5f, MiaAnchorPos.z - 1.4f), new Vector3(2.6f, 1f, 1.4f));
     CarveBox("CrateCarve", new Vector3(CrateAnchorPos.x, 0.3f, CrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
     CarveBox("BallCrateCarve", new Vector3(BallCrateAnchorPos.x, 0.3f, BallCrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
     CarveBox("PedestalCarve", new Vector3(5.4f, 0.4f, 0.6f), new Vector3(0.9f, 0.8f, 0.9f));
     // R9: fence -> hedge (same footprint, renamed with the visuals).
-    CarveBox("EdgeCarveN", new Vector3(0f, 0.5f, -6f), new Vector3(16.4f, 1f, 0.4f));
-    CarveBox("EdgeCarveS", new Vector3(0f, 0.5f, 6f), new Vector3(16.4f, 1f, 0.4f));
-    CarveBox("EdgeCarveW", new Vector3(-8f, 0.5f, 0f), new Vector3(0.4f, 1f, 12.4f));
-    CarveBox("EdgeCarveE", new Vector3(8f, 0.5f, 0f), new Vector3(0.4f, 1f, 12.4f));
+    // Phase 3.0: the 4 subject roads cross the inner hedge through 2m+ gaps
+    // (N/S gap at x[-1,1], E/W gap at z[0.5,3.1] around the 1.8 axis).
+    CarveBox("EdgeCarveN_L", new Vector3(-4.6f, 0.5f, -6f), new Vector3(7.2f, 1f, 0.4f));
+    CarveBox("EdgeCarveN_R", new Vector3(4.6f, 0.5f, -6f), new Vector3(7.2f, 1f, 0.4f));
+    // S gap follows the Vietnamese road at x=3.5 (gap x[2.3,4.7]).
+    CarveBox("EdgeCarveS_L", new Vector3(-2.95f, 0.5f, 6f), new Vector3(10.5f, 1f, 0.4f));
+    CarveBox("EdgeCarveS_R", new Vector3(6.45f, 0.5f, 6f), new Vector3(3.5f, 1f, 0.4f));
+    CarveBox("EdgeCarveW_N", new Vector3(-8f, 0.5f, -2.85f), new Vector3(0.4f, 1f, 6.7f));
+    CarveBox("EdgeCarveW_S", new Vector3(-8f, 0.5f, 4.65f), new Vector3(0.4f, 1f, 3.1f));
+    CarveBox("EdgeCarveE_N", new Vector3(8f, 0.5f, -2.85f), new Vector3(0.4f, 1f, 6.7f));
+    CarveBox("EdgeCarveE_S", new Vector3(8f, 0.5f, 4.65f), new Vector3(0.4f, 1f, 3.1f));
   }
 
   void CarveBox(string carveName, Vector3 pos, Vector3 size) {
@@ -840,13 +1383,21 @@ public class MarketBuilder : MonoBehaviour {
     obstacle.carveOnlyStationary = true;
   }
 
+  // Shared matte material cache (landscape polish): one instance per color
+  // instead of one per object — fewer materials, instancing-friendly.
+  static readonly Dictionary<string, Material> _litCache = new Dictionary<string, Material>();
+
   static Material Lit(Color color) {
+    string key = color.r.ToString("F2") + "," + color.g.ToString("F2") + "," + color.b.ToString("F2");
+    if (_litCache.TryGetValue(key, out Material cached) && cached != null) return cached;
     Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
     mat.SetColor("_BaseColor", color);
     // R5V-1 unified stylized finish: matte environment (specular highlights
     // on grass/path read as neon/glow under the warm sun).
     if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0f);
     if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
+    mat.enableInstancing = true;
+    _litCache[key] = mat;
     return mat;
   }
 }

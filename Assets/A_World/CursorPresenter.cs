@@ -14,9 +14,11 @@
 // R9: the pointer arrow also ROTATES with the player's facing (screen-space
 // heading cue: the arrow leans where the child will walk). Pure presentation:
 // no gameplay state, no events, no services, no audio.
-// Player-report follow-up: the arrow now leans toward the LAST CLICKED
-// direction (the assumed walk direction) instead of the current facing —
-// clicking somewhere swings the arrow where the child is about to go.
+// Player-report follow-up (live pointer rule): the arrow points from the
+// player toward the POINTER ITSELF — i.e. the direction the character will
+// face if this spot is clicked (click-to-move turns the walker toward the
+// destination). No click memory, no facing fallback: the cue is live every
+// frame and holds its last angle only when the player/camera is unreadable.
 // Pointer confinement: the first click confines the OS pointer to the game
 // window (the custom arrow keeps working inside); M releases back to the
 // normal OS cursor (toggle).
@@ -159,11 +161,12 @@ public sealed class CursorPresenter : MonoBehaviour {
     return a;
   }
 
-  // Assumed-walk direction (player-report follow-up): the last clicked screen
-  // direction, in the same angle contract as the heading cue. Empty until the
-  // first click lands; the facing cue covers the pre-click frames.
-  float _clickAngle;
-  bool _hasClick;
+  // Live pointer rule (player report: the arrow shows where the character
+  // will face if this spot is clicked — player screen pos -> pointer).
+  // Degenerate input (pointer on the player) reads as straight-up, never NaN.
+  public static float PointerAngle(Vector2 playerPx, Vector2 mousePx) {
+    return ComputeArrowAngle(playerPx, mousePx);
+  }
 
   // Pointer-lock state machine (pure, tests pin this): first click confines
   // the OS pointer to the window (custom arrow keeps working inside); M
@@ -172,17 +175,6 @@ public sealed class CursorPresenter : MonoBehaviour {
     if (mPressed) return current == CursorLockMode.None ? CursorLockMode.Confined : CursorLockMode.None;
     if (clicked && current == CursorLockMode.None) return CursorLockMode.Confined;
     return current;
-  }
-
-  // Test seam: register a click direction deterministically (no live mouse).
-  public void RegisterClickForTests(Vector2 playerScreenPos, Vector2 clickScreenPos) {
-    _clickAngle = ComputeArrowAngle(playerScreenPos, clickScreenPos);
-    _hasClick = true;
-    _angle = _clickAngle;
-  }
-
-  public bool HasClickDirection {
-    get { return _hasClick; }
   }
 
   // Test seam: drive one frame deterministically without a live mouse.
@@ -234,25 +226,19 @@ public sealed class CursorPresenter : MonoBehaviour {
     // The in-game arrow replaces the hardware arrow while confined; a
     // released (None) pointer shows the normal OS cursor again.
     Cursor.visible = Cursor.lockState == CursorLockMode.None;
-    if (clicked) RegisterClick(px);
     Collider target = HoverScan();
     bool hovering = target != null;
     ComputeCursor(hovering, out float scaleTarget, out Color colorTarget);
     float t = 1f - Mathf.Exp(-12f * Mathf.Max(Time.deltaTime, 0.0001f));
     _scale = Mathf.Lerp(_scale, scaleTarget, t);
-    _angle = SmoothAngle(_angle, _hasClick ? _clickAngle : ReadPlayerHeading(), t);
+    // Live pointer rule: player -> pointer every frame; hold the last angle
+    // when the player or camera cannot be resolved this frame.
+    float want = _angle;
+    if (TryPlayerScreenPos(out Vector2 playerPx)) want = PointerAngle(playerPx, px);
+    _angle = SmoothAngle(_angle, want, t);
     _arrow.color = Color.Lerp(_arrow.color, colorTarget, t);
     ApplyArrow(px, _arrow.color);
     TickMarker(target);
-  }
-
-  // Assumed-walk direction: player screen position -> clicked screen point,
-  // in the heading angle contract. Holds the last angle when the player
-  // cannot be resolved (degenerate click keeps the previous cue).
-  void RegisterClick(Vector2 clickPx) {
-    if (!TryPlayerScreenPos(out Vector2 playerPx)) return;
-    _clickAngle = ComputeArrowAngle(playerPx, clickPx);
-    _hasClick = true;
   }
 
   bool TryPlayerScreenPos(out Vector2 screenPos) {
@@ -276,26 +262,6 @@ public sealed class CursorPresenter : MonoBehaviour {
     _arrowRt.localScale = Vector3.one * _scale;
     _arrowRt.localRotation = Quaternion.Euler(0f, 0f, -_angle);
     if (_arrow != null) _arrow.color = color;
-  }
-
-  // R9 heading cue: where the player faces, in screen space. Holds the last
-  // angle when nothing is readable (no player/camera yet, degenerate facing).
-  float ReadPlayerHeading() {
-    if (_playerT == null) {
-      GameObject player = GameObject.Find("Player");
-      if (player == null) return _angle;
-      _playerT = player.transform;
-    }
-    Camera cam = Camera.main;
-    if (cam == null) return _angle;
-    Vector3 fwd = _playerT.forward;
-    fwd.y = 0f;
-    if (fwd.sqrMagnitude < 0.0001f) return _angle;
-    Vector3 origin = cam.WorldToScreenPoint(_playerT.position);
-    Vector3 facing = cam.WorldToScreenPoint(_playerT.position + fwd.normalized);
-    if (origin.z < 0f || facing.z < 0f) return _angle;
-    return ComputeArrowAngle(
-      new Vector2(origin.x, origin.y), new Vector2(facing.x, facing.y));
   }
 
   // Gentle attention bounce above the hovered target's rendered top.

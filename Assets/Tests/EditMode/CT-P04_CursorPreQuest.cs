@@ -1,7 +1,10 @@
-// CT-P04: pre-talk quest robustness (R7 softlock) + software cursor contract.
-// A child can click the apple BEFORE talking to Milo (nothing blocks it):
+// CT-P04: pre-talk quest robustness (R7 softlock, player-rule pickup gate) +
+// software cursor contract.
+// A child can click the apple BEFORE talking to Milo (the walk still happens)
+// but picks up NOTHING until the quest starts:
 //   - the crate must STAY visible/clickable pre-quest (else find_apple is
 //     unrecoverable after Talk),
+//   - no carried visual and no carry context arm pre-talk,
 //   - the in-quest find still empties the crate (R6 lifecycle),
 //   - Mia must not consume carrying / count wrongs / publish story pre-talk,
 //   - the normal talk -> find -> bring path completes at unit level.
@@ -76,25 +79,37 @@ public class CT_P04_CursorPreQuest {
     }
   }
 
-  // 3. Pre-talk Mia click is wave-only: carrying kept, no wrongs, no story.
+  // 3. Pre-talk tap arms NOTHING (player rule: no pickup before Talk to Milo).
+// The crate stays full, no carried visual, Mia holds no context: wave-only,
+// no wrongs, no story. The in-quest find path (test 4) is untouched.
   [Test] public void CT_P04C_MiaIgnoresBringPreQuest() {
     var ctx = new Ctx();
     GameObject miaGo = new GameObject("MiaPreTest");
+    GameObject presenterGo = new GameObject("ApplePresenterPreCarryTest");
+    GameObject crate = GameObject.CreatePrimitive(PrimitiveType.Cube);
     StoryMomentEvent? story = null;
     try {
+      var presenter = presenterGo.AddComponent<ApplePresenter>();
+      presenter.Bind(ctx.Bus);
+      presenter.SetCrateApple(crate);
       var mia = miaGo.AddComponent<MiaPresenter>();
       Assert.IsNotNull(mia, "Mia presenter must build in EditMode");
       mia.Bind(ctx.Bus, ctx.Quests, ctx.Hints);
       ctx.Bus.Subscribe<StoryMomentEvent>(e => story = e);
-      PublishSeen(ctx.Bus); // pre-talk apple tap arms carrying
-      Assert.IsTrue(mia.IsCarrying, "WordSeen(apple) arms carrying even pre-talk");
+      PublishSeen(ctx.Bus); // pre-talk apple tap: no quest, no pickup
+      Assert.IsTrue(crate.activeSelf, "pre-talk tap must not empty the crate");
+      Assert.IsNull(GameObject.Find("CarriedApple"), "pre-talk tap must not ride the hand");
+      Assert.IsFalse(mia.IsCarrying, "pre-talk tap must not arm Mia's carry context");
       mia.OnMiaClicked(); // pre-talk tap on Mia
-      Assert.IsTrue(mia.IsCarrying, "pre-talk Mia click must not consume the apple");
+      Assert.IsFalse(mia.IsCarrying, "pre-talk Mia click arms nothing");
       Assert.IsFalse(ctx.Quests.GetState(W1).Completed);
       Assert.AreEqual(0, ctx.Hints.GetState(W1).WrongCount, "pre-talk taps must not count wrongs");
       Assert.IsFalse(story.HasValue, "pre-talk Mia click must publish no story moment");
     } finally {
       UnityEngine.Object.DestroyImmediate(miaGo);
+      UnityEngine.Object.DestroyImmediate(presenterGo);
+      UnityEngine.Object.DestroyImmediate(crate);
+      DestroyCarriedDecoy();
     }
   }
 
@@ -187,7 +202,7 @@ public class CT_P04_CursorPreQuest {
     }
   }
 
-  // 8. Tightened bring radius (R8): 1.5m completes, just outside stays silent.
+  // 8. Tightened bring radius (player report: halved 1.5 -> 0.75m).
   [Test] public void CT_P04H_ProximityBoundary() {
     var ctx = new Ctx();
     GameObject miaGo = new GameObject("MiaBoundaryTest");
@@ -201,11 +216,11 @@ public class CT_P04_CursorPreQuest {
       // Mia root sits at origin in this fixture (SpawnPosition applies at
       // Start, which EditMode never runs): measure from the live root.
       Vector3 root = miaGo.transform.position;
-      mia.TryProximityBring(root + new Vector3(1.2f, 0f, 1.0f)); // ~1.56m: outside
-      Assert.IsFalse(ctx.Quests.GetState(W1).Completed, "1.56m must stay silent (bring is a handover, not a shout)");
+      mia.TryProximityBring(root + new Vector3(0.7f, 0f, 0.6f)); // ~0.92m: outside
+      Assert.IsFalse(ctx.Quests.GetState(W1).Completed, "0.92m must stay silent (bring is a handover, not a shout)");
       Assert.IsTrue(mia.IsCarrying, "carrying must survive (retry preserved)");
-      mia.TryProximityBring(root + new Vector3(0.9f, 0f, 0.9f)); // ~1.27m: inside
-      Assert.IsTrue(ctx.Quests.GetState(W1).Completed, "1.27m must complete the handover");
+      mia.TryProximityBring(root + new Vector3(0.4f, 0f, 0.4f)); // ~0.57m: inside
+      Assert.IsTrue(ctx.Quests.GetState(W1).Completed, "0.57m must complete the handover");
     } finally {
       UnityEngine.Object.DestroyImmediate(miaGo);
     }

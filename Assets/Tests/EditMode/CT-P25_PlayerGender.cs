@@ -63,18 +63,18 @@ public class CT_P25_PlayerGender {
     var go = new GameObject("P25E");
     var viz = go.AddComponent<PlayerVisual>();
     try {
-      // BuildVisual runs in Awake (Boy tint). Switch to Girl re-tints in place.
+      // Removal order 2026-09-18: Girl coerces to Boy (blue tint path).
       Assert.DoesNotThrow(() => viz.SetGender(PlayerGender.Girl));
-      Assert.AreEqual(PlayerGender.Girl, viz.Gender);
+      Assert.AreEqual(PlayerGender.Boy, viz.Gender);
       Assert.DoesNotThrow(() => viz.SetGender(PlayerGender.Boy));
       Assert.AreEqual(PlayerGender.Boy, viz.Gender);
     } finally { Object.DestroyImmediate(go); }
   }
 
   [Test] public void P25F_BoyGirlSameGroundingContract() {
-    // Both genders share the same gameplay contract (collider, agent, quest).
-    // In EditMode batch, Resources prefab may be unavailable => visual root
-    // null is not a gender bug. Verify the contract via the component API.
+    // Removal order 2026-09-18: both requests land on the Boy visual, so the
+    // contract holds trivially. In EditMode batch, Resources prefab may be
+    // unavailable => visual root null is not a bug. Verify via component API.
     var goBoy = new GameObject("P25F_Boy");
     var vizBoy = goBoy.AddComponent<PlayerVisual>();
     var goGirl = new GameObject("P25F_Girl");
@@ -82,15 +82,15 @@ public class CT_P25_PlayerGender {
     try {
       vizGirl.SetGender(PlayerGender.Girl);
       Assert.AreEqual(PlayerGender.Boy, vizBoy.Gender);
-      Assert.AreEqual(PlayerGender.Girl, vizGirl.Gender);
+      Assert.AreEqual(PlayerGender.Boy, vizGirl.Gender, "Girl coerces to Boy");
       // If visuals loaded, they must share scale/lift (0.5 / 0.005).
       Transform boyRoot = goBoy.transform.Find("PlayerVisualRoot");
       Transform girlRoot = goGirl.transform.Find("PlayerVisualRoot");
       if (boyRoot == null || girlRoot == null) {
         Assert.Ignore("PlayerVisual prefab not available in this EditMode domain — gender API still pinned above");
       }
-      Assert.AreEqual(boyRoot.localScale, girlRoot.localScale, "Boy/Girl same scale (0.5) — proportions unified");
-      Assert.AreEqual(boyRoot.localPosition.y, girlRoot.localPosition.y, 0.001f, "Boy/Girl same grounding lift");
+      Assert.AreEqual(boyRoot.localScale, girlRoot.localScale, "same scale (0.5) — one body");
+      Assert.AreEqual(boyRoot.localPosition.y, girlRoot.localPosition.y, 0.001f, "same grounding lift");
     } finally {
       Object.DestroyImmediate(goBoy);
       Object.DestroyImmediate(goGirl);
@@ -105,13 +105,14 @@ public class CT_P25_PlayerGender {
     try {
       // MarketBuilder.Awake builds full world + player. In EditMode batch,
       // the full world build may be heavy; verify plumbing doesn't throw.
+      // Removal order: Girl coerces to Boy end-to-end.
       Assert.DoesNotThrow(() => builder.SetPlayerGender(PlayerGender.Girl));
       Assert.DoesNotThrow(() => builder.SetPlayerGender(PlayerGender.Boy));
       if (builder.PlayerViz == null) {
         Assert.Ignore("MarketBuilder PlayerViz not available in this EditMode domain — plumbing still not throwing");
       }
       builder.SetPlayerGender(PlayerGender.Girl);
-      Assert.AreEqual(PlayerGender.Girl, builder.PlayerViz.Gender);
+      Assert.AreEqual(PlayerGender.Boy, builder.PlayerViz.Gender, "Girl coerces to Boy");
       builder.SetPlayerGender(PlayerGender.Boy);
       Assert.AreEqual(PlayerGender.Boy, builder.PlayerViz.Gender);
     } finally { Object.DestroyImmediate(go); }

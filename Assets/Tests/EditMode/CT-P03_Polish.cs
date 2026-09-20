@@ -107,7 +107,6 @@ public class CT_P03_Polish {
       Object.DestroyImmediate(footGo);
     }
   }
-
   // E. Null foot is a silent no-op (presenters call QueueShoe unconditionally).
   [Test] public void CT_P03E_ShoeNullFootSilent() {
     GameObject root = new GameObject("ShoeNullTest");
@@ -118,6 +117,32 @@ public class CT_P03_Polish {
       Assert.AreEqual(0, root.GetComponentsInChildren<Transform>(true).Length - 1, "nothing built for null foot");
     } finally {
       Object.DestroyImmediate(root);
+    }
+  }
+
+  // F. Toe lead (player report 2026-09-17 "giày lệch ra sau gót"): the shoe
+  // center must sit ahead of the ankle along facing (covers toes, never reads
+  // worn-backwards), even when the sole-minima seat lands heel-side.
+  [Test] public void CT_P03F_ShoeToeLeadForward() {
+    GameObject root = new GameObject("ShoeToeTest");
+    GameObject footGo = new GameObject("Foot.L");
+    try {
+      footGo.transform.SetParent(root.transform, false);
+      footGo.transform.position = new Vector3(1f, 0.5f, 2f);
+      root.transform.rotation = Quaternion.identity;
+      CharacterPresentation face = root.AddComponent<CharacterPresentation>();
+      face.QueueShoe(footGo.transform, "ShoeL");
+      face.BuildShoesImmediate();
+      Transform shoe = footGo.transform.Find("ShoeL");
+      Assert.IsNotNull(shoe, "shoe must build");
+      Vector3 flat = new Vector3(
+        shoe.position.x - footGo.transform.position.x, 0f,
+        shoe.position.z - footGo.transform.position.z);
+      float lead = Vector3.Dot(flat, Vector3.forward);
+      Assert.GreaterOrEqual(lead, 0.055f, "shoe center must lead the ankle toward the toes");
+    } finally {
+      Object.DestroyImmediate(root);
+      Object.DestroyImmediate(footGo);
     }
   }
 }

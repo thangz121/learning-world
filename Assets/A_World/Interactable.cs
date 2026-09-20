@@ -64,8 +64,13 @@ public class Interactable : MonoBehaviour {
     _bus.Publish(new WordSeenEvent(Word, LearnSource.Object, DateTime.UtcNow));
   }
 
-  // Range check stub (W0-T1): distance-only check against interactionDistance.
+  // Range check stub (W0-T1): horizontal-distance-only against
+  // interactionDistance. Interaction is a ground concept (walk up TO the
+  // crate): the apple rides ~0.6m up while feet stay on the grass, so 3D
+  // distance would bake the height gap into every pickup.
   public bool IsInRange(Vector3 requesterPosition) {
-    return Vector3.Distance(requesterPosition, transform.position) <= interactionDistance;
+    float dx = requesterPosition.x - transform.position.x;
+    float dz = requesterPosition.z - transform.position.z;
+    return dx * dx + dz * dz <= interactionDistance * interactionDistance;
   }
 }

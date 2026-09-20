@@ -42,6 +42,11 @@ public sealed class CharacterPresentation : MonoBehaviour {
   float _hopT;
   const float HopDuration = 0.45f;
   const float HopHeight = 0.22f;
+  // Phase 2.5 girl twirl (celebration vocabulary for the Girl player): a full
+  // 360° yaw spin composed into the SAME visual-root rotation channel as the
+  // attention glance (never fights it — additive on top of _visualBaseRot).
+  float _twirlT;
+  const float TwirlDuration = 0.8f;
 
   CharacterExpression _baseline = CharacterExpression.Neutral;
   CharacterExpression _shown = CharacterExpression.Neutral;
@@ -139,20 +144,51 @@ public sealed class CharacterPresentation : MonoBehaviour {
     // them instead of being fully covered (belongs-to-face, not sticker).
     // Final polish: +12% pupil presence so the doll eyes dominate the
     // sculpted lid shading (shared by every character, verified at 1.5m/6m).
-    _eyeL = BuildEye("EyeL", p + n * Proud - right * (s * 0.185f) + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.2f, s * 0.26f, s * 0.13f));
-    _eyeR = BuildEye("EyeR", p + n * Proud + right * (s * 0.185f) + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.2f, s * 0.26f, s * 0.13f));
+    // FaceBoost scales every size AND offset uniformly (boost=1 reproduces the
+    // golden numbers exactly); the Girl chibi head sets ~1.4.
+    float b = _faceBoost;
+    if (b < 0.5f) b = 0.5f;
+    if (b > 2f) b = 2f;
+    _eyeL = BuildEye("EyeL", p + n * Proud - right * (s * 0.185f * b) + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.2f * b, s * 0.26f * b, s * 0.13f * b));
+    _eyeR = BuildEye("EyeR", p + n * Proud + right * (s * 0.185f * b) + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.2f * b, s * 0.26f * b, s * 0.13f * b));
     // Mouths ride the SAME measured pane as the eyes (shared depth basis:
     // the sculpt face is flat across these heights). A per-height mouth
     // measurement was tried and REVERTED: the mouth band is contaminated by
     // throat/jaw verts, so its p95 (≈ −0.14) buried the mouths inside the
     // chin on Mia/Player while Milo's flat-pane mouth (+0.25) stayed visible.
-    Vector3 mp = c + n * (eyeFront > -10f ? eyeFront + 0.015f : s * 0.40f) + Vector3.up * (-s * 0.26f);
-    _mouthSmile = BuildMouth("MouthSmile", mp, look, new Vector3(s * 0.25f, s * 0.10f, s * 0.09f), new Color(0.45f, 0.16f, 0.14f));
-    _mouthFlat = BuildMouth("MouthFlat", mp, look, new Vector3(s * 0.20f, s * 0.05f, s * 0.08f), new Color(0.4f, 0.14f, 0.12f));
-    _mouthOpen = BuildMouth("MouthOpen", mp + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.12f, s * 0.17f, s * 0.08f), new Color(0.35f, 0.1f, 0.1f));
+    // Boosted (chibi) heads are deeper than the sculpt: add boost-exact extra
+    // proud so the bigger mouth never sinks into the bigger head (survey
+    // photo 2026-09-18: Girl mouth invisible at boost 1.4 without it).
+    // Bright-eye (girl-only) exact seat: solve the chibi head ellipsoid
+    // (same radii/center the body builder uses) and park the mouth so its
+    // front clears the surface by 6mm — lips touch skin, never buried, never
+    // hovering. Front macro 2026-09-18: formula-seat smile was coplanar with
+    // the cheek. Golden path (no boost, no bright eyes): legacy numbers.
+    float mouthProud = 0.015f + (b - 1f) * 0.035f;
+    float mb = b * _mouthScale;
+    Vector3 mp = c + n * (eyeFront > -10f ? eyeFront + mouthProud : s * 0.40f) + Vector3.up * (-s * 0.26f);
+    if (_brightEyes && eyeFront > -10f) {
+      // Mirrors GirlBodyBuilder head center/radii (single source of truth lives
+      // there; this mirror keeps SharedKernel dependency-free).
+      float hr = Mathf.Clamp(s * 0.58f, 0.12f, 0.155f);
+      Vector3 hC = p + n * (Proud - (hr - 0.025f)) + Vector3.up * (hr * 0.06f);
+      Vector3 ml = mp - hC;
+      float lx = Vector3.Dot(ml, right);
+      float ly = ml.y;
+      float rx = hr, ry = hr * 1.025f, rz = hr * 0.975f;
+      float q = 1f - (lx * lx) / (rx * rx) - (ly * ly) / (ry * ry);
+      float surfZ = q > 0f ? rz * Mathf.Sqrt(q) : 0f;
+      float mouthZ = Vector3.Dot(ml, n);
+      float halfThick = s * 0.09f * mb * 0.5f;
+      float push = (surfZ + halfThick + 0.006f) - mouthZ;
+      if (push > 0f) mp += n * push;
+    }
+    _mouthSmile = BuildMouth("MouthSmile", mp, look, new Vector3(s * 0.25f * mb, s * 0.10f * mb, s * 0.09f * mb), new Color(0.45f, 0.16f, 0.14f));
+    _mouthFlat = BuildMouth("MouthFlat", mp, look, new Vector3(s * 0.20f * mb, s * 0.05f * mb, s * 0.08f * mb), new Color(0.4f, 0.14f, 0.12f));
+    _mouthOpen = BuildMouth("MouthOpen", mp + Vector3.up * (-s * 0.02f), look, new Vector3(s * 0.12f * mb, s * 0.17f * mb, s * 0.08f * mb), new Color(0.35f, 0.1f, 0.1f));
     // Frown reuses the smile geometry rotated half-turn: same visual language,
     // child-friendly "oops" (never angry/scary). Documented API addition.
-    _mouthFrown = BuildMouth("MouthFrown", mp + Vector3.up * (-s * 0.01f), look * Quaternion.Euler(0f, 0f, 180f), new Vector3(s * 0.22f, s * 0.09f, s * 0.08f), new Color(0.38f, 0.13f, 0.12f));
+    _mouthFrown = BuildMouth("MouthFrown", mp + Vector3.up * (-s * 0.01f), look * Quaternion.Euler(0f, 0f, 180f), new Vector3(s * 0.22f * mb, s * 0.09f * mb, s * 0.08f * mb), new Color(0.38f, 0.13f, 0.12f));
     _eyeBaseScaleL = _eyeL.transform.localScale;
     _eyeBaseScaleR = _eyeR.transform.localScale;
     if (_mouthSmile != null) _smileBase = _mouthSmile.transform.localScale;
@@ -160,6 +196,96 @@ public sealed class CharacterPresentation : MonoBehaviour {
     ResetBlinkTimer();
     ResetAttentionTimer();
     ApplyExpression(_baseline);
+  }
+
+  // Phase 2.5 girl face (visual acceptance spec 2026-09-18): the shared doll
+  // kit stays pixel-identical by default (FaceBoost=1, BrightEyes=false —
+  // golden faces untouched). The Girl player sets FaceBoost ~1.4 (bigger
+  // features for the bigger chibi head) + BrightEyes (white sclera + brown
+  // iris around a smaller pupil: friendly, never black-bead creepy).
+  float _faceBoost = 1f;
+  bool _brightEyes;
+  public static readonly Color GirlIrisBrown = new Color(0.42f, 0.27f, 0.15f);
+  // Mouth-only scale (ref sheet 2026-09-18: the 1.4x grin is grotesque — the
+  // girl keeps big eyes but a SMALLER smile). Multiplies with FaceBoost;
+  // default 1 reproduces golden numbers exactly.
+  float _mouthScale = 1f;
+
+  public float FaceBoost {
+    get { return _faceBoost; }
+    set { _faceBoost = Mathf.Clamp(value, 0.5f, 2f); }
+  }
+
+  public float MouthScale {
+    get { return _mouthScale; }
+    set { _mouthScale = Mathf.Clamp(value, 0.4f, 1.5f); }
+  }
+
+  public bool BrightEyes {
+    get { return _brightEyes; }
+    set { _brightEyes = value; }
+  }
+
+  // Read-only face landmarks for body builders (e.g. seating a custom head
+  // sphere just behind the seated eyes). Zero when the face isn't built yet.
+  public bool IsFaceBuilt => _eyeL != null && _eyeR != null;
+
+  public Vector3 EyeMidpoint {
+    get {
+      try {
+        if (_eyeL == null || _eyeR == null) return Vector3.zero;
+        return (_eyeL.transform.position + _eyeR.transform.position) * 0.5f;
+      } catch (Exception) { return Vector3.zero; }
+    }
+  }
+
+  public float SkullSize {
+    get {
+      try {
+        if (_headBone == null) return 0.3f;
+        Transform headEnd = FindChildDeep(_headBone, "Head_end");
+        if (headEnd == null) return 0.3f;
+        return Mathf.Clamp(Vector3.Distance(_headBone.position, headEnd.position), 0.15f, 0.8f);
+      } catch (Exception) { return 0.3f; }
+    }
+  }
+
+  // Girl mouth palette (acceptance 2026-09-18: the shared dark-maroon smile
+  // reads sinister at 1.4x size — the girl gets a brighter berry red).
+  // Operates on this kit's OWN mouth refs only (Milo/Mia/Boy untouched).
+  public void TintMouths(Color smile, Color flat, Color open, Color frown) {
+    try {
+      if (_mouthSmile != null) Paint(_mouthSmile, smile);
+      if (_mouthFlat != null) Paint(_mouthFlat, flat);
+      if (_mouthOpen != null) Paint(_mouthOpen, open);
+      if (_mouthFrown != null) Paint(_mouthFrown, frown);
+    } catch (Exception) { }
+  }
+
+  // Gender-toggle path: tear down seated face parts and build again with the
+  // current FaceBoost/BrightEyes (Boy<->Girl live switch, no scene reload).
+  // Pre-SetupFace calls only clear (the deferred frame-2 build seats later).
+  public void RebuildFaceNow() {
+    try {
+      GameObject[] parts = { _eyeL, _eyeR, _mouthSmile, _mouthFlat, _mouthOpen, _mouthFrown };
+      foreach (GameObject p in parts) {
+        if (p == null) continue;
+        try { DestroyNow(p); } catch (Exception) { }
+      }
+    } catch (Exception) { }
+    _eyeL = _eyeR = _mouthSmile = _mouthFlat = _mouthOpen = _mouthFrown = null;
+    if (_headBone == null || _anchorSpace == null || _visualRoot == null) return;
+    try { BuildFaceNow(); } catch (Exception) { }
+  }
+
+  // Girl pink sneakers replace the shared brown caps (ref sheet 2026-09-18):
+  // the player disables the brown build and the girl builder seats pink ones
+  // on the same Foot bones. Default true (everyone else unchanged).
+  bool _shoesEnabled = true;
+
+  public bool ShoesEnabled {
+    get { return _shoesEnabled; }
+    set { _shoesEnabled = value; }
   }
 
   // Reusable presentation API for future dialogue/story/gameplay code.
@@ -182,6 +308,8 @@ public sealed class CharacterPresentation : MonoBehaviour {
 
   // Reusable celebratory hop (visual root only; colliders/gameplay untouched).
   public void PlayHop() { _hopT = HopDuration; }
+  public void PlayTwirl() { _twirlT = TwirlDuration; }
+  public bool IsTwirling => _twirlT > 0f;
 
   // Gait lift driver (see _liftOffset): target is approached smoothly inside
   // TickBreath, so walk<->idle transitions never snap the character.
@@ -232,6 +360,9 @@ public sealed class CharacterPresentation : MonoBehaviour {
   // ankle-relative drop misplaces caps by decimeters (R5l proof).
   public static readonly Vector3 ShoeSize = new Vector3(0.13f, 0.1f, 0.26f);
   public static readonly Color ShoeColor = new Color(0.23f, 0.17f, 0.13f);
+  // Player report 2026-09-17 ("giày lệch ra sau gót"): the cap center must
+  // lead the ankle toward the toes (covers toes, never reads worn-backwards).
+  const float ShoeToeLeadMin = 0.06f;
 
   struct QueuedShoe { public Transform Foot; public string Name; }
   readonly System.Collections.Generic.List<QueuedShoe> _pendingShoes =
@@ -275,6 +406,12 @@ public sealed class CharacterPresentation : MonoBehaviour {
 
   bool TryBuildShoes(bool force) {
     if (_pendingShoes.Count == 0) return true;
+    // Girl path: brown caps disabled (pink sneakers seat separately).
+    if (!_shoesEnabled) {
+      _pendingShoes.Clear();
+      _shoeRetry = 0;
+      return true;
+    }
     if (!force && !MeshReady()) return false;
     // R5p-fix: peek first — if the mesh has verts but none lie within the
     // 0.8m gate yet (bind pose still at origin), DEFER instead of building a
@@ -328,16 +465,8 @@ public sealed class CharacterPresentation : MonoBehaviour {
       string mode;
       int vertCount;
       float minDist;
-      Vector3 seat = SoleSeatFor(q.Name, q.Foot.position, out mode, out vertCount, out minDist);
       Vector3 basePos;
-      if (mode != "drop") {
-        basePos = new Vector3(seat.x, seat.y + ShoeSize.y * 0.5f, seat.z);
-      } else {
-        basePos = new Vector3(
-          q.Foot.position.x + fwd.x * 0.05f,
-          q.Foot.position.y - 0.085f,
-          q.Foot.position.z + fwd.z * 0.05f);
-      }
+      TrySeatShoe(q.Name, q.Foot.position, fwd, out basePos, out mode, out vertCount, out minDist);
       Debug.Log("[CharacterPresentation] SHOE_SEAT " + q.Name + " mode=" + mode
         + " seat=" + basePos.ToString("F3")
         + " foot=" + q.Foot.position.ToString("F3")
@@ -353,6 +482,42 @@ public sealed class CharacterPresentation : MonoBehaviour {
     _pendingShoes.Clear();
     _shoeRetry = 0;
     return true;
+  }
+
+  // Shared seat solver (brown caps AND girl pink sneakers): sole-minima seat
+  // with the toe-lead guarantee, so both pairs plant identically. Survey
+  // 2026-09-18: an ankle-relative drop formula buried the pink pair (the Foot
+  // bone rides only ~0.02 above the sole on this rig, not 0.085).
+  public bool TrySeatShoe(string shoeName, Vector3 footPos, Vector3 forward,
+      out Vector3 center, out string mode, out int vertCount, out float minDist) {
+    mode = "drop";
+    vertCount = 0;
+    minDist = 999f;
+    center = footPos;
+    try {
+      if (string.IsNullOrEmpty(shoeName)) return false;
+      Vector3 fwd = forward;
+      fwd.y = 0f;
+      if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.forward;
+      fwd.Normalize();
+      Vector3 seat = SoleSeatFor(shoeName, footPos, out mode, out vertCount, out minDist);
+      if (mode != "drop") {
+        center = new Vector3(seat.x, seat.y + ShoeSize.y * 0.5f, seat.z);
+      } else {
+        center = new Vector3(
+          footPos.x + fwd.x * 0.05f,
+          footPos.y - 0.085f,
+          footPos.z + fwd.z * 0.05f);
+      }
+      Vector3 flat = new Vector3(center.x - footPos.x, 0f, center.z - footPos.z);
+      float lead = Vector3.Dot(flat, fwd);
+      if (lead < ShoeToeLeadMin) {
+        Vector3 fix = fwd * (ShoeToeLeadMin - lead);
+        center.x += fix.x;
+        center.z += fix.z;
+      }
+      return true;
+    } catch (Exception) { return false; }
   }
 
   // R5p per-foot live sole (world): lowest CURRENT-posed vertex position
@@ -566,7 +731,13 @@ public sealed class CharacterPresentation : MonoBehaviour {
     }
     float cur = Mathf.DeltaAngle(0f, _visualRoot.localRotation.eulerAngles.y) * Mathf.Deg2Rad;
     float next = Mathf.SmoothDamp(cur, _attYaw, ref _attYawVel, 0.35f);
-    _visualRoot.localRotation = _visualBaseRot * Quaternion.Euler(0f, next * Mathf.Rad2Deg, 0f);
+    float twirlYaw = 0f;
+    if (_twirlT > 0f) {
+      _twirlT -= dt;
+      float k = Mathf.Clamp01(1f - _twirlT / TwirlDuration);
+      twirlYaw = k * 360f;
+    }
+    _visualRoot.localRotation = _visualBaseRot * Quaternion.Euler(0f, next * Mathf.Rad2Deg + twirlYaw, 0f);
   }
 
   void ResetBlinkTimer() { _blinkT = UnityEngine.Random.Range(2.2f, 4.8f); }
@@ -683,18 +854,53 @@ public sealed class CharacterPresentation : MonoBehaviour {
     GameObject root = new GameObject(eyeName);
     root.transform.position = worldPos;
     root.transform.rotation = look;
-    GameObject pupil = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    pupil.name = eyeName + "Pupil";
-    pupil.transform.SetParent(root.transform, false);
-    pupil.transform.localPosition = Vector3.zero;
-    pupil.transform.localScale = worldSize;
-    Paint(pupil, Color.black);
-    GameObject glint = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    glint.name = eyeName + "Glint";
-    glint.transform.SetParent(root.transform, false);
-    glint.transform.localPosition = new Vector3(0.016f, 0.024f, 0.028f);
-    glint.transform.localScale = new Vector3(0.024f, 0.024f, 0.016f);
-    Paint(glint, Color.white);
+    float b = _faceBoost;
+    if (b < 0.5f) b = 0.5f;
+    if (b > 2f) b = 2f;
+    if (_brightEyes) {
+      // Girl bright eye (ref sheet: brown iris fills most of a SMALLER
+      // white — never bulging). All sizes derive from worldSize.
+      GameObject white = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      white.name = eyeName + "White";
+      white.transform.SetParent(root.transform, false);
+      white.transform.localPosition = Vector3.zero;
+      white.transform.localScale = worldSize;
+      Paint(white, Color.white);
+      GameObject iris = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      iris.name = eyeName + "Iris";
+      iris.transform.SetParent(root.transform, false);
+      // Cute "looking up" read (survey: centered iris looked derpy).
+      iris.transform.localPosition = new Vector3(0f, worldSize.y * 0.10f, worldSize.z * 0.30f);
+      iris.transform.localScale = worldSize * 0.78f;
+      Paint(iris, GirlIrisBrown);
+      GameObject pupil = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      pupil.name = eyeName + "Pupil";
+      pupil.transform.SetParent(root.transform, false);
+      pupil.transform.localPosition = new Vector3(0f, worldSize.y * 0.10f, worldSize.z * 0.52f);
+      pupil.transform.localScale = worldSize * 0.46f;
+      Paint(pupil, Color.black);
+      GameObject glint = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      glint.name = eyeName + "Glint";
+      glint.transform.SetParent(root.transform, false);
+      glint.transform.localPosition = new Vector3(0.014f * b, 0.022f * b, worldSize.z * 0.72f);
+      glint.transform.localScale = new Vector3(0.018f * b, 0.018f * b, 0.012f * b);
+      Paint(glint, Color.white);
+      DestroyColliders(root);
+      AttachToHead(root);
+      return root;
+    }
+    GameObject pupil0 = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    pupil0.name = eyeName + "Pupil";
+    pupil0.transform.SetParent(root.transform, false);
+    pupil0.transform.localPosition = Vector3.zero;
+    pupil0.transform.localScale = worldSize;
+    Paint(pupil0, Color.black);
+    GameObject glint0 = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    glint0.name = eyeName + "Glint";
+    glint0.transform.SetParent(root.transform, false);
+    glint0.transform.localPosition = new Vector3(0.016f, 0.024f, 0.028f);
+    glint0.transform.localScale = new Vector3(0.024f, 0.024f, 0.016f);
+    Paint(glint0, Color.white);
     DestroyColliders(root);
     AttachToHead(root);
     return root;
@@ -721,7 +927,8 @@ public sealed class CharacterPresentation : MonoBehaviour {
     go.transform.SetParent(_headBone, true);
   }
 
-  static void DestroyColliders(GameObject go) {
+  // Reusable by any world/presentation builder (World -> SharedKernel).
+  public static void DestroyColliders(GameObject go) {
     if (go == null) return;
     foreach (Collider c in go.GetComponentsInChildren<Collider>(true)) {
       DestroyNow(c);
@@ -767,7 +974,19 @@ public sealed class CharacterPresentation : MonoBehaviour {
     if (changed) skin.sharedMaterials = mats;
   }
 
-  static void Paint(GameObject go, Color color) {
+  // Reusable flat-color paint for primitive dressing (shoes, girl hair/bow).
+  public static void Paint(GameObject go, Color color) {
+    PaintWithSmoothness(go, color, 0.4f);
+  }
+
+  // Soft-matte stylized PBR (preschool spec 2026-09-18: bright, high
+  // roughness, never dark glossy plastic doll). Girl skin/hair/cloth use
+  // this; the shared doll kit keeps its 0.4 sheen untouched.
+  public static void PaintMatte(GameObject go, Color color) {
+    PaintWithSmoothness(go, color, 0.15f);
+  }
+
+  static void PaintWithSmoothness(GameObject go, Color color, float smoothness) {
     if (go == null) return;
     Renderer r = go.GetComponent<Renderer>();
     if (r == null) return;
@@ -775,7 +994,7 @@ public sealed class CharacterPresentation : MonoBehaviour {
     if (lit != null) {
       Material mat = new Material(lit);
       mat.SetColor("_BaseColor", color);
-      mat.SetFloat("_Smoothness", 0.4f);
+      mat.SetFloat("_Smoothness", smoothness);
       r.sharedMaterial = mat;
       return;
     }

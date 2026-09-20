@@ -120,6 +120,8 @@ public class CT_P09_NpcTemplate {
   }
 
   // F. Ball icon through the same api (no special-case code path).
+  // Player report: the old blue sphere was identical to the distractor — the
+  // quest ball is now BIG ORANGE + white band (matches the crate ball).
   [Test] public void CT_P09F_BallIconSameApi() {
     WorldQuestionBubble bubble = NewBubble();
     try {
@@ -128,10 +130,12 @@ public class CT_P09_NpcTemplate {
       Transform fruit = FindDeep(bubble.transform, "AskBall");
       Assert.IsNotNull(fruit, "AskBall built");
       Color c = BaseColor(fruit.GetComponent<Renderer>());
-      Assert.Greater(c.b, 0.7f, "ball stays distractor blue");
-      Assert.Less(c.r, 0.4f, "ball stays distractor blue");
+      Assert.Greater(c.r, 0.9f, "quest ball is orange, never distractor blue");
+      Assert.Greater(c.g, 0.4f, "quest ball is orange, never distractor blue");
+      Assert.Less(c.b, 0.3f, "quest ball is orange, never distractor blue");
       Assert.IsNull(FindDeep(bubble.transform, "AskStem"), "ball has no stem");
       Assert.IsNull(FindDeep(bubble.transform, "AskLeaf"), "ball has no leaf");
+      Assert.IsNotNull(FindDeep(bubble.transform, "AskBand"), "quest ball carries its white band");
       Transform icon = bubble.transform.Find("AskIcon");
       Assert.IsNotNull(icon, "container (and pulse) survive the swap");
     } finally {

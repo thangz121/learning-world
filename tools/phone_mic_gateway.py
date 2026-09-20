@@ -184,7 +184,6 @@ class Session:
         self.last_seq = -1
         self.t0 = time.time()
         self.record_frames = []  # only when --record-dir is set
-        self.bound_logged = False  # §18 10 s bridge bound: log once
 
 
 class Gateway:
@@ -763,17 +762,13 @@ class Gateway:
             dur = time.time() - sess.t0
             log("[STEP 8/%d] session %s audio: chunks=%d (~%.1fs audio) peak=%d wall=%.1fs listeners=%d" % (
                 TOTAL_STEPS, sid, sess.chunks, sess.samples / float(CANON_RATE), peak, dur, nsubs))
-        if sess.samples > CANON_RATE * 60:  # bounded (§18): 60 s window (was 10 s)
-            # Camera streams 60fps continuously with no wall cap; mic capped at 10 s
-            # caused HUD "mất" after 10 s of continuous START (gateway stops
-            # forwarding, watcher goes stale, bars cross-grey) while camera stays
-            # Live. 60 s matches max exercise + probe windows without unbounded RAM.
-            self.drop_counts["queue"] += 1
-            if not sess.bound_logged:
-                sess.bound_logged = True
-                log("[STEP 8/%d] session %s reached the 60 s bridge bound "
-                    "(long session — further audio still arrives but is no longer forwarded)." % (TOTAL_STEPS, sid))
-            return
+        # NO forward cap (fix 2026-09-17): forwarding is stateless — chunks are
+        # broadcast immediately, nothing accumulates per session (record_frames
+        # only grows with explicit --record-dir test mode). The old 10 s then
+        # 60 s silent cut stopped forwarding mid-session while the phone kept
+        # sending (packets up, phone meter alive) and the game decayed to red
+        # with zero signal on either side. Long START sessions now stay live;
+        # Unity bounds its own capture buffer (AppendBounded cap) downstream.
         if self.args.record_dir:
             sess.record_frames.append(payload)
         self.bridge_broadcast(K_AUDIO, sess.serial, sess.chunks, payload)

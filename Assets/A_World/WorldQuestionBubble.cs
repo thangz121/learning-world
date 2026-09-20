@@ -55,7 +55,8 @@ public class WorldQuestionBubble : MonoBehaviour {
   // SetIcon rebuilds ONLY the icon child from a word-driven spec table —
   // target changes, icon changes, no per-word code after this point:
   // "apple" -> red fruit + stem + leaf (R9 language, unchanged);
-  // "ball" -> blue sphere in the distractor-ball language (no stem/leaf);
+  // "ball" -> BIG ORANGE quest ball + white band (player report: the old blue
+  // sphere was identical to the distractor — now color/size/band all differ);
   // anything else -> neutral thought dot (never apple by accident).
   // Existing Apple appearance is byte-identical (CT-P09 pins names/sizes).
   public void SetIcon(WordId target) {
@@ -81,6 +82,7 @@ public class WorldQuestionBubble : MonoBehaviour {
     public Color fruitColor;
     public bool stem;
     public bool leaf;
+    public bool band; // white equatorial stripe (quest-ball identity)
   }
 
   static IconSpec SpecFor(string word) {
@@ -96,16 +98,16 @@ public class WorldQuestionBubble : MonoBehaviour {
     if (w == "ball") {
       return new IconSpec {
         fruitName = "AskBall",
-        fruitScale = new Vector3(0.30f, 0.30f, 0.30f),
-        fruitColor = new Color(0.20f, 0.42f, 0.90f), // distractor-ball blue
-        stem = false, leaf = false,
+        fruitScale = new Vector3(0.34f, 0.34f, 0.34f),
+        fruitColor = new Color(1.0f, 0.55f, 0.10f), // quest orange (matches the crate ball)
+        stem = false, leaf = false, band = true,
       };
     }
     return new IconSpec {
       fruitName = "AskUnknown",
       fruitScale = new Vector3(0.26f, 0.26f, 0.26f),
       fruitColor = new Color(0.85f, 0.75f, 0.55f),
-      stem = false, leaf = false,
+      stem = false, leaf = false, band = false,
     };
   }
 
@@ -204,6 +206,16 @@ public class WorldQuestionBubble : MonoBehaviour {
     fruit.transform.localScale = spec.fruitScale;
     fruit.GetComponent<Renderer>().sharedMaterial = Lit(spec.fruitColor);
     CharacterPresentation.DestroyNow(fruit.GetComponent<Collider>());
+    if (spec.band) {
+      GameObject band = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      band.name = "AskBand";
+      band.transform.SetParent(fruit.transform);
+      band.transform.localPosition = Vector3.zero;
+      band.transform.localScale = new Vector3(1.04f, 0.12f, 1.04f);
+      band.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.96f, 0.96f, 0.97f));
+      CharacterPresentation.DestroyNow(band.GetComponent<Collider>());
+      return;
+    }
     if (!spec.stem && !spec.leaf) return;
     if (spec.stem) {
       GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -222,6 +234,15 @@ public class WorldQuestionBubble : MonoBehaviour {
       leaf.transform.localScale = new Vector3(0.135f, 0.045f, 0.075f);
       leaf.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.6f, 0.25f));
       CharacterPresentation.DestroyNow(leaf.GetComponent<Collider>());
+    }
+    if (spec.band) {
+      GameObject band = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      band.name = "AskBand";
+      band.transform.SetParent(icon.transform);
+      band.transform.localPosition = Vector3.zero;
+      band.transform.localScale = new Vector3(1.04f, 0.12f, 1.04f);
+      band.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.96f, 0.96f, 0.97f));
+      CharacterPresentation.DestroyNow(band.GetComponent<Collider>());
     }
   }
 

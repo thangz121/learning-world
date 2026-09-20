@@ -56,6 +56,7 @@ public sealed class LocalSave : ISaveService {
       playTimeSec = p.PlayTimeSec,
       worldSeed = p.WorldSeed ?? "",
       playerGender = (int)p.PlayerGender,
+      genderChosen = p.GenderChosen ? 1 : 0,
       words = new List<WordEntry>(),
       npcVoices = new List<KvEntry>(),
     };
@@ -92,6 +93,7 @@ public sealed class LocalSave : ISaveService {
       WorldSeed = dto.worldSeed ?? "",
       PlayerGender = System.Enum.IsDefined(typeof(PlayerGender), dto.playerGender)
         ? (PlayerGender)dto.playerGender : PlayerGender.Boy,
+      GenderChosen = dto.genderChosen != 0,
       Words = new Dictionary<string, WordMastery>(),
       NpcVoices = new Dictionary<string, string>(),
     };
@@ -132,6 +134,7 @@ public sealed class LocalSave : ISaveService {
     public List<KvEntry> npcVoices = new List<KvEntry>();
     public string worldSeed = "";
     public int playerGender; // 0=Boy 1=Girl
+    public int genderChosen; // 0=never picked (show panel) 1=picked
   }
 
   [Serializable]

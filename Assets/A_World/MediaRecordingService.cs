@@ -63,6 +63,7 @@ public class MediaRecordingService : MonoBehaviour {
   RecordingToast _toast;
   RecordingIndicator _indicator;
   PhoneCameraHud _cameraHud;
+  GameAudioTap _gameTap; // listener-side game-audio FIFO (voice+gameplay mix)
   bool _chooserStartAfter;
   readonly F2DoubleTracker _f2 = new F2DoubleTracker();
 
@@ -258,6 +259,48 @@ public class MediaRecordingService : MonoBehaviour {
   // may be absent while recording still runs on gameplay + audio).
   public void BindCameraHud(PhoneCameraHud hud) {
     try { _cameraHud = hud; } catch (Exception) { }
+  }
+
+  // Game-audio tap (MarketBuilder puts it on the AudioListener object;
+  // MarketBootstrap binds it here). Null = mic-only file (legacy behavior).
+  public void BindGameAudioTap(GameAudioTap tap) {
+    try { _gameTap = tap; } catch (Exception) { }
+  }
+
+  void ArmGameTap() {
+    try {
+      if (_gameTap == null) return;
+      try { _gameTap.Clear(); } catch (Exception) { }
+      try { _gameTap.CaptureEnabled = _effective.RecordAudio && _effective.MixGameAudio; }
+      catch (Exception) { }
+    } catch (Exception) { }
+  }
+
+  void DisarmGameTap() {
+    try {
+      if (_gameTap == null) return;
+      try { _gameTap.CaptureEnabled = false; } catch (Exception) { }
+    } catch (Exception) { }
+  }
+
+  // Sums one mic chunk with the overlapping game-audio window (same length
+  // out as mic in — queue counts stay honest). Any failure degrades to the
+  // legacy mic-only chunk, never a dropped take.
+  byte[] MixWithGameAudio(byte[] micPcm16) {
+    try {
+      if (micPcm16 == null || micPcm16.Length < 2) return micPcm16;
+      if (!_effective.MixGameAudio || _gameTap == null) return micPcm16;
+      byte[] game;
+      try { game = _gameTap.TakeBytes(micPcm16.Length); }
+      catch (Exception) { return micPcm16; }
+      byte[] mixed;
+      try {
+        mixed = RecAudioMixer.MixMicWithGame(
+          micPcm16, game, _effective.MicGain, _effective.GameGain);
+      } catch (Exception) { return micPcm16; }
+      if (mixed == null || mixed.Length != micPcm16.Length) return micPcm16;
+      return mixed;
+    } catch (Exception) { return micPcm16; }
   }
 
   public void SetLocalMicForTests(bool present) {
@@ -741,6 +784,7 @@ public class MediaRecordingService : MonoBehaviour {
         }
       } catch (Exception) { return FailStart("worker-start-failed"); }
 
+      ArmGameTap();
       SetState(RecordingState.Recording);
       // Real-fps anchors: process CPU seconds at START (FinishSession diffs
       // it over the wall); pacing/dup/render probes were zeroed in reset.
@@ -776,6 +820,7 @@ public class MediaRecordingService : MonoBehaviour {
       try { if (_videoQueue != null) _videoQueue.Close(); } catch (Exception) { }
       try { if (_gameRawQueue != null) _gameRawQueue.Close(); } catch (Exception) { }
       try { StopLocalMic(); } catch (Exception) { }
+      try { DisarmGameTap(); } catch (Exception) { }
       lock (_telLock) { _telemetry.StopUtcIso = RecordingClock.ToIso(_stopUtc); }
       SetState(RecordingState.Stopping);
       // Recording ended (STOP): the camera box returns immediately while the
@@ -953,8 +998,14 @@ public class MediaRecordingService : MonoBehaviour {
   // consumes it via AsyncGPUReadback. Screen capture is the only scope in
   // which the finished frame is reliably readable: Update-scope blits read an
   // unbound target, a runtime-cloned camera broke URP's render-pass
-  // bookkeeping (EndRenderPass errors + black frames), and an
-  // endCameraRendering blit of CameraTarget stayed black (P2X findings).
+  // bookkeeping (EndRenderPass errors + black frames), an
+  // endCameraRendering blit of CameraTarget stayed black (P2X findings), and
+  // an explicit Camera.Render() into the RT (tried 2026-09-19) renders BLACK
+  // (all 606 frames dark, telemetry honest) — reverted same day.
+  // Consequence (photo-proven): view capture composites ScreenSpaceOverlay,
+  // so overlay UI would burn into exports. Mitigations live at the UI layer:
+  // the REC badge shows a DOT ONLY while recording (no text in the file),
+  // the in-game camera box hides (single encoder PIP, never two faces).
   // Main-thread cost per sample is one 2 MB memcpy; encode NEVER touches the
   // main thread. runInBackground is forced during capture so clicking out of
   // the window never pauses the session (restored afterwards).
@@ -1244,12 +1295,13 @@ public class MediaRecordingService : MonoBehaviour {
           _telemetry.Interrupted = true;
         }
       }
-      if (_audioQueue.TryEnqueue(pcm16)) {
+      byte[] mixed = MixWithGameAudio(pcm16);
+      if (_audioQueue.TryEnqueue(mixed)) {
         _phoneFed = true;
         NoteAudioOrigin("phone");
         lock (_telLock) {
           _telemetry.AudioChunks++;
-          _telemetry.AudioSamples += pcm16.Length / 2;
+          _telemetry.AudioSamples += mixed.Length / 2;
           if (_telemetry.FirstAudioOffsetMs < 0)
             _telemetry.FirstAudioOffsetMs = _clock.OffsetMs();
         }
@@ -1388,12 +1440,13 @@ public class MediaRecordingService : MonoBehaviour {
       catch (Exception) { return; }
       if (pcm == null || pcm.Length == 0) return;
       _localLatch.Accept(1);
-      if (_audioQueue.TryEnqueue(pcm)) {
+      byte[] mixed = MixWithGameAudio(pcm);
+      if (_audioQueue.TryEnqueue(mixed)) {
         _localMicFed = true;
         NoteAudioOrigin("local");
         lock (_telLock) {
           _telemetry.AudioChunks++;
-          _telemetry.AudioSamples += pcm.Length / 2;
+          _telemetry.AudioSamples += mixed.Length / 2;
           _telemetry.LocalMicChunks++;
           if (_telemetry.FirstAudioOffsetMs < 0)
             _telemetry.FirstAudioOffsetMs = _clock.OffsetMs();
@@ -2064,6 +2117,7 @@ public class MediaRecordingService : MonoBehaviour {
       try { if (_videoWriter != null) _videoWriter.Close(); } catch (Exception) { }
       try { if (_gameWriter != null) _gameWriter.Close(); } catch (Exception) { }
       try { ReleaseGameCapture(); } catch (Exception) { }
+      try { DisarmGameTap(); } catch (Exception) { }
       _audioWriter = null;
       _videoWriter = null;
       _gameWriter = null;
@@ -2349,6 +2403,7 @@ public class MediaRecordingService : MonoBehaviour {
       try { if (_videoQueue != null) _videoQueue.Close(); } catch (Exception) { }
       try { if (_gameRawQueue != null) _gameRawQueue.Close(); } catch (Exception) { }
       try { StopLocalMic(); } catch (Exception) { }
+      try { DisarmGameTap(); } catch (Exception) { }
       try { if (_audioThread != null && _audioThread.IsAlive) _audioThread.Join(2000); } catch (Exception) { }
       try { if (_videoThread != null && _videoThread.IsAlive) _videoThread.Join(2000); } catch (Exception) { }
       try { if (_gameThread != null && _gameThread.IsAlive) _gameThread.Join(2000); } catch (Exception) { }

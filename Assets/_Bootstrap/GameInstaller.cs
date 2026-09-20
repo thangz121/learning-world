@@ -28,6 +28,8 @@ public class GameInstaller : MonoBehaviour {
   public IAudioDirector Audio { get; private set; }
   public ISpeechSynthesisProvider Tts { get; private set; }
   public INpcVoiceSelector Voices { get; private set; }
+  // Phase 3.0 world navigation (in-memory Scene/Session state, like Quests).
+  public IWorldNavService WorldNav { get; private set; }
   // Phase 2.1 mic-setup gate (additive): PC mic/headset OR phone mic.
   // SpeechMic (composite) is the future ISpeechRecognizer input so the frozen
   // SkippedNoMic/deferral policy ("tạm thời bỏ qua bài nghe") applies as-is.
@@ -48,6 +50,7 @@ public class GameInstaller : MonoBehaviour {
     Hints = new HintService(EventBus);                // Session logic, per-quest state
     Quests = new QuestManager(EventBus, Learning, Hints); // Scene/Session
     Rewards = new QuestRewardService(EventBus);             // Session reward state (friendship + world changes)
+    WorldNav = new WorldNavService(EventBus);               // Phase 3.0: world-navigation state (in-memory)
     Tts = new CloudflareTranslateTtsProvider();          // Application, endpoint/config ngoài repo (Translate source)
     Audio = new AudioDirector(EventBus, Tts);         // Application, cache L1/L2 + Mixer + Focus
     Voices = new NpcVoiceProfileSelector(Save);       // Application, save.npcVoices + worldSeed
@@ -65,6 +68,7 @@ public class GameInstaller : MonoBehaviour {
     SpeechMic = new CompositeMicrophoneDevice(LocalMic, PhoneMic); // local wins, phone fallback
     MicGate = new MicSetupGate(LocalMic, PhoneMic);     // startup offer + exercise-entry policy
     Milo.Bind(EventBus, Quests, Learning, Hints, Audio);
+    Mia.Bind(Audio); // shopkeeper voice (name readout + gentle retry)
     PregenSeeder.SeedFromStreamingAssets();           // D: offline L2 seeding before first audio use
     LoadMarketSceneAndBuild();
   }
@@ -98,13 +102,24 @@ public class GameInstaller : MonoBehaviour {
 
   // Phase 2.4: persisted gender (Boy default for migration). Applied to the
   // already-built PlayerVisual via re-tint (same mesh, no rebuild) so no
-  // gameplay interrupts. Public API lets future UI or G-key toggle persist.
+  // gameplay interrupts.
+  // REMOVED 2026-09-18 by user order (girl visual failed gate): Boy-only.
+  // Gender selection UI, panel, toggle and Girl visual are deleted; any saved
+  // Girl coerces to Boy on boot (logged). Save fields stay (architecture
+  // intact, no save-format break).
   MarketBuilder _activeBuilder;
 
   public PlayerGender CurrentGender {
     get {
-      try { return Load().PlayerGender; } catch (System.Exception) { return PlayerGender.Boy; }
+      try {
+        PlayerGender g = Load().PlayerGender;
+        return g == PlayerGender.Girl ? PlayerGender.Boy : g;
+      } catch (System.Exception) { return PlayerGender.Boy; }
     }
+  }
+
+  public bool HasChosenGender() {
+    return true; // no panel anymore: everyone is treated as decided
   }
 
   PlayerProgress Load() {
@@ -113,11 +128,16 @@ public class GameInstaller : MonoBehaviour {
 
   public void SetPlayerGender(PlayerGender gender) {
     try {
+      if (gender != PlayerGender.Boy) {
+        try { Debug.Log("[GameInstaller] Girl unavailable (removed) — staying Boy.", this); }
+        catch (System.Exception) { }
+        gender = PlayerGender.Boy;
+      }
       PlayerProgress p = Load();
-      p.PlayerGender = gender;
+      p.PlayerGender = PlayerGender.Boy;
+      p.GenderChosen = true;
       if (Save != null) Save.Save(p);
-      if (_activeBuilder != null) _activeBuilder.SetPlayerGender(gender);
-      Debug.Log("[GameInstaller] Player gender set to " + gender, this);
+      if (_activeBuilder != null) _activeBuilder.SetPlayerGender(PlayerGender.Boy);
     } catch (System.Exception e) { Debug.LogWarning("[GameInstaller] SetPlayerGender failed: " + e.Message, this); }
   }
 
@@ -136,13 +156,20 @@ public class GameInstaller : MonoBehaviour {
       return;
     }
     _activeBuilder = builder;
-    // Apply persisted gender to the already-spawned player (re-tint only).
+    // Boy-only (removal order): persisted gender is coerced — a saved Girl
+    // can never spawn a visual anymore.
     try {
       PlayerGender g = Load().PlayerGender;
+      if (g != PlayerGender.Boy) {
+        try { Debug.Log("[GameInstaller] Saved Girl coerced to Boy (gender selection removed).", this); }
+        catch (System.Exception) { }
+        g = PlayerGender.Boy;
+      }
       builder.SetPlayerGender(g);
     } catch (System.Exception) { }
     builder.BuildServices(EventBus, Audio);
     builder.WireQuestService(Quests, Hints);
+    builder.SetWorldNav(WorldNav); // Phase 3.0: push nav service into subject gates
     MarketBootstrap bootstrap = GetComponent<MarketBootstrap>();
     if (bootstrap == null) {
       Debug.LogError("[GameInstaller] No MarketBootstrap on the installer object; slice cannot start.", this);
@@ -154,14 +181,7 @@ public class GameInstaller : MonoBehaviour {
   }
 
   void Update() {
-    // Phase 2.4 QA: G toggles Boy/Girl live (same session, persisted).
-    try {
-      if (Input.GetKeyDown(KeyCode.G)) {
-        PlayerGender cur = Load().PlayerGender;
-        PlayerGender next = cur == PlayerGender.Boy ? PlayerGender.Girl : PlayerGender.Boy;
-        SetPlayerGender(next);
-      }
-    } catch (System.Exception) { }
+    // G-toggle REMOVED with gender selection (Boy-only by user order).
   }
 
   // Runtime online->offline swap INSIDE the router: every injected consumer

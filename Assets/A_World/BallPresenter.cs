@@ -135,15 +135,29 @@ public class BallPresenter : BusBehaviour {
   GameObject BuildMiniBall() {
     GameObject mini = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     mini.name = "CarriedQuestBall"; // distinct from the distractor's CarriedBall mini
-    mini.transform.localScale = new Vector3(0.24f, 0.24f, 0.24f);
+    mini.transform.localScale = new Vector3(0.30f, 0.30f, 0.30f);
     Renderer renderer = mini.GetComponent<Renderer>();
     if (renderer != null) {
       Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-      mat.SetColor("_BaseColor", new Color(0.20f, 0.42f, 0.90f)); // blue ball
+      mat.SetColor("_BaseColor", new Color(1.0f, 0.55f, 0.10f)); // quest orange (matches the crate ball)
       renderer.sharedMaterial = mat;
     }
     Collider collider = mini.GetComponent<Collider>();
     if (collider != null) CharacterPresentation.DestroyNow(collider); // carried decoy must not eat clicks
+    // White equatorial band (same quest-ball language as the crate).
+    GameObject band = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    band.name = "CarriedQuestBallBand";
+    band.transform.SetParent(mini.transform);
+    band.transform.localPosition = Vector3.zero;
+    band.transform.localScale = new Vector3(1.04f, 0.12f, 1.04f);
+    Renderer bandRenderer = band.GetComponent<Renderer>();
+    if (bandRenderer != null) {
+      Material bandMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+      bandMat.SetColor("_BaseColor", new Color(0.96f, 0.96f, 0.97f));
+      bandRenderer.sharedMaterial = bandMat;
+    }
+    Collider bandCollider = band.GetComponent<Collider>();
+    if (bandCollider != null) CharacterPresentation.DestroyNow(bandCollider);
     return mini;
   }
 

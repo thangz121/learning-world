@@ -14,6 +14,9 @@ public class ApplePresenter : BusBehaviour {
   const string AppleWord = "apple";
   // W1 slice quest this presenter serves (Content/quests/w1_mia_apple.json).
   const string W1QuestId = "w1_mia_apple";
+  // Ball quest id: the apple is the WRONG item there, but it must still be
+  // pickable (player rule: every answer is pickable, the bring decides).
+  const string W1BallQuestId = "w1_mia_ball";
 
   IGameEventBus _bus;
   bool _subscribed;
@@ -83,21 +86,25 @@ public class ApplePresenter : BusBehaviour {
   // glow (8% + light): breathing invites, glow directs. Stops once found.
   bool _breathing;
   float _breatheT;
-  // R7 pre-talk softlock guard: the taken-apple may be found BEFORE the quest
-  // starts (nothing blocks clicking the crate pre-talk). Hiding the crate then
-  // would softlock find_apple after Talk (no visible/clickable apple left to
-  // re-find). Track quest-active; only the IN-QUEST find empties the crate.
+  // R7 pre-talk softlock guard + player rule (no pickup before Talk):
+  // the taken-apple may be found BEFORE any quest starts. Only an IN-QUEST
+  // find (apple quest OR ball quest — the apple is pickable in both, correct
+  // in one) empties the crate, so find_apple stays recoverable after Talk.
   bool _questActive;
 
   void OnQuestBreathe(QuestStartedEvent e) {
-    if (e.QuestId.Value != W1QuestId) return;
+    if (e.QuestId.Value != W1QuestId && e.QuestId.Value != W1BallQuestId) return;
     _questActive = true;
-    _breathing = true;
+    _breathing = e.QuestId.Value == W1QuestId;
     _breatheT = 0f;
   }
 
   void OnWordSeen(WordSeenEvent e) {
     if (e.WordId.Value != AppleWord) return;
+    // Player rule: no pickup before the quest starts (Talk to Milo first).
+    // The crate stays full and nothing rides the hand, so the pre-talk tap is
+    // a walk-over with zero state change; the in-quest find path is untouched.
+    if (!_questActive) return;
     _breathing = false;
     SetGlow(false);
     // R6 quest lifecycle (FINAL POLISH): the apple is TAKEN — the crate goes
@@ -125,7 +132,9 @@ public class ApplePresenter : BusBehaviour {
   }
 
   void OnQuestDone(QuestCompletedEvent e) {
-    if (e.QuestId.Value != W1QuestId) return;
+    // Either W1 quest closing clears the hands (a wrong-item carry must never
+    // survive into the next quest).
+    if (e.QuestId.Value != W1QuestId && e.QuestId.Value != W1BallQuestId) return;
     _questActive = false;
     _breathing = false;
     SetGlow(false);

@@ -1,29 +1,24 @@
-// CT-P11: player-report cursor follow-ups (click-direction arrow, marker
+// CT-P11: player-report cursor follow-ups (live pointer arrow, marker
 // orientation, pointer confinement). Pure EditMode: deterministic seams +
 // static contracts only. C# 9.0 only.
 using NUnit.Framework;
 using UnityEngine;
 
 public class CT_P11_CursorFollowUp {
-  // 1. Click direction: the arrow leans where the click points relative to
-  // the player (assumed walk direction), not the current facing.
-  [Test] public void CT_P11A_ClickDirectionDrivesArrow() {
-    GameObject go = new GameObject("ClickDirTest");
-    try {
-      var cursor = go.AddComponent<CursorPresenter>();
-      cursor.BuildCursorImmediate();
-      Assert.IsFalse(cursor.HasClickDirection, "no click yet: facing cue covers");
-      Vector2 player = new Vector2(400f, 300f);
-      cursor.RegisterClickForTests(player, new Vector2(500f, 300f)); // click right
-      Assert.IsTrue(cursor.HasClickDirection, "click registers a direction");
-      Assert.AreEqual(90f, cursor.CurrentAngle, 0.001f, "click right of player leans +90");
-      cursor.RegisterClickForTests(player, new Vector2(400f, 100f)); // click below
-      Assert.AreEqual(180f, Mathf.Abs(cursor.CurrentAngle), 0.001f, "click below player flips down");
-      cursor.RegisterClickForTests(player, player); // degenerate: straight, never NaN
-      Assert.AreEqual(0f, cursor.CurrentAngle, 0.001f, "click on the player reads straight");
-    } finally {
-      UnityEngine.Object.DestroyImmediate(go);
-    }
+  // 1. Live pointer rule: the arrow points from the player toward the pointer
+  // itself — the direction the character will face if this spot is clicked.
+  [Test] public void CT_P11A_PointerDirectionDrivesArrow() {
+    Vector2 player = new Vector2(400f, 300f);
+    Assert.AreEqual(90f, CursorPresenter.PointerAngle(player, new Vector2(500f, 300f)),
+      0.001f, "pointer right of player leans +90 (character will face right)");
+    Assert.AreEqual(-90f, CursorPresenter.PointerAngle(player, new Vector2(300f, 300f)),
+      0.001f, "pointer left of player leans -90");
+    Assert.AreEqual(0f, CursorPresenter.PointerAngle(player, new Vector2(400f, 400f)),
+      0.001f, "pointer above player reads straight up");
+    Assert.AreEqual(180f, Mathf.Abs(CursorPresenter.PointerAngle(player, new Vector2(400f, 100f))),
+      0.001f, "pointer below player flips down");
+    Assert.AreEqual(0f, CursorPresenter.PointerAngle(player, player),
+      0.001f, "pointer on the player reads straight, never NaN");
   }
 
   // 2. Marker chevron points DOWN (∨): each arm's inner end (toward x=0)

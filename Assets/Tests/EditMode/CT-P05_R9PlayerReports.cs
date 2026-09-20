@@ -143,7 +143,7 @@ public class CT_P05_R9PlayerReports {
     }
   }
 
-  // 5. Walking the ball up to Mia is a bring attempt too (same 1.5m radius);
+  // 5. Walking the ball up to Mia is a bring attempt too (same 0.75m radius);
   // empty-handed wandering stays silent (P1 closure contract intact).
   [Test] public void CT_P05E_ProximityBallBringIsWrong() {
     var ctx = new Ctx();
@@ -152,10 +152,10 @@ public class CT_P05_R9PlayerReports {
     try {
       ctx.Quests.StartQuest(W1);
       Vector3 root = mia.gameObject.transform.position;
-      mia.TryProximityBring(root + new Vector3(0.9f, 0f, 0.9f)); // ~1.27m, empty hands
+      mia.TryProximityBring(root + new Vector3(0.4f, 0f, 0.4f)); // ~0.57m, empty hands
       Assert.AreEqual(0, ctx.Hints.GetState(W1).WrongCount, "empty-handed proximity must stay silent");
       ball.OnClicked(); // pick up
-      mia.TryProximityBring(root + new Vector3(0.9f, 0f, 0.9f)); // ~1.27m, ball in hand
+      mia.TryProximityBring(root + new Vector3(0.4f, 0f, 0.4f)); // ~0.57m, ball in hand
       Assert.AreEqual(1, ctx.Hints.GetState(W1).WrongCount, "ball proximity bring must count a wrong");
       Assert.IsFalse(ctx.Quests.GetState(W1).Completed, "wrong bring must never complete");
       Assert.IsTrue(ball.IsBallHome, "the ball must hop home");

@@ -253,8 +253,15 @@ public struct MediaRecordingConfig {
   public bool KeepIntermediates;  // keep wav/avis after a successful
                                   // transcode (default false: save disk)
   public VideoQuality Quality;    // output quality preset (default High):
-                                  // drives CRF + x264 preset + capture
-                                  // resolution together at session start
+                                   // drives CRF + x264 preset + capture
+                                   // resolution together at session start
+  // Recording audio mix (player report 2026-09-17: exports were voice-only,
+  // mic too quiet). Game audio (TTS/dialogue) is tapped at the AudioListener
+  // and summed with the mic chunk-for-chunk; gains below shape the file mix
+  // only (live speech/assessment paths untouched).
+  public float MicGain;             // mic boost in the file (default 2.0)
+  public float GameGain;            // game-audio level in the file (default 1.0)
+  public bool MixGameAudio;         // false = mic-only file (legacy behavior)
 
   public static MediaRecordingConfig Default {
     get {
@@ -280,6 +287,9 @@ public struct MediaRecordingConfig {
         FfmpegPathOverride = null,
         KeepIntermediates = false,
         Quality = VideoQuality.High,
+        MicGain = RecAudioMixer.DefaultMicGain,
+        GameGain = RecAudioMixer.DefaultGameGain,
+        MixGameAudio = true,
       };
     }
   }
@@ -340,6 +350,12 @@ public struct MediaRecordingConfig {
     }
     if (!System.Enum.IsDefined(typeof(VideoQuality), Quality)) {
       reason = "quality Preview..Max"; return false;
+    }
+    if (!(MicGain >= 0.25f && MicGain <= RecAudioMixer.MaxGain)) {
+      reason = "micGain 0.25..8"; return false;
+    }
+    if (!(GameGain >= 0f && GameGain <= RecAudioMixer.MaxGain)) {
+      reason = "gameGain 0..8"; return false;
     }
     reason = null;
     return true;

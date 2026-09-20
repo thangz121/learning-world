@@ -15,10 +15,11 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
-  // R5V-2 interaction zone (spec §18-19): greet 2.0-2.2m + facing cone ±60° +
-  // rising edge. (DERIVED project parameter for the 1.65m NPC scale.)
+  // R5V-2 interaction zone (spec §18-19): greet 2.0-2.2m + facing cone ±60°.
+  // (DERIVED project parameter for the 1.65m NPC scale.)
+  // Player report 2026-09-17: "Hello! I am Milo!" must fire EXACTLY ONCE per
+  // session — walking away and back must NOT greet again (no re-arm).
   const float GreetDistance = 2.1f;
-  const float GreetResetDistance = 2.6f;
   const float GreetFacingDot = 0.5f; // cos(60°): player must face Milo
   const float WaveDuration = 1.6f;
 
@@ -180,9 +181,9 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
       if (faceDir.sqrMagnitude > 0.0001f)
         transform.rotation = Quaternion.LookRotation(faceDir);
       float dist = toPlayer.magnitude;
-      if (dist > GreetResetDistance) {
-        _greeted = false; // re-arm: leaving the zone allows one future greet
-      } else if (!_greeted && dist < GreetDistance && PlayerFacesMilo()) {
+      // Greet-once per session (player report 2026-09-17): the latch NEVER
+      // re-arms — leaving and re-entering the zone stays silent.
+      if (!_greeted && dist < GreetDistance && PlayerFacesMilo()) {
         _greeted = true;
         if (_presentation != null) _presentation.PulseExpression(CharacterExpression.Happy, 3f);
         Milo.Greet();
@@ -191,8 +192,8 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
   }
 
   // R5V-2 facing cone: the PLAYER must face Milo (dot(playerFwd, toMilo) >=
-  // cos60°). Walking behind/away never greets; standing inside stays silent
-  // (rising edge via _greeted). Null-safe (no player transform = no greet).
+  // cos60°). Walking behind/away never greets; after the one session greet
+  // every re-entry stays silent (latch via _greeted, never re-armed).
   bool PlayerFacesMilo() {
     if (PlayerTarget == null) return false;
     Vector3 toMilo = transform.position - PlayerTarget.position;
