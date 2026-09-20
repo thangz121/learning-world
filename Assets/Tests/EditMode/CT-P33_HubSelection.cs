@@ -69,4 +69,49 @@ public class CT_P33_HubSelection {
       MarketBuilder.HubSelectionOnly = prev;
     }
   }
+
+  [Test] public void P33F_SetupLockedPaintsBoard() {
+    // Gate name boards ride ON the arch (locked mode): position painted once,
+    // fixed yaw toward the hub via the proven billboard math — no follow
+    // anchor, no per-frame rotation (the floating pill read as a black box).
+    var go = new GameObject("P33Locked");
+    try {
+      WorldNameLabel label = go.AddComponent<WorldNameLabel>();
+      Vector3 board = new Vector3(10.5f, 1.95f, -4f);
+      label.SetupLocked("Toán", board, SubjectCatalog.HubCenter);
+      label.Show();
+      Assert.AreEqual("Toán", label.CurrentName, "locked setup must name the board");
+      Assert.AreEqual(board.x, go.transform.position.x, 1e-6f);
+      Assert.AreEqual(board.y, go.transform.position.y, 1e-6f);
+      Assert.AreEqual(board.z, go.transform.position.z, 1e-6f);
+      Quaternion expect = WorldNameLabel.BillboardRotation(board, SubjectCatalog.HubCenter);
+      Assert.AreEqual(expect.eulerAngles.y, go.transform.rotation.eulerAngles.y, 1e-3f,
+        "locked yaw must face the hub exactly like the board it sits on");
+      // Reusing the label in follow mode must unlock it (no frozen tags).
+      var follow = new GameObject("P33LockedFollow");
+      try {
+        label.Setup("Milo", follow.transform, 2f);
+        Assert.AreEqual("Milo", label.CurrentName);
+      } finally { Object.DestroyImmediate(follow); }
+    } finally {
+      Object.DestroyImmediate(go);
+    }
+  }
+
+  [Test] public void P33G_HubFollowOffsetHigherThanDefault() {
+    // Hub convention: the spawn camera sits higher so the whole gate arc
+    // reads in one frame; the frozen default framing is never touched.
+    bool prev = MarketBuilder.HubSelectionOnly;
+    try {
+      Vector3 def = new Vector3(0f, 3.2f, 4.6f);
+      MarketBuilder.HubSelectionOnly = true;
+      Assert.AreEqual(MarketBuilder.HubFollowOffset, MarketBuilder.FollowOffset(def),
+        "hub must frame higher than default");
+      Assert.Greater(MarketBuilder.HubFollowOffset.y, def.y, "hub camera higher");
+      Assert.Greater(MarketBuilder.HubFollowOffset.magnitude, def.magnitude, "hub camera wider");
+      MarketBuilder.HubSelectionOnly = false;
+      Assert.AreEqual(def, MarketBuilder.FollowOffset(def),
+        "full world keeps the frozen default framing (CT-P32)");
+    } finally { MarketBuilder.HubSelectionOnly = prev; }
+  }
 }

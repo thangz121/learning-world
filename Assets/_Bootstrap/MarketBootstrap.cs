@@ -283,7 +283,9 @@ public class MarketBootstrap : MonoBehaviour {
     // All missing = silent when everything is present; declining never
     // blocks gameplay (fallbacks stay active). Any failure leaves
     // DependencySetup=null and the game runs exactly as before.
-    try {
+    // Hub-selection hall: skip the check entirely (the LAN-cert/FFmpeg/Python
+    // modal is a dev flow — kids choosing a gate must never see it).
+    if (!MarketBuilder.HubSelectionOnly) try {
       string appTools = null;
       try { appTools = System.IO.Path.Combine(Application.persistentDataPath, "Tools"); }
       catch (Exception) { }
@@ -515,7 +517,7 @@ public class MarketBootstrap : MonoBehaviour {
         else _hud.ShowObjective("Look around!");
       }
       if (_builder.WorldCamera != null && _builder.Player != null) {
-        try { _builder.WorldCamera.Follow(_builder.Player.transform, _builder.WorldCamera.defaultOffset); }
+        try { _builder.WorldCamera.Follow(_builder.Player.transform, MarketBuilder.FollowOffset(_builder.WorldCamera.defaultOffset)); }
         catch (Exception) { }
       }
     }

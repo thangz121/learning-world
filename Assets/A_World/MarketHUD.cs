@@ -165,6 +165,15 @@ public class MarketHUD : BusBehaviour {
     panelRt.pivot = new Vector2(0f, 1f);
     panelRt.anchoredPosition = new Vector2(20f, -20f);
     panelRt.sizeDelta = new Vector2(320f, 64f);
+    if (MarketBuilder.HubSelectionOnly) {
+      // Hub hall: the top-left chip sat on top of gate name boards (the raised
+      // hub camera pushes boards high on screen). Park it bottom-center
+      // instead — only lawn and feet project there, never labels.
+      panelRt.anchorMin = new Vector2(0.5f, 0f);
+      panelRt.anchorMax = new Vector2(0.5f, 0f);
+      panelRt.pivot = new Vector2(0.5f, 0f);
+      panelRt.anchoredPosition = new Vector2(0f, 20f);
+    }
 
     GameObject textGo = new GameObject("ObjectiveText");
     textGo.transform.SetParent(panelGo.transform);
@@ -172,7 +181,7 @@ public class MarketHUD : BusBehaviour {
     _objectiveText.font = font;
     _objectiveText.fontSize = 23;
     _objectiveText.color = new Color(0.35f, 0.22f, 0.12f);
-    _objectiveText.alignment = TextAnchor.MiddleLeft;
+    _objectiveText.alignment = MarketBuilder.HubSelectionOnly ? TextAnchor.MiddleCenter : TextAnchor.MiddleLeft;
     _objectiveText.verticalOverflow = VerticalWrapMode.Truncate;
     _objectiveText.text = CurrentObjective;
     RectTransform textRt = textGo.GetComponent<RectTransform>();

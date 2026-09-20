@@ -167,3 +167,128 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
   + spawn. Lockdown: temp 0 file, asmdef sạch. FINAL clean build Succeeded
   errors=0 warnings=1, boot 3×FACE_OK 0 exc, FINAL EditMode 462/458/0/4.
   Không commit (chờ user).
+
+## 6. HUB-BEAUTY ROUND — TIẾP TỤC (2026-09-20, máy ASUS)
+
+- Môi trường: gỡ Unity 5.5.0f3 (`C:/Program Files/Unity/Editor` + MonoDevelop kèm theo
+  + `D:/unitydownloadassistant-5-5-0f3.exe`). Chỉ giữ Unity **6000.6.0f1**
+  (`C:/Program Files/Unity/Hub/Editor/6000.6.0f1`, `Unity.exe -version` → 6000.6.0f1).
+  Registry sạch (chỉ còn 6000.6.0f1 + Hub 3.21.1).
+- Việc làm: gate name boards chuyển sang `WorldNameLabel.SetupLocked` (trước đó code
+  chết — boards vẫn dùng floating `Setup` + anchor). VN banner + 3 boards gỗ đều
+  `SetupLocked(name, boardPos, HubCenter)` (yaw khóa = BillboardRotation 1 lần, đã chứng
+  minh song song mặt board). Xóa anchor GO thừa. `Setup` nay reset `_locked=false`
+  (tái dùng label follow-mode không bị đóng băng). Test mới `P33F_SetupLockedPaintsBoard`
+  (position + yaw + unlock) trong `CT-P33_HubSelection.cs` (không file test mới ⇒ không
+  đụng TestManifest mapping).
+- Verify máy ASUS: EditMode **472 total / 467 pass / 0 fail / 5 skip** (baseline 462/
+  458/0/4 + P32×4 + P33×6; P33E skip trong domain EditMode như thiết kế). Không regression.
+  Lưu ý: `-quit` + `-runTests` cùng lúc khiến Unity thoát trước khi chạy test (bug đã biết)
+  → chạy `-runTests` không kèm `-quit` (tự thoát code 0).
+- Build P34 (`Temp/opencode/P34Build/LWE.exe`, hub-mode mặc định): UTP success:true,
+  **103.4MB**, level0+level1 + Managed DLLs tươi. 1 warning benign (không xóa được
+  BuildHistory cũ của máy khác: access denied).
+- Boot smoke (build hub thật, windowed): **FACE_OK 1×, 0 exception**, services wired đủ
+  (phone/local cam, recording, dep check). Game đang chạy (user tự nhìn hub bằng mắt —
+  screenshot bị trình duyệt che nên chưa chụp được).
+- Chưa làm (cần user): nhìn hub + 4 cổng bằng mắt trong game đang chạy, đóng game khi xong.
+  Không commit (chờ lệnh, như mọi khi).
+
+## 7. FIX THEO FEEDBACK MẮT USER (2026-09-20, máy ASUS)
+
+- User báo từ game đang chạy: (1) cọc biển che chữ — cọc phải ở phía sau;
+  (2) game hiện prompt thiếu chứng chỉ LAN (dev-intent thì bỏ qua).
+- Root cause (1): cột cọc biển là cylinder 2m, scale y=1.1 → cao 2.2m, đỉnh 1.65m
+  đâm VÀO pill chữ (mép dưới 1.36m) cùng XZ — đầu cọc cắt chữ từ mọi hướng hub.
+  Fix: scale y 1.1→0.6 (cọc 1.2m, đỉnh 1.15m < 1.36m): cọc nằm sau/dưới chữ mọi góc,
+  pill vẫn đọc như gắn trên cọc. Không đổi vị trí XZ ⇒ bake/nav giữ nguyên.
+- Fix (2): prompt DepSetup (FFmpeg/Python/LAN-cert) là dev tooling Phase 2.x —
+  đúng là cố tình trong bản dev. Nhưng build hub là hướng ship cho trẻ con nên skip
+  hẳn khi `HubSelectionOnly` (1 dòng guard trong MarketBootstrap, cùng pattern Milo/
+  Mia; `DependencySetup` không ai đọc ngoài chỗ gán ⇒ null-safe).
+- Verify: EditMode **472/467/0/5** (P22 DepSetup xanh hết) → rebuild P34 UTP
+  success:true (LWE.World.dll + LWE.Bootstrap.dll + level0/1 tươi 15:38).
+  Boot build mới: **FACE_OK, 0 exception, 0 dòng DepSetup/prompt/LAN** (prompt hết).
+- Log note (user yêu cầu log mọi việc): Unity batchmode chạy detached + flush log
+  out-of-order (đuôi log kẹt ở dòng startup trong khi build đã success) + process
+  nán lại sau build (thiếu -quit). Từ nay: check hoàn thành bằng marker UTP
+  `success:true` + timestamp DLL/level, không tin đuôi log; kill Unity sau build.
+- Game mới đang chạy — user nhìn lại cọc biển + xác nhận hết prompt rồi báo sang phần tiếp.
+- (Update sau boot): user xác nhận hết prompt LAN. Cọc biển hết che chữ (fix rút cọc).
+  Không commit (chờ lệnh).
+
+## 8. BIỂN NHẦM CỬA — GẮN BIỂN SÁT CỘT (2026-09-20, máy ASUS)
+
+- User báo + ảnh: biển "Tiếng Anh" nổi trên cửa Tư duy — cắm nhầm biển vào sai cửa.
+- Xác minh tọa độ: KHÔNG nhầm dữ liệu — mỗi biển đúng tên cửa mình và đứng gần nhất
+  cửa mình (vd biển Anh (-4.02,-1.35) cách cửa Anh 3.69m, cách cửa Tư duy 7m).
+  Vấn đề là cảm nhận: biển đứng detached 3.7m ngoài sân, từ góc plaza nhìn thẳng
+  hàng camera-biển-cửa-bên (vd đứng plaza-đông: biển Anh đè đúng lên cửa Tư duy).
+- Fix: biển ôm sát cột cửa — sp = gate + face*1.1 + lat*2.3 (cách tâm cửa ~2.55m:
+  ngoài pillar carve 2.0 + đĩa cửa 1.3, trong plaza veto 2.6, tránh road/walkway/
+  entry đã đối chiếu 4 cửa). Biển đọc như đồ của cửa từ mọi góc hub.
+- Verify: EditMode 472/467/0/5 exit 0 → build UTP success:true (World.dll + level0/1
+  tươi 15:58, các DLL khác giữ nguyên đúng). Boot: FACE_OK, 0 exception, 0 DepSetup.
+- Quy trình build (user lệnh: tối đa 180s, phải timeout): build incremental chỉ ~60-90s tới
+  UTP success; process Unity nán lại sau build (thiếu -quit) + log flush lộn xộn
+  từng gây hiểu lầm "treo". Từ nay watch bằng artifact (UTP success + DLL tươi),
+  deadline 180s, kill Unity sau build để nhả lock.
+- Game mới đang chạy — user nhìn lại: mỗi biển phải dính sát cửa của nó.
+- (Update: user CHƯA đồng ý — ra quy ước mới, xem §9.)
+  Không commit (chờ lệnh).
+
+## 9. QUY ƯỚC BIỂN: TRÁI ĐƯỜNG VÀO, NGAY LỐI VÀO (2026-09-20, máy ASUS)
+
+- User chốt quy ước: mỗi biển ở bên TRÁI đường vào cổng, ngay lối vào cổng.
+- Code: xóa flip `lat.x * gate.x < 0` trong BuildSignpost (flip này từng đẩy biển
+  Math/VN sang bên PHẢI). lat thô = (-face.z, 0, face.x) đã chứng minh luôn là
+  bên trái hướng đi vào (left = up x fwd, fwd = -face) — giữ nguyên cho cả 4 cửa.
+  sp = gate + face*0.9 + lat*2.2 (sát miệng cửa, ngoài pillar carve, đã đối chiếu
+  road/walkway/entry 4 cửa). Mũi tên vẫn chỉ vào cửa (toGate tính lại).
+- Verify: EditMode 472/467/0/5 exit 0 → build UTP success:true trong deadline
+  (World.dll + level0/1 tươi 16:17). Boot: FACE_OK, 0 exception, 0 DepSetup.
+- Quy trình (user nhắc — mọi bước build/test có timeout thật): watch artifact +
+  deadline 180s, hết giờ tự kill Unity + kết luận (không poll vô hạn). Đã áp dụng
+  từ bước này (BUILD-WATCH=SUCCESS).
+- Game mới đang chạy — user kiểm tra quy ước trái-đường-vào.
+- (Update: user vẫn chưa đồng ý + ảnh mới: cây to giữa sân che cổng → chặt, xem §10.)
+  Không commit (chờ lệnh).
+
+## 10. CHẶT CÂY GIỮA SÂN CHE CỔNG (2026-09-20, máy ASUS)
+
+- User + ảnh: cây to giữa sân che cổng, cãi trái/phải vô nghĩa — chặt đi.
+- Xác định: cây phía tây (-6.2, 3.8) scale 1.0 ngay lối từ spawn vào sân (gần camera,
+  tán che cổng; không test nào giữ, không code nào tìm theo tên).
+- Chặt: xóa BuildTree(-6.2, 3.8) + xóa TreeCarve cùng tọa độ (carve không cây =
+  tường vô hình — chính comment cũ cũng dặn). Hoa/đá/gốc thấp quanh đó giữ nguyên.
+- Verify: EditMode 472/467/0/5 exit 0 → build UTP success:true trong deadline
+  (World.dll + level0/1 tươi 16:35). Boot: FACE_OK, 0 exception, 0 DepSetup.
+- Game mới đang chạy — user nhìn: hết cây, cổng thoáng.
+- (Update: user báo tiếp — cổng Tư duy bị 2 cây che cột + spawn camera thấp + HUD
+  "Choose a gate!" đè biển, xem §11. Rồi lệnh push hết lên GitHub về máy nhà.)
+  Không commit (chờ lệnh).
+
+## 11. CỘT TƯ DUY + CAMERA CAO + HUD ĐÈ BIỂN (2026-09-20, máy ASUS)
+
+- User + ảnh: (1) 2 cây che cột cổng Tư duy; (2) spawn camera để cao hơn nhìn trọn
+  4 cổng; (3) pill "Choose a gate!" đè biển tên 1 cổng.
+- Fix (1): dời cây tây (-14,-9,1.6x) ra góc SW sâu (-15,-11.5) + cây district Tư duy
+  (-14.5,4.5) vào sâu (-15,6). Carve district đi theo tp (cùng code). Không test nào
+  giữ tọa độ cây (đã grep). Hedge/bụi quanh cổng đã sạch sẵn (plaza veto 2.6m).
+- Fix (2): camera hub cao hơn — MarketBuilder.HubFollowOffset (0,5,7) + helper
+  FollowOffset() (hub?Hub:default). Đấu nối 3 chỗ: pose đầu + Follow đầu (MarketBuilder)
+  + Follow return-to-Main (MarketBootstrap). defaultOffset KHÔNG đụng (CT-P32 đóng
+  băng) + test mới P33G (hub cao/rộng hơn, full giữ nguyên).
+- Fix (3): HUD objective ở hub chuyển từ chip trên-trái xuống bottom-center + chữ
+  giữa (chỉ sân cỏ + bàn chân chiếu tới đó, không bao giờ có biển chữ). Full-world
+  giữ nguyên. (Bắt được NRE suýt xảy ra: _objectiveText gán alignment trước khi
+  tạo — đã tách ra sau.)
+- Verify: EditMode 472/468/0/5 exit 0 → build UTP success:true (World.dll +
+  level0/1 tươi 16:48). Boot: FACE_OK, 0 exception, 0 DepSetup.
+- BÀI HỌC LỚN (user mắng đúng): build xong từ 16:53 nhưng watch treo tới 17:40 vì
+  chờ dòng UTP success trong log (Unity flush log chậm tới ~47 phút!). Từ nay watch
+  build CHỈ bằng timestamp DLL/level (filesystem truth, tức thì), coi UTP success
+  là phụ. Build incremental thật chỉ ~60s.
+- PUSH GitHub (user lệnh về máy nhà làm tiếp): commit + push origin/main.
+  Library/ + Temp/ ignored — máy nhà mở project sẽ import lại từ đầu (lâu lần đầu).
+  Không commit (chờ lệnh).

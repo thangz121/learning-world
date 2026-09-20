@@ -15,12 +15,18 @@ public class WorldNameLabel : MonoBehaviour {
   Transform _follow;
   float _height = 2f;
   Text _text;
+  // Locked mode (hub beauty round): the text is PAINTED onto a physical
+  // board — fixed yaw, never billboards. Real signboards don't rotate to
+  // face you; the old always-face pill read as a black box floating in air
+  // (user report). Same font/shrink contract as floating labels.
+  bool _locked;
 
   void Awake() {
     BuildLabel();
   }
 
   void Update() {
+    if (_locked) return;
     if (_follow != null) transform.position = _follow.position + Vector3.up * _height;
     Camera cam = Camera.main;
     if (cam == null) return;
@@ -51,6 +57,7 @@ public class WorldNameLabel : MonoBehaviour {
   public void Setup(string displayName, Transform follow, float heightAboveRoot) {
     if (_text == null) BuildLabel();
     _follow = follow;
+    _locked = false;
     _height = heightAboveRoot;
     if (_text != null && !string.IsNullOrWhiteSpace(displayName)) {
       string clean = displayName.Trim();
@@ -67,6 +74,22 @@ public class WorldNameLabel : MonoBehaviour {
 
   public string CurrentName {
     get { return _text != null ? _text.text : ""; }
+  }
+
+  // Locked setup: paint the name onto a physical board at worldPos, facing
+  // viewerPos ONCE (same legible-face convention as the billboard math, so
+  // the proven font rendering carries over). No follow, no rotation after.
+  public void SetupLocked(string displayName, Vector3 worldPos, Vector3 viewerPos) {
+    if (_text == null) BuildLabel();
+    _follow = null;
+    _locked = true;
+    if (_text != null && !string.IsNullOrWhiteSpace(displayName)) {
+      string clean = displayName.Trim();
+      _text.text = clean;
+      _text.fontSize = clean.Length > 9 ? 88 : 112;
+    }
+    transform.position = worldPos;
+    transform.rotation = BillboardRotation(worldPos, viewerPos);
   }
 
   public void Show() {

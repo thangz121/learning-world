@@ -148,20 +148,10 @@ public static class SubjectWorldBuilder {
     disc.transform.localScale = new Vector3(2.6f, 0.024f, 2.6f);
     disc.GetComponent<Renderer>().sharedMaterial = Lit(def.GroundTint);
 
-    // In-world name (reuses the frozen WorldNameLabel contract). The anchor
-    // sits BEHIND the arch (district side, 1.3m off the gate line) at 3.2m:
-    // the pill floats above every gate topper (VN straw hat peaks at 2.63m,
-    // English crown at 2.3m) so low hub-side cameras read it OVER the beam
-    // instead of through the dressing. Y-billboard keeps it readable from
-    // every approach angle.
-    GameObject anchor = new GameObject(name + "GateAnchor");
-    anchor.transform.SetParent(parent);
-    anchor.transform.position = def.GatePos - face * 1.3f;
-    GameObject labelGo = new GameObject(name + "GateLabel");
-    labelGo.transform.SetParent(parent);
-    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.Setup(def.DisplayName, anchor.transform, 3.2f);
-    label.Show();
+    // Gate name, mounted ON the arch (user round: hub beauty — the name is
+    // one body with the gate, dressed per subject, instead of a pill box
+    // floating high above it).
+    BuildGateNameBoard(parent, def, face, lat);
 
     result.Carves.Add(new CarveSpec { Name = name + "PillarCarveA", Pos = pillarA + new Vector3(0f, 1f, 0f), Size = new Vector3(0.8f, 2f, 0.8f) });
     result.Carves.Add(new CarveSpec { Name = name + "PillarCarveB", Pos = pillarB + new Vector3(0f, 1f, 0f), Size = new Vector3(0.8f, 2f, 0.8f) });
@@ -171,8 +161,61 @@ public static class SubjectWorldBuilder {
     result.EntryGates.Add(gate);
   }
 
-  // Math: stacked-cube pillars + cylinder lintel + finial spheres + 3
-  // ascending counting cubes beside the road (geometry motif, no curriculum).
+  // ---- gate name boards (one body with the arch) -------------------------------
+  // Light-wood board carrying the subject pill ON the structure (no floating
+  // boxes): Math/Thinking ride above their beams, English hangs in front of
+  // its crown, Vietnamese reads straight off its pink banner. Visual-only
+  // (above headroom, no collider, ignored by the bake).
+  static void BuildGateNameBoard(Transform parent, SubjectDefinition def, Vector3 face, Vector3 lat) {
+    string name = def.DisplayName;
+    Vector3 mid = def.GatePos;
+    float yaw = YawAlongX(lat);
+    if (def.Landmark == SubjectLandmarkKind.Scrolls) {
+      // Banner IS the board: pill painted straight onto the pink face
+      // (locked mode — fixed yaw toward the hub, never billboards, so the
+      // name reads as one body with the gate instead of a floating box).
+      GameObject labelGo = new GameObject(name + "GateLabel");
+      labelGo.transform.SetParent(parent);
+      WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
+      label.SetupLocked(def.DisplayName,
+        mid + face * 0.35f + new Vector3(0f, 1.95f, 0f),
+        SubjectCatalog.HubCenter);
+      label.Show();
+      return;
+    }
+    Vector3 boardPos;
+    if (def.Landmark == SubjectLandmarkKind.Books) {
+      boardPos = mid + face * 0.40f + new Vector3(0f, 2.0f, 0f); // in front of the crown
+    } else if (def.Landmark == SubjectLandmarkKind.Gears) {
+      boardPos = mid + new Vector3(0f, 2.32f, 0f); // bridges the puzzle notch
+    } else {
+      boardPos = mid + new Vector3(0f, 2.28f, 0f); // sits on the beam
+    }
+    GameObject board = Box(parent, name + "NameBoard", boardPos,
+      new Vector3(1.5f, 0.42f, 0.14f), new Color(0.72f, 0.55f, 0.34f), false);
+    board.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+    IgnoreFromBuild(board);
+    GameObject labelGo2 = new GameObject(name + "GateLabel");
+    labelGo2.transform.SetParent(parent);
+    WorldNameLabel label2 = labelGo2.AddComponent<WorldNameLabel>();
+    label2.SetupLocked(def.DisplayName,
+      boardPos + face * 0.12f,
+      SubjectCatalog.HubCenter);
+    label2.Show();
+    if (def.Landmark == SubjectLandmarkKind.Blocks) {
+      // Math motif: two counting cubes riding the beam beside the board.
+      for (int i = -1; i <= 1; i += 2) {
+        GameObject cube = Box(parent, "MathBeamCube" + i,
+          mid + lat * (i * 1.1f) + new Vector3(0f, 2.15f, 0f),
+          new Vector3(0.24f, 0.24f, 0.24f), def.Secondary, false);
+        StripCollider(cube);
+        IgnoreFromBuild(cube);
+      }
+    }
+  }
+
+  // Math: stacked-cube pillars + cylinder lintel + finial spheres (geometry
+  // motif, no curriculum). Counting cubes ride the beam (see name board).
   static void BuildBlocksGate(Transform parent, SubjectDefinition def, Vector3 a, Vector3 b, Vector3 lat) {
     BuildCubePillar(parent, "MathPillarA", a, def.Primary);
     BuildCubePillar(parent, "MathPillarB", b, def.Primary);
@@ -227,9 +270,9 @@ public static class SubjectWorldBuilder {
     lintelR.transform.localRotation = Quaternion.Euler(0f, YawAlongX(along), 0f);
     IgnoreFromBuild(lintelL);
     IgnoreFromBuild(lintelR);
-    // Puzzle tab locking the center notch (interlock motif, visual-only).
+    // Puzzle tab rides ABOVE the name board (interlock motif, visual-only).
     // (User round: ground maze ring removed — side clutter around a hub gate.)
-    GameObject tab = Box(parent, "ThinkingTab", mid + new Vector3(0f, 2.15f, 0f),
+    GameObject tab = Box(parent, "ThinkingTab", mid + new Vector3(0f, 2.78f, 0f),
       new Vector3(0.3f, 0.5f, 0.3f), def.Primary, false);
     IgnoreFromBuild(tab);
   }
@@ -545,11 +588,10 @@ public static class SubjectWorldBuilder {
   static void BuildPlaygroundTree(Transform parent, SubjectDefinition def, BuildResult result) {
     string name = def.DisplayName;
     Vector3 tp;
-    // Hub round 3 (user: district trees covered their gates from the yard):
-    // trees sit deep in-district, off the gate sightlines (Math/Thinking
-    // trees used to stand 6m south of their gates, right in the view).
-    if (def.Id == SubjectIds.Math) tp = new Vector3(9.5f, 0f, 3.5f);
-    else if (def.Id == SubjectIds.Thinking) tp = new Vector3(-9.5f, 0f, 3.5f);
+    // Hub beauty round (user: trees covered gates from the yard): district
+    // trees sit deep in-district, off every gate sightline and walkway.
+    if (def.Id == SubjectIds.Math) tp = new Vector3(14.5f, 0f, 4.5f);
+    else if (def.Id == SubjectIds.Thinking) tp = new Vector3(-15f, 0f, 6f); // (user round: was -14.5,4.5, trunk crossed the gate pillars from hub views)
     else if (def.Id == SubjectIds.English) tp = new Vector3(3.4f, 0f, -12.3f);
     else tp = new Vector3(0.3f, 0f, 12.4f); // VN district NW corner (off its x=3.5 road)
     GameObject tree = new GameObject(name + "Tree");
@@ -581,25 +623,47 @@ public static class SubjectWorldBuilder {
 
   static void BuildSignpost(Transform parent, SubjectDefinition def) {
     string name = def.DisplayName;
-    // Hub-arc placement: beside its own gate, hub-side, fanned outward —
-    // the post never stands in a neighbour's sightline or walkway.
+    // Signpost placement (user convention: LEFT of the entrance path, right at
+    // the gate mouth: no outward flip; raw lat is always approach-left. Face 0.9 hub-side of
+    // the gate line, lateral 2.2 just outside the left pillar.)
     Vector3 face = FaceOf(def);
     Vector3 lat = new Vector3(-face.z, 0f, face.x);
-    if (lat.x * def.GatePos.x < 0f) lat = -lat;
-    Vector3 sp = def.GatePos + face * 2.8f + lat * 1.6f;
+    Vector3 sp = def.GatePos + face * 0.9f + lat * 2.2f;
+    // (User round 2: hug the pillar - detached spot projected onto neighbour
+    // gates from plaza views. (Superseded by the LEFT-of-path convention above.)
+    // (Still holds: outside pillar carve/disc, inside plaza veto, clear of roads.)
     GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     post.name = name + "SignPost";
     post.transform.SetParent(parent);
     post.transform.position = sp + new Vector3(0f, 0.55f, 0f);
-    post.transform.localScale = new Vector3(0.12f, 1.1f, 0.12f);
+    // User round (post covered its own text): the primitive cylinder is 2m
+    // tall, so scale y=1.1 made a 2.2m pole whose tip (1.65m) reached INTO the
+    // name pill (bottom edge 1.36m) at the same XZ — the dark tip crossed the
+    // text from every hub approach. y=0.6 → 1.2m pole, tip at 1.15m: the post
+    // stays behind/below the text from all angles, pill still reads mounted.
+    post.transform.localScale = new Vector3(0.12f, 0.6f, 0.12f);
     post.GetComponent<Renderer>().sharedMaterial = Lit(TrunkC);
-    // Colored cap points toward the subject road (slab toward the road).
-    Vector3 toRoad = def.GatePos - sp;
-    toRoad.y = 0f;
-    toRoad.Normalize();
-    GameObject cap = Box(parent, name + "SignCap", sp + toRoad * 0.25f + new Vector3(0f, 1.05f, 0f),
-      new Vector3(0.55f, 0.3f, 0.3f), def.Primary, true);
-    cap.transform.localRotation = Quaternion.LookRotation(toRoad);
+    // Arrow arm toward the gate (user round: real directional sign) —
+    // rectangular tail + diamond head in subject colour, at hand height.
+    Vector3 toGate = def.GatePos - sp;
+    toGate.y = 0f;
+    toGate.Normalize();
+    float yaw = Mathf.Atan2(toGate.x, toGate.z) * Mathf.Rad2Deg;
+    GameObject tail = Box(parent, name + "SignTail", sp + new Vector3(0f, 0.78f, 0f) - toGate * 0.15f,
+      new Vector3(0.14f, 0.16f, 0.85f), def.Primary, true);
+    tail.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+    GameObject head = Box(parent, name + "SignHead", sp + new Vector3(0f, 0.78f, 0f) + toGate * 0.42f,
+      new Vector3(0.30f, 0.16f, 0.30f), def.Primary, true);
+    head.transform.localRotation = Quaternion.Euler(0f, yaw + 45f, 0f);
+    // Name pill above the post (same label contract as the gates).
+    GameObject anchor = new GameObject(name + "SignAnchor");
+    anchor.transform.SetParent(parent);
+    anchor.transform.position = sp;
+    GameObject labelGo = new GameObject(name + "SignLabel");
+    labelGo.transform.SetParent(parent);
+    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
+    label.Setup(def.DisplayName, anchor.transform, 1.55f);
+    label.Show();
   }
 
   // ---- outer hedge (new world bounds, full rectangle, no gaps) ---------------------

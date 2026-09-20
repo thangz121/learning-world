@@ -28,6 +28,13 @@ public class MarketBuilder : MonoBehaviour {
   // the whole quest/presenter suite stays green; -fullworld forces full
   // even in player builds (debug escape hatch).
   public static bool HubSelectionOnly = false;
+  // Hub-selection camera framing (user round: the spawn camera sits higher so
+  // the whole gate arc reads in one frame). defaultOffset stays FROZEN for the
+  // full world (CT-P32 pins it); hub call sites use FollowOffset() instead.
+  public static readonly Vector3 HubFollowOffset = new Vector3(0f, 5f, 7f);
+  public static Vector3 FollowOffset(Vector3 def) {
+    return HubSelectionOnly ? HubFollowOffset : def;
+  }
 
   [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
   static void DetectHubMode() {
@@ -332,7 +339,9 @@ public class MarketBuilder : MonoBehaviour {
   // ---- tree + hedge boundary --------------------------------------------------
 
   void BuildTreeAndHedge() {
-    BuildTree(new Vector3(-6.2f, 0f, 3.8f), 1f);
+    // (User round: the west yard tree at (-6.2, 3.8) is FELLED - its near-field
+    // canopy blocked the gate views from every hub angle. No replacement: hub
+    // round 4 already cleared yard trees; boundary + district trees stay.)
     // R5V-1 background depth: two OUTSIDE trees so the boundary reads as a
     // garden edge inside a larger world (foreground path / midground play /
     // background green), plus three small bushes inside corners for charm.
@@ -340,7 +349,9 @@ public class MarketBuilder : MonoBehaviour {
     // Hub round 5 (user: tree swallowed the Thinking gate): the (-11,-3)
     // tree stood 1.1m from the arc gate — moved deep west, clear of gates,
     // walkways and districts.
-    BuildTree(new Vector3(-14f, -0.1f, -9f), 1.6f);
+    // (User round: trunk+canopy still crossed the Thinking pillars from hub
+    // views — parked in the deep SW corner, off every gate sightline.)
+    BuildTree(new Vector3(-15f, -0.1f, -11.5f), 1.6f);
     // Phase 3.0: the old east backdrop tree stood at (10.5, 4.5) — its canopy
     // crossed the Math follow sightline x=12 (P3 visual QA: obstruction
     // pull-in parked the playground camera 1.6m behind the player). Parked
@@ -401,11 +412,6 @@ public class MarketBuilder : MonoBehaviour {
     hedge.transform.SetParent(transform);
     Color leafA = new Color(0.28f, 0.60f, 0.30f);
     Color leafB = new Color(0.22f, 0.52f, 0.28f);
-    Color[] tuft = {
-      new Color(0.95f, 0.55f, 0.65f),
-      new Color(0.98f, 0.82f, 0.30f),
-      new Color(0.96f, 0.95f, 0.90f),
-    };
     // Deterministic alternation (never Random: every build is identical).
     // Phase 3.0: gaps where the 4 subject roads cross (|x|<1.65 on N/E/W,
     // Vietnamese S road runs at x=3.5 so the spawn camera axis stays clear).
@@ -418,7 +424,8 @@ public class MarketBuilder : MonoBehaviour {
       bool gapS = Mathf.Abs(x - 3.5f) < 1.65f;
       if (!gapN) AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, -6f), n);
       if (!gapS) AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, 6f), n + 1);
-      if (!gapN && n % 4 == 1) AddFlowerTuft(hedge.transform, new Vector3(x, 0f, -6f), tuft[(n / 4) % 3]);
+      // (Hub beauty round: hedge flower tufts removed — spiky stems read as
+      // thorns from above. Hedge stays pure bushes.)
       n++;
     }
     for (float z = -4.4f; z <= 4.41f; z += 1.6f) {
@@ -442,21 +449,6 @@ public class MarketBuilder : MonoBehaviour {
         : new Vector3(0.95f, 0.55f, 0.95f);
       bush.GetComponent<Renderer>().sharedMaterial = Lit(seed % 2 == 0 ? leafA : leafB);
       // Collider kept (same bake/click behavior the fence posts had).
-    }
-
-    void AddFlowerTuft(Transform parent, Vector3 groundPos, Color color) {
-      GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-      stem.name = "HedgeTuftStem";
-      stem.transform.SetParent(parent);
-      stem.transform.position = groundPos + new Vector3(0f, 0.5f, 0f);
-      stem.transform.localScale = new Vector3(0.05f, 0.35f, 0.05f);
-      stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.55f, 0.28f));
-      GameObject bloom = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      bloom.name = "HedgeTuftBloom";
-      bloom.transform.SetParent(parent);
-      bloom.transform.position = groundPos + new Vector3(0f, 0.72f, 0f);
-      bloom.transform.localScale = new Vector3(0.13f, 0.13f, 0.13f);
-      bloom.GetComponent<Renderer>().sharedMaterial = Lit(color);
     }
   }
 
@@ -792,19 +784,98 @@ public class MarketBuilder : MonoBehaviour {
   void BuildHubWalkways(System.Random rng) {
     WalkwaySegs.Clear();
     foreach (SubjectDefinition def in SubjectCatalog.All) {
-      Vector3 face = SubjectCatalog.HubCenter - def.GatePos;
-      face.y = 0f;
-      if (face.sqrMagnitude < 0.001f) face = new Vector3(0f, 0f, 1f);
-      face.Normalize();
-      // Walkway from the open lawn to the gate front. Outer gates (|x|>10)
-      // start near the lawn edge so the strip threads the open hedge corner
-      // (no hedge crossing); middle gates start mid-lawn. Lengths stay short
-      // now the arc hugs the yard.
-      float sx = Mathf.Sign(def.GatePos.x) * (Mathf.Abs(def.GatePos.x) > 10f ? 7.5f : 4.0f);
-      Vector3 a = new Vector3(sx, 0f, -0.5f);
+      Vector3 toGate = def.GatePos - SubjectCatalog.HubCenter;
+      toGate.y = 0f;
+      if (toGate.sqrMagnitude < 0.001f) continue;
+      toGate.Normalize();
+      // Straight radial fan from the spawn plaza rim to the gate front:
+      // symmetric pairs, no wonky mid-lawn starts.
+      Vector3 face = -toGate;
+      Vector3 a = SubjectCatalog.HubCenter + toGate * 2.0f;
       Vector3 b = def.GatePos + face * 0.6f;
       WalkwaySegs.Add(new Vector3[] { a, b });
       BuildBrickWalkway(a, b, rng);
+    }
+    if (HubSelectionOnly) BuildHubPlaza();
+  }
+
+  // Spawn plaza: round paved hub the 4 walkways fan out from (hub-only; the
+  // full world keeps its Phase-1 lawn exactly). Sits over the path stripe
+  // (paved above it, no z-fight).
+  void BuildHubPlaza() {
+    GameObject plaza = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    plaza.name = "HubPlaza";
+    plaza.transform.SetParent(transform);
+    plaza.transform.position = SubjectCatalog.HubCenter + new Vector3(0f, 0.02f, 0f);
+    plaza.transform.localScale = new Vector3(4.4f, 0.03f, 4.4f);
+    plaza.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.80f, 0.68f, 0.48f));
+    Collider c = plaza.GetComponent<Collider>();
+    if (c != null) Destroy(c);
+    BuildPlazaVase(new Vector3(-2.9f, 0f, 0.7f), 0);
+    BuildPlazaVase(new Vector3(2.9f, 0f, 0.7f), 1);
+  }
+
+  // One beautiful bouquet vase (user round: a composed vase beats a wild
+  // flower field). Terracotta pot + soil + 5 tilted pastel blooms + leaves.
+  // Collider-free dressing + a small stationary carve (feet go around).
+  void BuildPlazaVase(Vector3 pos, int seed) {
+    GameObject vase = new GameObject("PlazaVase");
+    vase.transform.SetParent(transform);
+    vase.transform.position = pos;
+    GameObject pot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    pot.name = "VasePot";
+    pot.transform.SetParent(vase.transform);
+    pot.transform.localPosition = new Vector3(0f, 0.22f, 0f);
+    pot.transform.localScale = new Vector3(0.55f, 0.22f, 0.55f);
+    pot.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.72f, 0.42f, 0.28f));
+    Destroy(pot.GetComponent<Collider>());
+    GameObject rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    rim.name = "VaseRim";
+    rim.transform.SetParent(vase.transform);
+    rim.transform.localPosition = new Vector3(0f, 0.46f, 0f);
+    rim.transform.localScale = new Vector3(0.68f, 0.08f, 0.68f);
+    rim.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.78f, 0.48f, 0.32f));
+    Destroy(rim.GetComponent<Collider>());
+    GameObject soil = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    soil.name = "VaseSoil";
+    soil.transform.SetParent(vase.transform);
+    soil.transform.localPosition = new Vector3(0f, 0.47f, 0f);
+    soil.transform.localScale = new Vector3(0.5f, 0.03f, 0.5f);
+    soil.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.30f, 0.20f, 0.12f));
+    Destroy(soil.GetComponent<Collider>());
+    Color[] blooms = { PastelBlooms[seed % PastelBlooms.Length], PastelBlooms[(seed + 2) % PastelBlooms.Length] };
+    for (int i = 0; i < 5; i++) {
+      float ang = (i * 72f + seed * 40f) * Mathf.Deg2Rad;
+      float tilt = 0.10f + (i % 3) * 0.06f;
+      float h = 0.55f + (i % 2) * 0.12f;
+      Vector3 dir = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang));
+      Vector3 top = pos + dir * tilt + new Vector3(0f, 0.47f + h, 0f);
+      GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      stem.name = "VaseStem";
+      stem.transform.SetParent(vase.transform);
+      stem.transform.position = (pos + new Vector3(0f, 0.47f, 0f) + top) * 0.5f;
+      stem.transform.localScale = new Vector3(0.035f, h * 0.5f, 0.035f);
+      stem.transform.localRotation = Quaternion.Euler(dir.z * 12f, 0f, -dir.x * 12f);
+      stem.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.25f, 0.55f, 0.28f));
+      Destroy(stem.GetComponent<Collider>());
+      GameObject bloom = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      bloom.name = "VaseBloom";
+      bloom.transform.SetParent(vase.transform);
+      bloom.transform.position = top;
+      bloom.transform.localScale = new Vector3(0.15f, 0.13f, 0.15f);
+      bloom.GetComponent<Renderer>().sharedMaterial = Lit(blooms[i % 2]);
+      Destroy(bloom.GetComponent<Collider>());
+    }
+    for (int i = 0; i < 3; i++) {
+      float ang = (i * 120f + seed * 60f + 30f) * Mathf.Deg2Rad;
+      GameObject leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      leaf.name = "VaseLeaf";
+      leaf.transform.SetParent(vase.transform);
+      leaf.transform.localPosition = new Vector3(Mathf.Cos(ang) * 0.20f, 0.58f, Mathf.Sin(ang) * 0.20f);
+      leaf.transform.localScale = new Vector3(0.16f, 0.06f, 0.10f);
+      leaf.transform.localRotation = Quaternion.Euler(0f, -ang * Mathf.Rad2Deg, 0f);
+      leaf.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.28f, 0.60f, 0.30f));
+      Destroy(leaf.GetComponent<Collider>());
     }
   }
 
@@ -909,18 +980,8 @@ public class MarketBuilder : MonoBehaviour {
     if (grown != null) {
       grown.name = "FlowerCluster";
       grown.AddComponent<NatureSway>().amplitudeDeg = 0.8f;
-      // Extra filler blooms around the sculpted core (primitive, harmonized).
-      GameObject filler = new GameObject("ClusterFiller");
-      filler.transform.SetParent(grown.transform);
-      filler.transform.localPosition = Vector3.zero;
-      for (int i = 0; i < blooms; i++) {
-        float ang = (float)(rng.NextDouble() * Mathf.PI * 2f);
-        float rad = 0.30f + (float)rng.NextDouble() * 0.18f;
-        AddTinyBloomAt(filler.transform,
-          grown.transform.position + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad),
-          PastelBlooms[(paletteOffset + i) % PastelBlooms.Length],
-          "ClusterSprig", "ClusterBloom");
-      }
+      // Hub beauty round (user: wildflower scatter reads as spikes/thorns
+      // from above): NO filler sprigs — the sculpted core alone, composed.
       return;
     }
     LegacyFlowerCluster(pos, blooms, paletteOffset, rng);
@@ -992,20 +1053,8 @@ public class MarketBuilder : MonoBehaviour {
     leafGo.GetComponent<Renderer>().sharedMaterial = Lit(leaf);
     Collider c = leafGo.GetComponent<Collider>();
     if (c != null) Destroy(c);
-    if (flowering) {
-      for (int i = 0; i < 3; i++) {
-        float ang = (float)(rng.NextDouble() * Mathf.PI * 2f);
-        Vector3 off = new Vector3(Mathf.Cos(ang) * 0.32f * s, 0.52f * s, Mathf.Sin(ang) * 0.32f * s);
-        GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        dot.name = "DecorBushBloom";
-        dot.transform.SetParent(bush.transform);
-        dot.transform.localPosition = off;
-        dot.transform.localScale = new Vector3(0.13f, 0.13f, 0.13f);
-        dot.GetComponent<Renderer>().sharedMaterial = Lit(PastelBlooms[(i * 2) % PastelBlooms.Length]);
-        Collider bc = dot.GetComponent<Collider>();
-        if (bc != null) Destroy(bc);
-      }
-    }
+    // (Hub beauty round: flowering dots removed — spiky scatter. Berries on
+    // the premium sculpt stay; legacy bushes stay plain green.)
   }
 
   // ---- trees: 3 scale classes; inside = small/medium anchors, outside = BG --
@@ -1188,10 +1237,11 @@ public class MarketBuilder : MonoBehaviour {
           // outside it — nudge outward instead of skipping (keeps rhythm).
           p.x = side * 1.62f;
         }
-        int pick = rng.Next(3);
+        int pick = rng.Next(2);
         if (pick == 0) AddPebble(p, 0.6f + (float)rng.NextDouble() * 0.5f);
-        else if (pick == 1) AddGrassTuft(p, 0.55f + (float)rng.NextDouble() * 0.2f, rng);
-        else AddTinyBloom(p, PastelBlooms[rng.Next(PastelBlooms.Length)]);
+        else AddGrassTuft(p, 0.55f + (float)rng.NextDouble() * 0.2f, rng);
+        // (Hub beauty round: no tiny blooms on the path shoulders — spiky
+        // stems read as thorns from above. Pebbles + tufts only.)
       }
     }
     // Subtle dirt variation ON the path shoulders (flat, underfoot, no block).
@@ -1203,6 +1253,8 @@ public class MarketBuilder : MonoBehaviour {
     AddTinyBloomAt(transform, pos, bloom, "PathSprig", "PathTinyBloom");
   }
 
+  // (Hub beauty round: tiny-bloom callers removed — wildflower scatter read
+  // as thorns from above. Kept as the primitive-bloom seam for vases/future.)
   void AddTinyBloomAt(Transform parent, Vector3 pos, Color bloom, string stemName, string bloomName) {
     GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     stem.name = stemName;
@@ -1400,9 +1452,9 @@ public class MarketBuilder : MonoBehaviour {
     // object for OnAudioFilterRead; read-only copy, armed only while recording).
     GameTap = camGo.AddComponent<GameAudioTap>();
     WorldCamera = camGo.AddComponent<SmartCamera>();
-    camGo.transform.position = PlayerSpawn + WorldCamera.defaultOffset;
+    camGo.transform.position = PlayerSpawn + FollowOffset(WorldCamera.defaultOffset);
     camGo.transform.LookAt(PlayerSpawn + Vector3.up);
-    if (Player != null) WorldCamera.Follow(Player.transform, WorldCamera.defaultOffset);
+    if (Player != null) WorldCamera.Follow(Player.transform, FollowOffset(WorldCamera.defaultOffset));
     FacePlayerToCamera();
   }
 
@@ -1472,7 +1524,8 @@ public class MarketBuilder : MonoBehaviour {
   // Stationary carve volumes keep the agent on the grass. Interaction reach
   // (apple 2.5m, NPC clicks) is unaffected: carves only deny foot placement.
   void BuildNavCarves() {
-    CarveBox("TreeCarve", new Vector3(-6.2f, 1f, 3.8f), new Vector3(1.4f, 2f, 1.4f));
+    // (West yard TreeCarve removed with its tree — user round: felled.
+    // A carve without a tree is an invisible wall.)
     // (Inside decor-tree carves removed with their trees — hub round 4:
     // no yard trees, no invisible walls.)
     // (DecorTreeCarveN removed: its willow was thinned in the hub round —
@@ -1484,6 +1537,10 @@ public class MarketBuilder : MonoBehaviour {
       CarveBox("CrateCarve", new Vector3(CrateAnchorPos.x, 0.3f, CrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
       CarveBox("BallCrateCarve", new Vector3(BallCrateAnchorPos.x, 0.3f, BallCrateAnchorPos.z), new Vector3(1.2f, 0.6f, 1.2f));
       CarveBox("PedestalCarve", new Vector3(5.4f, 0.4f, 0.6f), new Vector3(0.9f, 0.8f, 0.9f));
+    } else {
+      // Plaza vases block feet (dressing itself is collider-free).
+      CarveBox("VaseCarveW", new Vector3(-2.9f, 0.5f, 0.7f), new Vector3(0.7f, 1f, 0.7f));
+      CarveBox("VaseCarveE", new Vector3(2.9f, 0.5f, 0.7f), new Vector3(0.7f, 1f, 0.7f));
     }
     // R9: fence -> hedge (same footprint, renamed with the visuals).
     // Phase 3.0: the 4 subject roads cross the inner hedge through 2m+ gaps
