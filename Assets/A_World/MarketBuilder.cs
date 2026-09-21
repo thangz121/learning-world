@@ -1448,7 +1448,7 @@ public class MarketBuilder : MonoBehaviour {
     cam.orthographic = false;
     cam.fieldOfView = 55f;
     cam.nearClipPlane = 0.1f;
-    cam.farClipPlane = 100f;
+    cam.farClipPlane = 300f; // P3.0.x: subject scenes sit offset (+60x); 300 keeps them inside far with mm depth precision to spare at Math ranges
     camGo.AddComponent<AudioListener>();
     // Phase 2.5: game-audio tap for recordings (MUST sit on the listener
     // object for OnAudioFilterRead; read-only copy, armed only while recording).
@@ -1471,6 +1471,37 @@ public class MarketBuilder : MonoBehaviour {
     toCam.y = 0f;
     if (toCam.sqrMagnitude > 0.001f)
       Player.transform.rotation = Quaternion.LookRotation(toCam);
+  }
+
+  // Phase 3.0.x S2: split Persistent Core from Main presentation (§14 CORE list
+  // vs world module). Called once by MarketBootstrap at build (player runtime
+  // only, so EditMode hierarchy is untouched): Player, Camera, Router, HUD,
+  // cursor, destination marker and EventSystem move to a scene-rooted
+  // "PersistentCore" GO. MarketScene never unloads, so no DontDestroy needed;
+  // deactivating the MarketBuilder root later hides ONLY presentation (NPC
+  // brains sleep too — their Updates stop with them).
+  public void BuildPersistentCore() {
+    if (!Application.isPlaying) return;
+    try {
+      GameObject core = new GameObject("PersistentCore");
+      MoveToCore(core.transform, Player != null ? Player.gameObject : null);
+      MoveToCore(core.transform, WorldCamera != null ? WorldCamera.gameObject : null);
+      MoveToCore(core.transform, Router != null ? Router.gameObject : null);
+      MoveToCore(core.transform, Hud != null ? Hud.gameObject : null);
+      MoveToCore(core.transform, Cursor != null ? Cursor.gameObject : null);
+      MoveToCore(core.transform, transform.Find("DestinationMarker"));
+      MoveToCore(core.transform, transform.Find("EventSystem"));
+    } catch (System.Exception e) { Debug.LogWarning("[MarketBuilder] BuildPersistentCore failed: " + e.Message, this); }
+  }
+
+  static void MoveToCore(Transform core, GameObject go) {
+    if (core == null || go == null) return;
+    try { go.transform.SetParent(core, true); } catch (System.Exception) { }
+  }
+
+  static void MoveToCore(Transform core, Transform t) {
+    if (core == null || t == null) return;
+    try { t.SetParent(core, true); } catch (System.Exception) { }
   }
 
   // ---- frame services (router / HUD / presenters) -----------------------------------

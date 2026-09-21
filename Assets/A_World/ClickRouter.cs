@@ -38,6 +38,10 @@ public class ClickRouter : MonoBehaviour {
   // Phase 3.0: extended Learning World (districts at |x|<=12.2+3.3, |z|<=10+3.3).
   public float boundX = 16f;
   public float boundZ = 14f;
+  // Phase 3.0.x: subject scenes live at an offset (Math +60x). The click bounds
+  // recentre per active world (Bootstrap sets this on travel); default zero =
+  // legacy Main behaviour, so EditMode + full-world paths are untouched.
+  public Vector3 boundCenter;
 
   IGameEventBus _bus;
   IAudioDirector _audio;
@@ -101,7 +105,7 @@ public class ClickRouter : MonoBehaviour {
     if (mouse == null) return;
     Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
     if (!Physics.Raycast(ray, out RaycastHit hit, clickMaxDistance, clickMask)) return;
-    if (Mathf.Abs(hit.point.x) > boundX || Mathf.Abs(hit.point.z) > boundZ) return; // (d) ignore
+    if (Mathf.Abs(hit.point.x - boundCenter.x) > boundX || Mathf.Abs(hit.point.z - boundCenter.z) > boundZ) return; // (d) ignore
 
     Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
     if (interactable != null) { // (a) typed world object
@@ -304,7 +308,7 @@ public class ClickRouter : MonoBehaviour {
   // (Lead/tests drive this without needing a live mouse + camera.)
   public void RouteHitForTests(Collider hit, Vector3 point) {
     if (_player == null || hit == null) return;
-    if (Mathf.Abs(point.x) > boundX || Mathf.Abs(point.z) > boundZ) return;
+    if (Mathf.Abs(point.x - boundCenter.x) > boundX || Mathf.Abs(point.z - boundCenter.z) > boundZ) return;
     Interactable interactable = hit.GetComponentInParent<Interactable>();
     if (interactable != null) {
       _player.MoveTo(point);

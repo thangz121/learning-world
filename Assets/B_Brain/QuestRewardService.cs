@@ -78,6 +78,17 @@ public sealed class QuestRewardService {
           rewardWorldChange = "flower_pot",
         };
       }
+      // Phase 3.0.x S3: Math pilot (mirrors Content/quests/math_counting.json).
+      // Friendship stays Mia-ledger-only by W0-T1 contract (multi-NPC is Phase
+      // 4), so the Math reward credits NOBODY (0) and banks an inert
+      // "math_bloom" change id with no visual consumer yet (S4 polish owns it).
+      if (questId.Value == "math_counting") {
+        return new QuestData {
+          id = "math_counting",
+          rewardFriendshipMia = 0,
+          rewardWorldChange = "math_bloom",
+        };
+      }
       if (questId.Value != "market_help_mia") return null;
       return new QuestData {
         id = "market_help_mia",

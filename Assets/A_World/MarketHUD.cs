@@ -34,6 +34,12 @@ public class MarketHUD : BusBehaviour {
   GameObject _replayButtonGo;
   CanvasGroup _fade; // adaptive hierarchy: the chip yields to emotional beats
   float _targetAlpha = 1f;
+  // S3A transition cover (SceneBridge pattern ADAPTED: fade-to-black covers
+  // the load/warp/unload beat, then lifts — no fake progress bar, the cover
+  // is time-based while the load underneath stays a real awaited op).
+  // Lives LAST in this same canvas (PersistentCore: survives scene unload, no
+  // new roots, no new systems). raycastTarget=false: taps pass through.
+  Image _coverImage;
 
   void Awake() {
     BuildUiImmediate();
@@ -87,6 +93,27 @@ public class MarketHUD : BusBehaviour {
   protected override void OnDisable() {
     _subscribed = false;
     base.OnDisable();
+  }
+
+  // S3A transition cover API (driven by MarketBootstrap travel/return).
+  // Alpha 0 = invisible (normal play), 1 = full black (mid-transition).
+  // Null-safe before BuildUi (tests call BuildUiImmediate first).
+  public bool HasTransitionCover {
+    get { return _coverImage != null; }
+  }
+
+  public float TransitionCoverAlpha {
+    get { return _coverImage != null ? _coverImage.color.a : 0f; }
+  }
+
+  public void SetTransitionCover(float alpha) {
+    if (_coverImage == null) return;
+    if (alpha < 0f) alpha = 0f;
+    if (alpha > 1f) alpha = 1f;
+    Color c = _coverImage.color;
+    c.a = alpha;
+    _coverImage.color = c;
+    _coverImage.enabled = alpha > 0.001f;
   }
 
   // Banner text entry point. Empty input keeps the previous line (kids never
@@ -219,6 +246,34 @@ public class MarketHUD : BusBehaviour {
     labelRt.anchorMax = Vector2.one;
     labelRt.offsetMin = Vector2.zero;
     labelRt.offsetMax = Vector2.zero;
+
+    // S3A transition cover: fullscreen black, LAST sibling (topmost), starts
+    // disabled. Taps pass through (raycastTarget=false) so a mid-transition
+    // tap still reaches the world underneath.
+    GameObject coverGo = new GameObject("TransitionCover");
+    coverGo.transform.SetParent(canvasGo.transform);
+    _coverImage = coverGo.AddComponent<Image>();
+    _coverImage.color = new Color(0f, 0f, 0f, 0f);
+    _coverImage.raycastTarget = false;
+    _coverImage.enabled = false;
+    RectTransform coverRt = coverGo.GetComponent<RectTransform>();
+    coverRt.anchorMin = Vector2.zero;
+    coverRt.anchorMax = Vector2.one;
+    coverRt.offsetMin = Vector2.zero;
+    coverRt.offsetMax = Vector2.zero;
+    coverGo.transform.SetAsLastSibling();
+
+    // S3B dev-truth (pill investigation): one boot line proving the hierarchy
+    // exists, is active, and carries text — batch-verifiable via Player.log
+    // (no foreground needed). Players never see this line.
+    try {
+      Debug.Log("[MarketHUD] built canvas=" + canvasGo.activeInHierarchy
+        + " panel=" + (panelGo.activeInHierarchy ? panelRt.sizeDelta.ToString() : "off")
+        + " text=" + (_objectiveText != null ? ("'" + _objectiveText.text + "'") : "null")
+        + " font=" + (_objectiveText != null && _objectiveText.font != null ? _objectiveText.font.name : "null")
+        + " alpha=" + _targetAlpha
+        + " cover=" + (_coverImage != null), this);
+    } catch (System.Exception) { }
   }
 
   // Procedural rounded-rect sprite (no imported assets; 9-slice border set).

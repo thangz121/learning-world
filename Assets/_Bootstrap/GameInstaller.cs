@@ -30,6 +30,11 @@ public class GameInstaller : MonoBehaviour {
   public INpcVoiceSelector Voices { get; private set; }
   // Phase 3.0 world navigation (in-memory Scene/Session state, like Quests).
   public IWorldNavService WorldNav { get; private set; }
+  // Phase 3.0.x subject scenes (S1b): the transition machine + scene ops.
+  // Owned here, never newed elsewhere. Nothing drives them yet (S2 flips the
+  // gate switch) — present so ownership is single and P34-tested via fakes.
+  public WorldTransition WorldTransitions { get; private set; }
+  public ISceneOps SceneOps { get; private set; }
   // Phase 2.1 mic-setup gate (additive): PC mic/headset OR phone mic.
   // SpeechMic (composite) is the future ISpeechRecognizer input so the frozen
   // SkippedNoMic/deferral policy ("tạm thời bỏ qua bài nghe") applies as-is.
@@ -42,6 +47,7 @@ public class GameInstaller : MonoBehaviour {
 
   void Awake() {
     DontDestroyOnLoad(gameObject);
+    SceneManager.sceneLoaded += OnSubjectSceneLoaded;
     EventBus = new GameEventBus();                    // Application
     Save = new LocalSave();                           // Application
     _speechRouter = new SpeechProviderRouter(new AzureSttProvider()); // Application, default online
@@ -51,6 +57,8 @@ public class GameInstaller : MonoBehaviour {
     Quests = new QuestManager(EventBus, Learning, Hints); // Scene/Session
     Rewards = new QuestRewardService(EventBus);             // Session reward state (friendship + world changes)
     WorldNav = new WorldNavService(EventBus);               // Phase 3.0: world-navigation state (in-memory)
+    WorldTransitions = new WorldTransition(SubjectIds.Main); // Phase 3.0.x S1b: subject transition machine
+    SceneOps = new UnitySceneOps();                          // Phase 3.0.x S1b: production scene adapter
     Tts = new CloudflareTranslateTtsProvider();          // Application, endpoint/config ngoài repo (Translate source)
     Audio = new AudioDirector(EventBus, Tts);         // Application, cache L1/L2 + Mixer + Focus
     Voices = new NpcVoiceProfileSelector(Save);       // Application, save.npcVoices + worldSeed
@@ -100,6 +108,114 @@ public class GameInstaller : MonoBehaviour {
     BuildFromScene(scene);
   }
 
+  // Phase 3.0.x S2: MathScene arrival. Finds the MathWorld root, applies the
+  // pilot spatial offset, code-builds the world (ground/arch/boundary/pads),
+  // bakes its NavMesh and binds the return gate — all synchronously on the
+  // main thread, BEFORE the loader task completes, so travelers never warp
+  // into an unready world. Any failure leaves MathWorldRoot null and the
+  // Bootstrap travel path cleans up (unload + stay Main) instead of stranding.
+  public Transform MathWorldRoot { get; private set; }
+  public Transform MathEntryPoint { get; private set; }
+
+  void OnSubjectSceneLoaded(Scene scene, LoadSceneMode mode) {
+    if (scene.name != "MathScene") return;
+    MathWorldRoot = null;
+    MathEntryPoint = null;
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "MathWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] MathScene has no MathWorld root.", this);
+        return;
+      }
+      root.transform.position = MathWorldBuilder.WorldOffset;
+      MathWorldBuilder builder = root.GetComponent<MathWorldBuilder>();
+      if (builder == null) builder = root.AddComponent<MathWorldBuilder>();
+      Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+        ? _activeBuilder.Player.transform : null;
+      builder.Build(WorldNav, playerT);
+      WireMathContent(root, builder);
+      Transform entry = root.transform.Find("EntryPoint");
+      if (entry == null) {
+        Debug.LogError("[GameInstaller] MathScene has no EntryPoint marker.", this);
+        return;
+      }
+      MathWorldRoot = root.transform;
+      MathEntryPoint = entry;
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] MathScene build failed: " + e.Message, this);
+      MathWorldRoot = null;
+      MathEntryPoint = null;
+    }
+  }
+
+  // Phase 3.0.x S3: Math playable-skeleton wiring (runs on the main thread
+  // inside the sceneLoaded callback, before the loader task completes).
+  // Tess host + quest director + counting-object bus bindings. Best-effort:
+  // any failure degrades to a silent-but-enterable world (travel roots still
+  // set by the caller) — never a stranded player, never an exception out.
+  void WireMathContent(GameObject root, MathWorldBuilder builder) {
+    try {
+      if (builder != null && builder.CountingObjects != null && EventBus != null) {
+        foreach (Interactable inter in builder.CountingObjects) {
+          if (inter != null) inter.Bind(EventBus);
+        }
+      }
+      Tess.Bind(Audio);
+      Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+        ? _activeBuilder.Player.transform : null;
+      GameObject tessGo = new GameObject("Tess");
+      tessGo.transform.SetParent(root.transform, true);
+      MathHostPresenter host = tessGo.AddComponent<MathHostPresenter>();
+      host.SpawnPosition = MathWorldBuilder.WorldOffset + MathWorldBuilder.HostAnchorLocal;
+      host.PlayerTarget = playerT;
+      host.Bind(EventBus, Quests, Hints);
+      NpcDefinition tessDef = NpcRoster.Get("tess");
+      GameObject labelGo = new GameObject("TessLabel");
+      labelGo.transform.SetParent(tessGo.transform, false);
+      WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
+      if (tessDef != null) label.Setup(tessDef.displayName, tessGo.transform, tessDef.labelHeight);
+      else label.Setup("Tess", tessGo.transform, 2.35f);
+      label.Show();
+      GameObject dirGo = new GameObject("MathQuestDirector");
+      dirGo.transform.SetParent(root.transform, true);
+      MathQuestDirector director = dirGo.AddComponent<MathQuestDirector>();
+      MarketHUD hud = _activeBuilder != null ? _activeBuilder.Hud : null;
+      director.Build(EventBus, Quests, host, hud);
+      // S3B: carry-token lifecycle + bloom consumer (bus-only wiring, same
+      // best-effort discipline as above).
+      Interactable cube = null;
+      try {
+        if (builder.CountingObjects != null && builder.CountingObjects.Count > 0)
+          cube = builder.CountingObjects[0];
+      } catch (System.Exception) { }
+      Transform hand = null;
+      try { hand = _activeBuilder != null ? _activeBuilder.PlayerHand : null; }
+      catch (System.Exception) { }
+      if (hand == null) hand = playerT;
+      GameObject carryGo = new GameObject("MathTokenCarry");
+      carryGo.transform.SetParent(root.transform, true);
+      MathTokenCarry carry = carryGo.AddComponent<MathTokenCarry>();
+      try { carry.Build(EventBus, Quests, cube, hand); }
+      catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Math carry wiring failed: " + e.Message, this);
+      }
+      try {
+        if (builder.BloomRoot != null) {
+          MathBloomDisplay bloom = builder.BloomRoot.gameObject.AddComponent<MathBloomDisplay>();
+          bloom.Build(EventBus);
+        }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Math bloom wiring failed: " + e.Message, this);
+      }
+    } catch (System.Exception e) {
+      Debug.LogWarning("[GameInstaller] Math content wiring failed (world stays enterable): " + e.Message, this);
+    }
+  }
   // Phase 2.4: persisted gender (Boy default for migration). Applied to the
   // already-built PlayerVisual via re-tint (same mesh, no rebuild) so no
   // gameplay interrupts.
@@ -177,7 +293,8 @@ public class GameInstaller : MonoBehaviour {
     }
     bootstrap.Build(EventBus, Quests, Hints, builder, Audio, new MicSetupBundle(
       MicGate, LocalMic, PhoneMic, SpeechMic,
-      PhoneMicProtocol.LoopbackHost, PhoneMicProtocol.DefaultBridgePort));
+      PhoneMicProtocol.LoopbackHost, PhoneMicProtocol.DefaultBridgePort),
+      WorldTransitions, SceneOps); // Phase 3.0.x S2: shared loader for scene-backed gates
   }
 
   void Update() {

@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/A_World/Supermarket/MarketScene.unity
     guid: f4a9791c889511f498fefbdd9fbe2137
+  - enabled: 1
+    path: Assets/A_World/MathWorld/MathScene.unity
+    guid: 86736cd7329f441b90c94701a2dc44bb
   m_configObjects: {}

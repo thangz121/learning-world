@@ -28,6 +28,9 @@ public class SubjectDefinition {
   public Color Primary;
   public Color Secondary;
   public Color GroundTint;          // playground medallion tint
+  // Phase 3.0.x: additive subject scene (null/empty = legacy spatial district,
+  // walked in continuously — Thinking/English/Vietnamese until their phases).
+  public string SceneName;
 }
 
 // Single source of truth for the 4 Phase 3.0 subjects. Coordinates are in the
@@ -57,6 +60,7 @@ public static class SubjectCatalog {
     Primary = new Color(0.25f, 0.45f, 0.85f),
     Secondary = new Color(0.98f, 0.78f, 0.25f),
     GroundTint = new Color(0.55f, 0.68f, 0.88f),
+    SceneName = "MathScene", // P3.0.1 pilot: own additive scene (others spatial until phased)
   };
 
   public static readonly SubjectDefinition Thinking = new SubjectDefinition {

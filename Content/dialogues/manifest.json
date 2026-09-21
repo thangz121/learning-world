@@ -1,5 +1,5 @@
 {
-  "count": 38,
+  "count": 40,
   "lang": "en-US",
   "approved": false,
   "lines": [
@@ -268,6 +268,20 @@
       "voice": "mia_v1",
       "text": "Great! Ball!",
       "audio": "audio/dialog/ok_05.mp3"
+    },
+    {
+      "id": "math_01",
+      "npc": "tess",
+      "voice": "npc_female_01",
+      "text": "Find the one!",
+      "audio": "audio/dialog/math_01.mp3"
+    },
+    {
+      "id": "math_02",
+      "npc": "tess",
+      "voice": "npc_female_01",
+      "text": "Great! One!",
+      "audio": "audio/dialog/math_02.mp3"
     }
   ]
 }

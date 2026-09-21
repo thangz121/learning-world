@@ -78,6 +78,8 @@ public class CT_P09_NpcTemplate {
   }
 
   // C. Every shipped quest's npc resolves (QuestEntry.npc consumed at last).
+  // Phase 3.0.x S3 amendment: math_* quests stage Tess (Math host); all other
+  // shipped quests still stage Mia exactly as before (pins below unchanged).
   [Test] public void CT_P09C_QuestNpcResolves() {
     string root = ContentRoot();
     int count = 0;
@@ -85,7 +87,8 @@ public class CT_P09_NpcTemplate {
       QuestEntry q = ContentDatabase.ParseQuest(File.ReadAllText(path));
       NpcDefinition def = NpcRoster.ResolveQuestNpc(q.npc);
       Assert.IsNotNull(def, "quest " + q.id + ": npc '" + q.npc + "' must resolve in the roster");
-      Assert.AreEqual("mia", def.id, "quest " + q.id + " stages Mia today");
+      if (q.id.StartsWith("math_")) Assert.AreEqual("tess", def.id, "quest " + q.id + " stages Tess (Math host)");
+      else Assert.AreEqual("mia", def.id, "quest " + q.id + " stages Mia today");
       count++;
     }
     Assert.GreaterOrEqual(count, 7, "all shipped quests covered");
@@ -232,6 +235,10 @@ public class CT_P09_NpcTemplate {
     Assert.AreEqual("milo", NpcRoster.ResolveQuestNpc("milo").id, "milo alias resolves");
     Assert.IsNull(NpcRoster.ResolveQuestNpc("w1_mia_apple"), "quest IDS never resolve (ids != npc aliases)");
     Assert.IsNull(NpcRoster.ResolveQuestNpc(null), "null safe");
-    Assert.AreEqual(2, NpcRoster.Count, "cast is exactly Milo + Mia (no third NPC invented in 2E)");
+    // Phase 3.0.x S3 amendment: Tess (Math host) joins the cast; the 2E pin
+    // above ("no third NPC in 2E") is scoped to its phase. Main-world identity
+    // pins (milo/mia ids, voices, aliases) are untouched.
+    Assert.AreEqual(3, NpcRoster.Count, "cast is Milo + Mia + Tess (Math host, Phase 3.0.x)");
+    Assert.AreEqual("tess", NpcRoster.ResolveQuestNpc("math_host").id, "math_host alias stages Tess");
   }
 }

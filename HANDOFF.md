@@ -378,8 +378,86 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
   vì Get-Process hụt race lúc khởi động — check lại process vẫn chạy khỏe.)
 - Game mới đang chạy — user bấm giữa cổng Tư duy (dừng ở cửa, không chui sau nữa)
   + nhìn cột đã ra chất cổng đá chưa.
-- (Update: user bắt đúng — có tường VÔ HÌNH lớn chắn lối gạch → đi vòng. Xem §16.)
+- (Update: user paste spec PHASE 3.0.x Subject Playground — audit + thiết kế, xem §18.)
   Chưa push (chờ user gom lệnh).
+
+## 18. PHASE 3.0.x KICKOFF — MATH PILOT, SCENE RIÊNG (2026-09-21, máy ASUS)
+
+- User lệnh: scene riêng từng môn, Core dùng chung (không duplicate/rewrite),
+  loading/unloading qua MỘT World Transition/Loader contract chung.
+- REPORT §31 (trade-off trước khi khóa implement):
+  single-scene = kế thừa survey PASS + không trùng Core, nhưng scene phình,
+  không unload thật, NavMesh chung; multi-scene = đúng chữ spec + unload thật,
+  nhưng phải giải quyết player/camera đi lại, 2 NavMesh chồng, bake/scene ops.
+  User chốt multi-scene → firewall: (1) additive cùng tồn tại (Main ở lại, tắt
+  hiển thị khi vào môn — chuyển nhanh, không reload, không mất state);
+  (2) player/camera thành persistent (DDOL khi vào môn — đúng §14 CORE list);
+  (3) MathScene offset +60x + camera far 100→300 (2 NavMesh không chạm nhau,
+  không rebake bao giờ); (4) ISceneOps + WorldTransition machine (Lead contract,
+  fake-test được); (5) SubjectCatalog.SceneName (null = đi bộ cũ — 3 môn còn lại
+  giữ nguyên cho tới phase của chúng); (6) no-save-format-change (3.1 sở hữu).
+- AUDIT (Steps 1-4): GameInstaller sở hữu hết services (bus/save/speech/policy/
+  learning/hints/quests/rewards/worldnav/tts/audio/voices/mics), BootstrapScene
+  DontDestroy + MarketScene additive, quest data-driven 7 quests + 51 vocab,
+  NPC = presenter+model+Bind, suite baseline 472.
+- S1 DONE (contract): _SharedKernel/WorldTransition.cs (Idle/Loading/InSubject/
+  Unloading + Enter/Return idempotent + spam-safe + fail-truthful) +
+  CT-P34 (6 tests fake ops). Suite 476/0/5 exit 0. Chưa đấu nối game (0 đổi
+  hành vi) — công tắc ở S2.
+- MATH LAYOUT (S3/S4): lobby tại origin MathScene (sân medallion + abacus +
+  host NPC), Area A Counting Garden (tây), Area B Number Bridge (đông/bắc),
+  entry IDs ổn định (math.lobby, math.counting_garden.entry...), return arch nam.
+  NPC/quest theo pattern Milo/Mia + QuestManager, text C_Content sở hữu JSON.
+  Không question engine (placeholder + seam cho 3.1).
+- Tiếp: S1b adapter UnitySceneOps + MathScene shell + BuildSettings; S2 công tắc
+  + player/camera travel; S3 lobby/NPC/quest; S4 areas/entry/return; S5 stress +
+  recording + visual + PASS verdict.
+- (Update: S1b PASS xong. S2 implement xong — travel wiring live, xem §20.
+  Journey thật + verdict S2 làm riêng, CHƯA PASS.)
+
+## 20. S2 IMPLEMENTED — TRAVEL WIRING LIVE, CHƯA JOURNEY (2026-09-21, máy ASUS)
+
+- SubjectDefinition.SceneName (Math="MathScene", 3 môn null = đi bộ cũ giữ nguyên).
+- ClickRouter.boundCenter (default 0 = legacy; Bootstrap recentre (60,0,0) khi vào).
+- MarketBuilder.BuildPersistentCore (Player/Camera/Router/HUD/Cursor/Marker/
+  EventSystem → scene-root PersistentCore; MarketScene không unload nên không cần
+  DDOL) + camera far 100→300 (Math +60x nằm trong far, precision mm dư).
+- MathWorldBuilder (đất/biên/arch vàng/entry-lobby-zone pads/mặt trời/nav bake/
+  return gate bind Main) + MathLearningEntries (math.lobby/counting_garden/
+  number_bridge) + root offset (60,0,0) do GameInstaller đặt lúc scene load.
+- GameInstaller: sceneLoaded MathScene → offset + build + bake + bind return,
+  expose MathWorldRoot/MathEntryPoint (null = fail, đường cleanup dùng).
+- MarketBootstrap: Build nhận (loader, ops) + BuildPersistentCore; gate Math →
+  TravelToSubjectAsync (lock input, HUD Entering, loader, null-check, deactivate
+  Main root + Milo/Mia/labels/guide, bounds Math, WarpTo entry, Follow default,
+  HUD Math World, unlock; fail → unload + ở Main + HUD lỗi); return arch →
+  ReturnFromSubjectCoreAsync (warp cached pos/spawn, bounds 0, unload,
+  reactivate, Follow hub, HUD restore, unlock). Milo/Mia/labels/guide null-guard
+  (hub không có). Spatial 3 cổng + return cũ giữ nguyên từng dòng.
+- Verify: EditMode 480/0/5 (P35A catalog, P35B bounds default; giữa chừng fail
+  compile 2 dòng miloGo/miaGo sót sau đổi field — sửa, không nới gì). Build
+  SUCCESS một nhịp 30s. Boot smoke: FACE_OK, 0 exception — game đang chạy.
+- KHÔNG CLAIM PASS: journey thật Spawn→cổng→Math→lobby→areas→return→Main +
+  adversarial + screenshots + stress + recording làm NHỊP RIÊNG.
+- Game đang chạy build S2. Chưa push (chờ user gom lệnh).
+
+## 19. S1b DONE — ADAPTER + MATH SHELL (2026-09-21, máy ASUS)
+
+- Files tạo: Assets/A_World/MathWorld/MathScene.unity (+ .meta guid tự cấp,
+  Unity chấp nhận) — MathWorld + 7 roots (Environment/Lobby/GameplayAreas/Npc/
+  LearningEntry/ReturnPoint(0,0,5)/EntryPoint(0,0,-5)), NavMeshSettings đồng
+  agent Main (r0.5/h2); Assets/_Bootstrap/UnitySceneOps.cs (ISceneOps thật qua
+  SceneManager, null-op = exception trung thực).
+- Files sửa: GameInstaller (sở hữu WorldTransitions + SceneOps, chưa ai gọi —
+  0 đổi hành vi); EditorBuildSettings (+ MathScene); CT-P34 (+P34G/H).
+- Ownership (§11): P34H đọc YAML thật — shell 0 script Core; machine + ops single
+  instance trong GameInstaller. Failure (§12): machine-level đã cover P34;
+  adapter null-op (scene thiếu khỏi Build Settings) → exception → machine false.
+- Verify: EditMode 478/0/5 (P34G/H xanh; lỗi giữa chừng: thiếu using UnityEngine
+  cho AsyncOperation — sửa 1 dòng). Build SUCCESS một nhịp 45s — log: MathScene
+  import sạch + build vào player (1.4kb cạnh Bootstrap/Market).
+- Tiếp: S2 (SubjectCatalog.SceneName + công tắc gate Math + player/camera travel
+  + Main deactivate). 3 gate còn lại giữ đi bộ cũ.
 
 ## 16. TƯỜNG CARVE VÔ HÌNH CHẮN ĐƯỜNG GẠCH (2026-09-20, máy ASUS)
 
@@ -407,3 +485,244 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
 - Verify cuối: EditMode 472/470/0/5 exit 0, build SUCCESS, boot FACE_OK 0 exc.
 - Tag: 3.0.0.1 (theo quy ước tag trần như hub-base). bundleVersion trong
   ProjectSettings giữ 1.0 (chưa đụng — user chưa lệnh).
+
+## 21. S3-IMPLEMENTATION — MATH PLAYABLE SKELETON (2026-09-21, máy ASUS)
+
+- Lệnh user: code S3 (lobby/host/quest/garden/bridge/return), CHƯA full journey.
+  Change Impact: MEDIUM-HIGH (layout + bake MathScene; Main/transition Core
+  không đụng) → Test Strategy: TARGETED (EditMode + build + boot) theo §16,
+  journey 11 shots theo lệnh user DỜI sang nhịp duyệt riêng.
+- Content: `Content/quests/math_counting.json` (find_one/bring_one → "one",
+  hint freeze-4, simplify 2+demo, reward world_change math_bloom +
+  friendship_mia 0); manifest +2 (math_01 "Find the one!", math_02 "Great!
+  One!", tess/npc_female_01) 38→40 đúng cap; roster += Tess (display Tess,
+  npc_female_01, alias math_host/tess, label 2.35).
+- Brain (additive, không đổi logic): BuiltIn QuestManager += math_counting;
+  BuiltInRewardContent += math_counting (0 + math_bloom, inert — friendship
+  vẫn Mia-ledger-only tới Phase 4); mới `Tess.cs` (voice npc_female_01, literals
+  do manifest cap frozen), `MathHostPresenter.cs` (pattern Milo/Mia: Bind,
+  IClickTarget, OnFirstTalk/OnTalk, greet-once, hint tick, click/proximity
+  bring 0.75m qua ReportAction, KHÔNG StoryMoment để khỏi frame anchor ẩn,
+  visual primitive Blocks-theme + nod), `_Bootstrap/MathQuestDirector.cs`
+  (Lead wiring: first-talk start/resume, WordSeen narrate, complete celebrate;
+  advancement vẫn qua lambda global của Bootstrap — không double-advance).
+- World (extend-only): MathWorldBuilder += lobby abacus (nam, corridor x=0
+  thoáng), Counting Garden (beds + pedestal 1/2/3 + gold One Interactable),
+  Number Bridge (stream + planks + rails 1.8m + blocks), 4 path warm-tan,
+  HostAnchorLocal (2.2,0,0.8), CountingObjects expose; bake sau mọi geometry.
+  Entry IDs giữ nguyên (Lobby/CountingGarden/NumberBridge).
+- Installer: OnSubjectSceneLoaded += WireMathContent (bind counting bus,
+  Tess.Bind, tạo Tess + label roster-driven + director dưới MathWorld root →
+  unload cuốn theo; best-effort không strand). Bootstrap: cache Main objective
+  khi travel scene + fail-branch restore (hub "Choose a gate!" hết mất).
+- Test: CT-P36 ×9 (JSON/provider/loop/reward/manifest/roster/no-leak/
+  catalog/pattern — KHÔNG di chuyển player); amend P09C + count 2→3 và P06F
+  38→40 (phase-growth pins, old-content giữ nguyên).
+- Verify: validator PASS (pack 40) → EditMode **494/489/0/5** (baseline
+  485/480 + P36 ×9) → build SUCCESS ~35s (World/Brain/Bootstrap/Content DLL +
+  level2 tươi 11:38) → boot **FACE_OK 0 exception**, spawn shot sạch (hub
+  nguyên vẹn). Game đang chạy build S3 (PID 764).
+- Nợ sang journey duyệt: Tess/carry-token visual, L2/L3 Tess voice riêng,
+  math_bloom consumer, HUD "Well done!" hậu-quest. Không commit (chờ lệnh).
+
+## 22. S3A — LOADER HONESTY + TRANSITION COVER (2026-09-21, máy ASUS)
+
+- Lệnh user: mọi bước trừ journey; chuyển cảnh phải khác thấy rõ; GitHub
+  phải được ÁP DỤNG (không chỉ đọc).
+- GitHub đã inspect (README/source-flow/license/version/architecture):
+  (1) UnityTechnologies/open-project-1 wiki-arch (Apache-2.0, archived 2021,
+  Unity 2020.3): PersistentManagers + additive SceneLoader + event channels
+  ≈ BootstrapScene/GameInstaller + typed bus SẴN CÓ → REFERENCE ONLY;
+  (2) Addressables-Sample (1.5k stars): Bootstrap→Foundation additive
+  load/unload khớp Travel/Return, nhưng Addressables package + pipeline quá
+  nặng cho 4 scene local → REJECT dep, REFERENCE ONLY flow;
+  (3) Persomatey/unity-scene-bridge (MIT, 0 star): singleton prefab + 5
+  loading-screen class + canvases = hệ thống UI mới, URP không rõ →
+  REJECT dep, ADAPT đúng 1 pattern: fade-in → load → enable → unload-old →
+  fade-out (không fake progress);
+  (4) EggyStudio SceneLoader (MPL-2.0, Unity 6000+): progress/events hay
+  nhưng song song architecture + copyleft → REJECT dep, REFERENCE ONLY
+  (progress bar còn flash với load <1s — chính SceneBridge cũng ghi nhận);
+  (5) oculus AssetStreaming (Addressables + Mesh Baker + Oculus proprietary,
+  open-world LOD): sai scale bài toán → REJECT.
+- Kết luận architecture (§7): WorldTransition + UnitySceneOps ĐÃ là shared
+  loader on-demand thật (không cần sửa): load duy nhất qua EnterAsync khi
+  gate fire (P37D pin call-site), boot chỉ Bootstrap + Market (Player.log
+  boot không một dòng MathScene; Tess/content chỉ xuất hiện sau entry —
+  journey S3 đã chứng minh), warp chỉ sau IsLoaded + entry non-null (Main
+  chỉ hide sau load verified). Thiếu đúng 2 thứ research chỉ ra: failure
+  reason surfacing + transition visual → làm cả hai trong firewall.
+- Code: WorldTransition.LastError (fail có lý do, no-op refusal im lặng);
+  Bootstrap log dev truthful ("Entered … InSubject" / fail + LastError, warp
+  fail, unload issue) + HUD states (Entering → World, fail restore);
+  MarketHUD += TransitionCover (fullscreen black, last-sibling, raycast OFF,
+  start disabled) + SetTransitionCover clamp; Bootstrap.FadeCoverAsync
+  (0.35s/6 bước, resume main-thread cùng pattern WarpTo sẵn có) đấu vào
+  travel (out → load → warp → in), return core (out → unload → in),
+  fail branches lift + cleanup(false), catch + fail-safe không kẹt đen.
+  Không progress bar giả, không system mới, không Math-loader riêng.
+- Test: CT-P37 ×4 (LastError fail/unverified/silent-noop, single call-site +
+  firewall no-LoadSceneAsync ngoài Core) + CT-P38 ×3 (cover structure/API/
+  teardown-safe). Suite **501/496/0/5**. Build SUCCESS (World/Bootstrap
+  tươi 13:40). Boot FACE_OK 0 exc + spawn sạch.
+- MỞ (biết rõ, chờ S5/user): pill HUD + camera-box vắng mặt từ frame đầu
+  trên MỌI build (pre-existing, không do S3/S3A — cover cùng canvas nên
+  shots transition S5 sẽ diagnostic luôn); Tess eyes chưa đọc được từ xa;
+  visual proof của fade + quest loop thuộc S5 journey (bị cấm ở S3A).
+  Không commit (chờ lệnh).
+
+## 23. S3A-BATCH — QUY ƯỚC MỚI + P39 NUMERICS (2026-09-21, máy ASUS)
+
+- Lệnh user (standing rule): trừ bản kết thúc phase, MỌI verification chạy
+  batch-số liệu, KHÔNG mở foreground. S3 còn dang dở: mã hoá bài học
+  pillar-snap S3-journey thành pins headless.
+- CT-P39 ×5 (production statics thật + catalog geometry, không player/scene/
+  screenshot): mouth+stopping<fire cả 4 cổng; pillar outer-face 1.95m snap
+  (regression miss S3); signpost 2.38m exempt cả 4; trigger fire đúng mouth/
+  im ngoài 1.5m (instance thật + Bind dry-run); ray xuyên cổng snap.
+  Giữa đường fail P39D (quên Bind → target mặc định Main no-op) → fix test,
+  code đúng từ đầu. Suite **506/501/0/5**. Tests-only → KHÔNG rebuild
+  (build SUCCESS 13:40 vẫn hiệu lực cho shipped code), không relaunch.
+- Chẩn đoán hẹp vụ pill HUD (không foreground): CT-P03A (panel+text build
+  đúng) PASS → construction nguyên vẹn; vắng mặt là render-time, cần mắt S5.
+  Game đã kill, cây sạch. Không commit (chờ lệnh).
+
+## 24. S3B — INTEGRATION CLOSURE (2026-09-21, máy ASUS, batch-rule)
+
+- Standing rule mới (user): trừ bản kết thúc phase, verify batch-số liệu,
+  KHÔNG foreground. S3B tuân thủ: EditMode + build + boot-LOG (không shot
+  lái, không driving).
+- §1 Pill/camera-box — ROOT CAUSE: TOOLING, game vô tội. Dev-truth log trên
+  BUILD (`[MarketHUD] canvas=True panel=320x64 text font=LegacyRuntime
+  alpha=1 cover=True` + `[Boot] screen=1920x1094 hud='Choose a gate!'` +
+  `[PhoneCameraHud] showing=True`) chứng minh hierarchy active + font + text
+  đầy đủ; client thật 1920×1094 trong khi capture tool chỉ lấy 1280×729 từ
+  origin sai → pill (bottom-center) + camera-box (bottom-left (20,20)) nằm
+  ngoài khung hình. Ảnh fullscreen cũ (j-fs1) từng hiện cả hai — khớp. Fix:
+  tooling capture S5 (lấy full client), KHÔNG sửa game (construction đúng).
+  Eyes regression: bằng chứng "mất UI" cũ vô hiệu → PASS.
+- §2 Carry-token: `MathTokenCarry` (World→Carried→Consumed, bus-only;
+  anchor PlayerHand travels; re-entry adopt live state) + wiring installer.
+- §3 math_bloom consumer: `MathBloomDisplay` (3 blooms ẩn → hiện +
+  `[MathBloom]` log) + wiring. Producer (ledger P36D) → consumer khép kín.
+- §4 Post-quest HUD: Start/Active/Complete/Post texts qua CT-P40 trên
+  components THẬT (P40A-D: first-talk/find/bring-complete/pre-talk-tap),
+  subscription order mirror production. Director + HUD + global Great-job
+  thứ tự deterministic ("Math World" cuối).
+- §5 Functional review headless: BuildContent tách khỏi bake (extend-only) +
+  CT-P41 ×5 (entries/typed target/hidden blooms/landmarks/layout-discipline).
+  Giữa đường: Box 6-arg sót + Destroy edit-mode (×2 files) → fix theo pattern
+  DestroyNow có sẵn. Suite **515/510/0/5**.
+- §6 GitHub source-level: Eggy SceneGroupManager FULL source (phát hiện:
+  OnSceneLoaded của họ fire lúc START load — machine mình honest hơn);
+  SceneBridge flow; OP1 wiki-arch (line-source 404, ghi thật); Addressables
+  + Oculus README; Unity allowSceneActivation docs (gating serialize mọi op
+  — adapter mình không gate nên không deadlock). Phân loại giữ nguyên S3A:
+  ADAPT duy nhất fade; còn lại REFERENCE ONLY/REJECT.
+- Verify: EditMode 515/510/0/5 (cây cuối) → build SUCCESS → boot FACE_OK
+  0 exc + facts-log. Không commit (chờ lệnh).
+
+## 25. S4 — POLISH / HARDENING (2026-09-21, máy ASUS, batch-rule, P3.0.1)
+
+- Impact: decor MEDIUM (meshes mới pre-bake, collider-free + P42 targeted);
+  NPC/quest/bloom LOW (visual-only); camera/audio/UI/Core KHÔNG đụng.
+  Không journey/11-shots/adversarial (S5).
+- GitHub-first: celebration search 1 (PopcornFX $/Konfetti Android-only/
+  Asset packs $/license → REJECT hết, giữ scale-pop nội bộ zero-dep);
+  decor/NPC/beacon = REUSE patterns nội bộ (MarketBuilder/SubjectWorldBuilder
+  tufts/blooms/pebbles, CursorPresenter DestroyNow/Lit-fallback, Mia
+  proximity). Không dependency mới, không framework mới.
+- Env: BuildDecor deterministic (pots/tufts/pebbles/garden-blooms/reeds/
+  backdrop ×3/return-disc+flowers/chevrons) — TẤT CẢ collider-free, trong
+  hedge, clear corridors. Return disc PathTan.
+- NPC: Tess eyes lên domes (0.20/0.08 — inspection thấy 0.19 chìm trong đầu
+  r0.22) + breathe dress 2% ~0.4Hz (procedural, không rig).
+- Gameplay: MathBeacon (bob ±0.08 + spin 40°/s, motion-only, chết theo cube);
+  bloom pop ×1.4 one-shot; chevrons dẫn lên cầu.
+- Safety headless CT-P42 ×4 (decor-colliders/corridor-overlap/budget<220/
+  beacon) + P41E skip backdrop. Suite **519/514/0/5**.
+- Foundation: `Assets/Documentation/SUBJECT_WORLD_FOUNDATION.md` (skeleton +
+  PROVEN/CANDIDATE/SPECIFIC/NOT-YET + matrix + variation + firewall).
+- Perf: build 103.4MB giữ nguyên (S3A), level2 2.4KB (shell tí hon,
+  content code-built). Không regression.
+- Verify: EditMode 519/514/0/5 → build SUCCESS → boot FACE_OK 0 exc +
+  HUD 'Choose a gate!'. Không commit (chờ lệnh).
+
+## 26. PHASE 3.0.1.1 — SKELETON-COMPLETE (user feedback round, 2026-09-21, máy ASUS)
+
+- User dừng journey, tự lái chuột, báo 5 việc (ảnh medallion vỡ hình đính kèm):
+  (1) hầu hết cửa có vật cản khi đi chuột; (2) ô trung tâm Math vỡ ảnh
+  (răng cưa — z-fighting); (3) cửa Về Math cũng bị chặn như bệnh Tư duy gate;
+  (4) World Toán sơ sài, thiếu chất Toán; (5) phase này phải xong phần THÔ
+  hoàn toàn (Tess hoàn chỉnh hình thể, không xếp khối; mỗi world = một
+  gameplay). Lệnh: research GitHub tối đa cho world đẹp nhất, không tiếc token.
+- GitHub (ADAPT mechanics, không copy code — 2D/scene-riêng, ta 3D/code-built):
+  Dima34/Frog-Adventure (counting game: số + hành động) + ynsemre1/learn-math
+  (Number Hunt: tìm số 1-10 → bóng bay + điểm; Fruit Basket: đếm + thêm;
+  Star Race: so sánh ít/nhiều). Chắt ra: number-row 1..5 bằng pips +
+  shape-trio Blocks + gold-rhythm discs. S3A/S4 verdicts (REJECT dep/ADAPT
+  fade) giữ nguyên.
+- Code (firewall giữ: manifest 40 frozen, không Question/Lesson/Topic,
+  không đụng quest/audio/save/camera contracts):
+  (a) Tess Golden body: `TessVisual.prefab` (clone MiaVisual + guid mới,
+  chung Worker_Female rig + NPC controller) + `MathHostPresenter` rewrite
+  visual (prefab + scale 0.5 + tints: vest Math-blue/hat gold/Face-Skin như
+  Mia + CharacterPresentation face/shoes + wave + Happy pulse/PickUp/
+  Celebrate; logic quest/click/proximity/hint Y NGUYÊN) + public
+  `BuildBodyImmediate()` idempotent (MarketHUD precedent);
+  (b) cửa Về Math: pillars +-0.9→+-1.25 (khe 2.2m), beam 2.8, fireRadius
+  1.3→1.6 (trigger sớm, khỏi cần vào chính giữa);
+  (c) medallion hết vỡ: pads top 0.015, paths top 0.047 (cách 32mm, không
+  coplanar), return disc nổi trên path;
+  (d) beat camera entry Math: warp xong frame Tess 2s (khỏi nhìn biên bắc
+  trống) rồi Follow tự về — statics `EntryWorldPos/HostWorldPos` world-owned;
+  (e) spatial returns có lối về: đĩa gold + nhãn "Về" (vẫn KHÔNG arch —
+  giữ lệnh hub-declutter), trigger giữ nguyên;
+  (f) chất Toán: entry board (posts + beam + beads), number row 1..5 pips,
+  shape trio (cube/sphere/cylinder), bridge discs — tất cả deterministic,
+  corridor-safe, collider-free trừ pads walkable;
+  (g) SubjectWorldBuilder.StripCollider edit-safe (DestroyImmediate ngoài play).
+- Test: CT-P43 ×6 (return gap/board corridor/pad-path heights/number-row/
+  spatial Về/Tess Golden + idempotent) + amend P42A prefixes. Giữa đường:
+  P43D clearance 0.797<0.8 (dời row), P43E Destroy-editmode (fix StripCollider),
+  P43F lòi 2 sự thật batch: AddComponent KHÔNG gọi Awake (capsule proof) →
+  BuildBodyImmediate; run -testFilter dính DLL cũ 1 lần → full suite là truth.
+- Verify: EditMode **525/520/0/5** (P43 ×6 xanh) → build P35 SUCCESS
+  (UTP success:true, DLL + level tươi 16:20; folder MỚI vì P34Build/LWE.exe
+  đang bị game user lái lock). KHÔNG boot (user đang lái bản cũ — boot
+  foreground sẽ giật chuột). Không commit (chờ lệnh).
+- Nợ sang user/mắt (không foreground): swap sang P35Build khi rảnh → đi bộ
+  chuột qua 4 cổng + cửa Về, nhìn Tess/lobby/garden/bridge, xong báo để sang
+  phase polish. S5 journey bản cũ SUPERSEDED bởi round này (evidence S5-01..
+  S5-05e + s4-*.png giữ trong Temp).
+
+## 27. PHASE 3.0.2 — DISTRICT SCALE (verdict user: CHƯA PASS, 2026-09-21)
+
+- User mở P35 cửa sổ nhỏ, lái mắt, verdict CHƯA PASS + ảnh bridge (kèm 5 lệnh):
+  đất phải rộng hơn; vùng mint (xanh nước biển) thay đi cho đỡ skeleton;
+  spawn đứng CHÍNH GIỮA world; world ≥ sân chính; decor đẹp hơn từ GitHub.
+- GitHub decor THẬT (không chỉ đọc): Quaternius CC0 "LowPoly Nature Pack"
+  (cùng tác giả rigs, OpenGameArt, 1.2MB) — tải về, import 13 FBX
+  (Tree1-4/Bush1-3/Grass1-3/Rock1-3) vào `A_World/Resources/NatureKit/` +
+  provenance README. `NatureKit.cs` loader: deterministic place, URP Lit
+  convert (giữ màu flat), click-through (FBX không collider), strip node
+  Camera/Lamp của Blender (P41E bắt 1 Camera lạc ở |x|=18.7), edit-safe.
+- World 28m→38m (ground r19, hedge r18, ngang sân chính + districts):
+  entry (0,-8)+board z-7, garden (-10.5,3), bridge (10.5,-3), return (0,8),
+  paths dài 8.4/11m, shell EntryPoint→(0,0,0) = warp GIỮA lobby (Tess cách
+  2.3m → greet chào ngay), ReturnPoint→(0,0,8). Router bounds 20/20 khi vào
+  Math, restore 16/14 khi về (toán cũ kẹt click ngoài biên).
+- Đất hết mint-slab: cỏ (0.36,0.62,0.34) + 2 meadow patches + suối NƯỚC xanh
+  (0.30,0.56,0.86). Decor mới 19 placements Quaternius + number row tính từ
+  trục (không magic numbers) + trio/discs theo districts.
+- Test: P41E ≤18.5 + corridor (0,-8)→(0,0); P42B samples mới + exemptions;
+  P42C budget <320 (>100); P43D segment mới; P43G nature (19 + no-collider +
+  no-camera/lamp + clearance). Lỗi giữa chừng: FBX kèm Camera/Lamp (fix
+  NatureKit strip + P43G pin). Batch lesson (mắc 2 lần): run `-runTests`
+  phải launch detached + poll process (single-call return sớm, process chạy
+  ngầm); stale UnityLockfile sau force-kill phải xóa; lingering Unity sau
+  build/test phải kill tay (thiếu -quit).
+- Verify: EditMode **526/521/0/5** (P43G xanh) → build P36 SUCCESS
+  (UTP success:true, DLL tươi 17:08). Game cũ user đã tắt sạch (Player.log
+  shutdown đẹp, không crash). Không boot (chờ user mở P36 tự check).
+  Không commit (chờ lệnh).

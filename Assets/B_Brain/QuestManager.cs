@@ -181,6 +181,16 @@ public sealed class QuestManager : IQuestService {
           }
         };
       }
+      // Phase 3.0.x S3: Math pilot (mirrors Content/quests/math_counting.json).
+      if (questId.Value == "math_counting") {
+        return new QuestData {
+          id = "math_counting",
+          objectives = new List<ObjectiveData> {
+            new ObjectiveData { id = "find_one", action = "find", target = "one" },
+            new ObjectiveData { id = "bring_one", action = "bring", target = "one" }
+          }
+        };
+      }
       if (questId.Value != "market_help_mia") return null;
       return new QuestData {
         id = "market_help_mia",

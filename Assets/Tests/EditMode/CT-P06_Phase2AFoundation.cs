@@ -213,8 +213,9 @@ public class CT_P06_Phase2AFoundation {
     Assert.AreEqual(16, active, "active vocab is 16 after +ball");
     DialoguePack pack = LoadPack(root);
     Assert.AreEqual(pack.count, pack.lines.Count, "manifest.count must match real lines");
-    Assert.AreEqual(38, pack.lines.Count, "dialogue pack is 38 after +2 ball lines");
-    foreach (string qid in new string[] { "w1_mia_apple", "w1_mia_ball" }) {
+    // Phase 3.0.x S3: pack grows 38 -> 40 (+2 Tess lines math_01/math_02, cap frozen).
+    Assert.AreEqual(40, pack.lines.Count, "dialogue pack is 40 after +2 math lines");
+    foreach (string qid in new string[] { "w1_mia_apple", "w1_mia_ball", "math_counting" }) {
       QuestEntry q = LoadQuest(root, qid);
       Assert.AreEqual(qid, q.id, "quest id must match filename");
       foreach (QuestObjective o in q.objectives)

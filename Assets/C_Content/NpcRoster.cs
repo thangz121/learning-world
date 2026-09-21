@@ -38,6 +38,13 @@ public static class NpcRoster {
       id = "mia", displayName = "Mia", voice = "mia_v1",
       questNpc = new List<string> { "shopkeeper_mia", "mia" }, labelHeight = 2.35f,
     },
+    // Phase 3.0.x S3: Tess hosts the Math world lobby (Counting Garden pilot).
+    // Third entry amends the 2E "exactly Milo + Mia" pin (see CT-P09 Phase
+    // 3.0.x notes): Main-world quests still stage Mia, math_* quests stage Tess.
+    new NpcDefinition {
+      id = "tess", displayName = "Tess", voice = "npc_female_01",
+      questNpc = new List<string> { "math_host", "tess" }, labelHeight = 2.35f,
+    },
   };
 
   public static NpcDefinition Get(string npcId) {

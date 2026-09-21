@@ -586,6 +586,25 @@ public static class SubjectWorldBuilder {
     root.transform.SetParent(parent);
     root.transform.position = rp;
 
+    // 3.0.1.1 way-home marker (user round: the invisible return could neither
+    // be found nor clicked — "no door back"): a flat gold disc + "Về" label.
+    // Still NO arch (pillars/lintel stay removed per the hub-declutter order):
+    // ground treatment + text only, walkable, bake-neutral.
+    GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    disc.name = name + "ReturnDisc";
+    disc.transform.SetParent(parent);
+    disc.transform.position = rp + new Vector3(0f, 0.015f, 0f);
+    disc.transform.localScale = new Vector3(2.0f, 0.03f, 2.0f);
+    disc.GetComponent<Renderer>().sharedMaterial = Lit(ReturnGold);
+    GameObject anchor = new GameObject(name + "ReturnAnchor");
+    anchor.transform.SetParent(parent);
+    anchor.transform.position = rp;
+    GameObject labelGo = new GameObject(name + "ReturnLabel");
+    labelGo.transform.SetParent(parent);
+    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
+    label.Setup("Về", anchor.transform, 1.2f);
+    label.Show();
+
     SubjectGate gate = root.AddComponent<SubjectGate>();
     gate.fireRadius = 1.3f;
     result.ReturnGates.Add(gate);
@@ -886,7 +905,12 @@ public static class SubjectWorldBuilder {
   static void StripCollider(GameObject go) {
     try {
       Collider c = go.GetComponent<Collider>();
-      if (c != null) UnityEngine.Object.Destroy(c);
+      if (c == null) return;
+      // 3.0.1.1 headless-safe (P43E builds the shell in EditMode): Destroy
+      // is illegal outside play mode — DestroyImmediate there. Player path
+      // unchanged.
+      if (Application.isPlaying) UnityEngine.Object.Destroy(c);
+      else UnityEngine.Object.DestroyImmediate(c);
     } catch (Exception) { }
   }
 

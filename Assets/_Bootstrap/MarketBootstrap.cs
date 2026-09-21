@@ -29,6 +29,15 @@ public class MarketBootstrap : MonoBehaviour {
   Transform _miloT;
   Transform _miaT;
   bool _built;
+  // Phase 3.0.x S2 scene travel (scene-backed subjects only; the spatial
+  // siblings never touch these).
+  WorldTransition _worldTransition;
+  ISceneOps _sceneOps;
+  bool _travelLock;
+  Vector3 _mainReturnPos;
+  string _activeSubjectScene;
+  GameObject _miloGo;
+  GameObject _miaGo;
   // Track which quest is active (only one at a time in W1)
   QuestId? _activeQuest;
   // R7: pre-talk finds must not narrate. Set by QuestStartedEvent.
@@ -51,7 +60,7 @@ public class MarketBootstrap : MonoBehaviour {
   public LocalCameraService LocalCamera { get; private set; }
   public MediaRecordingService MediaRecorder { get; private set; }
   public DependencySetupService DependencySetup { get; private set; }
-  public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null, MicSetupBundle mic = null) {
+  public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null, MicSetupBundle mic = null, WorldTransition worldTransition = null, ISceneOps sceneOps = null) {
     if (_built) return;
     _built = true;
     _bus = bus;
@@ -62,6 +71,9 @@ public class MarketBootstrap : MonoBehaviour {
       return;
     }
     _builder = builder;
+    _worldTransition = worldTransition;
+    _sceneOps = sceneOps;
+    try { builder.BuildPersistentCore(); } catch (System.Exception) { }
 
 // B presenters (Unity instantiates via AddComponent; Bind injects services).
     // Hub-selection mode: NO NPCs in the gate-selection hall (quests live in
@@ -70,22 +82,22 @@ public class MarketBootstrap : MonoBehaviour {
     // without a first talk.
     MiloPresenter miloPresenter = null;
     MiaPresenter miaPresenter = null;
-    GameObject miloGo = null;
-    GameObject miaGo = null;
+    _miloGo = null;
+    _miaGo = null;
     if (!MarketBuilder.HubSelectionOnly) {
-      miloGo = new GameObject("Milo");
-      miloPresenter = miloGo.AddComponent<MiloPresenter>();
+      _miloGo = new GameObject("Milo");
+      miloPresenter = _miloGo.AddComponent<MiloPresenter>();
       miloPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
       miloPresenter.Bind(bus, quests, hints);
       miloPresenter.OnFirstTalk = OnFirstTalk;
       miloPresenter.OnTalk = OnTalk;
 
-      miaGo = new GameObject("Mia");
-      miaPresenter = miaGo.AddComponent<MiaPresenter>();
+      _miaGo = new GameObject("Mia");
+      miaPresenter = _miaGo.AddComponent<MiaPresenter>();
       miaPresenter.PlayerTarget = builder.Player != null ? builder.Player.transform : null;
       miaPresenter.Bind(bus, quests, hints);
-      _miloT = miloGo.transform;
-      _miaT = miaGo.transform;
+      _miloT = _miloGo.transform;
+      _miaT = _miaGo.transform;
     }
 
     // Shop-counter click proxy (Phase-1 closure): tapping Mia's counter reaches
@@ -115,18 +127,18 @@ public class MarketBootstrap : MonoBehaviour {
     float miloHeight = miloDef != null ? miloDef.labelHeight : 2.35f;
     float miaHeight = miaDef != null ? miaDef.labelHeight : 2.35f;
     GameObject miloLabelGo = new GameObject("MiloLabel");
-    miloLabelGo.transform.SetParent(miloGo.transform, false);
+    miloLabelGo.transform.SetParent(_miloGo.transform, false);
     _miloLabel = miloLabelGo.AddComponent<WorldNameLabel>();
     // Player-experience audit 2026-09-12 (W1Audit m-label/g-mia/k-correct):
     // 2.05m sits inside Milo's hard-hat ridge / Mia's hair volume, so level
     // cameras see the pill with the text occluded. 2.35m clears all headwear
     // (Milo 1.65 + hat ~0.3, Mia 1.65 + hair ~0.3, pill half-height 0.19).
-    _miloLabel.Setup(miloName, miloGo.transform, miloHeight);
+    _miloLabel.Setup(miloName, _miloGo.transform, miloHeight);
     _miloLabel.Show();
     GameObject miaLabelGo = new GameObject("MiaLabel");
-    miaLabelGo.transform.SetParent(miaGo.transform, false);
+    miaLabelGo.transform.SetParent(_miaGo.transform, false);
     _miaLabel = miaLabelGo.AddComponent<WorldNameLabel>();
-    _miaLabel.Setup(miaName, miaGo.transform, miaHeight);
+    _miaLabel.Setup(miaName, _miaGo.transform, miaHeight);
     // Player report: Mia's name shows from frame one, like Milo's (no more
     // hidden-until-introduction — the child should always read who is who).
     _miaLabel.Show();
@@ -305,6 +317,12 @@ public class MarketBootstrap : MonoBehaviour {
       Debug.LogWarning("[DepSetup] wiring failed, game continues without setup check: " + e.Message);
       DependencySetup = null;
     }
+    // S3B dev-truth (UI visibility forensics, batch-verifiable): screen pixels
+    // vs capture size decides tooling-crop vs render-bug. Players never see it.
+    try {
+      Debug.Log("[Boot] screen=" + Screen.width + "x" + Screen.height
+        + " hud=" + (_hud != null ? ("'" + _hud.CurrentObjective + "'") : "null"), this);
+    } catch (System.Exception) { }
   }
 
   // <repo>/tools (phone_mic_gateway.py + lan certs) for the monitor's
@@ -479,6 +497,12 @@ public class MarketBootstrap : MonoBehaviour {
     if (_builder == null) return;
     SubjectDefinition to = SubjectCatalog.Get(e.To);
     if (to != null) {
+      // Phase 3.0.x S2: scene-backed subjects (Math pilot) travel through the
+      // shared loader; spatial siblings keep the legacy walk-in beat below.
+      if (!string.IsNullOrEmpty(to.SceneName) && _worldTransition != null && _sceneOps != null) {
+        TravelToSubjectAsync(to);
+        return;
+      }
       if (_hud != null) {
         // Cache discipline (chaos survey: cross-subject switches broke a
         // single-slot cache): only an entry FROM Main overwrites the cached
@@ -504,6 +528,12 @@ public class MarketBootstrap : MonoBehaviour {
       return;
     }
     if (e.To == SubjectIds.Main) {
+      // Phase 3.0.x S2: returning from a scene-backed subject unloads it and
+      // restores Main; spatial returns keep the legacy warp below.
+      if (!string.IsNullOrEmpty(_activeSubjectScene)) {
+        ReturnFromSubjectAsync();
+        return;
+      }
       SubjectDefinition from = SubjectCatalog.Get(e.From);
       if (from != null && _builder.Player != null) {
         Vector3 outDir = from.GatePos - from.PlaygroundCenter;
@@ -521,6 +551,227 @@ public class MarketBootstrap : MonoBehaviour {
         catch (Exception) { }
       }
     }
+  }
+
+  // Phase 3.0.x S2 scene travel (Math pilot). Fire-and-forget by design (bus
+  // event handler): every failure path restores Main playability and reports
+  // via HUD + log — never a stranded player, never a false InSubject.
+  // Awaits resume on the main thread (no ConfigureAwait), so Unity API below
+  // is safe; the machine itself never touches Unity objects.
+  async void TravelToSubjectAsync(SubjectDefinition to) {
+    if (_travelLock) return;
+    _travelLock = true;
+    try {
+      if (_builder == null || _builder.Player == null || _worldTransition == null || _sceneOps == null) return;
+      _mainReturnPos = _builder.Player.transform.position;
+      // Phase 3.0.x S3: cache the Main objective for the scene return path
+      // (the spatial branch caches on entry; without this the unload restore
+      // in ReturnFromSubjectCoreAsync falls back to "Look around!" and the hub
+      // "Choose a gate!" line is lost).
+      if (_hud != null) {
+        try { _preWorldObjective = _hud.CurrentObjective; } catch (System.Exception) { }
+      }
+      try { _builder.Player.Stop(); } catch (System.Exception) { }
+      if (_builder.Router != null) { try { _builder.Router.enabled = false; } catch (System.Exception) { } }
+      if (_hud != null) { try { _hud.ShowObjective("Entering " + to.DisplayName + "…"); } catch (System.Exception) { } }
+      // S3A transition cover (SceneBridge ADAPTED): fade to black BEFORE the
+      // load so the child never sees a half-built world pop in.
+      await FadeCoverAsync(1f, 0.35f);
+      bool entered = false;
+      try { entered = await _worldTransition.EnterAsync(_sceneOps, to.Id, to.SceneName); }
+      catch (System.Exception e) { Debug.LogWarning("[MarketBootstrap] Enter failed: " + e.Message, this); }
+      GameInstaller installer = null;
+      try { installer = GetComponent<GameInstaller>(); } catch (System.Exception) { }
+      Transform entry = installer != null ? installer.MathEntryPoint : null;
+      if (!entered || entry == null) {
+        // Truthful failure (S3A §8): dev-side reason in the log (machine
+        // LastError), player-side objective restore (no fake progress, no
+        // tech language — the child simply taps the gate again).
+        try {
+          string reason = _worldTransition != null ? _worldTransition.LastError : null;
+          Debug.LogWarning("[MarketBootstrap] Enter " + to.SceneName + " failed"
+            + (string.IsNullOrEmpty(reason) ? " (entry missing)." : ": " + reason), this);
+        } catch (System.Exception) { }
+        // Nothing switched yet: lift the entry cover, clean up, restore HUD.
+        await FadeCoverAsync(0f, 0.25f);
+        await ReturnFromSubjectCoreAsync(false);
+        if (_hud != null) {
+          try {
+            if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
+            else _hud.ShowObjective("Look around!");
+          } catch (System.Exception) { }
+        }
+        return;
+      }
+      _activeSubjectScene = to.SceneName;
+      DeactivateMainPresentation();
+      if (_builder.Router != null) {
+        try { _builder.Router.boundCenter = MathWorldBuilder.WorldOffset; } catch (System.Exception) { }
+        // 3.0.2 district scale (38m ground): widen click bounds for Math,
+        // restored to Main values on return below.
+        try { _builder.Router.boundX = MathWorldBuilder.BoundX; } catch (System.Exception) { }
+        try { _builder.Router.boundZ = MathWorldBuilder.BoundZ; } catch (System.Exception) { }
+      }
+      bool warped = false;
+      try { warped = _builder.Player.WarpTo(entry.position); } catch (System.Exception) { }
+      if (!warped) {
+        try { Debug.LogWarning("[MarketBootstrap] Enter " + to.SceneName + " warp failed; staying Main.", this); }
+        catch (System.Exception) { }
+        await FadeCoverAsync(0f, 0.25f);
+        await ReturnFromSubjectCoreAsync(false);
+        if (_hud != null) {
+          try {
+            if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
+            else _hud.ShowObjective("Look around!");
+          } catch (System.Exception) { }
+        }
+        return;
+      }
+      if (_builder.WorldCamera != null) {
+        try { _builder.WorldCamera.Follow(_builder.Player.transform, _builder.WorldCamera.defaultOffset); }
+        catch (System.Exception) { }
+      }
+      // 3.0.1.1 arrival beat (S5 journey: the warp-in stared at the empty
+      // north fence — the lobby/Tess sat behind the camera): frame the host
+      // for 2s like the spatial gate beats, then Follow resumes by itself.
+      if (to.Id == SubjectIds.Math && _builder.WorldCamera != null) {
+        try {
+          Vector3 entryW = MathWorldBuilder.EntryWorldPos;
+          Vector3 hostW = MathWorldBuilder.HostWorldPos;
+          Vector3 outDir = entryW - hostW;
+          outDir.y = 0f;
+          if (outDir.sqrMagnitude < 0.001f) outDir = new Vector3(0f, 0f, -1f);
+          outDir.Normalize();
+          Vector3 lateral = new Vector3(outDir.z, 0f, -outDir.x);
+          Vector3 camPos = entryW + outDir * 3.2f + lateral * 2.4f + new Vector3(0f, 2.6f, 0f);
+          _builder.WorldCamera.FramePointFor(camPos, hostW + new Vector3(0f, 1.0f, 0f), 2.0f);
+        } catch (System.Exception) { }
+      }
+      if (_hud != null) { try { _hud.ShowObjective(to.DisplayName + " World"); } catch (System.Exception) { } }
+      if (_builder.Router != null) { try { _builder.Router.enabled = true; } catch (System.Exception) { } }
+      // S3A §8: success is dev-verifiable in the log (states stay truthful end
+      // to end: Loading HUD -> InSubject HUD + this line). Cover lifts AFTER
+      // the warp + camera + HUD are all in place (never half-switched).
+      try { Debug.Log("[MarketBootstrap] Entered " + to.SceneName + " (loader InSubject).", this); }
+      catch (System.Exception) { }
+      await FadeCoverAsync(0f, 0.35f);
+    } catch (System.Exception e) {
+      // Fail-safe: an unexpected throw must never strand the child behind a
+      // black cover (or a dead travel lock — finally below still runs).
+      try { Debug.LogWarning("[MarketBootstrap] Travel crashed: " + e.Message, this); }
+      catch (System.Exception) { }
+      try { await FadeCoverAsync(0f, 0.2f); } catch (System.Exception) { }
+    } finally { _travelLock = false; }
+  }
+
+  async void ReturnFromSubjectAsync() {
+    if (_travelLock) return;
+    _travelLock = true;
+    try {
+      await ReturnFromSubjectCoreAsync(true);
+    } finally { _travelLock = false; }
+  }
+
+  // S3A transition cover driver (SceneBridge pattern ADAPTED: fade covers the
+  // load/warp/unload beat, then lifts — time-based cover over a real awaited
+  // op, never a fake progress bar). Main-thread note: these awaits resume on
+  // Unity's SynchronizationContext (no ConfigureAwait), so the SetTransition-
+  // Cover calls below are main-thread safe — the same pattern the existing
+  // post-await WarpTo/camera calls already rely on. Never throws.
+  async System.Threading.Tasks.Task FadeCoverAsync(float target, float seconds) {
+    try {
+      if (_hud == null) return;
+      float from = 0f;
+      try { from = _hud.TransitionCoverAlpha; } catch (System.Exception) { }
+      int steps = 6;
+      if (seconds <= 0f) {
+        try { _hud.SetTransitionCover(target); } catch (System.Exception) { }
+        return;
+      }
+      for (int i = 1; i <= steps; i++) {
+        try { await System.Threading.Tasks.Task.Delay((int)(seconds * 1000f / steps)); }
+        catch (System.Exception) { break; }
+        try { _hud.SetTransitionCover(from + (target - from) * i / steps); }
+        catch (System.Exception) { break; }
+      }
+      try { _hud.SetTransitionCover(target); } catch (System.Exception) { }
+    } catch (System.Exception) { }
+  }
+
+  // Shared return core (called with the travel lock held): warp back, unload,
+  // reactivate Main, restore camera/HUD/input. Idempotent pieces make it safe
+  // from both the return-gate path and the enter-failure path. withFade covers
+  // the switch beat (S3A); enter-failure callers pass false (nothing switched
+  // yet — they only lift the entry cover).
+  async System.Threading.Tasks.Task ReturnFromSubjectCoreAsync(bool withFade) {
+    try {
+      if (withFade) await FadeCoverAsync(1f, 0.35f);
+      if (_builder != null && _builder.Player != null) {
+        try { _builder.Player.Stop(); } catch (System.Exception) { }
+        bool back = false;
+        try { back = _builder.Player.WarpTo(_mainReturnPos); } catch (System.Exception) { }
+        if (!back) { try { back = _builder.Player.WarpTo(MarketBuilder.PlayerSpawn); } catch (System.Exception) { } }
+        if (!back) {
+          try { Debug.LogWarning("[MarketBootstrap] Return warp failed; player stays.", this); }
+          catch (System.Exception) { }
+        }
+      }
+      if (_builder != null && _builder.Router != null) {
+        try { _builder.Router.boundCenter = Vector3.zero; } catch (System.Exception) { }
+        try { _builder.Router.boundX = MarketBuilder.BoundX; } catch (System.Exception) { }
+        try { _builder.Router.boundZ = MarketBuilder.BoundZ; } catch (System.Exception) { }
+      }
+      if (_worldTransition != null && _sceneOps != null && !string.IsNullOrEmpty(_activeSubjectScene)) {
+        try { await _worldTransition.ReturnAsync(_sceneOps, _activeSubjectScene); }
+        catch (System.Exception e) { Debug.LogWarning("[MarketBootstrap] Unload failed: " + e.Message, this); }
+        try {
+          string reason = _worldTransition != null ? _worldTransition.LastError : null;
+          if (!string.IsNullOrEmpty(reason)) Debug.LogWarning("[MarketBootstrap] Return unload issue: " + reason, this);
+          else Debug.Log("[MarketBootstrap] Returned to Main (loader Idle).", this);
+        } catch (System.Exception) { }
+      }
+      _activeSubjectScene = null;
+      ReactivateMainPresentation();
+      if (_hud != null) {
+        try {
+          if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
+          else _hud.ShowObjective("Look around!");
+        } catch (System.Exception) { }
+      }
+      if (_builder != null && _builder.WorldCamera != null && _builder.Player != null) {
+        try { _builder.WorldCamera.Follow(_builder.Player.transform, MarketBuilder.FollowOffset(_builder.WorldCamera.defaultOffset)); }
+        catch (System.Exception) { }
+      }
+      if (_builder != null && _builder.Router != null) {
+        try { _builder.Router.enabled = true; } catch (System.Exception) { }
+      }
+      // S3A: lift the cover AFTER the world is switched back and HUD/camera
+      // restored (the child never sees half-restored state).
+      if (withFade) await FadeCoverAsync(0f, 0.35f);
+    } catch (System.Exception e) {
+      try { Debug.LogWarning("[MarketBootstrap] Return cleanup failed: " + e.Message, this); }
+      catch (System.Exception) { }
+      // Fail-safe: never strand the child behind a black cover.
+      try { await FadeCoverAsync(0f, 0.2f); } catch (System.Exception) { }
+    }
+  }
+
+  void DeactivateMainPresentation() {
+    try { if (_builder != null) _builder.gameObject.SetActive(false); } catch (System.Exception) { }
+    try { if (_miloGo != null) _miloGo.SetActive(false); } catch (System.Exception) { }
+    try { if (_miaGo != null) _miaGo.SetActive(false); } catch (System.Exception) { }
+    try { if (_miloLabel != null) _miloLabel.Hide(); } catch (System.Exception) { }
+    try { if (_miaLabel != null) _miaLabel.Hide(); } catch (System.Exception) { }
+    try { if (_guide != null) _guide.gameObject.SetActive(false); } catch (System.Exception) { }
+  }
+
+  void ReactivateMainPresentation() {
+    try { if (_builder != null) _builder.gameObject.SetActive(true); } catch (System.Exception) { }
+    try { if (_miloGo != null) _miloGo.SetActive(true); } catch (System.Exception) { }
+    try { if (_miaGo != null) _miaGo.SetActive(true); } catch (System.Exception) { }
+    try { if (_miloLabel != null) _miloLabel.Show(); } catch (System.Exception) { }
+    try { if (_miaLabel != null) _miaLabel.Show(); } catch (System.Exception) { }
+    try { if (_guide != null) _guide.gameObject.SetActive(true); } catch (System.Exception) { }
   }
 
   void OnQuestStartedFlag(QuestStartedEvent e) {
