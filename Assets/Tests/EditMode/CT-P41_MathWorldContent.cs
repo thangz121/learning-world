@@ -85,29 +85,36 @@ public class CT_P41_MathWorldContent {
   }
 
   // D. Landmarks, paths and return arch all present (no pads-only shell).
+  // B1R re-pin: the world grew (r26) and the hub was decluttered; the Kenney
+  // fence/bridge modules and the meadow loop are now part of the landmark set.
   [Test] public void P41D_LandmarksPresent() {
     SetUp();
     try {
       foreach (string name in new string[] {
         "MathAbacusPostL", "MathAbacusPostR",
-        "GardenBedW", "GardenBedE", "GardenPedestal1", "GardenPedestal2", "GardenPedestal3",
-        "BridgeStream", "BridgeRailW", "BridgeRailE",
+        "GardenBedW", "GardenBedE", "GardenBedN", "GardenBerryBed",
+        "GardenPedestal1", "GardenPedestal2", "GardenPedestal3",
+        "BridgeStream", "BridgeRailW", "BridgeRailE", "MathBridgeModule0",
         "MathPathEntry", "MathPathReturn", "MathPathGarden", "MathPathBridge",
+        "MathPathMeadow1", "MathPathGardenInnerA",
         "MathReturnA", "MathReturnB", "MathReturnBeam",
         "MathLobbyPad", "MathEntryPad", "CountingGardenPad", "NumberBridgePad",
+        "MathGardenGate", "MathCountingTree", "MathPropTree0", "MathSkyCloud0",
+        "MathTower0", "MathDomino0", "MathSignPlusV", "MathBedPipsW0",
+        "MathWorldSignBoard", "MathWorldSignPost", "MathWorldSignLabel",
       }) {
         Assert.IsNotNull(FindDeep(_root.transform, name), name + " must be built");
       }
     } finally { TearDown(); }
   }
 
-  // E. Layout discipline: everything inside the hedge ring; abacus clear of
-  // the arrival corridor; host anchored inside the lobby pad. Backdrop blobs
-  // live OUTSIDE the ring by design (depth dressing, S4) and are skipped.
+  // E. Layout discipline: everything inside the island (r26 ground, r25
+  // hedge); abacus clear of the arrival corridor; host anchored inside the
+  // lobby pad. The skirt is the ground itself (skipped by name).
   [Test] public void P41E_LayoutDiscipline() {
     SetUp();
     try {
-      var skip = new HashSet<string> { "MathSun", "MathNavMesh", "MathReturnGate" };
+      var skip = new HashSet<string> { "MathSun", "MathNavMesh", "MathReturnGate", "MathOuterField" };
       var all = new List<Transform>();
       var stack = new Stack<Transform>();
       stack.Push(_root.transform);
@@ -117,17 +124,17 @@ public class CT_P41_MathWorldContent {
         for (int i = 0; i < t.childCount; i++) stack.Push(t.GetChild(i));
       }
       foreach (Transform t in all) {
-        if (t.name.StartsWith("MathBackdrop")) continue; // outside-ring dressing by design
+        if (t.name.StartsWith("MathSky")) continue; // sky dressing lives beyond the island
         Vector3 p = t.position;
-        Assert.LessOrEqual(Mathf.Abs(p.x), 18.5f, t.name + " inside hedge X");
-        Assert.LessOrEqual(Mathf.Abs(p.z), 18.5f, t.name + " inside hedge Z");
+        Assert.LessOrEqual(Mathf.Abs(p.x), 25.5f, t.name + " inside island X");
+        Assert.LessOrEqual(Mathf.Abs(p.z), 25.5f, t.name + " inside island Z");
       }
       Transform abacus = FindDeep(_root.transform, "MathAbacusPostL");
       Assert.IsNotNull(abacus);
       Assert.Greater(
-        DistToSegment(abacus.position, new Vector3(0f, 0f, -8f), new Vector3(0f, 0f, 0f)), 0.9f,
+        DistToSegment(abacus.position, new Vector3(0f, 0f, -12f), new Vector3(0f, 0f, 0f)), 0.9f,
         "abacus stays clear of the entry->lobby arrival corridor");
-      Assert.Less(FlatDist(MathWorldBuilder.HostAnchorLocal, Vector3.zero), 4f,
+      Assert.Less(FlatDist(MathWorldBuilder.HostAnchorLocal, Vector3.zero), 6f,
         "host anchors inside the lobby pad");
     } finally { TearDown(); }
   }

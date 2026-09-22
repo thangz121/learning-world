@@ -49,9 +49,12 @@ public class CT_P42_MathWorldSafety {
     try {
       var decor = new List<GameObject>();
       foreach (string prefix in new string[] {
-        "MathPot", "MathTuft", "MathPebble", "MathBloom", "MathBead",
-        "MathReeds", "MathBackdrop", "MathReturnFlower", "MathNumPip",
-        "MathEntryBead", "MathBridgeDisc", "MathShape",
+        "MathPebble", "MathBloom", "MathBead", "MathReeds", "MathBackdrop",
+        "MathReturnFlower", "MathEntryBead", "MathBridgeDisc", "MathShape",
+        "MathFence", "MathCrop", "MathProp", "MathGardenStone", "MathClearingStone",
+        "MathGardenStonePip", "MathClearingPip", "MathHostFlower",
+        "MathDomino", "MathTower", "MathSign", "MathBedPips",
+        "MathWorldSignBead",
       }) CollectByPrefix(_root.transform, prefix, decor);
       Assert.Greater(decor.Count, 10, "dressing must exist to be checked");
       var offenders = new List<string>();
@@ -77,17 +80,19 @@ public class CT_P42_MathWorldSafety {
   }
 
   // B. Corridors walkable: torso-height sphere finds no structural blocker on
-  // the entry/lobby/garden/bridge/return walking lines (walkable ground,
-  // pads, paths, discs and the quest cube itself are exempt by name).
-  // 3.0.2: district-scale samples (entry z=-8, garden (-10.5,3),
-  // bridge (10.5,-3), return z=8).
+  // the entry/garden/bridge/return spokes, the meadow loop and the garden
+  // inner path (walkable ground, pads, paths, discs, stones and the quest
+  // cube itself are exempt by name). B1R: new district-scale coordinates.
   [Test] public void P42B_CorridorsClear() {
     SetUp();
     try {
       Vector3[] samples = {
-        new Vector3(0f, 0.5f, -6.5f), new Vector3(0f, 0.5f, -4f), new Vector3(0f, 0.5f, -1f),
-        new Vector3(-5.6f, 0.5f, 1.54f), new Vector3(5.6f, 0.5f, -1.6f),
-        new Vector3(0f, 0.5f, 5.5f), new Vector3(0f, 0.5f, 7f),
+        new Vector3(0f, 0.5f, -10f), new Vector3(0f, 0.5f, -5f), new Vector3(0f, 0.5f, -1f),
+        new Vector3(-8f, 0.5f, 2.5f), new Vector3(7.75f, 0.5f, -2.5f),
+        new Vector3(0f, 0.5f, 5f), new Vector3(0f, 0.5f, 10f),
+        new Vector3(9f, 0.5f, -9.2f), new Vector3(2f, 0.5f, -9.6f), new Vector3(-5f, 0.5f, -9f),
+        new Vector3(-11f, 0.5f, -6.8f), new Vector3(-16f, 0.5f, -1.5f),
+        new Vector3(-12.2f, 0.5f, 3.6f), new Vector3(-14.6f, 0.5f, 3f), new Vector3(-18.2f, 0.5f, 1.2f),
       };
       var blockers = new List<string>();
       foreach (Vector3 s in samples) {
@@ -100,7 +105,8 @@ public class CT_P42_MathWorldSafety {
           if (n.StartsWith("MathGround") || n.Contains("Pad") || n.StartsWith("MathPath")
             || n.StartsWith("MathReturnDisc") || n.StartsWith("MathChevron")
             || n.StartsWith("MathOneCube") || n.StartsWith("MathBloomRoot")
-            || n.StartsWith("MathMeadow") || n.StartsWith("MathNumPad")) continue;
+            || n.StartsWith("MathMeadow") || n.StartsWith("MathGardenStone")
+            || n.StartsWith("MathClearingStone") || n.StartsWith("MathBridgeDeck")) continue;
           blockers.Add(n + "@" + s);
         }
       }
@@ -110,12 +116,14 @@ public class CT_P42_MathWorldSafety {
   }
 
   // C. Object budget guardrail (perf: decor must not bloat the scene).
-  // 3.0.2: district scale (38m ground + Quaternius nature) raises the cap.
+  // B1R2 measured 311; B1R3 added the sky rim/clouds, world-name column,
+  // bunting and pink/red accents (measured 400) -> cap re-pinned to 440 with
+  // the number recorded in MATH_WORLD_VISUAL_QA.md; shared materials only.
   [Test] public void P42C_ObjectBudget() {
     SetUp();
     try {
       int count = _root.transform.GetComponentsInChildren<Transform>(true).Length;
-      Assert.Less(count, 320, "content object count bounded (perf guardrail)");
+      Assert.Less(count, 440, "content object count bounded (perf guardrail)");
       Assert.Greater(count, 100, "district-scale skeleton + dressing present (not a bare shell)");
     } finally { TearDown(); }
   }

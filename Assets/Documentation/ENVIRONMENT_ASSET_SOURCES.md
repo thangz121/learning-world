@@ -125,3 +125,35 @@ technique over bulk import.
 3. LW `NatureSway`: single-component sine sway for grass/flowers/plants
    (the "alive" requirement without particles or shader risk).
 4. Existing cluster/zone/clear-zone composition system (extended, not forked).
+
+## L. Kenney (CC0) — Math World B1R kit — SELECTED + APPLIED
+
+- SOURCE (official, direct zip): https://kenney.nl/assets/food-kit and
+  https://kenney.nl/assets/nature-kit (kenney.nl media zips, fetched
+  2026-09-21; both CC0 1.0, commercial use allowed, credit appreciated).
+- RESEARCH PATH: GitHub search first (kenney asset mirrors, shorepine/kenney
+  3D GLB tree, ETdoFresh/kenney.nl, dreamengine-assets manifest) — mirrors
+  were GLB-only or incomplete, so the official kenney.nl zips (FBX + OBJ +
+  glTF + Unity package) were used instead. The "Kenney + Quaternius Free
+  Pack" (beep2bleep) and poly.pizza bundles were inspected and rejected as
+  sources (no food/crop FBX in the former; GLB-only in the latter).
+- WHAT WE USE (copied to Assets/A_World/Resources/PropKit, FBX only):
+  - Food Kit (colormap.png texture): carrot, pumpkin, corn, beet, cabbage,
+    strawberry, watermelon, apple, tomato, broccoli, radish, mushroom,
+    cherries, grapes, lemon, orange, banana, eggplant, leek, onion, pepper,
+    pineapple (22 models).
+  - Nature Kit (untextured flat materials): fence_simple/Center/Low/High/
+    planks/corner/bend/gate, bridge_wood/woodNarrow/center/side, path_stone,
+    path_stoneCircle, rock_largeA/B, rock_smallA/B, plant_bush/Small/
+    Detailed, mushroom_red/tan, grass, grass_large, flower_redA/yellowA/
+    purpleA, tree_oak/detailed/default/pineTallA, stump_round, log, sign
+    (36 models).
+- ADAPTATIONS (code, imports stay pristine): `A_World/PropKit.cs` — material
+  harmonization by material NAME onto the LW palette (leafsGreen/grass ->
+  project green, wood/bark -> project browns, stone -> greys; Food Kit
+  colormap texture preserved untouched), collider strip (click-through),
+  optional `NavMeshModifier.ignoreFromBuild` for visual bridge modules over
+  the walkable deck, deterministic placement (no Random).
+- USED BY: `A_World/MathWorld/MathWorldBuilder.cs` (garden crops + fence +
+  gate, bridge modules, stepping stones, meadow dressing, rim trees).
+- LICENSE: CC0 1.0 (public domain) — ships in builds, no attribution needed.

@@ -15,6 +15,7 @@ public class MathBloomDisplay : MonoBehaviour {
   static readonly QuestId MathQuest = new QuestId("math_counting");
 
   IGameEventBus _bus;
+  IQuestService _quests;
   IDisposable _sub;
   bool _built;
 
@@ -22,10 +23,20 @@ public class MathBloomDisplay : MonoBehaviour {
 
   // Injection boundary (GameInstaller calls this on MathScene load, on the
   // bloom-root GO the builder exposes). Blooms are CHILDREN of this GO.
-  public void Build(IGameEventBus bus) {
+  // B1-journey fix (P2): the consumer must also ADOPT an already-completed
+  // quest — a fresh re-entry after completion never receives the event, so
+  // the reward visual used to vanish on the second visit.
+  public void Build(IGameEventBus bus, IQuestService quests) {
     if (_built) return;
     _built = true;
     _bus = bus;
+    _quests = quests;
+    try {
+      if (_quests != null && _quests.GetState(MathQuest) != null
+          && _quests.GetState(MathQuest).Completed) {
+        ApplyBlooms();
+      }
+    } catch (Exception) { }
     if (_bus == null) return;
     try { _sub = _bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted); }
     catch (Exception) { }
@@ -33,6 +44,11 @@ public class MathBloomDisplay : MonoBehaviour {
 
   void OnQuestCompleted(QuestCompletedEvent e) {
     if (e.QuestId.Value != MathQuest.Value) return;
+    ApplyBlooms();
+  }
+
+  void ApplyBlooms() {
+    if (BloomShown) return; // idempotent: event + adopt can never double-pop
     BloomShown = true;
     try {
       // S4 celebration pop: one-shot 1.4x scale (deterministic state change,

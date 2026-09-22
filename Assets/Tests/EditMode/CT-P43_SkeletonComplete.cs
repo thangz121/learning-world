@@ -92,7 +92,9 @@ public class CT_P43_SkeletonComplete {
       Assert.IsTrue(IsIgnoredFromBuild(beam.gameObject), "entry beam bake-ignored");
       var beads = new List<GameObject>();
       CollectByPrefix(_root.transform, "MathEntryBead", beads);
-      Assert.AreEqual(3, beads.Count, "3 abacus beads ride the beam");
+      // B1 re-pin: the entry door carries the world's number (5 beads) — the
+      // 3-bead skeleton version predated the composition round.
+      Assert.AreEqual(5, beads.Count, "5 abacus beads ride the beam");
       foreach (GameObject bead in beads) {
         Assert.GreaterOrEqual(bead.transform.localPosition.y, 2.0f, "bead above head passage");
         Assert.IsNull(bead.GetComponent<Collider>(), bead.name + " click-through");
@@ -122,29 +124,34 @@ public class CT_P43_SkeletonComplete {
     } finally { TearDownMath(); }
   }
 
-  // D. Number row: 5 walkable pads south of the garden path, pad i carries
-  // i+1 gold pips (1..5); pads keep feet colliders, pips are click-through.
+  // D. Counting stones (B1R re-pin: the off-path number-row pads were
+  // removed as hub clutter; the 1..5 language now lives on the garden
+  // stepping stones along the inner path). 5 stones, 1+2+3+4+5 gold pips,
+  // pips click-through, every stone inside the fenced plot (r6.5).
   [Test] public void P43D_NumberRowCounts() {
     SetUpMath();
     try {
-      var pads = new List<GameObject>();
-      CollectByPrefix(_root.transform, "MathNumPad", pads);
-      Assert.AreEqual(5, pads.Count, "5 counting pads 1..5");
+      var stones = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathGardenStone", stones);
+      // Prefix also matches the pips (MathGardenStonePip*): filter by exact
+      // trailing digit.
+      int stoneCount = 0;
+      for (int i = 0; i < 5; i++) {
+        if (FindDeep(_root.transform, "MathGardenStone" + i) != null) stoneCount++;
+      }
+      Assert.AreEqual(5, stoneCount, "5 counting stones 1..5");
       var pips = new List<GameObject>();
-      CollectByPrefix(_root.transform, "MathNumPip", pips);
+      CollectByPrefix(_root.transform, "MathGardenStonePip", pips);
       Assert.AreEqual(15, pips.Count, "1+2+3+4+5 pips");
       foreach (GameObject pip in pips) {
         Assert.IsNull(pip.GetComponent<Collider>(), pip.name + " click-through");
       }
-      // Corridor guard: pads stay off the lobby->garden walking line
-      // (3.0.2 segment (0,0)->(-10.5,3), keep 0.8m+ clearance).
-      Vector3 a = new Vector3(0f, 0f, 0f);
-      Vector3 b = new Vector3(-10.5f, 0f, 3f);
-      foreach (GameObject pad in pads) {
-        Vector3 p = pad.transform.localPosition;
+      Vector3 c = new Vector3(-16f, 0f, 5f);
+      for (int i = 0; i < 5; i++) {
+        Transform s = FindDeep(_root.transform, "MathGardenStone" + i);
+        Vector3 p = s.localPosition;
         p.y = 0f;
-        float dist = DistToSegment(p, a, b);
-        Assert.GreaterOrEqual(dist, 0.8f, pad.name + " clear of the garden line: " + dist);
+        Assert.LessOrEqual(Vector3.Distance(p, c), 6.5f, s.name + " inside the fenced plot");
       }
     } finally { TearDownMath(); }
   }
@@ -220,34 +227,142 @@ public class CT_P43_SkeletonComplete {
     } finally { Object.DestroyImmediate(host); }
   }
 
-  // G. GitHub nature ships placed + click-through + off the walking lines
-  // (3.0.2 decor round: 6 trees + 4 bushes + 3 rocks + 6 grass = 19).
+  // H. B1 composition: the MathScene return arch finally carries the "Về"
+  // label the 3 spatial subjects ship (audit F13).
+  [Test] public void P43H_ReturnLabelInMath() {
+    SetUpMath();
+    try {
+      var labels = _root.GetComponentsInChildren<WorldNameLabel>(true);
+      int veCount = 0;
+      foreach (WorldNameLabel wl in labels) {
+        if (wl != null && wl.CurrentName == "Về") veCount++;
+      }
+      Assert.AreEqual(1, veCount, "Math return arch reads Về");
+    } finally { TearDownMath(); }
+  }
+
+  // I. B1R garden plot: Kenney fence with 2 openings + gate, counting tree
+  // with 5 bead-fruit, 5 stepping stones (1..5 pips), countable Kenney crops
+  // in every bed (3 carrots / 2 pumpkins / 4 corn / 5 strawberries).
+  [Test] public void P43I_GardenPlotReadable() {
+    SetUpMath();
+    try {
+      var fence = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathFence", fence);
+      Assert.GreaterOrEqual(fence.Count, 24, "Kenney fence modules around the plot");
+      Assert.IsNotNull(FindDeep(_root.transform, "MathGardenGate"), "garden gate module");
+      Assert.IsNotNull(FindDeep(_root.transform, "MathCountingTree"), "counting tree");
+      var beads = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathTreeBead", beads);
+      Assert.AreEqual(5, beads.Count, "5 bead-fruit on the tree");
+      int stoneCount = 0;
+      for (int i = 0; i < 5; i++) {
+        if (FindDeep(_root.transform, "MathGardenStone" + i) != null) stoneCount++;
+      }
+      Assert.AreEqual(5, stoneCount, "5 stepping stones");
+      var pips = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathGardenStonePip", pips);
+      Assert.AreEqual(15, pips.Count, "1+2+3+4+5 pips");
+      var carrots = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathCropCarrot", carrots);
+      Assert.AreEqual(3, carrots.Count, "3 carrots");
+      var pumpkins = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathCropPumpkin", pumpkins);
+      Assert.AreEqual(2, pumpkins.Count, "2 pumpkins");
+      var corn = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathCropCorn", corn);
+      Assert.AreEqual(4, corn.Count, "4 corn");
+      var berries = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathCropStrawberry", berries);
+      Assert.AreEqual(5, berries.Count, "5 strawberries");
+    } finally { TearDownMath(); }
+  }
+
+  // J. B1R hub/bridge composition: courtyard rim + host mat, meadow loop
+  // paths + garden inner path, Kenney bridge modules + rail posts, far-bank
+  // stone circle + bead pile. (The hub pot cluster + mouth markers were
+  // removed as clutter in the user round.)
+  [Test] public void P43J_HubBridgeComposition() {
+    SetUpMath();
+    try {
+      var rim = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathRimStone", rim);
+      // B1R6 declutter: 4 larger rim stones on the courtyard diagonals.
+      Assert.AreEqual(4, rim.Count, "courtyard rim stones");
+      Assert.IsNotNull(FindDeep(_root.transform, "MathHostMat"), "host nook mat");
+      var loopPaths = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathPathMeadow", loopPaths);
+      Assert.AreEqual(5, loopPaths.Count, "5 meadow loop segments");
+      Assert.IsNotNull(FindDeep(_root.transform, "MathPathGardenInnerA"), "garden inner path");
+      var modules = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathBridgeModule", modules);
+      Assert.AreEqual(3, modules.Count, "3 Kenney bridge modules");
+      var posts = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathBridgeCountPost", posts);
+      Assert.AreEqual(5, posts.Count, "5 rail posts on the bridge");
+      var stones = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathClearingStone", stones);
+      Assert.AreEqual(5, stones.Count, "5 far-bank stones");
+      var pips = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathClearingPip", pips);
+      Assert.AreEqual(15, pips.Count, "1+2+3+4+5 far-bank pips");
+      var beads = new List<GameObject>();
+      CollectByPrefix(_root.transform, "MathRewardBead", beads);
+      Assert.AreEqual(3, beads.Count, "gold bead reward pile");
+    } finally { TearDownMath(); }
+  }
+
+  // K. MathScene return gate binding (journey P1 regression): SubjectGate's
+  // return branch fires only when nav.Current == target, so a scene return
+  // arch MUST be bound to its SUBJECT id (binding Main trapped the player).
+  [Test] public void P43K_ReturnGateBindsSubject() {
+    GameObject root = new GameObject("P43ReturnGateWorld");
+    try {
+      MathWorldBuilder b = root.AddComponent<MathWorldBuilder>();
+      var bus = new GameEventBus();
+      var nav = new WorldNavService(bus);
+      nav.Enter(SubjectIds.Math);
+      b.Build(nav, null);
+      Transform gateT = FindDeep(root.transform, "MathReturnGate");
+      Assert.IsNotNull(gateT, "return gate built");
+      SubjectGate gate = gateT.GetComponent<SubjectGate>();
+      Assert.IsNotNull(gate);
+      Assert.IsTrue(gate.IsReturnGate, "gate is a return gate");
+      Assert.AreEqual(SubjectIds.Math, gate.Target, "return gate targets the subject id");
+      Assert.IsTrue(gate.TryFireForTests(gateT.position, SubjectIds.Math),
+        "return gate fires when the player is inside Math");
+      Assert.AreEqual(SubjectIds.Main, nav.Current, "return goes to Main");
+    } finally { Object.DestroyImmediate(root); }
+  }
+
+  // G. Kenney props (CC0) ship placed + click-through + off the walking
+  // lines. B1R3: 11 rim trees + 7 nature trees + 25 meadow props = 43
+  // (the +5 are the red/pink accent flowers + mushroom).
   [Test] public void P43G_NaturePlacedAndClear() {
     SetUpMath();
     try {
       var nature = new List<GameObject>();
-      CollectByPrefix(_root.transform, "MathQ", nature);
-      Assert.AreEqual(19, nature.Count, "19 Quaternius placements");
+      CollectByPrefix(_root.transform, "MathProp", nature);
+      Assert.AreEqual(43, nature.Count, "43 Kenney prop placements");
       foreach (GameObject go in nature) {
-        Assert.IsNull(go.GetComponent<Collider>(), go.name + " click-through (FBX carry none)");
+        Assert.IsNull(go.GetComponent<Collider>(), go.name + " click-through (PropKit strips)");
       }
-      // Blender scene furniture must not ship: the 2018 FBX carry author
-      // Camera + Lamp nodes (P41E caught one at |x|=18.7).
+      // Kit FBX must never ship author cameras/lamps (PropKit strips them).
       foreach (GameObject go in nature) {
         Assert.AreEqual(0, go.GetComponentsInChildren<Camera>(true).Length, go.name + " ships no camera");
         Assert.AreEqual(0, go.GetComponentsInChildren<Light>(true).Length, go.name + " ships no lamp");
       }
-      // Walking lines: entry x=0 z[-8,0], garden (0,0)->(-10.5,3),
-      // bridge (0,0)->(10.5,-3), return x=0 z[0,8]. Trees need 1.5m+,
+      // Walking lines (B1R): entry x=0 z[-12,0], garden (0,0)->(-16,5),
+      // bridge (0,0)->(15.5,-5), return x=0 z[0,12]. Trees need 1.5m+,
       // small dressing 1.0m+.
       foreach (GameObject go in nature) {
         Vector3 p = go.transform.localPosition;
         p.y = 0f;
-        float need = go.name.Contains("Tree") ? 1.5f : 1.0f;
-        Assert.GreaterOrEqual(DistToSegment(p, new Vector3(0f, 0f, -8f), new Vector3(0f, 0f, 0f)), need, go.name + " clear of entry");
-        Assert.GreaterOrEqual(DistToSegment(p, new Vector3(0f, 0f, 0f), new Vector3(-10.5f, 0f, 3f)), need, go.name + " clear of garden line");
-        Assert.GreaterOrEqual(DistToSegment(p, new Vector3(0f, 0f, 0f), new Vector3(10.5f, 0f, -3f)), need, go.name + " clear of bridge line");
-        Assert.GreaterOrEqual(DistToSegment(p, new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 8f)), need, go.name + " clear of return");
+        float need = (go.name.Contains("Tree") || go.name.Contains("Pine")) ? 1.5f : 1.0f;
+        Assert.GreaterOrEqual(DistToSegment(p, new Vector3(0f, 0f, -12f), new Vector3(0f, 0f, 0f)), need, go.name + " clear of entry");
+        Assert.GreaterOrEqual(DistToSegment(p, new Vector3(0f, 0f, 0f), new Vector3(-16f, 0f, 5f)), need, go.name + " clear of garden line");
+        Assert.GreaterOrEqual(DistToSegment(p, new Vector3(0f, 0f, 0f), new Vector3(15.5f, 0f, -5f)), need, go.name + " clear of bridge line");
+        Assert.GreaterOrEqual(DistToSegment(p, new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 12f)), need, go.name + " clear of return");
       }
     } finally { TearDownMath(); }
   }

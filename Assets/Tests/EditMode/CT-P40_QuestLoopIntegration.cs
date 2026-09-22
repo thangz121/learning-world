@@ -78,7 +78,7 @@ public class CT_P40_QuestLoopIntegration {
       b.SetActive(false);
     }
     _bloom = bloomRoot.AddComponent<MathBloomDisplay>();
-    _bloom.Build(_bus);
+    _bloom.Build(_bus, _quests); // journey fix: quest service for re-entry adoption
   }
 
   void TearDown() {
@@ -133,6 +133,73 @@ public class CT_P40_QuestLoopIntegration {
       string before = _hud.CurrentObjective;
       _host.OnTalk();
       Assert.AreEqual(before, _hud.CurrentObjective, "post-quest talk is inert");
+    } finally { TearDown(); }
+  }
+
+  // P3.0.1 journey fix pin: a FRESH host after re-entry (never saw
+  // QuestStartedEvent) must still complete the bring — find-done is quest
+  // state, not presenter event history.
+  [Test] public void P40E_ReentryHostCompletesBringStateDriven() {
+    SetUp();
+    try {
+      _host.OnFirstTalk();          // quest starts on the first-visit host
+      _cube.Interact();             // find advances to index 1
+      GameObject reentryGo = NewGo("P40ReentryTess");
+      MathHostPresenter host2 = reentryGo.AddComponent<MathHostPresenter>();
+      host2.Bind(_bus, _quests, _hints); // fresh subscriber: no QuestStarted seen
+      host2.TryProximityBring(host2.transform.position);
+      Assert.IsTrue(_quests.GetState(new QuestId("math_counting")).Completed,
+        "bring completes on a fresh mid-quest re-entry host");
+    } finally { TearDown(); }
+  }
+
+  // P3.0.1 journey fix pin: a fresh bloom consumer on re-entry adopts an
+  // already-completed quest (the reward visual survives the second visit).
+  [Test] public void P40F_ReentryBloomAdoptsCompletedQuest() {
+    SetUp();
+    try {
+      _host.OnFirstTalk();
+      _cube.Interact();
+      _host.TryProximityBring(_host.transform.position);
+      Assert.IsTrue(_quests.GetState(new QuestId("math_counting")).Completed);
+      GameObject bloomRoot = NewGo("P40ReentryBloomRoot");
+      for (int i = 0; i < 3; i++) {
+        GameObject b = new GameObject("P40ReentryBloom" + i);
+        b.transform.SetParent(bloomRoot.transform, false);
+        b.SetActive(false);
+      }
+      MathBloomDisplay bloom2 = bloomRoot.AddComponent<MathBloomDisplay>();
+      bloom2.Build(_bus, _quests); // fresh scene load, event long gone
+      Assert.IsTrue(bloom2.BloomShown, "bloom adopts the completed quest");
+      for (int i = 0; i < bloomRoot.transform.childCount; i++) {
+        Assert.IsTrue(bloomRoot.transform.GetChild(i).gameObject.activeSelf,
+          "blooms visible on re-entry");
+      }
+    } finally { TearDown(); }
+  }
+
+  // P3.0.1 journey fix pin: a fresh carry on re-entry after completion must
+  // adopt Consumed (world cube + hand token stay hidden — the reward state
+  // must not regress).
+  [Test] public void P40G_ReentryCarryAdoptsConsumed() {
+    SetUp();
+    try {
+      _host.OnFirstTalk();
+      _cube.Interact();
+      _host.TryProximityBring(_host.transform.position);
+      Assert.IsTrue(_quests.GetState(new QuestId("math_counting")).Completed);
+      GameObject carryGo2 = NewGo("P40ReentryCarry");
+      MathTokenCarry carry2 = carryGo2.AddComponent<MathTokenCarry>();
+      GameObject cube2 = NewGo("P40ReentryCube");
+      Interactable inter2 = cube2.AddComponent<Interactable>();
+      inter2.wordId = "one";
+      inter2.ParseIds();
+      inter2.Bind(_bus);
+      GameObject hand2 = NewGo("P40ReentryHand");
+      carry2.Build(_bus, _quests, inter2, hand2.transform);
+      Assert.AreEqual(MathTokenState.Consumed, carry2.State, "re-entry adopts Consumed");
+      Assert.IsFalse(cube2.activeSelf, "world cube stays hidden after completion");
+      Assert.IsFalse(carry2.IsTokenShown, "hand token stays hidden");
     } finally { TearDown(); }
   }
 

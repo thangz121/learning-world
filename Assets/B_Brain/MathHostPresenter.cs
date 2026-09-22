@@ -134,10 +134,14 @@ public sealed class MathHostPresenter : MonoBehaviour, IClickTarget {
     CompleteBring();
   }
 
-  // Find-done = quest started, find objective (index 0) advanced, quest not
-  // yet completed. Bring objective sits at index 1 (mirrors the JSON order).
+  // Find-done = find objective (index 0) advanced, quest not yet completed.
+  // B1-journey fix (P1): this MUST be quest-state driven, not presenter-event
+  // driven — on re-entry mid-quest the presenter is a fresh instance that
+  // never saw QuestStartedEvent, so the old `_questStarted` gate made the
+  // bring objective impossible to complete after leaving/returning to Math.
+  // Index >= 1 already implies the quest started (default state is index 0).
   bool IsFindDone() {
-    if (!_questStarted || _quests == null) return false;
+    if (_quests == null) return false;
     try {
       QuestState s = _quests.GetState(_activeQuest);
       return !s.Completed && s.ObjectiveIndex >= 1;
@@ -147,9 +151,10 @@ public sealed class MathHostPresenter : MonoBehaviour, IClickTarget {
   // Shared bring completion (click path + proximity path stay identical, Mia
   // pattern): explicit ReportAction is the ONLY path that advances bring.
   void CompleteBring() {
-    if (!_questStarted || _quests == null) return;
+    if (_quests == null) return;
     try {
-      if (_quests.GetState(_activeQuest).Completed) return;
+      QuestState s = _quests.GetState(_activeQuest);
+      if (s == null || s.Completed || s.ObjectiveIndex < 1) return;
       _quests.ReportAction(PlayerAction.Bring, OneWord);
       Wave();
       // Golden §11: bring received reads on the face + body (Mia pattern).

@@ -207,7 +207,7 @@ public class GameInstaller : MonoBehaviour {
       try {
         if (builder.BloomRoot != null) {
           MathBloomDisplay bloom = builder.BloomRoot.gameObject.AddComponent<MathBloomDisplay>();
-          bloom.Build(EventBus);
+          bloom.Build(EventBus, Quests); // journey fix: adopt a completed quest on re-entry
         }
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Math bloom wiring failed: " + e.Message, this);

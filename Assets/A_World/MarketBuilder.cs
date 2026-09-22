@@ -1491,6 +1491,14 @@ public class MarketBuilder : MonoBehaviour {
       MoveToCore(core.transform, Cursor != null ? Cursor.gameObject : null);
       MoveToCore(core.transform, transform.Find("DestinationMarker"));
       MoveToCore(core.transform, transform.Find("EventSystem"));
+      // P3.0.1 journey fix (P1): keeping the Main NavMeshSurface under this
+      // root meant DeactivateMainPresentation() hit NavMeshSurface.OnDisable
+      // -> RemoveData(): the Main navmesh vanished while in a subject, so the
+      // return warp's SamplePosition found nothing and "Return warp failed;
+      // player stays" left the child stranded at Math coordinates. The
+      // navmesh is a persistent core service (like Player/Camera/HUD) — it
+      // lives in PersistentCore now and survives subject travel.
+      MoveToCore(core.transform, transform.Find("NavMesh"));
     } catch (System.Exception e) { Debug.LogWarning("[MarketBuilder] BuildPersistentCore failed: " + e.Message, this); }
   }
 

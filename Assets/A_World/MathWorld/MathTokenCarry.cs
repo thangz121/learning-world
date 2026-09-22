@@ -57,11 +57,18 @@ public class MathTokenCarry : MonoBehaviour {
       _subs.Add(_bus.Subscribe<QuestStartedEvent>(OnQuestStarted));
       _subs.Add(_bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted));
     } catch (Exception) { }
-    // Re-entry resume: fresh scene, resumed bring — adopt Carried immediately
-    // (no StartedEvent replay exists for a fresh subscriber).
+    // Re-entry resume: fresh scene adopts the live quest state (no event
+    // replay exists for a fresh subscriber). Both mid-quest (Carried) and
+    // completed (Consumed) must be honored — journey evidence: without the
+    // Completed branch the reward cube reappeared after completion.
     try {
       QuestState s = _quests.GetState(MathQuest);
-      if (s != null && !s.Completed && s.ObjectiveIndex >= 1) {
+      if (s != null && s.Completed) {
+        _started = true;
+        State = MathTokenState.Consumed;
+        if (_worldCube != null) _worldCube.gameObject.SetActive(false);
+        if (_handToken != null) _handToken.SetActive(false);
+      } else if (s != null && s.ObjectiveIndex >= 1) {
         _started = true;
         SetCarried();
       }

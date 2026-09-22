@@ -35,6 +35,8 @@ public class MarketBootstrap : MonoBehaviour {
   ISceneOps _sceneOps;
   bool _travelLock;
   Vector3 _mainReturnPos;
+  Vector3 _mainReturnGate;      // gate of the subject being entered (journey fix)
+  Vector3 _mainReturnOut;       // gate -> hub direction (safe re-entry landing)
   string _activeSubjectScene;
   GameObject _miloGo;
   GameObject _miaGo;
@@ -564,6 +566,15 @@ public class MarketBootstrap : MonoBehaviour {
     try {
       if (_builder == null || _builder.Player == null || _worldTransition == null || _sceneOps == null) return;
       _mainReturnPos = _builder.Player.transform.position;
+      // P3.0.1 journey fix (P1): remember the gate so the return warp can
+      // land OUTSIDE its fire radius. Warping back onto the cached position
+      // (often right on the gate mouth) left SubjectGate._wasInside latched
+      // true from the first entry, so the gate could never re-fire and the
+      // child could not re-enter Math without first walking away and back.
+      _mainReturnGate = to.GatePos;
+      Vector3 toHub = SubjectCatalog.HubCenter - to.GatePos;
+      toHub.y = 0f;
+      _mainReturnOut = toHub.sqrMagnitude > 0.001f ? toHub.normalized : new Vector3(0f, 0f, 1f);
       // Phase 3.0.x S3: cache the Main objective for the scene return path
       // (the spatial branch caches on entry; without this the unload restore
       // in ReturnFromSubjectCoreAsync falls back to "Look around!" and the hub
@@ -574,9 +585,10 @@ public class MarketBootstrap : MonoBehaviour {
       try { _builder.Player.Stop(); } catch (System.Exception) { }
       if (_builder.Router != null) { try { _builder.Router.enabled = false; } catch (System.Exception) { } }
       if (_hud != null) { try { _hud.ShowObjective("Entering " + to.DisplayName + "…"); } catch (System.Exception) { } }
-      // S3A transition cover (SceneBridge ADAPTED): fade to black BEFORE the
-      // load so the child never sees a half-built world pop in.
-      await FadeCoverAsync(1f, 0.35f);
+      // B1R3 math tunnel (user round): bead rings + number/symbol glyphs rush
+      // past while the world loads — the transition itself reads "Math".
+      if (_hud != null) { try { _hud.PlayTunnel(); } catch (System.Exception) { } }
+      await System.Threading.Tasks.Task.Delay(120);
       bool entered = false;
       try { entered = await _worldTransition.EnterAsync(_sceneOps, to.Id, to.SceneName); }
       catch (System.Exception e) { Debug.LogWarning("[MarketBootstrap] Enter failed: " + e.Message, this); }
@@ -592,8 +604,8 @@ public class MarketBootstrap : MonoBehaviour {
           Debug.LogWarning("[MarketBootstrap] Enter " + to.SceneName + " failed"
             + (string.IsNullOrEmpty(reason) ? " (entry missing)." : ": " + reason), this);
         } catch (System.Exception) { }
-        // Nothing switched yet: lift the entry cover, clean up, restore HUD.
-        await FadeCoverAsync(0f, 0.25f);
+        // Nothing switched yet: close the tunnel, clean up, restore HUD.
+        if (_hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
         await ReturnFromSubjectCoreAsync(false);
         if (_hud != null) {
           try {
@@ -617,7 +629,7 @@ public class MarketBootstrap : MonoBehaviour {
       if (!warped) {
         try { Debug.LogWarning("[MarketBootstrap] Enter " + to.SceneName + " warp failed; staying Main.", this); }
         catch (System.Exception) { }
-        await FadeCoverAsync(0f, 0.25f);
+        if (_hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
         await ReturnFromSubjectCoreAsync(false);
         if (_hud != null) {
           try {
@@ -628,23 +640,20 @@ public class MarketBootstrap : MonoBehaviour {
         return;
       }
       if (_builder.WorldCamera != null) {
-        try { _builder.WorldCamera.Follow(_builder.Player.transform, _builder.WorldCamera.defaultOffset); }
+        // B1R3: Math spawns with a higher, wider follow framing (user round).
+        Vector3 spawnOffset = (to.Id == SubjectIds.Math)
+          ? MathWorldBuilder.FollowOffset : _builder.WorldCamera.defaultOffset;
+        try { _builder.WorldCamera.Follow(_builder.Player.transform, spawnOffset); }
         catch (System.Exception) { }
       }
-      // 3.0.1.1 arrival beat (S5 journey: the warp-in stared at the empty
-      // north fence — the lobby/Tess sat behind the camera): frame the host
-      // for 2s like the spatial gate beats, then Follow resumes by itself.
+      // B1R3 arrival beat (user round): frame the world-name column first
+      // ("this is the Math world"), then the camera returns to the character
+      // by itself (FramePointFor auto-resumes Follow).
       if (to.Id == SubjectIds.Math && _builder.WorldCamera != null) {
         try {
-          Vector3 entryW = MathWorldBuilder.EntryWorldPos;
-          Vector3 hostW = MathWorldBuilder.HostWorldPos;
-          Vector3 outDir = entryW - hostW;
-          outDir.y = 0f;
-          if (outDir.sqrMagnitude < 0.001f) outDir = new Vector3(0f, 0f, -1f);
-          outDir.Normalize();
-          Vector3 lateral = new Vector3(outDir.z, 0f, -outDir.x);
-          Vector3 camPos = entryW + outDir * 3.2f + lateral * 2.4f + new Vector3(0f, 2.6f, 0f);
-          _builder.WorldCamera.FramePointFor(camPos, hostW + new Vector3(0f, 1.0f, 0f), 2.0f);
+          Vector3 signW = MathWorldBuilder.SignWorldPos;
+          Vector3 camPos = signW + new Vector3(-2.6f, 1.7f, 4.8f);
+          _builder.WorldCamera.FramePointFor(camPos, signW + new Vector3(0f, 1.7f, 0f), 2.2f);
         } catch (System.Exception) { }
       }
       if (_hud != null) { try { _hud.ShowObjective(to.DisplayName + " World"); } catch (System.Exception) { } }
@@ -654,13 +663,13 @@ public class MarketBootstrap : MonoBehaviour {
       // the warp + camera + HUD are all in place (never half-switched).
       try { Debug.Log("[MarketBootstrap] Entered " + to.SceneName + " (loader InSubject).", this); }
       catch (System.Exception) { }
-      await FadeCoverAsync(0f, 0.35f);
+      if (_hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
     } catch (System.Exception e) {
-      // Fail-safe: an unexpected throw must never strand the child behind a
-      // black cover (or a dead travel lock — finally below still runs).
+      // Fail-safe: an unexpected throw must never strand the child inside a
+      // tunnel (or a dead travel lock — finally below still runs).
       try { Debug.LogWarning("[MarketBootstrap] Travel crashed: " + e.Message, this); }
       catch (System.Exception) { }
-      try { await FadeCoverAsync(0f, 0.2f); } catch (System.Exception) { }
+      if (_hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
     } finally { _travelLock = false; }
   }
 
@@ -705,14 +714,32 @@ public class MarketBootstrap : MonoBehaviour {
   // yet — they only lift the entry cover).
   async System.Threading.Tasks.Task ReturnFromSubjectCoreAsync(bool withFade) {
     try {
-      if (withFade) await FadeCoverAsync(1f, 0.35f);
+      // B1R3: same math tunnel covers the way home (symmetric transition).
+      if (withFade) {
+        if (_hud != null) { try { _hud.PlayTunnel(); } catch (System.Exception) { } }
+        await System.Threading.Tasks.Task.Delay(120);
+      }
       if (_builder != null && _builder.Player != null) {
         try { _builder.Player.Stop(); } catch (System.Exception) { }
+        // Journey fix: never land inside the entry gate's fire radius (that
+        // latches SubjectGate._wasInside and blocks re-entry). If the cached
+        // spot sits within 2.2m of the gate, land 3m hub-side instead.
+        Vector3 target = _mainReturnPos;
+        Vector3 flat = new Vector3(target.x, 0f, target.z);
+        Vector3 gateFlat = new Vector3(_mainReturnGate.x, 0f, _mainReturnGate.z);
+        if (Vector3.Distance(flat, gateFlat) < 2.2f) {
+          Vector3 outDir = _mainReturnOut.sqrMagnitude > 0.001f
+            ? _mainReturnOut : new Vector3(0f, 0f, 1f);
+          target = _mainReturnGate + outDir * 3.0f;
+        }
         bool back = false;
-        try { back = _builder.Player.WarpTo(_mainReturnPos); } catch (System.Exception) { }
+        try { back = _builder.Player.WarpTo(target); } catch (System.Exception) { }
         if (!back) { try { back = _builder.Player.WarpTo(MarketBuilder.PlayerSpawn); } catch (System.Exception) { } }
         if (!back) {
           try { Debug.LogWarning("[MarketBootstrap] Return warp failed; player stays.", this); }
+          catch (System.Exception) { }
+        } else {
+          try { Debug.Log("[MarketBootstrap] Return warp -> " + target.ToString("F1"), this); }
           catch (System.Exception) { }
         }
       }
@@ -745,14 +772,14 @@ public class MarketBootstrap : MonoBehaviour {
       if (_builder != null && _builder.Router != null) {
         try { _builder.Router.enabled = true; } catch (System.Exception) { }
       }
-      // S3A: lift the cover AFTER the world is switched back and HUD/camera
-      // restored (the child never sees half-restored state).
-      if (withFade) await FadeCoverAsync(0f, 0.35f);
+      // B1R3: close the tunnel AFTER the world is switched back and
+      // HUD/camera restored (the child never sees half-restored state).
+      if (withFade && _hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
     } catch (System.Exception e) {
       try { Debug.LogWarning("[MarketBootstrap] Return cleanup failed: " + e.Message, this); }
       catch (System.Exception) { }
-      // Fail-safe: never strand the child behind a black cover.
-      try { await FadeCoverAsync(0f, 0.2f); } catch (System.Exception) { }
+      // Fail-safe: never strand the child inside the tunnel.
+      if (_hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
     }
   }
 

@@ -56,6 +56,38 @@ public class CT_P38_TransitionCover {
     } finally { Object.DestroyImmediate(go); }
   }
 
+  // B1R3 math tunnel: bead-ring + number-glyph overlay on its own canvas,
+  // click-through, above setup dialogs (50/70) and below the cursor (100).
+  [Test] public void P38D_MathTunnelStructure() {
+    GameObject go;
+    MarketHUD hud = NewHud(out go);
+    try {
+      Assert.IsTrue(hud.HasTunnel, "HUD must build the math tunnel");
+      Transform tunnel = go.transform.Find("MathTunnelCanvas");
+      Assert.IsNotNull(tunnel, "tunnel lives on its own canvas");
+      Canvas canvas = tunnel.GetComponent<Canvas>();
+      Assert.IsNotNull(canvas);
+      Assert.AreEqual(80, canvas.sortingOrder, "above dialogs (50/70), below cursor (100)");
+      Assert.IsNull(tunnel.GetComponent<GraphicRaycaster>(), "tunnel never eats clicks");
+      Assert.IsNotNull(tunnel.GetComponent<CanvasGroup>());
+      Assert.AreEqual(6, CountChildren(tunnel, "TunnelRing"), "6 bead rings");
+      Assert.AreEqual(16, CountChildren(tunnel, "TunnelSym"), "16 number/symbol glyphs");
+      Assert.IsFalse(tunnel.gameObject.activeSelf, "tunnel starts hidden");
+      Assert.AreEqual(0f, hud.TunnelAlpha, 0.001f, "alpha starts 0");
+      hud.PlayTunnel();
+      Assert.IsTrue(tunnel.gameObject.activeSelf, "PlayTunnel shows the overlay");
+      hud.StopTunnel(); // must not throw; fade-out is Update-driven
+    } finally { Object.DestroyImmediate(go); }
+  }
+
+  static int CountChildren(Transform t, string prefix) {
+    int n = 0;
+    for (int i = 0; i < t.childCount; i++) {
+      if (t.GetChild(i).name.StartsWith(prefix)) n++;
+    }
+    return n;
+  }
+
   [Test] public void P38C_ApiSurvivesHudTeardown() {
     // Unload edge: Bootstrap may touch the HUD after teardown — the API must
     // degrade silently, never throw (Awake always builds, so "before build"

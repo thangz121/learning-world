@@ -138,12 +138,16 @@ public class DependencySetupDialog : MonoBehaviour {
     dimGo.transform.SetParent(_root.transform, false);
     Image dim = dimGo.AddComponent<Image>();
     dim.color = new Color(0f, 0f, 0f, 0.55f);
+    // B1R2: startup prompts must never swallow world clicks (see MicSetupDialog).
+    dim.raycastTarget = false;
     Stretch(dimGo);
 
     _panel = new GameObject("Panel");
     _panel.transform.SetParent(_root.transform, false);
     Image card = _panel.AddComponent<Image>();
     card.color = new Color(1f, 0.97f, 0.90f, 1f);
+    // P3.0.1 journey fix: card graphics must not swallow world clicks.
+    card.raycastTarget = false;
     RectTransform rt = _panel.GetComponent<RectTransform>();
     rt.anchorMin = new Vector2(0.5f, 0.5f);
     rt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -189,6 +193,7 @@ public class DependencySetupDialog : MonoBehaviour {
     t.fontSize = size;
     t.color = color;
     t.alignment = align;
+    t.raycastTarget = false; // P3.0.1 journey fix: text never eats world clicks
     if (overflow) t.verticalOverflow = VerticalWrapMode.Overflow;
     return t;
   }

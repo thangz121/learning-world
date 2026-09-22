@@ -183,6 +183,11 @@ public class MicSetupDialog : MonoBehaviour {
     dimGo.transform.SetParent(_root.transform, false);
     Image dim = dimGo.AddComponent<Image>();
     dim.color = new Color(0f, 0f, 0f, 0.55f);
+    // B1R2 (user round: "click chuột thì player không di chuyển"): the startup
+    // offer's fullscreen Dim swallowed EVERY world click while shown. The
+    // panel stays visible and its buttons stay interactive; the dim no longer
+    // eats gameplay taps, so a child can never be trapped by a setup prompt.
+    dim.raycastTarget = false;
     Stretch(dimGo);
 
     GameObject offerSkip;
@@ -221,6 +226,12 @@ public class MicSetupDialog : MonoBehaviour {
     panelGo.transform.SetParent(_root.transform, false);
     Image panel = panelGo.AddComponent<Image>();
     panel.color = new Color(1f, 0.97f, 0.90f, 1f);
+    // P3.0.1 journey bug (P1): this startup panel is 640x460 and its graphics
+    // are raycast targets — while it was open, every world click landing on
+    // the card (right half of the screen) was swallowed by the UI and the
+    // child could not walk (REAL journey: stuck on "Find the one"). The card
+    // is click-through now; only the BUTTONS capture clicks.
+    panel.raycastTarget = false;
     RectTransform rt = panelGo.GetComponent<RectTransform>();
     rt.anchorMin = new Vector2(0.5f, 0.5f);
     rt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -236,6 +247,7 @@ public class MicSetupDialog : MonoBehaviour {
     titleT.color = new Color(0.35f, 0.22f, 0.12f);
     titleT.alignment = TextAnchor.MiddleCenter;
     titleT.text = title;
+    titleT.raycastTarget = false;
     Place(titleGo, 0f, 1f, 1f, 1f, 24f, -88f, -24f, -24f);
 
     GameObject bodyGo = new GameObject("Body");
@@ -247,6 +259,7 @@ public class MicSetupDialog : MonoBehaviour {
     bodyT.alignment = TextAnchor.UpperLeft;
     bodyT.verticalOverflow = VerticalWrapMode.Overflow;
     bodyT.text = body;
+    bodyT.raycastTarget = false;
     Place(bodyGo, 0f, 1f, 1f, 1f, 40f, -330f, -40f, -104f);
 
     float statusH = statusOut != null ? 44f : 0f;
@@ -260,6 +273,7 @@ public class MicSetupDialog : MonoBehaviour {
       st.color = new Color(0.15f, 0.35f, 0.15f);
       st.alignment = TextAnchor.MiddleCenter;
       st.text = StatusWaiting;
+      st.raycastTarget = false;
       Place(stGo, 0f, 0f, 1f, 0f, 24f, 118f, -24f, 118f + statusH);
       statusOut(st);
     }
@@ -292,6 +306,7 @@ public class MicSetupDialog : MonoBehaviour {
     l.color = Color.white;
     l.alignment = TextAnchor.MiddleCenter;
     l.text = label;
+    l.raycastTarget = false; // the button IMAGE is the single click target
     Stretch(lGo);
     return go;
   }

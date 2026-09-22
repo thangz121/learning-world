@@ -726,3 +726,223 @@ Quyáº¿t Ä‘á»‹nh kiáº¿n trÃºc (tá»« audit, EXTEND khÃ´ng REWRITE):
   (UTP success:true, DLL tÆ°Æ¡i 17:08). Game cÅ© user Ä‘Ã£ táº¯t sáº¡ch (Player.log
   shutdown Ä‘áº¹p, khÃ´ng crash). KhÃ´ng boot (chá» user má»Ÿ P36 tá»± check).
   KhÃ´ng commit (chá» lá»‡nh).
+
+## 28. P3.0.1.1 DEEP AUDIT + BATCH 1 COMPOSITION (2026-09-21, mÃ¡y nhÃ )
+
+- Lá»‡nh user: cháº¡y láº¡i brief P3.0.1.1 (deep audit + redesign + hardening)
+  TRÃŠN Báº¢N Má»šI (sau khi user nhá»› ra chÆ°a pull â€” Ä‘Ã£ pull ff d8c4d06â†’15ad8bb
+  + tag 3.0.0.1, 4 commit hub+P3.0.1+P3.0.2). Docs viáº¿t láº¡i 100% theo cÃ¢y
+  tháº­t (báº£n cÅ© viáº¿t trÃªn P3.0.0 Ä‘Ã£ bá»).
+- STAGE A/B/C (docs, chÆ°a commit):
+  `docs/MATH_WORLD_DESIGN_AUDIT.md` (15 findings F1-F15: pad-as-zone, thiáº¿u
+  landmark, thiáº¿u spatial grammar, garden khÃ´ng pháº£i garden, bridge khÃ´ng
+  pháº£i bridge, host nook trá»‘ng, reward off-screen, learning 1 tá»«, dead Math
+  district trong MarketScene F9, Math-branch trong shared travel F10, vÃ nh
+  hedge há»Ÿ 4.9m F11, return MathScene thiáº¿u nhÃ£n "Vá»" F13, budget chÆ°a Ä‘o
+  F14, test chÆ°a pin composition F15),
+  `docs/MATH_WORLD_REDESIGN.md` (grammar v2 + layout cá»¥ thá»ƒ + batch plan +
+  decision points),
+  `docs/MATH_WORLD_REUSE_MATRIX.md` (promotion rules + hardening queue).
+- STAGE D â€” BATCH 1 (world composition, gameplay khÃ´ng Ä‘á»¥ng):
+  MathWorldBuilder: courtyard sand + rim + planters + 6 mouth markers; host
+  nook (mat/planters/basket, backdrop bush dá»i sau Tess); Counting Frame
+  5 rodsÃ—3 beads cao 2.0m; entry arch 5 beads; garden: fence 2 cá»­a + gate
+  arch + 2 beds má»›i + crops Ä‘áº¿m Ä‘Æ°á»£c 3/2/4/5 + counting tree 5 bead-fruit +
+  5 stepping stones pips 1..5 + giant sunflower; brook: banks/reeds/lilies +
+  stringers/posts + bead garland; clearing bá» báº¯c: 5 stones pips 1..5 + bead
+  pile; loop path meadow 5 Ä‘oáº¡n + garden inner path; vÃ nh rim thÃªm 8 bá»¥i +
+  4 backdrop tree; carves nhá»‘t nÆ°á»›c trá»« corridor deck 1.8m; return "Vá»".
+  Pin cáº­p nháº­t cÃ³ chá»§ Ä‘Ã­ch: P43B 3â†’5 beads; P42C cap 320â†’400 (Ä‘o tháº­t);
+  thÃªm P43H/I/J (label, garden plot, hub/bridge composition). Lesson cÅ© giá»¯:
+  beam ngang pháº£i ignoreFromBuild (garden gate + bridge garland).
+- Evidence (batch, khÃ´ng foreground): baseline 526/521/0/5 + census 176 â†’
+  B1 suite **529/524/0/5** + census **373** (<400) â†’ build release 3 scenes
+  **Succeeded** 108,488,772 bytes â†’ boot headless **FACE_OK 0 exception**.
+  Temp tooling (TempMathCensus/TempBuild) Ä‘Ã£ xÃ³a sáº¡ch (Assets/Editor/ gá»¡).
+  Artifacts: `Temp/opencode/p311b-*`; build review:
+  `Temp/opencode/p311b-B1Build/LWE.exe`.
+- STAGE E â€” CHá»œ USER REVIEW (máº¯t): checklist trong
+  `docs/MATH_WORLD_VISUAL_QA.md` Â§3 (arrival/hub/garden/bridge/loop/quest
+  regression). ChÆ°a lÃ m Batch 2-5 (host staging + camera beats + arrival
+  audio; counting activity + content sidecar 1-5; reward visibility;
+  hardening F9/F10/F12; visual QA cuá»‘i).
+- KhÃ´ng commit (chá» lá»‡nh).
+
+## 29. P3.0.1.1 B1R — USER ROUND: CÂY BAY / CLUTTER / SCALE / KENNEY ASSETS (2026-09-21)
+
+- User m? build B1 (?nh): (1) cây c?m trên không trung ngoài mép d?o; (2) quá
+  nhi?u kh?i g? ? trung tâm sân; (3) sân quá bé; (4) tìm GitHub repo h?u ích
+  và thêm vào; (5) làm d?p + g?n, du?c phép s?p x?p l?i/thay UI.
+- GitHub-first (ADAPT/REUSE, không dep m?i): kenney mirrors (shorepine/kenney,
+  ETdoFresh, dreamengine manifest) ch? có GLB/thi?u food ? dùng ZIP CHÍNH TH?C
+  kenney.nl: Food Kit + Nature Kit (CC0 1.0). Quaternius Crops qua Google Drive
+  (gdown) b? Drive throttle/timeout ? b? (có log, không treo ti?n trình);
+  partial dã xóa. 58 FBX copy vào `Assets/A_World/Resources/PropKit/` +
+  colormap.png; provenance `Assets/Documentation/ENVIRONMENT_ASSET_SOURCES.md`
+  §L. Loader m?i `A_World/PropKit.cs`: harmonize màu theo TÊN material
+  (leafsGreen/grass?green d? án, wood/bark?brown, stone?grey; colormap gi?
+  texture), strip collider, ignoreFromBuild cho bridge module, deterministic.
+- MathWorldBuilder B1R (rewrite layout): d?o r19?r26 (52m) + skirt t?i; m?i
+  object n?m trong r25 (h?t cây/dá bay ngoài void); rim = 20 hedge + 11 Kenney
+  tree + backdrop blob TRONG d?o; hub d?n h?n (b? 4 ch?u, 6 mouth stone, 20
+  number-row pad + pips; Counting Frame d?i (-5.2,-3.2)); Tess nook ch? mat +
+  2 Kenney flower + basket; garden (-16,5) r6.5 = Kenney fence 1m + fence_gate
+  + 4 beds crops th?t (3 carrot/2 pumpkin/4 corn/5 strawberry) + counting tree
+  + 5 stepping stones (path_stoneCircle) + pips 1..5; bridge (15.5,-5) = 3
+  Kenney bridge module (ignoreFromBuild) trên deck walkable + rail posts +
+  banks/lilies + carves nu?c; clearing b? b?c (15.5,-8.5) 5 stones + bead pile;
+  meadow loop 5 do?n + garden inner 4 do?n; entry z=-12, return z=+12 (nhãn
+  V?); bounds 27x27. Quaternius Math trees (white-canopy) b? kh?i Math.
+- Test pins c?p nh?t: P41D/E (r25.5, corridor z=-12), P42A prefixes m?i,
+  P42B samples 15 di?m (spokes + loop + inner), P42C cap 400 (census th?t 311),
+  P43D (number row ? garden stones), P43G (38 MathProp), P43I (Kenney fence/
+  crops), P43J (bridge modules; b? mouth).
+- Verify (batch, log d?y d?): EditMode **529/524/0/5**; census **311**
+  transforms; build release **Succeeded** 109,358,564 bytes (22:49); boot
+  headless **FACE_OK 0 exception**. Temp tooling (TempPropInspect/
+  TempMathCensus/TempBuild) dã xóa s?ch. Build review:
+  `Temp/opencode/p311b-B1RBuild/LWE.exe`.
+- CH? USER REVIEW M?T (Stage E). Chua commit (ch? l?nh).
+
+## 30. P3.0.1.1 B1R2 — ROOT CAUSE CLICK + FLOATING + MATH IDENTITY (2026-09-21)
+
+- User round 2 (?nh): cây v?n ? rìa/ngoài d?o; click chu?t không di chuy?n;
+  chua có ch?t "sân choi toán".
+- Ch?n doán b?ng runtime self-test t? d?ng (temp, có log, dã xóa): phát hi?n
+  3 bug TH?T:
+  (1) MathGround là CYLINDER scale 26 = bán kính 13m (primitive radius 0.5)
+  + collider capsule scale méo thành kh?i c?u kh?ng l? ? ray click tru?t
+  ngoài ~13m (player không di), NavMesh không t?i garden/bridge (r16-24),
+  cây/hedge d?ng ngoài mép c?. FIX: ground = Plane 5.2 (52x52m, MeshCollider
+  ph?ng nhu Main); Pad strip collider (cylinder pad scale 11 = c?u bán kính
+  5.5); MathOuterField 300m strip + ignoreFromBuild. Self-test: far move t?i
+  garden PathComplete; clickRay hit MathGround.
+  (2) Dim c?a mic offer (Phase 2.1) nu?t M?I click world khi panel m?
+  ([ClickSpy] overUi=True hits=Title|OfferPanel|Dim@50) ? tr? b? k?t không
+  di du?c. FIX: MicSetupDialog + DependencySetupDialog Dim raycastTarget=false
+  (panel + nút v?n b?m du?c, world không còn b? ch?n).
+  (3) Vành dai: hedge r24 + tree line r22 n?m TRÊN c? th?t (không còn float).
+- Math identity B1R2: domino 1..6 hai bên tr?c entry, Number Tower 5 kh?i
+  3.5m, d?u + / - ngoài sân dông, pips d?m ? m?t tru?c t?ng bed, bridge rail
+  d?i g?.
+- Verify: EditMode **529/524/0/5**; build **Succeeded** (World.dll 23:32);
+  boot headless **FACE_OK 0 exception**. Temp tooling (self-test/spy/build)
+  xóa s?ch; asmdef Bootstrap revert (không thêm Unity.InputSystem).
+  Build review: `Temp/opencode/p311b-B1R2Test/LWE.exe`.
+- CH? USER REVIEW M?T. Chua commit (ch? l?nh).
+
+## 31. P3.0.1.1 B1R3 — POLISH ROUND (tunnel/sky/red-pink/c?t/camera) (2026-09-21)
+
+- User round 3 (5 vi?c): (1) transition hub?Math thành "du?ng h?m không gian
+  d?m ch?t toán"; (2) thêm d?/h?ng (dang quá vàng/xanh); (3a) ngoài sân thành
+  b?u tr?i/m? t?m m?t; (3b) c?t ghi tên world ? góc sân ? spawn focus c?t r?i
+  v? nhân v?t; (4) camera spawn cao hon.
+- Code:
+  (1) MarketHUD + math tunnel: canvas riêng order 80, 6 vòng h?t
+  (gold/blue/pink) phóng ra + 16 glyph (1-9, + - =, ?, ?) trôi; PlayTunnel/
+  StopTunnel; Bootstrap dùng cho c? enter + return (thay fade den); CT-P38D pin.
+  (2) Ğ?/h?ng: bunting c? tam giác qua sân, hoa h?ng/d? + n?m d?, Number Tower
+  + Counting Frame + entry beads cycle gold/blue/pink.
+  (3a) BuildGround: d?o bay — vành d?t du?i c? (MathSkyRim), bi?n mây y=-14
+  (MathSkyCloudSea), 9 mây quanh vành + 3 mây cao; t?t c? ignoreFromBuild +
+  collider-free.
+  (3b) MathWorldSignPost/Board + label "Toán" + 3 h?t t?i entry plaza
+  (SignWorldPos); arrival beat frame c?t 2.2s r?i FramePointFor t? v? Follow
+  nhân v?t.
+  (4) MathWorldBuilder.FollowOffset (0,4.6,6.4) cho spawn Math (Main/hub gi?
+  nguyên offset).
+- Test pins: P41D/E (sky skip prefix + sign), P42A (bunting/sign beads),
+  P42C cap 400?440 (do th?t 400), P43G 38?43 MathProp, +P38D tunnel structure.
+- Verify: EditMode **530/525/0/5** ? build **Succeeded** (World.dll 23:53) ?
+  boot headless **FACE_OK 0 exception**. Temp tooling xóa s?ch. Build review:
+  `Temp/opencode/p311b-B1R3Build/LWE.exe`.
+- Chua commit (ch? l?nh).
+
+## 32. P3.0.1.1 B1R4 — SMOOTHNESS ROUND (disco/bunting/tunnel) (2026-09-22)
+
+- User round 4 (?nh): (1) chuy?n c?nh ok nhung dài; (2) chuy?n c?nh v? ?nh,
+  không mu?t; (3) sân Math nh?p nháy nhu sàn disco khi player di chuy?n.
+- Root cause + fix:
+  (1)+(3) MathSkyRim (vành d?o) top dúng y=0 — coplanar v?i m?t c? ? z-fight
+  nâu/xanh nh?p nháy khi camera di chuy?n. Fix: rim t?t 15cm du?i c?
+  (y=-1.55, cao 2.8) ? mép d?o s?ch, h?t fight.
+  (2) Dây bunting: LookRotation align +Z theo span nhung length l?i ghi vào X
+  ? dây thành thanh ngang l?c, c? nhu kim cuong bay r?i. Fix: length sang Z.
+  Tunnel: sprite vòng 256px anti-alias (h?t v? khi upscale), glyph ch? dùng
+  kı t? LegacyRuntime có (1-9, + - =; b? ?/? vì hi?n ô l?i trên vài máy),
+  SmoothStep + xoay ch?m hon, max ring 2.9?2.2, fade 0.18/0.22s, hold tru?c
+  load 320?120ms (ng?n l?i theo yêu c?u).
+- Verify: EditMode **530/525/0/5**; build **Succeeded** (World.dll 06:27);
+  boot **FACE_OK 0 exception**. Temp build script xóa (gi? Assets/Editor.meta
+  tracked). Build review: `Temp/opencode/p311b-B1R4Build/LWE.exe`.
+- Chua commit (ch? l?nh).
+
+## 33. B1R5 — RIM BURIAL FIX (2026-09-22)
+
+- User ?nh: sân b? "ng?p" nâu — B1R4 d?i rim sang scaleY 2.8 nhung cylinder
+  primitive cao 2*scaleY = 5.6m, d?nh +1.25m ph? kín d?o. Fix: scaleY 1.4,
+  center y=-1.5 ? d?nh -0.10m (mép d?o du?i c?, không ph?, không z-fight).
+- Verify: suite 530/525/0/5 ? build **Succeeded** (World.dll 06:36) ? m?
+  `Temp/opencode/p311b-B1R5Build/LWE.exe`. Temp xóa. Chua commit.
+
+## 34. B1R6 — SIGN FIX + DECLUTTER (2026-09-22)
+
+- User ?nh: sân l?n x?n + b?ng tên world l?i (board den, không ch?).
+- Fix: label dùng SetupLocked d?t tru?c board 22cm, khóa hu?ng v? sân (dúng
+  pattern hub gate); b? bunting (kim cuong bay r?i); domino kéo sát l? du?ng
+  entry (x=±1.9, cách 1.5m, tile to hon) thành number walk g?n; rim stone
+  6 nh? -> 4 to d?m ? 4 góc chéo.
+- Pins: P41D/P42A/P43J c?p nh?t. Verify suite 530/525/0/5 ? build Succeeded
+  (World.dll 06:43) ? m? `Temp/opencode/p311b-B1R6Build/LWE.exe`. Temp xóa.
+  Chua commit.
+
+## 35. B1R7 — OUTER = SKY (2026-09-22)
+
+- User: ph?n outer dang tr?ng, c?n thành b?u tr?i. B? plane MathSkyCloudSea
+  (y=-14) — ngoài d?o gi? là n?n tr?i xanh c?a camera; gi? 9 mây quanh vành
+  (h? th?p) + 4 mây du?i chân d?o. P41D pin d?i sang MathSkyCloud0.
+- Verify: suite 530/525/0/5 ? build Succeeded (World.dll 06:57) ? m?
+  `Temp/opencode/p311b-B1R7Build/LWE.exe`. Temp xóa. Chua commit.
+
+## 36. P3.0.1 REAL JOURNEY + HIDDEN BUG GATE — PASS (2026-09-22)
+
+- M?c tiêu: ch?ng minh skeleton Math d? tin c?y tru?c l?p Gameplay Pattern
+  (KHÔNG redesign/polish trong pass này).
+- Cách ch?y: build standalone release + journey driver t?m (click th?t qua
+  Input System t?i to? d? màn hình; KHÔNG teleport/Warp/SetPosition/direct
+  state/fake interaction), log t?ng transition; driver xoá sau khi xong.
+  Docs: `docs/P3.0.1_MATH_JOURNEY_AUDIT.md` + `docs/P3.0.1_HIDDEN_BUG_AUDIT.md`.
+- Journey th?t khui 8 bug ?n (unit test không th?y):
+  J1 P1 — card mic offer (640x460 + Body text) an raycast ? click n?a ph?i
+  màn hình b? nu?t, player k?t ? "Find the one". Fix: card/title/body/status
+  raycastTarget=false (MicSetupDialog + DependencySetupDialog; nút v?n b?m).
+  J2 P1 — return gate MathScene bind SubjectIds.Main nhung SubjectGate return
+  branch ch? fire khi Current==target (Math?Main) ? c?a V? KHÔNG BAO GI? fire,
+  tr? k?t trong Math. Fix: bind SubjectIds.Math (pin CT-P43K).
+  J3 P1 — DeactivateMainPresentation t?t root ch?a Main NavMeshSurface ?
+  NavMeshSurface.OnDisable?RemoveData() g? navmesh Main ? "Return warp failed;
+  player stays" (player k?t ? to? d? Math sau unload). Fix: chuy?n NavMesh GO
+  c?a Main vào PersistentCore (d?ch v? core persistent).
+  J4 P1/P2 — return warp v? dúng v? trí cu (mi?ng c?ng) + latch _wasInside còn
+  true ? c?ng không re-fire, không re-enter du?c. Fix: n?u v? trí cache n?m
+  trong 2.2m c?ng thì warp ra 3m phía sân (log "Return warp -> (7.7,-2.8)").
+  J5 P1 — host tuoi sau re-entry chua t?ng th?y QuestStartedEvent ? bring b?t
+  kh? thi. Fix: IsFindDone/CompleteBring state-driven (pin CT-P40E).
+  J6 P2 — bloom m?t khi re-entry sau completion (ch? nghe event). Fix: Build
+  nh?n IQuestService, adopt quest dã Completed (pin CT-P40F).
+  J7 P2 — cube "one" hi?n l?i sau completion khi re-entry (token InWorld).
+  Fix: carry adopt Consumed (pin CT-P40G).
+  J8 P2 — bake Math dùng CollectObjects.All quét M?I scene (log bake li?t kê
+  mesh Main) ? navmesh ch?ng lên Main + bake player/NPC Main thành obstacle.
+  Fix: surface d?t trên MathWorld root + CollectObjects.Children.
+- Verify: 6 vòng journey; vòng cu?i PASS tr?n: spawn ? gate ? Math (scenes 3,
+  hosts/directors/carries/blooms/interactables=1) ? talk ? find (WordSeen,
+  Carried) ? bring (QuestCompleted, Consumed, bloomShown=True) ? bridge t?i
+  clearing (76,-9.6) ? return (warp 7.7,-2.8; scenes 2; Math objects 0; HUD
+  restore) ? re-entry (objects 1/1, quest gi? idx=2, bloom adopt=True) ? return
+  2 s?ch. Không duplicate ? 12 dump.
+- Suite cu?i: **534/529/0/5**; build release **Succeeded** (World.dll 08:01);
+  boot **FACE_OK 0 exception**. Temp tooling xoá s?ch; asmdef Bootstrap revert.
+- VERDICT: **READY FOR GAMEPLAY FOUNDATION** (không còn P0/P1). Next theo brief:
+  Gameplay Pattern Foundation (pattern ? question type), chua làm quest content.
+- Commit + push main theo l?nh user.
