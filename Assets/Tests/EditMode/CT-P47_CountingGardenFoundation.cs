@@ -54,7 +54,7 @@ public class CT_P47_CountingGardenFoundation {
       }
       // DEMO THEATRE: number board + 2 apples + basket + hidden result board.
       string[] demoKit = { "CGDemoBoardPanel", "CGDemoBoardL", "CGDemoBoardR",
-        "CGDemoNumber2", "CGDemoPedestal", "CGDemoApple0", "CGDemoApple1",
+        "CGDemoNumber2", "CGDemoBallField", "CGDemoBall0", "CGDemoBall4",
         "CGDemoBasket", "CGDemoResultFrame", "CGDemoResultTwo", "CGDemoResultCheckArm" };
       foreach (string n in demoKit) {
         Transform t = FindDeep(garden.transform, n);
@@ -189,7 +189,7 @@ public class CT_P47_CountingGardenFoundation {
       // Demo props stay in the stage's front row (never on the approach walk:
       // the spur runs (0,4.6)->(0,8.4), so measure against THAT segment).
       Vector3 spurA = new Vector3(0f, 0f, 4.6f), spurB = new Vector3(0f, 0f, 8.4f);
-      foreach (string n in new[] { "CGDemoBoardPanel", "CGDemoPedestal", "CGDemoBasket" }) {
+      foreach (string n in new[] { "CGDemoBoardPanel", "CGDemoBallField", "CGDemoBasket" }) {
         Transform t = FindDeep(garden.transform, n);
         Assert.Greater(DistToSeg2D(t.position, spurA, spurB), 0.9f,
           n + " sits past the stage mouth, not on the approach");

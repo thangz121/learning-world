@@ -62,19 +62,31 @@ public class CountingGardenBuilder : MonoBehaviour {
   // the marked disc on the plaza's south rim, camera-first from there.
   public static readonly Vector3 DemoMouthLocal = new Vector3(0f, 0f, 4.4f);
   public const float DemoViewRadius = 5.0f;
-  // NPC stations sit in the GAPS between the front-row props (round-1 capture:
-  // standing exactly behind the number board hid the host from the card).
-  public static readonly Vector3 DemoNpcStart = new Vector3(-1.0f, 0f, 10.9f);
-  public static readonly Vector3 DemoAppleStand = new Vector3(0.8f, 0f, 10.9f);
-  public static readonly Vector3 DemoBasketStand = new Vector3(2.0f, 0f, 10.9f);
-  static readonly Vector3 DemoNumberPos = new Vector3(-2.0f, 0f, 9.9f);
-  static readonly Vector3 DemoPedestalPos = new Vector3(0.15f, 0f, 9.9f);
-  static readonly Vector3 DemoBasketPos = new Vector3(1.5f, 0f, 9.9f);
-  static readonly Vector3 DemoResultPos = new Vector3(2.5f, 0f, 9.9f);
-  // Card camera: far enough that number board -> result board fit one frame
-  // (visible half-width at the props ≈ 3.8m), low enough to stay a "card".
-  static readonly Vector3 DemoCamPos = new Vector3(0f, 2.7f, 5.4f);
-  static readonly Vector3 DemoLookPos = new Vector3(0f, 0.9f, 10.4f);
+  // Lesson staging (2-NPC mini lesson, user script S3-P2W): depth order from
+  // the child's view (camera north of the stage, looking south) =
+  //   BOARD (back) -> TEACHER -> STUDENT -> 5-BALL FIELD -> BASKET (front).
+  public static readonly Vector3 DemoNpcStart = new Vector3(-0.6f, 0f, 11.4f); // teacher
+  public static readonly Vector3 DemoStudentStart = new Vector3(0f, 0f, 10.2f);
+  public static readonly Vector3 DemoBallStand = new Vector3(-0.2f, 0f, 9.6f);
+  public static readonly Vector3 DemoBall2Stand = new Vector3(0.5f, 0f, 9.6f);
+  public static readonly Vector3 DemoBasketStand = new Vector3(2.1f, 0f, 9.6f);
+  static readonly Vector3 DemoBoardPos = new Vector3(0f, 0f, 12.4f);
+  public static readonly Vector3 DemoBallFieldPos = new Vector3(0f, 0f, 9.6f);
+  static readonly Vector3 DemoBasketPos = new Vector3(2.4f, 0f, 9.0f);
+  static readonly Vector3 DemoResultPos = new Vector3(2.9f, 0f, 9.3f);
+  // Shot A (lesson): board + teacher + student + ball field + basket in one
+  // frame. Shot B (action): student + 2 balls + basket + result, tighter and
+  // lower. The sequence reframes between them (user: camera must switch).
+  static readonly Vector3 DemoCamPos = new Vector3(0f, 2.2f, 5.6f);
+  static readonly Vector3 DemoLookPos = new Vector3(0f, 1.35f, 11.8f);
+  static readonly Vector3 DemoActionCamPos = new Vector3(0.9f, 2.1f, 6.6f);
+  static readonly Vector3 DemoActionLookPos = new Vector3(0.75f, 0.85f, 9.9f);
+  // The five balls of the field (the student must take exactly TWO of them).
+  public static readonly Vector3[] DemoBallHomes = {
+    new Vector3(-1.6f, 0.17f, 9.6f), new Vector3(-0.9f, 0.17f, 9.6f),
+    new Vector3(-0.2f, 0.17f, 9.6f), new Vector3(0.5f, 0.17f, 9.6f),
+    new Vector3(1.2f, 0.17f, 9.6f),
+  };
 
   static readonly Color Lawn = new Color(0.38f, 0.64f, 0.36f);
   static readonly Color Meadow = new Color(0.46f, 0.71f, 0.42f);
@@ -96,13 +108,12 @@ public class CountingGardenBuilder : MonoBehaviour {
   // Demo stage refs (scene-authored; CountingDemo reads these).
   public GameObject DemoNumber { get; private set; }
   public Transform DemoBasket { get; private set; }
-  public GameObject DemoApple0 { get; private set; }
-  public GameObject DemoApple1 { get; private set; }
-  public Vector3 DemoAppleHome0 { get; private set; }
-  public Vector3 DemoAppleHome1 { get; private set; }
+  public readonly List<GameObject> DemoBalls = new List<GameObject>();
   public GameObject DemoResult { get; private set; }
   public Transform DemoCam { get; private set; }
   public Transform DemoLook { get; private set; }
+  public Transform DemoActionCam { get; private set; }
+  public Transform DemoActionLook { get; private set; }
   public Vector3 DemoStageCenter { get; private set; }
   public Vector3 DemoMouth { get; private set; }
 
@@ -324,8 +335,8 @@ public class CountingGardenBuilder : MonoBehaviour {
       new Vector3(-3.0f, 0f, 10.4f), 90f, 0.92f);
     PlaceProp(parent, "fence_simpleLow", "CGZone2Fence1",
       new Vector3(3.0f, 0f, 10.4f), 90f, 0.92f);
-    for (int i = 0; i < 5; i++) {
-      float a = (55f + i * 17.5f) * Mathf.Deg2Rad; // behind the stage (south arc)
+    for (int i = 0; i < 4; i++) {
+      float a = (65f + i * 16f) * Mathf.Deg2Rad; // behind the stage (south arc)
       GameObject bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
       bush.name = "CGDemoBackdrop" + i;
       bush.transform.SetParent(parent);
@@ -335,46 +346,54 @@ public class CountingGardenBuilder : MonoBehaviour {
       bush.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.28f, 0.58f, 0.32f));
       StripCollider(bush);
     }
-    // NUMBER BOARD (screen-left): cream panel, big gold "2" + 2 dots, faces
-    // the plaza (north) so the child reads it from the viewing spot.
-    Box(parent, "CGDemoBoardL", DemoNumberPos + new Vector3(-0.72f, 0.75f, 0f),
-      new Vector3(0.14f, 1.5f, 0.14f), BasketBrown);
-    Box(parent, "CGDemoBoardR", DemoNumberPos + new Vector3(0.72f, 0.75f, 0f),
-      new Vector3(0.14f, 1.5f, 0.14f), BasketBrown);
-    Box(parent, "CGDemoBoardPanel", DemoNumberPos + new Vector3(0f, 1.35f, 0f),
-      new Vector3(1.6f, 1.3f, 0.12f), BoardCream);
-    DemoNumber = Digit2(parent, "CGDemoNumber2", DemoNumberPos + new Vector3(0f, 0.85f, -0.08f),
-      0.9f, 0.5f, Gold, 90f);
-    Sphere(parent, "CGDemoNumberDot0", DemoNumberPos + new Vector3(-0.22f, 0.68f, -0.08f),
-      0.15f, AppleRed, false);
-    Sphere(parent, "CGDemoNumberDot1", DemoNumberPos + new Vector3(0.22f, 0.68f, -0.08f),
-      0.15f, AppleRed, false);
-    // APPLE PEDESTAL (screen-centre-left): 2 apples resting side by side.
-    Cylinder(parent, "CGDemoPedestal", DemoPedestalPos + new Vector3(0f, 0.3f, 0f),
-      0.85f, 0.6f, BoardCream);
-    DemoAppleHome0 = DemoPedestalPos + new Vector3(-0.24f, 0.77f, 0f);
-    DemoAppleHome1 = DemoPedestalPos + new Vector3(0.24f, 0.77f, 0f);
-    DemoApple0 = Sphere(parent, "CGDemoApple0", DemoAppleHome0, 0.34f, AppleRed, false);
-    DemoApple1 = Sphere(parent, "CGDemoApple1", DemoAppleHome1, 0.34f, AppleRed, false);
-    // BASKET (screen-centre-right): big enough to read from the plaza.
+    // NUMBER BOARD (back): cream panel with a big gold "2" + 2 dots, facing
+    // the child (north). The teacher stands IN FRONT of it so one frame holds
+    // "teacher + number two" while she explains (user camera rule).
+    // The board rides HIGH above the teacher's hat (round-1 capture: a chest
+    // height board hid its own "2" behind the teacher's head).
+    Box(parent, "CGDemoBoardL", DemoBoardPos + new Vector3(-1.1f, 0.8f, 0f),
+      new Vector3(0.14f, 1.6f, 0.14f), BasketBrown);
+    Box(parent, "CGDemoBoardR", DemoBoardPos + new Vector3(1.1f, 0.8f, 0f),
+      new Vector3(0.14f, 1.6f, 0.14f), BasketBrown);
+    Box(parent, "CGDemoBoardPanel", DemoBoardPos + new Vector3(0f, 2.3f, 0f),
+      new Vector3(2.3f, 1.5f, 0.12f), BoardCream);
+    DemoNumber = Digit2(parent, "CGDemoNumber2", DemoBoardPos + new Vector3(0f, 1.65f, -0.08f),
+      1.3f, 0.75f, Gold, 90f);
+    // BALL FIELD (front): five balls in a row — the student must take TWO.
+    Pad(parent, "CGDemoBallField", DemoBallFieldPos + new Vector3(0f, -0.006f, 0f), 3.4f,
+      new Color(0.93f, 0.90f, 0.78f));
+    Color[] ballColors = { AppleRed, new Color(0.30f, 0.55f, 0.95f), Gold,
+      new Color(0.35f, 0.75f, 0.40f), WorldBeauty.BlossomDeep };
+    for (int i = 0; i < DemoBallHomes.Length; i++) {
+      GameObject ball = Sphere(parent, "CGDemoBall" + i, DemoBallHomes[i], 0.34f,
+        ballColors[i % ballColors.Length], false);
+      if (ball != null) DemoBalls.Add(ball);
+    }
+    // BASKET (front-right): big enough to read from the viewing spot.
     GameObject basketGo = Cylinder(parent, "CGDemoBasket",
       DemoBasketPos + new Vector3(0f, 0.27f, 0f), 1.05f, 0.55f, BasketBrown);
     DemoBasket = basketGo != null ? basketGo.transform : null;
     Cylinder(parent, "CGDemoBasketRim", DemoBasketPos + new Vector3(0f, 0.55f, 0f),
       1.15f, 0.1f, BasketRim);
-    // RESULT BOARD (screen-right): appears ONLY after both apples land.
+    // RESULT BOARD (front-right of the basket): appears ONLY after both balls
+    // are in, so the last shot reads "2 balls -> basket -> 2 tick".
     GameObject result = new GameObject("CGDemoResult");
     result.transform.SetParent(parent, false);
     result.transform.localPosition = DemoResultPos;
-    Box(result.transform, "CGDemoResultFrame", new Vector3(0f, 1.0f, 0f),
-      new Vector3(1.3f, 1.15f, 0.12f), BoardCream);
-    Digit2(result.transform, "CGDemoResultTwo", new Vector3(0f, 0.62f, -0.08f),
-      0.55f, 0.32f, Gold, 90f);
-    CheckMark(result.transform, "CGDemoResultCheck", new Vector3(0f, 1.22f, -0.08f),
+    // Raised on its own post: the celebrating student's body can no longer
+    // cover the "2 tick" (round-3 capture).
+    Box(result.transform, "CGDemoResultPost", new Vector3(0f, 0.65f, 0f),
+      new Vector3(0.13f, 1.3f, 0.13f), BasketBrown);
+    Box(result.transform, "CGDemoResultFrame", new Vector3(0f, 1.6f, 0f),
+      new Vector3(1.1f, 1.0f, 0.12f), BoardCream);
+    Digit2(result.transform, "CGDemoResultTwo", new Vector3(0f, 1.22f, -0.08f),
+      0.55f, 0.34f, Gold, 90f);
+    CheckMark(result.transform, "CGDemoResultCheck", new Vector3(0f, 1.78f, -0.08f),
       0.3f, MintLeaf);
     result.SetActive(false);
     DemoResult = result;
-    // Demo camera markers (scene-authored transforms, no second system).
+    // Camera markers (scene-authored transforms, no second system): shot A =
+    // lesson frame, shot B = action frame.
     GameObject cam = new GameObject("CGDemoCam");
     cam.transform.SetParent(parent, false);
     cam.transform.localPosition = DemoCamPos;
@@ -383,22 +402,33 @@ public class CountingGardenBuilder : MonoBehaviour {
     look.transform.SetParent(parent, false);
     look.transform.localPosition = DemoLookPos;
     DemoLook = look.transform;
+    GameObject camB = new GameObject("CGDemoCamAction");
+    camB.transform.SetParent(parent, false);
+    camB.transform.localPosition = DemoActionCamPos;
+    DemoActionCam = camB.transform;
+    GameObject lookB = new GameObject("CGDemoLookAction");
+    lookB.transform.SetParent(parent, false);
+    lookB.transform.localPosition = DemoActionLookPos;
+    DemoActionLook = lookB.transform;
   }
 
-  // Seven-seg "2" (a/b/g/e/d) in the ZY plane, thin in X; yaw 90 = faces the
-  // plaza (north). Group origin at the base so emphasis pulses grow upward.
+  // Blocky "2" in the ZY plane (top bar + diagonal + bottom bar), thin in X;
+  // yaw 90 faces the plaza (north). Local +z maps to world -x at yaw 90, and
+  // the north viewer reads screen-right = local +z, so the diagonal rises to
+  // +z (round-2 capture: a mirrored digit read as noise).
+  // Group origin at the base so emphasis pulses grow upward.
   GameObject Digit2(Transform parent, string name, Vector3 origin, float h, float w,
       Color color, float yawDeg) {
     GameObject g = new GameObject(name);
     g.transform.SetParent(parent, false);
     g.transform.localPosition = origin;
     g.transform.localRotation = Quaternion.Euler(0f, yawDeg, 0f);
-    float t = Mathf.Min(0.16f, h * 0.13f);
-    Box(g.transform, name + "A", new Vector3(0f, h, 0f), new Vector3(t, t, w), color);
-    Box(g.transform, name + "G", new Vector3(0f, h * 0.5f, 0f), new Vector3(t, t, w), color);
-    Box(g.transform, name + "D", new Vector3(0f, 0f, 0f), new Vector3(t, t, w), color);
-    Box(g.transform, name + "B", new Vector3(0f, h * 0.75f, -w * 0.5f), new Vector3(t, h * 0.5f, t), color);
-    Box(g.transform, name + "E", new Vector3(0f, h * 0.25f, w * 0.5f), new Vector3(t, h * 0.5f, t), color);
+    float t = Mathf.Min(0.2f, h * 0.16f);
+    Box(g.transform, name + "Top", new Vector3(0f, h * 0.88f, 0f), new Vector3(t, t * 1.5f, w), color);
+    GameObject diag = Box(g.transform, name + "Diag", new Vector3(0f, h * 0.5f, 0f),
+      new Vector3(t, h * 0.72f, t), color);
+    diag.transform.localRotation = Quaternion.Euler(48f, 0f, 0f);
+    Box(g.transform, name + "Bottom", new Vector3(0f, h * 0.1f, 0f), new Vector3(t, t * 1.5f, w), color);
     return g;
   }
 
@@ -487,9 +517,9 @@ public class CountingGardenBuilder : MonoBehaviour {
       new Vector3(-3.8f, 0f, -6.4f), new Vector3(3.8f, 0f, -6.4f),
       new Vector3(-11.5f, 0f, 9.5f), new Vector3(11.5f, 0f, 9.5f),
       new Vector3(-13f, 0f, -1f), new Vector3(13f, 0f, -1f),
-      new Vector3(0f, 0f, 16.2f),
+      new Vector3(5.2f, 0f, 16.0f),
     };
-    float[] scales = { 0.62f, 0.62f, 0.72f, 0.72f, 0.7f, 0.7f, 0.8f };
+    float[] scales = { 0.62f, 0.62f, 0.72f, 0.72f, 0.7f, 0.7f, 0.7f };
     for (int i = 0; i < trees.Length; i++) {
       WorldBeauty.BlossomTree(parent, "CGBlossomTree" + i, trees[i], scales[i]);
       // Smaller carpets: the old 2.2-3m discs read as white puddles.
@@ -504,7 +534,9 @@ public class CountingGardenBuilder : MonoBehaviour {
     for (int i = 0; i < drifts.Length; i++)
       WorldBeauty.FlowerDrift(parent, "CGFlowerDrift" + i, drifts[i], 1.2f + (i % 2) * 0.2f);
     // Garden accents at the bed flanks (PropKit flowers, garden identity).
-    WorldBeauty.PetalFall(parent, "CGPetalFall", new Vector3(0f, 0f, 4f), 12f, 18, 60909);
+    // Petals over the plaza/entry — NOT over the lesson stage (round-2 capture:
+    // drifting petals crossed the instruction card as translucent blobs).
+    WorldBeauty.PetalFall(parent, "CGPetalFall", new Vector3(0f, 0f, -2f), 9f, 12, 60909);
     WorldBeauty.Butterfly(parent, "CGButterfly0", new Vector3(3.0f, 0f, 4.2f), 2.2f, 0.1f,
       WorldBeauty.BlossomDeep, WorldBeauty.BlossomCream);
     WorldBeauty.Butterfly(parent, "CGButterfly1", new Vector3(-3.0f, 0f, 4.2f), 2.2f, 0.6f,

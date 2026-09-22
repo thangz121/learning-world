@@ -1211,3 +1211,45 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
   Temp tooling xóa sạch (0 file, Assets/Editor trống).
 - CÒN LẠI CHO MẮT NGƯỜI: duyệt ảnh BEFORE/AFTER + tự lái thử (đi bộ, xem loop,
   độ dễ hiểu 3 giây). Chưa làm Phase 3.
+
+## 46. S3-P2W - DEMO V2: TWO-NPC MINI LESSON "TAKE TWO BALLS" (2026-09-22)
+
+- Lệnh user (kèm script diễn đầy đủ): demo phải là TIẾT HỌC MINI 2 NPC —
+  CÔ GIÁO (bảng số 2) + HỌC SINH (bé), cô giao bài -> bé lấy ĐÚNG 2 trong 5
+  quả bóng -> mang bỏ giỏ -> cô hỏi/xác nhận -> 2 tick -> khen -> reset loop.
+  Camera phải ĐỔI SHOT: cô+bảng khi giảng, bé+2 bóng+giỏ khi làm; bảng luôn
+  nằm trong composition chính; không zoom quá mất context.
+- Stage mới (thay apples cũ): BOARD treo CAO trên đầu cô (post + panel 2.3x1.5
+  + "2" khối 3 thanh vàng); 5 BÓNG màu (đỏ/xanh dương/vàng/xanh lá/hồng) trên
+  thảm cỏ; GIỎ to bên phải; RESULT board "2 + tick" nâng trên cột (không bị
+  người che); cô giáo (-0.6,11.4) + bé (0,10.2) + ball field (0,9.6) + giỏ
+  (2.4,9.0) — đúng thứ tự chiều sâu board -> cô -> bé -> bóng -> giỏ.
+- 2 SHOT camera scene-authored: A (0,2.2,5.6)->(0,1.35,11.8) = bảng+cô+bé+
+  bóng+giỏ; B (0.9,2.1,6.6)->(0.75,0.85,9.9) = bé+2 bóng+giỏ+result. Sequence
+  tự đổi shot khi cô giao xong (SetShot(true)) và về A khi reset; beat giữ
+  theo shot đang active (re-issue 3s) như cũ.
+- Diễn xuất (không AI): cô xoay về bảng/bé/giỏ theo beat + vẫy tay chỉ; bé
+  xoay theo, đi tới bóng, PickUp từng quả (bóng bay cung vào ngực — cùng vật
+  thể, không teleport), ShowTwo (2 bóng nhìn rõ), mang giỏ, thả từng quả,
+  2 quả nằm trên miệng giỏ (y0.76, tách 0.56); celebrate: cả 2 Victory + Happy
+  + bé PlayHop; reset: 2 bóng bay về sân, bé về chỗ, result ẩn, bảng giữ "2".
+- 12 lời thoại EN (VoiceProfileId npc_female_01 qua IAudioDirector, literal
+  trực tiếp — KHÔNG sửa manifest 40 dòng, không audio mới): "Look at the
+  board!" / "This is number two." / "Two." / "Today, we take two balls." /
+  "Take two balls, please!" / "Put them in the basket!" / "One ball." /
+  "Two balls!" / "How many balls?" / "Yes! Two balls! Well done!" (mỗi câu ≤6
+  từ; offline = hình vẫn đủ nghĩa).
+- Nhận xét vòng capture (5 vòng THẬT standalone, driver tạm inject chuột):
+  vòng 1 bảng bị cô che -> nâng bảng; số "2" bị mirror -> đổi sang khối 3 thanh;
+  petal rơi ngang card -> dời khỏi sân khấu; cây backdrop sau bảng lộ tán hồng
+  -> dời sang (5.2,16); result board bị bé che -> nâng trên cột (2.9,9.3);
+  bóng thứ 2 trong giỏ bị khuất -> tách slot. Tooling tạm đã xóa sạch.
+- Pin mới CT-P48 (viết lại): stage 5 bóng + shot A/B markers; 2 actor (bé nhỏ
+  hơn cô, face kit, click-through, carry anchor); loop 21 phase đúng kịch bản
+  (bé lấy bóng #3/#4, confirm có result + 2 bóng ở giỏ, reset đủ 5 bóng về
+  home, không teleport); camera beat once/hold/re-arm + reframe A->B.
+  CT-P47A/D đổi tên prop cũ (apple/pedestal -> ball field/balls).
+- Verify: targeted 15/15; full EditMode **577/572/0/5**; build production
+  (không driver) **Succeeded**; boot **ALIVE + FACE_OK 0 exception**. Ảnh
+  BEFORE/AFTER: `Temp/opencode/s3p2w*-shots/` (lesson shots A/B).
+- Chưa commit trước đó; commit kèm phase này. Chưa làm Phase 3.

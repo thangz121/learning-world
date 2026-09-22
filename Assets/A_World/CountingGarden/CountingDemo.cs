@@ -1,359 +1,451 @@
-// A_World/CountingGarden/CountingDemo.cs — S3 P2 COUNTING DEMO PIONEER.
-// ONE Number-2 living visual instruction (NOT cutscene, NOT gameplay, NOT AI):
-//   NUMBER 2 -> NPC looks -> "Number two." -> NPC walks to 2 apples ->
-//   "Two apples." -> picks apple 1 -> picks apple 2 -> carries (visible) ->
-//   walks to basket -> places 1 -> places 2 -> result "2 tick" appears ->
-//   "Two apples!" + celebrate -> tidy reset -> LOOP.
-// Scene-local sequence controller (the lightweight local controller §15
-// allows — NOT a manager/AI/framework): transform-only motion (walk waypoints
-// with bob, yaw facing), VISIBLE arc object transfer (the same apple object
-// flies pedestal->hand->basket; never teleport/disappear), existing PickUp /
-// Celebrate Animator triggers, Happy face pulses, LookAt-style facing,
-// SmartCamera.FrameAnchor beat when the child walks up, speech through the
-// existing IAudioDirector (npc_female_01, fire-and-forget like Tess).
-// Touches NOTHING gameplay: no bus, no quest, no save, no progression, no
-// score, no Interactable, no collider on the host (click-through).
-// The host spawns in Build (post-NavMesh-bake, installer-driven) so it never
-// bakes as a phantom obstacle. C# 9.0 only.
+// A_World/CountingGarden/CountingDemo.cs — S3 P2W TWO-NPC MINI LESSON.
+// ONE Number-2 living visual instruction (NOT cutscene, NOT gameplay, NOT AI).
+// User script: teacher explains number two at the board -> assigns the task
+// ("take two balls, put them in the basket") -> the child student fetches
+// exactly TWO of the five balls, carries them visibly, drops them in the
+// basket -> the teacher asks, confirms ("two balls!") -> result board "2 tick"
+// -> both celebrate -> tidy reset -> LOOP.
+// Roles are acted, not simulated: the teacher speaks/turns/points and OBSERVES;
+// the student looks, walks, picks, carries, places, reacts. Both are staged
+// with the existing body kit (TessVisual / MiloVisual prefab, face kit, PickUp
+// / Celebrate triggers, procedural arm raise) — no AI, no new framework.
+// CAMERA (user rule): two authored shots — A (lesson: board + teacher +
+// student + field + basket) while the teacher talks, B (action: student + two
+// balls + basket + result) while the student works. The active shot is HELD
+// while the child watches (re-issued), so this stays a readable instruction
+// card; walking away releases it.
+// Touches NOTHING gameplay: no bus, no quest, no save, no score, no
+// Interactable, click-through hosts. C# 9.0 only.
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum DemoPhase {
   Ready,
-  LookNumber,
-  SayNumber,
-  WalkApples,
-  ArriveApples,
+  TeacherLookBoard,
+  TeacherSayBoard,
+  TeacherSayTwo,
+  TeacherSayToday,
+  TeacherAssign,
+  StudentLook,
+  WalkBalls,
   PickOne,
   PickTwo,
-  CarryShow,
+  ShowTwo,
   WalkBasket,
   PlaceOne,
   PlaceTwo,
-  ShowResult,
+  TeacherAsks,
+  Confirm,
   Celebrate,
   HoldResult,
-  ResetBeat,
-  WalkStart,
+  ResetBalls,
+  StudentReturn,
+  TeacherReturn,
 }
 
 [DisallowMultipleComponent]
 public class CountingDemo : MonoBehaviour {
-  // Garden-local choreography (S3-P2V demo theatre, stage centre (0,11)):
-  // NPC works the BACK row (z 10.9) behind the front-row props (z 9.9) so it
-  // never occludes the number/apples/basket/result from the viewing spot.
-  static readonly Vector3 StartStand = CountingGardenBuilder.DemoNpcStart;
-  static readonly Vector3 AppleStand = CountingGardenBuilder.DemoAppleStand;
-  static readonly Vector3 BasketStand = CountingGardenBuilder.DemoBasketStand;
-  const float WalkSpeed = 0.9f; // slow enough for a 4yo to follow
+  const float WalkSpeed = 0.9f;   // slow enough for a 4yo to follow
   const float WatchRadius = CountingGardenBuilder.DemoViewRadius;
   const float RearmMargin = 2.0f;
-  const float BeatHoldSeconds = 3.0f; // re-issued while the child stays watching
+  const float BeatHoldSeconds = 3.0f;
 
   static readonly VoiceProfileId DemoVoice = new VoiceProfileId("npc_female_01");
   static readonly LanguageCode EnUs = new LanguageCode("en-US");
 
-  // Stage refs (pushed by Build, read never written as magic vectors).
+  // Stage refs (pushed by Build).
   GameObject _number;
   Transform _basket;
-  GameObject _apple0;
-  GameObject _apple1;
-  Vector3 _home0;
-  Vector3 _home1;
+  readonly List<GameObject> _balls = new List<GameObject>();
   GameObject _result;
-  Transform _camT;
-  Transform _lookT;
+  Transform _camA, _lookA, _camB, _lookB;
   Vector3 _mouth;
-  Vector3 _numberFocus = new Vector3(-2.1f, 1.1f, 9.9f); // the number board
 
   // Live refs (nullable; every use is null-guarded).
   Transform _playerT;
   SmartCamera _cam;
   IAudioDirector _audio;
 
-  // Host rig (Tess identity, Math-blue vest + gold hat via the prefab).
-  GameObject _host;
-  Transform _visual;
-  Animator _animator;
-  CharacterPresentation _face;
-  Transform _carryAnchor;
-  bool _hostBuilt;
+  // Two staged NPCs (teacher + child student).
+  sealed class NpcActor {
+    public GameObject Root;
+    public Transform Visual;
+    public Animator Animator;
+    public CharacterPresentation Face;
+    public Transform CarryAnchor;
+    public Transform WaveBone;
+    public Quaternion WaveBase = Quaternion.identity;
+    public bool Waving;
+    public float WaveT;
+  }
+
+  NpcActor _teacher;
+  NpcActor _student;
+  bool _actorsBuilt;
   bool _built;
 
-  // Sequence state (EditMode-drives-Step seams for tests).
+  // Sequence state (Step() drives it; tests drive Step with fake dt).
   DemoPhase _phase = DemoPhase.Ready;
   float _phaseT;
   public DemoPhase Phase { get { return _phase; } }
   public int LoopCount { get; private set; }
   public int DemoBeatsFired { get; private set; }
-  public bool HostBuilt { get { return _hostBuilt; } }
+  public bool ActorsBuilt { get { return _actorsBuilt; } }
   public bool ResultShown { get { return _result != null && _result.activeSelf; } }
+  public bool ShotIsAction { get; private set; }
 
-  // One in-flight apple transfer (arc pedestal<->hand<->basket, same object).
-  GameObject _flyApple;
-  Vector3 _flyFrom;
-  Vector3 _flyTo;
-  float _flyT;
-  float _flyDur = 1f;
-  float _flyLift = 0.5f;
-  float _flyDelay;
+  // One in-flight ball transfer (arc field<->hand<->basket; same object).
+  GameObject _flyBall;
+  Vector3 _flyFrom, _flyTo;
+  float _flyT, _flyDur, _flyLift;
   bool _flying;
-  // Carry-follow flags (apple glued to the hand anchor while carried).
-  bool _carry0;
-  bool _carry1;
+  bool _carry0, _carry1;
+  GameObject _ball0, _ball1; // the two chosen balls (indices into _balls)
 
   bool _beatLatched;
   float _beatRefreshT;
-  bool _saidNumber;
-  bool _saidApples;
-  bool _cheered;
-  bool _firedPick;
-  bool _placed;
-  float _walkT; // bob clock
+  bool _didPulse;
+  bool _saidNumber, _saidToday, _saidAssign, _cheered, _asked;
+  bool _firedPick, _placed;
+  float _walkT;
 
-  // Installer entry: stage refs + live refs, then spawn the host (post-bake).
+  // ---- build -------------------------------------------------------------------
+
   public void Build(CountingGardenBuilder b, Transform playerT, SmartCamera cam, IAudioDirector audio) {
     if (b != null) {
       _number = b.DemoNumber;
       _basket = b.DemoBasket;
-      _apple0 = b.DemoApple0;
-      _apple1 = b.DemoApple1;
-      _home0 = b.DemoAppleHome0;
-      _home1 = b.DemoAppleHome1;
+      _balls.Clear();
+      _balls.AddRange(b.DemoBalls);
       _result = b.DemoResult;
-      _camT = b.DemoCam;
-      _lookT = b.DemoLook;
+      _camA = b.DemoCam;
+      _lookA = b.DemoLook;
+      _camB = b.DemoActionCam;
+      _lookB = b.DemoActionLook;
       _mouth = b.DemoMouth;
       _built = true;
     }
     _playerT = playerT;
     _cam = cam;
     _audio = audio;
-    BuildHostImmediate(b != null ? b.transform : transform);
+    BuildActorsImmediate(b != null ? b.transform : transform);
     ResetActors();
     _phase = DemoPhase.Ready;
     _phaseT = 0f;
   }
 
-  bool _hostAttempted;
+  bool _actorAttempt;
 
-  public void BuildHostImmediate(Transform stageParent) {
-    if (_hostAttempted) return;
-    _hostAttempted = true;
+  public void BuildActorsImmediate(Transform stageParent) {
+    if (_actorAttempt) return;
+    _actorAttempt = true;
     try {
-      GameObject prefab = Resources.Load<GameObject>("NpcVisuals/TessVisual");
-      if (prefab == null) {
-        Debug.LogError("[CountingDemo] Missing NpcVisuals/TessVisual; demo parks.", this);
-        return;
-      }
-      _host = new GameObject("CGDemoHost");
-      _host.transform.SetParent(stageParent, false);
-      _host.transform.localPosition = StartStand;
-      _host.transform.localRotation = Quaternion.identity;
-      GameObject visual = Instantiate(prefab, _host.transform, false);
-      visual.name = "CGDemoHostVisual";
-      visual.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-      visual.transform.localRotation = Quaternion.identity;
-      visual.transform.localScale = Vector3.one * 0.5f;
-      _visual = visual.transform;
-      _animator = visual.GetComponentInChildren<Animator>(true);
-      SkinnedMeshRenderer skin = visual.GetComponentInChildren<SkinnedMeshRenderer>(true);
-      Transform head = null, footL = null, footR = null;
-      if (skin != null && skin.bones != null) {
+      _teacher = BuildNpc(stageParent, "CGDemoTeacher", "NpcVisuals/TessVisual", 0.5f,
+        CountingGardenBuilder.DemoNpcStart, new Color(0.25f, 0.45f, 0.85f),
+        new Color(0.98f, 0.78f, 0.25f));
+      _student = BuildNpc(stageParent, "CGDemoStudent", "NpcVisuals/MiloVisual", 0.42f,
+        CountingGardenBuilder.DemoStudentStart, new Color(0.30f, 0.62f, 0.45f),
+        new Color(0.55f, 0.35f, 0.20f));
+      _actorsBuilt = _teacher != null && _teacher.Root != null
+        && _student != null && _student.Root != null;
+    } catch (Exception e) {
+      try { Debug.LogError("[CountingDemo] actor build failed: " + e.Message, this); }
+      catch (Exception) { }
+    }
+  }
+
+  NpcActor BuildNpc(Transform parent, string name, string prefabName, float scale,
+      Vector3 stand, Color vest, Color hat) {
+    GameObject prefab = Resources.Load<GameObject>(prefabName);
+    if (prefab == null) {
+      Debug.LogError("[CountingDemo] Missing " + prefabName + "; actor parked.", this);
+      return null;
+    }
+    NpcActor a = new NpcActor();
+    a.Root = new GameObject(name);
+    a.Root.transform.SetParent(parent, false);
+    a.Root.transform.localPosition = stand;
+    a.Root.transform.localRotation = Quaternion.identity;
+    GameObject visual = Instantiate(prefab, a.Root.transform, false);
+    visual.name = name + "Visual";
+    visual.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+    visual.transform.localRotation = Quaternion.identity;
+    visual.transform.localScale = Vector3.one * scale;
+    a.Visual = visual.transform;
+    a.Animator = visual.GetComponentInChildren<Animator>(true);
+    SkinnedMeshRenderer skin = visual.GetComponentInChildren<SkinnedMeshRenderer>(true);
+    Transform head = null, footL = null, footR = null;
+    if (skin != null) {
+      CharacterPresentation.TintSharedMaterials(skin, "Vest", vest);
+      CharacterPresentation.TintSharedMaterials(skin, "Hat", hat);
+      if (skin.bones != null) {
         foreach (Transform bone in skin.bones) {
           if (bone == null) continue;
           if (head == null && bone.name == "Head") head = bone;
           if (footL == null && bone.name == "Foot.L") footL = bone;
           if (footR == null && bone.name == "Foot.R") footR = bone;
+          if (a.WaveBone == null && (bone.name == "UpperArm.R" || bone.name == "Shoulder.R"))
+            a.WaveBone = bone;
         }
       }
-      _face = _host.AddComponent<CharacterPresentation>();
-      try { _face.SetupFace(skin, head, _host.transform, _visual); } catch (Exception) { }
-      try { _face.BuildFaceImmediate(); } catch (Exception) { }
-      try {
-        if (footL != null) _face.QueueShoe(footL, "ShoeL");
-        if (footR != null) _face.QueueShoe(footR, "ShoeR");
-        _face.BuildShoesImmediate();
-      } catch (Exception) { }
-      GameObject anchor = new GameObject("CGDemoCarryAnchor");
-      anchor.transform.SetParent(_host.transform, false);
-      // In FRONT of the host (local -z): the host faces the props/camera, so
-      // the carried apples stay visible between the host and the child.
-      anchor.transform.localPosition = new Vector3(0f, 0.95f, -0.35f);
-      _carryAnchor = anchor.transform;
-      // Click-through: the demo host must never eat walk clicks (no capsule,
-      // no mesh colliders — the stage floor stays clickable under the NPC).
-      try { CharacterPresentation.DestroyColliders(_host); } catch (Exception) { }
-      _hostBuilt = true;
-    } catch (Exception e) {
-      try { Debug.LogError("[CountingDemo] host build failed: " + e.Message, this); }
-      catch (Exception) { }
     }
+    a.Face = a.Root.AddComponent<CharacterPresentation>();
+    try { a.Face.SetupFace(skin, head, a.Root.transform, a.Visual); } catch (Exception) { }
+    try { a.Face.BuildFaceImmediate(); } catch (Exception) { }
+    try {
+      if (footL != null) a.Face.QueueShoe(footL, "ShoeL");
+      if (footR != null) a.Face.QueueShoe(footR, "ShoeR");
+      a.Face.BuildShoesImmediate();
+    } catch (Exception) { }
+    GameObject anchor = new GameObject(name + "CarryAnchor");
+    anchor.transform.SetParent(a.Root.transform, false);
+    anchor.transform.localPosition = new Vector3(0f, 0.95f, -0.35f);
+    a.CarryAnchor = anchor.transform;
+    // Click-through: the lesson must never eat walk clicks.
+    try { CharacterPresentation.DestroyColliders(a.Root); } catch (Exception) { }
+    return a;
   }
 
   void ResetActors() {
     _carry0 = false;
     _carry1 = false;
     _flying = false;
-    _flyApple = null;
+    _flyBall = null;
     try {
-      if (_apple0 != null) _apple0.transform.localPosition = _home0;
-      if (_apple1 != null) _apple1.transform.localPosition = _home1;
-      if (_result != null) _result.SetActive(false);
       if (_number != null) _number.transform.localScale = Vector3.one;
-      if (_host != null) {
-        _host.transform.localPosition = StartStand;
-        FaceSnap(CourtyardDir());
+      if (_result != null) _result.SetActive(false);
+      for (int i = 0; i < _balls.Count; i++) {
+        if (_balls[i] != null) _balls[i].transform.localPosition = CountingGardenBuilder.DemoBallHomes[i];
       }
-      if (_face != null) _face.SetExpression(CharacterExpression.Neutral);
+      if (_teacher != null && _teacher.Root != null) {
+        _teacher.Root.transform.localPosition = CountingGardenBuilder.DemoNpcStart;
+        FaceSnap(_teacher, BoardPoint());
+        if (_teacher.Face != null) _teacher.Face.SetExpression(CharacterExpression.Neutral);
+      }
+      if (_student != null && _student.Root != null) {
+        _student.Root.transform.localPosition = CountingGardenBuilder.DemoStudentStart;
+        FaceSnap(_student, TeacherPoint());
+        if (_student.Face != null) _student.Face.SetExpression(CharacterExpression.Neutral);
+      }
     } catch (Exception) { }
   }
 
-  // Facing helper for the host: toward the viewing spot (the child), i.e.
-  // north across the stage, so "talking" always reads on the face.
-  Vector3 CourtyardDir() {
-    Vector3 d = CountingGardenBuilder.DemoMouthLocal;
-    if (_host != null) d = d - _host.transform.localPosition;
-    d.y = 0f;
-    return d.sqrMagnitude > 0.0001f ? d : new Vector3(0f, 0f, -1f);
-  }
+  // ---- sequence -----------------------------------------------------------------
 
   void Update() {
     try { Step(Time.deltaTime); } catch (Exception) { }
   }
 
-  // Time-stepped state machine (tests drive Step directly with fake dt).
   public void Step(float dt) {
-    if (!_built || !_hostBuilt || dt <= 0f) return;
+    if (!_built || !_actorsBuilt || dt <= 0f) return;
     WatchPlayer();
     _phaseT += dt;
     switch (_phase) {
       case DemoPhase.Ready:
-        if (_phaseT >= 0.8f) To(DemoPhase.LookNumber);
+        if (_phaseT >= 0.8f) To(DemoPhase.TeacherLookBoard);
         break;
-      case DemoPhase.LookNumber:
-        FaceTowards(_numberFocus, dt, 4f);
-        if (_phaseT >= 1.2f) {
-          To(DemoPhase.SayNumber);
-          Speak("Number two.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+
+      // ---- teacher introduces: "look at the board / this is number two" ----
+      case DemoPhase.TeacherLookBoard:
+        FaceTowards(_teacher, BoardPoint(), dt, 4f);
+        FaceTowards(_student, TeacherPoint(), dt, 3f);
+        if (_phaseT >= 1.0f) {
+          To(DemoPhase.TeacherSayBoard);
+          Wave(_teacher);
+          Speak("Look at the board!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
         break;
-      case DemoPhase.SayNumber:
-        FaceTowards(_numberFocus, dt, 4f);
+      case DemoPhase.TeacherSayBoard:
+        FaceTowards(_teacher, BoardPoint(), dt, 4f);
         PulseNumber();
+        if (!_saidNumber) {
+          _saidNumber = true;
+          Speak("This is number two.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+        }
+        if (_phaseT >= 2.4f) To(DemoPhase.TeacherSayTwo);
+        break;
+      case DemoPhase.TeacherSayTwo:
+        FaceTowards(_teacher, BoardPoint(), dt, 4f);
+        PulseNumber();
+        if (!_didPulse && _phaseT >= 0.2f) {
+          _didPulse = true;
+          Speak("Two.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+        }
+        if (_phaseT >= 1.4f) To(DemoPhase.TeacherSayToday);
+        break;
+      case DemoPhase.TeacherSayToday:
+        FaceTowards(_teacher, StudentPoint(), dt, 4f);
+        if (!_saidToday) {
+          _saidToday = true;
+          Speak("Today, we take two balls.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+        }
+        if (_phaseT >= 2.6f) To(DemoPhase.TeacherAssign);
+        break;
+
+      // ---- teacher assigns: point at the balls, then at the basket ----
+      case DemoPhase.TeacherAssign:
+        if (!_saidAssign) {
+          _saidAssign = true;
+          Wave(_teacher);
+          Speak("Take two balls, please!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+        }
+        FaceTowards(_teacher, BallFieldPoint(), dt, 4f);
+        if (_phaseT >= 2.2f) To(DemoPhase.StudentLook);
+        break;
+      case DemoPhase.StudentLook:
+        FaceTowards(_teacher, BasketPoint(), dt, 4f);
+        if (_phaseT >= 0.4f && !_didPulse) {
+          _didPulse = true;
+          Speak("Put them in the basket!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+        }
+        FaceTowards(_student, TeacherPoint(), dt, 3f);
         if (_phaseT >= 2.2f) {
-          if (_number != null) _number.transform.localScale = Vector3.one;
-          To(DemoPhase.WalkApples);
+          SetShot(true); // action frame: student + balls + basket
+          To(DemoPhase.WalkBalls);
         }
         break;
-      case DemoPhase.WalkApples:
-        if (WalkTo(AppleStand, dt)) To(DemoPhase.ArriveApples);
-        break;
-      case DemoPhase.ArriveApples:
-        FaceTowards(AppleFocus(), dt, 5f);
-        if (!_saidApples) {
-          _saidApples = true;
-          Speak("Two apples.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
-        }
-        if (_phaseT >= 1.8f) To(DemoPhase.PickOne);
+
+      // ---- the student fetches exactly two of the five balls ----
+      case DemoPhase.WalkBalls:
+        if (WalkTo(_student, CountingGardenBuilder.DemoBallStand, dt)) To(DemoPhase.PickOne);
         break;
       case DemoPhase.PickOne:
-        FaceTowards(AppleFocus(), dt, 5f);
+        FaceTowards(_student, BallPoint(), dt, 5f);
         if (!_firedPick) {
           _firedPick = true;
-          Trigger("PickUp");
-          Fly(_apple0, _home0, CarrySlot(0), 0.25f, 0.9f, 0.5f);
+          Trigger(_student, "PickUp");
+          _ball0 = PickBall(2);
+          Fly(_ball0, BallHome(2), CarrySlot(_student, 0), 0.25f, 0.9f, 0.5f);
         }
-        if (_phaseT >= 1.4f) {
+        if (_phaseT >= 0.9f && !_didPulse) {
+          _didPulse = true;
+          Speak("One ball.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+        }
+        if (_phaseT >= 1.8f) {
           _carry0 = true;
           To(DemoPhase.PickTwo);
         }
         break;
       case DemoPhase.PickTwo:
-        FaceTowards(AppleFocus(), dt, 5f);
+        FaceTowards(_student, BallPoint2(), dt, 5f);
         if (!_firedPick) {
           _firedPick = true;
-          Trigger("PickUp");
-          Fly(_apple1, _home1, CarrySlot(1), 0.25f, 0.9f, 0.5f);
+          Trigger(_student, "PickUp");
+          _ball1 = PickBall(3);
+          Fly(_ball1, BallHome(3), CarrySlot(_student, 1), 0.25f, 0.9f, 0.5f);
         }
         if (_phaseT >= 1.4f) {
           _carry1 = true;
-          To(DemoPhase.CarryShow);
+          To(DemoPhase.ShowTwo);
         }
         break;
-      case DemoPhase.CarryShow:
-        FaceTowards(ViewerPoint(), dt, 4f);
-        if (!_didPulse && _phaseT >= 0.2f) {
+      case DemoPhase.ShowTwo:
+        // Beat: the student faces the child holding BOTH balls, teacher reacts.
+        FaceTowards(_student, ViewerPoint(), dt, 4f);
+        FaceTowards(_teacher, StudentPoint(), dt, 3f);
+        if (!_didPulse && _phaseT >= 0.3f) {
           _didPulse = true;
-          try { if (_face != null) _face.PulseExpression(CharacterExpression.Happy, 2.0f); }
-          catch (Exception) { }
+          Speak("Two balls!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+          Wave(_teacher);
+          Pulse(_teacher, CharacterExpression.Happy, 2f);
+          Pulse(_student, CharacterExpression.Happy, 2f);
         }
-        if (_phaseT >= 1.6f) To(DemoPhase.WalkBasket);
+        if (_phaseT >= 2.2f) To(DemoPhase.WalkBasket);
         break;
+
+      // ---- carry to the basket and drop both in ----
       case DemoPhase.WalkBasket:
-        if (WalkTo(BasketStand, dt)) To(DemoPhase.PlaceOne);
+        if (WalkTo(_student, CountingGardenBuilder.DemoBasketStand, dt)) To(DemoPhase.PlaceOne);
         break;
       case DemoPhase.PlaceOne:
-        FaceTowards(BasketPoint(), dt, 5f);
+        FaceTowards(_student, BasketPoint(), dt, 5f);
         if (!_placed) {
           _placed = true;
           _carry0 = false;
-          Fly(_apple0, CarrySlot(0), BasketSlot(0), 0.1f, 0.8f, 0.4f);
+          Fly(_ball0, CarrySlot(_student, 0), BasketSlot(0), 0.1f, 0.8f, 0.4f);
         }
         if (_phaseT >= 1.1f) To(DemoPhase.PlaceTwo);
         break;
       case DemoPhase.PlaceTwo:
-        FaceTowards(BasketPoint(), dt, 5f);
+        FaceTowards(_student, BasketPoint(), dt, 5f);
         if (!_placed) {
           _placed = true;
           _carry1 = false;
-          Fly(_apple1, CarrySlot(1), BasketSlot(1), 0.1f, 0.8f, 0.4f);
+          Fly(_ball1, CarrySlot(_student, 1), BasketSlot(1), 0.1f, 0.8f, 0.4f);
         }
-        if (_phaseT >= 1.1f) To(DemoPhase.ShowResult);
+        if (_phaseT >= 1.1f) To(DemoPhase.TeacherAsks);
         break;
-      case DemoPhase.ShowResult:
-        FaceTowards(BasketPoint(), dt, 5f);
+
+      // ---- teacher asks + confirms: the result board shows 2 tick ----
+      case DemoPhase.TeacherAsks:
+        FaceTowards(_teacher, BasketPoint(), dt, 4f);
+        FaceTowards(_student, BasketPoint(), dt, 4f);
+        if (!_asked) {
+          _asked = true;
+          Speak("How many balls?", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+        }
+        if (_phaseT >= 2.0f) To(DemoPhase.Confirm);
+        break;
+      case DemoPhase.Confirm:
+        FaceTowards(_teacher, BasketPoint(), dt, 4f);
         if (_result != null && !_result.activeSelf) {
           try { _result.SetActive(true); } catch (Exception) { }
         }
-        if (_phaseT >= 1.0f) {
-          To(DemoPhase.Celebrate);
-          Trigger("Celebrate");
-          try { if (_face != null) _face.SetExpression(CharacterExpression.Happy); }
-          catch (Exception) { }
-          Speak("Two apples!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+        if (!_cheered) {
+          _cheered = true;
+          Speak("Two balls!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
         }
+        if (_phaseT >= 1.6f) To(DemoPhase.Celebrate);
         break;
       case DemoPhase.Celebrate:
-        FaceTowards(ViewerPoint(), dt, 3f);
+        FaceTowards(_teacher, ViewerPoint(), dt, 3f);
+        FaceTowards(_student, ViewerPoint(), dt, 3f);
+        if (!_didPulse) {
+          _didPulse = true;
+          Trigger(_teacher, "Celebrate");
+          Trigger(_student, "Celebrate");
+          Wave(_teacher);
+          SpeelCelebrate();
+          Pulse(_teacher, CharacterExpression.Happy, 3f);
+          Pulse(_student, CharacterExpression.Happy, 3f);
+          try { if (_student.Face != null) _student.Face.PlayHop(); } catch (Exception) { }
+        }
         if (_phaseT >= 2.8f) To(DemoPhase.HoldResult);
         break;
       case DemoPhase.HoldResult:
-        if (_phaseT >= 1.5f) To(DemoPhase.ResetBeat);
+        if (_phaseT >= 1.6f) To(DemoPhase.ResetBalls);
         break;
-      case DemoPhase.ResetBeat:
-        FaceTowards(AppleFocus(), dt, 4f);
-        if (_phaseT >= 0.2f && _result != null && _result.activeSelf) {
+
+      // ---- tidy reset: balls go home, actors return, board keeps its 2 ----
+      case DemoPhase.ResetBalls:
+        if (_result != null && _result.activeSelf) {
           try { _result.SetActive(false); } catch (Exception) { }
         }
+        SetShot(false);
         if (!_firedPick) {
           _firedPick = true;
-          Fly(_apple0, BasketSlot(0), _home0, 0.2f, 0.7f, 0.45f);
+          Fly(_ball0, BasketSlot(0), BallHome(2), 0.2f, 0.7f, 0.45f);
         }
-        if (_phaseT >= 0.9f && !_saidNumber) {
-          _saidNumber = true;
-          Fly(_apple1, BasketSlot(1), _home1, 0.0f, 0.7f, 0.45f);
+        if (_phaseT >= 0.9f && !_placed) {
+          _placed = true;
+          Fly(_ball1, BasketSlot(1), BallHome(3), 0.0f, 0.7f, 0.45f);
         }
-        if (_phaseT >= 2.4f) {
-          try {
-            if (_apple0 != null) _apple0.transform.localPosition = _home0;
-            if (_apple1 != null) _apple1.transform.localPosition = _home1;
-          } catch (Exception) { }
-          To(DemoPhase.WalkStart);
+        if (_phaseT >= 2.2f) {
+          for (int i = 0; i < _balls.Count; i++) {
+            if (_balls[i] != null) _balls[i].transform.localPosition = CountingGardenBuilder.DemoBallHomes[i];
+          }
+          if (_teacher != null && _teacher.Face != null) _teacher.Face.SetExpression(CharacterExpression.Neutral);
+          if (_student != null && _student.Face != null) _student.Face.SetExpression(CharacterExpression.Neutral);
+          To(DemoPhase.StudentReturn);
         }
         break;
-      case DemoPhase.WalkStart:
-        if (WalkTo(StartStand, dt)) {
+      case DemoPhase.StudentReturn:
+        if (WalkTo(_student, CountingGardenBuilder.DemoStudentStart, dt)) To(DemoPhase.TeacherReturn);
+        break;
+      case DemoPhase.TeacherReturn:
+        FaceTowards(_teacher, BoardPoint(), dt, 3f);
+        if (_phaseT >= 0.6f) {
           LoopCount++;
           To(DemoPhase.Ready);
         }
@@ -361,9 +453,14 @@ public class CountingDemo : MonoBehaviour {
     }
     TickFlight(dt);
     TickCarry();
+    TickWave(dt);
   }
 
-  bool _didPulse;
+  void SpeelCelebrate() {
+    Speak("Yes! Two balls! Well done!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+  }
+
+  bool _didPulseReset;
 
   void To(DemoPhase next) {
     _phase = next;
@@ -371,42 +468,168 @@ public class CountingDemo : MonoBehaviour {
     _firedPick = false;
     _placed = false;
     _didPulse = false;
-    if (next == DemoPhase.ArriveApples) _saidApples = false;
-    if (next == DemoPhase.ResetBeat) { _saidNumber = false; }
     if (next == DemoPhase.Ready) {
-      _saidApples = false;
       _saidNumber = false;
-      try { if (_face != null) _face.SetExpression(CharacterExpression.Neutral); }
-      catch (Exception) { }
+      _saidToday = false;
+      _saidAssign = false;
+      _asked = false;
+      _cheered = false;
+      _ball0 = null;
+      _ball1 = null;
+      _didPulseReset = false;
     }
   }
 
-  Vector3 AppleFocus() {
-    return new Vector3((_home0.x + _home1.x) * 0.5f, 0.75f, (_home0.z + _home1.z) * 0.5f);
+  // ---- shot control --------------------------------------------------------------
+
+  void SetShot(bool action) {
+    if (ShotIsAction == action) return;
+    ShotIsAction = action;
+    IssueShot(); // crisp reframe on the phase boundary (user camera rule)
   }
 
-  Vector3 ViewerPoint() {
-    if (_camT != null) return _camT.localPosition;
-    return _host.transform.localPosition + CourtyardDir();
+  void IssueShot() {
+    if (_cam == null) return;
+    Transform c = ShotIsAction ? _camB : _camA;
+    Transform l = ShotIsAction ? _lookB : _lookA;
+    if (c == null || l == null) return;
+    try { _cam.FrameAnchor(c, l, BeatHoldSeconds); } catch (Exception) { }
   }
 
-  Vector3 BasketPoint() {
-    if (_basket != null) return _basket.localPosition;
-    return BasketStand;
-  }
+  // ---- carry / flight / wave ------------------------------------------------------
 
-  void PulseNumber() {
-    if (_number == null) return;
+  void TickCarry() {
     try {
-      float t = Mathf.Clamp01(_phaseT / 2.2f);
-      float s = 1f + 0.12f * Mathf.Sin(Mathf.PI * t);
-      _number.transform.localScale = new Vector3(s, s, s);
+      if (_carry0 && _ball0 != null && !_flying) _ball0.transform.localPosition = CarrySlot(_student, 0);
+      if (_carry1 && _ball1 != null && !_flying) _ball1.transform.localPosition = CarrySlot(_student, 1);
     } catch (Exception) { }
   }
 
-  void Trigger(string name) {
-    try { if (_animator != null) _animator.SetTrigger(name); } catch (Exception) { }
+  void Fly(GameObject ball, Vector3 from, Vector3 to, float delay, float dur, float lift) {
+    _flyBall = ball;
+    _flyFrom = from;
+    _flyTo = to;
+    _flyT = -delay;
+    _flyDur = Mathf.Max(0.2f, dur);
+    _flyLift = lift;
+    _flying = true;
   }
+
+  void TickFlight(float dt) {
+    if (!_flying || _flyBall == null) return;
+    try {
+      _flyT += dt;
+      if (_flyT < 0f) return;
+      float t = Mathf.Clamp01(_flyT / _flyDur);
+      Vector3 mid = (_flyFrom + _flyTo) * 0.5f + new Vector3(0f, _flyLift, 0f);
+      _flyBall.transform.localPosition = Vector3.Lerp(
+        Vector3.Lerp(_flyFrom, mid, t), Vector3.Lerp(mid, _flyTo, t), t);
+      if (t >= 1f) { _flying = false; _flyBall = null; }
+    } catch (Exception) { _flying = false; }
+  }
+
+  GameObject PickBall(int index) {
+    return index >= 0 && index < _balls.Count ? _balls[index] : null;
+  }
+
+  Vector3 BallHome(int index) {
+    return index >= 0 && index < CountingGardenBuilder.DemoBallHomes.Length
+      ? CountingGardenBuilder.DemoBallHomes[index] : Vector3.zero;
+  }
+
+  Vector3 BallPoint() { return CountingGardenBuilder.DemoBallStand + new Vector3(0f, 0.3f, 0f); }
+  Vector3 BallPoint2() { return CountingGardenBuilder.DemoBall2Stand + new Vector3(0f, 0.3f, 0f); }
+  Vector3 BallFieldPoint() { return CountingGardenBuilder.DemoBallFieldPos + new Vector3(0f, 0.4f, 0f); }
+  Vector3 BoardPoint() { return new Vector3(0f, 1.4f, 12.25f); }
+  Vector3 TeacherPoint() {
+    return _teacher != null && _teacher.Root != null
+      ? _teacher.Root.transform.localPosition + new Vector3(0f, 1.1f, 0f)
+      : new Vector3(0f, 1.1f, 11.4f);
+  }
+  Vector3 StudentPoint() {
+    return _student != null && _student.Root != null
+      ? _student.Root.transform.localPosition + new Vector3(0f, 0.9f, 0f)
+      : new Vector3(0f, 0.9f, 10.2f);
+  }
+  Vector3 BasketPoint() {
+    return _basket != null ? _basket.localPosition + new Vector3(0f, 0.4f, 0f)
+      : CountingGardenBuilder.DemoBasketStand + new Vector3(0f, 0.4f, 0f);
+  }
+  Vector3 ViewerPoint() {
+    return _camA != null ? _camA.localPosition : CountingGardenBuilder.DemoMouthLocal;
+  }
+
+  Vector3 CarrySlot(NpcActor actor, int i) {
+    if (actor != null && actor.CarryAnchor != null) {
+      Vector3 c = actor.CarryAnchor.localPosition;
+      Vector3 h = actor.Root.transform.localPosition;
+      return new Vector3(h.x + c.x + (i == 0 ? -0.13f : 0.13f), c.y, h.z + c.z);
+    }
+    return Vector3.zero;
+  }
+
+  // Both landed balls must stay visible above the rim from the card camera
+  // (round-2 capture: the second ball hid behind the first).
+  Vector3 BasketSlot(int i) {
+    Vector3 b = _basket != null ? _basket.localPosition : CountingGardenBuilder.DemoBasketStand;
+    return new Vector3(b.x + (i == 0 ? -0.26f : 0.30f), 0.76f, b.z + (i == 0 ? 0.16f : -0.10f));
+  }
+
+  // ---- motion ---------------------------------------------------------------------
+
+  bool WalkTo(NpcActor actor, Vector3 target, float dt) {
+    if (actor == null || actor.Root == null) return true;
+    Vector3 p = actor.Root.transform.localPosition;
+    Vector3 flat = new Vector3(target.x - p.x, 0f, target.z - p.z);
+    float dist = flat.magnitude;
+    if (dist <= 0.15f) {
+      try {
+        if (actor.Visual != null) {
+          Vector3 v = actor.Visual.localPosition;
+          v.y = 0.02f;
+          actor.Visual.localPosition = v;
+        }
+      } catch (Exception) { }
+      return true;
+    }
+    FaceTowards(actor, target, dt, 6f);
+    float step = Mathf.Min(WalkSpeed * dt, dist);
+    Vector3 dir = flat / (dist > 0.0001f ? dist : 1f);
+    try { actor.Root.transform.localPosition = new Vector3(p.x + dir.x * step, 0f, p.z + dir.z * step); }
+    catch (Exception) { }
+    _walkT += dt;
+    try {
+      if (actor.Visual != null) {
+        Vector3 v = actor.Visual.localPosition;
+        v.y = 0.02f + Mathf.Abs(Mathf.Sin(_walkT * 9f)) * 0.05f;
+        actor.Visual.localPosition = v;
+      }
+    } catch (Exception) { }
+    return false;
+  }
+
+  void FaceTowards(NpcActor actor, Vector3 targetLocal, float dt, float rate) {
+    if (actor == null || actor.Root == null) return;
+    try {
+      Vector3 p = actor.Root.transform.localPosition;
+      Vector3 d = new Vector3(targetLocal.x - p.x, 0f, targetLocal.z - p.z);
+      if (d.sqrMagnitude < 0.0001f) return;
+      Quaternion want = Quaternion.LookRotation(d);
+      actor.Root.transform.localRotation = Quaternion.Slerp(actor.Root.transform.localRotation, want,
+        1f - Mathf.Exp(-rate * dt));
+    } catch (Exception) { }
+  }
+
+  void FaceSnap(NpcActor actor, Vector3 dir) {
+    if (actor == null || actor.Root == null) return;
+    try {
+      Vector3 d = new Vector3(dir.x, 0f, dir.z);
+      if (d.sqrMagnitude < 0.0001f) return;
+      actor.Root.transform.localRotation = Quaternion.LookRotation(d);
+    } catch (Exception) { }
+  }
+
+  // ---- speech / gesture -----------------------------------------------------------
 
   void Speak(string text, SpeechStyle style, AudioPriority priority) {
     if (_audio == null) return;
@@ -417,120 +640,60 @@ public class CountingDemo : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  // Walk with yaw facing + visual bob (no teleport, no snap, no clipping step
-  // larger than speed*dt). Returns true on arrival (0.15m).
-  bool WalkTo(Vector3 target, float dt) {
-    Vector3 p = _host.transform.localPosition;
-    Vector3 flat = new Vector3(target.x - p.x, 0f, target.z - p.z);
-    float dist = flat.magnitude;
-    if (dist <= 0.15f) {
-      try {
-        if (_visual != null) {
-          Vector3 v = _visual.localPosition;
-          v.y = 0.02f;
-          _visual.localPosition = v;
-        }
-      } catch (Exception) { }
-      return true;
-    }
-    FaceTowards(target, dt, 6f);
-    float step = Mathf.Min(WalkSpeed * dt, dist);
-    Vector3 dir = flat / (dist > 0.0001f ? dist : 1f);
-    try { _host.transform.localPosition = new Vector3(p.x + dir.x * step, 0f, p.z + dir.z * step); }
+  void Trigger(NpcActor actor, string name) {
+    try { if (actor != null && actor.Animator != null) actor.Animator.SetTrigger(name); } catch (Exception) { }
+  }
+
+  void Pulse(NpcActor actor, CharacterExpression e, float seconds) {
+    try { if (actor != null && actor.Face != null) actor.Face.PulseExpression(e, seconds); }
     catch (Exception) { }
-    _walkT += dt;
+  }
+
+  void Wave(NpcActor actor) {
+    if (actor == null) return;
+    actor.WaveT = 1.4f;
+  }
+
+  void TickWave(float dt) {
+    TickWaveOne(_teacher, dt);
+    TickWaveOne(_student, dt);
+  }
+
+  void TickWaveOne(NpcActor actor, float dt) {
+    if (actor == null || actor.WaveBone == null) return;
     try {
-      if (_visual != null) {
-        Vector3 v = _visual.localPosition;
-        v.y = 0.02f + Mathf.Abs(Mathf.Sin(_walkT * 9f)) * 0.05f;
-        _visual.localPosition = v;
-      }
-    } catch (Exception) { }
-    return false;
-  }
-
-  void FaceTowards(Vector3 targetLocal, float dt, float rate) {
-    if (_host == null) return;
-    try {
-      Vector3 p = _host.transform.localPosition;
-      Vector3 d = new Vector3(targetLocal.x - p.x, 0f, targetLocal.z - p.z);
-      if (d.sqrMagnitude < 0.0001f) return;
-      Quaternion want = Quaternion.LookRotation(d);
-      float t = 1f - Mathf.Exp(-rate * dt);
-      _host.transform.localRotation = Quaternion.Slerp(_host.transform.localRotation, want, t);
-    } catch (Exception) { }
-  }
-
-  void FaceSnap(Vector3 dir) {
-    if (_host == null) return;
-    try {
-      if (dir.sqrMagnitude < 0.0001f) return;
-      _host.transform.localRotation = Quaternion.LookRotation(dir);
-    } catch (Exception) { }
-  }
-
-  Vector3 CarrySlot(int i) {
-    if (_carryAnchor != null) {
-      Vector3 c = _carryAnchor.localPosition;
-      Vector3 h = _host.transform.localPosition;
-      return new Vector3(h.x + c.x + (i == 0 ? -0.13f : 0.13f), c.y, h.z + c.z);
-    }
-    Vector3 hp = _host.transform.localPosition;
-    return hp + new Vector3(i == 0 ? -0.13f : 0.13f, 0.95f, 0.35f);
-  }
-
-  // Where a placed apple comes to rest: INSIDE the basket, slightly apart
-  // (visible above the rim from the plaza camera).
-  Vector3 BasketSlot(int i) {
-    Vector3 b = BasketStand;
-    if (_basket != null) b = _basket.localPosition;
-    return new Vector3(b.x + (i == 0 ? -0.17f : 0.17f), 0.62f, b.z + (i == 0 ? 0.06f : -0.06f));
-  }
-
-  void Fly(GameObject apple, Vector3 from, Vector3 to, float delay, float dur, float lift) {
-    _flyApple = apple;
-    _flyFrom = from;
-    _flyTo = to;
-    _flyT = -delay;
-    _flyDur = Mathf.Max(0.2f, dur);
-    _flyLift = lift;
-    _flying = true;
-  }
-
-  void TickFlight(float dt) {
-    if (!_flying || _flyApple == null) return;
-    try {
-      _flyT += dt;
-      if (_flyT < 0f) return; // pickup bend reads before the apple moves
-      float t = Mathf.Clamp01(_flyT / _flyDur);
-      Vector3 mid = (_flyFrom + _flyTo) * 0.5f + new Vector3(0f, _flyLift, 0f);
-      Vector3 a = Vector3.Lerp(_flyFrom, mid, t);
-      Vector3 b = Vector3.Lerp(mid, _flyTo, t);
-      _flyApple.transform.localPosition = Vector3.Lerp(a, b, t);
-      if (t >= 1f) { _flying = false; _flyApple = null; }
-    } catch (Exception) { _flying = false; }
-  }
-
-  void TickCarry() {
-    try {
-      if (_carry0 && _apple0 != null && !_flying) _apple0.transform.localPosition = CarrySlot(0);
-      if (_carry1 && _apple1 != null && !_flying) {
-        // While apple1 flies, apple0 keeps following the hand.
-        _apple1.transform.localPosition = CarrySlot(1);
+      if (actor.WaveT > 0f) {
+        if (!actor.Waving) {
+          actor.Waving = true;
+          actor.WaveBase = actor.WaveBone.localRotation;
+        }
+        actor.WaveT -= dt;
+        float wave = Mathf.Sin(Time.time * 14f) * 18f;
+        actor.WaveBone.localRotation = actor.WaveBase * Quaternion.Euler(0f, 0f, -75f + wave);
+        if (actor.WaveT <= 0f) {
+          actor.Waving = false;
+          actor.WaveBone.localRotation = actor.WaveBase;
+        }
       }
     } catch (Exception) { }
   }
 
-  // Camera-first: while the child stands at the viewing spot, HOLD the stage
-  // frame (re-issued every beat so the instruction stays a readable "card" —
-  // not a 3s flick that snaps back mid-demo). Re-arms after walking clear.
+  void PulseNumber() {
+    if (_number == null) return;
+    try {
+      float t = Mathf.Clamp01(_phaseT / 2.4f);
+      float s = 1f + 0.12f * Mathf.Sin(Mathf.PI * t);
+      _number.transform.localScale = new Vector3(s, s, s);
+    } catch (Exception) { }
+  }
+
+  // ---- camera-first watching -------------------------------------------------------
+
   void WatchPlayer() {
-    if (_playerT == null || _cam == null || _camT == null || _lookT == null) return;
+    if (_playerT == null || _cam == null || _camA == null || _lookA == null) return;
     try {
       Vector3 p = _playerT.position;
-      // Player lives in another scene graph — compare in garden space only if
-      // the player is actually inside the garden island (x > 60).
-      if (p.x < 60f) return;
+      if (p.x < 60f) return; // player not in the garden island
       Vector3 local = p - new Vector3(120f, 0f, 0f);
       float dx = local.x - _mouth.x, dz = local.z - _mouth.z;
       float d2 = dx * dx + dz * dz;
@@ -539,12 +702,12 @@ public class CountingDemo : MonoBehaviour {
           _beatLatched = true;
           DemoBeatsFired++;
           _beatRefreshT = 0f;
-          _cam.FrameAnchor(_camT, _lookT, BeatHoldSeconds);
+          IssueShot();
         } else {
           _beatRefreshT += Time.deltaTime;
           if (_beatRefreshT >= BeatHoldSeconds - 1.2f) {
             _beatRefreshT = 0f;
-            _cam.FrameAnchor(_camT, _lookT, BeatHoldSeconds);
+            IssueShot();
           }
         }
       } else if (_beatLatched && d2 > (WatchRadius + RearmMargin) * (WatchRadius + RearmMargin)) {

@@ -1,8 +1,8 @@
-// CT-P48: S3 P2 COUNTING DEMO PIONEER (ONE Number-2 living instruction).
-// Pins: demo stage geometry (number/basket/2 apples/hidden result/camera
-// markers), host contract (Tess-identity body, face, click-through, no
-// gameplay surface), full sequence order + loop reset (driven headless via
-// Step), camera beat + re-arm, and the no-gameplay-state firewall.
+// CT-P48: S3 P2W COUNTING DEMO — TWO-NPC MINI LESSON (Number 2).
+// Pins: lesson stage geometry (board + number 2, five-ball field, basket,
+// hidden result, shot A/B camera markers), the two staged actors (teacher +
+// child student, face kits, click-through, no gameplay surface), the full
+// acted sequence + tidy loop reset, and the two-shot camera contract.
 // C# 9.0 only.
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -24,7 +24,6 @@ public class CT_P48_CountingDemo {
     return Mathf.Sqrt(dx * dx + dz * dz);
   }
 
-  // Builds the garden + demo with null live refs (audio/camera/player absent).
   static void BuildDemo(out GameObject garden, out CountingGardenBuilder builder,
       out CountingDemo demo) {
     garden = new GameObject("P48GardenWorld");
@@ -38,9 +37,9 @@ public class CT_P48_CountingDemo {
     if (garden != null) Object.DestroyImmediate(garden);
   }
 
-  // A. Stage geometry: the number, basket, EXACTLY 2 apples on pedestals, a
-  // result that starts hidden, and demo camera markers inside the demo plot.
-  [Test] public void P48A_DemoStageBuilt() {
+  // A. Lesson stage: board + number, FIVE balls, basket, hidden result, both
+  // shot markers, all inside the demo theatre plot.
+  [Test] public void P48A_LessonStageBuilt() {
     GameObject garden;
     CountingGardenBuilder builder;
     CountingDemo demo;
@@ -48,133 +47,165 @@ public class CT_P48_CountingDemo {
     try {
       Assert.IsNotNull(demo, "demo controller built");
       Vector3 plot = builder.DemoStageCenter;
-      Assert.IsNotNull(builder.DemoNumber, "big number 2 staged");
-      Assert.Less(Dist2D(builder.DemoNumber.transform.localPosition, plot), 4.0f,
-        "number lives inside the demo theatre");
-      Assert.Greater(builder.DemoNumber.transform.localPosition.y, 0.5f,
-        "number rides the number board (readable at child eye height)");
-      Assert.IsNotNull(FindDeep(garden.transform, "CGDemoBoardPanel"), "number board panel");
-      Assert.IsNotNull(builder.DemoBasket, "demo basket staged");
-      Assert.Less(Dist2D(builder.DemoBasket.localPosition, plot), 4.0f,
-        "basket lives inside the demo theatre");
-      Assert.IsNotNull(builder.DemoApple0, "demo apple 0");
-      Assert.IsNotNull(builder.DemoApple1, "demo apple 1");
-      Assert.IsNull(FindDeep(garden.transform, "CGDemoApple2"), "exactly 2 demo apples (no ambiguity)");
-      Assert.Less(Dist2D(builder.DemoApple0.transform.localPosition, plot), 4.0f, "apple0 in theatre");
-      Assert.Less(Dist2D(builder.DemoApple1.transform.localPosition, plot), 4.0f, "apple1 in theatre");
-      Assert.Greater(Dist2D(builder.DemoApple0.transform.localPosition,
-        builder.DemoApple1.transform.localPosition), 0.4f, "apples distinct, never stacked");
-      Assert.IsNotNull(builder.DemoResult, "result group staged");
-      Assert.IsFalse(builder.DemoResult.activeSelf, "result hidden until the apples land");
-      Assert.IsNotNull(FindDeep(garden.transform, "CGDemoResultTwo"), "result shows 2");
-      Assert.IsNotNull(FindDeep(garden.transform, "CGDemoResultCheckArm"), "result shows tick");
-      Assert.IsNotNull(builder.DemoCam, "demo camera marker");
-      Assert.IsNotNull(builder.DemoLook, "demo look marker");
-      Assert.Less(builder.DemoCam.transform.localPosition.z, plot.z - 2f,
-        "demo camera sits on the plaza side (north), facing the stage");
-      Assert.Less(builder.DemoCam.transform.localPosition.y, 3f,
-        "demo camera at child-comfort height (instruction card, not landscape)");
+      string[] kit = { "CGDemoBoardPanel", "CGDemoBoardL", "CGDemoBoardR",
+        "CGDemoNumber2", "CGDemoBallField", "CGDemoBasket",
+        "CGDemoResultFrame", "CGDemoResultTwo", "CGDemoResultCheckArm" };
+      foreach (string n in kit) {
+        Transform t = FindDeep(garden.transform, n);
+        Assert.IsNotNull(t, "lesson static " + n);
+        Assert.Less(Dist2D(t.position, plot), 4.2f, n + " sits inside the demo theatre");
+      }
+      Assert.AreEqual(5, builder.DemoBalls.Count, "five balls on the field");
+      Assert.IsNull(FindDeep(garden.transform, "CGDemoBall5"), "exactly five balls");
+      for (int i = 0; i < builder.DemoBalls.Count; i++) {
+        Assert.IsNotNull(builder.DemoBalls[i], "ball " + i);
+        Assert.Less(Dist2D(builder.DemoBalls[i].transform.localPosition, plot), 4.2f,
+          "ball " + i + " on the stage");
+      }
+      // The field row must be spread (no stacking ambiguity).
+      float minGap = 999f;
+      for (int i = 0; i < builder.DemoBalls.Count - 1; i++) {
+        float gap = Dist2D(builder.DemoBalls[i].transform.localPosition,
+          builder.DemoBalls[i + 1].transform.localPosition);
+        if (gap < minGap) minGap = gap;
+      }
+      Assert.Greater(minGap, 0.5f, "balls read as distinct objects");
+      Assert.IsFalse(builder.DemoResult.activeSelf, "result hidden until the balls are in");
+      Assert.IsNotNull(builder.DemoCam, "shot A camera marker");
+      Assert.IsNotNull(builder.DemoLook, "shot A look marker");
+      Assert.IsNotNull(builder.DemoActionCam, "shot B camera marker");
+      Assert.IsNotNull(builder.DemoActionLook, "shot B look marker");
+      // Shot A frames the whole lesson (board behind teacher).
+      Assert.Less(builder.DemoCam.localPosition.z, plot.z - 2f,
+        "shot A sits north (plaza side) of the stage");
+      Assert.Less(builder.DemoCam.localPosition.y, 3f, "shot A at child-comfort height");
+      // Shot B is tighter and lower than shot A (the action card).
+      Assert.Less(Vector3.Distance(builder.DemoActionCam.localPosition, plot),
+        Vector3.Distance(builder.DemoCam.localPosition, plot),
+        "shot B sits closer than shot A");
+      Assert.Less(builder.DemoActionCam.localPosition.y, builder.DemoCam.localPosition.y,
+        "shot B is lower than shot A");
+      Assert.Less(Dist2D(builder.DemoActionLook.localPosition, builder.DemoActionCam.localPosition), 4.5f,
+        "shot B keeps the action large in frame");
     } finally { TearDown(garden); }
   }
 
-  // B. Host contract: Tess-identity body + face, click-through, camera-facing
-  // start, and NO gameplay surface (no click target, no quest/save/bus types).
-  [Test] public void P48B_HostContractAndFirewall() {
+  // B. Two acted roles: teacher + child student, both with bodies/faces, both
+  // click-through, and NO gameplay surface anywhere in the lesson.
+  [Test] public void P48B_TwoActorsAndFirewall() {
     GameObject garden;
     CountingGardenBuilder builder;
     CountingDemo demo;
     BuildDemo(out garden, out builder, out demo);
     try {
-      Assert.IsTrue(demo.HostBuilt, "demo host body built (TessVisual prefab)");
-      Transform host = FindDeep(garden.transform, "CGDemoHost");
-      Assert.IsNotNull(host, "host rooted in the garden scene");
-      Assert.IsNotNull(host.GetComponentInChildren<Animator>(true), "host has Animator (PickUp/Celebrate)");
-      Assert.IsNotNull(host.GetComponentInChildren<CharacterPresentation>(true), "host has face kit");
-      Assert.IsNull(host.GetComponentInChildren<Collider>(true), "host click-through (no capsule/mesh colliders)");
-      Assert.IsNull(host.GetComponentInChildren<Interactable>(true), "host is not clickable gameplay");
-      Assert.IsNotNull(FindDeep(host, "CGDemoCarryAnchor"), "visible carry anchor on the host");
+      Assert.IsTrue(demo.ActorsBuilt, "teacher + student bodies built");
+      Transform teacher = FindDeep(garden.transform, "CGDemoTeacher");
+      Transform student = FindDeep(garden.transform, "CGDemoStudent");
+      Assert.IsNotNull(teacher, "teacher rooted in the garden scene");
+      Assert.IsNotNull(student, "student rooted in the garden scene");
+      foreach (Transform t in new[] { teacher, student }) {
+        Assert.IsNotNull(t.GetComponentInChildren<Animator>(true), t.name + " has Animator");
+        Assert.IsNotNull(t.GetComponentInChildren<CharacterPresentation>(true), t.name + " has face kit");
+        Assert.IsNull(t.GetComponentInChildren<Collider>(true), t.name + " is click-through");
+        Assert.IsNull(t.GetComponentInChildren<Interactable>(true), t.name + " is not gameplay");
+        Assert.IsNotNull(FindDeep(t, t.name + "CarryAnchor"), t.name + " has a visible carry anchor");
+      }
+      // The student is a CHILD next to the teacher (user script roles).
+      float teacherH = teacher.GetComponentInChildren<SkinnedMeshRenderer>(true) != null
+        ? teacher.GetComponentInChildren<SkinnedMeshRenderer>(true).bounds.size.y : 0f;
+      float studentH = student.GetComponentInChildren<SkinnedMeshRenderer>(true) != null
+        ? student.GetComponentInChildren<SkinnedMeshRenderer>(true).bounds.size.y : 0f;
+      Assert.Greater(teacherH, 0.5f, "teacher has a body");
+      Assert.Greater(studentH, 0.3f, "student has a body");
+      Assert.Less(studentH, teacherH, "student reads smaller than the teacher (a child)");
       Assert.IsFalse(typeof(IClickTarget).IsAssignableFrom(typeof(CountingDemo)),
-        "demo is not a click target (player cannot drive it)");
+        "demo is not a click target (the child cannot drive the lesson)");
       System.Reflection.FieldInfo[] fields = typeof(CountingDemo).GetFields(
         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
       foreach (System.Reflection.FieldInfo f in fields) {
         string tn = f.FieldType.FullName ?? f.FieldType.Name;
-        Assert.IsFalse(tn.Contains("Quest") && !tn.Contains("DemoPhase"),
-          "no quest types on the demo (" + f.Name + ":" + tn + ")");
-        Assert.IsFalse(tn.Contains("Save") || tn.Contains("Mastery") || tn.Contains("Bus")
-          || tn.Contains("Score") || tn.Contains("Manager"),
-          "no progression/manager types on the demo (" + f.Name + ":" + tn + ")");
+        Assert.IsFalse(tn.Contains("Save") || tn.Contains("Mastery") || tn.Contains("Score")
+          || tn.Contains("Manager"), "no progression/manager types on the demo (" + f.Name + ")");
       }
       MicroWorldPortal[] portals = garden.GetComponentsInChildren<MicroWorldPortal>(true);
-      Assert.AreEqual(1, portals.Length, "demo adds no portals (exit only, P47 intact)");
+      Assert.AreEqual(1, portals.Length, "the lesson adds no portals (exit only)");
     } finally { TearDown(garden); }
   }
 
-  // C. Full loop headless: phases visit in story order, NPC never teleports,
-  // apples end home, result hides again, loop counter advances.
-  [Test] public void P48C_SequenceLoopsClean() {
+  // C. Full lesson loop headless: the role script order holds, the student
+  // takes exactly 2 of the 5 balls to the basket, the result appears only
+  // after both are in, the reset tidies everything, nobody teleports.
+  [Test] public void P48C_LessonLoopsClean() {
     GameObject garden;
     CountingGardenBuilder builder;
     CountingDemo demo;
     BuildDemo(out garden, out builder, out demo);
     try {
+      DemoPhase[] story = { DemoPhase.TeacherLookBoard, DemoPhase.TeacherSayBoard,
+        DemoPhase.TeacherSayTwo, DemoPhase.TeacherSayToday, DemoPhase.TeacherAssign,
+        DemoPhase.StudentLook, DemoPhase.WalkBalls, DemoPhase.PickOne, DemoPhase.PickTwo,
+        DemoPhase.ShowTwo, DemoPhase.WalkBasket, DemoPhase.PlaceOne, DemoPhase.PlaceTwo,
+        DemoPhase.TeacherAsks, DemoPhase.Confirm, DemoPhase.Celebrate,
+        DemoPhase.HoldResult, DemoPhase.ResetBalls, DemoPhase.StudentReturn,
+        DemoPhase.TeacherReturn, DemoPhase.Ready };
       List<DemoPhase> order = new List<DemoPhase>();
       DemoPhase last = demo.Phase;
       order.Add(last);
-      Vector3 prevHost = FindDeep(garden.transform, "CGDemoHost").localPosition;
+      Transform teacher = FindDeep(garden.transform, "CGDemoTeacher");
+      Transform student = FindDeep(garden.transform, "CGDemoStudent");
+      Vector3 prevS = student.localPosition, prevT = teacher.localPosition;
       float maxStep = 0f;
-      bool sawResult = false;
-      bool applesInBasket = false;
+      bool sawResult = false, ballsInBasket = false;
       int iter = 0;
-      while (iter < 3000) {
+      while (iter < 4000) {
         iter++;
         demo.Step(0.1f);
         if (demo.Phase != last) {
           last = demo.Phase;
           order.Add(last);
           if (last == DemoPhase.Celebrate) {
-            // ShowResult just ran: the tick must be visible with both apples
-            // resting by the basket (captured here, one beat after the reveal).
+            // Confirm just ran: result visible + both chosen balls at the basket.
             sawResult = demo.ResultShown;
-            float d0 = Dist2D(builder.DemoApple0.transform.localPosition,
+            float d2 = Dist2D(builder.DemoBalls[2].transform.localPosition,
               builder.DemoBasket.localPosition);
-            float d1 = Dist2D(builder.DemoApple1.transform.localPosition,
+            float d3 = Dist2D(builder.DemoBalls[3].transform.localPosition,
               builder.DemoBasket.localPosition);
-            applesInBasket = d0 < 0.6f && d1 < 0.6f;
+            ballsInBasket = d2 < 0.7f && d3 < 0.7f;
           }
         }
-        Vector3 hp = FindDeep(garden.transform, "CGDemoHost").localPosition;
-        float step = Dist2D(hp, prevHost);
+        Vector3 sp = student.localPosition, tp = teacher.localPosition;
+        float step = Mathf.Max(Dist2D(sp, prevS), Dist2D(tp, prevT));
         if (step > maxStep) maxStep = step;
-        prevHost = hp;
-        if (demo.LoopCount >= 1 && demo.Phase == DemoPhase.LookNumber) break;
+        prevS = sp;
+        prevT = tp;
+        if (demo.LoopCount >= 1 && demo.Phase == DemoPhase.TeacherLookBoard) break;
       }
-      Assert.Less(iter, 3000, "loop completes (no stall)");
+      Assert.Less(iter, 4000, "the lesson completes (no stall)");
       Assert.GreaterOrEqual(demo.LoopCount, 1, "loop counter advances");
-      DemoPhase[] story = { DemoPhase.LookNumber, DemoPhase.SayNumber, DemoPhase.WalkApples,
-        DemoPhase.ArriveApples, DemoPhase.PickOne, DemoPhase.PickTwo, DemoPhase.CarryShow,
-        DemoPhase.WalkBasket, DemoPhase.PlaceOne, DemoPhase.PlaceTwo, DemoPhase.ShowResult,
-        DemoPhase.Celebrate, DemoPhase.HoldResult, DemoPhase.ResetBeat, DemoPhase.WalkStart,
-        DemoPhase.Ready };
       int cursor = 0;
       foreach (DemoPhase p in order) {
         if (cursor < story.Length && p == story[cursor]) cursor++;
       }
-      Assert.AreEqual(story.Length, cursor, "story order intact: 2 -> take 2 -> carry -> basket -> 2-tick");
-      Assert.LessOrEqual(maxStep, 0.9f * 0.1f + 0.001f, "NPC never teleports (walk speed bound)");
-      Assert.IsTrue(sawResult, "result appears only after both apples land");
-      Assert.IsTrue(applesInBasket, "both apples visibly rest by the basket at result time");
+      Assert.AreEqual(story.Length, cursor,
+        "role script intact: teacher explains -> assigns -> student fetches two -> carries -> teacher confirms -> celebrate -> reset");
+      Assert.LessOrEqual(maxStep, 0.9f * 0.1f + 0.001f, "actors never teleport (walk speed bound)");
+      Assert.IsTrue(sawResult, "result appears only after both balls land");
+      Assert.IsTrue(ballsInBasket, "the two chosen balls rest by the basket at confirm time");
       Assert.IsFalse(demo.ResultShown, "result hides again on reset");
-      float h0 = Dist2D(builder.DemoApple0.transform.localPosition, builder.DemoAppleHome0);
-      float h1 = Dist2D(builder.DemoApple1.transform.localPosition, builder.DemoAppleHome1);
-      Assert.Less(h0, 0.05f, "apple0 home after reset");
-      Assert.Less(h1, 0.05f, "apple1 home after reset");
+      for (int i = 0; i < builder.DemoBalls.Count; i++) {
+        float home = Dist2D(builder.DemoBalls[i].transform.localPosition,
+          CountingGardenBuilder.DemoBallHomes[i]);
+        Assert.Less(home, 0.05f, "ball " + i + " home after reset");
+      }
+      float back = Dist2D(student.localPosition, CountingGardenBuilder.DemoStudentStart);
+      Assert.Less(back, 0.2f, "student back at the start position");
     } finally { TearDown(garden); }
   }
 
-  // D. Camera-first: walking up to the demo mouth frames the stage once, and
-  // the beat re-arms after walking clear (ыгрок drives nothing else).
-  [Test] public void P48D_CameraBeatAndRearm() {
+  // D. Camera contract: walking up fires the lesson card once and holds it;
+  // the sequence reframes from shot A to shot B for the student action;
+  // leaving releases the beat and re-entering re-arms it.
+  [Test] public void P48D_TwoShotCameraBeat() {
     GameObject garden = new GameObject("P48GardenCam");
     try {
       CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
@@ -182,16 +213,19 @@ public class CT_P48_CountingDemo {
       GameObject camGo = new GameObject("P48Camera");
       SmartCamera cam = camGo.AddComponent<SmartCamera>();
       GameObject playerGo = new GameObject("P48Player");
-      // Garden island contract: live player positions carry the +120x offset.
       playerGo.transform.position = new Vector3(0f, 0f, 0f);
       CountingDemo demo = garden.AddComponent<CountingDemo>();
       demo.Build(builder, playerGo.transform, cam, null);
-      for (int i = 0; i < 30; i++) demo.Step(0.1f);
+      for (int i = 0; i < 20; i++) demo.Step(0.1f);
       Assert.AreEqual(0, demo.DemoBeatsFired, "no beat while the child is away");
       playerGo.transform.position = CountingGardenBuilder.WorldOffset + builder.DemoMouth;
-      for (int i = 0; i < 30; i++) demo.Step(0.1f);
-      Assert.AreEqual(1, demo.DemoBeatsFired, "walking up frames the stage once");
-      for (int i = 0; i < 30; i++) demo.Step(0.1f);
+      for (int i = 0; i < 20; i++) demo.Step(0.1f);
+      Assert.AreEqual(1, demo.DemoBeatsFired, "walking up frames the lesson once");
+      Assert.IsFalse(demo.ShotIsAction, "the lesson starts on shot A (board + teacher + student)");
+      int guard = 0;
+      while (!demo.ShotIsAction && guard < 900) { demo.Step(0.1f); guard++; }
+      Assert.IsTrue(demo.ShotIsAction, "the camera reframes to shot B when the student acts");
+      for (int i = 0; i < 20; i++) demo.Step(0.1f);
       Assert.AreEqual(1, demo.DemoBeatsFired, "beat does not spam while staying");
       playerGo.transform.position = new Vector3(60f, 0f, 0f);
       for (int i = 0; i < 30; i++) demo.Step(0.1f);
