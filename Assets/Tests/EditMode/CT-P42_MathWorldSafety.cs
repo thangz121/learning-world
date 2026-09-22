@@ -55,6 +55,11 @@ public class CT_P42_MathWorldSafety {
         "MathGardenStonePip", "MathClearingPip", "MathHostFlower",
         "MathDomino", "MathTower", "MathSign", "MathBedPips",
         "MathWorldSignBead",
+        "MathRainbow", "MathBlossom", "MathPetal", "MathFlowerDrift",
+        "MathPetalFall", "MathButterfly", "MathEntryBlossom",
+        "MathGardenArch", "MathGardenBlossom", "MathGardenCarpet", "MathGardenDrift",
+        "MathGardenPetals", "MathGardenApple", "MathGardenBasket", "MathGardenSign",
+        "MathGardenExitDisc", "MathGardenBackdrop",
       }) CollectByPrefix(_root.transform, prefix, decor);
       Assert.Greater(decor.Count, 10, "dressing must exist to be checked");
       var offenders = new List<string>();
@@ -121,12 +126,19 @@ public class CT_P42_MathWorldSafety {
   // the number recorded in MATH_WORLD_VISUAL_QA.md; shared materials only.
   // Hub phase measured ~600 (10 gate skeletons + landmark + spurs, all shared
   // Lit/PropKit materials, zero colliders, zero lights) -> cap re-pinned to
-  // 640, recorded in MATH_HUB_VISUAL_QA.md. Micro-World 1 re-pins again.
+  // 640, recorded in MATH_HUB_VISUAL_QA.md. S3 cartoon gates measured 698
+  // (10 unique arcs/toppers, still shared materials, zero colliders) -> cap
+  // re-pinned to 720; S6 beauty+pink pass measured 777 (blossom trees, petal
+  // carpets, flower drifts, pastel rainbow); S7 full-bloom measured 870 (more
+  // trees/drifts, falling petals, butterflies, entry blossom crown); S2
+  // pioneer micro-world (Counting Garden staging + portals) measured 938 ->
+  // cap re-pinned to 990, recorded in MATH_HUB_VISUAL_QA.md. Micro-World
+  // production re-pins again.
   [Test] public void P42C_ObjectBudget() {
     SetUp();
     try {
       int count = _root.transform.GetComponentsInChildren<Transform>(true).Length;
-      Assert.Less(count, 640, "content object count bounded (perf guardrail)");
+      Assert.Less(count, 990, "content object count bounded (perf guardrail)");
       Assert.Greater(count, 100, "district-scale skeleton + dressing present (not a bare shell)");
     } finally { TearDown(); }
   }

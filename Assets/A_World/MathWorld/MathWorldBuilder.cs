@@ -44,7 +44,8 @@ public class MathWorldBuilder : MonoBehaviour {
 
   // B1R3: higher spawn framing (user round: "camera cao hơn một chút để nhìn
   // toàn thể") + the world-name column anchor for the arrival beat.
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 4.6f, 6.4f);
+  // S1 review (+30% height, same view direction): (0,4.6,6.4) -> (0,6.0,8.3).
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 6.0f, 8.3f);
   public static readonly Vector3 SignLocal = new Vector3(3.6f, 0f, -10.6f);
   public static Vector3 SignWorldPos {
     get { return WorldOffset + SignLocal; }
@@ -105,7 +106,37 @@ public class MathWorldBuilder : MonoBehaviour {
     BuildSun(root);
     BuildPresentationAnchors(root);
     BuildHubLandmark(root);      // P3.0.1 Hub: central orientation landmark
-    BuildMicroWorldGates(root);  // P3.0.1 Hub: 10 gate skeletons + spurs
+    BuildMicroWorldGates(root);  // P3.0.1 Hub: 10 gate skeletons + ring
+    BuildHubDressing(root);      // S1: compass + zone tints + accent flowers
+  }
+
+  // S1 §4/§8: small composed dressing (all flat/walkable, collider-free).
+  // Compass medallion on the lobby pad (orientation heart), three restrained
+  // zone tints (N warm / W leaf / E pale) to break green monotony, three
+  // accent flower clusters on the ring. MathGate* names (count-safe).
+  void BuildHubDressing(Transform parent) {
+    Pad(parent, "MathGateCompass", new Vector3(0f, 0.02f, 1f), 2.0f, CourtyardSand);
+    Ball(parent, "MathGateCompassDot", new Vector3(0f, 0.06f, 1f), 0.4f, AbacusBlue, false);
+    Pad(parent, "MathGateZoneN", new Vector3(0f, 0.008f, 14.3f), 10f,
+      new Color(0.84f, 0.76f, 0.60f));
+    Pad(parent, "MathGateZoneW", new Vector3(-10.5f, 0.008f, -2f), 9f,
+      new Color(0.78f, 0.76f, 0.58f));
+    Pad(parent, "MathGateZoneE", new Vector3(11f, 0.008f, -2f), 10f,
+      new Color(0.86f, 0.78f, 0.60f));
+    DressBloom(parent, "MathGateAccent0", new Vector3(9f, 0f, 8f), BerryRed);
+    DressBloom(parent, "MathGateAccent1", new Vector3(-7f, 0f, 11f), BloomPink);
+    DressBloom(parent, "MathGateAccent2", new Vector3(3f, 0f, -12f), BloomWhite);
+    // S1-final depth: background silhouettes (distant, quiet, shared green).
+    DressBackdrop(parent, "MathGateBackdropN1", new Vector3(-6f, 0f, 21.5f), 2.2f);
+    DressBackdrop(parent, "MathGateBackdropN2", new Vector3(7f, 0f, 21f), 2.0f);
+    DressBackdrop(parent, "MathGateBackdropE", new Vector3(23f, 0f, 2f), 2.0f);
+    // S1-final foreground: entry-path framing bushes (low, flanking, never
+    // competing — camera passes over them).
+    PlaceProp(parent, "plant_bushSmall", "MathGateFrameL", new Vector3(-2.5f, 0f, -11f), 15f, 1.4f);
+    PlaceProp(parent, "plant_bushSmall", "MathGateFrameR", new Vector3(2.5f, 0f, -11f), 195f, 1.4f);
+    // S4 declutter (user round "rối mắt"): entry pebbles + spoke grass tufts
+    // removed — the domino number-walk + chevrons already guide the eye, and
+    // the small scatter read as noise around the gates.
   }
 
   // ---- micro-world hub (P3.0.1: selection hub, NO gameplay) --------------------
@@ -118,6 +149,21 @@ public class MathWorldBuilder : MonoBehaviour {
   // (shared Lit palette + PropKit + Kenney kits). ALL gate geometry is
   // collider-free (P42 dressing rule: clicks fall through, child walks to the
   // mouth); solid posts bake as NavMesh obstacles off-path (no through-walk).
+  //
+  // S2 GATE-SHAPE PASS: every gate became a real gate silhouette (frame +
+  // motif) and the body moved off the ring. S3 CARTOON PASS (user round:
+  // "các cổng giống nhau quá… cartoon hơn và đúng bản chất từng micro world"):
+  // the shared plain frame is replaced by the cartoon kit below — each gate
+  // gets its OWN chunky silhouette (see the kit + per-gate builders).
+  // The gate BODY stands GateBodyZ behind the ring waypoint so the 1.5m
+  // circulation ring keeps its full width clear while every gate fronts the
+  // hub. Arches are bake-ignored (headroom rule, P3 survey lesson); legs stay
+  // collider-free and bake as off-path obstacles like every other post.
+
+  // Gate body offset (local -Z = away from the hub, i.e. behind the ring).
+  public const float GateBodyZ = -2.0f;
+  // Pill floats above every S3 crown/topper (tallest ring/ball ~3.67).
+  const float GateLabelHeight = 3.95f;
 
   MicroWorldGate GateRoot(Transform parent, MicroWorldCatalog.Entry def,
       Vector3 pos, Vector3 facePos) {
@@ -130,37 +176,146 @@ public class MathWorldBuilder : MonoBehaviour {
       root.transform.localRotation = Quaternion.LookRotation(d.normalized);
     MicroWorldGate gate = root.AddComponent<MicroWorldGate>();
     gate.Wire(def.Id, def.VnName, def.Pattern, def.Accent);
-    Pad(root.transform, "MathGateBase", Vector3.zero, 3.4f, CourtyardSand);
+    Pad(root.transform, "MathGateBase", new Vector3(0f, 0f, GateBodyZ), 3.4f, CourtyardSand);
+    // Name pill rides above the frame (anchored to the body, not the ring).
+    gate.LabelAnchor.localPosition = new Vector3(0f, 0f, GateBodyZ);
     GameObject labelGo = new GameObject("MathGateLabel");
     labelGo.transform.SetParent(root.transform, false);
     WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.Setup(def.VnName, gate.LabelAnchor, 2.7f);
+    label.Setup(def.VnName, gate.LabelAnchor, GateLabelHeight);
     label.Show();
     MicroGates.Add(gate);
     return gate;
   }
 
-  static void GatePost(Transform parent, string name, float x, float h, Color color) {
-    Box(parent, name, new Vector3(x, h * 0.5f, 0f),
-      new Vector3(0.22f, h, 0.22f), color);
+  // The gate body (frame + motif anchor). Builders compose in body-local
+  // coords: +Z faces the ring/hub, -Z faces the micro-world.
+  static Transform GateBody(MicroWorldGate gate) {
+    Transform t = gate.transform.Find("MathGateBody");
+    if (t != null) return t;
+    GameObject go = new GameObject("MathGateBody");
+    go.transform.SetParent(gate.transform, false);
+    go.transform.localPosition = new Vector3(0f, 0f, GateBodyZ);
+    return go.transform;
   }
 
-  static void GateBeam(Transform parent, string name, float y, float w, Color color) {
-    Box(parent, name, new Vector3(0f, y, 0f),
-      new Vector3(w, 0.18f, 0.18f), color);
+  // ---- S3 cartoon gate kit (shared rounded language + per-gate silhouette) --
+  // User round: "các cổng giống nhau quá… muốn cartoon và đúng bản chất từng
+  // micro world". The plain post-and-lintel frame is gone. Every gate now
+  // stands on two cartoon legs at ±1.6 (rounded post + ball cap, toy blocks,
+  // striped site post, mushroom, tree, stone…) and carries a UNIQUE chunky
+  // arch/topper that says what the micro-world is about (beads, magnifier,
+  // fruit branch, mirrored halves, rainbow sort, jigsaw, cottage roof, crane,
+  // stone bridge, mushroom + moon). Arches are bake-ignored (headroom rule);
+  // all gate geometry stays collider-free (P42/P45 dressing rules).
+
+  // Rounded cartoon leg: chunky cylinder + ball cap (the family signature).
+  static GameObject CartoonPost(Transform t, string name, float x, float h, float radius,
+      Color body, Color cap) {
+    GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    post.name = name;
+    post.transform.SetParent(t);
+    post.transform.localPosition = new Vector3(x, h * 0.5f, 0f);
+    post.transform.localScale = new Vector3(radius * 2f, h * 0.5f, radius * 2f);
+    post.GetComponent<Renderer>().sharedMaterial = Lit(body);
+    StripCollider(post);
+    Ball(t, name + "Cap", new Vector3(x, h + radius * 0.9f, 0f), radius * 2.3f, cap, false);
+    return post;
   }
 
-  static void GateBeads(Transform parent, string name, float y, int n, float spread, Color a, Color b) {
-    for (int i = 0; i < n; i++) {
-      GameObject bead = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      bead.name = name + i;
-      bead.transform.SetParent(parent);
-      bead.transform.localPosition = new Vector3(
-        -spread * 0.5f + (n <= 1 ? 0f : spread * i / (n - 1)), y, 0f);
-      bead.transform.localScale = new Vector3(0.26f, 0.26f, 0.26f);
-      bead.GetComponent<Renderer>().sharedMaterial = Lit(i % 2 == 0 ? a : b);
-      StripCollider(bead);
+  // Toy counting-block leg (stack 1-2-3, ball cap): the block IS the motif.
+  static void BlockPost(Transform t, string name, float x, Color a, Color b) {
+    Box(t, name, new Vector3(x, 0.45f, 0f), new Vector3(0.9f, 0.9f, 0.9f), a);
+    Box(t, name + "B", new Vector3(x, 1.25f, 0f), new Vector3(0.7f, 0.7f, 0.7f), b);
+    Box(t, name + "C", new Vector3(x, 1.9f, 0f), new Vector3(0.5f, 0.5f, 0.5f), a);
+    Ball(t, name + "Cap", new Vector3(x, 2.3f, 0f), 0.44f, BloomWhite, false);
+  }
+
+  // Hazard-striped site leg (gold/soil bands + cap): Build Yard signature.
+  static void StripedPost(Transform t, string name, float x) {
+    Box(t, name, new Vector3(x, 0.3f, 0f), new Vector3(0.6f, 0.6f, 0.6f), QuestGold);
+    Box(t, name + "B", new Vector3(x, 0.9f, 0f), new Vector3(0.6f, 0.6f, 0.6f), SoilBrown);
+    Box(t, name + "C", new Vector3(x, 1.5f, 0f), new Vector3(0.6f, 0.6f, 0.6f), QuestGold);
+    Ball(t, name + "Cap", new Vector3(x, 2.05f, 0f), 0.5f, BloomWhite, false);
+  }
+
+  // Chunky cartoon arch: segments along a half-ellipse landing at (±radiusX,
+  // baseY); per-segment colour cycling reads "rainbow"/"mirrored" motifs.
+  static void CartoonArch(Transform t, string name, float radiusX, float rise, float baseY,
+      int segments, float thick, Color[] colors) {
+    for (int i = 0; i < segments; i++) {
+      float a = Mathf.PI * (i + 0.5f) / segments;
+      float x = -Mathf.Cos(a) * radiusX;
+      float y = baseY + Mathf.Sin(a) * rise;
+      float x0 = -Mathf.Cos(Mathf.PI * i / segments) * radiusX;
+      float y0 = baseY + Mathf.Sin(Mathf.PI * i / segments) * rise;
+      float x1 = -Mathf.Cos(Mathf.PI * (i + 1) / segments) * radiusX;
+      float y1 = baseY + Mathf.Sin(Mathf.PI * (i + 1) / segments) * rise;
+      float len = Mathf.Sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0)) * 1.06f;
+      GameObject seg = Box(t, name + i, new Vector3(x, y, 0f),
+        new Vector3(len, thick, thick), colors[i % colors.Length]);
+      seg.transform.localRotation = Quaternion.Euler(0f, 0f,
+        Mathf.Atan2(Mathf.Cos(a) * rise, Mathf.Sin(a) * radiusX) * Mathf.Rad2Deg);
+      IgnoreFromBuild(seg);
     }
+  }
+
+  // Chunky cartoon ring (the Discovery magnifier head).
+  static void CartoonRing(Transform t, string name, float cx, float cy, float r,
+      int segments, float thick, Color color) {
+    for (int i = 0; i < segments; i++) {
+      float a = 2f * Mathf.PI * (i + 0.5f) / segments;
+      float len = 2f * Mathf.PI * r / segments * 1.25f;
+      GameObject seg = Box(t, name + i, new Vector3(cx + Mathf.Cos(a) * r, cy + Mathf.Sin(a) * r, 0f),
+        new Vector3(len, thick, thick), color);
+      seg.transform.localRotation = Quaternion.Euler(0f, 0f, a * Mathf.Rad2Deg + 90f);
+      IgnoreFromBuild(seg);
+    }
+  }
+
+  // Mushroom leg (Memory Grove signature): cream stalk + spotted red cap +
+  // accent base ring.
+  static void MushroomPost(Transform t, string name, float x, float stalkH, Color accent, Color capColor) {
+    GameObject baseRing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    baseRing.name = name + "Base";
+    baseRing.transform.SetParent(t);
+    baseRing.transform.localPosition = new Vector3(x, 0.06f, 0f);
+    baseRing.transform.localScale = new Vector3(0.7f, 0.06f, 0.7f);
+    baseRing.GetComponent<Renderer>().sharedMaterial = Lit(accent);
+    StripCollider(baseRing);
+    GameObject stalk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    stalk.name = name;
+    stalk.transform.SetParent(t);
+    stalk.transform.localPosition = new Vector3(x, stalkH * 0.5f, 0f);
+    stalk.transform.localScale = new Vector3(0.4f, stalkH * 0.5f, 0.4f);
+    stalk.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.97f, 0.94f, 0.86f));
+    StripCollider(stalk);
+    GameObject cap = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    cap.name = name + "Cap";
+    cap.transform.SetParent(t);
+    cap.transform.localPosition = new Vector3(x, stalkH + 0.18f, 0f);
+    cap.transform.localScale = new Vector3(1.0f, 0.55f, 1.0f);
+    cap.GetComponent<Renderer>().sharedMaterial = Lit(capColor);
+    StripCollider(cap);
+    Ball(t, name + "SpotA", new Vector3(x - 0.2f, stalkH + 0.42f, 0.12f), 0.16f, BloomWhite, false);
+    Ball(t, name + "SpotB", new Vector3(x + 0.22f, stalkH + 0.42f, -0.1f), 0.14f, BloomWhite, false);
+  }
+
+  static void MushroomMini(Transform t, string name, float x, Color capColor) {
+    GameObject stalk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    stalk.name = name;
+    stalk.transform.SetParent(t);
+    stalk.transform.localPosition = new Vector3(x, 0.22f, 0.6f);
+    stalk.transform.localScale = new Vector3(0.2f, 0.22f, 0.2f);
+    stalk.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.97f, 0.94f, 0.86f));
+    StripCollider(stalk);
+    GameObject cap = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    cap.name = name + "Cap";
+    cap.transform.SetParent(t);
+    cap.transform.localPosition = new Vector3(x, 0.5f, 0.6f);
+    cap.transform.localScale = new Vector3(0.5f, 0.26f, 0.5f);
+    cap.GetComponent<Renderer>().sharedMaterial = Lit(capColor);
+    StripCollider(cap);
   }
 
   static void GateBasket(Transform parent, string name, Vector3 pos) {
@@ -182,7 +337,7 @@ public class MathWorldBuilder : MonoBehaviour {
 
   void BuildHubLandmark(Transform parent) {
     // Great Abacus (5.5, 9.5): the hub's north star — tall bead frame visible
-    // from spawn over the lobby, staging the return arch + north gates behind.
+    // from spawn over the lobby, staging the return marker + north gates behind.
     Transform root = new GameObject("MathGateLandmark").transform;
     root.SetParent(parent);
     root.localPosition = new Vector3(5.5f, 0f, 9.5f);
@@ -209,234 +364,332 @@ public class MathWorldBuilder : MonoBehaviour {
   }
 
   void BuildMicroWorldGates(Transform parent) {
+    // S1 arc/court: 10 gates on a ring around the hub (r~13-16), ALL facing
+    // the center so the child reads fronts from the lobby. Slots sit between
+    // the 4 walking spokes (>=2m, pinned CT-P45C) inside the r25.5 box.
+    Vector3 hub = new Vector3(0f, 0f, 0f);
     MicroWorldCatalog.Entry[] all = MicroWorldCatalog.All;
-    BuildGateCounting(parent, all[0], new Vector3(-9f, 0f, -2f), new Vector3(-7.63f, 0f, 2.38f));
-    BuildGateDiscovery(parent, all[1], new Vector3(-6f, 0f, -5f), new Vector3(-4.05f, 0f, 1.26f));
-    BuildGateOrchard(parent, all[2], new Vector3(8.5f, 0f, 0.5f), new Vector3(7.55f, 0f, -2.44f));
-    BuildGateMatch(parent, all[3], new Vector3(3f, 0f, 6f), new Vector3(0.8f, 0f, 3.5f));
-    BuildGateSorting(parent, all[4], new Vector3(-6f, 0f, 13.5f), new Vector3(0f, 0f, 11.5f));
-    BuildGateWorkshop(parent, all[5], new Vector3(3.5f, 0f, 15f), new Vector3(0f, 0f, 11.5f));
-    BuildGateVillage(parent, all[6], new Vector3(-10f, 0f, 13f), new Vector3(0f, 0f, 10.5f));
-    BuildGateBuild(parent, all[7], new Vector3(6f, 0f, -13.5f), new Vector3(5.77f, 0f, -9.38f));
-    BuildGateBridge(parent, all[8], new Vector3(19.5f, 0f, -0.5f), new Vector3(16.5f, 0f, -4f));
-    BuildGateMemory(parent, all[9], new Vector3(-2.5f, 0f, 17f), new Vector3(0f, 0f, 11.5f));
-    // Approach spurs (walkable flats, MathPath prefix = P42B-exempt).
-    Spur(parent, "MathPathGate0", new Vector3(-7.63f, 0f, 2.38f), new Vector3(-9f, 0f, -2f));
-    Spur(parent, "MathPathGate1", new Vector3(-4.05f, 0f, 1.26f), new Vector3(-6f, 0f, -5f));
-    Spur(parent, "MathPathGate2", new Vector3(7.55f, 0f, -2.44f), new Vector3(8.5f, 0f, 0.5f));
-    Spur(parent, "MathPathGate3", new Vector3(0.8f, 0f, 3.5f), new Vector3(3f, 0f, 6f));
-    Spur(parent, "MathPathGate4", new Vector3(0f, 0f, 11.5f), new Vector3(-6f, 0f, 13.5f));
-    Spur(parent, "MathPathGate5", new Vector3(0f, 0f, 11.5f), new Vector3(3.5f, 0f, 15f));
-    Spur(parent, "MathPathGate6", new Vector3(0f, 0f, 10.5f), new Vector3(-10f, 0f, 13f));
-    Spur(parent, "MathPathGate7", new Vector3(5.77f, 0f, -9.38f), new Vector3(6f, 0f, -13.5f));
-    Spur(parent, "MathPathGate8", new Vector3(16.5f, 0f, -4f), new Vector3(19.5f, 0f, -0.5f));
-    Spur(parent, "MathPathGate9", new Vector3(0f, 0f, 11.5f), new Vector3(-2.5f, 0f, 17f));
+    BuildGateCounting(parent, all[0], new Vector3(-11f, 0f, -3f), hub);
+    BuildGateDiscovery(parent, all[1], new Vector3(-9.6f, 0f, 12.5f), hub);
+    BuildGateOrchard(parent, all[2], new Vector3(14.5f, 0f, 4.9f), hub);
+    BuildGateMatch(parent, all[3], new Vector3(11.5f, 0f, 10.6f), hub);
+    BuildGateSorting(parent, all[4], new Vector3(6.3f, 0f, 14.6f), hub);
+    BuildGateWorkshop(parent, all[5], new Vector3(-5.1f, 0f, 15.1f), hub);
+    BuildGateVillage(parent, all[6], new Vector3(-10.6f, 0f, -10.6f), hub);
+    BuildGateBuild(parent, all[7], new Vector3(6.3f, 0f, -12.6f), hub);
+    BuildGateBridge(parent, all[8], new Vector3(13.2f, 0f, -8.6f), hub);
+    BuildGateMemory(parent, all[9], new Vector3(-6.3f, 0f, -12.6f), hub);
+    BuildRingCirculation(parent);
+    // S2 PIONEER: the counting_garden gate is the first live micro-world door —
+    // a walk-in portal at its hub-side mouth fires the CountingGardenArea beat.
+    MicroWorldGate counting = MicroGates.Count > 0 ? MicroGates[0] : null;
+    if (counting != null && counting.EntryAnchor != null) {
+      GameObject portalGo = new GameObject("CountingGardenPortal");
+      portalGo.transform.SetParent(parent);
+      portalGo.transform.position = counting.EntryAnchor.position;
+      MicroWorldPortal portal = portalGo.AddComponent<MicroWorldPortal>();
+      portal.ExitMode = false;
+      portal.fireRadius = 1.3f;
+      portal.areaId = CountingGardenArea.AreaId;
+      CountingGardenPortal = portal;
+      Pad(parent, "CountingGardenPortalDisc", portalGo.transform.localPosition, 2.4f, CourtyardSand);
+    }
   }
 
-  static void Spur(Transform parent, string name, Vector3 a, Vector3 b) {
-    Seg(parent, name, a + new Vector3(0f, 0.032f, 0f), b + new Vector3(0f, 0.032f, 0f), 1.4f);
+  // S1 ring: one circulation loop through every gate mouth (lighter sand than
+  // the spokes so the loop reads). The east chord jogs via the real bridge
+  // deck (the ring USES the Number Bridge to cross the brook); the west chord
+  // midpoints around the garden fence. Waypoints are exposed for CT-P45's
+  // carve-avoidance pin.
+  public readonly System.Collections.Generic.List<Vector3> RingWaypoints =
+    new System.Collections.Generic.List<Vector3>();
+
+  void BuildRingCirculation(Transform parent) {
+    RingWaypoints.Clear();
+    Vector3[] pts = {
+      new Vector3(6.3f, 0f, 14.6f),    // sorting mouth
+      new Vector3(11.5f, 0f, 10.6f),   // match mouth
+      new Vector3(14.5f, 0f, 4.9f),    // orchard mouth
+      new Vector3(15.5f, 0f, -5f),     // bridge deck (ford the brook)
+      new Vector3(13.2f, 0f, -8.6f),   // number-bridge mouth
+      new Vector3(6.3f, 0f, -12.6f),   // build mouth
+      new Vector3(-6.3f, 0f, -12.6f),  // memory mouth
+      new Vector3(-10.6f, 0f, -10.6f), // village mouth
+      new Vector3(-11f, 0f, -3f),      // counting mouth
+      new Vector3(-8f, 0f, 4f),        // fence midpoint (around the garden)
+      new Vector3(-9.6f, 0f, 12.5f),   // discovery mouth
+      new Vector3(-5.1f, 0f, 15.1f),   // workshop mouth
+    };
+    foreach (Vector3 p in pts) RingWaypoints.Add(p);
+    for (int i = 0; i < pts.Length; i++) {
+      Vector3 a = pts[i];
+      Vector3 b = pts[(i + 1) % pts.Length];
+      Seg(parent, "MathRing" + i.ToString("00"),
+        a + new Vector3(0f, 0.032f, 0f), b + new Vector3(0f, 0.032f, 0f), 1.5f);
+      // Ring tint: lighter wash over the spoke tan (circulation reads).
+      // Applied by re-tinting the seg just built (shared Lit cache, no new material).
+    }
+    TintRing(parent);
   }
 
-  // 01 Counting Garden: fence-post arch + bead beam + baskets + count trio.
+  // S1 §8: restrained value variation — the ring reads lighter than spokes.
+  static void TintRing(Transform parent) {
+    for (int i = 0; i < 12; i++) {
+      Transform seg = parent.Find("MathRing" + i.ToString("00"));
+      if (seg == null) continue;
+      Renderer r = seg.GetComponent<Renderer>();
+      if (r != null) r.sharedMaterial = Lit(CourtyardSand);
+    }
+  }
+
+  // 01 Counting Garden (COUNT/CHOOSE/COLLECT): toy 1-2-3 block legs + chunky
+  // green arch with a bead count row hanging under it.
   void BuildGateCounting(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    GatePost(t, "MathGatePostL", -1.1f, 2.0f, FenceWood);
-    GatePost(t, "MathGatePostR", 1.1f, 2.0f, FenceWood);
-    GateBeam(t, "MathGateBeam", 2.02f, 2.4f, FenceWood);
-    GateBeads(t, "MathGateBead", 2.3f, 5, 1.4f, QuestGold, CropGreen);
-    GateBasket(t, "MathGateBasketL", new Vector3(-1.5f, 0.2f, 0.9f));
-    for (int i = 0; i < 3; i++)
-      Ball(t, "MathGateTrio" + i, new Vector3(-0.4f + i * 0.4f, 0.2f, -0.9f), 0.3f, BerryRed, false);
-    PlaceProp(t, "grass_large", "MathGateGrass", new Vector3(1.9f, 0f, -0.6f), 30f, 1.6f);
+    Transform t = GateBody(gate);
+    BlockPost(t, "MathGatePostL", -1.6f, AbacusBlue, QuestGold);
+    BlockPost(t, "MathGatePostR", 1.6f, QuestGold, AbacusBlue);
+    CartoonArch(t, "MathGateArch", 1.6f, 1.0f, 2.15f, 5, 0.36f,
+      new[] { CropGreen, LeafGreen, CropGreen, LeafGreen, CropGreen });
+    // Count row: beads hang just under the arch segments.
+    for (int i = 0; i < 5; i++) {
+      float a = Mathf.PI * (i + 0.5f) / 5f;
+      Ball(t, "MathGateBead" + i,
+        new Vector3(-Mathf.Cos(a) * 1.6f, 2.15f + Mathf.Sin(a) * 1.0f - 0.42f, 0f),
+        0.3f, i % 2 == 0 ? QuestGold : BerryRed, false);
+    }
   }
 
-  // 02 Discovery Garden: bush horseshoe + magnifier hoop + pebble trail.
+  // 02 Discovery Garden (FIND/SEARCH/DISCOVER): the gate IS a giant cartoon
+  // magnifier — mint ring + pale glass + handle into the right post.
   void BuildGateDiscovery(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    PlaceProp(t, "plant_bush", "MathGateBushL", new Vector3(-1.6f, 0f, -0.4f), 0f, 1.8f);
-    PlaceProp(t, "plant_bush", "MathGateBushR", new Vector3(1.6f, 0f, -0.4f), 120f, 1.8f);
-    PlaceProp(t, "plant_bushDetailed", "MathGateBushC", new Vector3(0f, 0f, -1.5f), 60f, 2.0f);
-    GameObject hoop = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    hoop.name = "MathGateHoop";
-    hoop.transform.SetParent(t);
-    hoop.transform.localPosition = new Vector3(0f, 1.5f, 0.4f);
-    hoop.transform.localScale = new Vector3(0.7f, 0.06f, 0.7f);
-    hoop.GetComponent<Renderer>().sharedMaterial = Lit(FenceWood);
-    StripCollider(hoop);
-    Box(t, "MathGateHandle", new Vector3(0.45f, 0.9f, 0.4f),
-      new Vector3(0.1f, 1.0f, 0.1f), FenceWood);
-    for (int i = 0; i < 3; i++)
-      DressPebble(t, "MathGatePeb" + i, new Vector3(-0.5f + i * 0.5f, 0f, 1.3f + i * 0.3f));
+    Transform t = GateBody(gate);
+    CartoonPost(t, "MathGatePostL", -1.6f, 2.05f, 0.22f, def.Accent, BloomWhite);
+    CartoonPost(t, "MathGatePostR", 1.6f, 2.05f, 0.22f, def.Accent, BloomWhite);
+    CartoonRing(t, "MathGateArch", 0f, 2.75f, 0.7f, 8, 0.3f, def.Accent);
+    GameObject glass = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    glass.name = "MathGateGlass";
+    glass.transform.SetParent(t);
+    glass.transform.localPosition = new Vector3(0f, 2.75f, 0f);
+    glass.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+    glass.transform.localScale = new Vector3(1.2f, 0.05f, 1.2f);
+    glass.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.78f, 0.90f, 0.96f));
+    StripCollider(glass);
+    IgnoreFromBuild(glass);
+    GameObject handle = Box(t, "MathGateHandle", new Vector3(0.62f, 2.15f, 0f),
+      new Vector3(0.22f, 0.95f, 0.22f), def.Accent);
+    handle.transform.localRotation = Quaternion.Euler(0f, 0f, -38f);
+    IgnoreFromBuild(handle);
   }
 
-  // 03 Fruit Orchard: twin fruit trees + harvest basket + leaf beam.
+  // 03 Fruit Orchard (COLLECT/GATHER): the legs ARE fruit trees (trunk +
+  // canopy) and a leafy branch arches over with ripe apples hanging.
   void BuildGateOrchard(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    PlaceProp(t, "tree_oak", "MathGateTreeL", new Vector3(-1.7f, 0f, -0.8f), 20f, 1.6f);
-    PlaceProp(t, "tree_oak", "MathGateTreeR", new Vector3(1.7f, 0f, -0.8f), 200f, 1.6f);
-    for (int i = 0; i < 3; i++)
-      Ball(t, "MathGateApple" + i, new Vector3(-1.7f + (i % 2) * 0.5f, 1.3f + i * 0.25f, -0.4f), 0.24f, BerryRed, false);
-    GateBasket(t, "MathGateBasket", new Vector3(0f, 0.2f, 0.9f));
-    Box(t, "MathGateLeafBeam", new Vector3(0f, 2.1f, -0.8f),
-      new Vector3(3.6f, 0.22f, 0.5f), LeafGreen);
+    Transform t = GateBody(gate);
+    CartoonPost(t, "MathGatePostL", -1.6f, 1.95f, 0.34f, SoilBrown, LeafGreen);
+    CartoonPost(t, "MathGatePostR", 1.6f, 1.95f, 0.34f, SoilBrown, LeafGreen);
+    CartoonArch(t, "MathGateArch", 1.6f, 0.9f, 2.3f, 5, 0.4f,
+      new[] { LeafGreen, CropGreen, LeafGreen, CropGreen, LeafGreen });
+    for (int i = 0; i < 3; i++) {
+      float a = Mathf.PI * (i + 1f) / 4f;
+      Ball(t, "MathGateApple" + i,
+        new Vector3(-Mathf.Cos(a) * 1.6f, 2.3f + Mathf.Sin(a) * 0.9f - 0.35f, 0f),
+        0.34f, BerryRed, false);
+    }
+    GateBasket(t, "MathGateBasket", new Vector3(1.35f, 0.2f, 0.85f));
   }
 
-  // 04 Match Meadow: mirrored twin pillars + paired shapes + balance beam.
+  // 04 Match Meadow (MATCH): two mirrored halves (aqua | gold) meeting at a
+  // pink crown — the whole arch is a "pair", with mirrored pairs below.
   void BuildGateMatch(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    Box(t, "MathGatePillarL", new Vector3(-1.2f, 0.9f, 0f),
-      new Vector3(0.4f, 1.8f, 0.4f), AbacusBlue);
-    Box(t, "MathGatePillarR", new Vector3(1.2f, 0.9f, 0f),
-      new Vector3(0.4f, 1.8f, 0.4f), QuestGold);
-    Box(t, "MathGatePairCubeL", new Vector3(-1.2f, 2.05f, 0f),
+    Transform t = GateBody(gate);
+    CartoonPost(t, "MathGatePostL", -1.6f, 2.05f, 0.22f, def.Accent, BloomWhite);
+    CartoonPost(t, "MathGatePostR", 1.6f, 2.05f, 0.22f, def.Accent, BloomWhite);
+    CartoonArch(t, "MathGateArch", 1.6f, 1.0f, 2.2f, 6, 0.36f,
+      new[] { def.Accent, QuestGold, def.Accent, QuestGold, def.Accent, QuestGold });
+    Ball(t, "MathGateCrown", new Vector3(0f, 3.42f, 0f), 0.5f, BloomPink, false);
+    Ball(t, "MathGatePairBallL", new Vector3(-0.85f, 0.2f, 0.8f), 0.4f, def.Accent, false);
+    Ball(t, "MathGatePairBallR", new Vector3(0.85f, 0.2f, 0.8f), 0.4f, def.Accent, false);
+    Box(t, "MathGatePairCubeL", new Vector3(-0.85f, 0.2f, -0.6f),
       new Vector3(0.4f, 0.4f, 0.4f), QuestGold);
-    Box(t, "MathGatePairCubeR", new Vector3(1.2f, 2.05f, 0f),
-      new Vector3(0.4f, 0.4f, 0.4f), AbacusBlue);
-    Ball(t, "MathGatePairBallL", new Vector3(-0.5f, 0.2f, 0.9f), 0.32f, BerryRed, false);
-    Ball(t, "MathGatePairBallR", new Vector3(0.5f, 0.2f, 0.9f), 0.32f, BerryRed, false);
-    GateBeam(t, "MathGateBalance", 1.2f, 2.0f, FenceWood);
+    Box(t, "MathGatePairCubeR", new Vector3(0.85f, 0.2f, -0.6f),
+      new Vector3(0.4f, 0.4f, 0.4f), QuestGold);
   }
 
-  // 05 Sorting Park: three color bins + shape toppers + divider rail.
+  // 05 Sorting Park (SORT/CATEGORIZE): a rainbow arch over three colour bins
+  // with shape toppers riding the crown.
   void BuildGateSorting(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
+    Transform t = GateBody(gate);
+    CartoonPost(t, "MathGatePostL", -1.6f, 2.05f, 0.22f, AbacusBlue, BloomWhite);
+    CartoonPost(t, "MathGatePostR", 1.6f, 2.05f, 0.22f, AbacusBlue, BloomWhite);
+    CartoonArch(t, "MathGateArch", 1.6f, 0.95f, 2.2f, 5, 0.38f,
+      new[] { AbacusBlue, CropGreen, BerryRed, QuestGold, AbacusBlue });
+    Box(t, "MathGateTopCube", new Vector3(-0.6f, 3.35f, 0f),
+      new Vector3(0.36f, 0.36f, 0.36f), AbacusBlue);
+    Ball(t, "MathGateTopBall", new Vector3(0f, 3.42f, 0f), 0.36f, BerryRed, false);
+    GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    disc.name = "MathGateTopDisc";
+    disc.transform.SetParent(t);
+    disc.transform.localPosition = new Vector3(0.6f, 3.35f, 0f);
+    disc.transform.localScale = new Vector3(0.36f, 0.18f, 0.36f);
+    disc.GetComponent<Renderer>().sharedMaterial = Lit(CropGreen);
+    StripCollider(disc);
     Color[] bin = { AbacusBlue, BerryRed, CropGreen };
     for (int i = 0; i < 3; i++) {
-      float x = -1.1f + i * 1.1f;
       GameObject body = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
       body.name = "MathGateBin" + i;
       body.transform.SetParent(t);
-      body.transform.localPosition = new Vector3(x, 0.45f, -0.3f);
+      body.transform.localPosition = new Vector3(-1.2f + i * 1.2f, 0.45f, -1.0f);
       body.transform.localScale = new Vector3(0.7f, 0.9f, 0.7f);
       body.GetComponent<Renderer>().sharedMaterial = Lit(bin[i]);
       StripCollider(body);
     }
-    Box(t, "MathGateTopCube", new Vector3(-1.1f, 1.1f, -0.3f),
-      new Vector3(0.34f, 0.34f, 0.34f), AbacusBlue);
-    Ball(t, "MathGateTopBall", new Vector3(0f, 1.1f, -0.3f), 0.34f, BerryRed, false);
-    GameObject cyl = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    cyl.name = "MathGateTopCyl";
-    cyl.transform.SetParent(t);
-    cyl.transform.localPosition = new Vector3(1.1f, 1.1f, -0.3f);
-    cyl.transform.localScale = new Vector3(0.34f, 0.34f, 0.34f);
-    cyl.GetComponent<Renderer>().sharedMaterial = Lit(CropGreen);
-    StripCollider(cyl);
-    GatePost(t, "MathGateRailL", -1.7f, 1.0f, FenceWood);
-    GatePost(t, "MathGateRailR", 1.7f, 1.0f, FenceWood);
-    Box(t, "MathGateRail", new Vector3(0f, 1.0f, 0f),
-      new Vector3(3.4f, 0.12f, 0.12f), FenceWood);
   }
 
-  // 06 Puzzle Workshop: workbench + big blocks + peg board.
+  // 06 Puzzle Workshop (DRAG/DROP/PLACE/ORDER): the top IS two stepped,
+  // interlocking jigsaw planks over a wooden workbench.
   void BuildGateWorkshop(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    Box(t, "MathGateBench", new Vector3(0f, 0.75f, -0.6f),
+    Transform t = GateBody(gate);
+    Box(t, "MathGatePostL", new Vector3(-1.6f, 1.0f, 0f),
+      new Vector3(0.44f, 2.0f, 0.44f), FenceWood);
+    Ball(t, "MathGatePostLCap", new Vector3(-1.6f, 2.18f, 0f), 0.5f, BasketTan, false);
+    Box(t, "MathGatePostR", new Vector3(1.6f, 1.0f, 0f),
+      new Vector3(0.44f, 2.0f, 0.44f), FenceWood);
+    Ball(t, "MathGatePostRCap", new Vector3(1.6f, 2.18f, 0f), 0.5f, BasketTan, false);
+    // Jigsaw step: two planks at different heights locked by a center tab.
+    GameObject plankL = Box(t, "MathGateArch0", new Vector3(-0.8f, 2.55f, 0f),
+      new Vector3(1.7f, 0.42f, 0.5f), FenceWood);
+    IgnoreFromBuild(plankL);
+    GameObject plankR = Box(t, "MathGateArch1", new Vector3(0.8f, 2.95f, 0f),
+      new Vector3(1.7f, 0.42f, 0.5f), BasketTan);
+    IgnoreFromBuild(plankR);
+    GameObject tab = Box(t, "MathGateArch2", new Vector3(0f, 2.75f, 0f),
+      new Vector3(0.5f, 0.5f, 0.5f), SoilBrown);
+    IgnoreFromBuild(tab);
+    Ball(t, "MathGatePeg", new Vector3(0f, 3.28f, 0f), 0.36f, QuestGold, false);
+    Box(t, "MathGateBench", new Vector3(0f, 0.75f, -1.9f),
       new Vector3(1.8f, 0.14f, 0.7f), FenceWood);
-    Box(t, "MathGateBenchLegL", new Vector3(-0.7f, 0.35f, -0.6f),
+    Box(t, "MathGateBenchLegL", new Vector3(-0.7f, 0.35f, -1.9f),
       new Vector3(0.14f, 0.7f, 0.5f), SoilBrown);
-    Box(t, "MathGateBenchLegR", new Vector3(0.7f, 0.35f, -0.6f),
+    Box(t, "MathGateBenchLegR", new Vector3(0.7f, 0.35f, -1.9f),
       new Vector3(0.14f, 0.7f, 0.5f), SoilBrown);
-    Box(t, "MathGateBlockCube", new Vector3(-0.5f, 1.05f, -0.6f),
+    Box(t, "MathGateBlockCube", new Vector3(-0.5f, 1.05f, -1.9f),
       new Vector3(0.4f, 0.4f, 0.4f), AbacusBlue);
-    Ball(t, "MathGateBlockBall", new Vector3(0.4f, 1.0f, -0.6f), 0.4f, QuestGold, false);
-    Box(t, "MathGatePegBoard", new Vector3(0f, 1.7f, -1.1f),
-      new Vector3(1.6f, 0.9f, 0.1f), BasketTan);
-    for (int i = 0; i < 2; i++)
-      Ball(t, "MathGatePeg" + i, new Vector3(-0.25f + i * 0.5f, 1.7f, -1.0f), 0.16f, BerryRed, false);
+    Ball(t, "MathGateBlockBall", new Vector3(0.4f, 1.0f, -1.9f), 0.4f, QuestGold, false);
   }
 
-  // 07 Delivery Village: cottage + mailbox + fence bit.
+  // 07 Delivery Village (DELIVER/GIVE/BRING): a little cottage gate — the
+  // legs carry a pitched roof + chimney, with the mailbox and parcels.
   void BuildGateVillage(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    Box(t, "MathGateHouse", new Vector3(-0.7f, 0.6f, -0.7f),
-      new Vector3(1.2f, 1.2f, 1.0f), BasketTan);
-    GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
-    roof.name = "MathGateRoof";
-    roof.transform.SetParent(t);
-    roof.transform.localPosition = new Vector3(-0.7f, 1.45f, -0.7f);
-    roof.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-    roof.transform.localScale = new Vector3(0.9f, 0.9f, 1.1f);
-    roof.GetComponent<Renderer>().sharedMaterial = Lit(BerryRed);
-    StripCollider(roof);
-    Box(t, "MathGateDoor", new Vector3(-0.7f, 0.4f, -0.18f),
-      new Vector3(0.34f, 0.8f, 0.06f), SoilBrown);
-    Box(t, "MathGateMailPost", new Vector3(1.1f, 0.5f, 0.3f),
+    Transform t = GateBody(gate);
+    CartoonPost(t, "MathGatePostL", -1.6f, 2.05f, 0.22f, def.Accent, BloomWhite);
+    CartoonPost(t, "MathGatePostR", 1.6f, 2.05f, 0.22f, def.Accent, BloomWhite);
+    GameObject roofL = Box(t, "MathGateArch0", new Vector3(-0.75f, 2.52f, 0f),
+      new Vector3(1.9f, 0.26f, 1.0f), def.Accent);
+    roofL.transform.localRotation = Quaternion.Euler(0f, 0f, 26f);
+    IgnoreFromBuild(roofL);
+    GameObject roofR = Box(t, "MathGateArch1", new Vector3(0.75f, 2.52f, 0f),
+      new Vector3(1.9f, 0.26f, 1.0f), BerryRed);
+    roofR.transform.localRotation = Quaternion.Euler(0f, 0f, -26f);
+    IgnoreFromBuild(roofR);
+    Ball(t, "MathGateRidge", new Vector3(0f, 2.98f, 0f), 0.42f, QuestGold, false);
+    Box(t, "MathGateChimney", new Vector3(1.05f, 2.78f, -0.2f),
+      new Vector3(0.3f, 0.66f, 0.3f), BerryRed);
+    Box(t, "MathGateMailPost", new Vector3(1.7f, 0.5f, 0.75f),
       new Vector3(0.12f, 1.0f, 0.12f), FenceWood);
-    Box(t, "MathGateMailBox", new Vector3(1.1f, 1.1f, 0.3f),
+    Box(t, "MathGateMailBox", new Vector3(1.7f, 1.1f, 0.75f),
       new Vector3(0.4f, 0.3f, 0.5f), AbacusBlue);
-    Box(t, "MathGateMailFlag", new Vector3(1.32f, 1.4f, 0.3f),
-      new Vector3(0.06f, 0.4f, 0.06f), BerryRed);
-    GatePost(t, "MathGateFenceL", 1.9f, 0.9f, FenceWood);
+    Box(t, "MathGateParcelA", new Vector3(-1.35f, 0.25f, 0.8f),
+      new Vector3(0.5f, 0.5f, 0.5f), BasketTan);
+    Box(t, "MathGateParcelB", new Vector3(-1.35f, 0.65f, 0.8f),
+      new Vector3(0.38f, 0.3f, 0.38f), FenceWood);
   }
 
-  // 08 Build Yard: scaffold + material stacks + barrel.
+  // 08 Build Yard (BUILD/CONSTRUCT): hazard-striped site legs under a beam,
+  // with a little crane arm + hook and material stacks.
   void BuildGateBuild(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    GatePost(t, "MathGatePoleL", -0.9f, 2.2f, FenceWood);
-    GatePost(t, "MathGatePoleR", 0.9f, 2.2f, FenceWood);
-    Box(t, "MathGatePlank", new Vector3(0f, 1.4f, 0f),
-      new Vector3(2.2f, 0.12f, 0.5f), BasketTan);
-    Box(t, "MathGateStoneA", new Vector3(-1.5f, 0.25f, 0.6f),
+    Transform t = GateBody(gate);
+    StripedPost(t, "MathGatePostL", -1.6f);
+    StripedPost(t, "MathGatePostR", 1.6f);
+    GameObject beam = Box(t, "MathGateArch0", new Vector3(0f, 2.3f, 0f),
+      new Vector3(3.8f, 0.26f, 0.3f), FenceWood);
+    IgnoreFromBuild(beam);
+    // Gantry crane (S4 fix: the old thin diagonal arm read as a broken
+    // scaffold). Chunky gold mast + symmetric jib + two cables: a load block
+    // left, a hook right — reads as BUILD/CONSTRUCT from the lobby.
+    GameObject mast = Box(t, "MathGateCraneMast", new Vector3(0f, 2.85f, 0f),
+      new Vector3(0.3f, 1.1f, 0.3f), QuestGold);
+    IgnoreFromBuild(mast);
+    GameObject jib = Box(t, "MathGateCraneArm", new Vector3(0f, 3.45f, 0f),
+      new Vector3(3.4f, 0.26f, 0.26f), QuestGold);
+    IgnoreFromBuild(jib);
+    Box(t, "MathGateCraneCable", new Vector3(1.15f, 3.12f, 0f),
+      new Vector3(0.08f, 0.42f, 0.08f), SoilBrown);
+    Ball(t, "MathGateCraneHook", new Vector3(1.15f, 2.75f, 0f), 0.3f, StoneGrey, false);
+    Box(t, "MathGateCraneCableL", new Vector3(-1.15f, 3.15f, 0f),
+      new Vector3(0.08f, 0.4f, 0.08f), SoilBrown);
+    Box(t, "MathGateCraneLoad", new Vector3(-1.15f, 2.72f, 0f),
+      new Vector3(0.44f, 0.44f, 0.44f), BasketTan);
+    Box(t, "MathGateBlockA", new Vector3(-0.6f, 0.25f, -1.2f),
       new Vector3(0.5f, 0.5f, 0.5f), StoneGrey);
-    Box(t, "MathGateStoneB", new Vector3(-1.5f, 0.75f, 0.6f),
-      new Vector3(0.4f, 0.4f, 0.4f), StoneGrey);
-    Box(t, "MathGatePaintA", new Vector3(1.5f, 0.25f, 0.6f),
-      new Vector3(0.5f, 0.5f, 0.5f), QuestGold);
+    Box(t, "MathGateBlockB", new Vector3(-0.6f, 0.7f, -1.2f),
+      new Vector3(0.4f, 0.4f, 0.4f), QuestGold);
     GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     barrel.name = "MathGateBarrel";
     barrel.transform.SetParent(t);
-    barrel.transform.localPosition = new Vector3(0.4f, 0.4f, -1.0f);
+    barrel.transform.localPosition = new Vector3(1.2f, 0.4f, -1.2f);
     barrel.transform.localScale = new Vector3(0.5f, 0.8f, 0.5f);
     barrel.GetComponent<Renderer>().sharedMaterial = Lit(SoilBrown);
     StripCollider(barrel);
   }
 
-  // 09 Number Bridge: mini deck + rails + rill pebbles + bead garland.
+  // 09 Number Bridge (PATH/SEQUENCE/ORDER): a chunky stone arch bridge with a
+  // wooden deck + rails across the crown and a rill below.
   void BuildGateBridge(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    Box(t, "MathGateDeck", new Vector3(0f, 0.12f, 0f),
-      new Vector3(1.6f, 0.12f, 3.0f), FenceWood);
-    Box(t, "MathGateRailL", new Vector3(-0.85f, 0.55f, 0f),
-      new Vector3(0.1f, 0.5f, 3.0f), SoilBrown);
-    Box(t, "MathGateRailR", new Vector3(0.85f, 0.55f, 0f),
-      new Vector3(0.1f, 0.5f, 3.0f), SoilBrown);
-    for (int i = 0; i < 2; i++)
-      DressPebble(t, "MathGateRill" + i, new Vector3(-1.3f + i * 2.6f, 0f, -1f + i * 1.2f));
-    GateBeads(t, "MathGateGarland", 1.9f, 3, 1.2f, Sky, QuestGold);
-    Box(t, "MathGateRod", new Vector3(0f, 2.1f, 0f),
-      new Vector3(1.6f, 0.08f, 0.08f), FenceWood);
+    Transform t = GateBody(gate);
+    CartoonPost(t, "MathGatePostL", -1.6f, 1.9f, 0.24f, StoneGrey, BloomWhite);
+    CartoonPost(t, "MathGatePostR", 1.6f, 1.9f, 0.24f, StoneGrey, BloomWhite);
+    CartoonArch(t, "MathGateArch", 1.6f, 0.9f, 2.3f, 5, 0.42f,
+      new[] { StoneGrey, StoneGrey, StoneGrey, StoneGrey, StoneGrey });
+    // S8 fix (user: "còn 1 cái thanh ở trên, Failed"): the top plank + tiny
+    // rails read as a board stuck on the arch. The bridge is now just the
+    // clean stone arch with a keystone, plus the ground boardwalk behind.
+    GameObject keystone = Box(t, "MathGateKeystone", new Vector3(0f, 3.28f, 0f),
+      new Vector3(0.56f, 0.5f, 0.5f), StoneGrey);
+    IgnoreFromBuild(keystone);
+    Box(t, "MathGateDeck", new Vector3(0f, 0.12f, -0.7f),
+      new Vector3(1.7f, 0.12f, 2.4f), FenceWood);
   }
 
-  // 10 Memory Grove: canopy ring + moon disc + paired stones.
+  // 10 Memory Grove (MEMORY/RECALL): mushroom legs (red dotted caps) under a
+  // dusk-plum arch with the moon, paired mini mushrooms at the base.
   void BuildGateMemory(Transform parent, MicroWorldCatalog.Entry def, Vector3 pos, Vector3 face) {
     MicroWorldGate gate = GateRoot(parent, def, pos, face);
-    Transform t = gate.transform;
-    PlaceProp(t, "tree_detailed", "MathGateCanopyL", new Vector3(-1.8f, 0f, -1.0f), 40f, 1.5f);
-    PlaceProp(t, "tree_detailed", "MathGateCanopyR", new Vector3(1.8f, 0f, -1.0f), 220f, 1.5f);
-    Box(t, "MathGateMoonPole", new Vector3(0f, 0.9f, -1.2f),
-      new Vector3(0.12f, 1.8f, 0.12f), FenceWood);
-    Ball(t, "MathGateMoon", new Vector3(0f, 2.1f, -1.2f), 0.55f, BloomWhite, false);
-    Ball(t, "MathGatePairA0", new Vector3(-0.7f, 0.16f, 0.8f), 0.32f, Plum, false);
-    Ball(t, "MathGatePairA1", new Vector3(0.7f, 0.16f, 0.8f), 0.32f, Plum, false);
-    Box(t, "MathGatePairB0", new Vector3(-0.7f, 0.16f, -0.2f),
-      new Vector3(0.3f, 0.3f, 0.3f), Plum);
-    Box(t, "MathGatePairB1", new Vector3(0.7f, 0.16f, -0.2f),
-      new Vector3(0.3f, 0.3f, 0.3f), Plum);
+    Transform t = GateBody(gate);
+    MushroomPost(t, "MathGatePostL", -1.6f, 1.7f, def.Accent, BerryRed);
+    MushroomPost(t, "MathGatePostR", 1.6f, 1.7f, def.Accent, BerryRed);
+    CartoonArch(t, "MathGateArch", 1.6f, 0.95f, 2.15f, 5, 0.4f,
+      new[] { def.Accent, Plum, def.Accent, Plum, def.Accent });
+    Ball(t, "MathGateMoon", new Vector3(0f, 3.35f, 0f), 0.6f, BloomWhite, false);
+    MushroomMini(t, "MathGateMiniL", -1.15f, BerryRed);
+    MushroomMini(t, "MathGateMiniR", 1.15f, BerryRed);
   }
   // P1-2 presentation registry (scene-authored anchors, NOT magic vectors).
+  // S1 re-stage: the arrival beat is a south-high wide shot INTO the hub
+  // (player + lobby + Tess + abacus + return marker + north gate row) instead
+  // of the old sign-column close-up. Follow framing untouched.
   // Entry = warp landing (EntryWorldPos); Npc = Tess lobby anchor; Focus =
-  // garden (where the find happens); Camera/Look = arrival beat pose;
+  // garden (where the find happens);
   // Prompt = bubble anchor beside Tess; Feedback = praise point before Tess;
-  // Reward = far-bank clearing (completion moment); Exit = return arch.
+  // Reward = far-bank clearing (completion moment); Exit = return marker.
   void BuildPresentationAnchors(Transform root) {
     ActivityAnchors a = ActivityAnchors.Ensure(root, "PresentationRoot");
     Anchors = a;
@@ -444,8 +697,8 @@ public class MathWorldBuilder : MonoBehaviour {
     a.Entry = a.EnsureSlot("EntryAnchor", new Vector3(0f, 0f, 0f));
     a.GameplayFocus = a.EnsureSlot("GameplayFocusAnchor", new Vector3(-16f, 0f, 5f));
     a.Npc = a.EnsureSlot("NpcAnchor", HostAnchorLocal);
-    a.Camera = a.EnsureSlot("CameraAnchor", SignLocal + new Vector3(-2.6f, 1.7f, 4.8f));
-    a.CameraLook = a.EnsureSlot("CameraLookAnchor", SignLocal + new Vector3(0f, 1.7f, 0f));
+    a.Camera = a.EnsureSlot("CameraAnchor", new Vector3(0f, 7.2f, -11f));
+    a.CameraLook = a.EnsureSlot("CameraLookAnchor", new Vector3(0f, 1.5f, 5f));
     a.Prompt = a.EnsureSlot("PromptAnchor", HostAnchorLocal + new Vector3(1.45f, 1.78f, 0.55f));
     a.Feedback = a.EnsureSlot("FeedbackAnchor", HostAnchorLocal + new Vector3(1.0f, 1.2f, 1.4f));
     a.Reward = a.EnsureSlot("RewardAnchor", new Vector3(15.5f, 0f, -8.5f));
@@ -512,7 +765,7 @@ public class MathWorldBuilder : MonoBehaviour {
       cloud.transform.SetParent(parent);
       cloud.transform.localPosition = p;
       cloud.transform.localScale = new Vector3(8f + (i % 3) * 3f, 2.8f, 7f + (i % 2) * 2.4f);
-      cloud.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.97f, 0.98f, 1f));
+      cloud.GetComponent<Renderer>().sharedMaterial = Lit(WorldBeauty.CloudPink);
       StripCollider(cloud);
       IgnoreFromBuild(cloud);
     }
@@ -527,7 +780,7 @@ public class MathWorldBuilder : MonoBehaviour {
       cloud.transform.SetParent(parent);
       cloud.transform.localPosition = p;
       cloud.transform.localScale = new Vector3(9f, 2.6f, 8f);
-      cloud.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.97f, 0.98f, 1f));
+      cloud.GetComponent<Renderer>().sharedMaterial = Lit(WorldBeauty.CloudPink);
       StripCollider(cloud);
       IgnoreFromBuild(cloud);
     }
@@ -537,7 +790,7 @@ public class MathWorldBuilder : MonoBehaviour {
       high.transform.SetParent(parent);
       high.transform.localPosition = new Vector3(-30f + i * 30f, 16f + i * 3f, -38f + i * 8f);
       high.transform.localScale = new Vector3(12f, 3.4f, 9f);
-      high.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.97f, 0.98f, 1f));
+      high.GetComponent<Renderer>().sharedMaterial = Lit(WorldBeauty.CloudPink);
       StripCollider(high);
       IgnoreFromBuild(high);
     }
@@ -658,25 +911,29 @@ public class MathWorldBuilder : MonoBehaviour {
       }
     }
     // Number Tower: 5 cubes, 1.0 -> 0.4, alternating blue/gold, 3.5m tall.
+    // S1-final: relocated from the east foreground (it competed with the hub
+    // in the spawn frame) to the east backdrop as a distant silhouette.
+    // Names kept (P41D pins existence, positions are free).
     float[] size = { 1.0f, 0.85f, 0.7f, 0.55f, 0.4f };
     float y = 0f;
     for (int i = 0; i < size.Length; i++) {
       float h = size[i];
       y += h * 0.5f;
-      Box(parent, "MathTower" + i, new Vector3(5.6f, y, -6.6f),
+      Box(parent, "MathTower" + i, new Vector3(17f, y, 9f),
         new Vector3(h, h, h), i % 3 == 0 ? AbacusBlue : (i % 3 == 1 ? QuestGold : PinkAccent));
       y += h * 0.5f;
     }
-    // Plus / minus signs on the east lawn (shape language, 0.9m high).
-    Box(parent, "MathSignPlusV", new Vector3(6.6f, 0.85f, 3.4f),
+    // Plus / minus signs: S1-final relocated from the east lawn (cluttered the
+    // orchard approach) to the entry-path flanks as welcome markers.
+    Box(parent, "MathSignPlusV", new Vector3(-2.8f, 0.85f, -8f),
       new Vector3(0.26f, 1.0f, 0.26f), AbacusBlue);
-    Box(parent, "MathSignPlusH", new Vector3(6.6f, 0.85f, 3.4f),
+    Box(parent, "MathSignPlusH", new Vector3(-2.8f, 0.85f, -8f),
       new Vector3(1.0f, 0.26f, 0.26f), AbacusBlue);
-    Box(parent, "MathSignMinus", new Vector3(8.2f, 0.85f, 4.2f),
+    Box(parent, "MathSignMinus", new Vector3(2.8f, 0.85f, -8f),
       new Vector3(1.0f, 0.24f, 0.26f), QuestGold);
-    Box(parent, "MathSignPost", new Vector3(6.6f, 0.35f, 3.4f),
+    Box(parent, "MathSignPost", new Vector3(-2.8f, 0.35f, -8f),
       new Vector3(0.16f, 0.7f, 0.16f), SoilBrown);
-    Box(parent, "MathSignPost2", new Vector3(8.2f, 0.35f, 4.2f),
+    Box(parent, "MathSignPost2", new Vector3(2.8f, 0.35f, -8f),
       new Vector3(0.16f, 0.7f, 0.16f), SoilBrown);
   }
 
@@ -799,6 +1056,12 @@ public class MathWorldBuilder : MonoBehaviour {
     // Garden gate at the east opening (toward the hub).
     PlaceProp(parent, "fence_gate", "MathGardenGate", new Vector3(-9.8f, 0f, 3.06f), 107.3f, 1.15f);
   }
+
+  // S2 micro-world travel contract (v2): hub portal reference + hub-side
+  // landing outside its fire radius; the garden scene's OWN anchors are pushed
+  // in by GameInstaller on each lazy load (the garden is a separate scene now).
+  public MicroWorldPortal CountingGardenPortal { get; private set; }
+  public static readonly Vector3 GardenHubReturnLocal = new Vector3(-7.1f, 0f, -1.9f);
 
   void BuildGardenCrops(Transform parent) {
     // Kenney Food Kit (CC0): identical crops per bed, child-scale counts.
@@ -1036,15 +1299,12 @@ public class MathWorldBuilder : MonoBehaviour {
   }
 
   void BuildReturnArch(Transform parent) {
-    Flat(parent, "MathReturnDisc", new Vector3(0f, 0.05f, 12f), new Vector3(3.4f, 0.024f, 3.4f));
-    Color gold = new Color(0.98f, 0.78f, 0.25f);
-    Box(parent, "MathReturnA", new Vector3(-1.25f, 0.9f, 12f),
-      new Vector3(0.3f, 1.8f, 0.3f), gold);
-    Box(parent, "MathReturnB", new Vector3(1.25f, 0.9f, 12f),
-      new Vector3(0.3f, 1.8f, 0.3f), gold);
-    GameObject beam = Box(parent, "MathReturnBeam", new Vector3(0f, 1.95f, 12f),
-      new Vector3(2.8f, 0.3f, 0.3f), gold);
-    IgnoreFromBuild(beam);
+    // S2 user round ("quá nhiều cổng thừa"): the way home is a MARKER, not a
+    // second gate. The old gold pillars + beam competed with the 10
+    // destination gates; the proven contract (gold disc + "Về" label +
+    // invisible one-way trigger, same as the 3 spatial districts) stays.
+    Flat(parent, "MathReturnDisc", new Vector3(0f, 0.05f, 12f),
+      new Vector3(2.6f, 0.024f, 2.6f), new Color(0.98f, 0.78f, 0.25f));
     // Way home named like the 3 spatial subjects: gold disc + "Về" label.
     GameObject retAnchor = new GameObject("MathReturnLabelAnchor");
     retAnchor.transform.SetParent(parent);
@@ -1059,20 +1319,22 @@ public class MathWorldBuilder : MonoBehaviour {
   // ---- identity + decor -------------------------------------------------------
 
   void BuildShapeTrio(Transform parent) {
-    // Blocks shape language at the garden mouth (cube + sphere + cylinder).
-    Box(parent, "MathShapeCube", new Vector3(-8.4f, 0.25f, 1.4f),
+    // S1 declutter: the trio read as random toys at the garden mouth. Same
+    // three shapes, recomposed as totems flanking the Great Abacus landmark
+    // (names kept — P41D pins existence, positions are free).
+    Box(parent, "MathShapeCube", new Vector3(4.2f, 0.25f, 9.0f),
       new Vector3(0.5f, 0.5f, 0.5f), AbacusBlue);
     GameObject ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     ball.name = "MathShapeBall";
     ball.transform.SetParent(parent);
-    ball.transform.localPosition = new Vector3(-7.6f, 0.25f, 1.3f);
+    ball.transform.localPosition = new Vector3(6.8f, 0.25f, 9.0f);
     ball.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
     ball.GetComponent<Renderer>().sharedMaterial = Lit(QuestGold);
     StripCollider(ball);
     GameObject pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     pillar.name = "MathShapePillar";
     pillar.transform.SetParent(parent);
-    pillar.transform.localPosition = new Vector3(-8.0f, 0.25f, 2.0f);
+    pillar.transform.localPosition = new Vector3(5.5f, 0.25f, 10.6f);
     pillar.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
     pillar.GetComponent<Renderer>().sharedMaterial = Lit(SoilBrown);
     StripCollider(pillar);
@@ -1102,13 +1364,9 @@ public class MathWorldBuilder : MonoBehaviour {
   }
 
   void BuildDecor(Transform parent) {
+    // S1-final declutter: the two stray pebbles + four far-flung blooms were
+    // pure filler (kept: return-arch flowers = navigation framing).
     // Host-side + hub accents only (the hub stays open; no center clutter).
-    DressPebble(parent, "MathPebble0", new Vector3(-3f, 0f, 4.5f));
-    DressPebble(parent, "MathPebble1", new Vector3(6.5f, 0f, 3.5f));
-    DressBloom(parent, "MathBloomFB0", new Vector3(-20.6f, 0f, 4.4f), BloomPink);
-    DressBloom(parent, "MathBloomFB1", new Vector3(-11.4f, 0f, 4.6f), BloomWhite);
-    DressBloom(parent, "MathBloomFB2", new Vector3(-19.0f, 0f, 0.6f), BloomWhite);
-    DressBloom(parent, "MathBloomFB3", new Vector3(-13.0f, 0f, 8.6f), BloomPink);
     DressBloom(parent, "MathReturnFlowerL", new Vector3(-2.2f, 0f, 13.0f), BloomPink);
     DressBloom(parent, "MathReturnFlowerR", new Vector3(2.2f, 0f, 13.0f), BloomWhite);
     // Kenney grass/flowers/mushrooms: cluster-gap rhythm around the meadows.
@@ -1138,6 +1396,67 @@ public class MathWorldBuilder : MonoBehaviour {
     PlaceProp(parent, "rock_smallA", "MathPropRockC", new Vector3(-2.5f, 0f, -17f), 210f, 2.2f);
     PlaceProp(parent, "stump_round", "MathPropStumpA", new Vector3(-20f, 0f, 12f), 0f, 2.4f);
     PlaceProp(parent, "log", "MathPropLogA", new Vector3(16f, 0f, 12.5f), 25f, 2.4f);
+    BuildBeautyPass(parent);
+  }
+
+  // S6 BEAUTY + PINK PASS (user rounds: "world đẹp hơn" + "gam hồng cho con
+  // gái"): blossom trees on the lawns, petal carpets, pink flower drifts and
+  // a pastel rainbow landing behind the north gates (the arrival/lobby view
+  // looks north, so the rainbow frames the hub). S7 FULL-BLOOM (user round:
+  // "đẩy tới nóc"): more trees/drifts everywhere, falling pink petals over
+  // the hub, flapping pastel butterflies around the flower spots and a
+  // blossom crown over the entry board. All collider-free dressing, off every
+  // walking line, deterministic (seeded, no Random at build time).
+  void BuildBeautyPass(Transform parent) {
+    // Blossom trees (pink canopies) on the open lawns between the spokes.
+    Vector3[] trees = {
+      new Vector3(7.2f, 0f, 6.5f), new Vector3(-6.8f, 0f, 7.5f),
+      new Vector3(9.5f, 0f, -6f), new Vector3(-9.5f, 0f, -7.5f),
+      new Vector3(2.5f, 0f, 11.5f), new Vector3(10.2f, 0f, 6.2f),
+      // S7: west/east/north/south perimeter blush + garden + bridge flanks.
+      // S8: (21,-1.5)/(21.5,8.5) keep clear of the real Number Bridge deck and
+      // the Orchard gate trees (the old spots visually stuck to them).
+      new Vector3(-20.5f, 0f, -1.5f), new Vector3(21.5f, 0f, 8.5f),
+      new Vector3(-1.5f, 0f, 18f), new Vector3(21f, 0f, -1.5f),
+      new Vector3(2f, 0f, -18f), new Vector3(-19.5f, 0f, -11f),
+    };
+    for (int i = 0; i < trees.Length; i++) {
+      float s = 0.9f + (i % 3) * 0.12f;
+      WorldBeauty.BlossomTree(parent, "MathBlossomTree" + i, trees[i], s);
+      WorldBeauty.PetalCarpet(parent, "MathPetalCarpet" + i, trees[i], 2.8f * s);
+    }
+    // Pink flower drifts: lobby rim (between the path mouths) + entry edges
+    // + the far zones (garden mouth, bridge bank, north ring, south lawn).
+    Vector3[] drifts = {
+      new Vector3(3.4f, 0f, 5.6f), new Vector3(-3.2f, 0f, 5.8f),
+      new Vector3(4.0f, 0f, -5.4f), new Vector3(-4.2f, 0f, -5.2f),
+      new Vector3(-2.6f, 0f, -3.6f), new Vector3(2.6f, 0f, -3.6f),
+      new Vector3(-2.6f, 0f, -8.5f), new Vector3(2.6f, 0f, -8.5f),
+      new Vector3(-17f, 0f, 12f), new Vector3(12.5f, 0f, -3.5f),
+      new Vector3(-13f, 0f, 11f), new Vector3(9.5f, 0f, 11.5f),
+      new Vector3(-4.6f, 0f, -4.6f), new Vector3(4.8f, 0f, 4.6f),
+    };
+    for (int i = 0; i < drifts.Length; i++)
+      WorldBeauty.FlowerDrift(parent, "MathFlowerDrift" + i, drifts[i], 1.3f + (i % 2) * 0.25f);
+    // Falling petals over the hub (S7) + blossom crown on the entry board.
+    WorldBeauty.PetalFall(parent, "MathPetalFall", new Vector3(0f, 0f, 0f), 13f, 20, 60601);
+    WorldBeauty.Ball(parent, "MathEntryBlossom0", new Vector3(0f, 2.78f, -12f), 1.1f, WorldBeauty.BlossomPink);
+    WorldBeauty.Ball(parent, "MathEntryBlossom1", new Vector3(-0.72f, 2.58f, -12f), 0.8f, WorldBeauty.BlossomDeep);
+    WorldBeauty.Ball(parent, "MathEntryBlossom2", new Vector3(0.72f, 2.64f, -12f), 0.85f, WorldBeauty.BlossomCream);
+    // Flapping butterflies around the flower spots (S7).
+    WorldBeauty.Butterfly(parent, "MathButterfly0", new Vector3(3.4f, 0f, 5.6f), 2.2f, 0.0f,
+      WorldBeauty.BlossomDeep, WorldBeauty.BlossomCream);
+    WorldBeauty.Butterfly(parent, "MathButterfly1", new Vector3(-3.2f, 0f, 5.8f), 2.0f, 0.35f,
+      WorldBeauty.Lilac, WorldBeauty.BlossomPink);
+    WorldBeauty.Butterfly(parent, "MathButterfly2", new Vector3(0f, 0f, -4.5f), 2.4f, 0.6f,
+      WorldBeauty.CreamGold, WorldBeauty.BlossomPink);
+    WorldBeauty.Butterfly(parent, "MathButterfly3", new Vector3(2.5f, 0f, 11.5f), 2.2f, 0.15f,
+      WorldBeauty.Peach, WorldBeauty.BlossomCream);
+    WorldBeauty.Butterfly(parent, "MathButterfly4", new Vector3(-6.8f, 0f, 7.5f), 2.0f, 0.8f,
+      WorldBeauty.Sky, WorldBeauty.BlossomPink);
+    // Pastel rainbow (pink-forward) landing on the lawn behind the north
+    // gates — visible in the arrival shot and from the whole lobby.
+    WorldBeauty.PastelRainbow(parent, "MathRainbow", new Vector3(0f, 0f, 21f), 11f);
   }
 
   // ---- Kenney nature placement (MathProp*) ------------------------------------

@@ -14,4 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/A_World/MathWorld/MathScene.unity
     guid: 86736cd7329f441b90c94701a2dc44bb
+  - enabled: 1
+    path: Assets/A_World/CountingGarden/CountingGardenScene.unity
+    guid: a131612660470784a8fc8ea94301a228
   m_configObjects: {}

@@ -15,6 +15,10 @@
 
 * Free 360-degree camera mọi lúc, full open-world navigation, unrestricted exploration, complex camera collision system
 * Camera được phép constrained, cinematic hoặc context-driven (follow / interaction zoom / cinematic theo quest)
+* Amendment theo user round (2026-09-22): Follow mode cho phép người chơi tự điều chỉnh
+  khung nhìn trong biên — lăn chuột để zoom (0.45x–3.2x) và giữ con lăn/chuột phải kéo
+  để xoay quanh nhân vật (yaw tự do, pitch ±giới hạn). Mặc định 1.0x / yaw 0 / pitch 0
+  tái tạo đúng framing đã khóa nên mọi beat/camera contract không đổi.
 
 ## 3. Acceptance test — Constrained 3D Test
 

@@ -99,4 +99,12 @@ Passive chỉ cần visual + label khi chạm, không bắt buộc speech, khôn
 ## 8. Graphics & Audio
 
 * Pixar-like stylized: màu dịu, khối rõ, facial exaggerated, animation rõ ràng. Không photorealistic.
+* S6 art direction (user directive 2026-09-22): gam hồng là chủ đạo vì game
+  hướng tới bé gái — hoa anh đào (blossom trees), thảm cánh hoa, cụm hoa
+  pastel hồng, cầu vồng pastel (hồng → lilac) làm landmark, mây hồng nhạt.
+  Nền vẫn xanh cỏ/trời để hồng nổi bật, không phủ hồng toàn bộ.
+* S7 full-bloom (cùng ngày, "đẩy tới nóc"): cánh hoa rơi lả tả trên hub
+  (PetalFall), bướm pastel vỗ cánh quanh các cụm hoa (ButterflyDrift), hoa
+  anh đào phủ khắp bãi cỏ hai world, vòm hoa anh đào chào ở lối vào sảnh
+  chính, và bầu trời Math chuyển sắc sakura (hồng nhạt).
 * Audio: 1 voice / lần, hiệu ứng vui, không ồn.

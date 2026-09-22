@@ -72,6 +72,7 @@ public sealed class WorldTransition {
   public async Task<bool> ReturnAsync(ISceneOps ops, string sceneName) {
     if (ops == null || string.IsNullOrEmpty(sceneName)) return false;
     if (State != WorldTransitionState.InSubject) return false;
+    if (!string.IsNullOrEmpty(MicroScene)) return false; // S2: leave the micro-world first
     State = WorldTransitionState.Unloading;
     LastError = null;
     try {
@@ -88,6 +89,58 @@ public sealed class WorldTransition {
     }
     Current = _main;
     State = WorldTransitionState.Idle;
+    return true;
+  }
+
+  // ---- S2 micro-world slot (one nested additive scene on top of a subject) ----
+  // LAZY by construction: the micro scene is only requested on EnterMicroAsync
+  // (the gate walk), never at boot. The subject scene stays loaded underneath;
+  // State stays InSubject (the subject world is still the active world).
+  public string MicroScene { get; private set; }
+  public bool MicroBusy { get; private set; }
+
+  public async Task<bool> EnterMicroAsync(ISceneOps ops, string sceneName) {
+    if (ops == null || string.IsNullOrEmpty(sceneName)) return false;
+    if (State != WorldTransitionState.InSubject) return false;
+    if (MicroBusy || !string.IsNullOrEmpty(MicroScene)) return false;
+    MicroBusy = true;
+    LastError = null;
+    try {
+      await ops.LoadAdditiveAsync(sceneName).ConfigureAwait(false);
+    } catch (Exception e) {
+      MicroBusy = false;
+      LastError = "micro load failed: " + e.Message;
+      return false;
+    }
+    if (!ops.IsLoaded(sceneName)) {
+      MicroBusy = false;
+      LastError = "micro load unverified: " + sceneName + " not loaded after op";
+      return false;
+    }
+    MicroScene = sceneName;
+    MicroBusy = false;
+    return true;
+  }
+
+  public async Task<bool> ExitMicroAsync(ISceneOps ops) {
+    if (ops == null || string.IsNullOrEmpty(MicroScene) || MicroBusy) return false;
+    MicroBusy = true;
+    LastError = null;
+    string sceneName = MicroScene;
+    try {
+      await ops.UnloadAsync(sceneName).ConfigureAwait(false);
+    } catch (Exception e) {
+      MicroBusy = false;
+      LastError = "micro unload failed: " + e.Message;
+      return false;
+    }
+    if (ops.IsLoaded(sceneName)) {
+      MicroBusy = false;
+      LastError = "micro unload unverified: " + sceneName + " still loaded after op";
+      return false;
+    }
+    MicroScene = null;
+    MicroBusy = false;
     return true;
   }
 }

@@ -57,21 +57,19 @@ public class CT_P43_SkeletonComplete {
     try { return (bool)p.GetValue(c, null); } catch (System.Exception) { return false; }
   }
 
-  // A. Math return arch passes feet: pillars at +-1.25 (2.2m clear, ~1.2m
-  // after agent erosion — the old 1.5m gap baked down to a ~0.5m slot).
-  [Test] public void P43A_ReturnGapWide() {
+  // A. S2 return MARKER (user round "quá nhiều cổng thừa"): the way home is
+  // the proven gold disc + "Về" label + invisible trigger, NOT a second gate.
+  // Pin the deliberate absence of the old arch (MathReturnA/B/Beam) so the
+  // extra gate can never creep back into the hub.
+  [Test] public void P43A_ReturnIsMarkerNotGate() {
     SetUpMath();
     try {
-      Transform a = FindDeep(_root.transform, "MathReturnA");
-      Transform b = FindDeep(_root.transform, "MathReturnB");
-      Transform beam = FindDeep(_root.transform, "MathReturnBeam");
-      Assert.IsNotNull(a, "return pillar A built");
-      Assert.IsNotNull(b, "return pillar B built");
-      Assert.IsNotNull(beam, "return beam built");
-      Assert.AreEqual(-1.25f, a.localPosition.x, 0.001f, "pillar A x");
-      Assert.AreEqual(1.25f, b.localPosition.x, 0.001f, "pillar B x");
-      Assert.AreEqual(2.8f, beam.localScale.x, 0.001f, "beam spans the widened gap");
-      Assert.IsTrue(IsIgnoredFromBuild(beam.gameObject), "beam ignore flag set (headroom rule)");
+      Transform disc = FindDeep(_root.transform, "MathReturnDisc");
+      Assert.IsNotNull(disc, "return disc built");
+      Assert.IsNull(FindDeep(_root.transform, "MathReturnA"), "no return pillar A (marker, not gate)");
+      Assert.IsNull(FindDeep(_root.transform, "MathReturnB"), "no return pillar B (marker, not gate)");
+      Assert.IsNull(FindDeep(_root.transform, "MathReturnBeam"), "no return beam (marker, not gate)");
+      Assert.Less(disc.localScale.y, 0.05f, "disc is a flat walkable ground marker");
     } finally { TearDownMath(); }
   }
 
@@ -166,23 +164,34 @@ public class CT_P43_SkeletonComplete {
     return Vector3.Distance(p, a + ab * t);
   }
 
-  // E. Spatial returns show the way home: each subject gets a gold disc +
-  // a "Về" label (the invisible trigger alone could not be found).
+  // E. Spatial returns show the way home: each SPATIAL subject gets a gold
+  // disc + a "Về" label (the invisible trigger alone could not be found).
+  // S2 (audit F9): additive-scene subjects (Math) keep the hub gate + signpost
+  // but build NO dead duplicate district/return in the Spatial Hub — the
+  // return slot stays catalog-aligned as a null so binding indices never shift.
   [Test] public void P43E_SpatialReturnWayHome() {
     GameObject parent = new GameObject("P43MainWorld");
     try {
       SubjectWorldBuilder.BuildResult result = SubjectWorldBuilder.BuildShell(parent.transform);
       Assert.IsNotNull(result, "shell builds headlessly");
-      Assert.AreEqual(4, result.ReturnGates.Count, "4 return triggers");
+      Assert.AreEqual(4, result.ReturnGates.Count, "4 catalog-aligned return slots");
+      int liveReturns = 0;
+      foreach (SubjectGate g in result.ReturnGates) if (g != null) liveReturns++;
+      Assert.AreEqual(3, liveReturns, "3 spatial return triggers (Math owns MathScene)");
       var discs = new List<GameObject>();
       CollectBySuffix(parent.transform, "ReturnDisc", discs);
-      Assert.AreEqual(4, discs.Count, "4 return discs (one per subject)");
+      Assert.AreEqual(3, discs.Count, "3 return discs (one per spatial subject)");
       int veCount = 0;
       var labels = parent.GetComponentsInChildren<WorldNameLabel>(true);
       foreach (WorldNameLabel wl in labels) {
         if (wl != null && wl.CurrentName == "Về") veCount++;
       }
-      Assert.AreEqual(4, veCount, "4 return labels read Về");
+      Assert.AreEqual(3, veCount, "3 return labels read Về");
+      // Math: the door stays, the dead district does not (F9).
+      Assert.IsNotNull(FindDeep(parent.transform, "ToánGate"), "Math hub gate kept");
+      Assert.IsNotNull(FindDeep(parent.transform, "ToánSignPost"), "Math signpost kept");
+      Assert.IsNull(FindDeep(parent.transform, "ToánMedallion"), "no dead Math district");
+      Assert.IsNull(FindDeep(parent.transform, "ToánReturnDisc"), "no stray Math return marker");
     } finally { Object.DestroyImmediate(parent); }
   }
 
@@ -310,6 +319,34 @@ public class CT_P43_SkeletonComplete {
       CollectByPrefix(_root.transform, "MathRewardBead", beads);
       Assert.AreEqual(3, beads.Count, "gold bead reward pile");
     } finally { TearDownMath(); }
+  }
+
+  // S2 gate-shape contract (main hall, user round "cổng cần dev quá mờ
+  // nhạt"): the 4 subject gates must READ as gates — tall pillar pairs with
+  // a lintel above head passage (bake-ignored) — not doorway props.
+  [Test] public void P43L_SubjectGatesAreRealGates() {
+    GameObject parent = new GameObject("P43GateShapes");
+    try {
+      SubjectWorldBuilder.BuildShell(parent.transform);
+      Transform top = FindDeep(parent.transform, "MathPillarATop");
+      Assert.IsNotNull(top, "Math pillar A top built");
+      float topY = top.localPosition.y + top.localScale.y * 0.5f;
+      Assert.GreaterOrEqual(topY, 2.4f, "Math pillar reads full gate height");
+      Transform lintel = FindDeep(parent.transform, "MathLintel");
+      Assert.IsNotNull(lintel, "Math lintel built");
+      Assert.GreaterOrEqual(lintel.localPosition.y, 2.0f, "Math lintel above head passage");
+      Assert.IsTrue(IsIgnoredFromBuild(lintel.gameObject), "Math lintel bake-ignored");
+      foreach (string name in new[] {
+        "ThinkingGearAWheel", "EnglishBookAPageL", "VietnameseTabletABody",
+        "ThinkingLintelL", "EnglishLintel", "VietnameseBanner",
+      }) Assert.IsNotNull(FindDeep(parent.transform, name), name + " built");
+      Transform engLintel = FindDeep(parent.transform, "EnglishLintel");
+      Assert.GreaterOrEqual(engLintel.localPosition.y, 2.0f, "English lintel above head");
+      Assert.IsTrue(IsIgnoredFromBuild(engLintel.gameObject), "English lintel bake-ignored");
+      Transform vnBanner = FindDeep(parent.transform, "VietnameseBanner");
+      Assert.GreaterOrEqual(vnBanner.localPosition.y, 2.0f, "VN banner above head");
+      Assert.IsTrue(IsIgnoredFromBuild(vnBanner.gameObject), "VN banner bake-ignored");
+    } finally { Object.DestroyImmediate(parent); }
   }
 
   // K. MathScene return gate binding (journey P1 regression): SubjectGate's

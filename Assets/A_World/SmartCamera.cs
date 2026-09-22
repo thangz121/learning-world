@@ -1,7 +1,10 @@
 // A_World/SmartCamera.cs — Agent A (World & Visual), W1 vertical slice.
 // Constrained context-driven camera (CONSTRAINED_3D.md §2): modes
-// Follow / Interaction / Cinematic. No free-rotate/zoom input (constrained,
-// no 360 camera). Smooth-damped movement; perspective camera enforced; camera
+// Follow / Interaction / Cinematic. Perspective, ground-clamped; the player
+// can orbit the FOLLOW view by holding the middle (wheel) or right mouse
+// button and dragging (user round: "giữ chuột/con lăn để điều chỉnh hướng
+// nhìn map") — neutral orbit 0,0 reproduces the frozen authored framing, so
+// every beat/camera contract is unchanged. Smooth-damped movement; camera
 // height is clamped above the ground so it can never clip through it.
 // W1 additions (API byte-compatible): real cinematic waypoint traversal
 // (PlayCinematic now sweeps instead of holding), Bind(IGameEventBus) so a
@@ -53,6 +56,15 @@ public class SmartCamera : MonoBehaviour {
   public float maxZoomFactor = 3.2f;
   [Tooltip("Zoom change per wheel notch.")]
   public float zoomStep = 0.15f;
+  [Header("Mouse-drag orbit (Follow only)")]
+  [Tooltip("Orbit degrees per mouse pixel while the middle (wheel) or right button is held.")]
+  public float orbitSensitivity = 0.28f;
+  [Tooltip("How far the orbit pitch may deviate from the frozen framing (degrees).")]
+  public float orbitPitchMin = -22f;
+  public float orbitPitchMax = 42f;
+  [Tooltip("Player orbit state (degrees). 0,0 = the frozen authored framing.")]
+  public float orbitYaw = 0f;
+  public float orbitPitch = 0f;
 
   public CameraMode Mode { get; private set; } = CameraMode.Follow;
 
@@ -218,6 +230,7 @@ public class SmartCamera : MonoBehaviour {
       case CameraMode.Follow:
         if (_hasFollowTarget && _followTarget != null) {
           PollWheelZoom(); // Follow only: authored beats keep frozen framing
+          PollOrbitDrag(); // Follow only: player view control (2 mouse buttons)
           TickFollow();
         }
         break;
@@ -238,7 +251,8 @@ public class SmartCamera : MonoBehaviour {
   }
 
   void TickFollow() {
-    Vector3 offset = ZoomedOffset(_followOffset, zoomFactor);
+    Vector3 offset = OrbitOffset(
+      ZoomedOffset(_followOffset, zoomFactor), orbitYaw, orbitPitch);
     Vector3 desired = ClampAboveGround(EnforceFollowFloor(
       _followTarget.position,
       ResolveObstruction(_followTarget.position, _followTarget.position + offset)));
@@ -263,7 +277,44 @@ public class SmartCamera : MonoBehaviour {
     } catch (Exception) { return 0f; }
   }
 
-  // Pure seams (EditMode cover without a live frame).
+  // Mouse-drag orbit (user round: the child/parent can rotate the map view
+  // instead of being stuck on one fixed angle). Middle (wheel) OR right
+  // button held + drag = orbit; Follow only (authored beats keep framing).
+  void PollOrbitDrag() {
+    Vector2 delta;
+    if (!ReadOrbitDrag(out delta)) return;
+    Vector2 next = ApplyOrbitDrag(new Vector2(orbitYaw, orbitPitch), delta,
+      orbitSensitivity, orbitPitchMin, orbitPitchMax);
+    orbitYaw = next.x;
+    orbitPitch = next.y;
+  }
+
+  static bool ReadOrbitDrag(out Vector2 delta) {
+    delta = Vector2.zero;
+    try {
+      var mouse = UnityEngine.InputSystem.Mouse.current;
+      if (mouse == null) return false;
+      if (!mouse.middleButton.isPressed && !mouse.rightButton.isPressed) return false;
+      delta = mouse.delta.ReadValue();
+      return true;
+    } catch (Exception) { return false; }
+  }
+
+  // Pure seams (EditMode cover without a live frame). OrbitOffset rotates the
+  // follow offset around the target: yaw about Y, positive pitch raises the
+  // eye (over-the-shoulder → look-down). 0,0 returns the base exactly.
+  public static Vector3 OrbitOffset(Vector3 baseOffset, float yawDeg, float pitchDeg) {
+    return Quaternion.Euler(-pitchDeg, yawDeg, 0f) * baseOffset;
+  }
+
+  public static Vector2 ApplyOrbitDrag(Vector2 orbit, Vector2 mouseDelta, float sensitivity,
+      float minPitch, float maxPitch) {
+    float yaw = orbit.x + mouseDelta.x * sensitivity;
+    yaw = Mathf.Repeat(yaw + 180f, 360f) - 180f; // stays in (-180, 180]
+    float pitch = Mathf.Clamp(orbit.y + mouseDelta.y * sensitivity, minPitch, maxPitch);
+    return new Vector2(yaw, pitch);
+  }
+
   public static float ClampZoomFactor(float z, float min, float max) {
     if (min > max) { float t = min; min = max; max = t; }
     return Mathf.Clamp(z, min, max);

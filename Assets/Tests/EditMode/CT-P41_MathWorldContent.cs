@@ -84,9 +84,10 @@ public class CT_P41_MathWorldContent {
     } finally { TearDown(); }
   }
 
-  // D. Landmarks, paths and return arch all present (no pads-only shell).
+  // D. Landmarks, paths and the return marker all present (no pads-only shell).
   // B1R re-pin: the world grew (r26) and the hub was decluttered; the Kenney
   // fence/bridge modules and the meadow loop are now part of the landmark set.
+  // S2 re-pin: MathReturnA/B/Beam (arch) -> MathReturnDisc (marker).
   [Test] public void P41D_LandmarksPresent() {
     SetUp();
     try {
@@ -97,7 +98,7 @@ public class CT_P41_MathWorldContent {
         "BridgeStream", "BridgeRailW", "BridgeRailE", "MathBridgeModule0",
         "MathPathEntry", "MathPathReturn", "MathPathGarden", "MathPathBridge",
         "MathPathMeadow1", "MathPathGardenInnerA",
-        "MathReturnA", "MathReturnB", "MathReturnBeam",
+        "MathReturnDisc",
         "MathLobbyPad", "MathEntryPad", "CountingGardenPad", "NumberBridgePad",
         "MathGardenGate", "MathCountingTree", "MathPropTree0", "MathSkyCloud0",
         "MathTower0", "MathDomino0", "MathSignPlusV", "MathBedPipsW0",

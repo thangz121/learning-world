@@ -77,13 +77,15 @@ public class CT_P37_LoaderHonesty {
 
   // D. On-demand architecture pin: the production load/unload call pair lives
   // in exactly one place — the WorldTransition machine (driven by Bootstrap's
-  // single Travel/Return path). Nobody else touches ISceneOps.
+  // single Travel/Return path). S2 (deliberate re-pin): the machine now owns
+  // TWO load paths — the subject slot and the nested micro-world slot (lazy
+  // scene) — so the count moves 1 -> 2 per op; nobody else touches ISceneOps.
   [Test] public void P37D_SingleLoadCallSite() {
     string machine = ReadRepoFile("_SharedKernel", "WorldTransition.cs");
-    Assert.AreEqual(1, new Regex(@"ops\.LoadAdditiveAsync").Matches(machine).Count,
-      "machine owns the single production load call");
-    Assert.AreEqual(1, new Regex(@"ops\.UnloadAsync").Matches(machine).Count,
-      "machine owns the single production unload call");
+    Assert.AreEqual(2, new Regex(@"ops\.LoadAdditiveAsync").Matches(machine).Count,
+      "machine owns both production load calls (subject + micro-world slot)");
+    Assert.AreEqual(2, new Regex(@"ops\.UnloadAsync").Matches(machine).Count,
+      "machine owns both production unload calls (subject + micro-world slot)");
     string bootstrap = ReadRepoFile("_Bootstrap", "MarketBootstrap.cs");
     Assert.IsTrue(bootstrap.Contains("TravelToSubjectAsync"),
       "Bootstrap drives entry through the single travel path");

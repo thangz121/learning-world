@@ -946,3 +946,228 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
 - VERDICT: **READY FOR GAMEPLAY FOUNDATION** (kh�ng c�n P0/P1). Next theo brief:
   Gameplay Pattern Foundation (pattern ? question type), chua l�m quest content.
 - Commit + push main theo l?nh user.
+
+## 37. S2 - GATE-SHAPE PASS (user round: "cổng thừa / cổng cần dev quá mờ nhạt") (2026-09-22)
+
+- User round (2 khu vực, đã chốt qua hỏi đáp): (1) quá nhiều cổng thừa — cổng về
+  chỉ để về sảnh chính chọn môn; (2) cổng cần dev quá mờ nhạt, chưa ra hình hài
+  cổng. Chốt xử lý: cổng về = MARKER (disc + chữ "Về"), không còn dáng cổng;
+  10 cổng micro-world (Math hub) + 4 cổng môn học (sảnh chính) phải ra hình hài cổng thật.
+- Math hub (`MathWorldBuilder`):
+  (1) 10 gate: thêm khung cổng dùng chung `GateFrame` — 2 trụ 2.7m (local ±1.6)
+  + xà 3.8m @2.78m tô accent của từng cổng; motif giữ đặc trưng (bead row, kính
+  lúp, fruit row, cặp hình, color bins, peg board, cottage, giàn giáo, deck,
+  moon) gắn trên/trước khung. Xà bake-ignored (headroom rule), toàn bộ collider-free.
+  (2) `MathGateBody` offset `GateBodyZ=-2.0`: thân cổng đứng SAU waypoint của
+  ring ⇒ ring 1.5m giữ nguyên bề rộng (cluster cũ bị pinch), cổng vẫn quay mặt hub.
+  (3) Name pill neo theo body, cao 3.6m (trên xà).
+  (4) Cổng về: bỏ 3 mảnh arch (MathReturnA/B/Beam) — chỉ còn disc vàng d2.6 +
+  label "Về" + trigger ẩn (P43A pin "marker, not gate").
+- Sảnh chính (`SubjectWorldBuilder`): 4 cổng môn nâng thành silhouette cổng thật —
+  Toán: trụ cube 2.45m + xà cylinder @2.38 + finial; Tư duy: bánh răng 2.1m +
+  puzzle beam @2.62; Tiếng Anh: sách 2.3m + xà @2.5 + crown; Tiếng Việt: tablet
+  2.1m + banner @2.5 + nón lá ~3.1m. Board tên gắn TRÊN mặt xà (bỏ board bay).
+  Mọi xà/crown ignoreFromBuild; vị trí trụ/carve/road giữ nguyên.
+- Pins cập nhật có chủ đích: P41D (MathReturnDisc), P43A (return marker),
+  + mới P43L (subject gates are real gates) + P45J (10 gate frames).
+- Verify: EditMode **557/552/0/5**; build release **Succeeded** errors=0
+  warnings=5 (pre-existing) size=109,391,897; boot **FACE_OK 0 exception**
+  (`s2-boot.log`). Census: math=634 (cap 640), hubShell=289. Temp build script +
+  TempCensus xóa sạch.
+- Docs cập nhật: MATH_HUB_GATES/DESIGN/VISUAL_QA §S2.
+- Chưa commit (chờ lệnh).
+- F9 (audit): Spatial Hub thôi dựng district Toán chết (medallion/core/tree/road)
+  + điểm "Về" thừa trong MarketScene; giữ cổng Toán + signpost; slot ReturnGates
+  null-aligned theo catalog nên binding không lệch (P43E re-pin: 3 spatial returns).
+- Verify lần cuối (sau F9): EditMode **557/552/0/5**; build **Succeeded** errors=0
+  warnings=5 size=109,391,897; boot **FACE_OK 0 exception**.
+## 38. S3 - CARTOON GATE PASS (user round: "các cổng giống nhau quá") (2026-09-22)
+
+- User (kèm ảnh): 10 cổng nhìn giống hệt nhau; muốn cartoon hơn và đúng bản
+  chất từng micro-world.
+- Fix (`MathWorldBuilder`): bỏ khung post-and-lintel dùng chung; thêm cartoon
+  kit (CartoonPost trụ tròn + chỏm bi, BlockPost khối số, StripedPost sọc công
+  trường, CartoonArch vòm dày nửa ellipse nhiều màu, CartoonRing vòng kính lúp,
+  MushroomPost nấm bi đỏ chấm trắng) và làm riêng từng cổng:
+  01 Vườn Đếm: chân khối 1-2-3 + vòm xanh + dãy bead treo dưới vòm.
+  02 Vườn Khám Phá: cổng LÀ kính lúp khổng lồ (vòng mint + mặt kính + cán).
+  03 Vườn Trái Cây: chân là cây ăn quả, vòm cành lá, táo treo + giỏ.
+  04 Đồng Ghép Cặp: hai nửa đối xứng (aqua|gold) gặp nhau ở chỏm hồng + cặp
+  hình bên dưới.
+  05 Công Viên Phân Loại: vòm cầu vồng + 3 topper hình dạng + 3 bin màu.
+  06 Xưởng Xếp Hình: hai thanh ghép gỗ lệch tầng (jigsaw) + bàn thợ.
+  07 Làng Giao Hàng: mái nhà + ống khói + bưu kiện + hòm thư.
+  08 Sân Xây Dựng: chân sọc vàng/nâu + dầm + cần cẩu + móc + vật liệu.
+  09 Cầu Số: vòm đá + mặt cầu gỗ + lan can + suối đá.
+  10 Rừng Trí Nhớ: chân nấm đốm đỏ + vòm tím chạng vạng + mặt trăng + nấm nhỏ đôi.
+- Nav/index giữ nguyên: mọi mảnh vòm bake-ignored (headroom), chân collider-free
+  bake off-path, body vẫn lùi GateBodyZ=-2.0 khỏi ring.
+- Pins: P45J pin chân ±1.6 + mảnh MathGateArch* ignored + map motif riêng từng
+  cổng; P42C/P45E re-pin cap 640 -> 720 (đo 698, ghi ở MATH_HUB_VISUAL_QA).
+- Verify: EditMode **557/552/0/5**; build release **Succeeded** errors=0
+  warnings=5 size=109,395,481; boot **FACE_OK 0 exception** (`s3-boot.log`).
+  TempCensus/build script xóa sạch. Docs: MATH_HUB_GATES/DESIGN/VISUAL_QA §S3.
+- Chưa commit (chờ lệnh).
+## 39. S4 - DECLUTTER + FIX CỔNG + CAMERA ORBIT (user round 3 ảnh) (2026-09-22)
+
+- User: (1) một số thứ rối mắt; (2) cổng vẫn có cái bị lỗi; (3) cần giữ chuột /
+  con lăn để điều chỉnh hướng nhìn map thay vì cố định 1 góc.
+- Cổng (`MathWorldBuilder`):
+  - Vòm cartoon: overlap mảnh 1.25 -> 1.06 (hết góc nhô như gãy).
+  - Xưởng Xếp Hình: tab jigsaw khóa giữa 2 thanh + trả lại 2 chân bàn thợ.
+  - Sân Xây Dựng: thay dầm chéo (trông như bập bênh) bằng cần cẩu tháp:
+    dầm + cột + cần ngang + cáp + móc; vật liệu dời ra sau.
+  - Làng Giao Hàng: mái ngắn về đúng nhịp trụ; Cầu Số: bỏ sỏi rill; Vườn Đếm:
+    bỏ trio; Vườn Khám Phá: bỏ bụi + sỏi; Ghép Cặp/Trí Nhớ: bỏ cặp bi thừa.
+- Declutter hub: bỏ 6 pebble entry + 4 tuft grass (MathGateEdge0-5, Tuft0-3) —
+  domino walk + chevron đã đủ dẫn mắt. Census 698 -> 681 (cap 720 giữ nguyên).
+- Camera orbit (`SmartCamera`, global): giữ con lăn HOẶC chuột phải + kéo để
+  xoay follow view; yaw tự do, pitch kẹp -22..+42; zoom lăn giữ nguyên. Neutral
+  (yaw0/pitch0/zoom1) tái tạo đúng framing khóa. Pure seams OrbitOffset /
+  ApplyOrbitDrag; pin CT-P32E/F/G (+3 test). Ghi chú contract ở
+  CONSTRAINED_3D.md §2.
+- Pins: P45H bỏ MathGateEdge0/Tuft0, thêm Accent0Stem/Accent1Stem.
+- Verify: EditMode **560/555/0/5**; build release **Succeeded** errors=0
+  warnings=4 size=109,395,481; boot **FACE_OK 0 exception** (`s4-boot.log`).
+  TempCensus/build script xóa sạch.
+- Chưa commit (chờ lệnh).
+## 40. S5 - FIX CỔNG CẦU SỐ + SÂN XÂY DỰNG (user ảnh: "Nó đang kiểu gì đây?") (2026-09-22)
+
+- User ảnh cận cảnh 2 cổng: Cầu Số có "mặt cầu" chơ vơ trên vòm + 2 que nhỏ;
+  Sân Xây Dựng có dầm chéo mảnh trông như giàn giáo gãy.
+- Fix (`MathWorldBuilder`):
+  - Cầu Số: deck gỗ đặt khít trên đỉnh vòm (3.9 x 1.0 @3.3) + 2 trụ lan can
+    dày ở 2 đầu deck (thay 2 que mảnh giữa); giữ boardwalk sau cổng. Trụ đá
+    hạ còn 1.9m để vòm spring từ chỏm bi.
+  - Sân Xây Dựng: thay cần cẩu mảnh bằng cần cẩu giàn vàng chunky — cột giữa
+    (0.3) + cần ngang đối xứng (3.4) + 2 cáp: bên trái treo kiện hàng, bên
+    phải treo móc; đọc rõ BUILD từ lobby.
+- Verify: EditMode **560/555/0/5**; build release **Succeeded** errors=0
+  warnings=4 size=109,395,993; boot **FACE_OK 0 exception** (`s5-boot.log`).
+  Temp build script xóa sạch.
+- Chưa commit (chờ lệnh).
+## 41. S6 - BEAUTY + GAM HỒNG (user: "world đẹp hơn" + "game cho con gái") (2026-09-22)
+
+- User: làm world đẹp hơn (được sửa bất cứ gì) + thêm gam hồng vì game hướng
+  tới bé gái là chính.
+- Kit mới `A_World/WorldBeauty.cs` (primitive, shared material, collider-free):
+  BlossomTree (thân + 3 tán hồng), PetalCarpet (thảm cánh hoa), FlowerDrift
+  (cụm hoa pastel hồng), PastelRainbow (6 dải hồng→lilac + 2 mây chân), và
+  ApplyMainAtmosphere / ApplyMathAtmosphere.
+- Math hub: 6 cây hoa anh đào + thảm dưới gốc, 8 cụm hoa hồng ở lobby/entry,
+  cầu vồng pastel đáp sau cổng Bắc tại (0,0,21) bán kính 11 (view arrival +
+  lobby nhìn Bắc nên cầu vồng nằm giữa khung), mây đổi sang hồng nhạt.
+- Sảnh chính: 4 cây hoa anh đào + thảm + 6 cụm hoa trên bãi cỏ (có guard
+  clear-zone/walkway/gate-plaza nên không đè đường đi).
+- Không khí mỗi world: MarketBootstrap đổi fog/ambient khi travel — Math dùng
+  sương mù xa 32-170m (bầu trời/mây/cầu vồng hiện rõ; fog 18-45m của Main
+  trước đây nuốt mất), quay về Main khôi phục 18-45m.
+- Pins: P45K (beauty landmarks + rainbow bake-ignored), P42A thêm prefix
+  MathRainbow/MathBlossom/MathPetal/MathFlowerDrift, P42C/P45E re-pin cap
+  720 -> 820 (đo 777). Art direction ghi ở GAME_DESIGN.md §8.
+- Verify: EditMode **561/556/0/5**; build release **Succeeded** errors=0
+  warnings=4 size=109,400,745; boot **FACE_OK 0 exception** (`s6-boot.log`).
+  TempCensus/build script xóa sạch.
+- Chưa commit (chờ lệnh).
+## 42. S7 - FULL BLOOM (user: "đẩy tới nóc") (2026-09-22)
+
+- User: "Đẹp đấy, đẩy mạnh hơn nữa. Bắt đầu có hồn hơn rồi. Đẩy tới nóc đi."
+- Kit chung thêm: `PetalFall` (cánh hoa hồng rơi lả tả, transform-only,
+  deterministic, batch-safe), `ButterflyDrift` (bướm pastel bay vòng quanh
+  cụm hoa, vỗ cánh), `WorldBeauty.TrunkPost` (thân trụ cho vòm hoa).
+- Math hub: 12 cây hoa anh đào + thảm (mọi bãi cỏ), 14 cụm hoa hồng, 20 cánh
+  hoa rơi trên lobby, 5 bướm, vương miện hoa anh đào trên cổng entry; trời
+  Math chuyển sắc sakura (camera background trong atmosphere swap).
+- Sảnh chính: 6 cây hoa anh đào + thảm, 10 cụm hoa, VÒM HOA ANH ĐÀO chào ở
+  lối vào (trụ ±1.7 ngoài corridor, tán cao 2.3m+ để không cắt navmesh),
+  12 cánh hoa rơi, 2 bướm.
+- Budget: đo 870, cap re-pin 820 -> 920 (MATH_HUB_VISUAL_QA.md).
+- Pins: P45K mở rộng (petal/butterfly/entry crown), P42A thêm prefix.
+- Verify: EditMode **561/556/0/5**; build release **Succeeded** errors=0
+  warnings=4 size=109,405,641; boot **FACE_OK 0 exception** (`s7-boot.log`).
+  TempCensus/build script xóa sạch.
+- Chưa commit (chờ lệnh).
+## 43. S8 - FIX CỔNG CẦU SỐ + CÂY DÍNH CẦU + CỘT VÒM HOA (user ảnh) (2026-09-22)
+
+- User (2 ảnh): (1) cổng Cầu Số "còn 1 cái thanh ở trên, Failed"; (2) chỗ cây
+  hoa anh đào mới "bị dính vào cổng" (dính vào cầu gỗ thật); (3) vòm hoa ở
+  sân spawn có "đám mây" trên cổng nhưng cột trơn — "làm cột cũng phải đẹp
+  tương xứng".
+- Fix:
+  - Cầu Số: bỏ tấm deck gỗ trên vòm + 2 trụ lan can nhỏ; giờ là vòm đá sạch
+    + keystone (đá khóa vòm) + boardwalk gỗ dưới chân. P45J đổi motif pin
+    sang "MathGateKeystone".
+  - Dời cây hoa anh đào: (17.5,-2.5) -> (21,-1.5); (19.5,6.5) -> (21.5,8.5);
+    (-9,-8.5) -> (-9.5,-7.5) — hết dính cầu/orchard gate.
+  - `WorldBeauty.PrettyPost`: trụ chân loe + thân thuôn + chỏm bi; vòm hoa
+    sân spawn dùng trụ này + 2 chùm lá xanh 2 bên.
+  - Pin mới P45K: cây ≥3.5m, cụm hoa ≥2.0m cách MỌI gate body + cầu gỗ thật
+    + tâm vườn — chống tái phát "dính vào cổng".
+- Verify: EditMode **561/556/0/5**; build release **Succeeded** errors=0
+  warnings=4 size=109,406,153; boot **FACE_OK 0 exception** (`s8-boot.log`).
+  TempCensus math=868. Temp scripts xóa sạch.
+- Chưa commit (chờ lệnh).
+## 44. S2 PIONEER MICRO-WORLD - COUNTING GARDEN v1 (2026-09-22)
+
+- Mục tiêu: micro-world thật đầu tiên + chuẩn tái sử dụng cho 9 cái sau; tái
+  dùng toàn bộ Core (không manager/service/bus/save/camera thứ hai).
+- Thêm: `CountingGardenArea.cs` (module scene-local: anchors + beat vào/ra:
+  tunnel, warp, staging Tess, camera frame/follow, HUD cache/restore, pure
+  state seams), `MicroWorldPortal.cs` (cổng đi bộ 2 chế độ Enter/Exit, cùng
+  pattern poll XZ như SubjectGate — 1 component cho cả 9 micro-world sau).
+- MathWorldBuilder: staging Vườn Đếm (vòm hoa + bảng tên khóa, walk quanh co,
+  giỏ thu hoạch + 3 táo, cây hoa anh đào/thảm/hoa, petal rơi, backdrop), bộ
+  anchor vườn `MathGardenPresentationRoot` đủ 8 slot, portal ở miệng cổng
+  counting_garden, portal exit ở cổng vườn, contract statics (entry/exit/
+  focus/host/camera/reward/hub-return).
+- GameInstaller: bind area với refs sống (player/camera/HUD/Tess) + gán vào
+  mọi portal; lookup anchor MAIN đổi sang tìm theo tên (tránh registry vườn
+  cướp beat arrival).
+- Loop dùng nguyên math_counting (find "one" trong hàng đếm 1-2-3 -> mang cho
+  Tess -> bloom); Tess được stage vào vườn khi vào, về nook khi ra; adoption/
+  re-entry giữ nguyên (P40-P43 xanh).
+- Tests: CT-P46 **5/5** (portal hợp đồng, anchors hợp lệ, staging identity,
+  state machine không double enter/exit, điểm hạ cánh ngoài bán kính portal).
+  Suite **566/561/0/5**. Budget cap re-pin 920 -> 990 (đo 938).
+- Verify: build release **Succeeded** errors=0 warnings=4 size=109,414,665;
+  boot **FACE_OK 0 exception** (`s2p-boot.log`). Temp scripts xóa sạch.
+- Hạn chế v1: loop đếm hiện là quest cũ (tìm "one"), chưa có quest đếm 3 quả
+  + 4 câu thoại mới; host là Tess hiện có; chưa chạy journey driver thật.
+  Record đầy đủ + checklist human review: `docs/S2_COUNTING_GARDEN.md`.
+- Chưa commit (chờ lệnh).
+## 44b. S2 v2 - CHUYỂN COUNTING GARDEN THÀNH SCENE RIÊNG, LAZY-LOAD (2026-09-22)
+
+- User chỉnh kiến trúc: Counting Garden phải là SÂN MỚI (scene riêng) giống
+  MathScene khi đi từ sảnh chọn môn; warp xong phải tới sân mới; LAZY LOAD
+  không load từ đầu; trên sân quây 5 khu vườn theo cánh cung (chỉ quây khu).
+- Bỏ staging trong MathScene (v1) — sân Toán trở lại nguyên trạng (khu vườn
+  pilot cũ giữ nguyên); cổng Ở Math Hub vẫn là cửa vào micro-world.
+- Thêm: `WorldTransition` micro slot (EnterMicroAsync/ExitMicroAsync/MicroScene,
+  LAZY, honest failure, chặn ReturnAsync khi đang trong micro), `CountingGardenBuilder`
+  (scene contract + sân: ground/hedge/entry arch/exit portal/5 khu arc 50-130°
+  r11 có fence + mouth + anchor/nền/đường/dressing S6-S7/anchors 8 slot),
+  `GameInstaller.BuildCountingGardenScene` (sceneLoaded -> build lazy -> đẩy
+  entry/anchors vào area), `CountingGardenArea` v2 (async beats), scene asset
+  `Assets/A_World/CountingGarden/CountingGardenScene.unity` + Build Settings.
+- CT-P46 viết lại **6/6** (lazy contract P46B: scene KHÔNG load lúc vào subject,
+  chỉ load khi EnterMicro; subject vẫn nằm dưới; exit unload; return bị chặn khi
+  trong micro). P37D re-pin: machine sở hữu 2 call site load/unload (subject +
+  micro), vẫn là nơi duy nhất chạm ISceneOps. Suite **567/562/0/5**.
+- Verify: build release **Succeeded** errors=0 warnings=6 size=109,948,697;
+  boot **FACE_OK 0 exception** (`s2v2-boot.log`). Temp scripts/sân tạo bằng
+  editor script đã xóa.
+- Hạn chế: 5 khu đang trống (đúng lệnh); chưa NPC trong sân mới; chưa chạy
+  journey click thật (EditMode + build + boot).
+- Chưa commit (chờ lệnh).
+## 44c. S2 v3 - FIX "SANG SÂN VƯỜN ĐẾM RỒI BỊ QUAY LẠI MATH" (2026-09-22)
+
+- User: vào được sân vườn đếm nhưng bị trả về Math World ngay.
+- Root cause 1: điểm warp vào vườn (0,0,-10) nằm TRONG bán kính cổng exit
+  (0,0,-10.4, r1.35) -> cổng exit fire ngay frame đầu. Fix: điểm vào dời ra
+  (0,0,-8) + `MicroWorldPortal` cold start (latch khởi tạo TRUE, chỉ arm sau
+  khi người chơi ra khỏi bán kính một lần — bài học J4) + pin P46D.
+- Root cause 2 (chặn chơi): sân mới CHƯA bake NavMesh -> bé không đi được.
+  Fix: `CountingGardenBuilder.BuildNavMesh` (NavMeshSurface trên garden root,
+  CollectObjects.Children — đúng bài học J8, không bake chéo scene).
+- Verify: EditMode **567/562/0/5**; build **Succeeded** errors=0 warnings=4
+  size=109,949,209; boot **FACE_OK 0 exception** (`s2v3-boot.log`). Chưa commit.

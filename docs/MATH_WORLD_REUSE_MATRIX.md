@@ -55,7 +55,7 @@ Legend: **PROVEN SHARED** (≥2 consumers or locked contract) ·
 
 | Item | Class | Action |
 |---|---|---|
-| Dead Math district still built in MarketScene (F9) | PROVEN-SHARED BUG | skip road/district/return for `SceneName != null`; re-pin P31F/P33/P39/P43E |
+| Dead Math district still built in MarketScene (F9) | FIXED 2026-09-22 (S2) | `BuildShell`/`BuildDecor` honor `SceneName` (skip road/district/return/decor, keep gate+signpost, null-align return slot); P43E re-pinned |
 | Math literals in shared travel code (F10) | PROVEN-SHARED SMELL | move offset/bounds/anchors into per-subject data; flows stay identical |
 | Boundary gaps r18 (~4.9 m) (F11) | SHARED BUG | compose/close rim; enclosure test |
 | Return arch in MathScene has no "Về" label (F13) | MATH GAP | one label + pin |

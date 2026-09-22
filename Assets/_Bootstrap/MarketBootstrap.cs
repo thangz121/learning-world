@@ -654,6 +654,12 @@ public class MarketBootstrap : MonoBehaviour {
         return;
       }
       _activeSubjectScene = to.SceneName;
+      // S6 beauty pass: scene-backed worlds get their own air (soft far haze
+      // so the sky, clouds and the pastel rainbow read — Main's 18-45m fog
+      // washed the Math sky out). Restored symmetrically on return below.
+      if (to.Id == SubjectIds.Math) {
+        try { WorldBeauty.ApplyMathAtmosphere(); } catch (System.Exception) { }
+      }
       DeactivateMainPresentation();
       if (_builder.Router != null) {
         try { _builder.Router.boundCenter = MathWorldBuilder.WorldOffset; } catch (System.Exception) { }
@@ -816,6 +822,9 @@ public class MarketBootstrap : MonoBehaviour {
       }
       _activeSubjectScene = null;
       ReactivateMainPresentation();
+      // S6 beauty pass: back to the crisp Main air (symmetric with the enter
+      // swap; harmless on the enter-failure path — it just re-applies Main).
+      try { WorldBeauty.ApplyMainAtmosphere(); } catch (System.Exception) { }
       if (_hud != null) {
         try {
           if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);

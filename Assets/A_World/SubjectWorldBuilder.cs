@@ -54,9 +54,20 @@ public static class SubjectWorldBuilder {
   public static BuildResult BuildShell(Transform parent) {
     BuildResult result = new BuildResult();
     foreach (SubjectDefinition def in SubjectCatalog.All) {
-      BuildRoad(parent, def);
+      // Additive-scene subjects (Math: SceneName != null) live in their own
+      // scene: the Spatial Hub keeps the entry gate + signpost (the door the
+      // child walks through) but MUST NOT build a dead duplicate district
+      // behind it (audit F9: the dead Math playground + its stray "Về" marker
+      // read as extra gates in the hub). The return slot stays aligned with
+      // SubjectCatalog.All as a null so subject<->gate binding cannot shift.
+      bool additive = !string.IsNullOrEmpty(def.SceneName);
+      if (!additive) BuildRoad(parent, def);
       BuildEntryGate(parent, def, result);
-      BuildPlaygroundShell(parent, def, result);
+      if (additive) {
+        result.ReturnGates.Add(null);
+      } else {
+        BuildPlaygroundShell(parent, def, result);
+      }
       BuildSignpost(parent, def);
     }
     BuildOuterHedgeShell(parent, result);
@@ -77,8 +88,13 @@ public static class SubjectWorldBuilder {
   public static void BuildDecor(Transform parent) {
     System.Random rng = new System.Random(30300);
     foreach (SubjectDefinition def in SubjectCatalog.All) {
-      BuildBoundaryRing(parent, def, rng);
-      BuildPlaygroundDecor(parent, def, rng);
+      // Additive subjects own no spatial playground: skip its ring/floor decor
+      // (F9), but keep the hub-side road-shoulder dressing (BuildRoadEdges).
+      bool additive = !string.IsNullOrEmpty(def.SceneName);
+      if (!additive) {
+        BuildBoundaryRing(parent, def, rng);
+        BuildPlaygroundDecor(parent, def, rng);
+      }
       BuildRoadEdges(parent, def, rng);
     }
     BuildOuterHedgeDressing(parent, rng);
@@ -162,10 +178,10 @@ public static class SubjectWorldBuilder {
   }
 
   // ---- gate name boards (one body with the arch) -------------------------------
-  // Light-wood board carrying the subject pill ON the structure (no floating
-  // boxes): Math/Thinking ride above their beams, English hangs in front of
-  // its crown, Vietnamese reads straight off its pink banner. Visual-only
-  // (above headroom, no collider, ignored by the bake).
+  // Light-wood board carrying the subject pill MOUNTED ON the lintel face (S2
+  // gate-shape pass: the board used to float above the beam; now the name is
+  // one body with the gate at gate height). Vietnamese paints its pill
+  // straight onto the pink banner. Visual-only (no collider, bake-ignored).
   static void BuildGateNameBoard(Transform parent, SubjectDefinition def, Vector3 face, Vector3 lat) {
     string name = def.DisplayName;
     Vector3 mid = def.GatePos;
@@ -178,18 +194,18 @@ public static class SubjectWorldBuilder {
       labelGo.transform.SetParent(parent);
       WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
       label.SetupLocked(def.DisplayName,
-        mid + face * 0.35f + new Vector3(0f, 1.95f, 0f),
+        mid + face * 0.35f + new Vector3(0f, 2.5f, 0f),
         SubjectCatalog.HubCenter);
       label.Show();
       return;
     }
     Vector3 boardPos;
     if (def.Landmark == SubjectLandmarkKind.Books) {
-      boardPos = mid + face * 0.40f + new Vector3(0f, 2.0f, 0f); // in front of the crown
+      boardPos = mid + face * 0.22f + new Vector3(0f, 2.5f, 0f); // on the slab face
     } else if (def.Landmark == SubjectLandmarkKind.Gears) {
-      boardPos = mid + new Vector3(0f, 2.32f, 0f); // bridges the puzzle notch
+      boardPos = mid + face * 0.25f + new Vector3(0f, 2.62f, 0f); // on the puzzle beam
     } else {
-      boardPos = mid + new Vector3(0f, 2.28f, 0f); // sits on the beam
+      boardPos = mid + face * 0.25f + new Vector3(0f, 2.38f, 0f); // on the cylinder beam
     }
     GameObject board = Box(parent, name + "NameBoard", boardPos,
       new Vector3(1.5f, 0.42f, 0.14f), new Color(0.72f, 0.55f, 0.34f), false);
@@ -202,31 +218,21 @@ public static class SubjectWorldBuilder {
       boardPos + face * 0.12f,
       SubjectCatalog.HubCenter);
     label2.Show();
-    if (def.Landmark == SubjectLandmarkKind.Blocks) {
-      // Math motif: two counting cubes riding the beam beside the board.
-      for (int i = -1; i <= 1; i += 2) {
-        GameObject cube = Box(parent, "MathBeamCube" + i,
-          mid + lat * (i * 1.1f) + new Vector3(0f, 2.15f, 0f),
-          new Vector3(0.24f, 0.24f, 0.24f), def.Secondary, false);
-        StripCollider(cube);
-        IgnoreFromBuild(cube);
-      }
-    }
   }
 
-  // Math: stacked-cube pillars + cylinder lintel + finial spheres (geometry
-  // motif, no curriculum). Counting cubes ride the beam (see name board).
+  // Math: stacked-cube pillars + cylinder lintel + finial duo (geometry
+  // motif, no curriculum). S2 gate-shape pass (user round: the dev gates must
+  // read as gates): pillars grow to 2.45m and the beam rides the pillar tops
+  // with a short overhang, so the Math gate is a real doorway silhouette.
   static void BuildBlocksGate(Transform parent, SubjectDefinition def, Vector3 a, Vector3 b, Vector3 lat) {
     BuildCubePillar(parent, "MathPillarA", a, def.Primary);
     BuildCubePillar(parent, "MathPillarB", b, def.Primary);
-    Vector3 mid = (a + b) * 0.5f + new Vector3(0f, 1.85f, 0f);
+    Vector3 mid = (a + b) * 0.5f + new Vector3(0f, 2.38f, 0f);
     GameObject lintel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     lintel.name = "MathLintel";
     lintel.transform.SetParent(parent);
     lintel.transform.position = mid;
-    // Beam spans the pillars with a short overhang (was 6.8m: filled every
-    // closeup frame once gates became the hub stars — survey photo proof).
-    lintel.transform.localScale = new Vector3(0.36f, 1.95f, 0.36f);
+    lintel.transform.localScale = new Vector3(0.38f, 2.4f, 0.38f);
     // Exact beam axis (was an X/Z snap: connected from the front, floated
     // from the side on diagonal hub-arc gates).
     lintel.transform.localRotation = Quaternion.FromToRotation(Vector3.up, lat);
@@ -238,23 +244,24 @@ public static class SubjectWorldBuilder {
     // ignoreFromBuild, feet pass under, pillars keep meshes + carves.
     StripCollider(lintel);
     IgnoreFromBuild(lintel);
-    // Shape duo (geometry family): cube + sphere finials — the Math gate
-    // reads as shapes before any color does. (User round: counting cubes +
-    // abacus row removed — side clutter around a hub gate.)
-    Box(parent, "MathFinialA", a + new Vector3(0f, 1.85f, 0f),
-      new Vector3(0.36f, 0.36f, 0.36f), def.Primary, false);
-    Ball(parent, "MathFinialB", b + new Vector3(0f, 1.85f, 0f), 0.42f, def.Secondary, false);
+    // Shape duo (geometry family): cube + sphere finials ride the pillar tops.
+    Box(parent, "MathFinialA", a + new Vector3(0f, 2.72f, 0f),
+      new Vector3(0.4f, 0.4f, 0.4f), def.Primary, false);
+    Ball(parent, "MathFinialB", b + new Vector3(0f, 2.7f, 0f), 0.46f, def.Secondary, false);
   }
 
   static void BuildCubePillar(Transform parent, string pillarName, Vector3 basePos, Color color) {
-    Box(parent, pillarName + "Base", basePos + new Vector3(0f, 0.35f, 0f),
-      new Vector3(0.7f, 0.7f, 0.7f), color, true);
-    Box(parent, pillarName + "Top", basePos + new Vector3(0f, 1.05f, 0f),
-      new Vector3(0.55f, 0.7f, 0.55f), color, true);
+    Box(parent, pillarName + "Base", basePos + new Vector3(0f, 0.425f, 0f),
+      new Vector3(0.85f, 0.85f, 0.85f), color, true);
+    Box(parent, pillarName + "Mid", basePos + new Vector3(0f, 1.175f, 0f),
+      new Vector3(0.65f, 0.65f, 0.65f), color, true);
+    Box(parent, pillarName + "Top", basePos + new Vector3(0f, 1.975f, 0f),
+      new Vector3(0.5f, 0.95f, 0.5f), color, true);
   }
 
-  // Thinking: gear-wheel pillars (cylinder + teeth) + slotted puzzle lintel +
-  // broken square maze ring flat on the ground.
+  // Thinking: gear-wheel pillars (cylinder + teeth) + slotted puzzle lintel.
+  // S2 gate-shape pass: wheels grow to 2.1m pillars and the puzzle beam rides
+  // at 2.62m — a real doorway on the district road.
   static void BuildGearsGate(Transform parent, SubjectDefinition def, Vector3 a, Vector3 b, Vector3 lat) {
     BuildGearPillar(parent, "ThinkingGearA", a, def.Primary);
     BuildGearPillar(parent, "ThinkingGearB", b, def.Primary);
@@ -262,19 +269,15 @@ public static class SubjectWorldBuilder {
     // Puzzle lintel: two slabs leaving a center notch (interlock motif).
     // Visual-only (no collider + ignoreFromBuild): the road must pass UNDER.
     Vector3 along = lat;
-    GameObject lintelL = Box(parent, "ThinkingLintelL", mid + along * 0.95f + new Vector3(0f, 1.95f, 0f),
+    GameObject lintelL = Box(parent, "ThinkingLintelL", mid + along * 0.95f + new Vector3(0f, 2.62f, 0f),
       SlabScale(along, 1.5f), def.Secondary, false);
-    GameObject lintelR = Box(parent, "ThinkingLintelR", mid - along * 0.95f + new Vector3(0f, 1.95f, 0f),
+    GameObject lintelR = Box(parent, "ThinkingLintelR", mid - along * 0.95f + new Vector3(0f, 2.62f, 0f),
       SlabScale(along, 1.5f), def.Secondary, false);
     lintelL.transform.localRotation = Quaternion.Euler(0f, YawAlongX(along), 0f);
     lintelR.transform.localRotation = Quaternion.Euler(0f, YawAlongX(along), 0f);
     IgnoreFromBuild(lintelL);
     IgnoreFromBuild(lintelR);
-    // Puzzle tab rides ABOVE the name board (interlock motif, visual-only).
-    // (User round: ground maze ring removed — side clutter around a hub gate.)
-    GameObject tab = Box(parent, "ThinkingTab", mid + new Vector3(0f, 2.78f, 0f),
-      new Vector3(0.3f, 0.5f, 0.3f), def.Primary, false);
-    IgnoreFromBuild(tab);
+    // Name board parks on the beam (see BuildGateNameBoard).
   }
 
   static Vector3 SlabScale(Vector3 along, float len) {
@@ -304,8 +307,8 @@ public static class SubjectWorldBuilder {
   static void BuildGearPillar(Transform parent, string gearName, Vector3 basePos, Color color) {
     // (User round: solid green columns read as TREE TRUNKS from hub views.
     // Restyle: light-stone wheel (rock/metal gear, zero foliage read) + green
-    // chunkier teeth keep the Thinking identity + cream hub. Same coords,
-    // carves and colliders (new bits are visual-only) — bake/nav untouched.)
+    // chunkier teeth keep the Thinking identity + cream hub. S2: the wheel
+    // grows to a 2.1m gate pillar — same shape language, real gate scale.)
     Color stone = new Color(0.80f, 0.78f, 0.72f);
     GameObject foot = Box(parent, gearName + "Foot", basePos + new Vector3(0f, 0.15f, 0f),
       new Vector3(0.7f, 0.3f, 0.7f), stone, true);
@@ -314,47 +317,45 @@ public static class SubjectWorldBuilder {
     GameObject wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     wheel.name = gearName + "Wheel";
     wheel.transform.SetParent(parent);
-    wheel.transform.position = basePos + new Vector3(0f, 1.0f, 0f);
-    wheel.transform.localScale = new Vector3(0.9f, 1.6f, 0.9f);
+    wheel.transform.position = basePos + new Vector3(0f, 1.35f, 0f);
+    wheel.transform.localScale = new Vector3(0.95f, 1.05f, 0.95f);
     wheel.GetComponent<Renderer>().sharedMaterial = Lit(stone);
     for (int i = 0; i < 6; i++) {
       float ang = i * 60f;
       Vector3 dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
       GameObject tooth = Box(parent, gearName + "Tooth" + i,
-        basePos + dir * 0.52f + new Vector3(0f, 1.0f, 0f),
-        new Vector3(0.24f, 1.2f, 0.24f), color, false);
+        basePos + dir * 0.55f + new Vector3(0f, 1.35f, 0f),
+        new Vector3(0.26f, 1.5f, 0.26f), color, false);
       tooth.transform.localRotation = Quaternion.Euler(0f, -ang, 0f);
       StripCollider(tooth);
       IgnoreFromBuild(tooth);
     }
-    Ball(parent, gearName + "Hub", basePos + new Vector3(0f, 1.0f, 0f), 0.30f,
+    Ball(parent, gearName + "Hub", basePos + new Vector3(0f, 1.35f, 0f), 0.32f,
       new Color(0.96f, 0.95f, 0.90f), false).transform.SetParent(parent);
   }
 
   // English: open-book pillars (two tilted slabs) + slab lintel + ascending
-  // blocks + speech-bubble sign (sphere + tail) on a post beside the road.
+  // open-book crown over the beam. S2 gate-shape pass: pillars grow to 2.3m
+  // and the beam rides at 2.5m — a real reading-gate silhouette.
   static void BuildBooksGate(Transform parent, SubjectDefinition def, Vector3 a, Vector3 b, Vector3 lat) {
     Vector3 face = FaceOf(def);
     BuildBookPillar(parent, "EnglishBookA", a, def.Primary, def.Secondary, lat, face);
     BuildBookPillar(parent, "EnglishBookB", b, def.Primary, def.Secondary, lat, face);
     Vector3 mid = (a + b) * 0.5f;
-    // Lowered 1.9 -> 1.7 (P3 visual QA: the slab filled the playground
-    // follow frame; the sightline clears its top by ~0.8m now). Slimmed
-    // 0.3 -> 0.18 thick so the in-frame doorway reads light, not a wall.
-    GameObject engLintel = Box(parent, "EnglishLintel", mid + new Vector3(0f, 1.7f, 0f),
+    GameObject engLintel = Box(parent, "EnglishLintel", mid + new Vector3(0f, 2.5f, 0f),
       SlabScale(lat, 3.4f), def.Secondary, false);
-    engLintel.transform.localScale = new Vector3(3.4f, 0.18f, 0.3f);
+    engLintel.transform.localScale = new Vector3(3.4f, 0.2f, 0.34f);
     engLintel.transform.localRotation = Quaternion.Euler(0f, YawAlongX(lat), 0f);
     IgnoreFromBuild(engLintel);
     // Open-book crown (reading motif): two slabs meeting over the beam.
     // Visual-only: crowns the road (ignoreFromBuild).
     float crownYaw = YawFaceZ(FaceOf(def));
-    GameObject crownL = Box(parent, "EnglishCrownL", mid + new Vector3(0f, 2.05f, 0f),
-      new Vector3(0.7f, 0.5f, 0.07f), def.Primary, false);
+    GameObject crownL = Box(parent, "EnglishCrownL", mid + new Vector3(0f, 2.85f, 0f),
+      new Vector3(0.8f, 0.55f, 0.08f), def.Primary, false);
     crownL.transform.localRotation = Quaternion.Euler(0f, crownYaw + 22f, 0f);
     IgnoreFromBuild(crownL);
-    GameObject crownR = Box(parent, "EnglishCrownR", mid + new Vector3(0f, 2.05f, 0f),
-      new Vector3(0.7f, 0.5f, 0.07f), def.Secondary, false);
+    GameObject crownR = Box(parent, "EnglishCrownR", mid + new Vector3(0f, 2.85f, 0f),
+      new Vector3(0.8f, 0.55f, 0.08f), def.Secondary, false);
     crownR.transform.localRotation = Quaternion.Euler(0f, crownYaw - 22f, 0f);
     IgnoreFromBuild(crownR);
     // (User round: pencil + blocks + bubble sign removed — side clutter
@@ -363,41 +364,43 @@ public static class SubjectWorldBuilder {
 
   static void BuildBookPillar(Transform parent, string bookName, Vector3 basePos, Color cover, Color pages, Vector3 lat, Vector3 face) {
     Box(parent, bookName + "Base", basePos + new Vector3(0f, 0.15f, 0f),
-      new Vector3(0.8f, 0.3f, 0.8f), cover, true);
+      new Vector3(0.85f, 0.3f, 0.85f), cover, true);
     float yaw = YawFaceZ(face);
-    GameObject left = Box(parent, bookName + "PageL", basePos + new Vector3(0f, 1.0f, 0f),
-      new Vector3(0.55f, 1.30f, 0.08f), pages, true);
+    GameObject left = Box(parent, bookName + "PageL", basePos + new Vector3(0f, 1.325f, 0f),
+      new Vector3(0.6f, 1.95f, 0.09f), pages, true);
     left.transform.localRotation = Quaternion.Euler(0f, yaw + 18f, 0f);
-    GameObject right = Box(parent, bookName + "PageR", basePos + new Vector3(0f, 1.0f, 0f),
-      new Vector3(0.55f, 1.30f, 0.08f), cover, true);
+    GameObject right = Box(parent, bookName + "PageR", basePos + new Vector3(0f, 1.325f, 0f),
+      new Vector3(0.6f, 1.95f, 0.09f), cover, true);
     right.transform.localRotation = Quaternion.Euler(0f, yaw - 18f, 0f);
   }
 
   // Vietnamese: tablet pillars with caps + banner lintel with scroll ends +
-  // straw-hat disc on top + dot stones beside the road.
+  // straw-hat crown. S2 gate-shape pass: tablets grow to 2.1m, banner rides
+  // at 2.5m and the hat crowns at ~3.1m — a real festival gate silhouette.
   static void BuildScrollsGate(Transform parent, SubjectDefinition def, Vector3 a, Vector3 b, Vector3 lat) {
     BuildTabletPillar(parent, "VietnameseTabletA", a, def.Primary, def.Secondary);
     BuildTabletPillar(parent, "VietnameseTabletB", b, def.Primary, def.Secondary);
     Vector3 mid = (a + b) * 0.5f;
     // Banner + rolls + hat are visual-only (headroom rule: road passes under).
-    GameObject banner = Box(parent, "VietnameseBanner", mid + new Vector3(0f, 1.95f, 0f),
+    GameObject banner = Box(parent, "VietnameseBanner", mid + new Vector3(0f, 2.5f, 0f),
       SlabScale(lat, 3.2f), def.Secondary, false);
+    banner.transform.localScale = new Vector3(3.6f, 0.32f, 0.22f);
     banner.transform.localRotation = Quaternion.Euler(0f, YawAlongX(lat), 0f);
     IgnoreFromBuild(banner);
     // Scroll ends: two short vertical rolls hanging at the banner tips.
     GameObject rollL = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     rollL.name = "VietnameseRollL";
     rollL.transform.SetParent(parent);
-    rollL.transform.position = mid + lat * 1.6f + new Vector3(0f, 1.55f, 0f);
-    rollL.transform.localScale = new Vector3(0.22f, 0.5f, 0.22f);
+    rollL.transform.position = mid + lat * 1.75f + new Vector3(0f, 2.35f, 0f);
+    rollL.transform.localScale = new Vector3(0.24f, 0.5f, 0.24f);
     rollL.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.99f, 0.94f, 0.84f));
     StripCollider(rollL);
     IgnoreFromBuild(rollL);
     GameObject rollR = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     rollR.name = "VietnameseRollR";
     rollR.transform.SetParent(parent);
-    rollR.transform.position = mid - lat * 1.6f + new Vector3(0f, 1.55f, 0f);
-    rollR.transform.localScale = new Vector3(0.22f, 0.5f, 0.22f);
+    rollR.transform.position = mid - lat * 1.75f + new Vector3(0f, 2.35f, 0f);
+    rollR.transform.localScale = new Vector3(0.24f, 0.5f, 0.24f);
     rollR.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.99f, 0.94f, 0.84f));
     StripCollider(rollR);
     IgnoreFromBuild(rollR);
@@ -405,31 +408,31 @@ public static class SubjectWorldBuilder {
     GameObject brim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     brim.name = "VietnameseHatBrim";
     brim.transform.SetParent(parent);
-    brim.transform.position = mid + new Vector3(0f, 2.35f, 0f);
-    brim.transform.localScale = new Vector3(1.3f, 0.08f, 1.3f);
+    brim.transform.position = mid + new Vector3(0f, 2.86f, 0f);
+    brim.transform.localScale = new Vector3(1.35f, 0.08f, 1.35f);
     brim.GetComponent<Renderer>().sharedMaterial = Lit(StrawC);
     StripCollider(brim);
     IgnoreFromBuild(brim);
     GameObject crown = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     crown.name = "VietnameseHatCrown";
     crown.transform.SetParent(parent);
-    crown.transform.position = mid + new Vector3(0f, 2.42f, 0f);
-    crown.transform.localScale = new Vector3(0.45f, 0.25f, 0.45f);
+    crown.transform.position = mid + new Vector3(0f, 2.93f, 0f);
+    crown.transform.localScale = new Vector3(0.5f, 0.26f, 0.5f);
     crown.GetComponent<Renderer>().sharedMaterial = Lit(StrawC);
     StripCollider(crown);
     IgnoreFromBuild(crown);
     GameObject tier2 = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     tier2.name = "VietnameseHatTier2";
     tier2.transform.SetParent(parent);
-    tier2.transform.position = mid + new Vector3(0f, 2.48f, 0f);
-    tier2.transform.localScale = new Vector3(0.55f, 0.07f, 0.55f);
+    tier2.transform.position = mid + new Vector3(0f, 2.99f, 0f);
+    tier2.transform.localScale = new Vector3(0.58f, 0.07f, 0.58f);
     tier2.GetComponent<Renderer>().sharedMaterial = Lit(StrawC);
     StripCollider(tier2);
     IgnoreFromBuild(tier2);
     GameObject knob = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     knob.name = "VietnameseHatKnob";
     knob.transform.SetParent(parent);
-    knob.transform.position = mid + new Vector3(0f, 2.56f, 0f);
+    knob.transform.position = mid + new Vector3(0f, 3.07f, 0f);
     knob.transform.localScale = new Vector3(0.14f, 0.14f, 0.14f);
     knob.GetComponent<Renderer>().sharedMaterial = Lit(def.Secondary);
     StripCollider(knob);
@@ -439,10 +442,10 @@ public static class SubjectWorldBuilder {
   }
 
   static void BuildTabletPillar(Transform parent, string tabletName, Vector3 basePos, Color body, Color cap) {
-    Box(parent, tabletName + "Body", basePos + new Vector3(0f, 0.85f, 0f),
-      new Vector3(0.6f, 1.7f, 0.4f), body, true);
-    Box(parent, tabletName + "Cap", basePos + new Vector3(0f, 1.80f, 0f),
-      new Vector3(0.75f, 0.18f, 0.5f), cap, true);
+    Box(parent, tabletName + "Body", basePos + new Vector3(0f, 1.05f, 0f),
+      new Vector3(0.62f, 2.1f, 0.42f), body, true);
+    Box(parent, tabletName + "Cap", basePos + new Vector3(0f, 2.19f, 0f),
+      new Vector3(0.78f, 0.18f, 0.52f), cap, true);
   }
 
   // ---- playground shells -------------------------------------------------------
@@ -806,7 +809,9 @@ public static class SubjectWorldBuilder {
     float len = dir.magnitude;
     dir.Normalize();
     Vector3 side = new Vector3(-dir.z, 0f, dir.x);
-    for (int i = 0; i < 3; i++) {
+    // Additive subjects have no district road: dress only the hub-side half.
+    bool additive = !string.IsNullOrEmpty(def.SceneName);
+    for (int i = 0; !additive && i < 3; i++) {
       float t = 0.2f + i * 0.3f;
       Vector3 mid = a + dir * (len * t);
       for (int s = -1; s <= 1; s += 2) {

@@ -137,6 +137,10 @@ public class GameInstaller : MonoBehaviour {
   public ActivityAnchors MathAnchors { get; private set; }
 
   void OnSubjectSceneLoaded(Scene scene, LoadSceneMode mode) {
+    if (scene.name == CountingGardenBuilder.SceneName) {
+      BuildCountingGardenScene(scene);
+      return;
+    }
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
@@ -168,8 +172,14 @@ public class GameInstaller : MonoBehaviour {
       MathEntryPoint = entry;
       // P1-2/P1-3: expose anchors for the arrival beat, then push live quest
       // state into every adoptable (re-entry visuals without event replay).
-      try { MathAnchors = root.GetComponentInChildren<ActivityAnchors>(); }
-      catch (System.Exception) { MathAnchors = null; }
+      // S2: the MAIN world registry is looked up BY NAME — the Counting Garden
+      // added a second ActivityAnchors root earlier in the hierarchy, so a
+      // blind GetComponentInChildren could frame the garden instead of the hub.
+      try {
+        Transform mainAnchors = root.transform.Find("PresentationRoot");
+        MathAnchors = mainAnchors != null ? mainAnchors.GetComponent<ActivityAnchors>() : null;
+        if (MathAnchors == null) MathAnchors = root.GetComponentInChildren<ActivityAnchors>();
+      } catch (System.Exception) { MathAnchors = null; }
       try {
         IQuestAdoptable[] adoptables = root.GetComponentsInChildren<IQuestAdoptable>();
         QuestAdoption.AdoptAll(adoptables, Quests, new QuestId("math_counting"));
@@ -181,6 +191,42 @@ public class GameInstaller : MonoBehaviour {
       MathWorldRoot = null;
       MathEntryPoint = null;
       MathAnchors = null;
+    }
+  }
+
+  // S2 PIONEER MICRO-WORLD: lazy scene arrival for the Counting Garden. Builds
+  // the scene content, then pushes the scene-authored entry + anchors into the
+  // area module (living in MathScene) so the travel beat can warp the child in.
+  void BuildCountingGardenScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "CountingGardenWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] CountingGardenScene has no CountingGardenWorld root.", this);
+        return;
+      }
+      root.transform.position = CountingGardenBuilder.WorldOffset;
+      CountingGardenBuilder builder = root.GetComponent<CountingGardenBuilder>();
+      if (builder == null) builder = root.AddComponent<CountingGardenBuilder>();
+      builder.Build();
+      CountingGardenArea area = _gardenArea;
+      if (area == null) {
+        try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        Vector3 entry = CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal;
+        area.SetGarden(entry, builder.Anchors);
+        if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
+      }
+      try {
+        Debug.Log("[GameInstaller] Counting Garden scene built (lazy) entry=" + (CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] CountingGardenScene build failed: " + e.Message, this);
     }
   }
 
@@ -243,6 +289,35 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Math bloom wiring failed: " + e.Message, this);
       }
+      // S2 PIONEER MICRO-WORLD (v2): the Counting Garden is its OWN scene,
+      // LAZY-loaded only when the child walks into the hub gate. This area
+      // module (living in MathScene) drives the travel beats and receives the
+      // garden scene's entry + anchors on each load.
+      try {
+        CountingGardenArea area = root.GetComponent<CountingGardenArea>();
+        if (area == null) {
+          GameObject areaGo = new GameObject("CountingGardenArea");
+          areaGo.transform.SetParent(root.transform, true);
+          area = areaGo.AddComponent<CountingGardenArea>();
+        }
+        _gardenArea = area;
+        area.Bind(
+          WorldTransitions,
+          SceneOps,
+          _activeBuilder != null ? _activeBuilder.Player : null,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
+          _activeBuilder != null ? _activeBuilder.Hud : null,
+          MathWorldBuilder.WorldOffset + MathWorldBuilder.GardenHubReturnLocal);
+        if (builder.CountingGardenPortal != null) builder.CountingGardenPortal.Area = area;
+        MicroWorldPortal[] portals = root.GetComponentsInChildren<MicroWorldPortal>(true);
+        foreach (MicroWorldPortal portal in portals) {
+          if (portal != null) portal.Area = area;
+        }
+        try { Debug.Log("[GameInstaller] Counting Garden area wired (" + portals.Length + " hub portals).", this); }
+        catch (System.Exception) { }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Counting Garden wiring failed: " + e.Message, this);
+      }
     } catch (System.Exception e) {
       Debug.LogWarning("[GameInstaller] Math content wiring failed (world stays enterable): " + e.Message, this);
     }
@@ -255,6 +330,7 @@ public class GameInstaller : MonoBehaviour {
   // Girl coerces to Boy on boot (logged). Save fields stay (architecture
   // intact, no save-format break).
   MarketBuilder _activeBuilder;
+  CountingGardenArea _gardenArea;
 
   public PlayerGender CurrentGender {
     get {

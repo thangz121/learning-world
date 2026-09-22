@@ -758,11 +758,67 @@ public class MarketBuilder : MonoBehaviour {
     BuildBoundaryVegetation(rng);
     BuildPathTransition(rng);
     BuildStoryProps(rng);
+    BuildPinkCorner(rng); // S6 beauty + pink pass (girl-first art direction)
     // Legacy focal: wooden barrel beside the apple crate (non-interactive).
     // Hub-selection mode: the crate is gone, so the barrel goes too.
     if (!HubSelectionOnly) {
       AddBarrel(new Vector3(CrateAnchorPos.x + 0.9f, 0f, CrateAnchorPos.z + 0.3f));
     }
+  }
+
+  // S6/S7 BEAUTY + PINK PASS (user rounds: "world đẹp hơn", "gam hồng cho con
+  // gái", "đẩy tới nóc"): blossom trees + petal carpets + pink flower drifts
+  // on the hub lawns, falling petals over the courtyard, flapping pastel
+  // butterflies and a blossom arch framing the path north of the spawn.
+  // Scattered spots re-check the gameplay clear zone / walkways / gate
+  // plazas; the arch is a deliberate set piece (posts just outside the
+  // corridor, canopy above head height).
+  void BuildPinkCorner(System.Random rng) {
+    Vector3[] trees = {
+      new Vector3(6.6f, 0f, 4.2f), new Vector3(-6.4f, 0f, 4.6f),
+      new Vector3(-6.8f, 0f, -3.0f), new Vector3(6.8f, 0f, -3.4f),
+      new Vector3(-2.5f, 0f, 5.6f), new Vector3(2.6f, 0f, 5.8f),
+    };
+    for (int i = 0; i < trees.Length; i++) {
+      Vector3 p = trees[i];
+      if (IsInGameplayClearZone(p) || IsOnWalkway(p, 1.2f) || IsInGatePlaza(p)) continue;
+      float s = 0.85f + (i % 2) * 0.12f;
+      WorldBeauty.BlossomTree(transform, "HubBlossomTree" + i, p, s);
+      WorldBeauty.PetalCarpet(transform, "HubPetalCarpet" + i, p, 2.8f * s);
+    }
+    Vector3[] drifts = {
+      new Vector3(5.2f, 0f, 2.6f), new Vector3(-5.4f, 0f, 2.4f),
+      new Vector3(4.4f, 0f, -3.6f), new Vector3(-4.8f, 0f, -3.8f),
+      new Vector3(7.4f, 0f, 1.2f), new Vector3(-7.2f, 0f, 1.0f),
+      new Vector3(3.2f, 0f, 3.2f), new Vector3(-3.4f, 0f, 3.0f),
+      new Vector3(5.8f, 0f, -1.2f), new Vector3(-6.0f, 0f, -1.0f),
+    };
+    for (int i = 0; i < drifts.Length; i++) {
+      Vector3 p = drifts[i];
+      if (IsInGameplayClearZone(p) || IsOnWalkway(p, 1.0f) || IsInGatePlaza(p)) continue;
+      WorldBeauty.FlowerDrift(transform, "HubFlowerDrift" + i, p, 1.25f + (i % 2) * 0.25f);
+    }
+    // Blossom arch framing the path just north of the spawn (S7; S8: the bare
+    // trunks became pretty flared posts with ball caps so the blossom cloud
+    // sits on posts that match it). Posts ride the corridor shoulders, the
+    // canopy floats above head height (2.3m+ clearance — the bake rasterizes
+    // render meshes with agentHeight 2m).
+    WorldBeauty.PrettyPost(transform, "HubArchPostL", new Vector3(-1.7f, 0f, 2.2f), 2.35f, 0.24f,
+      new Color(0.58f, 0.42f, 0.24f), WorldBeauty.BlossomCream);
+    WorldBeauty.PrettyPost(transform, "HubArchPostR", new Vector3(1.7f, 0f, 2.2f), 2.35f, 0.24f,
+      new Color(0.58f, 0.42f, 0.24f), WorldBeauty.BlossomCream);
+    WorldBeauty.Ball(transform, "HubArchBlossom0", new Vector3(0f, 3.05f, 2.2f), 1.5f, WorldBeauty.BlossomPink);
+    WorldBeauty.Ball(transform, "HubArchBlossom1", new Vector3(-0.95f, 2.85f, 2.2f), 1.15f, WorldBeauty.BlossomDeep);
+    WorldBeauty.Ball(transform, "HubArchBlossom2", new Vector3(0.95f, 2.9f, 2.2f), 1.2f, WorldBeauty.BlossomCream);
+    WorldBeauty.Ball(transform, "HubArchLeafL", new Vector3(-1.35f, 2.62f, 2.2f), 0.6f, new Color(0.30f, 0.60f, 0.30f));
+    WorldBeauty.Ball(transform, "HubArchLeafR", new Vector3(1.35f, 2.66f, 2.2f), 0.6f, new Color(0.30f, 0.60f, 0.30f));
+    // Falling petals over the courtyard + butterflies around the flower spots.
+    WorldBeauty.PetalFall(transform, "HubPetalFall", new Vector3(0f, 0f, 0f), 9f, 12, 60707);
+    WorldBeauty.Butterfly(transform, "HubButterfly0", new Vector3(5.2f, 0f, 2.6f), 1.8f, 0.2f,
+      WorldBeauty.BlossomDeep, WorldBeauty.BlossomCream);
+    WorldBeauty.Butterfly(transform, "HubButterfly1", new Vector3(-5.4f, 0f, 2.4f), 1.8f, 0.7f,
+      WorldBeauty.Lilac, WorldBeauty.BlossomPink);
+    if (rng != null) { } // parity with the other decor builders (no Random used)
   }
 
   // GameplayClearZone: decor with volume (trees/bushes/rocks/barrel) must stay
