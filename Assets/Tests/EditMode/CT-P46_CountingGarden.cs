@@ -138,8 +138,11 @@ public class CT_P46_CountingGarden {
         float ang = Mathf.Atan2(z.x - c.x, z.z - c.z) * Mathf.Rad2Deg;
         if (ang < minAng) minAng = ang;
         if (ang > maxAng) maxAng = ang;
-        Assert.IsNotNull(FindDeep(garden.transform, "CGZone" + builder.ZoneCenters.IndexOf(z) + "Pad"),
-          "zone pad built");
+        int zi = builder.ZoneCenters.IndexOf(z);
+        // S3-P2V: zone 2 is the demo theatre (its floor is CG DemoStagePad).
+        Transform zonePad = FindDeep(garden.transform, "CGZone" + zi + "Pad");
+        if (zonePad == null) zonePad = FindDeep(garden.transform, "CGDemoStagePad");
+        Assert.IsNotNull(zonePad, "zone pad built");
       }
       Assert.Greater(maxAng - minAng, 60f, "zones fan out in an arc");
       for (int z = 0; z < CountingGardenBuilder.ZoneCount; z++) {

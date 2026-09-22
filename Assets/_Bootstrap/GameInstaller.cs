@@ -324,6 +324,7 @@ public class GameInstaller : MonoBehaviour {
           _activeBuilder != null ? _activeBuilder.WorldCamera : null,
           _activeBuilder != null ? _activeBuilder.Hud : null,
           MathWorldBuilder.WorldOffset + MathWorldBuilder.GardenHubReturnLocal);
+        area.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
         if (builder.CountingGardenPortal != null) builder.CountingGardenPortal.Area = area;
         MicroWorldPortal[] portals = root.GetComponentsInChildren<MicroWorldPortal>(true);
         foreach (MicroWorldPortal portal in portals) {

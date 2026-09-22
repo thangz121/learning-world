@@ -25,6 +25,7 @@ public class CountingGardenArea : MonoBehaviour {
   ClickToMove _player;
   SmartCamera _camera;
   MarketHUD _hud;
+  ClickRouter _router;
   Vector3 _gardenEntry;
   float _tunnelT = -1f;
   string _preObjective;
@@ -46,6 +47,30 @@ public class CountingGardenArea : MonoBehaviour {
     HubReturnPos = hubReturn;
     IsInside = false;
     IsBusy = false;
+  }
+
+  // S3-P2V journey bug: the router bounds must follow the ACTIVE island or the
+  // child cannot walk inside the garden (clicks outside Math's 60±27 were
+  // silently dropped). Same push/restore pattern MarketBootstrap uses for
+  // Main<->Math; the garden owner owns its own pair.
+  public void BindRouter(ClickRouter router) { _router = router; }
+
+  void PushGardenBounds() {
+    if (_router == null) return;
+    try {
+      _router.boundCenter = CountingGardenBuilder.WorldOffset;
+      _router.boundX = CountingGardenBuilder.BoundX;
+      _router.boundZ = CountingGardenBuilder.BoundZ;
+    } catch (Exception) { }
+  }
+
+  void RestoreMathBounds() {
+    if (_router == null) return;
+    try {
+      _router.boundCenter = MathWorldBuilder.WorldOffset;
+      _router.boundX = MathWorldBuilder.BoundX;
+      _router.boundZ = MathWorldBuilder.BoundZ;
+    } catch (Exception) { }
   }
 
   // Called by GameInstaller every time the garden scene finishes loading
@@ -78,6 +103,11 @@ public class CountingGardenArea : MonoBehaviour {
         return;
       }
       if (_player != null) _player.WarpTo(_gardenEntry);
+      PushGardenBounds();
+      // Garden follow first (so the arrival beat returns to THIS world's
+      // framing, not Math's map-height offset), then the reveal beat.
+      if (_camera != null && _player != null)
+        _camera.Follow(_player.transform, CountingGardenBuilder.FollowOffset);
       if (_camera != null && Anchors != null && Anchors.Camera != null && Anchors.CameraLook != null)
         _camera.FrameAnchor(Anchors.Camera, Anchors.CameraLook, 2.4f);
       ShowObjective("Vườn Đếm");
@@ -97,6 +127,7 @@ public class CountingGardenArea : MonoBehaviour {
     try {
       PlayTunnel();
       if (_player != null) _player.WarpTo(HubReturnPos);
+      RestoreMathBounds();
       if (_camera != null && _player != null)
         _camera.Follow(_player.transform, MathWorldBuilder.FollowOffset);
       RestoreObjective();

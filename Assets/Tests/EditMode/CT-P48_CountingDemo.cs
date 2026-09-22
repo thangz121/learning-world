@@ -49,30 +49,31 @@ public class CT_P48_CountingDemo {
       Assert.IsNotNull(demo, "demo controller built");
       Vector3 plot = builder.DemoStageCenter;
       Assert.IsNotNull(builder.DemoNumber, "big number 2 staged");
-      Assert.Less(Dist2D(builder.DemoNumber.transform.localPosition, plot), 3.4f,
-        "number lives inside the demo plot");
-      Assert.IsTrue(builder.DemoNumber.transform.localPosition.y < 0.3f,
-        "number stands on the floor, not floating");
+      Assert.Less(Dist2D(builder.DemoNumber.transform.localPosition, plot), 4.0f,
+        "number lives inside the demo theatre");
+      Assert.Greater(builder.DemoNumber.transform.localPosition.y, 0.5f,
+        "number rides the number board (readable at child eye height)");
+      Assert.IsNotNull(FindDeep(garden.transform, "CGDemoBoardPanel"), "number board panel");
       Assert.IsNotNull(builder.DemoBasket, "demo basket staged");
-      Assert.Less(Dist2D(builder.DemoBasket.localPosition, plot), 3.4f,
-        "basket lives inside the demo plot");
+      Assert.Less(Dist2D(builder.DemoBasket.localPosition, plot), 4.0f,
+        "basket lives inside the demo theatre");
       Assert.IsNotNull(builder.DemoApple0, "demo apple 0");
       Assert.IsNotNull(builder.DemoApple1, "demo apple 1");
       Assert.IsNull(FindDeep(garden.transform, "CGDemoApple2"), "exactly 2 demo apples (no ambiguity)");
-      Assert.Less(Dist2D(builder.DemoApple0.transform.localPosition, plot), 3.4f, "apple0 in plot");
-      Assert.Less(Dist2D(builder.DemoApple1.transform.localPosition, plot), 3.4f, "apple1 in plot");
+      Assert.Less(Dist2D(builder.DemoApple0.transform.localPosition, plot), 4.0f, "apple0 in theatre");
+      Assert.Less(Dist2D(builder.DemoApple1.transform.localPosition, plot), 4.0f, "apple1 in theatre");
       Assert.Greater(Dist2D(builder.DemoApple0.transform.localPosition,
-        builder.DemoApple1.transform.localPosition), 0.5f, "apples distinct, never stacked");
+        builder.DemoApple1.transform.localPosition), 0.4f, "apples distinct, never stacked");
       Assert.IsNotNull(builder.DemoResult, "result group staged");
       Assert.IsFalse(builder.DemoResult.activeSelf, "result hidden until the apples land");
       Assert.IsNotNull(FindDeep(garden.transform, "CGDemoResultTwo"), "result shows 2");
       Assert.IsNotNull(FindDeep(garden.transform, "CGDemoResultCheckArm"), "result shows tick");
       Assert.IsNotNull(builder.DemoCam, "demo camera marker");
       Assert.IsNotNull(builder.DemoLook, "demo look marker");
-      Assert.Less(builder.DemoCam.transform.localPosition.x, plot.x - 2f,
-        "demo camera sits west (courtyard side), facing the stage");
-      Assert.Greater(builder.DemoCam.transform.localPosition.y, 3f,
-        "demo camera elevated for a readable stage frame");
+      Assert.Less(builder.DemoCam.transform.localPosition.z, plot.z - 2f,
+        "demo camera sits on the plaza side (north), facing the stage");
+      Assert.Less(builder.DemoCam.transform.localPosition.y, 3f,
+        "demo camera at child-comfort height (instruction card, not landscape)");
     } finally { TearDown(garden); }
   }
 

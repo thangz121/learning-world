@@ -39,13 +39,16 @@ public enum DemoPhase {
 
 [DisallowMultipleComponent]
 public class CountingDemo : MonoBehaviour {
-  // Garden-local choreography (same space as the P1 demo stage).
-  static readonly Vector3 StartStand = new Vector3(8.4f, 0f, 3.2f);
-  static readonly Vector3 AppleStand = new Vector3(10.1f, 0f, 1.2f);
-  static readonly Vector3 BasketStand = new Vector3(8.9f, 0f, 1.1f);
+  // Garden-local choreography (S3-P2V demo theatre, stage centre (0,11)):
+  // NPC works the BACK row (z 10.9) behind the front-row props (z 9.9) so it
+  // never occludes the number/apples/basket/result from the viewing spot.
+  static readonly Vector3 StartStand = CountingGardenBuilder.DemoNpcStart;
+  static readonly Vector3 AppleStand = CountingGardenBuilder.DemoAppleStand;
+  static readonly Vector3 BasketStand = CountingGardenBuilder.DemoBasketStand;
   const float WalkSpeed = 0.9f; // slow enough for a 4yo to follow
-  const float WatchRadius = 5.0f;
+  const float WatchRadius = CountingGardenBuilder.DemoViewRadius;
   const float RearmMargin = 2.0f;
+  const float BeatHoldSeconds = 3.0f; // re-issued while the child stays watching
 
   static readonly VoiceProfileId DemoVoice = new VoiceProfileId("npc_female_01");
   static readonly LanguageCode EnUs = new LanguageCode("en-US");
@@ -61,7 +64,7 @@ public class CountingDemo : MonoBehaviour {
   Transform _camT;
   Transform _lookT;
   Vector3 _mouth;
-  Vector3 _numberFocus = new Vector3(11.0f, 1.0f, 3.3f);
+  Vector3 _numberFocus = new Vector3(-2.1f, 1.1f, 9.9f); // the number board
 
   // Live refs (nullable; every use is null-guarded).
   Transform _playerT;
@@ -100,6 +103,7 @@ public class CountingDemo : MonoBehaviour {
   bool _carry1;
 
   bool _beatLatched;
+  float _beatRefreshT;
   bool _saidNumber;
   bool _saidApples;
   bool _cheered;
@@ -173,7 +177,9 @@ public class CountingDemo : MonoBehaviour {
       } catch (Exception) { }
       GameObject anchor = new GameObject("CGDemoCarryAnchor");
       anchor.transform.SetParent(_host.transform, false);
-      anchor.transform.localPosition = new Vector3(0f, 0.95f, 0.35f);
+      // In FRONT of the host (local -z): the host faces the props/camera, so
+      // the carried apples stay visible between the host and the child.
+      anchor.transform.localPosition = new Vector3(0f, 0.95f, -0.35f);
       _carryAnchor = anchor.transform;
       // Click-through: the demo host must never eat walk clicks (no capsule,
       // no mesh colliders — the stage floor stays clickable under the NPC).
@@ -203,11 +209,13 @@ public class CountingDemo : MonoBehaviour {
     } catch (Exception) { }
   }
 
+  // Facing helper for the host: toward the viewing spot (the child), i.e.
+  // north across the stage, so "talking" always reads on the face.
   Vector3 CourtyardDir() {
-    Vector3 d = new Vector3(5.5f, 0f, 2.0f);
+    Vector3 d = CountingGardenBuilder.DemoMouthLocal;
     if (_host != null) d = d - _host.transform.localPosition;
     d.y = 0f;
-    return d.sqrMagnitude > 0.0001f ? d : new Vector3(-1f, 0f, 0f);
+    return d.sqrMagnitude > 0.0001f ? d : new Vector3(0f, 0f, -1f);
   }
 
   void Update() {
@@ -374,7 +382,7 @@ public class CountingDemo : MonoBehaviour {
   }
 
   Vector3 AppleFocus() {
-    return new Vector3((_home0.x + _home1.x) * 0.5f, 0.6f, (_home0.z + _home1.z) * 0.5f);
+    return new Vector3((_home0.x + _home1.x) * 0.5f, 0.75f, (_home0.z + _home1.z) * 0.5f);
   }
 
   Vector3 ViewerPoint() {
@@ -471,10 +479,12 @@ public class CountingDemo : MonoBehaviour {
     return hp + new Vector3(i == 0 ? -0.13f : 0.13f, 0.95f, 0.35f);
   }
 
+  // Where a placed apple comes to rest: INSIDE the basket, slightly apart
+  // (visible above the rim from the plaza camera).
   Vector3 BasketSlot(int i) {
     Vector3 b = BasketStand;
     if (_basket != null) b = _basket.localPosition;
-    return new Vector3(b.x + (i == 0 ? -0.15f : 0.15f), 0.42f, b.z + (i == 0 ? 0.05f : -0.05f));
+    return new Vector3(b.x + (i == 0 ? -0.17f : 0.17f), 0.62f, b.z + (i == 0 ? 0.06f : -0.06f));
   }
 
   void Fly(GameObject apple, Vector3 from, Vector3 to, float delay, float dur, float lift) {
@@ -511,8 +521,9 @@ public class CountingDemo : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  // Camera-first: when the child walks up to the demo mouth, frame the whole
-  // stage once (auto-returns to Follow); re-arms after walking clear.
+  // Camera-first: while the child stands at the viewing spot, HOLD the stage
+  // frame (re-issued every beat so the instruction stays a readable "card" —
+  // not a 3s flick that snaps back mid-demo). Re-arms after walking clear.
   void WatchPlayer() {
     if (_playerT == null || _cam == null || _camT == null || _lookT == null) return;
     try {
@@ -523,10 +534,19 @@ public class CountingDemo : MonoBehaviour {
       Vector3 local = p - new Vector3(120f, 0f, 0f);
       float dx = local.x - _mouth.x, dz = local.z - _mouth.z;
       float d2 = dx * dx + dz * dz;
-      if (!_beatLatched && d2 <= WatchRadius * WatchRadius) {
-        _beatLatched = true;
-        DemoBeatsFired++;
-        _cam.FrameAnchor(_camT, _lookT, 3.0f);
+      if (d2 <= WatchRadius * WatchRadius) {
+        if (!_beatLatched) {
+          _beatLatched = true;
+          DemoBeatsFired++;
+          _beatRefreshT = 0f;
+          _cam.FrameAnchor(_camT, _lookT, BeatHoldSeconds);
+        } else {
+          _beatRefreshT += Time.deltaTime;
+          if (_beatRefreshT >= BeatHoldSeconds - 1.2f) {
+            _beatRefreshT = 0f;
+            _cam.FrameAnchor(_camT, _lookT, BeatHoldSeconds);
+          }
+        }
       } else if (_beatLatched && d2 > (WatchRadius + RearmMargin) * (WatchRadius + RearmMargin)) {
         _beatLatched = false;
       }

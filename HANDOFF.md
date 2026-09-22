@@ -1171,3 +1171,43 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
   CollectObjects.Children — đúng bài học J8, không bake chéo scene).
 - Verify: EditMode **567/562/0/5**; build **Succeeded** errors=0 warnings=4
   size=109,949,209; boot **FACE_OK 0 exception** (`s2v3-boot.log`). Chưa commit.
+## 45. S3-P2V - VISUAL RECONSTRUCTION: COUNTING GARDEN + DEMO (2026-09-22, batch+standalone)
+
+- Lệnh user: nhìn bằng camera thật, chụp trước/sau, RECOMPOSE (không polish mù).
+  Bắt buộc: standalone + ảnh thật + GitHub principles. Deliverable: micro-world
+  nhìn là hiểu, demo "3 giây hiểu ngay".
+- TOOLING TẠM (đã xóa trước commit): `TempS3P2VDriver` (RuntimeInitializeOnLoad,
+  inject chuột THẬT qua Input System: click/drag; ScreenCapture full-client;
+  tự ẩn MicDialog/PhoneCameraHud/MicStatusHud trước mỗi shot; log phase demo +
+  mode camera mỗi shot) + `TempBuildS3P2V` (build 4 scene). Ảnh: 
+  `Temp/opencode/s3p2v0-before/` (BEFORE) vs `s3p2v5-after/` (AFTER).
+- BUG THẬT DO JOURNEY KHAI: (1) click trong vườn bị nuốt IM LẶNG — router giữ
+  bounds Math (60±27) sau warp, đảo ở +120 -> bé KHÔNG đi được trong vườn. Fix:
+  `CountingGardenBuilder.BoundX/Z` + `CountingGardenArea.BindRouter` push khi
+  vào / restore Math khi ra + GameInstaller wire `_activeBuilder.Router`.
+  (2) camera follow kế thừa offset Math (+z) -> nhìn RA NGOÀI vườn (cả thế giới
+  sau lưng trẻ). Fix: `CountingGardenBuilder.FollowOffset (0,3.8,-5.0)` — nhìn
+  VÀO vườn; area gọi Follow(garden offset) trước beat arrival.
+- BEFORE (audit ảnh thật): 5 plot tròn r11 chồng nhau thành "fence snake"; cây
+  blossom to phủ kín zone; board demo quay cạnh (edge-on); number lệch khỏi
+  frame; follow cao/xa; path/pad z-fight lỗ chữ nhật; rainbow cắt góc card.
+- RECOMPOSE: plaza (0,1.5) + number stones 1..5 (bead đếm được); crescent r9.5
+  = 4 GARDEN BEDS (soil + crop đếm 3/4/5/2 + post số + fence 3 cạnh + hoa) +
+  DEMO THEATRE (index 2) quay mặt plaza; reward pocket tây; crescent walk +
+  demo spur; meadows 2 tông; cây dời khỏi sightline (entry/rim), petal carpet
+  nhỏ lại; rainbow dời tây xa (-22,16). Beds thay "chuồng rỗng" -> vườn thật.
+- DEMO CARD (camera-first): cam (0,2.7,5.4)->look (0,0.9,10.4); trái->phải =
+  number board ("2" vàng + 2 chấm đỏ) -> NPC (đứng trong KHE giữa props) ->
+  pedestal 2 táo -> basket có rim -> result board ("2" + tick) hiện SAU khi
+  xếp; NPC carry neo trước ngực (thấy rõ 2 táo); beat GIỮ khi trẻ đứng xem
+  (re-issue 3s), re-arm khi đi xa; arrival cam nâng (0,9.5,-17.5) + entry arch
+  lùi z-14.5 khỏi che plaza. Diag xác nhận: arrival beat FIRE (Interaction),
+  demo beat HOLD (Interaction suốt loop).
+- Re-pin tests có chủ đích: P46D (demo pad/anchor cho zone 2), CT-P47 viết lại
+  theo layout mới (beds/number stones/demo theatre/reward/corridor/scale),
+  CT-P48 theo tên stage mới. KHÔNG đụng Core/Math/transition/quest/save.
+- Verify: full EditMode **577/572/0/5** (baseline 577/572) -> build production
+  (KHÔNG driver) **Succeeded** -> boot **ALIVE + FACE_OK + 0 exception**.
+  Temp tooling xóa sạch (0 file, Assets/Editor trống).
+- CÒN LẠI CHO MẮT NGƯỜI: duyệt ảnh BEFORE/AFTER + tự lái thử (đi bộ, xem loop,
+  độ dễ hiểu 3 giây). Chưa làm Phase 3.
