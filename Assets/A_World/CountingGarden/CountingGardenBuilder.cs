@@ -60,13 +60,20 @@ public class CountingGardenBuilder : MonoBehaviour {
 
   // Demo theatre (stage centre = ZoneCenters[2] = (0,11)); the viewing spot is
   // the marked disc on the plaza's south rim, camera-first from there.
-  public static readonly Vector3 DemoMouthLocal = new Vector3(0f, 0f, 4.4f);
+  // Viewing spot: north of BOTH card cameras, so the child's own avatar can
+  // never stand between the camera and the lesson (round-5 capture: the
+  // player's head appeared in shot B's corner).
+  public static readonly Vector3 DemoMouthLocal = new Vector3(0f, 0f, 2.6f);
   public const float DemoViewRadius = 5.0f;
   // Lesson staging (2-NPC mini lesson, user script S3-P2W): depth order from
   // the child's view (camera north of the stage, looking south) =
   //   BOARD (back) -> TEACHER -> STUDENT -> 5-BALL FIELD -> BASKET (front).
-  public static readonly Vector3 DemoNpcStart = new Vector3(-0.6f, 0f, 11.4f); // teacher
-  public static readonly Vector3 DemoStudentStart = new Vector3(0f, 0f, 10.2f);
+  // Teacher stands BESIDE the board's left edge and the student a step to the
+  // right-front: side by side in shot A (round-4 capture: centered staging
+  // made the two actors stack/occlude each other, and the teacher's head hid
+  // the number "2").
+  public static readonly Vector3 DemoNpcStart = new Vector3(-1.35f, 0f, 11.6f);
+  public static readonly Vector3 DemoStudentStart = new Vector3(0.75f, 0f, 10.1f);
   public static readonly Vector3 DemoBallStand = new Vector3(-0.2f, 0f, 9.6f);
   public static readonly Vector3 DemoBall2Stand = new Vector3(0.5f, 0f, 9.6f);
   public static readonly Vector3 DemoBasketStand = new Vector3(2.1f, 0f, 9.6f);
@@ -77,10 +84,14 @@ public class CountingGardenBuilder : MonoBehaviour {
   // Shot A (lesson): board + teacher + student + ball field + basket in one
   // frame. Shot B (action): student + 2 balls + basket + result, tighter and
   // lower. The sequence reframes between them (user: camera must switch).
-  static readonly Vector3 DemoCamPos = new Vector3(0f, 2.2f, 5.6f);
-  static readonly Vector3 DemoLookPos = new Vector3(0f, 1.35f, 11.8f);
-  static readonly Vector3 DemoActionCamPos = new Vector3(0.9f, 2.1f, 6.6f);
-  static readonly Vector3 DemoActionLookPos = new Vector3(0.75f, 0.85f, 9.9f);
+  // Shot A (lesson): the whole stage, board fully in frame (a clipped number
+  // board reads as a WRONG number — user report).
+  static readonly Vector3 DemoCamPos = new Vector3(0.3f, 2.5f, 6.6f);
+  static readonly Vector3 DemoLookPos = new Vector3(0.7f, 1.5f, 11.6f);
+  // Shot B (action): closer push-in on the student + balls + basket, raised
+  // board and result board still fully inside the frame.
+  static readonly Vector3 DemoActionCamPos = new Vector3(0.9f, 2.3f, 4.8f);
+  static readonly Vector3 DemoActionLookPos = new Vector3(0.85f, 1.05f, 10.3f);
   // The five balls of the field (the student must take exactly TWO of them).
   public static readonly Vector3[] DemoBallHomes = {
     new Vector3(-1.6f, 0.17f, 9.6f), new Vector3(-0.9f, 0.17f, 9.6f),
@@ -424,7 +435,8 @@ public class CountingGardenBuilder : MonoBehaviour {
     g.transform.localPosition = origin;
     g.transform.localRotation = Quaternion.Euler(0f, yawDeg, 0f);
     float t = Mathf.Min(0.2f, h * 0.16f);
-    Box(g.transform, name + "Top", new Vector3(0f, h * 0.88f, 0f), new Vector3(t, t * 1.5f, w), color);
+    Box(g.transform, name + "Top", new Vector3(0f, h * 0.88f, 0f),
+      new Vector3(t, t * 1.5f, w * 1.15f), color);
     GameObject diag = Box(g.transform, name + "Diag", new Vector3(0f, h * 0.5f, 0f),
       new Vector3(t, h * 0.72f, t), color);
     diag.transform.localRotation = Quaternion.Euler(48f, 0f, 0f);

@@ -1253,3 +1253,25 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
   (không driver) **Succeeded**; boot **ALIVE + FACE_OK 0 exception**. Ảnh
   BEFORE/AFTER: `Temp/opencode/s3p2w*-shots/` (lesson shots A/B).
 - Chưa commit trước đó; commit kèm phase này. Chưa làm Phase 3.
+
+## 47. S3-P2W2 - LESSON FIX ROUND (user ảnh: số sai, NPC chồng, camera) (2026-09-22)
+
+- User ảnh + 3 lệnh: (1) số trên bảng hiện KHÔNG đúng; (2) 2 NPC có lúc chồng
+  lên nhau; (3) kiểm tra lại camera; (4) làm sinh động nhất có thể.
+- Root cause (1): số "2" bị CẮT bởi khung (shot B cũ chỉ thấy nửa dưới của số
+  -> đọc thành hình sai). Fix: cả 2 shot đều giữ TRỌN bảng trong frame; số
+  dạng 3 thanh (top bar phóng to 1.15w + diagonal + bottom) đọc chuẩn.
+- Root cause (2): cô + bé đứng gần như cùng trục -> che nhau. Fix: cô dời
+  (-1.35,11.6) đứng BÊN TRÁI mép bảng, bé (0.75,10.1) lệch phải-trước ->
+  side-by-side, không còn chồng; bảng "2" cũng hết bị đầu cô che.
+- Camera: shot A (0.3,2.5,6.6)->(0.7,1.5,11.6); shot B (0.9,2.3,4.8)->
+  (0.85,1.05,10.3) — push-in vừa, giữ trọn board/result. Viewing spot dời về
+  (0,2.6) để avatar CỦA BÉ không bao giờ lọt vào shot B (vòng capture trước
+  đầu bé ở góc frame). HUD pill không còn che hàng bóng.
+- Sinh động (không thêm framework): cô + bé Hop khi khen (Victory + Happy +
+  vẫy tay); bé Hop + Surprised khi lấy được bóng 2; Curious cả 2 khi cô hỏi
+  "How many balls?"; bảng kết quả POP scale 0.65->1 khi hiện; bóng nảy nhẹ khi
+  tiếp đất; 5 bóng trên sân bob nhẹ lệch pha; bé Surprised beat "got it".
+- Verify: targeted P47/P48 9/9; full EditMode **577/572/0/5**; build production
+  **Succeeded**; boot **FACE_OK 0 exception**. Ảnh vòng 5/6: `Temp/opencode/
+  s3p2w8-shots/`. Temp tooling xóa sạch. Commit kèm phase này.

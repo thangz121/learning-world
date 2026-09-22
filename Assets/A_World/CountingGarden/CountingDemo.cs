@@ -332,6 +332,7 @@ public class CountingDemo : MonoBehaviour {
         if (!_firedPick) {
           _firedPick = true;
           Trigger(_student, "PickUp");
+          Pulse(_student, CharacterExpression.Surprised, 1.0f); // "got it!" beat
           _ball1 = PickBall(3);
           Fly(_ball1, BallHome(3), CarrySlot(_student, 1), 0.25f, 0.9f, 0.5f);
         }
@@ -350,6 +351,7 @@ public class CountingDemo : MonoBehaviour {
           Wave(_teacher);
           Pulse(_teacher, CharacterExpression.Happy, 2f);
           Pulse(_student, CharacterExpression.Happy, 2f);
+          Hop(_student); // excited little hop with the two balls
         }
         if (_phaseT >= 2.2f) To(DemoPhase.WalkBasket);
         break;
@@ -384,6 +386,8 @@ public class CountingDemo : MonoBehaviour {
         if (!_asked) {
           _asked = true;
           Speak("How many balls?", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Pulse(_teacher, CharacterExpression.Curious, 1.8f);
+          Pulse(_student, CharacterExpression.Curious, 1.8f);
         }
         if (_phaseT >= 2.0f) To(DemoPhase.Confirm);
         break;
@@ -391,6 +395,7 @@ public class CountingDemo : MonoBehaviour {
         FaceTowards(_teacher, BasketPoint(), dt, 4f);
         if (_result != null && !_result.activeSelf) {
           try { _result.SetActive(true); } catch (Exception) { }
+          _resultPopT = 0f; // lively pop-in of the "2 tick" board
         }
         if (!_cheered) {
           _cheered = true;
@@ -409,7 +414,8 @@ public class CountingDemo : MonoBehaviour {
           SpeelCelebrate();
           Pulse(_teacher, CharacterExpression.Happy, 3f);
           Pulse(_student, CharacterExpression.Happy, 3f);
-          try { if (_student.Face != null) _student.Face.PlayHop(); } catch (Exception) { }
+          Hop(_teacher);  // both actors hop: lively praise, not a static pose
+          Hop(_student);
         }
         if (_phaseT >= 2.8f) To(DemoPhase.HoldResult);
         break;
@@ -454,6 +460,46 @@ public class CountingDemo : MonoBehaviour {
     TickFlight(dt);
     TickCarry();
     TickWave(dt);
+    TickLiveliness(dt);
+  }
+
+  // ---- liveliness (user round: "làm sinh động nhất có thể") ----------------
+  // Result board pops in, landed balls bounce once, and the field balls idle
+  // with a tiny independent bob. All transform-only, deterministic-ish, and
+  // never touching gameplay state.
+
+  float _resultPopT = 1f;
+  GameObject _popBall;
+  float _popT = 1f;
+  readonly float[] _ballPhase = { 0.0f, 1.3f, 2.6f, 3.9f, 5.2f };
+
+  void TickLiveliness(float dt) {
+    if (_resultPopT < 1f && _result != null) {
+      _resultPopT = Mathf.Min(1f, _resultPopT + dt / 0.28f);
+      float s = Mathf.Lerp(0.65f, 1f, Mathf.SmoothStep(0f, 1f, _resultPopT));
+      try { _result.transform.localScale = new Vector3(s, s, s); } catch (Exception) { }
+    }
+    if (_popBall != null) {
+      _popT = Mathf.Min(1f, _popT + dt / 0.3f);
+      float s = 1f + 0.22f * Mathf.Sin(Mathf.PI * _popT);
+      try { _popBall.transform.localScale = Vector3.one * (0.34f * s); } catch (Exception) { }
+      if (_popT >= 1f) {
+        try { _popBall.transform.localScale = Vector3.one * 0.34f; } catch (Exception) { }
+        _popBall = null;
+      }
+    }
+    // Field balls breathe while they wait on the field.
+    for (int i = 0; i < _balls.Count; i++) {
+      GameObject b = _balls[i];
+      if (b == null || b == _ball0 || b == _ball1) continue;
+      Vector3 home = CountingGardenBuilder.DemoBallHomes[i];
+      try {
+        Vector3 p = b.transform.localPosition;
+        if ((p - home).sqrMagnitude > 0.01f) continue; // flying/placed: leave it
+        b.transform.localPosition = new Vector3(home.x,
+          home.y + Mathf.Sin(Time.time * 2.1f + _ballPhase[i % _ballPhase.Length]) * 0.015f, home.z);
+      } catch (Exception) { }
+    }
   }
 
   void SpeelCelebrate() {
@@ -524,7 +570,12 @@ public class CountingDemo : MonoBehaviour {
       Vector3 mid = (_flyFrom + _flyTo) * 0.5f + new Vector3(0f, _flyLift, 0f);
       _flyBall.transform.localPosition = Vector3.Lerp(
         Vector3.Lerp(_flyFrom, mid, t), Vector3.Lerp(mid, _flyTo, t), t);
-      if (t >= 1f) { _flying = false; _flyBall = null; }
+      if (t >= 1f) {
+        _popBall = _flyBall; // landing bounce (basket, hand, or home)
+        _popT = 0f;
+        _flying = false;
+        _flyBall = null;
+      }
     } catch (Exception) { _flying = false; }
   }
 
@@ -647,6 +698,10 @@ public class CountingDemo : MonoBehaviour {
   void Pulse(NpcActor actor, CharacterExpression e, float seconds) {
     try { if (actor != null && actor.Face != null) actor.Face.PulseExpression(e, seconds); }
     catch (Exception) { }
+  }
+
+  void Hop(NpcActor actor) {
+    try { if (actor != null && actor.Face != null) actor.Face.PlayHop(); } catch (Exception) { }
   }
 
   void Wave(NpcActor actor) {

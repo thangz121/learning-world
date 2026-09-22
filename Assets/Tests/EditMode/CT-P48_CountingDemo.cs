@@ -79,14 +79,15 @@ public class CT_P48_CountingDemo {
       Assert.Less(builder.DemoCam.localPosition.z, plot.z - 2f,
         "shot A sits north (plaza side) of the stage");
       Assert.Less(builder.DemoCam.localPosition.y, 3f, "shot A at child-comfort height");
-      // Shot B is tighter and lower than shot A (the action card).
-      Assert.Less(Vector3.Distance(builder.DemoActionCam.localPosition, plot),
-        Vector3.Distance(builder.DemoCam.localPosition, plot),
-        "shot B sits closer than shot A");
-      Assert.Less(builder.DemoActionCam.localPosition.y, builder.DemoCam.localPosition.y,
-        "shot B is lower than shot A");
-      Assert.Less(Dist2D(builder.DemoActionLook.localPosition, builder.DemoActionCam.localPosition), 4.5f,
-        "shot B keeps the action large in frame");
+      // Shot B pushes IN toward the action row (the ball field), while both
+      // shots keep the whole stage (board included) inside the frame.
+      Assert.Less(builder.DemoActionCam.localPosition.z, builder.DemoCam.localPosition.z,
+        "shot B pushes in toward the front row");
+      float aSpan = Vector3.Distance(builder.DemoLook.localPosition, builder.DemoCam.localPosition);
+      float bSpan = Vector3.Distance(builder.DemoActionLook.localPosition, builder.DemoActionCam.localPosition);
+      Assert.Greater(aSpan, 5f, "shot A holds the whole stage");
+      Assert.Greater(bSpan, 5f, "shot B keeps the board + action in one frame");
+      Assert.Less(bSpan, 7f, "shot B stays a medium shot, not a map view");
     } finally { TearDown(garden); }
   }
 
