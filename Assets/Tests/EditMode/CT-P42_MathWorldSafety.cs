@@ -119,11 +119,14 @@ public class CT_P42_MathWorldSafety {
   // B1R2 measured 311; B1R3 added the sky rim/clouds, world-name column,
   // bunting and pink/red accents (measured 400) -> cap re-pinned to 440 with
   // the number recorded in MATH_WORLD_VISUAL_QA.md; shared materials only.
+  // Hub phase measured ~600 (10 gate skeletons + landmark + spurs, all shared
+  // Lit/PropKit materials, zero colliders, zero lights) -> cap re-pinned to
+  // 640, recorded in MATH_HUB_VISUAL_QA.md. Micro-World 1 re-pins again.
   [Test] public void P42C_ObjectBudget() {
     SetUp();
     try {
       int count = _root.transform.GetComponentsInChildren<Transform>(true).Length;
-      Assert.Less(count, 440, "content object count bounded (perf guardrail)");
+      Assert.Less(count, 640, "content object count bounded (perf guardrail)");
       Assert.Greater(count, 100, "district-scale skeleton + dressing present (not a bare shell)");
     } finally { TearDown(); }
   }

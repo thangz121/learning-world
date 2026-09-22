@@ -56,6 +56,23 @@ public class GameInstaller : MonoBehaviour {
     Hints = new HintService(EventBus);                // Session logic, per-quest state
     Quests = new QuestManager(EventBus, Learning, Hints); // Scene/Session
     Rewards = new QuestRewardService(EventBus);             // Session reward state (friendship + world changes)
+    // P1-4 foundation: boot adopts the persisted completions SILENTLY (no
+    // events, no celebration replay) BEFORE any scene builds, so every later
+    // Build/Adopt reads deterministic state. Save format untouched.
+    // P1-7: every live completion is banked centrally here (covers ALL quests,
+    // present + future — directors never hand-roll save code).
+    try {
+      PlayerProgress boot = Save != null ? Save.Load() : new PlayerProgress();
+      System.Collections.Generic.List<string> done =
+        boot != null && boot.QuestsDone != null ? boot.QuestsDone : new System.Collections.Generic.List<string>();
+      QuestManager qm = Quests as QuestManager;
+      if (qm != null) qm.RestoreCompleted(done);
+      Rewards.RestoreCompleted(done);
+      EventBus.Subscribe<QuestCompletedEvent>(e => {
+        try { ActivityCompletion.PersistQuestDone(Save, e.QuestId); }
+        catch (System.Exception) { }
+      });
+    } catch (System.Exception) { }
     WorldNav = new WorldNavService(EventBus);               // Phase 3.0: world-navigation state (in-memory)
     WorldTransitions = new WorldTransition(SubjectIds.Main); // Phase 3.0.x S1b: subject transition machine
     SceneOps = new UnitySceneOps();                          // Phase 3.0.x S1b: production scene adapter
@@ -116,11 +133,14 @@ public class GameInstaller : MonoBehaviour {
   // Bootstrap travel path cleans up (unload + stay Main) instead of stranding.
   public Transform MathWorldRoot { get; private set; }
   public Transform MathEntryPoint { get; private set; }
+  // P1-2: Math presentation registry (null until the scene builds).
+  public ActivityAnchors MathAnchors { get; private set; }
 
   void OnSubjectSceneLoaded(Scene scene, LoadSceneMode mode) {
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
+    MathAnchors = null;
     try {
       GameObject root = null;
       if (scene.IsValid()) {
@@ -146,10 +166,21 @@ public class GameInstaller : MonoBehaviour {
       }
       MathWorldRoot = root.transform;
       MathEntryPoint = entry;
+      // P1-2/P1-3: expose anchors for the arrival beat, then push live quest
+      // state into every adoptable (re-entry visuals without event replay).
+      try { MathAnchors = root.GetComponentInChildren<ActivityAnchors>(); }
+      catch (System.Exception) { MathAnchors = null; }
+      try {
+        IQuestAdoptable[] adoptables = root.GetComponentsInChildren<IQuestAdoptable>();
+        QuestAdoption.AdoptAll(adoptables, Quests, new QuestId("math_counting"));
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Math adopt-all failed: " + e.Message, this);
+      }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] MathScene build failed: " + e.Message, this);
       MathWorldRoot = null;
       MathEntryPoint = null;
+      MathAnchors = null;
     }
   }
 

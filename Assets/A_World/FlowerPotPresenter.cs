@@ -14,7 +14,7 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class FlowerPotPresenter : BusBehaviour {
+public class FlowerPotPresenter : BusBehaviour, IQuestAdoptable {
   // W1 slice quest whose completion grows the flowers (Content/quests/w1_mia_apple.json).
   public const string W1QuestId = "w1_mia_apple";
 
@@ -70,6 +70,15 @@ public class FlowerPotPresenter : BusBehaviour {
   void OnQuestDone(QuestCompletedEvent e) {
     if (_revealed) return;
     if (e.QuestId.Value != W1QuestId) return;
+    Reveal();
+  }
+
+  // P1-3 generic adopt (Main-side proof the contract is cross-world, not
+  // Math-only): a fresh boot on a completed save reveals without an event.
+  // Idempotent with the event path (Reveal guards via _revealed).
+  public void AdoptQuestState(QuestState state) {
+    if (state == null) return;
+    if (state.Id.Value != W1QuestId || !state.Completed) return;
     Reveal();
   }
 

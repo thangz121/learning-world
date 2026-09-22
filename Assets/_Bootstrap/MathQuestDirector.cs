@@ -31,6 +31,14 @@ public class MathQuestDirector : MonoBehaviour {
   IDisposable _subStarted;
   IDisposable _subCompleted;
   bool _built;
+  // P1-1: this activity's lifecycle (owner = this director, sole writer).
+  // Talk-gated: Available -> Active on first talk (Begin shortcut, no staged
+  // Ready beat); Active -> Completed on QuestCompletedEvent.
+  readonly ActivityLifecycle _lifecycle = new ActivityLifecycle("math_counting", "MathQuestDirector");
+
+  public ActivityLifecycle Lifecycle {
+    get { return _lifecycle; }
+  }
 
   // Called ONCE by GameInstaller after the Math scene builds. Null-safe:
   // missing wiring degrades to a silent world (quest never starts), never NREs.
@@ -52,6 +60,22 @@ public class MathQuestDirector : MonoBehaviour {
       _subStarted = bus.Subscribe<QuestStartedEvent>(OnQuestStartedFlag);
       _subCompleted = bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted);
     } catch (Exception) { }
+    // P1-1/P1-3: offer the activity, then adopt live state (re-entry on a
+    // completed quest lands directly in Completed — no replayed beat).
+    _lifecycle.MarkAvailable("director built");
+    try {
+      QuestState live = quests.GetState(MathQuest);
+      if (live != null && live.Completed) {
+        _questStarted = true;
+        _activeQuest = MathQuest;
+        _lifecycle.AdoptCompleted("re-entry adopted");
+        ShowObjective("Math World");
+      } else if (live != null && live.ObjectiveIndex > 0) {
+        _questStarted = true;
+        _activeQuest = MathQuest;
+        _lifecycle.Begin("re-entry resumed");
+      }
+    } catch (Exception) { }
   }
 
   void OnFirstTalk() {
@@ -63,9 +87,11 @@ public class MathQuestDirector : MonoBehaviour {
     }
     if (state.ObjectiveIndex > 0 || _questStarted) {
       ResumeNarration(state); // re-entry mid-quest: never restart (no progress wipe)
+      _lifecycle.Begin("talk resumed");
       return;
     }
     _quests.StartQuest(MathQuest);
+    _lifecycle.Begin("first talk");
     ShowObjective("Find the one");
     Tess.SayFind();
     try { Debug.Log("[MathQuest] started math_counting (HUD: Find the one).", this); }
@@ -109,6 +135,7 @@ public class MathQuestDirector : MonoBehaviour {
 
   void OnQuestCompleted(QuestCompletedEvent e) {
     if (e.QuestId.Value != MathQuest.Value) return;
+    _lifecycle.MarkCompleted("quest completed");
     Tess.Celebrate();
     ShowObjective("Math World");
     try { Debug.Log("[MathQuest] completed math_counting (HUD: Math World).", this); }

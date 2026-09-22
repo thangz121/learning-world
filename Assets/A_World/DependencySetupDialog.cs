@@ -211,6 +211,7 @@ public class DependencySetupDialog : MonoBehaviour {
     l.color = Color.white;
     l.alignment = TextAnchor.MiddleCenter;
     l.text = label;
+    l.raycastTarget = false; // P1-6/O3: the button IMAGE is the single click target
     RectTransform rt = lGo.GetComponent<RectTransform>();
     rt.anchorMin = Vector2.zero;
     rt.anchorMax = Vector2.one;

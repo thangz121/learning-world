@@ -91,6 +91,9 @@ public class MarketBuilder : MonoBehaviour {
   public ProximityDiscovery AppleDiscovery { get; private set; }
   public ProximityDiscovery BallDiscovery { get; private set; }
   public GameAudioTap GameTap { get; private set; }
+  // P1-2 Main presentation registry (second producer: proves the contract is
+  // cross-world, not Math-only). Slots mirror the constants above 1:1.
+  public ActivityAnchors MainAnchors { get; private set; }
 
   IGameEventBus _bus;
 
@@ -124,6 +127,27 @@ public class MarketBuilder : MonoBehaviour {
     BuildPlayer();
     BuildCamera();
     BuildFrameServices();
+    BuildPresentationAnchors();
+  }
+
+  // P1-2: Main registry. Entry = spawn; Focus = apple crate (find site);
+  // Npc = Mia (bring target); Camera/Look = intro beat pose; Prompt = bubble
+  // anchor beside Mia; Feedback = praise point before Mia; Reward = flower
+  // bed nook; Exit = hub center (gate hall). No visual change: nodes only.
+  void BuildPresentationAnchors() {
+    ActivityAnchors a = ActivityAnchors.Ensure(transform, "MainPresentationRoot");
+    MainAnchors = a;
+    if (a == null) return;
+    a.Entry = a.EnsureSlot("EntryAnchor", PlayerSpawn);
+    a.GameplayFocus = a.EnsureSlot("GameplayFocusAnchor", CrateAnchorPos);
+    a.Npc = a.EnsureSlot("NpcAnchor", MiaAnchorPos);
+    a.Camera = a.EnsureSlot("CameraAnchor", PlayerSpawn + new Vector3(0f, 3.2f, 4.6f));
+    a.CameraLook = a.EnsureSlot("CameraLookAnchor", PlayerSpawn + new Vector3(0f, 1.0f, 0f));
+    a.Prompt = a.EnsureSlot("PromptAnchor", MiaAnchorPos + new Vector3(1.45f, 1.78f, 0.55f));
+    a.Feedback = a.EnsureSlot("FeedbackAnchor", MiaAnchorPos + new Vector3(0f, 1.2f, 1.0f));
+    a.Reward = a.EnsureSlot("RewardAnchor", FlowerAnchorPos);
+    try { a.Exit = a.EnsureSlot("ExitAnchor", SubjectCatalog.HubCenter); }
+    catch (System.Exception) { a.Exit = a.EnsureSlot("ExitAnchor", PlayerSpawn); }
   }
 
   // Injection boundary (Lead/GameInstaller calls this; services are passed in,
@@ -178,6 +202,31 @@ public class MarketBuilder : MonoBehaviour {
   public void WireQuestService(IQuestService quests, IHintService hints) {
     if (Hud != null) Hud.Bind(_bus, quests);
     if (Distractor != null) Distractor.Bind(_bus, hints, quests);
+    // P1-3 Main call site: a fresh boot on a completed save adopts the flower
+    // reward without an event (Math side adopts in GameInstaller).
+    try {
+      if (quests != null && FlowerPresenter != null)
+        FlowerPresenter.AdoptQuestState(quests.GetState(new QuestId(FlowerPotPresenter.W1QuestId)));
+    } catch (System.Exception) { }
+  }
+
+  // P1-6 additive seam: pushes the shared gate into the router + every
+  // subject gate AFTER SetWorldNav binding (Bootstrap calls this in Build).
+  // Null clears. Gates bound later re-bind via SetWorldNav ordering.
+  public void SetInteractionGate(InteractionGate gate) {
+    try { if (Router != null) Router.BindGate(gate); } catch (System.Exception) { }
+    try {
+      if (_worldResult != null) {
+        if (_worldResult.EntryGates != null)
+          foreach (SubjectGate g in _worldResult.EntryGates) {
+            if (g != null) g.BindGate(gate);
+          }
+        if (_worldResult.ReturnGates != null)
+          foreach (SubjectGate g in _worldResult.ReturnGates) {
+            if (g != null) g.BindGate(gate);
+          }
+      }
+    } catch (System.Exception) { }
   }
 
   // ---- Phase 3.0 Learning World wiring ----------------------------------------

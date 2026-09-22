@@ -209,6 +209,7 @@ public class MicSetupDialog : MonoBehaviour {
     qrGo.transform.SetParent(_waitPanel.transform, false);
     _waitQr = qrGo.AddComponent<RawImage>();
     _waitQr.color = Color.white;
+    _waitQr.raycastTarget = false; // P1-6/O3 (J1 rule): QR art never eats world clicks
     Place(qrGo, 0.5f, 0.5f, 0.5f, 0.5f, -70f, -160f, 70f, -20f);
     qrGo.SetActive(false);
     _root.SetActive(false);

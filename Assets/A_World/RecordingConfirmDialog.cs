@@ -78,12 +78,15 @@ public class RecordingConfirmDialog : MonoBehaviour {
     dimGo.transform.SetParent(_root.transform, false);
     Image dim = dimGo.AddComponent<Image>();
     dim.color = new Color(0f, 0f, 0f, 0.55f);
+    // P1-6/O3 (J1 rule): setup prompts are click-through — only buttons capture.
+    dim.raycastTarget = false;
     Stretch(dimGo);
 
     _panel = new GameObject("Panel");
     _panel.transform.SetParent(_root.transform, false);
     Image card = _panel.AddComponent<Image>();
     card.color = new Color(1f, 0.97f, 0.90f, 1f);
+    card.raycastTarget = false; // P1-6/O3: card graphics never eat world clicks
     RectTransform rt = _panel.GetComponent<RectTransform>();
     rt.anchorMin = new Vector2(0.5f, 0.5f);
     rt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -121,6 +124,7 @@ public class RecordingConfirmDialog : MonoBehaviour {
     t.fontSize = size;
     t.color = color;
     t.alignment = align;
+    t.raycastTarget = false; // P1-6/O3: text never eats world clicks
     if (overflow) t.verticalOverflow = VerticalWrapMode.Overflow;
     return t;
   }
@@ -138,6 +142,7 @@ public class RecordingConfirmDialog : MonoBehaviour {
     l.color = Color.white;
     l.alignment = TextAnchor.MiddleCenter;
     l.text = label;
+    l.raycastTarget = false; // the button IMAGE is the single click target
     RectTransform rt = lGo.GetComponent<RectTransform>();
     rt.anchorMin = Vector2.zero;
     rt.anchorMax = Vector2.one;

@@ -11,7 +11,7 @@ using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class MathBloomDisplay : MonoBehaviour {
+public class MathBloomDisplay : MonoBehaviour, IQuestAdoptable {
   static readonly QuestId MathQuest = new QuestId("math_counting");
 
   IGameEventBus _bus;
@@ -31,15 +31,21 @@ public class MathBloomDisplay : MonoBehaviour {
     _built = true;
     _bus = bus;
     _quests = quests;
+    // P1-3: initial adopt goes through the shared contract (fresh re-entry
+    // after completion never receives the event, so the visual adopts live
+    // state instead of waiting for a replay that never comes).
     try {
-      if (_quests != null && _quests.GetState(MathQuest) != null
-          && _quests.GetState(MathQuest).Completed) {
-        ApplyBlooms();
-      }
+      if (_quests != null) AdoptQuestState(_quests.GetState(MathQuest));
     } catch (Exception) { }
     if (_bus == null) return;
     try { _sub = _bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted); }
     catch (Exception) { }
+  }
+
+  // P1-3 generic adopt (idempotent with the event path: ApplyBlooms guards).
+  public void AdoptQuestState(QuestState state) {
+    if (state == null || state.Id.Value != MathQuest.Value) return;
+    if (state.Completed) ApplyBlooms();
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {

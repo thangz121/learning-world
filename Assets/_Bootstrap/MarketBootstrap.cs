@@ -44,6 +44,22 @@ public class MarketBootstrap : MonoBehaviour {
   QuestId? _activeQuest;
   // R7: pre-talk finds must not narrate. Set by QuestStartedEvent.
   bool _questStarted;
+  // P1-6: the ONE shared input lock (router + subject gates read it).
+  // Created here (Lead-owned Bootstrap), pushed into the builder's router +
+  // gates. Open dialogs NEVER lock (J1 click-through rule).
+  readonly InteractionGate _gate = new InteractionGate();
+  // P1-1 second consumer (math director is the first): the Main market
+  // activity lifecycle. Talk-gated like math: Available -> Active on quest
+  // start, Active -> Completed on w1 completion, back to Available on next start.
+  readonly ActivityLifecycle _marketLifecycle = new ActivityLifecycle("market", "MarketBootstrap");
+
+  public InteractionGate Gate {
+    get { return _gate; }
+  }
+
+  public ActivityLifecycle MarketLifecycle {
+    get { return _marketLifecycle; }
+  }
   // Phase 3.0: objective cached before a world entry, restored on return —
   // quest text is never clobbered by world navigation.
 
@@ -325,6 +341,24 @@ public class MarketBootstrap : MonoBehaviour {
       Debug.Log("[Boot] screen=" + Screen.width + "x" + Screen.height
         + " hud=" + (_hud != null ? ("'" + _hud.CurrentObjective + "'") : "null"), this);
     } catch (System.Exception) { }
+    // P1-1/P1-6 foundation wiring (additive, null-safe): offer the market
+    // activity, push the shared gate into router + gates, adopt live w1 state
+    // (fresh boot on a completed save lands Completed without a replayed beat).
+    try {
+      _marketLifecycle.MarkAvailable("bootstrap built");
+      if (_quests != null) {
+        QuestState a = _quests.GetState(W1QuestApple);
+        QuestState b = _quests.GetState(W1QuestBall);
+        if ((a != null && a.Completed) || (b != null && b.Completed)) {
+          _questStarted = true;
+          _marketLifecycle.AdoptCompleted("boot adopted");
+        } else if ((a != null && a.ObjectiveIndex > 0) || (b != null && b.ObjectiveIndex > 0)) {
+          _questStarted = true;
+          _marketLifecycle.Begin("boot resumed");
+        }
+      }
+    } catch (Exception) { }
+    try { if (builder != null) builder.SetInteractionGate(_gate); } catch (Exception) { }
   }
 
   // <repo>/tools (phone_mic_gateway.py + lan certs) for the monitor's
@@ -563,6 +597,10 @@ public class MarketBootstrap : MonoBehaviour {
   async void TravelToSubjectAsync(SubjectDefinition to) {
     if (_travelLock) return;
     _travelLock = true;
+    // P1-6: world input freezes for the whole travel beat (router + gates
+    // read the same gate — no scattered booleans). _travelLock stays as the
+    // async reentrancy guard; the gate is the INPUT lock.
+    try { _gate.BeginTransition("travel:" + to.Id.Value); } catch (Exception) { }
     try {
       if (_builder == null || _builder.Player == null || _worldTransition == null || _sceneOps == null) return;
       _mainReturnPos = _builder.Player.transform.position;
@@ -649,11 +687,23 @@ public class MarketBootstrap : MonoBehaviour {
       // B1R3 arrival beat (user round): frame the world-name column first
       // ("this is the Math world"), then the camera returns to the character
       // by itself (FramePointFor auto-resumes Follow).
+      // P1-2: anchor-posed when the world staged them, vector fallback otherwise.
       if (to.Id == SubjectIds.Math && _builder.WorldCamera != null) {
         try {
-          Vector3 signW = MathWorldBuilder.SignWorldPos;
-          Vector3 camPos = signW + new Vector3(-2.6f, 1.7f, 4.8f);
-          _builder.WorldCamera.FramePointFor(camPos, signW + new Vector3(0f, 1.7f, 0f), 2.2f);
+          bool anchored = false;
+          try {
+            GameInstaller gi = GetComponent<GameInstaller>();
+            ActivityAnchors ma = gi != null ? gi.MathAnchors : null;
+            if (ma != null && ma.Camera != null && ma.CameraLook != null) {
+              _builder.WorldCamera.FrameAnchor(ma.Camera, ma.CameraLook, 2.2f);
+              anchored = true;
+            }
+          } catch (Exception) { }
+          if (!anchored) {
+            Vector3 signW = MathWorldBuilder.SignWorldPos;
+            Vector3 camPos = signW + new Vector3(-2.6f, 1.7f, 4.8f);
+            _builder.WorldCamera.FramePointFor(camPos, signW + new Vector3(0f, 1.7f, 0f), 2.2f);
+          }
         } catch (System.Exception) { }
       }
       if (_hud != null) { try { _hud.ShowObjective(to.DisplayName + " World"); } catch (System.Exception) { } }
@@ -670,15 +720,22 @@ public class MarketBootstrap : MonoBehaviour {
       try { Debug.LogWarning("[MarketBootstrap] Travel crashed: " + e.Message, this); }
       catch (System.Exception) { }
       if (_hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
-    } finally { _travelLock = false; }
+    } finally {
+      try { _gate.EndTransition("travel:" + (to != null ? to.Id.Value : "?")); } catch (Exception) { }
+      _travelLock = false;
+    }
   }
 
   async void ReturnFromSubjectAsync() {
     if (_travelLock) return;
     _travelLock = true;
+    try { _gate.BeginTransition("return"); } catch (Exception) { }
     try {
       await ReturnFromSubjectCoreAsync(true);
-    } finally { _travelLock = false; }
+    } finally {
+      try { _gate.EndTransition("return"); } catch (Exception) { }
+      _travelLock = false;
+    }
   }
 
   // S3A transition cover driver (SceneBridge pattern ADAPTED: fade covers the
@@ -805,6 +862,12 @@ public class MarketBootstrap : MonoBehaviour {
     if (e.QuestId.Value == W1QuestApple.Value || e.QuestId.Value == W1QuestBall.Value) {
       _questStarted = true;
       _activeQuest = e.QuestId;
+      // P1-1: (re)offer then activate — a next quest after a completion goes
+      // Completed -> Available -> Active through the same contract.
+      try {
+        _marketLifecycle.MarkAvailable("quest started");
+        _marketLifecycle.Begin("quest started");
+      } catch (Exception) { }
       // Update bubble icon based on which quest started
       if (_builder != null && _builder.Bubble != null) {
         if (e.QuestId.Value == W1QuestApple.Value) {
@@ -817,6 +880,10 @@ public class MarketBootstrap : MonoBehaviour {
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
+    if (e.QuestId.Value == W1QuestApple.Value || e.QuestId.Value == W1QuestBall.Value) {
+      // P1-1: completion beat state (input stays accepted; the beat is short).
+      try { _marketLifecycle.MarkCompleted("quest completed"); } catch (Exception) { }
+    }
     if (e.QuestId.Value == W1QuestApple.Value) {
       Milo.Celebrate();
       if (_builder != null && _builder.Bubble != null) _builder.Bubble.Hide();

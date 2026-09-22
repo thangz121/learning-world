@@ -108,7 +108,8 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
     _waveT = WaveDuration;
     Mia.SayName();
     if (!_questStarted) return; // pre-talk: wave only, quest state untouched
-    if (_quests != null && _quests.GetState(_activeQuest).Completed) return;
+    // P1-7: quest-open check via the shared AnswerValidator contract.
+    if (!AnswerValidator.IsQuestOpen(_quests, _activeQuest)) return;
     bool isBallQuest = _activeQuest.Value == "w1_mia_ball";
     if ((_carryingApple && !_carryingBall && !isBallQuest)
         || (_carryingBall && !_carryingApple && isBallQuest)) {
@@ -171,7 +172,8 @@ public sealed class MiaPresenter : MonoBehaviour, IClickTarget {
   public void TryProximityBring(Vector3 playerPos) {
     if (!_carryingApple && !_carryingBall) return;
     if (_quests == null) return;
-    if (_quests.GetState(_activeQuest).Completed) return;
+    // P1-7: same quest-open contract as the click path.
+    if (!AnswerValidator.IsQuestOpen(_quests, _activeQuest)) return;
     // Player report follow-up (NPC auto-interaction too generous): halved
     // 1.5 -> 0.75m — the child hands the item OVER THE COUNTER, cheek to
     // cheek with Mia. Converges with the 0.75m click arrivalRange (R8

@@ -102,6 +102,18 @@ public class SmartCamera : MonoBehaviour {
     EnforcePerspective();
   }
 
+  // P1-2 anchor-driven beat: same framing as FramePointFor but posed by
+  // scene-authored anchors (ActivityAnchors.Camera/CameraLook) instead of
+  // magic vectors. Null anchors = graceful no-op (caller keeps its vector
+  // fallback), so half-staged worlds never strand the camera.
+  public void FrameAnchor(Transform camAnchor, Transform lookAnchor, float seconds) {
+    if (camAnchor == null || lookAnchor == null) {
+      Debug.LogWarning("[SmartCamera] FrameAnchor with null anchor; beat skipped.", this);
+      return;
+    }
+    FramePointFor(camAnchor.position, lookAnchor.position, seconds);
+  }
+
   Vector3[] _cinPath;
   float _cinT;
   float _cinDuration;

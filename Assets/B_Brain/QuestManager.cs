@@ -118,6 +118,30 @@ public sealed class QuestManager : IQuestService {
     return new QuestState { Id = questId, ObjectiveIndex = 0, Completed = false };
   }
 
+  // P1-4 replay (foundation): silently marks save-banked quests Completed so a
+  // fresh boot adopts deterministic state. NO events published (reward ledger
+  // restores separately via QuestRewardService.RestoreCompleted; visuals adopt
+  // via IQuestAdoptable) — replay must never re-celebrate. Unknown ids are
+  // skipped; null-safe. Additive: IQuestService stays frozen.
+  public void RestoreCompleted(System.Collections.Generic.IEnumerable<string> questIds) {
+    if (questIds == null) return;
+    foreach (string raw in questIds) {
+      if (string.IsNullOrEmpty(raw)) continue;
+      QuestId q;
+      try { q = new QuestId(raw); }
+      catch (System.Exception) { continue; }
+      try {
+        System.Collections.Generic.List<TypedObjective> list = LoadTyped(q);
+        int count = list != null ? list.Count : 0;
+        QuestState cur;
+        if (_states.TryGetValue(q, out cur) && cur.Completed) continue;
+        _states[q] = new QuestState { Id = q, ObjectiveIndex = count, Completed = true };
+        _objectives[q] = list;
+        if (!_active.HasValue) _active = q;
+      } catch (System.Exception) { }
+    }
+  }
+
   TypedObjective CurrentObjective(QuestId q) {
     QuestState s;
     List<TypedObjective> list;

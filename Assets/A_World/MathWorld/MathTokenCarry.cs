@@ -20,7 +20,7 @@ public enum MathTokenState {
 }
 
 [DisallowMultipleComponent]
-public class MathTokenCarry : MonoBehaviour {
+public class MathTokenCarry : MonoBehaviour, IQuestAdoptable {
   static readonly QuestId MathQuest = new QuestId("math_counting");
   static readonly WordId OneWord = new WordId("one");
 
@@ -57,22 +57,26 @@ public class MathTokenCarry : MonoBehaviour {
       _subs.Add(_bus.Subscribe<QuestStartedEvent>(OnQuestStarted));
       _subs.Add(_bus.Subscribe<QuestCompletedEvent>(OnQuestCompleted));
     } catch (Exception) { }
-    // Re-entry resume: fresh scene adopts the live quest state (no event
-    // replay exists for a fresh subscriber). Both mid-quest (Carried) and
-    // completed (Consumed) must be honored — journey evidence: without the
-    // Completed branch the reward cube reappeared after completion.
+    // P1-3: re-entry resume goes through the shared adopt contract (a fresh
+    // scene adopts live state — no event replay exists for fresh subscribers).
+    // Both mid-quest (Carried) and completed (Consumed) are honored.
     try {
-      QuestState s = _quests.GetState(MathQuest);
-      if (s != null && s.Completed) {
-        _started = true;
-        State = MathTokenState.Consumed;
-        if (_worldCube != null) _worldCube.gameObject.SetActive(false);
-        if (_handToken != null) _handToken.SetActive(false);
-      } else if (s != null && s.ObjectiveIndex >= 1) {
-        _started = true;
-        SetCarried();
-      }
+      if (_quests != null) AdoptQuestState(_quests.GetState(MathQuest));
     } catch (Exception) { }
+  }
+
+  // P1-3 generic adopt. Idempotent: Build starts InWorld, adopt moves forward only.
+  public void AdoptQuestState(QuestState state) {
+    if (state == null || state.Id.Value != MathQuest.Value) return;
+    if (state.Completed) {
+      _started = true;
+      State = MathTokenState.Consumed;
+      try { if (_worldCube != null) _worldCube.gameObject.SetActive(false); } catch (Exception) { }
+      try { if (_handToken != null) _handToken.SetActive(false); } catch (Exception) { }
+    } else if (state.ObjectiveIndex >= 1) {
+      _started = true;
+      if (State == MathTokenState.InWorld) SetCarried();
+    }
   }
 
   void OnQuestStarted(QuestStartedEvent e) {

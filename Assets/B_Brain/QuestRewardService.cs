@@ -43,8 +43,29 @@ public sealed class QuestRewardService {
 
   void OnQuestCompleted(QuestCompletedEvent e) {
     if (!_applied.Add(e.QuestId)) return; // each quest's reward applies exactly once
+    ApplyReward(e.QuestId);
+  }
+
+  // P1-4 replay (foundation): banks save-banked quest rewards SILENTLY (no
+  // event exists on a fresh boot). Same once-guard as the live path, so a
+  // later live completion of the same quest can never double-credit.
+  // Additive: live subscription path untouched.
+  public void RestoreCompleted(System.Collections.Generic.IEnumerable<string> questIds) {
+    if (questIds == null) return;
+    foreach (string raw in questIds) {
+      if (string.IsNullOrEmpty(raw)) continue;
+      QuestId q;
+      try { q = new QuestId(raw); }
+      catch (System.Exception) { continue; }
+      if (!_applied.Add(q)) continue;
+      try { ApplyReward(q); }
+      catch (System.Exception) { }
+    }
+  }
+
+  void ApplyReward(QuestId questId) {
     QuestData data = null;
-    try { data = _content.Get(e.QuestId); } catch (Exception) { return; }
+    try { data = _content.Get(questId); } catch (Exception) { return; }
     if (data == null) return;
     if (data.rewardFriendshipMia != 0) {
       string key = new NpcId(MiaNpcId).Value ?? MiaNpcId;

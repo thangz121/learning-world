@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class MathHostPresenter : MonoBehaviour, IClickTarget {
+public sealed class MathHostPresenter : MonoBehaviour, IClickTarget, IQuestAdoptable {
   static readonly WordId OneWord = new WordId("one");
   static readonly QuestId MathQuest = new QuestId("math_counting");
 
@@ -140,12 +140,25 @@ public sealed class MathHostPresenter : MonoBehaviour, IClickTarget {
   // never saw QuestStartedEvent, so the old `_questStarted` gate made the
   // bring objective impossible to complete after leaving/returning to Math.
   // Index >= 1 already implies the quest started (default state is index 0).
+  // P1-7: decided by the shared AnswerValidator contract, not local index lore.
   bool IsFindDone() {
-    if (_quests == null) return false;
-    try {
-      QuestState s = _quests.GetState(_activeQuest);
-      return !s.Completed && s.ObjectiveIndex >= 1;
-    } catch (Exception) { return false; }
+    return AnswerValidator.CanBring(_quests, _activeQuest);
+  }
+
+  // P1-3 generic adopt: a fresh re-entry host marks the quest started (hint
+  // tick + talk-resume run again) without replaying events. Completed quests
+  // stay silent (director shows the post line). Idempotent.
+  public void AdoptQuestState(QuestState state) {
+    if (state == null || state.Id.Value != _activeQuest.Value) return;
+    if (state.Completed) {
+      _questStarted = true;
+      _clockSinceProgress = 0f;
+      return;
+    }
+    if (state.ObjectiveIndex >= 1) {
+      _questStarted = true;
+      _clockSinceProgress = 0f;
+    }
   }
 
   // Shared bring completion (click path + proximity path stay identical, Mia

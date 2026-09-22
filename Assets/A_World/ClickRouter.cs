@@ -46,6 +46,10 @@ public class ClickRouter : MonoBehaviour {
   IGameEventBus _bus;
   IAudioDirector _audio;
   ClickToMove _player;
+  // P1-6 shared input lock (MarketBootstrap pushes ONE instance; null =
+  // legacy behaviour). Transition/activity beats freeze routing centrally —
+  // no per-system booleans, and open dialogs NEVER lock (J1 click-through).
+  InteractionGate _gate;
 
   Interactable _pendingInteract;
   bool _hasInteractPending; // explicit: Unity-destroyed targets read as null, so null alone cannot mean "none"
@@ -63,6 +67,9 @@ public class ClickRouter : MonoBehaviour {
   // Player reference (same GameObject family as ClickToMove; kept separate from
   // Bind because the router commands movement but does not own the player).
   public void AttachPlayer(ClickToMove player) { _player = player; }
+
+  // P1-6 additive seam: push the shared gate in after Bind. Null clears it.
+  public void BindGate(InteractionGate gate) { _gate = gate; }
 
   // Lead introspection (also keeps the injected bus referenced, not just stored).
   public IGameEventBus Bus {
@@ -98,6 +105,7 @@ public class ClickRouter : MonoBehaviour {
 
   void HandleClick() {
     if (_player == null) return;
+    if (_gate != null && !_gate.CanRouteWorld) return; // P1-6: beat in flight, drop the tap
     if (IsPointerOverUi()) return; // HUD button clicks must not move the player
     Camera cam = Camera.main;
     if (cam == null) return;
@@ -308,6 +316,7 @@ public class ClickRouter : MonoBehaviour {
   // (Lead/tests drive this without needing a live mouse + camera.)
   public void RouteHitForTests(Collider hit, Vector3 point) {
     if (_player == null || hit == null) return;
+    if (_gate != null && !_gate.CanRouteWorld) return; // P1-6: beat in flight, drop the tap
     if (Mathf.Abs(point.x - boundCenter.x) > boundX || Mathf.Abs(point.z - boundCenter.z) > boundZ) return;
     Interactable interactable = hit.GetComponentInParent<Interactable>();
     if (interactable != null) {
