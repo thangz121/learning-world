@@ -390,4 +390,31 @@ public class CT_P45_MathHubGates {
       }
     } finally { TearDown(); }
   }
+
+  // S2 GATE IDENTITY (scope: entrance only, no gameplay): every gate carries
+  // the shared threshold ring under the arch (the "doorway" grammar) and the
+  // five gates that lacked a strong crown got their primary landmark. Purely
+  // static, collider-free presentation — no interactables, no activities.
+  [Test] public void P45L_GateEntranceIdentity() {
+    SetUp();
+    try {
+      foreach (MicroWorldGate g in _builder.MicroGates) {
+        Transform body = FindDeep(g.transform, "MathGateBody");
+        Assert.IsNotNull(body, g.gateId + " body");
+        Transform ring = FindDeep(g.transform, "MathGateThreshold");
+        Assert.IsNotNull(ring, g.gateId + " threshold ring built");
+        Assert.IsNull(ring.GetComponent<Collider>(), g.gateId + " threshold collider-free");
+        Assert.IsNotNull(FindDeep(g.transform, "MathGateThresholdInner"), g.gateId + " threshold inner");
+        Assert.IsNull(g.GetComponentInChildren<Interactable>(true), g.gateId + " has no activity");
+      }
+      foreach (string crown in new[] {
+        "MathGateCountCrown0", "MathGateGiantApple", "MathGateJigsawCrown",
+        "MathGateParcelCrown", "MathGateSeqCrown0",
+      }) {
+        Transform t = FindDeep(_root.transform, crown);
+        Assert.IsNotNull(t, crown + " crown built");
+        Assert.IsNull(t.GetComponent<Collider>(), crown + " collider-free");
+      }
+    } finally { TearDown(); }
+  }
 }

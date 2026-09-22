@@ -177,6 +177,10 @@ public class MathWorldBuilder : MonoBehaviour {
     MicroWorldGate gate = root.AddComponent<MicroWorldGate>();
     gate.Wire(def.Id, def.VnName, def.Pattern, def.Accent);
     Pad(root.transform, "MathGateBase", new Vector3(0f, 0f, GateBodyZ), 3.4f, CourtyardSand);
+    // S2 GATE IDENTITY: tinted threshold ring under the arch — the shared
+    // "this is a doorway" grammar for all 10 entrances (accent ring + sand
+    // inner, walkable ground treatment, above the base pad).
+    GateThreshold(root.transform, def.Accent);
     // Name pill rides above the frame (anchored to the body, not the ring).
     gate.LabelAnchor.localPosition = new Vector3(0f, 0f, GateBodyZ);
     GameObject labelGo = new GameObject("MathGateLabel");
@@ -186,6 +190,25 @@ public class MathWorldBuilder : MonoBehaviour {
     label.Show();
     MicroGates.Add(gate);
     return gate;
+  }
+
+  // S2 GATE IDENTITY: threshold ring (accent) + sand inner under the arch.
+  // Same grammar on all 10 entrances; collider-free ground treatment.
+  static void GateThreshold(Transform root, Color accent) {
+    GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    ring.name = "MathGateThreshold";
+    ring.transform.SetParent(root);
+    ring.transform.localPosition = new Vector3(0f, 0.035f, GateBodyZ);
+    ring.transform.localScale = new Vector3(3.0f, 0.014f, 3.0f);
+    ring.GetComponent<Renderer>().sharedMaterial = Lit(accent);
+    StripCollider(ring);
+    GameObject inner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    inner.name = "MathGateThresholdInner";
+    inner.transform.SetParent(root);
+    inner.transform.localPosition = new Vector3(0f, 0.05f, GateBodyZ);
+    inner.transform.localScale = new Vector3(2.3f, 0.014f, 2.3f);
+    inner.GetComponent<Renderer>().sharedMaterial = Lit(CourtyardSand);
+    StripCollider(inner);
   }
 
   // The gate body (frame + motif anchor). Builders compose in body-local
@@ -458,6 +481,11 @@ public class MathWorldBuilder : MonoBehaviour {
         new Vector3(-Mathf.Cos(a) * 1.6f, 2.15f + Mathf.Sin(a) * 1.0f - 0.42f, 0f),
         0.3f, i % 2 == 0 ? QuestGold : BerryRed, false);
     }
+    // S2 crown: a chunky row of three counting beads above the arch (the
+    // "count" promise reads at courtyard distance, no text needed).
+    for (int i = 0; i < 3; i++)
+      Ball(t, "MathGateCountCrown" + i, new Vector3(-0.5f + i * 0.5f, 3.42f, 0f),
+        0.5f, i == 1 ? BerryRed : QuestGold, false);
   }
 
   // 02 Discovery Garden (FIND/SEARCH/DISCOVER): the gate IS a giant cartoon
@@ -499,6 +527,9 @@ public class MathWorldBuilder : MonoBehaviour {
         0.34f, BerryRed, false);
     }
     GateBasket(t, "MathGateBasket", new Vector3(1.35f, 0.2f, 0.85f));
+    // S2 crown: one giant apple + leaf above the leafy arch (orchard promise).
+    Ball(t, "MathGateGiantApple", new Vector3(0f, 3.34f, 0f), 0.78f, BerryRed, false);
+    Ball(t, "MathGateGiantAppleLeaf", new Vector3(0.3f, 3.62f, 0f), 0.28f, LeafGreen, false);
   }
 
   // 04 Match Meadow (MATCH): two mirrored halves (aqua | gold) meeting at a
@@ -572,6 +603,13 @@ public class MathWorldBuilder : MonoBehaviour {
       new Vector3(0.5f, 0.5f, 0.5f), SoilBrown);
     IgnoreFromBuild(tab);
     Ball(t, "MathGatePeg", new Vector3(0f, 3.28f, 0f), 0.36f, QuestGold, false);
+    // S2 crown: a giant jigsaw piece locked on top (workshop promise).
+    GameObject piece = Box(t, "MathGateJigsawCrown", new Vector3(0f, 3.5f, 0f),
+      new Vector3(0.72f, 0.42f, 0.5f), BasketTan);
+    IgnoreFromBuild(piece);
+    GameObject pieceTab = Box(t, "MathGateJigsawTab", new Vector3(0.26f, 3.5f, 0f),
+      new Vector3(0.24f, 0.62f, 0.5f), BasketTan);
+    IgnoreFromBuild(pieceTab);
     Box(t, "MathGateBench", new Vector3(0f, 0.75f, -1.9f),
       new Vector3(1.8f, 0.14f, 0.7f), FenceWood);
     Box(t, "MathGateBenchLegL", new Vector3(-0.7f, 0.35f, -1.9f),
@@ -599,6 +637,11 @@ public class MathWorldBuilder : MonoBehaviour {
     roofR.transform.localRotation = Quaternion.Euler(0f, 0f, -26f);
     IgnoreFromBuild(roofR);
     Ball(t, "MathGateRidge", new Vector3(0f, 2.98f, 0f), 0.42f, QuestGold, false);
+    // S2 crown: a delivery parcel stack on the ridge (village promise).
+    Box(t, "MathGateParcelCrown", new Vector3(0f, 3.3f, 0f),
+      new Vector3(0.6f, 0.44f, 0.6f), BasketTan);
+    Box(t, "MathGateParcelCrownB", new Vector3(-0.1f, 3.64f, 0.05f),
+      new Vector3(0.42f, 0.28f, 0.42f), FenceWood);
     Box(t, "MathGateChimney", new Vector3(1.05f, 2.78f, -0.2f),
       new Vector3(0.3f, 0.66f, 0.3f), BerryRed);
     Box(t, "MathGateMailPost", new Vector3(1.7f, 0.5f, 0.75f),
@@ -665,6 +708,11 @@ public class MathWorldBuilder : MonoBehaviour {
     GameObject keystone = Box(t, "MathGateKeystone", new Vector3(0f, 3.28f, 0f),
       new Vector3(0.56f, 0.5f, 0.5f), StoneGrey);
     IgnoreFromBuild(keystone);
+    // S2 crown: a 1-2-3 ascending bead sequence hanging under the keystone
+    // (sequence/path promise, still above head clearance).
+    Ball(t, "MathGateSeqCrown0", new Vector3(-0.45f, 3.0f, 0f), 0.26f, Sky, false);
+    Ball(t, "MathGateSeqCrown1", new Vector3(0f, 2.92f, 0f), 0.34f, QuestGold, false);
+    Ball(t, "MathGateSeqCrown2", new Vector3(0.45f, 2.84f, 0f), 0.42f, Sky, false);
     Box(t, "MathGateDeck", new Vector3(0f, 0.12f, -0.7f),
       new Vector3(1.7f, 0.12f, 2.4f), FenceWood);
   }
