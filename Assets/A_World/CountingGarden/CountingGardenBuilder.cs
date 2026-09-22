@@ -1,13 +1,22 @@
-// A_World/CountingGarden/CountingGardenBuilder.cs — S2 PIONEER MICRO-WORLD v2.
+// A_World/CountingGarden/CountingGardenBuilder.cs — S3 P1 COUNTING GARDEN
+// FOUNDATION (micro-world foundation, DESIGN-FIRST).
 // The Counting Garden is its OWN additive scene (like MathScene is to the
 // subject-selection hall), LAZY-loaded only when the child walks into the
 // counting-garden gate in the Math Hub. This builder code-builds the scene
 // content (same pattern as MathWorldBuilder/MarketBuilder: one root GO, all
 // geometry in code, deterministic, shared Lit materials).
-// v2 scope (user order): a real new yard with FIVE fenced garden zones in an
-// arc ("chỉ cần quây khu lại, chưa cần làm gì thêm") + entry/exit + dressing +
-// scene-authored anchors. Zones are empty on purpose — they host the future
-// counting games.
+// S3-P1 scope (NO gameplay, NO demo, NO activity logic): WORLD FOUNDATION +
+// SPATIAL BLUEPRINT + ENVIRONMENT + ENTRY + ORIENTATION + DEMO SPACE +
+// ACTIVITY SPACE + FEEDBACK/REWARD SPACE + EXIT + NPC STAGING + CAMERA
+// COMPOSITION. The five fenced arc plots are kept (v2 contract) and given
+// Phase-1 ROLES: Zone2 (centre) = DEMO SPACE (static board + target row +
+// result frame), Zone1/Zone3 = MAIN ACTIVITY SPACE (static basket + apples +
+// number sign), Zone0/Zone4 = reserve for future phases. The courtyard hosts
+// ORIENTATION (landmark trio + NPC staging disc) and FEEDBACK/REWARD
+// (celebration disc + empty plinth + garland). Every foundation object is
+// STATIC/PRESENTATION ONLY: plain primitives, collider-free, NO Interactable,
+// NO presenter, NO quest/collect/scoring logic — Phase 2 (demo) and Phase 3
+// (Count & Collect) stage into these spaces later.
 // C# 9.0 only.
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,6 +37,14 @@ public class CountingGardenBuilder : MonoBehaviour {
   static readonly Color Lawn = new Color(0.38f, 0.64f, 0.36f);
   static readonly Color PathTan = new Color(0.76f, 0.60f, 0.40f);
   static readonly Color CourtyardSand = new Color(0.86f, 0.78f, 0.62f);
+  // S3-P1 foundation palette (static presentation only — shapes read without text).
+  static readonly Color Gold = new Color(0.98f, 0.78f, 0.25f);
+  static readonly Color AppleRed = new Color(0.85f, 0.25f, 0.25f);
+  static readonly Color BasketBrown = new Color(0.55f, 0.38f, 0.22f);
+  static readonly Color MintLeaf = new Color(0.70f, 0.90f, 0.72f);
+  static readonly Color StoneGrey = new Color(0.68f, 0.68f, 0.66f);
+  static readonly Color BoardCream = new Color(0.99f, 0.95f, 0.85f);
+  static readonly Color SkyBlue = new Color(0.68f, 0.84f, 0.98f);
 
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
@@ -57,6 +74,7 @@ public class CountingGardenBuilder : MonoBehaviour {
     BuildZones(root);
     BuildPaths(root);
     BuildDressing(root);
+    BuildFoundation(root);
     BuildAnchors(root);
     GameObject entry = new GameObject("EntryPoint");
     entry.transform.SetParent(root, false);
@@ -188,6 +206,116 @@ public class CountingGardenBuilder : MonoBehaviour {
       ZoneCenters[4] + (ArcCenter - ZoneCenters[4]).normalized * 4.6f, 1.1f);
   }
 
+  // ---- S3-P1 foundation (STATIC presentation only — NO gameplay) ----------------
+  // Spatial blueprint (local coords; runtime offset +120x separates islands):
+  //   ENTRY (z -12..-8, threshold + arch + exit disc, spawn clears exit radius)
+  //     -> ORIENTATION (courtyard 0,2: landmark trio + NPC staging disc)
+  //     -> DEMO SPACE (Zone2 centre: static board + 3 pedestals + result frame)
+  //     -> MAIN ACTIVITY (Zone1/Zone3: static basket + apples + number sign)
+  //     -> FEEDBACK/REWARD (pocket 0,6.4: gold disc + empty plinth + garland)
+  //     -> EXIT (disc + mint posts, south). Zone0/Zone4 stay fenced reserve.
+  // Nav discipline (journey lessons): ground solids bake as obstacles, so every
+  // foundation piece sits OFF the walk corridors (entry walk half 0.8m, spokes
+  // half 0.65m, agent radius 0.5m); anything overhead is ignoreFromBuild
+  // (headroom rule); pads stay thin/walkable. Nothing here has gameplay
+  // behaviour: NO Interactable, NO presenter, NO quest/collect/scoring.
+
+  void BuildFoundation(Transform parent) {
+    // ENTRY threshold: two low stone discs flanking the entry walk (read the
+    // doorway without text; walkable pads, never block the 1.6m walk; y-stepped
+    // above the entry pad so overlapping pads never z-fight).
+    Pad(parent, "CGThresholdL", new Vector3(-1.3f, 0.015f, -9.2f), 1.0f, StoneGrey);
+    Pad(parent, "CGThresholdR", new Vector3(1.3f, 0.015f, -9.2f), 1.0f, StoneGrey);
+    // ORIENTATION: landmark trio (counting identity 1-2-3 as gold/blue/pink
+    // blocks) east of the courtyard + NPC staging disc (Phase 2 stages Tess
+    // here; today it is a painted circle, no presenter, no AI).
+    Box(parent, "CGOrientTrio0", new Vector3(2.0f, 0.25f, 4.8f),
+      new Vector3(0.5f, 0.5f, 0.5f), Gold);
+    Box(parent, "CGOrientTrio1", new Vector3(2.7f, 0.25f, 4.8f),
+      new Vector3(0.5f, 0.5f, 0.5f), SkyBlue);
+    Box(parent, "CGOrientTrio2", new Vector3(3.4f, 0.25f, 4.8f),
+      new Vector3(0.5f, 0.5f, 0.5f), WorldBeauty.BlossomDeep);
+    Pad(parent, "CGNpcStagingDisc", new Vector3(-2.2f, 0.015f, 0.5f), 2.2f, BoardCream);
+    // DEMO SPACE (Zone2 centre plot): static board at the back, three target
+    // pedestals in a row, one result frame to the side. Off the mouth axis
+    // (x=0 walk enters south, stops at the row — a destination, not a block).
+    if (ZoneCenters.Count == ZoneCount) {
+      Vector3 demo = ZoneCenters[2];
+      Vector3 back = demo + ((demo - ArcCenter).normalized * 1.8f);
+      Box(parent, "CGDemoBoardL", back + new Vector3(-1.0f, 0.65f, 0f),
+        new Vector3(0.14f, 1.3f, 0.14f), BasketBrown);
+      Box(parent, "CGDemoBoardR", back + new Vector3(1.0f, 0.65f, 0f),
+        new Vector3(0.14f, 1.3f, 0.14f), BasketBrown);
+      Box(parent, "CGDemoBoardPanel", back + new Vector3(0f, 1.35f, 0f),
+        new Vector3(2.2f, 1.2f, 0.12f), BoardCream);
+      Vector3 row = demo + ((demo - ArcCenter).normalized * 0.8f);
+      Box(parent, "CGDemoTarget0", row + new Vector3(-1.1f, 0.25f, 0f),
+        new Vector3(0.5f, 0.5f, 0.5f), MintLeaf);
+      Box(parent, "CGDemoTarget1", row + new Vector3(0f, 0.25f, 0f),
+        new Vector3(0.5f, 0.5f, 0.5f), SkyBlue);
+      Box(parent, "CGDemoTarget2", row + new Vector3(1.1f, 0.25f, 0f),
+        new Vector3(0.5f, 0.5f, 0.5f), WorldBeauty.Lilac);
+      Box(parent, "CGDemoResultFrame", new Vector3(demo.x + 1.8f, 0.5f, demo.z - 0.2f),
+        new Vector3(0.9f, 1.0f, 0.12f), Gold);
+      // MAIN ACTIVITY SPACE (Zone1: 2 apples / Zone3: 3 apples — static count
+      // variety, NO pickup logic). Basket at the back, sign lateral off-walk.
+      BuildActivityPlot(parent, ZoneCenters[1], 2);
+      BuildActivityPlot(parent, ZoneCenters[3], 3);
+    }
+    // FEEDBACK / REWARD pocket (courtyard north): gold celebration disc under
+    // the walk (walkable), EMPTY plinth to the side (Phase 3 fills it — today
+    // no reward logic, no bloom), blossom garland overhead (ignored in bake).
+    Pad(parent, "CGRewardDisc", new Vector3(0f, 0.015f, 6.4f), 2.6f, Gold);
+    Cylinder(parent, "CGRewardPlinth", new Vector3(1.6f, 0.2f, 7.2f), 0.8f, 0.4f, BoardCream);
+    Box(parent, "CGRewardPostL", new Vector3(-1.6f, 0.9f, 6.4f),
+      new Vector3(0.16f, 1.8f, 0.16f), BasketBrown);
+    Box(parent, "CGRewardPostR", new Vector3(1.6f, 0.9f, 6.4f),
+      new Vector3(0.16f, 1.8f, 0.16f), BasketBrown);
+    GameObject garland = Box(parent, "CGRewardBeam", new Vector3(0f, 1.9f, 6.4f),
+      new Vector3(3.4f, 0.14f, 0.14f), WorldBeauty.BlossomPink);
+    IgnoreFromBuild(garland);
+    Sphere(parent, "CGRewardBlossom0", new Vector3(-0.9f, 2.15f, 6.4f), 0.55f,
+      WorldBeauty.BlossomPink, true);
+    Sphere(parent, "CGRewardBlossom1", new Vector3(0f, 2.25f, 6.4f), 0.65f,
+      WorldBeauty.BlossomCream, true);
+    Sphere(parent, "CGRewardBlossom2", new Vector3(0.9f, 2.15f, 6.4f), 0.55f,
+      WorldBeauty.BlossomDeep, true);
+    // EXIT landmark: mint posts flanking the return disc (read "way home" by
+    // colour/shape; the portal trigger itself is untouched).
+    Box(parent, "CGExitPostL", new Vector3(-1.6f, 0.9f, -10.4f),
+      new Vector3(0.16f, 1.8f, 0.16f), MintLeaf);
+    Box(parent, "CGExitPostR", new Vector3(1.6f, 0.9f, -10.4f),
+      new Vector3(0.16f, 1.8f, 0.16f), MintLeaf);
+    Sphere(parent, "CGExitCapL", new Vector3(-1.6f, 1.9f, -10.4f), 0.4f, MintLeaf, true);
+    Sphere(parent, "CGExitCapR", new Vector3(1.6f, 1.9f, -10.4f), 0.4f, MintLeaf, true);
+  }
+
+  // One activity plot (STATIC): basket at the back half, N apples in/around
+  // it, number sign on the lateral side off the mouth walk. Plain primitives
+  // only — deliberately NOT Interactable/presenter (Phase 3 owns behaviour).
+  void BuildActivityPlot(Transform parent, Vector3 center, int appleCount) {
+    string tag = (appleCount == 2) ? "1" : "3";
+    Vector3 toOut = (center - ArcCenter).normalized;
+    Vector3 lat = new Vector3(-toOut.z, 0f, toOut.x);
+    if (lat.x > 0f) lat = -lat; // keep signs on the courtyard side, off-walk
+    Vector3 basket = center + toOut * 1.6f;
+    Cylinder(parent, "CGActivity" + tag + "Basket", basket + new Vector3(0f, 0.25f, 0f),
+      0.9f, 0.5f, BasketBrown);
+    for (int i = 0; i < appleCount; i++) {
+      // Apple 0 rests INSIDE the basket; the rest sit on the ground beside it
+      // (static fruit — deliberately no pickup behaviour; Phase 3 owns that).
+      Vector3 off = (i == 0) ? new Vector3(0f, 0.55f, 0f)
+        : (i == 1) ? new Vector3(0.75f, 0.14f, 0.2f)
+        : new Vector3(-0.7f, 0.14f, 0.3f);
+      Sphere(parent, "CGActivity" + tag + "Apple" + i, basket + off, 0.28f, AppleRed, false);
+    }
+    Vector3 sign = center + toOut * 0.4f + lat * 1.7f;
+    Box(parent, "CGActivity" + tag + "SignPost", sign + new Vector3(0f, 0.5f, 0f),
+      new Vector3(0.12f, 1.0f, 0.12f), BasketBrown);
+    Box(parent, "CGActivity" + tag + "SignCube", sign + new Vector3(0f, 1.15f, 0f),
+      new Vector3(0.55f, 0.55f, 0.55f), Gold);
+  }
+
   // ---- dressing (S6/S7 beauty kit) ---------------------------------------------
 
   void BuildDressing(Transform parent) {
@@ -227,7 +355,7 @@ public class CountingGardenBuilder : MonoBehaviour {
     a.CameraLook = a.EnsureSlot("CameraLookAnchor", new Vector3(0f, 1.2f, 4f));
     a.Prompt = a.EnsureSlot("PromptAnchor", new Vector3(-0.8f, 1.78f, 0.9f));
     a.Feedback = a.EnsureSlot("FeedbackAnchor", new Vector3(-1.4f, 1.2f, 1.4f));
-    a.Reward = a.EnsureSlot("RewardAnchor", new Vector3(0f, 0f, 2f));
+    a.Reward = a.EnsureSlot("RewardAnchor", new Vector3(0f, 0f, 6.4f));
     a.Exit = a.EnsureSlot("ExitAnchor", new Vector3(0f, 0f, -10.4f));
   }
 
@@ -257,6 +385,35 @@ public class CountingGardenBuilder : MonoBehaviour {
     pad.transform.localScale = new Vector3(diameter, 0.02f, diameter);
     pad.GetComponent<Renderer>().sharedMaterial = Lit(color);
     StripCollider(pad);
+  }
+
+  // Knee-high static solid (basket/plinth): bakes as an obstacle — callers
+  // keep it off the walk corridors.
+  static GameObject Cylinder(Transform parent, string name, Vector3 pos,
+      float diameter, float height, Color color) {
+    GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    go.name = name;
+    go.transform.SetParent(parent);
+    go.transform.localPosition = pos;
+    go.transform.localScale = new Vector3(diameter, height * 0.5f, diameter);
+    go.GetComponent<Renderer>().sharedMaterial = Lit(color);
+    StripCollider(go);
+    return go;
+  }
+
+  // Static ball (apple/blossom/cap). Overhead dressing passes ignore=true so
+  // it never cuts NavMesh headroom (beam lesson); ground fruit stays baked.
+  static GameObject Sphere(Transform parent, string name, Vector3 pos,
+      float diameter, Color color, bool ignore) {
+    GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    go.name = name;
+    go.transform.SetParent(parent);
+    go.transform.localPosition = pos;
+    go.transform.localScale = new Vector3(diameter, diameter, diameter);
+    go.GetComponent<Renderer>().sharedMaterial = Lit(color);
+    StripCollider(go);
+    if (ignore) IgnoreFromBuild(go);
+    return go;
   }
 
   static void Seg(Transform parent, string name, Vector3 a, Vector3 b, float width) {
