@@ -50,6 +50,19 @@ public class CountingGardenBuilder : MonoBehaviour {
   public Transform EntryPoint { get; private set; }
   public readonly List<Vector3> ZoneCenters = new List<Vector3>();
   public MicroWorldPortal ExitPortal { get; private set; }
+  // S3-P2 demo stage refs (scene-authored; the CountingDemo sequence reads
+  // these, never magic vectors).
+  public GameObject DemoNumber { get; private set; }
+  public Transform DemoBasket { get; private set; }
+  public GameObject DemoApple0 { get; private set; }
+  public GameObject DemoApple1 { get; private set; }
+  public Vector3 DemoAppleHome0 { get; private set; }
+  public Vector3 DemoAppleHome1 { get; private set; }
+  public GameObject DemoResult { get; private set; }
+  public Transform DemoCam { get; private set; }
+  public Transform DemoLook { get; private set; }
+  public Vector3 DemoStageCenter { get; private set; }
+  public Vector3 DemoMouth { get; private set; }
 
   // Scene entry (GameInstaller calls this after the lazy load).
   public void Build() {
@@ -75,6 +88,7 @@ public class CountingGardenBuilder : MonoBehaviour {
     BuildPaths(root);
     BuildDressing(root);
     BuildFoundation(root);
+    BuildDemoStage(root);
     BuildAnchors(root);
     GameObject entry = new GameObject("EntryPoint");
     entry.transform.SetParent(root, false);
@@ -314,6 +328,82 @@ public class CountingGardenBuilder : MonoBehaviour {
       new Vector3(0.12f, 1.0f, 0.12f), BasketBrown);
     Box(parent, "CGActivity" + tag + "SignCube", sign + new Vector3(0f, 1.15f, 0f),
       new Vector3(0.55f, 0.55f, 0.55f), Gold);
+  }
+
+  // ---- S3-P2 demo stage (STATIC geometry for ONE Number-2 demo) ----------------
+  // Lives inside the Zone2 demo plot (P1 Demo Space). The CountingDemo
+  // sequence animates these pieces; everything here is still static geometry
+  // at build time (plain primitives, collider-free, NO behaviour):
+  //   big west-facing segment "2" (the number), demo basket, exactly 2 demo
+  //   apples resting on the front pedestals, hidden "2 tick" result group,
+  //   demo camera markers. All solids sit off the mouth walk (same nav
+  //   discipline as the foundation).
+
+  void BuildDemoStage(Transform parent) {
+    if (ZoneCenters.Count != ZoneCount) return;
+    Vector3 demo = ZoneCenters[2];
+    DemoStageCenter = demo;
+    Vector3 toOut = (demo - ArcCenter).normalized;
+    DemoMouth = demo + (ArcCenter - demo).normalized * 3.4f;
+    // The number: segment "2", gold, faces the arriving child (west).
+    DemoNumber = Digit2(parent, "CGDemoNumber2", new Vector3(11.0f, 0.11f, 3.3f),
+      1.4f, 0.8f, Gold);
+    // The basket: front-south of the plot, off the mouth walk.
+    GameObject basket = Cylinder(parent, "CGDemoBasket", new Vector3(9.7f, 0.25f, 0.7f),
+      0.9f, 0.5f, BasketBrown);
+    DemoBasket = basket.transform;
+    // Exactly 2 demo apples, resting on the two front target pedestals.
+    Vector3 row = demo + toOut * 0.8f;
+    DemoAppleHome0 = row + new Vector3(-1.1f, 0.64f, 0f);
+    DemoAppleHome1 = row + new Vector3(0f, 0.64f, 0f);
+    DemoApple0 = Sphere(parent, "CGDemoApple0", DemoAppleHome0, 0.28f, AppleRed, false);
+    DemoApple1 = Sphere(parent, "CGDemoApple1", DemoAppleHome1, 0.28f, AppleRed, false);
+    // The result: mini "2" + tick beside the result frame, pre-built HIDDEN —
+    // it appears only after the apples land in the basket (never before).
+    GameObject result = new GameObject("CGDemoResult");
+    result.transform.SetParent(parent, false);
+    result.transform.localPosition = new Vector3(demo.x + 1.8f, 0f, demo.z - 0.2f);
+    Digit2(result.transform, "CGDemoResultTwo", new Vector3(0f, 0.05f, 0.35f),
+      0.5f, 0.32f, Gold);
+    CheckMark(result.transform, "CGDemoResultCheck", new Vector3(0f, 0f, -0.3f),
+      0.3f, MintLeaf);
+    result.SetActive(false);
+    DemoResult = result;
+    // Demo camera markers (plain scene-authored transforms, no second system).
+    GameObject cam = new GameObject("CGDemoCam");
+    cam.transform.SetParent(parent, false);
+    cam.transform.localPosition = new Vector3(5.5f, 4.5f, 2.0f);
+    DemoCam = cam.transform;
+    GameObject look = new GameObject("CGDemoLook");
+    look.transform.SetParent(parent, false);
+    look.transform.localPosition = new Vector3(11.5f, 1.0f, 2.0f);
+    DemoLook = look.transform;
+  }
+
+  // Seven-seg "2" (a/b/g/e/d) standing in the ZY plane, thin in X — reads
+  // from the west (arriving child + demo camera). Group origin at the base so
+  // emphasis pulses grow upward.
+  GameObject Digit2(Transform parent, string name, Vector3 origin, float h, float w, Color color) {
+    GameObject g = new GameObject(name);
+    g.transform.SetParent(parent, false);
+    g.transform.localPosition = origin;
+    float t = Mathf.Min(0.18f, h * 0.13f);
+    Box(g.transform, name + "A", new Vector3(0f, h, 0f), new Vector3(t, t, w), color);
+    Box(g.transform, name + "G", new Vector3(0f, h * 0.5f, 0f), new Vector3(t, t, w), color);
+    Box(g.transform, name + "D", new Vector3(0f, 0f, 0f), new Vector3(t, t, w), color);
+    Box(g.transform, name + "B", new Vector3(0f, h * 0.75f, -w * 0.5f), new Vector3(t, h * 0.5f, t), color);
+    Box(g.transform, name + "E", new Vector3(0f, h * 0.25f, w * 0.5f), new Vector3(t, h * 0.5f, t), color);
+    return g;
+  }
+
+  // Floor tick: short down-stroke + long up-stroke in the ZY plane.
+  void CheckMark(Transform parent, string name, Vector3 origin, float size, Color color) {
+    GameObject s1 = Box(parent, name + "Stem", origin + new Vector3(0f, size * 0.4f, size * 0.25f),
+      new Vector3(0.12f, 0.12f, size * 0.55f), color);
+    s1.transform.localRotation = Quaternion.Euler(-55f, 0f, 0f);
+    GameObject s2 = Box(parent, name + "Arm", origin + new Vector3(0f, size * 0.75f, -size * 0.25f),
+      new Vector3(0.12f, 0.12f, size * 0.95f), color);
+    s2.transform.localRotation = Quaternion.Euler(48f, 0f, 0f);
   }
 
   // ---- dressing (S6/S7 beauty kit) ---------------------------------------------

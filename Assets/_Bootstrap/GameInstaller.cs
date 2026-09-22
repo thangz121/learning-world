@@ -222,6 +222,22 @@ public class GameInstaller : MonoBehaviour {
         area.SetGarden(entry, builder.Anchors);
         if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
       }
+      // S3-P2 demo pioneer: scene-local Number-2 sequence (lightweight local
+      // controller, NOT manager/AI/quest). Built AFTER builder.Build() so the
+      // host spawns post-NavMesh-bake and never bakes as a phantom obstacle.
+      // Best-effort like the Math wiring above: a demo failure degrades to a
+      // quiet garden, never a stranded player.
+      try {
+        CountingDemo demo = root.AddComponent<CountingDemo>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        demo.Build(builder,
+          playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
+          Audio);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Counting demo wiring failed (garden stays quiet): " + e.Message, this);
+      }
       try {
         Debug.Log("[GameInstaller] Counting Garden scene built (lazy) entry=" + (CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal).ToString("F1"));
       } catch (System.Exception) { }
