@@ -169,6 +169,8 @@ public class CT_P51_CountingGame {
     GameObject arena;
     CountingPlayBuilder builder = BuildArena(out arena);
     GameObject player = new GameObject("P51PlayerI");
+    // The audience gate needs the child INSIDE the arena watch radius (S3-P2L2).
+    player.transform.position = CountingPlayBuilder.WorldOffset + new Vector3(0f, 0f, -3f);
     try {
       CountingDemo demo = arena.AddComponent<CountingDemo>();
       demo.LoopForever = false;
@@ -234,6 +236,7 @@ public class CT_P51_CountingGame {
     GameObject arena;
     CountingPlayBuilder builder = BuildArena(out arena);
     GameObject player = new GameObject("P51PlayerL");
+    player.transform.position = CountingPlayBuilder.WorldOffset + new Vector3(0f, 0f, -3f);
     try {
       CountingGardenBuilder.DemoRefs r = builder.Activity;
       Assert.Greater(Dist2D(r.NpcStart, CountingGardenBuilder.DemoNpcStart), 3f,
