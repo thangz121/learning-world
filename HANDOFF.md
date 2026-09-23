@@ -1663,6 +1663,26 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
 - Game production đang chạy trên maynode (PID 24148) cho user chơi thử; visual
   PASS vẫn chờ mắt user (report ghi rõ TECHNICAL PASS / VISUAL REVIEW
   REQUIRED + known limitations).
+## 55. MERGE + PUSH REFERENCE GAMEPLAY (2026-09-23)
+
+- User lệnh push. Remote có `e4afc16` (S3-P2L2 audience gate từ máy nhà) chạm
+  cùng CountingDemo → rebase + hợp nhất 2 hành vi:
+  * Audience gate giữ nguyên (1 lượt/khán giả, rời cắt tiếng + reset sân,
+    re-arm khi đi xa) — hợp với layout DATA (`_islandOffset`, `_refs`).
+  * Thêm `AudienceGateEnabled` (game tắt gate sau handover/adopt → không dạy
+    lại, không cướp camera khi trẻ chơi); `SkipToObserving` set `_engaged` để
+    tableau hoàn thành vẫn thở; FocusZone không replay cưỡng bức (PassDone →
+    mở panel ngay).
+  * Test P51D/F dời "khán giả" vào bán kính arena; CT-P50H cấp viewer ở
+    viewing spot theo contract mới.
+- Verify hợp nhất: EditMode **600/595/0/5** (3 test audience-gate của máy nhà
+  + 6 test P51 + toàn bộ cũ, 0 regression) → build production **Succeeded
+  errors=0** size=110,040,182 → deploy maynode (PID 16228).
+- Push: `e4afc16..c5fdc5e main -> main` (4 commit: audience gate, gameplay,
+  HANDOFF §53, test fix).
+- Chưa làm: journey lại trên bản hợp nhất (audience gate đổi timing vườn:
+  bài chỉ chạy khi trẻ đứng viewing spot — cần user chơi xác nhận).
+
 ## 54. S3-P2L2 — DEMO AUDIENCE GATE (từ máy nhà, commit e4afc16) (2026-09-23)
 
 - Lỗi user báo: vào Counting Garden là demo tự diễn + TỰ NÓI, và lặp đi lặp lại
