@@ -148,9 +148,15 @@ public class MathQuestDirector : MonoBehaviour {
     _activeQuest = e.QuestId;
   }
 
+  // S3-P2L: single funnel for every Math HUD objective line, so the system
+  // language switch covers the HUD mirrors of the NPC instructions too.
   void ShowObjective(string text) {
     if (_hud == null) return;
-    try { _hud.ShowObjective(text); } catch (Exception) { }
+    string localized = text;
+    if (text == "Find the one") localized = DialogueLang.T(text, "Tìm số một");
+    else if (text == "Bring it to Tess") localized = DialogueLang.T(text, "Mang cho cô Tess");
+    else if (text == "Math World") localized = DialogueLang.T(text, "Thế giới Toán");
+    try { _hud.ShowObjective(localized); } catch (Exception) { }
   }
 
   void OnDisable() {

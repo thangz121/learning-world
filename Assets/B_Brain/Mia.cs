@@ -11,7 +11,6 @@ public static class Mia {
   static bool _bound;
 
   static readonly VoiceProfileId MiaVoice = new VoiceProfileId("mia_v1");
-  static readonly LanguageCode EnUs = new LanguageCode("en-US");
 
   public static bool IsBound {
     get { return _bound; }
@@ -25,18 +24,18 @@ public static class Mia {
   // Manifest mia_01: name readout (every Mia click reads who she is).
   // "I(1) am(2) Mia(3)"
   public static void SayName() {
-    Say("I am Mia!", SpeechStyle.Clear, AudioPriority.P3_Dialogue);
+    Say(DialogueLang.T("I am Mia!", "Cô là Mia!"), SpeechStyle.Clear, AudioPriority.P3_Dialogue);
   }
 
   // Manifest retry_03: wrong bring (sad + "choose again").
   // "Try(1) again(2) please(3)"
   public static void SayRetry() {
-    Say("Try again please!", SpeechStyle.Clear, AudioPriority.P4_Feedback);
+    Say(DialogueLang.T("Try again please!", "Thử lại nhé!"), SpeechStyle.Clear, AudioPriority.P4_Feedback);
   }
 
   static void Say(string text, SpeechStyle style, AudioPriority priority) {
     if (!_bound || _audio == null) return;
-    var req = new DialogueRequest(text, MiaVoice, EnUs, 1f, 1f, style, AudioFormat.Mp3_44100, priority);
+    var req = new DialogueRequest(text, MiaVoice, DialogueLang.Language, 1f, 1f, style, AudioFormat.Mp3_44100, priority);
     _audio.SpeakAsync(req); // fire-and-forget: the Director owns playback/caching.
   }
 }

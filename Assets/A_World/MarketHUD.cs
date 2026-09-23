@@ -15,7 +15,8 @@ using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class MarketHUD : BusBehaviour {
-  public string CurrentObjective { get; private set; } = "Look around!";
+  public string CurrentObjective { get; private set; } =
+    DialogueLang.T("Look around!", "Nhìn quanh nhé!");
 
   // Lead-wired replay action (Milo.RepeatInstruction). Null = button is inert.
   public Action OnReplayPressed;
@@ -32,6 +33,9 @@ public class MarketHUD : BusBehaviour {
   Text _objectiveText;
   Button _replayButton;
   GameObject _replayButtonGo;
+  // S3-P2L system dialogue language toggle (English <-> Tiếng Việt).
+  Button _langButton;
+  Text _langLabel;
   CanvasGroup _fade; // adaptive hierarchy: the chip yields to emotional beats
   float _targetAlpha = 1f;
   // S3A transition cover (SceneBridge pattern ADAPTED: fade-to-black covers
@@ -314,7 +318,7 @@ public class MarketHUD : BusBehaviour {
   }
 
   void OnQuestCompleted(QuestCompletedEvent e) {
-    ShowObjective("Great job!");
+    ShowObjective(DialogueLang.T("Great job!", "Giỏi lắm!"));
   }
 
   void HandleReplayButton() {
@@ -324,6 +328,30 @@ public class MarketHUD : BusBehaviour {
       // Replay must never break the game for kids.
     }
   }
+
+  // ---- system dialogue language (S3-P2L) ------------------------------------
+
+  // Switches English <-> Tiếng Việt, persists it, and updates the chip label.
+  // The label shows the CURRENT language name.
+  void HandleLanguageButton() {
+    try { DialogueLang.ToggleAndPersist(); } catch (Exception) { }
+    RefreshLanguageLabel();
+    // The chip switch reads immediately: re-localize whatever line is on.
+    try {
+      string next = DialogueLang.Relocalize(CurrentObjective);
+      if (!string.IsNullOrEmpty(next) && next != CurrentObjective) ShowObjective(next);
+    } catch (Exception) { }
+  }
+
+  public void RefreshLanguageLabel() {
+    if (_langLabel == null) return;
+    _langLabel.text = DialogueLang.Current == DialogueLanguage.Vietnamese
+      ? "Tiếng Việt" : "English";
+  }
+
+  // Test seam: the button object exists and cycles the system language.
+  public bool HasLanguageButton { get { return _langButton != null; } }
+  public string LanguageLabelText { get { return _langLabel != null ? _langLabel.text : ""; } }
 
   // ---- code-built uGUI (overlay canvas, compact corner chip, replay button) ----
   // Final polish: the chip is deliberately SMALL (secondary reminder, never a
@@ -404,12 +432,44 @@ public class MarketHUD : BusBehaviour {
     label.fontSize = 32;
     label.color = Color.white;
     label.alignment = TextAnchor.MiddleCenter;
-    label.text = "Hear it again";
+    label.text = DialogueLang.T("Hear it again", "Nghe lại nhé");
     RectTransform labelRt = labelGo.GetComponent<RectTransform>();
     labelRt.anchorMin = Vector2.zero;
     labelRt.anchorMax = Vector2.one;
     labelRt.offsetMin = Vector2.zero;
     labelRt.offsetMax = Vector2.zero;
+
+    // S3-P2L language toggle: small top-right chip cycling the SYSTEM dialogue
+    // language (English <-> Tiếng Việt). Parent-facing, always available, and
+    // persisted in the save. Same Image+Button+Text pattern as the replay
+    // button; never overlaps the objective chip (top-left) or replay (bottom).
+    GameObject langGo = new GameObject("LanguageButton");
+    langGo.transform.SetParent(canvasGo.transform);
+    Image langImage = langGo.AddComponent<Image>();
+    langImage.sprite = MakeRoundedSprite(64, 18, new Color(1f, 0.96f, 0.87f));
+    langImage.type = Image.Type.Sliced;
+    _langButton = langGo.AddComponent<Button>();
+    _langButton.targetGraphic = langImage;
+    _langButton.onClick.AddListener(HandleLanguageButton);
+    RectTransform langRt = langGo.GetComponent<RectTransform>();
+    langRt.anchorMin = new Vector2(1f, 1f);
+    langRt.anchorMax = new Vector2(1f, 1f);
+    langRt.pivot = new Vector2(1f, 1f);
+    langRt.anchoredPosition = new Vector2(-20f, -20f);
+    langRt.sizeDelta = new Vector2(170f, 48f);
+    GameObject langLabelGo = new GameObject("LanguageLabel");
+    langLabelGo.transform.SetParent(langGo.transform);
+    _langLabel = langLabelGo.AddComponent<Text>();
+    _langLabel.font = font;
+    _langLabel.fontSize = 22;
+    _langLabel.color = new Color(0.35f, 0.22f, 0.12f);
+    _langLabel.alignment = TextAnchor.MiddleCenter;
+    RectTransform langLabelRt = langLabelGo.GetComponent<RectTransform>();
+    langLabelRt.anchorMin = Vector2.zero;
+    langLabelRt.anchorMax = Vector2.one;
+    langLabelRt.offsetMin = new Vector2(8f, 4f);
+    langLabelRt.offsetMax = new Vector2(-8f, -4f);
+    RefreshLanguageLabel();
 
     // S3A transition cover: fullscreen black, LAST sibling (topmost), starts
     // disabled. Taps pass through (raycastTarget=false) so a mid-transition

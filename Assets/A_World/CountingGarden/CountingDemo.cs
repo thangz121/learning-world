@@ -52,7 +52,6 @@ public class CountingDemo : MonoBehaviour {
   const float BeatHoldSeconds = 3.0f;
 
   static readonly VoiceProfileId DemoVoice = new VoiceProfileId("npc_female_01");
-  static readonly LanguageCode EnUs = new LanguageCode("en-US");
 
   // Stage refs (pushed by Build).
   GameObject _number;
@@ -253,7 +252,8 @@ public class CountingDemo : MonoBehaviour {
         if (_phaseT >= 1.0f) {
           To(DemoPhase.TeacherSayBoard);
           Wave(_teacher);
-          Speak("Look at the board!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Speak(DialogueLang.T("Look at the board!", "Nhìn lên bảng nhé!"),
+            SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
         break;
       case DemoPhase.TeacherSayBoard:
@@ -261,7 +261,8 @@ public class CountingDemo : MonoBehaviour {
         PulseNumber();
         if (!_saidNumber) {
           _saidNumber = true;
-          Speak("This is number two.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Speak(DialogueLang.T("This is number two.", "Đây là số hai."),
+            SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
         if (_phaseT >= 2.4f) To(DemoPhase.TeacherSayTwo);
         break;
@@ -270,7 +271,7 @@ public class CountingDemo : MonoBehaviour {
         PulseNumber();
         if (!_didPulse && _phaseT >= 0.2f) {
           _didPulse = true;
-          Speak("Two.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Speak(DialogueLang.T("Two.", "Hai."), SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
         if (_phaseT >= 1.4f) To(DemoPhase.TeacherSayToday);
         break;
@@ -278,7 +279,8 @@ public class CountingDemo : MonoBehaviour {
         FaceTowards(_teacher, StudentPoint(), dt, 4f);
         if (!_saidToday) {
           _saidToday = true;
-          Speak("Today, we take two balls.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Speak(DialogueLang.T("Today, we take two balls.", "Hôm nay lấy hai bóng."),
+            SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
         if (_phaseT >= 2.6f) To(DemoPhase.TeacherAssign);
         break;
@@ -288,7 +290,8 @@ public class CountingDemo : MonoBehaviour {
         if (!_saidAssign) {
           _saidAssign = true;
           Wave(_teacher);
-          Speak("Take two balls, please!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Speak(DialogueLang.T("Take two balls, please!", "Con lấy hai bóng nhé."),
+            SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
         FaceTowards(_teacher, BallFieldPoint(), dt, 4f);
         if (_phaseT >= 2.2f) To(DemoPhase.StudentLook);
@@ -297,7 +300,8 @@ public class CountingDemo : MonoBehaviour {
         FaceTowards(_teacher, BasketPoint(), dt, 4f);
         if (_phaseT >= 0.4f && !_didPulse) {
           _didPulse = true;
-          Speak("Put them in the basket!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Speak(DialogueLang.T("Put them in the basket!", "Bỏ vào giỏ nhé."),
+            SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
         FaceTowards(_student, TeacherPoint(), dt, 3f);
         if (_phaseT >= 2.2f) {
@@ -320,7 +324,8 @@ public class CountingDemo : MonoBehaviour {
         }
         if (_phaseT >= 0.9f && !_didPulse) {
           _didPulse = true;
-          Speak("One ball.", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Speak(DialogueLang.T("One ball.", "Một quả bóng."),
+            SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
         if (_phaseT >= 1.8f) {
           _carry0 = true;
@@ -347,7 +352,8 @@ public class CountingDemo : MonoBehaviour {
         FaceTowards(_teacher, StudentPoint(), dt, 3f);
         if (!_didPulse && _phaseT >= 0.3f) {
           _didPulse = true;
-          Speak("Two balls!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+          Speak(DialogueLang.T("Two balls!", "Hai quả bóng!"),
+            SpeechStyle.Excited, AudioPriority.P4_Feedback);
           Wave(_teacher);
           Pulse(_teacher, CharacterExpression.Happy, 2f);
           Pulse(_student, CharacterExpression.Happy, 2f);
@@ -385,7 +391,8 @@ public class CountingDemo : MonoBehaviour {
         FaceTowards(_student, BasketPoint(), dt, 4f);
         if (!_asked) {
           _asked = true;
-          Speak("How many balls?", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+          Speak(DialogueLang.T("How many balls?", "Có mấy quả bóng?"),
+            SpeechStyle.Clear, AudioPriority.P2_Instruction);
           Pulse(_teacher, CharacterExpression.Curious, 1.8f);
           Pulse(_student, CharacterExpression.Curious, 1.8f);
         }
@@ -399,7 +406,8 @@ public class CountingDemo : MonoBehaviour {
         }
         if (!_cheered) {
           _cheered = true;
-          Speak("Two balls!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+          Speak(DialogueLang.T("Two balls!", "Hai quả bóng!"),
+            SpeechStyle.Excited, AudioPriority.P4_Feedback);
         }
         if (_phaseT >= 1.6f) To(DemoPhase.Celebrate);
         break;
@@ -503,7 +511,8 @@ public class CountingDemo : MonoBehaviour {
   }
 
   void SpeelCelebrate() {
-    Speak("Yes! Two balls! Well done!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+    Speak(DialogueLang.T("Yes! Two balls! Well done!", "Đúng rồi! Hai bóng! Giỏi!"),
+      SpeechStyle.Excited, AudioPriority.P4_Feedback);
   }
 
   bool _didPulseReset;
@@ -685,7 +694,7 @@ public class CountingDemo : MonoBehaviour {
   void Speak(string text, SpeechStyle style, AudioPriority priority) {
     if (_audio == null) return;
     try {
-      var req = new DialogueRequest(text, DemoVoice, EnUs, 1f, 1f, style,
+      var req = new DialogueRequest(text, DemoVoice, DialogueLang.Language, 1f, 1f, style,
         AudioFormat.Mp3_44100, priority);
       _audio.SpeakAsync(req); // fire-and-forget: the Director owns playback.
     } catch (Exception) { }

@@ -32,6 +32,9 @@ public class PlayerProgress {
   public string WorldSeed; // stable per profile (Part E)
   public PlayerGender PlayerGender = PlayerGender.Boy; // Phase 2.4: Boy/Girl choice, default Boy for migration
   public bool GenderChosen; // Phase 2.5: true once the child picks on the gender panel (panel shows until then)
+  // S3-P2L: system dialogue language (English default = old behavior for every
+  // existing save; additive field, no format break).
+  public DialogueLanguage Language = DialogueLanguage.English;
 }
 public interface ILearningService {
   void ReportSeen(WordId id, LearnSource src);

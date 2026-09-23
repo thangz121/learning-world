@@ -110,7 +110,7 @@ public class CountingGardenArea : MonoBehaviour {
         _camera.Follow(_player.transform, CountingGardenBuilder.FollowOffset);
       if (_camera != null && Anchors != null && Anchors.Camera != null && Anchors.CameraLook != null)
         _camera.FrameAnchor(Anchors.Camera, Anchors.CameraLook, 2.4f);
-      ShowObjective("Vườn Đếm");
+      ShowObjective(DialogueLang.T("Counting Garden", "Vườn Đếm"));
       IsInside = true;
       try { Debug.Log("[CountingGarden] entered scene (warp " + _gardenEntry.ToString("F1") + ").", this); }
       catch (Exception) { }
@@ -177,7 +177,7 @@ public class CountingGardenArea : MonoBehaviour {
     try {
       if (_hud == null) return;
       if (!string.IsNullOrEmpty(_preObjective)) _hud.ShowObjective(_preObjective);
-      else _hud.ShowObjective("Math World");
+      else _hud.ShowObjective(DialogueLang.T("Math World", "Thế giới Toán"));
     } catch (Exception) { }
   }
 

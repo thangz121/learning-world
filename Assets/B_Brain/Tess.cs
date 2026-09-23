@@ -13,7 +13,6 @@ public static class Tess {
   static bool _bound;
 
   static readonly VoiceProfileId TessVoice = new VoiceProfileId("npc_female_01");
-  static readonly LanguageCode EnUs = new LanguageCode("en-US");
 
   public static bool IsBound {
     get { return _bound; }
@@ -27,36 +26,38 @@ public static class Tess {
   // Manifest math_01: quest instruction (first talk + repeats).
   // "Find(1) the(2) one(3)"
   public static void SayFind() {
-    Say("Find the one!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+    Say(T("Find the one!", "Tìm số một!"), SpeechStyle.Clear, AudioPriority.P2_Instruction);
   }
 
   // Instruction after the find completes (bring phase).
   // "Bring(1) it(2) to(3) Tess(4)"
   public static void SayBring() {
-    Say("Bring it to Tess!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+    Say(T("Bring it to Tess!", "Mang cho cô Tess!"), SpeechStyle.Clear, AudioPriority.P2_Instruction);
   }
 
   // Manifest math_02: find praise.
   // "Great(1) One(2)"
   public static void PraiseFound() {
-    Say("Great! One!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+    Say(T("Great! One!", "Giỏi! Một!"), SpeechStyle.Excited, AudioPriority.P4_Feedback);
   }
 
   // Quest completion celebration.
   // "Perfect(1) Well(2) done(3)"
   public static void Celebrate() {
-    Say("Perfect! Well done!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+    Say(T("Perfect! Well done!", "Tuyệt vời! Giỏi lắm!"), SpeechStyle.Excited, AudioPriority.P4_Feedback);
   }
 
   // Name readout (every Tess click reads who she is).
   // "I(1) am(2) Tess(3)"
   public static void SayName() {
-    Say("I am Tess!", SpeechStyle.Clear, AudioPriority.P3_Dialogue);
+    Say(T("I am Tess!", "Cô là Tess!"), SpeechStyle.Clear, AudioPriority.P3_Dialogue);
   }
+
+  static string T(string en, string vi) { return DialogueLang.T(en, vi); }
 
   static void Say(string text, SpeechStyle style, AudioPriority priority) {
     if (!_bound || _audio == null) return;
-    var req = new DialogueRequest(text, TessVoice, EnUs, 1f, 1f, style, AudioFormat.Mp3_44100, priority);
+    var req = new DialogueRequest(text, TessVoice, DialogueLang.Language, 1f, 1f, style, AudioFormat.Mp3_44100, priority);
     _audio.SpeakAsync(req); // fire-and-forget: the Director owns playback/caching.
   }
 }

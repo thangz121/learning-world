@@ -1,4 +1,4 @@
-// _Bootstrap/MarketBootstrap.cs — Lead owns. W1 vertical-slice wiring.
+﻿// _Bootstrap/MarketBootstrap.cs — Lead owns. W1 vertical-slice wiring.
 // Lives on the same GameObject as GameInstaller (BootstrapScene). After
 // GameInstaller creates services and loads MarketScene, Build() instantiates
 // the B_Brain NPC presenters at the world anchors, wires replay/objective HUD,
@@ -67,8 +67,10 @@ public class MarketBootstrap : MonoBehaviour {
   // texts, pinned to Content/dialogues/manifest.json by CT-P10 (code mirrors
   // content until runtime catalog loading lands; validators own the truth).
   // Call params match the 2D L2 contract exactly (rate/pitch 1.0, Clear).
-  const string BallAskText = "Ball please!"; // manifest inst_07
-  const string BallPraiseText = "Great! Ball!"; // manifest ok_05
+  // S3-P2L: English stays the pinned mirror default; Vietnamese mode speaks the
+  // translated line (same manifest slot, delivered live through the Director).
+  static string BallAskText { get { return DialogueLang.T("Ball please!", "Bóng nhé!"); } } // manifest inst_07
+  static string BallPraiseText { get { return DialogueLang.T("Great! Ball!", "Giỏi! Bóng!"); } } // manifest ok_05
 
   // Called ONCE by GameInstaller after MarketScene is loaded. All services are
   // constructed; the MarketBuilder (A) has built the world in its Awake.
@@ -191,7 +193,9 @@ public class MarketBootstrap : MonoBehaviour {
     // instead ("Choose a gate!"), and the quest guide stays home.
     if (miloPresenter != null) miloPresenter.OnFirstTalk = OnFirstTalk;
     if (builder.Bubble != null) builder.Bubble.Hide();
-    if (_hud != null) _hud.ShowObjective(MarketBuilder.HubSelectionOnly ? "Choose a gate!" : "Talk to Milo");
+    if (_hud != null) _hud.ShowObjective(MarketBuilder.HubSelectionOnly
+      ? DialogueLang.T("Choose a gate!", "Chọn một cổng nhé!")
+      : DialogueLang.T("Talk to Milo", "Nói chuyện với Milo"));
     if (!MarketBuilder.HubSelectionOnly) {
       // Guide starts at Milo (the one pre-talk action).
       GameObject guideGo = new GameObject("QuestGuideLine");
@@ -410,7 +414,9 @@ public class MarketBootstrap : MonoBehaviour {
     if (_builder != null && _builder.Bubble != null) _builder.Bubble.Show();
     if (_miaLabel != null) _miaLabel.Show();
     if (_hud != null) {
-      string objective = (questToStart == W1QuestApple) ? "Find the apple" : "Find the ball";
+      string objective = (questToStart == W1QuestApple)
+        ? DialogueLang.T("Find the apple", "Tìm quả táo")
+        : DialogueLang.T("Find the ball", "Tìm quả bóng");
       _hud.ShowObjective(objective);
       _hud.SetReplayVisible(true);
     }
@@ -448,7 +454,9 @@ public class MarketBootstrap : MonoBehaviour {
         if (_builder != null && _builder.Bubble != null) _builder.Bubble.Show();
         if (_miaLabel != null) _miaLabel.Show();
         if (_hud != null) {
-          string objective = (nextQuest.Value == W1QuestBall) ? "Find the ball" : "Find the apple";
+          string objective = (nextQuest.Value == W1QuestBall)
+            ? DialogueLang.T("Find the ball", "Tìm quả bóng")
+            : DialogueLang.T("Find the apple", "Tìm quả táo");
           _hud.ShowObjective(objective);
           _hud.SetReplayVisible(true);
         }
@@ -480,14 +488,14 @@ public class MarketBootstrap : MonoBehaviour {
     if (e.WordId.Value == AppleWord.Value && _activeQuest.Value == W1QuestApple.Value) {
       Milo.PraiseFound();
       Milo.SetInstructionTarget(1);
-      if (_hud != null) _hud.ShowObjective("Bring the apple to Mia");
+      if (_hud != null) _hud.ShowObjective(DialogueLang.T("Bring the apple to Mia", "Mang táo cho cô Mia"));
       if (_guide != null) _guide.SetStage(GuideStage.ToMia, _miaT);
     } else if (e.WordId.Value == BallWord.Value && _activeQuest.Value == W1QuestBall.Value) {
       // 2F entry-driven praise: manifest correct-response line (Mia voice),
       // mirroring Milo.PraiseFound's role in the apple branch — word-free
       // generic praise would misname the target, manifest data names it.
       SayQuestLine(BallPraiseText, MiaVoice(), AudioPriority.P4_Feedback);
-      if (_hud != null) _hud.ShowObjective("Bring the ball to Mia");
+      if (_hud != null) _hud.ShowObjective(DialogueLang.T("Bring the ball to Mia", "Mang bóng cho cô Mia"));
       if (_guide != null) _guide.SetStage(GuideStage.ToMia, _miaT);
     }
   }
@@ -505,7 +513,7 @@ public class MarketBootstrap : MonoBehaviour {
   void SayQuestLine(string text, string voice, AudioPriority priority) {
     if (_audio == null || string.IsNullOrEmpty(text)) return;
     var req = new DialogueRequest(text, new VoiceProfileId(voice ?? ""),
-      new LanguageCode("en-US"), 1f, 1f, SpeechStyle.Clear,
+      DialogueLang.Language, 1f, 1f, SpeechStyle.Clear,
       AudioFormat.Mp3_44100, priority);
     FireLine(req);
   }
@@ -531,6 +539,11 @@ public class MarketBootstrap : MonoBehaviour {
   // exact pre-entry objective, camera re-anchors Follow on the player.
   void OnWorldChanged(WorldChangedEvent e) {
     if (_builder == null) return;
+    // S3-P2L: the ENGLISH subject always teaches English — while it is active,
+    // DialogueLang keeps every line in English even in Vietnamese mode.
+    // (Forward hook: the English subject has no scene yet; every travel
+    // already publishes this event.)
+    DialogueLang.EnglishSubjectActive = e.To.Value == "english";
     SubjectDefinition to = SubjectCatalog.Get(e.To);
     if (to != null) {
       // Phase 3.0.x S2: scene-backed subjects (Math pilot) travel through the
@@ -546,7 +559,9 @@ public class MarketBootstrap : MonoBehaviour {
         if (e.From == SubjectIds.Main) {
           try { _preWorldObjective = _hud.CurrentObjective; } catch (Exception) { }
         }
-        _hud.ShowObjective(to.DisplayName + " World");
+        // Vietnamese mode: the subject name alone ("Toán") — English mode keeps
+        // the "<Name> World" label, byte-identical to before.
+        _hud.ShowObjective(DialogueLang.T(to.DisplayName + " World", to.DisplayName));
       }
       if (_builder.WorldCamera != null) {
         Vector3 look = to.EntryPoint + new Vector3(0f, 1.0f, 0f);
@@ -580,7 +595,7 @@ public class MarketBootstrap : MonoBehaviour {
       }
       if (_hud != null) {
         if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
-        else _hud.ShowObjective("Look around!");
+        else _hud.ShowObjective(DialogueLang.T("Look around!", "Nhìn quanh nhé!"));
       }
       if (_builder.WorldCamera != null && _builder.Player != null) {
         try { _builder.WorldCamera.Follow(_builder.Player.transform, MarketBuilder.FollowOffset(_builder.WorldCamera.defaultOffset)); }
@@ -622,7 +637,7 @@ public class MarketBootstrap : MonoBehaviour {
       }
       try { _builder.Player.Stop(); } catch (System.Exception) { }
       if (_builder.Router != null) { try { _builder.Router.enabled = false; } catch (System.Exception) { } }
-      if (_hud != null) { try { _hud.ShowObjective("Entering " + to.DisplayName + "…"); } catch (System.Exception) { } }
+      if (_hud != null) { try { _hud.ShowObjective(DialogueLang.T("Entering ", "Đang vào ") + to.DisplayName + "…"); } catch (System.Exception) { } }
       // B1R3 math tunnel (user round): bead rings + number/symbol glyphs rush
       // past while the world loads — the transition itself reads "Math".
       if (_hud != null) { try { _hud.PlayTunnel(); } catch (System.Exception) { } }
@@ -648,7 +663,7 @@ public class MarketBootstrap : MonoBehaviour {
         if (_hud != null) {
           try {
             if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
-            else _hud.ShowObjective("Look around!");
+            else _hud.ShowObjective(DialogueLang.T("Look around!", "Nhìn quanh nhé!"));
           } catch (System.Exception) { }
         }
         return;
@@ -678,7 +693,7 @@ public class MarketBootstrap : MonoBehaviour {
         if (_hud != null) {
           try {
             if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
-            else _hud.ShowObjective("Look around!");
+            else _hud.ShowObjective(DialogueLang.T("Look around!", "Nhìn quanh nhé!"));
           } catch (System.Exception) { }
         }
         return;
@@ -712,7 +727,7 @@ public class MarketBootstrap : MonoBehaviour {
           }
         } catch (System.Exception) { }
       }
-      if (_hud != null) { try { _hud.ShowObjective(to.DisplayName + " World"); } catch (System.Exception) { } }
+      if (_hud != null) { try { _hud.ShowObjective(DialogueLang.T(to.DisplayName + " World", to.DisplayName)); } catch (System.Exception) { } }
       if (_builder.Router != null) { try { _builder.Router.enabled = true; } catch (System.Exception) { } }
       // S3A §8: success is dev-verifiable in the log (states stay truthful end
       // to end: Loading HUD -> InSubject HUD + this line). Cover lifts AFTER
@@ -828,7 +843,7 @@ public class MarketBootstrap : MonoBehaviour {
       if (_hud != null) {
         try {
           if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
-          else _hud.ShowObjective("Look around!");
+          else _hud.ShowObjective(DialogueLang.T("Look around!", "Nhìn quanh nhé!"));
         } catch (System.Exception) { }
       }
       if (_builder != null && _builder.WorldCamera != null && _builder.Player != null) {

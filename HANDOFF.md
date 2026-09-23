@@ -1299,3 +1299,40 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
 - Verify: full EditMode **577/572/0/5**; build production (không tooling)
   **Succeeded**; boot **ALIVE + FACE_OK 0 exception**. Ảnh: s3p2w11-shots +
   crop. Temp tooling xóa sạch. Commit kèm phase này.
+
+## 49. S3-P2L - SYSTEM DIALOGUE LANGUAGE: VI / EN (user order) (2026-09-22)
+
+- Lệnh user: 2 lựa chọn ngôn ngữ hệ thống — (1) Tiếng Việt: MỌI lời thoại NPC
+  bằng vi, CHỈ môn Tiếng Anh giữ en; (2) English (mặc định): giữ nguyên tất cả
+  như hiện tại.
+- Kiến trúc (không manager/service mới): `_SharedKernel/DialogueLang.cs` —
+  state tĩnh Current (English=0/Vietnamese=1) + `T(en, vi)` cho text +
+  `Language` (vi-VN / en-US) cho DialogueRequest + `EnglishSubjectActive`
+  (môn Tiếng Anh luôn en — hook sẵn, môn này chưa có scene) + `Relocalize`
+  cho câu HUD đang hiện + `Init(progress)` (đọc save, override CLI `-lang vi`)
+  + `ToggleAndPersist()` (load→modify→save như mọi writer khác).
+- Save: `PlayerProgress.Language` + DTO `language` int (additive, guard
+  Enum.IsDefined) — save cũ thiếu field tự về English, không đổi format.
+- Nguồn thoại đã route 100%: Tess (5 câu), Mia (2), Milo (8), CountingDemo
+  (11 câu lesson), MarketBootstrap (BallAsk/BallPraise + lang của SayQuestLine)
+  — tất cả qua DialogueLang (locale vi-VN khi bật VI). Câu VI đều ≤6 token
+  (Milo ≤8) để KHÔNG bị SafetyFilter nuốt im lặng — CT-P49B/C pin từng câu.
+- HUD: các câu objective (Choose a gate! / Look around! / Great job! /
+  Find the apple|ball / Bring ... to Mia / Hear it again / "X World"→tên môn /
+  Vườn Đếm→Counting Garden / Find the one / Bring it to Tess / Entering) đều
+  localized; MathQuestDirector gom qua 1 funnel ShowObjective. Thêm CHIP
+  top-right "English/Tiếng Việt" (MarketHUD, pattern replay button) — bấm là
+  đổi + lưu + relocalize câu đang hiện ngay. Không đè objective (trái) hay
+  replay (dưới).
+- Bằng chứng THẬT: driver tạm bấm chip trong build → log
+  `[S3P2L] boot lang=English / after click lang=Vietnamese / after click2
+  lang=English` + ảnh: chip đổi "English"→"Tiếng Việt", HUD "Choose a gate!"
+  → relocalize, vào Math HUD hiện "Toán". Worker TTS trả audio/mpeg cho câu VI
+  (test trực tiếp 3 câu qua endpoint ?lang=vi-VN) ⇒ đường thoại VI chạy thật.
+- Test mới CT-P49 ×5 (state/picker/subject-exception, 15 câu producer EN+VI +
+  safety caps, lesson loop VI, save round-trip + migration save cũ, HUD chip).
+  Suite **582/577/0/5** (baseline 577/572 + 5). Build production **Succeeded**;
+  boot **FACE_OK 0 exception**. Temp tooling xóa sạch.
+- Lưu ý: chữ Milo/Mia/Tess + tên môn giữ nguyên; vocab (từ tiếng Anh) vẫn
+  en-US theo thiết kế dạy tiếng Anh; pregen pack vẫn EN (câu VI phát qua TTS
+  runtime + cache L2). Commit kèm phase này.

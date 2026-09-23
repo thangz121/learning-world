@@ -63,6 +63,9 @@ public class GameInstaller : MonoBehaviour {
     // present + future — directors never hand-roll save code).
     try {
       PlayerProgress boot = Save != null ? Save.Load() : new PlayerProgress();
+      // S3-P2L: system dialogue language before ANY line can be produced
+      // (save value + "-lang vi/en" launch override).
+      DialogueLang.Init(boot);
       System.Collections.Generic.List<string> done =
         boot != null && boot.QuestsDone != null ? boot.QuestsDone : new System.Collections.Generic.List<string>();
       QuestManager qm = Quests as QuestManager;

@@ -16,7 +16,6 @@ public static class Milo {
   static bool _bound;
 
   static readonly VoiceProfileId MiloVoice = new VoiceProfileId("milo_v1");
-  static readonly LanguageCode EnUs = new LanguageCode("en-US");
 
   public static bool IsBound {
     get { return _bound; }
@@ -33,42 +32,42 @@ public static class Milo {
 
   // "Great(1) Let's(2) try(3) together(4)"
   public static void Encourage() {
-    Say("Great! Let's try together!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+    Say(T("Great! Let's try together!", "Giỏi! Mình thử nhé!"), SpeechStyle.Excited, AudioPriority.P4_Feedback);
   }
 
   // "Perfect(1) Good(2) job(3)"
   public static void Celebrate() {
-    Say("Perfect! Good job!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+    Say(T("Perfect! Good job!", "Tuyệt vời! Giỏi lắm!"), SpeechStyle.Excited, AudioPriority.P4_Feedback);
   }
 
   // "Come(1) with(2) me(3)"
   public static void PointHint() {
-    Say("Come with me!", SpeechStyle.Clear, AudioPriority.P3_Dialogue);
+    Say(T("Come with me!", "Đi với mình nhé!"), SpeechStyle.Clear, AudioPriority.P3_Dialogue);
   }
 
   // "Watch(1) me(2) do(3) it(4)"
   public static void DemoHint() {
-    Say("Watch me do it!", SpeechStyle.Clear, AudioPriority.P3_Dialogue);
+    Say(T("Watch me do it!", "Xem mình làm nhé!"), SpeechStyle.Clear, AudioPriority.P3_Dialogue);
   }
 
   // "Hello(1) I(2) am(3) Milo(4)"
   public static void Greet() {
-    Say("Hello! I am Milo!", SpeechStyle.Clear, AudioPriority.P3_Dialogue);
+    Say(T("Hello! I am Milo!", "Xin chào! Mình là Milo!"), SpeechStyle.Clear, AudioPriority.P3_Dialogue);
   }
 
   // "Find(1) the(2) apple(3)"
   public static void InstructFind() {
-    Say("Find the apple!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+    Say(T("Find the apple!", "Tìm quả táo nhé!"), SpeechStyle.Clear, AudioPriority.P2_Instruction);
   }
 
   // "Bring(1) it(2) to(3) Mia(4)"
   public static void InstructBring() {
-    Say("Bring it to Mia!", SpeechStyle.Clear, AudioPriority.P2_Instruction);
+    Say(T("Bring it to Mia!", "Mang cho cô Mia!"), SpeechStyle.Clear, AudioPriority.P2_Instruction);
   }
 
   // "You(1) found(2) it(3)"
   public static void PraiseFound() {
-    Say("You found it!", SpeechStyle.Excited, AudioPriority.P4_Feedback);
+    Say(T("You found it!", "Con tìm thấy rồi!"), SpeechStyle.Excited, AudioPriority.P4_Feedback);
   }
 
   static int _lastInstructionIndex; // default 0 -> find.
@@ -87,9 +86,11 @@ public static class Milo {
     else InstructBring();
   }
 
+  static string T(string en, string vi) { return DialogueLang.T(en, vi); }
+
   static void Say(string text, SpeechStyle style, AudioPriority priority) {
     if (!_bound || _audio == null) return;
-    var req = new DialogueRequest(text, MiloVoice, EnUs, 1f, 1f, style, AudioFormat.Mp3_44100, priority);
+    var req = new DialogueRequest(text, MiloVoice, DialogueLang.Language, 1f, 1f, style, AudioFormat.Mp3_44100, priority);
     _audio.SpeakAsync(req); // fire-and-forget: the Director owns playback/caching.
   }
 }
