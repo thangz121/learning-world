@@ -11,6 +11,10 @@ using UnityEngine;
 public class MicroWorldPortal : MonoBehaviour {
   public CountingGardenArea Area;
   public bool ExitMode;
+  // S3 P2X play arena: this exit unloads the play scene and brings the child
+  // back to the Counting Garden (the exit portal of the GARDEN keeps
+  // ExitMode -> Math Hub). Same poll contract, one mode bit.
+  public bool PlayExit;
   public string areaId = CountingGardenArea.AreaId;
   public float fireRadius = 1.3f;
   public float rearmMargin = 0.8f;
@@ -31,7 +35,8 @@ public class MicroWorldPortal : MonoBehaviour {
     float d2 = dx * dx + dz * dz;
     if (!_wasInside && d2 <= fireRadius * fireRadius) {
       _wasInside = true;
-      if (ExitMode) Area.ExitToHub();
+      if (PlayExit) Area.ExitPlayToGarden();
+      else if (ExitMode) Area.ExitToHub();
       else Area.EnterFromHub();
     } else if (_wasInside && d2 > (fireRadius + rearmMargin) * (fireRadius + rearmMargin)) {
       _wasInside = false;

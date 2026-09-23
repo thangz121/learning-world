@@ -818,6 +818,13 @@ public class MarketBuilder : MonoBehaviour {
       WorldBeauty.BlossomDeep, WorldBeauty.BlossomCream);
     WorldBeauty.Butterfly(transform, "HubButterfly1", new Vector3(-5.4f, 0f, 2.4f), 1.8f, 0.7f,
       WorldBeauty.Lilac, WorldBeauty.BlossomPink);
+    // S6+ dreamy hub (user order): rose ground washes around the gate arc and
+    // two more blossom trees flanking the courtyard (flat dressing only).
+    WorldBeauty.PetalCarpet(transform, "HubRosePatch0", new Vector3(-8.6f, 0f, 3.4f), 6.5f);
+    WorldBeauty.PetalCarpet(transform, "HubRosePatch1", new Vector3(8.6f, 0f, 3.4f), 6.5f);
+    WorldBeauty.PetalCarpet(transform, "HubRosePatch2", new Vector3(0f, 0f, 6.2f), 8.0f);
+    WorldBeauty.BlossomTree(transform, "HubBlossomTree6", new Vector3(-8.4f, 0f, 5.2f), 1.0f);
+    WorldBeauty.BlossomTree(transform, "HubBlossomTree7", new Vector3(8.4f, 0f, 5.2f), 1.0f);
     if (rng != null) { } // parity with the other decor builders (no Random used)
   }
 

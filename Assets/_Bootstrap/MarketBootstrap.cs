@@ -1,4 +1,4 @@
-Ôªø// _Bootstrap/MarketBootstrap.cs ‚Äî Lead owns. W1 vertical-slice wiring.
+// _Bootstrap/MarketBootstrap.cs ó Lead owns. W1 vertical-slice wiring.
 // Lives on the same GameObject as GameInstaller (BootstrapScene). After
 // GameInstaller creates services and loads MarketScene, Build() instantiates
 // the B_Brain NPC presenters at the world anchors, wires replay/objective HUD,
@@ -60,7 +60,7 @@ public class MarketBootstrap : MonoBehaviour {
   public ActivityLifecycle MarketLifecycle {
     get { return _marketLifecycle; }
   }
-  // Phase 3.0: objective cached before a world entry, restored on return ‚Äî
+  // Phase 3.0: objective cached before a world entry, restored on return ó
   // quest text is never clobbered by world navigation.
 
   // 2F ball-quest dialogue (data-driven, NOT new literals): exact manifest
@@ -69,8 +69,8 @@ public class MarketBootstrap : MonoBehaviour {
   // Call params match the 2D L2 contract exactly (rate/pitch 1.0, Clear).
   // S3-P2L: English stays the pinned mirror default; Vietnamese mode speaks the
   // translated line (same manifest slot, delivered live through the Director).
-  static string BallAskText { get { return DialogueLang.T("Ball please!", "B√≥ng nh√©!"); } } // manifest inst_07
-  static string BallPraiseText { get { return DialogueLang.T("Great! Ball!", "Gi·ªèi! B√≥ng!"); } } // manifest ok_05
+  static string BallAskText { get { return DialogueLang.T("Ball please!", "BÛng nhÈ!"); } } // manifest inst_07
+  static string BallPraiseText { get { return DialogueLang.T("Great! Ball!", "Gi?i! BÛng!"); } } // manifest ok_05
 
   // Called ONCE by GameInstaller after MarketScene is loaded. All services are
   // constructed; the MarketBuilder (A) has built the world in its Awake.
@@ -80,6 +80,8 @@ public class MarketBootstrap : MonoBehaviour {
   public LocalCameraService LocalCamera { get; private set; }
   public MediaRecordingService MediaRecorder { get; private set; }
   public DependencySetupService DependencySetup { get; private set; }
+  // S3-P2X zone picker (persistent UI; bound to CountingGardenArea by GameInstaller).
+  public GardenZonePanel ZonePanel { get; private set; }
   public void Build(IGameEventBus bus, IQuestService quests, IHintService hints, MarketBuilder builder, IAudioDirector audio = null, MicSetupBundle mic = null, WorldTransition worldTransition = null, ISceneOps sceneOps = null) {
     if (_built) return;
     _built = true;
@@ -160,13 +162,43 @@ public class MarketBootstrap : MonoBehaviour {
     _miaLabel = miaLabelGo.AddComponent<WorldNameLabel>();
     _miaLabel.Setup(miaName, _miaGo.transform, miaHeight);
     // Player report: Mia's name shows from frame one, like Milo's (no more
-    // hidden-until-introduction ‚Äî the child should always read who is who).
+    // hidden-until-introduction ó the child should always read who is who).
     _miaLabel.Show();
     }
 
     // HUD: objective text + replay delegates to Milo (no World->Brain reference).
     _hud = builder.Hud;
     if (_hud != null) _hud.OnReplayPressed = Milo.RepeatInstruction;
+
+    // S3-P2L+ (user order): a beautiful language chooser at EVERY launch ó
+    // the game mixes Vietnamese and English subjects, so the child picks the
+    // system dialogue language before play. DialogueLang stays the single
+    // source of truth (save + HUD chip unchanged).
+    try {
+      GameObject langGo = new GameObject("LanguageDialog");
+      langGo.transform.SetParent(transform, false);
+      LanguageDialog dialog = langGo.AddComponent<LanguageDialog>();
+      dialog.Build(_hud);
+      // Waits for every system notification (mic/dependency/recording) to be
+      // confirmed first ó Update shows it once nothing else is on screen.
+      dialog.QueueShow();
+    } catch (System.Exception) { }
+
+    // S3-P2X zone picker (user order ß47B): the pink card for the Counting
+    // Garden's plot focus. Built here (persistent bootstrap object) so it
+    // survives the garden <-> play scene swap; GameInstaller binds the area
+    // when MathScene wires the garden (late binding, single owner).
+    try {
+      GameObject zoneGo = new GameObject("GardenZonePanel");
+      zoneGo.transform.SetParent(transform, false);
+      ZonePanel = zoneGo.AddComponent<GardenZonePanel>();
+      ZonePanel.Build();
+      ZonePanel.Hide();
+      try { Debug.Log("[MarketBootstrap] zone panel created id=" + ZonePanel.GetHashCode(), this); }
+      catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogWarning("[MarketBootstrap] zone panel build failed: " + e.Message, this);
+    }
 
     // Quest flow narration (event-driven; rules stay in services/Milo).
     // Production event routing: WordSeen/WordSpoken on the bus drive quest
@@ -188,14 +220,14 @@ public class MarketBootstrap : MonoBehaviour {
     // Opening is talk-gated (first-time readability): the HUD names the one
     // action ("Talk to Milo"); Milo's proximity greet + name label do the
     // inviting. The quest (bubble, instruction voice, HUD action line) starts
-    // when the player actually talks to him ‚Äî never before.
-    // Hub-selection mode: no Milo, no quest ‚Äî the hall invites gate-picking
+    // when the player actually talks to him ó never before.
+    // Hub-selection mode: no Milo, no quest ó the hall invites gate-picking
     // instead ("Choose a gate!"), and the quest guide stays home.
     if (miloPresenter != null) miloPresenter.OnFirstTalk = OnFirstTalk;
     if (builder.Bubble != null) builder.Bubble.Hide();
     if (_hud != null) _hud.ShowObjective(MarketBuilder.HubSelectionOnly
-      ? DialogueLang.T("Choose a gate!", "Ch·ªçn m·ªôt c·ªïng nh√©!")
-      : DialogueLang.T("Talk to Milo", "N√≥i chuy·ªán v·ªõi Milo"));
+      ? DialogueLang.T("Choose a gate!", "Ch?n m?t c?ng nhÈ!")
+      : DialogueLang.T("Talk to Milo", "NÛi chuy?n v?i Milo"));
     if (!MarketBuilder.HubSelectionOnly) {
       // Guide starts at Milo (the one pre-talk action).
       GameObject guideGo = new GameObject("QuestGuideLine");
@@ -208,15 +240,15 @@ public class MarketBootstrap : MonoBehaviour {
     // runs the startup check on the next frame; future listening exercises
     // gate on MicMonitor.CheckBeforeListening(token) (quest #3 wiring).
     // NOTE 2026-09-18: gender selection removed by user order (girl visual
-    // failed gate) ‚Äî Boy-only, mic wires immediately, no identity panel.
+    // failed gate) ó Boy-only, mic wires immediately, no identity panel.
     if (mic != null && mic.Gate != null) {
       WireMic(mic);
     }
     // Phone camera stream (Phase 2.2, additive, independent of the mic gate):
     // realtime face preview, bottom-left. Own bridge port (8452), own thread,
-    // own frame slot ‚Äî camera can never starve speech. Entry/exit logged (one
+    // own frame slot ó camera can never starve speech. Entry/exit logged (one
     // line each: R10 log-spam lesson); any failure leaves the game running
-    // with CameraStream=null (gameplay never depends on camera, ¬ß17).
+    // with CameraStream=null (gameplay never depends on camera, ß17).
     PhoneCameraHud camHud = null;
     try {
       Debug.Log("[PhoneCamera] wiring camera stream service + HUD");
@@ -236,7 +268,7 @@ public class MarketBootstrap : MonoBehaviour {
       CameraStream = null;
     }
     // Local PC camera (precedence follow-up, additive): the laptop/integrated
-    // camera ‚Äî or a plugged-in USB webcam, which outranks it ‚Äî plays DIRECTLY
+    // camera ó or a plugged-in USB webcam, which outranks it ó plays DIRECTLY
     // in the same HUD box (local Live wins, phone is the fallback). Own
     // capture, own polling, no LAN, no gateway. Any failure (no camera,
     // denied, headless) leaves the phone path exactly as before.
@@ -251,7 +283,7 @@ public class MarketBootstrap : MonoBehaviour {
       Debug.LogWarning("[LocalCamera] wiring failed, phone camera path unchanged: " + e.Message);
       LocalCamera = null;
     }
-    // Media recording (Phase 2.3, additive): PC-side session recorder ‚Äî
+    // Media recording (Phase 2.3, additive): PC-side session recorder ó
     // gameplay capture + phone-camera stream + phone-mic audio -> WAV/AVI
     // intermediates -> MP4 (H.264 + camera PiP) + MP3 (LAME) via the isolated
     // FFmpeg backend when available (verified-intermediate fallback when
@@ -302,7 +334,7 @@ public class MarketBootstrap : MonoBehaviour {
       rec.BindToast(recToast);
       // One face in the file (user rule): the recorder hides this box while
       // recording (the PiP carries the face). Null when the camera path
-      // failed to wire ‚Äî Bind is null-safe.
+      // failed to wire ó Bind is null-safe.
       try { rec.BindCameraHud(camHud); } catch (Exception) { }
       // Phase 2.5: voice+gameplay mix in exports (null-safe: mic-only legacy when absent).
       try { rec.BindGameAudioTap(builder.GameTap); } catch (Exception) { }
@@ -318,7 +350,7 @@ public class MarketBootstrap : MonoBehaviour {
     // blocks gameplay (fallbacks stay active). Any failure leaves
     // DependencySetup=null and the game runs exactly as before.
     // Hub-selection hall: skip the check entirely (the LAN-cert/FFmpeg/Python
-    // modal is a dev flow ‚Äî kids choosing a gate must never see it).
+    // modal is a dev flow ó kids choosing a gate must never see it).
     if (!MarketBuilder.HubSelectionOnly) try {
       string appTools = null;
       try { appTools = System.IO.Path.Combine(Application.persistentDataPath, "Tools"); }
@@ -368,13 +400,60 @@ public class MarketBootstrap : MonoBehaviour {
   // <repo>/tools (phone_mic_gateway.py + lan certs) for the monitor's
   // in-game gateway auto-start. Null when not found (player builds without
   // the dev tools folder): the monitor falls back to manual instructions.
+  // Tools folder resolution (user bug: every new build prompted again and
+  // could not install because the standalone has no <build>/tools). Search
+  // several layouts, then MIRROR into the stable per-user folder
+  // (persistentDataPath/Tools) so later builds/machines stay silent.
   static string FindToolsDir() {
     try {
-      string root = System.IO.Directory.GetParent(Application.dataPath).FullName;
-      string td = System.IO.Path.Combine(root, "tools");
-      if (System.IO.Directory.Exists(td)) return td;
+      string appTools = System.IO.Path.Combine(Application.persistentDataPath, "Tools");
+      if (ToolsValid(appTools)) return appTools;
+      string env = null;
+      try { env = System.Environment.GetEnvironmentVariable("LWE_TOOLS"); } catch (Exception) { }
+      string root = null;
+      try { root = System.IO.Directory.GetParent(Application.dataPath).FullName; } catch (Exception) { }
+      string[] candidates = {
+        appTools,
+        env,
+        root != null ? System.IO.Path.Combine(root, "tools") : null,
+        root != null ? System.IO.Path.Combine(root, "..", "tools") : null,
+        root != null ? System.IO.Path.Combine(root, "..", "little-world-english", "tools") : null,
+        root != null ? System.IO.Path.Combine(root, "..", "learning-world", "tools") : null,
+      };
+      foreach (string c in candidates) {
+        if (!ToolsValid(c)) continue;
+        if (!string.Equals(c, appTools, StringComparison.OrdinalIgnoreCase)) {
+          MirrorTools(c, appTools);
+          if (ToolsValid(appTools)) return appTools;
+        }
+        return c;
+      }
     } catch (Exception) { }
     return null;
+  }
+
+  // A tools dir is usable when the phone gateway + LAN cert pieces are there.
+  static bool ToolsValid(string dir) {
+    try {
+      if (string.IsNullOrEmpty(dir) || !System.IO.Directory.Exists(dir)) return false;
+      bool gateway = System.IO.File.Exists(System.IO.Path.Combine(dir, "phone_mic_gateway.py"));
+      bool cert = System.IO.File.Exists(System.IO.Path.Combine(dir, "lan.crt"))
+        && System.IO.File.Exists(System.IO.Path.Combine(dir, "lan.key"));
+      return gateway || cert;
+    } catch (Exception) { return false; }
+  }
+
+  // One-time copy of the small tools folder into the stable user dir (certs +
+  // gateway scripts + pages, ~100KB). Best effort: a failed mirror just keeps
+  // the found path for this run.
+  static void MirrorTools(string from, string to) {
+    try {
+      System.IO.Directory.CreateDirectory(to);
+      foreach (string file in System.IO.Directory.GetFiles(from)) {
+        try { System.IO.File.Copy(file, System.IO.Path.Combine(to, System.IO.Path.GetFileName(file)), true); }
+        catch (Exception) { }
+      }
+    } catch (Exception) { }
   }
 
   // First talk: Milo opens the story. Same block that used to run at build;
@@ -415,8 +494,8 @@ public class MarketBootstrap : MonoBehaviour {
     if (_miaLabel != null) _miaLabel.Show();
     if (_hud != null) {
       string objective = (questToStart == W1QuestApple)
-        ? DialogueLang.T("Find the apple", "T√¨m qu·∫£ t√°o")
-        : DialogueLang.T("Find the ball", "T√¨m qu·∫£ b√≥ng");
+        ? DialogueLang.T("Find the apple", "T?m qu? t·o")
+        : DialogueLang.T("Find the ball", "T?m qu? bÛng");
       _hud.ShowObjective(objective);
       _hud.SetReplayVisible(true);
     }
@@ -455,8 +534,8 @@ public class MarketBootstrap : MonoBehaviour {
         if (_miaLabel != null) _miaLabel.Show();
         if (_hud != null) {
           string objective = (nextQuest.Value == W1QuestBall)
-            ? DialogueLang.T("Find the ball", "T√¨m qu·∫£ b√≥ng")
-            : DialogueLang.T("Find the apple", "T√¨m qu·∫£ t√°o");
+            ? DialogueLang.T("Find the ball", "T?m qu? bÛng")
+            : DialogueLang.T("Find the apple", "T?m qu? t·o");
           _hud.ShowObjective(objective);
           _hud.SetReplayVisible(true);
         }
@@ -488,14 +567,14 @@ public class MarketBootstrap : MonoBehaviour {
     if (e.WordId.Value == AppleWord.Value && _activeQuest.Value == W1QuestApple.Value) {
       Milo.PraiseFound();
       Milo.SetInstructionTarget(1);
-      if (_hud != null) _hud.ShowObjective(DialogueLang.T("Bring the apple to Mia", "Mang t√°o cho c√¥ Mia"));
+      if (_hud != null) _hud.ShowObjective(DialogueLang.T("Bring the apple to Mia", "Mang t·o cho cÙ Mia"));
       if (_guide != null) _guide.SetStage(GuideStage.ToMia, _miaT);
     } else if (e.WordId.Value == BallWord.Value && _activeQuest.Value == W1QuestBall.Value) {
       // 2F entry-driven praise: manifest correct-response line (Mia voice),
-      // mirroring Milo.PraiseFound's role in the apple branch ‚Äî word-free
+      // mirroring Milo.PraiseFound's role in the apple branch ó word-free
       // generic praise would misname the target, manifest data names it.
       SayQuestLine(BallPraiseText, MiaVoice(), AudioPriority.P4_Feedback);
-      if (_hud != null) _hud.ShowObjective(DialogueLang.T("Bring the ball to Mia", "Mang b√≥ng cho c√¥ Mia"));
+      if (_hud != null) _hud.ShowObjective(DialogueLang.T("Bring the ball to Mia", "Mang bÛng cho cÙ Mia"));
       if (_guide != null) _guide.SetStage(GuideStage.ToMia, _miaT);
     }
   }
@@ -506,7 +585,7 @@ public class MarketBootstrap : MonoBehaviour {
   }
 
   // 2F narration entry point: manifest text + roster voice through the frozen
-  // 2D audio contract (rate/pitch 1.0, Clear ‚Äî the exact params P08B pins for
+  // 2D audio contract (rate/pitch 1.0, Clear ó the exact params P08B pins for
   // L2 hits). Fire-and-forget: the Director owns failures as warnings; the
   // quest never blocks on voice. No new sentences live here beyond the two
   // manifest mirrors above (CT-P10 pins them to Content/).
@@ -527,7 +606,7 @@ public class MarketBootstrap : MonoBehaviour {
     }
   }
 
-  // Phase 3.0: objective cached before a world entry, restored on return ‚Äî
+  // Phase 3.0: objective cached before a world entry, restored on return ó
   // quest text is never clobbered by world navigation.
   string _preWorldObjective;
 
@@ -535,11 +614,11 @@ public class MarketBootstrap : MonoBehaviour {
   // untouched). Enter: HUD names the new world + camera frames the entry
   // beat, then auto-returns to Follow (the child walked in, no teleport).
   // Return: the player is warped to the main-side road head (same GameObjects,
-  // same services ‚Äî nothing duplicated, nothing leaked), HUD restores the
+  // same services ó nothing duplicated, nothing leaked), HUD restores the
   // exact pre-entry objective, camera re-anchors Follow on the player.
   void OnWorldChanged(WorldChangedEvent e) {
     if (_builder == null) return;
-    // S3-P2L: the ENGLISH subject always teaches English ‚Äî while it is active,
+    // S3-P2L: the ENGLISH subject always teaches English ó while it is active,
     // DialogueLang keeps every line in English even in Vietnamese mode.
     // (Forward hook: the English subject has no scene yet; every travel
     // already publishes this event.)
@@ -559,7 +638,7 @@ public class MarketBootstrap : MonoBehaviour {
         if (e.From == SubjectIds.Main) {
           try { _preWorldObjective = _hud.CurrentObjective; } catch (Exception) { }
         }
-        // Vietnamese mode: the subject name alone ("To√°n") ‚Äî English mode keeps
+        // Vietnamese mode: the subject name alone ("To·n") ó English mode keeps
         // the "<Name> World" label, byte-identical to before.
         _hud.ShowObjective(DialogueLang.T(to.DisplayName + " World", to.DisplayName));
       }
@@ -595,7 +674,7 @@ public class MarketBootstrap : MonoBehaviour {
       }
       if (_hud != null) {
         if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
-        else _hud.ShowObjective(DialogueLang.T("Look around!", "Nh√¨n quanh nh√©!"));
+        else _hud.ShowObjective(DialogueLang.T("Look around!", "Nh?n quanh nhÈ!"));
       }
       if (_builder.WorldCamera != null && _builder.Player != null) {
         try { _builder.WorldCamera.Follow(_builder.Player.transform, MarketBuilder.FollowOffset(_builder.WorldCamera.defaultOffset)); }
@@ -606,14 +685,14 @@ public class MarketBootstrap : MonoBehaviour {
 
   // Phase 3.0.x S2 scene travel (Math pilot). Fire-and-forget by design (bus
   // event handler): every failure path restores Main playability and reports
-  // via HUD + log ‚Äî never a stranded player, never a false InSubject.
+  // via HUD + log ó never a stranded player, never a false InSubject.
   // Awaits resume on the main thread (no ConfigureAwait), so Unity API below
   // is safe; the machine itself never touches Unity objects.
   async void TravelToSubjectAsync(SubjectDefinition to) {
     if (_travelLock) return;
     _travelLock = true;
     // P1-6: world input freezes for the whole travel beat (router + gates
-    // read the same gate ‚Äî no scattered booleans). _travelLock stays as the
+    // read the same gate ó no scattered booleans). _travelLock stays as the
     // async reentrancy guard; the gate is the INPUT lock.
     try { _gate.BeginTransition("travel:" + to.Id.Value); } catch (Exception) { }
     try {
@@ -637,9 +716,9 @@ public class MarketBootstrap : MonoBehaviour {
       }
       try { _builder.Player.Stop(); } catch (System.Exception) { }
       if (_builder.Router != null) { try { _builder.Router.enabled = false; } catch (System.Exception) { } }
-      if (_hud != null) { try { _hud.ShowObjective(DialogueLang.T("Entering ", "ƒêang v√†o ") + to.DisplayName + "‚Ä¶"); } catch (System.Exception) { } }
+      if (_hud != null) { try { _hud.ShowObjective(DialogueLang.T("Entering ", "–ang v‡o ") + to.DisplayName + "Ö"); } catch (System.Exception) { } }
       // B1R3 math tunnel (user round): bead rings + number/symbol glyphs rush
-      // past while the world loads ‚Äî the transition itself reads "Math".
+      // past while the world loads ó the transition itself reads "Math".
       if (_hud != null) { try { _hud.PlayTunnel(); } catch (System.Exception) { } }
       await System.Threading.Tasks.Task.Delay(120);
       bool entered = false;
@@ -649,9 +728,9 @@ public class MarketBootstrap : MonoBehaviour {
       try { installer = GetComponent<GameInstaller>(); } catch (System.Exception) { }
       Transform entry = installer != null ? installer.MathEntryPoint : null;
       if (!entered || entry == null) {
-        // Truthful failure (S3A ¬ß8): dev-side reason in the log (machine
+        // Truthful failure (S3A ß8): dev-side reason in the log (machine
         // LastError), player-side objective restore (no fake progress, no
-        // tech language ‚Äî the child simply taps the gate again).
+        // tech language ó the child simply taps the gate again).
         try {
           string reason = _worldTransition != null ? _worldTransition.LastError : null;
           Debug.LogWarning("[MarketBootstrap] Enter " + to.SceneName + " failed"
@@ -663,14 +742,14 @@ public class MarketBootstrap : MonoBehaviour {
         if (_hud != null) {
           try {
             if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
-            else _hud.ShowObjective(DialogueLang.T("Look around!", "Nh√¨n quanh nh√©!"));
+            else _hud.ShowObjective(DialogueLang.T("Look around!", "Nh?n quanh nhÈ!"));
           } catch (System.Exception) { }
         }
         return;
       }
       _activeSubjectScene = to.SceneName;
       // S6 beauty pass: scene-backed worlds get their own air (soft far haze
-      // so the sky, clouds and the pastel rainbow read ‚Äî Main's 18-45m fog
+      // so the sky, clouds and the pastel rainbow read ó Main's 18-45m fog
       // washed the Math sky out). Restored symmetrically on return below.
       if (to.Id == SubjectIds.Math) {
         try { WorldBeauty.ApplyMathAtmosphere(); } catch (System.Exception) { }
@@ -693,7 +772,7 @@ public class MarketBootstrap : MonoBehaviour {
         if (_hud != null) {
           try {
             if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
-            else _hud.ShowObjective(DialogueLang.T("Look around!", "Nh√¨n quanh nh√©!"));
+            else _hud.ShowObjective(DialogueLang.T("Look around!", "Nh?n quanh nhÈ!"));
           } catch (System.Exception) { }
         }
         return;
@@ -729,7 +808,7 @@ public class MarketBootstrap : MonoBehaviour {
       }
       if (_hud != null) { try { _hud.ShowObjective(DialogueLang.T(to.DisplayName + " World", to.DisplayName)); } catch (System.Exception) { } }
       if (_builder.Router != null) { try { _builder.Router.enabled = true; } catch (System.Exception) { } }
-      // S3A ¬ß8: success is dev-verifiable in the log (states stay truthful end
+      // S3A ß8: success is dev-verifiable in the log (states stay truthful end
       // to end: Loading HUD -> InSubject HUD + this line). Cover lifts AFTER
       // the warp + camera + HUD are all in place (never half-switched).
       try { Debug.Log("[MarketBootstrap] Entered " + to.SceneName + " (loader InSubject).", this); }
@@ -737,7 +816,7 @@ public class MarketBootstrap : MonoBehaviour {
       if (_hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
     } catch (System.Exception e) {
       // Fail-safe: an unexpected throw must never strand the child inside a
-      // tunnel (or a dead travel lock ‚Äî finally below still runs).
+      // tunnel (or a dead travel lock ó finally below still runs).
       try { Debug.LogWarning("[MarketBootstrap] Travel crashed: " + e.Message, this); }
       catch (System.Exception) { }
       if (_hud != null) { try { _hud.StopTunnel(); } catch (System.Exception) { } }
@@ -760,10 +839,10 @@ public class MarketBootstrap : MonoBehaviour {
   }
 
   // S3A transition cover driver (SceneBridge pattern ADAPTED: fade covers the
-  // load/warp/unload beat, then lifts ‚Äî time-based cover over a real awaited
+  // load/warp/unload beat, then lifts ó time-based cover over a real awaited
   // op, never a fake progress bar). Main-thread note: these awaits resume on
   // Unity's SynchronizationContext (no ConfigureAwait), so the SetTransition-
-  // Cover calls below are main-thread safe ‚Äî the same pattern the existing
+  // Cover calls below are main-thread safe ó the same pattern the existing
   // post-await WarpTo/camera calls already rely on. Never throws.
   async System.Threading.Tasks.Task FadeCoverAsync(float target, float seconds) {
     try {
@@ -789,7 +868,7 @@ public class MarketBootstrap : MonoBehaviour {
   // reactivate Main, restore camera/HUD/input. Idempotent pieces make it safe
   // from both the return-gate path and the enter-failure path. withFade covers
   // the switch beat (S3A); enter-failure callers pass false (nothing switched
-  // yet ‚Äî they only lift the entry cover).
+  // yet ó they only lift the entry cover).
   async System.Threading.Tasks.Task ReturnFromSubjectCoreAsync(bool withFade) {
     try {
       // B1R3: same math tunnel covers the way home (symmetric transition).
@@ -838,12 +917,12 @@ public class MarketBootstrap : MonoBehaviour {
       _activeSubjectScene = null;
       ReactivateMainPresentation();
       // S6 beauty pass: back to the crisp Main air (symmetric with the enter
-      // swap; harmless on the enter-failure path ‚Äî it just re-applies Main).
+      // swap; harmless on the enter-failure path ó it just re-applies Main).
       try { WorldBeauty.ApplyMainAtmosphere(); } catch (System.Exception) { }
       if (_hud != null) {
         try {
           if (!string.IsNullOrEmpty(_preWorldObjective)) _hud.ShowObjective(_preWorldObjective);
-          else _hud.ShowObjective(DialogueLang.T("Look around!", "Nh√¨n quanh nh√©!"));
+          else _hud.ShowObjective(DialogueLang.T("Look around!", "Nh?n quanh nhÈ!"));
         } catch (System.Exception) { }
       }
       if (_builder != null && _builder.WorldCamera != null && _builder.Player != null) {
@@ -886,7 +965,7 @@ public class MarketBootstrap : MonoBehaviour {
     if (e.QuestId.Value == W1QuestApple.Value || e.QuestId.Value == W1QuestBall.Value) {
       _questStarted = true;
       _activeQuest = e.QuestId;
-      // P1-1: (re)offer then activate ‚Äî a next quest after a completion goes
+      // P1-1: (re)offer then activate ó a next quest after a completion goes
       // Completed -> Available -> Active through the same contract.
       try {
         _marketLifecycle.MarkAvailable("quest started");

@@ -117,12 +117,14 @@ public class CT_P48_CountingDemo {
         Assert.IsNotNull(FindDeep(t, t.name + "CarryAnchor"), t.name + " has a visible carry anchor");
       }
       // The student is a CHILD next to the teacher (user script roles).
+      // S3-P2Y: the garden stage is the MINIATURE (DemoMiniScale), so world
+      // body sizes are scaled down — the arena keeps the full-size bodies.
       float teacherH = teacher.GetComponentInChildren<SkinnedMeshRenderer>(true) != null
         ? teacher.GetComponentInChildren<SkinnedMeshRenderer>(true).bounds.size.y : 0f;
       float studentH = student.GetComponentInChildren<SkinnedMeshRenderer>(true) != null
         ? student.GetComponentInChildren<SkinnedMeshRenderer>(true).bounds.size.y : 0f;
-      Assert.Greater(teacherH, 0.5f, "teacher has a body");
-      Assert.Greater(studentH, 0.3f, "student has a body");
+      Assert.Greater(teacherH, 0.3f, "teacher has a body (miniature scale)");
+      Assert.Greater(studentH, 0.15f, "student has a body (miniature scale)");
       Assert.Less(studentH, teacherH, "student reads smaller than the teacher (a child)");
       Assert.IsFalse(typeof(IClickTarget).IsAssignableFrom(typeof(CountingDemo)),
         "demo is not a click target (the child cannot drive the lesson)");
@@ -241,5 +243,34 @@ public class CT_P48_CountingDemo {
       Object.DestroyImmediate(camGo);
       Object.DestroyImmediate(playerGo);
     } finally { Object.DestroyImmediate(garden); }
+  }
+
+  // E. S3-P2Y journey fix: the lesson card must NOT hold the camera forever.
+  // Standing inside the watch radius re-issues only a few times, then the demo
+  // hands the camera back to Follow (the way-home door is behind the card).
+  [Test] public void P48E_CardReleasesCamera() {
+    GameObject garden = new GameObject("P48GardenRelease");
+    GameObject camGo = new GameObject("P48CamRelease");
+    GameObject playerGo = new GameObject("P48PlayerRelease");
+    try {
+      CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
+      builder.BuildContent(garden.transform);
+      SmartCamera cam = camGo.AddComponent<SmartCamera>();
+      playerGo.transform.position = CountingGardenBuilder.WorldOffset + builder.DemoMouth;
+      CountingDemo demo = garden.AddComponent<CountingDemo>();
+      demo.Build(builder, playerGo.transform, cam, null);
+      int guard = 0;
+      while (demo.DemoBeatsFired < 1 && guard < 100) { demo.Step(0.1f); guard++; }
+      Assert.AreEqual(1, demo.DemoBeatsFired, "walking up fires the card");
+      int guard2 = 0;
+      while (demo.BeatReissues < 3 && guard2 < 200) { demo.Step(0.1f); guard2++; }
+      Assert.AreEqual(3, demo.BeatReissues, "card re-issues are budgeted, never endless");
+      demo.Step(0.1f); // the next pass hits the release branch
+      Assert.AreEqual(CameraMode.Follow, cam.Mode, "the demo hands the camera back after the budget");
+    } finally {
+      Object.DestroyImmediate(playerGo);
+      Object.DestroyImmediate(camGo);
+      Object.DestroyImmediate(garden);
+    }
   }
 }

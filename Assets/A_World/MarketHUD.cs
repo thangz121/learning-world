@@ -378,6 +378,10 @@ public class MarketHUD : BusBehaviour {
     Image panel = panelGo.AddComponent<Image>();
     panel.sprite = MakeRoundedSprite(64, 18, new Color(1f, 0.96f, 0.87f));
     panel.type = Image.Type.Sliced;
+    // Journey fix (user report round): the hub parks this pill bottom-centre,
+    // where it silently ate every ground click near the child's feet (the pill
+    // is a reminder, never a button). Display-only: taps pass through.
+    panel.raycastTarget = false;
     RectTransform panelRt = panelGo.GetComponent<RectTransform>();
     panelRt.anchorMin = new Vector2(0f, 1f);
     panelRt.anchorMax = new Vector2(0f, 1f);
@@ -397,6 +401,7 @@ public class MarketHUD : BusBehaviour {
     GameObject textGo = new GameObject("ObjectiveText");
     textGo.transform.SetParent(panelGo.transform);
     _objectiveText = textGo.AddComponent<Text>();
+    _objectiveText.raycastTarget = false; // display-only (see the panel note)
     _objectiveText.font = font;
     _objectiveText.fontSize = 23;
     _objectiveText.color = new Color(0.35f, 0.22f, 0.12f);

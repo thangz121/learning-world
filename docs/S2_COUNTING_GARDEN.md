@@ -86,3 +86,90 @@ yard (S6/S7 beauty kit). Scene-authored `ActivityAnchors` (8 slots).
 6. Dressing: pink/blossom identity consistent with the Math World art?
 7. Any stuck transition (gate spam, exit then re-enter, return to Main)?
 8. Re-enter: scene loads fresh, no duplicates, no leftover state?
+
+## 8. S3-P2X zone picker + play arena (user order §47B, 2026-09-23)
+
+Flow: Math Hub -> counting-garden gate -> CountingGardenScene (5 plots) ->
+click/walk up to a plot -> pink `GardenZonePanel` -> "Vào chơi" (staged plots
+only) -> `CountingPlayScene` (own lazy micro slot swap: garden unload -> arena
+load) -> the two-NPC Number-2 lesson plays there -> arena exit disc ->
+garden reload + warp back to the plot.
+
+- Zone doors: `GardenZoneSpot` (click pad with a collider for ClickRouter +
+  NavMeshModifier so it never bakes; per-zone camera pair; `playEnabled` only
+  for the demo plot, index 2).
+- Focus beat: click OR proximity <= 2m -> camera frames the plot + HUD names
+  it; double-click outside the panel cancels; the spot re-arms only after the
+  child walks clear.
+- Play swap reuses `WorldTransition`'s single micro slot
+  (`ExitMicroAsync` -> `EnterMicroAsync`). Any failure reloads the garden and
+  warps back to its entry: an empty world is never left under the child.
+- `CountingGardenBuilder.BuildDemoStageInto(parent, origin)` is the ONE
+  authored lesson layout (the garden theatre renders it as plot-2 scenery; the
+  arena hosts the live `CountingDemo` via the `CountingPlayBuilder` overload +
+  the island offset — no hardcoded map coordinates in the controller).
+- Tests: CT-P50 (7). Suite 589/584/0/5. Build Succeeded errors=0. Headless
+  wiring smoke: full loop, 0 exceptions. Human visual review of the new flow
+  is PENDING (foreground build on maynode).
+
+## 9. S3-P2Y feedback round (2026-09-23)
+
+User asked for: clear plot boundaries everywhere, the demo running even before
+any choice, attention shared with the 4 skeleton beds, the choose-panel only
+after a full try-run, the play zone shrunk before selection (focus/expand on
+play), and maximum demo animation.
+
+- Boundaries: every bed gets a contrasting ground border ring (plus its fence
+  ring); the demo plot gets the same border + a back/side fence ring placed
+  outside the crescent-walk band (north stays open as the theatre mouth).
+- Attention: `GardenZoneVignette` gives each bed an always-on counting
+  performance (beads pop 1..N, crops breathe).
+- Ambient demo: the garden hosts a pivot-compensated MINIATURE of the lesson
+  (`DemoMiniScale`), camera beats off, actors/FX inside the scaled root — it
+  loops for everyone; the arena keeps the full-size live version.
+- Panel gate: focusing a staged plot restarts the lesson and shows the panel
+  only when the loop completes (HUD "Watch!" meanwhile); skeleton plots keep
+  the immediate Back-only panel.
+- Animation: `DemoJuice` (confetti, sparkles, pulsing spotlight), squash &
+  stretch, basket pop, ball sparkles, and a third camera shot for the
+  "2 + tick" payoff.
+- Tests: CT-P50H (8th zone test) + CT-P48B thresholds re-pinned to the
+  miniature. Suite 590/585/0/5. Build Succeeded errors=0 warnings=4.
+
+## 10. S3-P2Z real-click journey (maynode) — 7 fixes (2026-09-23)
+
+The whole flow was driven on the home machine with REAL mouse injection
+(Input System state events at screen coordinates; no teleport/direct state),
+which exposed and fixed seven real bugs:
+
+1. Zone-focus camera anchors were children of the scaled click pad → the
+   camera landed at ground level (user report "camera đang fail"). Anchors now
+   live on the unscaled garden root.
+2. The zone panel's Play button was dead: `BindPanel` only stored the panel on
+   the area and never handed the area to the panel. Two-way bind + self-heal.
+3. The language chooser never opened: `SystemDialogBusy` tested dialog
+   COMPONENT presence (all dialogs exist hidden from boot) instead of
+   `IsShowing`.
+4. The lesson card re-issued forever while the child stood in its radius,
+   hiding the way out behind the camera. Budgeted re-issues + explicit
+   hand-back to Follow (pinned by CT-P48E).
+5. The hub HUD pill (bottom-centre) swallowed every world click near the
+   child's feet: panel + text are display-only now (raycastTarget=false).
+6. Returning from the arena landed on the plot and instantly re-focused it
+   (camera pinned). Proximity re-arms only after walking clear.
+7. The stage spotlight shipped without a material → magenta under URP; it now
+   gets the shared Lit tint.
+
+Journey result: language → Math gate → garden gate → plot focus → try-run →
+panel Play → arena lesson → card release → walk-out → garden → walk-out → Math
+hub, with **0 exceptions**. Evidence: `Temp/opencode/p2yj-shots/*.png`.
+
+## 11. S3-P2Z3 — arena cleared for the child's game (2026-09-23)
+
+User order: the play arena must contain ONLY the game (design incoming); the
+Number-2 NPC demo was removed from it. The arena scene now stages
+infrastructure + anchors only (ground/paths/entry/exit door/fences/dressing;
+GameplayFocus at the empty field centre) and no `CountingDemo`, no `CGDemo*`
+props, no spotlight. The garden keeps its ambient miniature + the "panel only
+after the try-run" flow. CT-P50F re-pinned to the empty arena. Suite
+591/586/0/5, build Succeeded errors=0.

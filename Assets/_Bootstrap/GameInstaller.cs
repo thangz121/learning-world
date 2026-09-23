@@ -144,6 +144,10 @@ public class GameInstaller : MonoBehaviour {
       BuildCountingGardenScene(scene);
       return;
     }
+    if (scene.name == CountingPlayBuilder.SceneName) {
+      BuildCountingPlayScene(scene);
+      return;
+    }
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
@@ -222,30 +226,93 @@ public class GameInstaller : MonoBehaviour {
       }
       if (area != null) {
         Vector3 entry = CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal;
-        area.SetGarden(entry, builder.Anchors);
+        area.SetGarden(entry, builder.Anchors, builder.ZoneSpots);
         if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
       }
-      // S3-P2 demo pioneer: scene-local Number-2 sequence (lightweight local
-      // controller, NOT manager/AI/quest). Built AFTER builder.Build() so the
-      // host spawns post-NavMesh-bake and never bakes as a phantom obstacle.
-      // Best-effort like the Math wiring above: a demo failure degrades to a
-      // quiet garden, never a stranded player.
+      // S3-P2Y (user order: "player chưa chọn chơi thì demo vẫn phải chạy"):
+      // the garden hosts an AMBIENT MINIATURE of the lesson — it loops for
+      // everyone and its card camera stays off (the zone focus frames it), plus
+      // it drives the "panel after the try-run" gate through the area module.
       try {
-        CountingDemo demo = root.AddComponent<CountingDemo>();
+        CountingDemo mini = root.AddComponent<CountingDemo>();
+        mini.CameraBeatsEnabled = false;
         Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
           ? _activeBuilder.Player.transform : null;
-        demo.Build(builder,
-          playerT,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
-          Audio);
+        mini.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio);
+        if (area != null) area.BindDemo(mini);
       } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Counting demo wiring failed (garden stays quiet): " + e.Message, this);
+        Debug.LogWarning("[GameInstaller] garden mini demo wiring failed (garden stays quiet): " + e.Message, this);
       }
       try {
-        Debug.Log("[GameInstaller] Counting Garden scene built (lazy) entry=" + (CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal).ToString("F1"));
+        Debug.Log("[GameInstaller] Counting Garden scene built (lazy) entry=" + (CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal).ToString("F1")
+          + " zones=" + builder.ZoneSpots.Count);
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] CountingGardenScene build failed: " + e.Message, this);
+    }
+  }
+
+  // S3 P2X PLAY ARENA (user order §47B): the zone-2 "Vào chơi" destination is
+  // its OWN lazy scene, loaded into the shared micro slot by CountingGardenArea
+  // (garden unload -> play load). Exactly the garden pattern: code-build here,
+  // then push the entry/anchors into the area so the travel beat can warp the
+  // child in. The demo lesson is wired HERE (its live home now) with the same
+  // best-effort discipline: a demo failure degrades to a quiet arena, never a
+  // stranded player.
+  void BuildCountingPlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "CountingPlayWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] CountingPlayScene has no CountingPlayWorld root.", this);
+        return;
+      }
+      root.transform.position = CountingPlayBuilder.WorldOffset;
+      CountingPlayBuilder builder = root.GetComponent<CountingPlayBuilder>();
+      if (builder == null) builder = root.AddComponent<CountingPlayBuilder>();
+      builder.Build();
+      CountingGardenArea area = _gardenArea;
+      if (area == null) {
+        try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        Vector3 entry = CountingPlayBuilder.WorldOffset + CountingPlayBuilder.EntryLocal;
+        area.SetPlay(entry, builder.Anchors);
+        if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
+      }
+      // S3-P2Z4 REFERENCE GAMEPLAY (user design): the arena runs the Number-2
+      // lesson ONCE as the intro (teacher teaches, student demonstrates), then
+      // the child plays "put the right number in the basket". The game owns the
+      // activity lifecycle (in-memory, handed over from the Math-side area so
+      // re-entry adopts the completed visual).
+      try {
+        CountingDemo intro = root.AddComponent<CountingDemo>();
+        intro.LoopForever = false;
+        intro.CameraBeatsEnabled = true;
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        intro.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio);
+        CountingGame game = root.AddComponent<CountingGame>();
+        Transform hand = null;
+        try { hand = _activeBuilder != null ? _activeBuilder.PlayerHand : null; } catch (System.Exception) { }
+        game.Build(intro, builder, playerT, hand,
+          _gardenArea != null ? _gardenArea.GameLifecycle : null, Audio);
+        if (_gardenArea != null) _gardenArea.BindGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Counting game wiring failed (arena stays quiet): " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Counting Play arena built (reference gameplay) entry="
+          + (CountingPlayBuilder.WorldOffset + CountingPlayBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] CountingPlayScene build failed: " + e.Message, this);
     }
   }
 
@@ -328,6 +395,15 @@ public class GameInstaller : MonoBehaviour {
           _activeBuilder != null ? _activeBuilder.Hud : null,
           MathWorldBuilder.WorldOffset + MathWorldBuilder.GardenHubReturnLocal);
         area.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
+        // S3-P2X: the persistent zone panel (built by MarketBootstrap on THIS
+        // object) is the UI end of the focus beat; the area owns the logic.
+        try {
+          MarketBootstrap bootstrap = GetComponent<MarketBootstrap>();
+          Debug.Log("[GameInstaller] zone panel bind check: bootstrap=" + (bootstrap != null)
+            + " panel=" + (bootstrap != null && bootstrap.ZonePanel != null)
+            + " area=" + (area != null), this);
+          if (bootstrap != null && bootstrap.ZonePanel != null) area.BindPanel(bootstrap.ZonePanel);
+        } catch (System.Exception) { }
         if (builder.CountingGardenPortal != null) builder.CountingGardenPortal.Area = area;
         MicroWorldPortal[] portals = root.GetComponentsInChildren<MicroWorldPortal>(true);
         foreach (MicroWorldPortal portal in portals) {

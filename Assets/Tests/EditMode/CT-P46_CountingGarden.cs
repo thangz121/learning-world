@@ -69,10 +69,19 @@ public class CT_P46_CountingGarden {
       Assert.Greater(enter.fireRadius, 0.5f, "portal has a walk-in radius");
       MicroWorldGate counting = _builder.MicroGates[0];
       Assert.AreEqual("counting_garden", counting.gateId, "gate 0 is the counting garden");
-      float mouthDist = Vector3.Distance(
-        new Vector3(enter.transform.position.x, 0f, enter.transform.position.z),
-        new Vector3(counting.EntryAnchor.position.x, 0f, counting.EntryAnchor.position.z));
-      Assert.Less(mouthDist, 0.05f, "portal rides the gate mouth anchor");
+      // S3-P2Z re-pin (user report: stepping through the arch from inside
+      // never crossed the mouth trigger): the trigger now rides the arch
+      // interior — hub-side of the gate centre — and must cover BOTH the
+      // mouth anchor and the centre.
+      float centreDist = Vector2.Distance(
+        new Vector2(enter.transform.position.x, enter.transform.position.z),
+        new Vector2(counting.transform.position.x, counting.transform.position.z));
+      Assert.Less(centreDist, 1.0f, "portal rides the arch interior (hub-side bias)");
+      float mouthDist = Vector2.Distance(
+        new Vector2(enter.transform.position.x, enter.transform.position.z),
+        new Vector2(counting.EntryAnchor.position.x, counting.EntryAnchor.position.z));
+      Assert.Less(mouthDist, enter.fireRadius, "the mouth anchor stays inside the trigger");
+      Assert.Less(centreDist, enter.fireRadius, "the gate centre stays inside the trigger");
     } finally { TearDown(); }
   }
 

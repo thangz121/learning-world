@@ -407,15 +407,24 @@ public class MathWorldBuilder : MonoBehaviour {
     // a walk-in portal at its hub-side mouth fires the CountingGardenArea beat.
     MicroWorldGate counting = MicroGates.Count > 0 ? MicroGates[0] : null;
     if (counting != null && counting.EntryAnchor != null) {
+      // User report: walking INTO the gate did not warp when the child stood
+      // under the arch (the trigger sat at the mouth, 1.8m hub-side of the
+      // centre — stepping through from inside never crossed it). The trigger
+      // now covers the WHOLE arch: 0.7m hub-side of the gate centre with a
+      // 1.8m radius (covers mouth + interior + a step behind).
+      Vector3 toHub = hub - counting.transform.position;
+      toHub.y = 0f;
+      if (toHub.sqrMagnitude < 0.001f) toHub = new Vector3(0f, 0f, 1f);
+      toHub.Normalize();
       GameObject portalGo = new GameObject("CountingGardenPortal");
       portalGo.transform.SetParent(parent);
-      portalGo.transform.position = counting.EntryAnchor.position;
+      portalGo.transform.position = counting.transform.position + toHub * 0.7f;
       MicroWorldPortal portal = portalGo.AddComponent<MicroWorldPortal>();
       portal.ExitMode = false;
-      portal.fireRadius = 1.3f;
+      portal.fireRadius = 1.8f;
       portal.areaId = CountingGardenArea.AreaId;
       CountingGardenPortal = portal;
-      Pad(parent, "CountingGardenPortalDisc", portalGo.transform.localPosition, 2.4f, CourtyardSand);
+      Pad(parent, "CountingGardenPortalDisc", portalGo.transform.localPosition, 3.0f, CourtyardSand);
     }
   }
 

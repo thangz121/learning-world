@@ -57,6 +57,13 @@ public static class DialogueLang {
     { "Bring it to Tess", "Mang cho cô Tess" },
     { "Math World", "Thế giới Toán" },
     { "Counting Garden", "Vườn Đếm" },
+    { "Counting Playground", "Sân chơi đếm" },
+    { "Watch!", "Xem nhé!" },
+    { "Carrot patch", "Vườn cà rốt" },
+    { "Strawberry patch", "Vườn dâu" },
+    { "Counting stage", "Sân đếm" },
+    { "Corn patch", "Vườn ngô" },
+    { "Pumpkin patch", "Vườn bí" },
     { "Hear it again", "Nghe lại nhé" },
   };
 

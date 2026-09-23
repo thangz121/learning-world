@@ -86,7 +86,11 @@ public class SmartCamera : MonoBehaviour {
   public void FocusOnFor(Vector3 point, float distance, float seconds) {
     _returnTarget = _followTarget;
     _returnOffset = _followOffset;
-    _hasReturn = _hasFollowTarget && _followTarget != null;
+    // Return-to-follow must survive a beat RE-ISSUED while the camera is still
+    // inside the previous beat (journey bug: the intro's 2.4s re-issues cleared
+    // _hasFollowTarget, so the last beat never handed the camera back and the
+    // child played blind). The last follow target is the honest return point.
+    _hasReturn = _returnTarget != null;
     FocusOn(point, distance);
     _focusT = Mathf.Max(0.5f, seconds);
   }
@@ -101,7 +105,7 @@ public class SmartCamera : MonoBehaviour {
   public void FramePointFor(Vector3 camPos, Vector3 point, float seconds) {
     _returnTarget = _followTarget;
     _returnOffset = _followOffset;
-    _hasReturn = _hasFollowTarget && _followTarget != null;
+    _hasReturn = _returnTarget != null; // see FocusOnFor (re-issue-safe return)
     _focusPoint = point;
     _explicitCamPos = camPos;
     _hasExplicitCamPos = true;

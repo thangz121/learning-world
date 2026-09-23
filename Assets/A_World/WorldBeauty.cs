@@ -214,6 +214,37 @@ public static class WorldBeauty {
     drift.Wire(wingL.transform, wingR.transform);
   }
 
+  // ---- main-hall gate dressing (S6+ dreamy hub pass) ---------------------------
+
+  // Tinted threshold ring + sand inner under a gate (same "doorway" grammar as
+  // the Math Hub gates) — collider-free ground treatment.
+  public static void GateRing(Transform parent, string name, Vector3 pos, Color accent, float diameter) {
+    GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    ring.name = name + "Ring";
+    ring.transform.SetParent(parent);
+    ring.transform.localPosition = pos + new Vector3(0f, 0.035f, 0f);
+    ring.transform.localScale = new Vector3(diameter, 0.014f, diameter);
+    ring.GetComponent<Renderer>().sharedMaterial = Lit(accent);
+    StripCollider(ring);
+    GameObject inner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    inner.name = name + "RingInner";
+    inner.transform.SetParent(parent);
+    inner.transform.localPosition = pos + new Vector3(0f, 0.05f, 0f);
+    inner.transform.localScale = new Vector3(diameter * 0.76f, 0.014f, diameter * 0.76f);
+    inner.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.86f, 0.78f, 0.62f));
+    StripCollider(inner);
+  }
+
+  // Blossom crown riding a gate lintel: three chunky pink/cream balls (dreamy
+  // hub identity, high enough for the NavMesh headroom rule).
+  public static void BlossomCrown(Transform parent, string name, Vector3 pos, float scale) {
+    Ball(parent, name + "0", pos, 1.1f * scale, BlossomPink);
+    Ball(parent, name + "L", pos + new Vector3(-0.72f * scale, -0.18f * scale, 0f),
+      0.85f * scale, BlossomDeep);
+    Ball(parent, name + "R", pos + new Vector3(0.74f * scale, -0.14f * scale, 0f),
+      0.9f * scale, BlossomCream);
+  }
+
   // ---- per-world atmosphere (fog + ambient) -----------------------------------
   // MarketBootstrap applies these on travel/return so each world keeps its
   // own air: Main stays the crisp 18-45m haze, the Math island gets a soft
@@ -222,13 +253,15 @@ public static class WorldBeauty {
   public static void ApplyMainAtmosphere() {
     RenderSettings.fog = true;
     RenderSettings.fogMode = FogMode.Linear;
-    RenderSettings.fogColor = new Color(0.75f, 0.88f, 0.96f);
-    RenderSettings.fogStartDistance = 18f;
-    RenderSettings.fogEndDistance = 45f;
+    // Dreamy rose hub (user order: "mộng mơ màu hồng"): soft pink haze + a
+    // warm rose sky; kept gentle so the pink gates still read.
+    RenderSettings.fogColor = new Color(0.93f, 0.86f, 0.94f);
+    RenderSettings.fogStartDistance = 22f;
+    RenderSettings.fogEndDistance = 70f;
     RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-    RenderSettings.ambientLight = new Color(0.68f, 0.71f, 0.75f);
+    RenderSettings.ambientLight = new Color(0.74f, 0.70f, 0.74f);
     RenderSettings.ambientIntensity = 1f;
-    TintSky(new Color(0.53f, 0.81f, 0.98f));
+    TintSky(new Color(0.82f, 0.82f, 0.99f));
   }
 
   public static void ApplyMathAtmosphere() {

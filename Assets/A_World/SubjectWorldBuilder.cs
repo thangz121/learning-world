@@ -163,6 +163,14 @@ public static class SubjectWorldBuilder {
     disc.transform.position = def.GatePos + new Vector3(0f, 0.012f, 0f);
     disc.transform.localScale = new Vector3(2.6f, 0.024f, 2.6f);
     disc.GetComponent<Renderer>().sharedMaterial = Lit(def.GroundTint);
+    // S6+ dreamy hub pass (user order "mộng mơ màu hồng"): a tinted threshold
+    // ring under every gate and a blossom crown on Blocks/Gears/Books lintels
+    // (Vietnamese keeps its festival hat). Collider-free dressing.
+    WorldBeauty.GateRing(parent, name + "Gate", def.GatePos, def.Primary, 3.0f);
+    if (def.Landmark != SubjectLandmarkKind.Scrolls) {
+      WorldBeauty.BlossomCrown(parent, name + "GateCrown",
+        def.GatePos + new Vector3(0f, 2.95f, 0f), 0.9f);
+    }
 
     // Gate name, mounted ON the arch (user round: hub beauty — the name is
     // one body with the gate, dressed per subject, instead of a pill box
