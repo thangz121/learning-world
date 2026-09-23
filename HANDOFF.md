@@ -1747,3 +1747,26 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
   tiếp đều Success/count=2/pips=2.
 - Verify: full EditMode **601/596/0/5** (+P49F); build production **Succeeded**;
   boot **FACE_OK 0 exception** (`s3p2z6prod-Build`). Temp tooling xóa sạch.
+
+## 57. S3-P2Z7 - GAME-WIDE FONT "UTM AVO" (user order, 2026-09-23)
+
+- Lệnh user: MỌI chữ trong game dùng font `UTM Avo.ttf` (nguồn D:\utm fONT).
+- Làm: copy `UTM Avo.ttf` + `UTM AvoBold.ttf` vào
+  `Assets/A_World/Resources/Fonts/UTMAvo(.Bold).ttf` (Resources = UI code-built
+  load được runtime, không cần tham chiếu scene). Thêm `A_World/UiFont.cs`:
+  `UiFont.Get()/GetBold()` cache + fallback engine font (thiếu asset = warning,
+  chữ không bao giờ mất) + PREWARM atlas (VN alphabet + ký hiệu ở 11 cỡ dùng
+  thật) để không chớp glyph ở frame đầu (một shot journey bắt được đúng lỗi này).
+- Thay toàn bộ 11 file UI (MarketHUD, WorldNameLabel, LanguageDialog,
+  GardenZonePanel, MicSetupDialog, DependencySetupDialog, PhoneCameraHud,
+  Recording* ×3, RecordingLocationDialog) từ `LegacyRuntime.ttf` sang Avo
+  (14 điểm tạo Text). Test CT-P52: font phải load đúng mặt UTMAvo + KHÔNG file
+  A_World nào còn gọi thẳng engine font (firewall source-level).
+- Verify visual (Build + driver tạm, ảnh `s3p2z7-shots2`): hộp chọn ngôn ngữ
+  ("Chọn ngôn ngữ · Choose language", "Tiếng Việt"/"Vietnamese"), biển cổng
+  Toán/Tư duy/Tiếng Việt/Tiếng Anh, HUD "Choose a gate!", chip "English" và
+  dòng so sánh [Legacy] vs (Avo) "Chọn một cổng nhé! Tiếng Việt · English 2 ✓ ●"
+  — TẤT CẢ render đúng dấu tiếng Việt bằng Avo; mặt chữ bo tròn thân thiện trẻ.
+- Verify: full EditMode **603/598/0/5** (+P52 ×2); build production
+  **Succeeded**; boot **FACE_OK 0 exception** (`s3p2z7-Build`). Temp tooling xóa
+  sạch. Commit + push kèm phase này.

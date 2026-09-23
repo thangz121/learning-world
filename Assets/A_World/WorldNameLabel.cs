@@ -113,7 +113,7 @@ public class WorldNameLabel : MonoBehaviour {
     canvas.renderMode = RenderMode.WorldSpace;
     RectTransform canvasRt = canvasGo.GetComponent<RectTransform>();
     canvasRt.sizeDelta = new Vector2(600f, 192f);
-    Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    Font font = UiFont.Get();
     // High-contrast pill (reusable identity cue): the old bare cream text
     // washed out against sky/awning at gameplay distance. Dark backing +
     // white text reads on any backdrop; sized for a 2-4m viewing distance.

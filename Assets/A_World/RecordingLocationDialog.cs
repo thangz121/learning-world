@@ -91,7 +91,7 @@ public class RecordingLocationDialog : MonoBehaviour {
   }
 
   void BuildUi() {
-    Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    Font font = UiFont.Get();
 
     _root = new GameObject("RecLocationRoot");
     _root.transform.SetParent(transform, false);

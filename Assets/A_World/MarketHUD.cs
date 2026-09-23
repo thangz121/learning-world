@@ -371,7 +371,7 @@ public class MarketHUD : BusBehaviour {
     scaler.referenceResolution = new Vector2(1280f, 720f);
     canvasGo.AddComponent<GraphicRaycaster>();
 
-    Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    Font font = UiFont.Get();
 
     GameObject panelGo = new GameObject("ObjectivePanel");
     panelGo.transform.SetParent(canvasGo.transform);

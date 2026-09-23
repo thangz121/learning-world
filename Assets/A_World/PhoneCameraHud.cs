@@ -232,7 +232,7 @@ public class PhoneCameraHud : MonoBehaviour {
     box.color = new Color(0.06f, 0.08f, 0.10f, 0.72f);
     box.raycastTarget = false;
 
-    Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    Font font = UiFont.Get();
 
     GameObject titleGo = new GameObject("Title");
     titleGo.transform.SetParent(_boxGo.transform, false);

@@ -232,7 +232,7 @@ public class LanguageDialog : MonoBehaviour {
       Vector2 pos, Vector2 rectSize) {
     RectTransform rect = Rect(parent, name, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, rectSize);
     Text label = rect.gameObject.AddComponent<Text>();
-    label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    label.font = UiFont.Get();
     label.fontSize = Mathf.RoundToInt(size);
     label.color = color;
     label.alignment = TextAnchor.MiddleCenter;

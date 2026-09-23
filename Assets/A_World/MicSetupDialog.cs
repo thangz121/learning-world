@@ -167,7 +167,7 @@ public class MicSetupDialog : MonoBehaviour {
 
   // ---- code-built uGUI ------------------------------------------------------
   void BuildUi() {
-    Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    Font font = UiFont.Get();
 
     _root = new GameObject("MicSetupRoot");
     _root.transform.SetParent(transform, false);
