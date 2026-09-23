@@ -179,6 +179,38 @@ public class CT_P49_DialogueLanguage {
     }
   }
 
+  // F. Chooser auto-close (S3-P2Z6 journey bug): the floating chooser used to
+  // sit at screen centre until tapped, covering the zone panel and eating the
+  // "Vào chơi" button. It must close once the child walks off to play.
+  [Test] public void P49F_ChooserAutoClosesOnWalkOff() {
+    SetUp();
+    GameObject dialogGo = new GameObject("P49LangDialog");
+    GameObject playerGo = new GameObject("P49LangPlayer");
+    try {
+      LanguageDialog dialog = dialogGo.AddComponent<LanguageDialog>();
+      dialog.Build(null);
+      dialog.Player = playerGo.transform;
+      playerGo.transform.position = new Vector3(0f, 0f, 0f);
+      dialog.Show();
+      Assert.IsTrue(dialog.IsOpen, "chooser shown at boot");
+      playerGo.transform.position = new Vector3(1f, 0f, 0f);
+      dialog.Tick(0.016f);
+      Assert.IsTrue(dialog.IsOpen, "a step nearby keeps the offer open");
+      playerGo.transform.position = new Vector3(5f, 0f, 0f);
+      dialog.Tick(0.016f);
+      Assert.IsFalse(dialog.IsOpen, "walking off to play closes the chooser");
+      // Choosing still works and closes it.
+      dialog.Show();
+      dialog.Choose(DialogueLanguage.Vietnamese);
+      Assert.IsFalse(dialog.IsOpen, "picking a language closes the chooser");
+      DialogueLang.Set(DialogueLanguage.English);
+    } finally {
+      UnityEngine.Object.DestroyImmediate(dialogGo);
+      UnityEngine.Object.DestroyImmediate(playerGo);
+      TearDown();
+    }
+  }
+
   // E. HUD chip: exists, shows the current language name, and reflects toggles.
   [Test] public void P49E_HudLanguageChip() {
     SetUp();

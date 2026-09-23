@@ -18,6 +18,7 @@
 // Interactable, click-through hosts. C# 9.0 only.
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public enum DemoPhase {
@@ -191,6 +192,10 @@ public class CountingDemo : MonoBehaviour {
       stageParent = b.transform;
     }
     BuildFrom(refs, CountingGardenBuilder.WorldOffset, playerT, cam, audio, stageParent);
+    // Garden: the lesson starts AT THE STAGE DOOR (user order §56: "lùi phần
+    // tự động về sát cửa") — not from the middle of the yard. 1.4m = the
+    // child's toes on the threshold (the portal-scale radius).
+    _watchRadius = 1.4f;
   }
 
   // S3-P2Z4: the ARENA runs the lesson as the reference gameplay's INTRO
@@ -199,6 +204,9 @@ public class CountingDemo : MonoBehaviour {
     CountingGardenBuilder.DemoRefs refs = b != null ? b.Activity : null;
     BuildFrom(refs, CountingPlayBuilder.WorldOffset, playerT, cam, audio,
       b != null ? b.transform : transform);
+    // Arena: the child SPAWNS at the door and the intro must greet them right
+    // there (the stage is compact), so this site keeps the wide radius.
+    _watchRadius = CountingGardenBuilder.DemoViewRadius;
   }
 
   void BuildFrom(CountingGardenBuilder.DemoRefs refs, Vector3 islandOffset,
@@ -370,6 +378,7 @@ public class CountingDemo : MonoBehaviour {
     // the radius, so the intro runs immediately; the game disables the gate
     // once control has passed (no re-teach while they play).
     TickLiveliness(dt);
+    TickSpeech(dt);
     if (!_engaged) return;
     // S3-P2Z4 intro camera: the lesson must STAY framed (the child watches the
     // board/balls/basket, not the player's back). Re-issue the current shot
@@ -1041,14 +1050,58 @@ public class CountingDemo : MonoBehaviour {
 
   // ---- speech / gesture -----------------------------------------------------------
 
+  // S3-P2Z6 (user: "để nó có ngắt nghỉ chứ đừng nói một mạch"): every line is
+  // PACED — the next line waits until the previous one finished playing (the
+  // Director's Task completes with playback) plus a short breath. Same-priority
+  // lines used to queue in the Director and stream back-to-back, which read as
+  // one unbroken monologue. Only the latest pending line is kept (the audio
+  // never lags far behind the acting).
+  Task _speechTask;
+  bool _hasPendingSpeech;
+  string _pendingSpeech;
+  SpeechStyle _pendingStyle;
+  AudioPriority _pendingPriority;
+  float _speechGapT;
+  const float SpeechGapSeconds = 0.65f;
+
   void Speak(string text, SpeechStyle style, AudioPriority priority) {
     // Audience gate: no listener, no line (belt & braces with StopVoice).
-    if (_audio == null || !_engaged) return;
+    if (_audio == null || !_engaged || string.IsNullOrEmpty(text)) return;
+    if (!VoiceIdle()) { // still talking (or breathing): hold the newest line
+      _pendingSpeech = text;
+      _pendingStyle = style;
+      _pendingPriority = priority;
+      _hasPendingSpeech = true;
+      return;
+    }
+    Submit(text, style, priority);
+  }
+
+  bool VoiceIdle() {
+    if (_speechTask != null && !_speechTask.IsCompleted) return false;
+    return _speechGapT <= 0f;
+  }
+
+  void Submit(string text, SpeechStyle style, AudioPriority priority) {
     try {
       var req = new DialogueRequest(text, DemoVoice, DialogueLang.Language, 1f, 1f, style,
         AudioFormat.Mp3_44100, priority);
-      _audio.SpeakAsync(req); // fire-and-forget: the Director owns playback.
+      _speechTask = _audio.SpeakAsync(req); // awaited implicitly by the pacer
+      _speechGapT = SpeechGapSeconds;
+      _hasPendingSpeech = false;
+      _pendingSpeech = null;
+      try { Debug.Log("[CountingDemo] say '" + text + "'", this); } catch (Exception) { }
     } catch (Exception) { }
+  }
+
+  // Paced drain: runs every frame (also while the audience is away so a stale
+  // line never fires after a pause).
+  void TickSpeech(float dt) {
+    if (_speechGapT > 0f) _speechGapT -= dt;
+    if (!_engaged) { _hasPendingSpeech = false; _pendingSpeech = null; return; }
+    if (!_hasPendingSpeech || string.IsNullOrEmpty(_pendingSpeech)) return;
+    if (!VoiceIdle()) return;
+    Submit(_pendingSpeech, _pendingStyle, _pendingPriority);
   }
 
   void Trigger(NpcActor actor, string name) {
@@ -1140,6 +1193,10 @@ public class CountingDemo : MonoBehaviour {
   // ---- camera-first watching + audience gate --------------------------------------
 
   const float AbortMargin = 1.5f; // hysteresis: a step out never kills the lesson
+  // Per-site audience radius (set by each Build): the garden lesson triggers AT
+  // THE STAGE DOOR (2.2m), the compact arena at its spawn (wide). A single
+  // shared radius made the garden start the lesson from the middle of the yard.
+  float _watchRadius = CountingGardenBuilder.DemoViewRadius;
 
   void WatchPlayer() {
     // The audience gate runs on its own (no camera needed): worlds/tests without
@@ -1149,9 +1206,9 @@ public class CountingDemo : MonoBehaviour {
       Vector3 local = _playerT.position - _islandOffset;
       float dx = local.x - _mouth.x, dz = local.z - _mouth.z;
       float d2 = dx * dx + dz * dz;
-      float insideR = WatchRadius * WatchRadius;
-      float abortR = (WatchRadius + AbortMargin) * (WatchRadius + AbortMargin);
-      float clearR = (WatchRadius + RearmMargin) * (WatchRadius + RearmMargin);
+      float insideR = _watchRadius * _watchRadius;
+      float abortR = (_watchRadius + AbortMargin) * (_watchRadius + AbortMargin);
+      float clearR = (_watchRadius + RearmMargin) * (_watchRadius + RearmMargin);
       bool inside = d2 <= insideR;
       if (!inside) _armed = true; // must stand clear to arm the next pass
 

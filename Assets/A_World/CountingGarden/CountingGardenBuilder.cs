@@ -325,9 +325,34 @@ public class CountingGardenBuilder : MonoBehaviour {
     BuildDemoStage(parent);
     BuildDemoPlotBorder(parent);
     BuildDemoPlotAnchor(parent);
+    BuildDemoDoorGate(parent);
     BuildBed(parent, 3, 5, "corn");
     BuildBed(parent, 4, 2, "pumpkin");
     BuildZoneSpots(parent);
+  }
+
+  // S3-P2Z6 (user: "demo ở sân không có cổng, đến giữa sân là nó tự chọn"):
+  // the stage's DOOR now exists as a real threshold arch at the viewing spot.
+  // The lesson's audience gate (2.2m) arms exactly here, so the demo starts
+  // when the child reaches the door — never from the middle of the yard.
+  // Overhead beam is bake-ignored + collider-free (headroom rule).
+  void BuildDemoDoorGate(Transform parent) {
+    Vector3 m = DemoMouthLocal;
+    Box(parent, "CGDemoDoorPostL", new Vector3(m.x - 1.7f, 1.05f, m.z),
+      new Vector3(0.18f, 2.1f, 0.18f), BasketBrown);
+    Box(parent, "CGDemoDoorPostR", new Vector3(m.x + 1.7f, 1.05f, m.z),
+      new Vector3(0.18f, 2.1f, 0.18f), BasketBrown);
+    GameObject beam = Box(parent, "CGDemoDoorBeam", new Vector3(m.x, 2.16f, m.z),
+      new Vector3(3.8f, 0.16f, 0.16f), WorldBeauty.BlossomPink);
+    IgnoreFromBuild(beam);
+    Sphere(parent, "CGDemoDoorCapL", new Vector3(m.x - 1.7f, 2.3f, m.z), 0.42f, Gold, true);
+    Sphere(parent, "CGDemoDoorCapR", new Vector3(m.x + 1.7f, 2.3f, m.z), 0.42f, Gold, true);
+    WorldBeauty.Ball(parent, "CGDemoDoorBlossom0", new Vector3(m.x, 2.42f, m.z), 0.7f,
+      WorldBeauty.BlossomPink);
+    WorldBeauty.Ball(parent, "CGDemoDoorBlossomL", new Vector3(m.x - 0.6f, 2.32f, m.z), 0.5f,
+      WorldBeauty.BlossomCream);
+    WorldBeauty.Ball(parent, "CGDemoDoorBlossomR", new Vector3(m.x + 0.6f, 2.34f, m.z), 0.55f,
+      WorldBeauty.BlossomDeep);
   }
 
   // S3-P2Y boundary for the demo plot (same language as the beds): a flat

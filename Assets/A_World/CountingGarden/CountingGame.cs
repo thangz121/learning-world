@@ -397,6 +397,9 @@ public class CountingGame : MonoBehaviour {
     _wrongT += dt;
     if (_demo == null) { FinishWrong(); return; }
     switch (_wrongStep) {
+      // Beat spacing (S3-P2Z6): the demo PACES speech (a line waits for the
+      // previous + a breath), so these beats leave room for each count line —
+      // the old 1.4s gaps made the correction sound like one run-on sentence.
       case 0:
         if (_wrongT >= 0.4f) {
           _wrongStep = 1;
@@ -405,10 +408,10 @@ public class CountingGame : MonoBehaviour {
         }
         break;
       case 1:
-        if (_wrongT >= 2.6f) { _wrongStep = 2; _demo.TeacherSay("One ball.", "Một quả bóng."); }
+        if (_wrongT >= 2.0f) { _wrongStep = 2; _demo.TeacherSay("One ball.", "Một quả bóng."); }
         break;
       case 2:
-        if (_wrongT >= 4.0f) { _wrongStep = 3; _demo.TeacherSay("Two balls.", "Hai quả bóng."); }
+        if (_wrongT >= 3.7f) { _wrongStep = 3; _demo.TeacherSay("Two balls.", "Hai quả bóng."); }
         break;
       case 3:
         if (_wrongT >= 5.4f) {
@@ -418,17 +421,17 @@ public class CountingGame : MonoBehaviour {
         }
         break;
       case 4:
-        if (_wrongT >= 7.4f) { _wrongStep = 5; _demo.TeacherSay("The board says two.", "Bảng ghi số hai."); }
+        if (_wrongT >= 7.2f) { _wrongStep = 5; _demo.TeacherSay("The board says two.", "Bảng ghi số hai."); }
         break;
       case 5:
-        if (_wrongT >= 9.2f) {
+        if (_wrongT >= 9.0f) {
           _wrongStep = 6;
           _demo.TeacherSay("We only need two.", "Mình chỉ cần hai.");
           if (_extra != null) _extra.BeginReturnHome();
         }
         break;
       case 6:
-        if (_wrongT >= 11.0f) FinishWrong();
+        if (_wrongT >= 10.8f) FinishWrong();
         break;
     }
   }

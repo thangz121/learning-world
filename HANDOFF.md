@@ -1709,3 +1709,41 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
   **FACE_OK 0 exception**. Build review: `Temp/opencode/s3p2l2-Build/LWE.exe`.
 - Commit + push kèm phase này (sau khi user hỏi "bản này đã mới nhất chưa" —
   lúc đó 2 file fix còn dở trong worktree, GitHub vẫn ở e808d24).
+
+## 56. S3-P2Z6 - DOOR GATE + SPEECH PACING + CHOOSER FIX (user round, 2026-09-23)
+
+- Lệnh user: (1) demo trong sân "không có cổng, đến giữa sân là tự chọn" — lùi
+  auto về sát cửa; (2) âm thanh phải NGẮT NGHỈ, đừng nói một mạch; (3) chạy
+  journey; (4) trả lời arena đã chơi được chưa.
+- (1) CỔNG + TRIGGER Ở CỬA (garden):
+  * Đo được: `DemoViewRadius 5m` quanh viewing spot (0,2.6) => demo tự chạy từ
+    z=-2.4 (giữa sân). Fix: bán kính THEO TỪNG SITE — garden 1.4m (bé đứng sát
+    ngưỡng cửa mới chạy), arena giữ rộng (bé spawn ngay cửa, intro chào liền).
+  * Dựng cổng thật `CGDemoDoorGate` (2 trụ + xà + chỏm vàng + chùm hoa) ngay
+    tại viewing spot; xà bake-ignored/collider-free (bài học headroom).
+  * Journey xác nhận: "lesson start (audience arrived)" khi player z=1.4 (trước
+    đây -2.4) => đúng "sát cửa".
+- (2) NHỊP THOẠI: AudioDirector queue cùng priority => các câu P2 đọc liền một
+  mạch. Thêm PACER trong CountingDemo: câu kế chỉ submit khi câu trước PHÁT
+  XONG (Task của SpeakAsync) + nghỉ `SpeechGapSeconds 0.65s`; câu đến sớm vào
+  slot pending (mới nhất thắng, không lag xa hình). Nhịp wrong-path giãn lại
+  (0.4/2.0/3.7/5.4/7.2/9.0, kết 10.8s) để mỗi câu đếm đủ chỗ. Journey log
+  "say 'Look at the board!'" -> "say 'This is number two.'" ... có khoảng nghỉ
+  rõ (trước đây đọc chồng/liền).
+- (3) JOURNEY THẬT (driver click chuột Input System, xoá sau khi xong):
+  Math gate -> counting portal -> walk to door (demo bắt đầu z=1.4) -> try-run
+  1 vòng -> panel -> click "Vào chơi" -> ARENA -> intro tại spawn -> FreePlay ->
+  click bóng 1 -> mang tới giỏ (count 1) -> click bóng 2 -> count 2 ->
+  phase=Success pips=2 (ảnh `a5_result`: 2 bóng trong giỏ + bảng 2 tick + cô
+  trò celebrate) -> đi bộ ra cổng exit -> về garden (arena unloaded) => TRỌN
+  VÒNG PASS bằng click thật.
+- (3b) BUG THẬT DO JOURNEY KHAI: hộp chọn ngôn ngữ (pulled) NỔI GIỮA MÀN HÌNH
+  MÃI cho tới khi bấm — nó đè panel khu và NUỐT nút "Vào chơi" => arena không
+  vào được (ảnh `g3_lesson`). Fix: `LanguageDialog` tự đóng khi bé đi xa >3m
+  khỏi điểm xuất hiện (Player wire trong MarketBootstrap) + test P49F. Lần
+  journey sau: vào arena bình thường.
+- (4) TRẢ LỜI: ARENA CHƠI ĐƯỢC — full loop với click thật (pick/carry/place,
+  count + pip + result board, celebrate, exit về garden) ✓ 2 lần journey liên
+  tiếp đều Success/count=2/pips=2.
+- Verify: full EditMode **601/596/0/5** (+P49F); build production **Succeeded**;
+  boot **FACE_OK 0 exception** (`s3p2z6prod-Build`). Temp tooling xóa sạch.

@@ -46,20 +46,41 @@ public class LanguageDialog : MonoBehaviour {
     IsOpen = false;
   }
 
+  // S3-P2Z6 (journey-found bug): the chooser floated at screen centre FOREVER
+  // until a box was tapped — it sat on top of the zone panel and swallowed the
+  // "Vào chơi" (Play) button, so the arena was unreachable. The chooser is an
+  // offer, never a wall: it closes itself as soon as the child starts playing
+  // (walks away from the arrival) or picks a language.
+  public Transform Player;        // wired by MarketBootstrap (null = no auto-hide)
+  Vector3 _showAnchor;
+  bool _hasAnchor;
+
   float _busyLogT = -10f;
 
-  void Update() {
-    if (!_pendingShow) return;
-    if (SystemDialogBusy()) {
-      // Dev-truth (journey diagnosis): name what is holding the chooser back.
-      if (Time.unscaledTime - _busyLogT >= 5f) {
-        _busyLogT = Time.unscaledTime;
-        try { Debug.Log("[LanguageDialog] waiting; busy=" + BusyReason(), this); } catch (Exception) { }
+  void Update() { Tick(Time.unscaledDeltaTime); }
+
+  // Test seam: same logic without a live frame.
+  public void Tick(float dt) {
+    if (_pendingShow) {
+      if (SystemDialogBusy()) {
+        // Dev-truth (journey diagnosis): name what is holding the chooser back.
+        if (Time.unscaledTime - _busyLogT >= 5f) {
+          _busyLogT = Time.unscaledTime;
+          try { Debug.Log("[LanguageDialog] waiting; busy=" + BusyReason(), this); } catch (Exception) { }
+        }
+        return;
       }
+      _pendingShow = false;
+      Show();
       return;
     }
-    _pendingShow = false;
-    Show();
+    if (!IsOpen || Player == null) return;
+    if (!_hasAnchor) { _hasAnchor = true; _showAnchor = Player.position; return; }
+    if ((Player.position - _showAnchor).sqrMagnitude > 9f) { // walked 3m away
+      try { Debug.Log("[LanguageDialog] auto-closed (the child started playing).", this); }
+      catch (Exception) { }
+      Hide();
+    }
   }
 
   static string BusyReason() {
@@ -97,6 +118,8 @@ public class LanguageDialog : MonoBehaviour {
   public void Show() {
     if (_canvasGo != null) _canvasGo.SetActive(true);
     IsOpen = true;
+    _hasAnchor = Player != null;
+    if (_hasAnchor) _showAnchor = Player.position;
     try { Debug.Log("[LanguageDialog] shown (current=" + DialogueLang.Current + ").", this); }
     catch (Exception) { }
   }
