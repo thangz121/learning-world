@@ -1275,3 +1275,27 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
 - Verify: targeted P47/P48 9/9; full EditMode **577/572/0/5**; build production
   **Succeeded**; boot **FACE_OK 0 exception**. Ảnh vòng 5/6: `Temp/opencode/
   s3p2w8-shots/`. Temp tooling xóa sạch. Commit kèm phase này.
+
+## 48. S3-P2W3 - BUG THẬT: SEGMENT CON XOAY SAI (số sai) + XÓA BỤI CHE (2026-09-22)
+
+- User ảnh: (1) "chưa có số hoàn chỉnh"; (2) "xóa lùm cây kia đi, nó đang che".
+- ROOT CAUSE (1) - bug thật của builder, ảnh hưởng MỌI Box(): helper
+  `Box/Cylinder/Sphere/Pad/Seg` đều `SetParent(parent)` (worldPositionStays =
+  TRUE) và KHÔNG set localRotation -> con của parent XOAY giữ nguyên world
+  rotation identity => các thanh NẰM NGANG của số "2" bị xoay 90° thành chĩa
+  vào màn hình (nhìn ra ô vuông), số đọc sai. Fix: đổi TẤT CẢ sang
+  `SetParent(parent, false)` (21 chỗ) -> con thừa hưởng rotation của parent;
+  chỗ nào cần rotation riêng đã set tường minh sau đó (CheckMark, vành miệng
+  vườn, soil) nên không đổi gì khác.
+- Số "2" nay = 7-segment NỐI LIỀN (A/B/G/E/D, thanh ngang dài w+t, thanh dọc
+  dài h/2+t để chồng mối) trên bảng chính (h=1.05 trong panel 2.3x1.5) + bảng
+  kết quả (2 + tick). Ảnh crop xác nhận số hoàn chỉnh.
+- (2) Bụi backdrop bị đặt sai cung: vòng cũ 65..113° vòng qua HÔNG PHẢI sân
+  khấu -> bụi đè bảng kết quả/giỏ. Fix: 3 bụi ở -35/0/+35° (SAU bảng, z 14.4-
+  15.1), hết che.
+- Kèm round trước (đã commit 4922fcf): tách 2 NPC cạnh nhau, shot A/B giữ trọn
+  bảng, viewing spot (0,2.6) để avatar bé không lọt frame, sinh động (hop,
+  curious/surprised, result pop, bóng nảy, bob).
+- Verify: full EditMode **577/572/0/5**; build production (không tooling)
+  **Succeeded**; boot **ALIVE + FACE_OK 0 exception**. Ảnh: s3p2w11-shots +
+  crop. Temp tooling xóa sạch. Commit kèm phase này.

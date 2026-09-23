@@ -164,7 +164,7 @@ public class CountingGardenBuilder : MonoBehaviour {
   void BuildGround(Transform parent) {
     GameObject rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     rim.name = "CGRim";
-    rim.transform.SetParent(parent);
+    rim.transform.SetParent(parent, false);
     rim.transform.localPosition = new Vector3(0f, -1.5f, 0f);
     rim.transform.localScale = new Vector3(42f, 1.4f, 42f);
     rim.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.42f, 0.33f, 0.24f));
@@ -172,7 +172,7 @@ public class CountingGardenBuilder : MonoBehaviour {
     IgnoreFromBuild(rim);
     GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
     ground.name = "CGGround";
-    ground.transform.SetParent(parent);
+    ground.transform.SetParent(parent, false);
     ground.transform.localPosition = Vector3.zero;
     ground.transform.localScale = new Vector3(4.0f, 1f, 4.0f);
     ground.GetComponent<Renderer>().sharedMaterial = Lit(Lawn);
@@ -187,7 +187,7 @@ public class CountingGardenBuilder : MonoBehaviour {
       float rad = angles[i] * Mathf.Deg2Rad;
       GameObject bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
       bush.name = "CGHedge" + i;
-      bush.transform.SetParent(parent);
+      bush.transform.SetParent(parent, false);
       bush.transform.localPosition = new Vector3(Mathf.Sin(rad) * 19f, 0.55f, 2f + Mathf.Cos(rad) * 19f);
       bush.transform.localScale = (i % 2 == 0) ? new Vector3(3.6f, 2.4f, 3.6f) : new Vector3(3.0f, 2.0f, 3.0f);
       bush.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.24f, 0.55f, 0.30f));
@@ -198,7 +198,7 @@ public class CountingGardenBuilder : MonoBehaviour {
   void MeadowPatch(Transform parent, string name, Vector3 pos, float dx, float dz) {
     GameObject patch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     patch.name = name;
-    patch.transform.SetParent(parent);
+    patch.transform.SetParent(parent, false);
     patch.transform.localPosition = new Vector3(pos.x, 0.004f, pos.z);
     patch.transform.localScale = new Vector3(dx, 0.004f, dz);
     patch.GetComponent<Renderer>().sharedMaterial = Lit(Meadow);
@@ -280,7 +280,7 @@ public class CountingGardenBuilder : MonoBehaviour {
     // Soil bed (tangential 3.0 x radial 2.2) — warm brown breaks the green.
     GameObject soil = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     soil.name = tag + "Pad";
-    soil.transform.SetParent(parent);
+    soil.transform.SetParent(parent, false);
     soil.transform.localPosition = new Vector3(center.x, 0.008f, center.z);
     soil.transform.localScale = new Vector3(3.0f, 0.012f, 2.2f);
     soil.transform.localRotation = Quaternion.Euler(0f, latYaw, 0f);
@@ -335,7 +335,7 @@ public class CountingGardenBuilder : MonoBehaviour {
     // Stage floor + low hedge backdrop (frames the stage, never the action).
     GameObject stagePad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     stagePad.name = "CGDemoStagePad";
-    stagePad.transform.SetParent(parent);
+    stagePad.transform.SetParent(parent, false);
     stagePad.transform.localPosition = new Vector3(demo.x, 0.006f, demo.z);
     stagePad.transform.localScale = new Vector3(5.8f, 0.012f, 5.8f);
     stagePad.GetComponent<Renderer>().sharedMaterial = Lit(CourtyardSand);
@@ -346,11 +346,14 @@ public class CountingGardenBuilder : MonoBehaviour {
       new Vector3(-3.0f, 0f, 10.4f), 90f, 0.92f);
     PlaceProp(parent, "fence_simpleLow", "CGZone2Fence1",
       new Vector3(3.0f, 0f, 10.4f), 90f, 0.92f);
-    for (int i = 0; i < 4; i++) {
-      float a = (65f + i * 16f) * Mathf.Deg2Rad; // behind the stage (south arc)
+    // Backdrop bushes sit BEHIND the board (a≈0 keeps them at z>stage, out of
+    // the basket/result side — user report: the right-side bush covered the
+    // result board).
+    for (int i = 0; i < 3; i++) {
+      float a = (-35f + i * 35f) * Mathf.Deg2Rad;
       GameObject bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
       bush.name = "CGDemoBackdrop" + i;
-      bush.transform.SetParent(parent);
+      bush.transform.SetParent(parent, false);
       bush.transform.localPosition = new Vector3(demo.x + Mathf.Sin(a) * 4.1f, 0.5f,
         demo.z + Mathf.Cos(a) * 4.1f);
       bush.transform.localScale = new Vector3(2.4f, 1.7f, 2.4f);
@@ -368,8 +371,8 @@ public class CountingGardenBuilder : MonoBehaviour {
       new Vector3(0.14f, 1.6f, 0.14f), BasketBrown);
     Box(parent, "CGDemoBoardPanel", DemoBoardPos + new Vector3(0f, 2.3f, 0f),
       new Vector3(2.3f, 1.5f, 0.12f), BoardCream);
-    DemoNumber = Digit2(parent, "CGDemoNumber2", DemoBoardPos + new Vector3(0f, 1.65f, -0.08f),
-      1.3f, 0.75f, Gold, 90f);
+    DemoNumber = Digit2(parent, "CGDemoNumber2", DemoBoardPos + new Vector3(0f, 1.78f, -0.08f),
+      1.05f, 0.8f, Gold, 90f);
     // BALL FIELD (front): five balls in a row — the student must take TWO.
     Pad(parent, "CGDemoBallField", DemoBallFieldPos + new Vector3(0f, -0.006f, 0f), 3.4f,
       new Color(0.93f, 0.90f, 0.78f));
@@ -397,9 +400,9 @@ public class CountingGardenBuilder : MonoBehaviour {
       new Vector3(0.13f, 1.3f, 0.13f), BasketBrown);
     Box(result.transform, "CGDemoResultFrame", new Vector3(0f, 1.6f, 0f),
       new Vector3(1.1f, 1.0f, 0.12f), BoardCream);
-    Digit2(result.transform, "CGDemoResultTwo", new Vector3(0f, 1.22f, -0.08f),
-      0.55f, 0.34f, Gold, 90f);
-    CheckMark(result.transform, "CGDemoResultCheck", new Vector3(0f, 1.78f, -0.08f),
+    Digit2(result.transform, "CGDemoResultTwo", new Vector3(0f, 1.2f, -0.08f),
+      0.55f, 0.4f, Gold, 90f);
+    CheckMark(result.transform, "CGDemoResultCheck", new Vector3(0f, 1.86f, -0.08f),
       0.3f, MintLeaf);
     result.SetActive(false);
     DemoResult = result;
@@ -423,10 +426,12 @@ public class CountingGardenBuilder : MonoBehaviour {
     DemoActionLook = lookB.transform;
   }
 
-  // Blocky "2" in the ZY plane (top bar + diagonal + bottom bar), thin in X;
-  // yaw 90 faces the plaza (north). Local +z maps to world -x at yaw 90, and
-  // the north viewer reads screen-right = local +z, so the diagonal rises to
-  // +z (round-2 capture: a mirrored digit read as noise).
+  // CONNECTED seven-segment "2" (A/B/G/E/D) in the ZY plane, thin in X, yaw 90
+  // faces the plaza (north). Segments overlap at the joints (length + t) so the
+  // glyph is one solid connected number — the user rejected the earlier floating
+  // bars ("chưa có số hoàn chỉnh"). Local +z maps to world -x at yaw 90 and the
+  // north viewer reads screen-right = local +z, so B (upper vertical) sits at
+  // +z and E (lower vertical) at -z, exactly like a real "2".
   // Group origin at the base so emphasis pulses grow upward.
   GameObject Digit2(Transform parent, string name, Vector3 origin, float h, float w,
       Color color, float yawDeg) {
@@ -434,13 +439,16 @@ public class CountingGardenBuilder : MonoBehaviour {
     g.transform.SetParent(parent, false);
     g.transform.localPosition = origin;
     g.transform.localRotation = Quaternion.Euler(0f, yawDeg, 0f);
-    float t = Mathf.Min(0.2f, h * 0.16f);
-    Box(g.transform, name + "Top", new Vector3(0f, h * 0.88f, 0f),
-      new Vector3(t, t * 1.5f, w * 1.15f), color);
-    GameObject diag = Box(g.transform, name + "Diag", new Vector3(0f, h * 0.5f, 0f),
-      new Vector3(t, h * 0.72f, t), color);
-    diag.transform.localRotation = Quaternion.Euler(48f, 0f, 0f);
-    Box(g.transform, name + "Bottom", new Vector3(0f, h * 0.1f, 0f), new Vector3(t, t * 1.5f, w), color);
+    float t = Mathf.Max(0.09f, h * 0.19f);          // stroke thickness
+    float hLen = w + t;                              // horizontal segments
+    float vLen = h * 0.5f + t;                       // vertical segments (overlap)
+    Box(g.transform, name + "A", new Vector3(0f, h, 0f), new Vector3(t, t, hLen), color);
+    Box(g.transform, name + "B", new Vector3(0f, h * 0.75f, w * 0.5f),
+      new Vector3(t, vLen, t), color);
+    Box(g.transform, name + "G", new Vector3(0f, h * 0.5f, 0f), new Vector3(t, t, hLen), color);
+    Box(g.transform, name + "E", new Vector3(0f, h * 0.25f, -w * 0.5f),
+      new Vector3(t, vLen, t), color);
+    Box(g.transform, name + "D", new Vector3(0f, 0f, 0f), new Vector3(t, t, hLen), color);
     return g;
   }
 
@@ -590,7 +598,7 @@ public class CountingGardenBuilder : MonoBehaviour {
   static GameObject Box(Transform parent, string name, Vector3 pos, Vector3 scale, Color color) {
     GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
     go.name = name;
-    go.transform.SetParent(parent);
+    go.transform.SetParent(parent, false);
     go.transform.localPosition = pos;
     go.transform.localScale = scale;
     go.GetComponent<Renderer>().sharedMaterial = Lit(color);
@@ -602,7 +610,7 @@ public class CountingGardenBuilder : MonoBehaviour {
   static void Pad(Transform parent, string name, Vector3 pos, float diameter, Color color) {
     GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     pad.name = name;
-    pad.transform.SetParent(parent);
+    pad.transform.SetParent(parent, false);
     pad.transform.localPosition = pos;
     pad.transform.localScale = new Vector3(diameter, 0.01f, diameter);
     pad.GetComponent<Renderer>().sharedMaterial = Lit(color);
@@ -615,7 +623,7 @@ public class CountingGardenBuilder : MonoBehaviour {
       float diameter, float height, Color color) {
     GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     go.name = name;
-    go.transform.SetParent(parent);
+    go.transform.SetParent(parent, false);
     go.transform.localPosition = pos;
     go.transform.localScale = new Vector3(diameter, height * 0.5f, diameter);
     go.GetComponent<Renderer>().sharedMaterial = Lit(color);
@@ -629,7 +637,7 @@ public class CountingGardenBuilder : MonoBehaviour {
       float diameter, Color color, bool ignore) {
     GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     go.name = name;
-    go.transform.SetParent(parent);
+    go.transform.SetParent(parent, false);
     go.transform.localPosition = pos;
     go.transform.localScale = new Vector3(diameter, diameter, diameter);
     go.GetComponent<Renderer>().sharedMaterial = Lit(color);
@@ -646,7 +654,7 @@ public class CountingGardenBuilder : MonoBehaviour {
     mid.y = 0.028f;
     GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
     go.name = name;
-    go.transform.SetParent(parent);
+    go.transform.SetParent(parent, false);
     go.transform.localPosition = mid;
     go.transform.localRotation = Quaternion.LookRotation((flatB - flatA).normalized);
     go.transform.localScale = new Vector3(width, 0.015f, Vector3.Distance(flatA, flatB) + width * 0.5f);
