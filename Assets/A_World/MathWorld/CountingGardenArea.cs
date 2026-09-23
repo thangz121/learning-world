@@ -261,10 +261,12 @@ public class CountingGardenArea : MonoBehaviour {
     // Staged zone: run the demo FIRST (the child watches the lesson), then the
     // panel offers play. Skeleton zones: focus + name, panel offers the way back.
     if (spot.playEnabled && _demo != null && !_demo.PassDone) {
-      // The audience gate starts the pass when the child stands at the spot;
-      // the panel opens once that pass completes (user order).
+      // S3-P2Z8: the focus ITSELF starts the lesson (a click from across the
+      // yard used to just frame the camera and do nothing). The panel opens
+      // once this pass completes (user order).
       _awaitDemo = true;
       _demoLoopBase = _demo.LoopCount;
+      _demo.StartFocusedLesson();
       ShowObjective(DialogueLang.T("Watch!", "Xem nhé!"));
       if (_panel != null) _panel.Hide();
     } else if (spot.playEnabled && _demo != null && _demo.PassDone) {
@@ -289,6 +291,9 @@ public class CountingGardenArea : MonoBehaviour {
     _doubleClickT = -1f;
     _awaitDemo = false;
     _proximityArmed = false; // standing on the spot must not instantly re-focus
+    // The zone owns the focused lesson: releasing the focus stops it (voice cut
+    // + stage back to the playground state).
+    if (_demo != null) { try { _demo.StopFocusedLesson(); } catch (Exception) { } }
     if (restoreCamera) { FollowGarden(); ShowObjective(GardenObjectiveText); }
   }
 

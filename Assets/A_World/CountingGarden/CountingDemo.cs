@@ -369,6 +369,37 @@ public class CountingDemo : MonoBehaviour {
     } catch (Exception) { }
   }
 
+  // S3-P2Z8 (user: "bấm vào vườn đếm, NPC không chạy demo"): focusing the plot
+  // IS the child choosing to watch, so the lesson STARTS on the focus — it no
+  // longer waits for the 1.4m door radius (clicking the spot from a distance
+  // used to focus the camera and then do nothing at all).
+  // A focused run is owned by the ZONE, not by the proximity gate: it keeps
+  // playing wherever the child stands in the yard and stops when the focus is
+  // released (panel Back / another plot / walking clear).
+  bool _focusRun;
+  public bool LessonEngaged { get { return _engaged; } }
+
+  public void StartFocusedLesson() {
+    if (!_built || !_actorsBuilt) return;
+    if (_engaged) return;             // already running: never restart on re-click
+    _focusRun = true;
+    _engaged = true;
+    _armed = false;
+    _passDone = false;
+    RestartLesson();
+    try { _audio.SetAudioFocus(AudioFocusMode.Learning); } catch (Exception) { }
+    try { Debug.Log("[CountingDemo] focused lesson start (zone door clicked)", this); }
+    catch (Exception) { }
+  }
+
+  public void StopFocusedLesson() {
+    if (!_focusRun) return;
+    _focusRun = false;
+    AbortLesson(); // cuts the voice + resets the stage to the playground state
+    try { Debug.Log("[CountingDemo] focused lesson stopped (zone focus released)", this); }
+    catch (Exception) { }
+  }
+
   public void Step(float dt) {
     if (!_built || !_actorsBuilt || dt <= 0f) return;
     WatchPlayer();
@@ -703,6 +734,7 @@ public class CountingDemo : MonoBehaviour {
     _engaged = false;
     _armed = true;
     _passDone = false;
+    _focusRun = false; // defensive: any abort also releases the focused run
     StopVoice();
     ResetActors();
     _phase = DemoPhase.Ready;
@@ -1193,6 +1225,34 @@ public class CountingDemo : MonoBehaviour {
   // ---- camera-first watching + audience gate --------------------------------------
 
   const float AbortMargin = 1.5f; // hysteresis: a step out never kills the lesson
+  // Standing anywhere inside the stage plot also counts as attending the
+  // lesson (the plot is the theatre floor).
+  const float StageAttendRadius = 3.4f;
+  // Island-local centre of the actual ball field, resolved lazily from the LIVE
+  // ball transforms: the garden stages the lesson as a SCALED miniature, so the
+  // authored refs' local space is not the player's space (using refs.Center
+  // made this circle land in the middle of the yard — journey-caught).
+  Vector3 _stageAttendLocal;
+  bool _stageAttendValid;
+
+  void EnsureStageAttendLocal() {
+    if (_stageAttendValid) return;
+    Vector3 c = Vector3.zero;
+    int n = 0;
+    for (int i = 0; i < _balls.Count; i++) {
+      GameObject b = _balls[i];
+      if (b == null) continue;
+      c += b.transform.position;
+      n++;
+    }
+    _stageAttendLocal = n > 0 ? (c / n) - _islandOffset : (_mouth + _islandOffset) - _islandOffset;
+    _stageAttendValid = true;
+  }
+
+  static float d2s(Vector3 a, Vector3 b) {
+    float x = a.x - b.x, z = a.z - b.z;
+    return x * x + z * z;
+  }
   // Per-site audience radius (set by each Build): the garden lesson triggers AT
   // THE STAGE DOOR (2.2m), the compact arena at its spawn (wide). A single
   // shared radius made the garden start the lesson from the middle of the yard.
@@ -1209,12 +1269,20 @@ public class CountingDemo : MonoBehaviour {
       float insideR = _watchRadius * _watchRadius;
       float abortR = (_watchRadius + AbortMargin) * (_watchRadius + AbortMargin);
       float clearR = (_watchRadius + RearmMargin) * (_watchRadius + RearmMargin);
-      bool inside = d2 <= insideR;
+      // Standing INSIDE the stage plot counts as attending too (user: "bấm vào
+      // vườn đếm" walks the child into the plot, away from the door radius —
+      // the NPC must still run the lesson there).
+      EnsureStageAttendLocal();
+      bool atStage = (d2s(local, _stageAttendLocal) <= StageAttendRadius * StageAttendRadius);
+      bool inside = d2 <= insideR || atStage;
       if (!inside) _armed = true; // must stand clear to arm the next pass
 
       // Audience gate: one pass per visit; the child must walk clear to re-arm.
+      // A FOCUSED run (zone clicked) is exempt: the zone owns it and releases
+      // it explicitly, so distance never kills a lesson the child asked for.
       if (AudienceGateEnabled && inside && !_engaged && _armed) BeginLesson();
-      if (AudienceGateEnabled && _engaged && d2 > abortR) {
+      if (AudienceGateEnabled && _engaged && !_focusRun
+          && d2 > abortR && !atStage) {
         AbortLesson();
         _beatLatched = false; // walking back in re-frames the stage
         return;

@@ -1770,3 +1770,27 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
 - Verify: full EditMode **603/598/0/5** (+P52 ×2); build production
   **Succeeded**; boot **FACE_OK 0 exception** (`s3p2z7-Build`). Temp tooling xóa
   sạch. Commit + push kèm phase này.
+
+## 58. S3-P2Z8 - FIX "BẤM VƯỜN ĐẾM, NPC KHÔNG CHẠY DEMO" (user, 2026-09-23)
+
+- Lỗi user: bấm vào vườn đếm (khu) thì NPC không chạy demo.
+- Root cause: S3-P2Z6 thu bán kính audience về 1.4m (để trigger ở cửa, không ở
+  giữa sân) nhưng `FocusZone` chỉ bật cờ `_awaitDemo` rồi CHỜ audience gate —
+  bấm khu từ xa / đi vào giữa khu => không vào bán kính 1.4m => demo không chạy,
+  panel không bao giờ mở.
+- Fix:
+  * `CountingDemo.StartFocusedLesson()`: FOCUS = trẻ đã chọn xem => bài học
+    chạy NGAY (engage + reset + focus-run), không phụ thuộc bán kính; re-click
+    khi đang chạy không restart; `StopFocusedLesson()` khi nhả focus (panel
+    Back / đổi khu / đi xa) => cắt tiếng + reset sân.
+  * Audience gate: vùng "đang xem" = cửa (1.4m) HOẶC đứng trong SÂN KHẤU
+    (3.4m quanh tâm bãi bóng — tâm tính từ transform bóng thật, vì vườn stage
+    là MINIATURE scale nên refs.Center không cùng không gian với player; lỗi
+    này journey bắt được: tâm sai nằm giữa sân => tự chạy từ giữa sân).
+    Focused run miễn nhiễm abort-theo-khoảng-cách.
+- Journey thật (click giữa khu từ lúc spawn): KHÔNG chạy ở giữa sân (z=-2.1,
+  engagedFalse) -> tới cửa khu: log "focused lesson start (zone door clicked)"
+  + focus=2 + demo chạy TeacherLookBoard->...->WalkBalls ✓ => đúng ý user.
+- Test: CT-P50D mới (focused từ xa chạy; re-click không restart; nhả focus =
+  Muted + reset bóng về home). Suite **604/599/0/5**. Build **Succeeded**; boot
+  **FACE_OK 0 exception**. Temp tooling xóa sạch. Commit + push kèm phase này.

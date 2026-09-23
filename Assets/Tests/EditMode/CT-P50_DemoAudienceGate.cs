@@ -80,6 +80,41 @@ public class CT_P50_DemoAudienceGate {
     } finally { TearDown(); }
   }
 
+  // D. Focused lesson (S3-P2Z8 user bug: "bấm vào vườn đếm, NPC không chạy
+  // demo"): clicking the plot door starts the lesson even when the child
+  // stands across the yard, it keeps running regardless of distance, a re-click
+  // never restarts it, and releasing the focus stops the voice + resets.
+  [Test] public void P50D_FocusedLessonRunsFromAFar() {
+    SetUp(false); // the viewer stands at the ENTRY, far outside every radius
+    try {
+      Assert.AreEqual(0, _audio.Lines.Count, "no lesson before the click");
+      _demo.StartFocusedLesson();
+      Assert.IsTrue(_demo.LessonEngaged, "clicking the plot engages the lesson");
+      Steps(80);
+      Assert.Greater(_audio.Lines.Count, 0, "the lesson speaks from across the yard");
+      DemoPhase phase = _demo.Phase;
+      Assert.AreNotEqual(DemoPhase.Ready, phase, "the lesson is actually running");
+      // A re-click must not restart an engaged run.
+      _demo.StartFocusedLesson();
+      Assert.AreEqual(phase, _demo.Phase, "re-clicking an engaged lesson never restarts it");
+      int guard = 0;
+      while (_demo.LoopCount < 1 && guard < 4000) { _demo.Step(0.1f); guard++; }
+      Assert.GreaterOrEqual(_demo.LoopCount, 1, "the focused pass completes (distance never aborts it)");
+      // Release the focus: voice cut + playground state.
+      int linesBefore = _audio.Lines.Count;
+      _demo.StopFocusedLesson();
+      Assert.IsFalse(_demo.LessonEngaged, "releasing the focus stops the lesson");
+      Assert.Contains(AudioFocusMode.Muted, _audio.Focus, "voice stopped on release");
+      Steps(200);
+      Assert.AreEqual(linesBefore, _audio.Lines.Count, "no further speech after release");
+      for (int i = 0; i < _builder.DemoBalls.Count; i++) {
+        float home = Vector3.Distance(_builder.DemoBalls[i].transform.localPosition,
+          CountingGardenBuilder.DemoBallHomes[i]);
+        Assert.Less(home, 0.05f, "ball " + i + " back home after the release");
+      }
+    } finally { TearDown(); }
+  }
+
   // C. The child leaves mid-pass: voice cut + stage reset; coming back replays.
   [Test] public void P50C_LeavingCutsVoiceAndResets() {
     SetUp(true);
