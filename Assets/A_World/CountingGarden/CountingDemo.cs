@@ -239,9 +239,18 @@ public class CountingDemo : MonoBehaviour {
   public void Step(float dt) {
     if (!_built || !_actorsBuilt || dt <= 0f) return;
     WatchPlayer();
+    TickLiveliness(dt);
+    // User order (S3-P2L2): the garden is a PLAYGROUND first — the lesson only
+    // exists while the child stands at the viewing spot. Nobody watching = no
+    // acting, no speech (the old build played the whole lesson, and looped its
+    // voice, from the moment the scene loaded).
+    if (!_engaged) return;
     _phaseT += dt;
     switch (_phase) {
       case DemoPhase.Ready:
+        // After a completed pass the actors hold the final idle state; the
+        // lesson restarts only after the child walks away and comes back.
+        if (_passDone) break;
         if (_phaseT >= 0.8f) To(DemoPhase.TeacherLookBoard);
         break;
 
@@ -461,6 +470,7 @@ public class CountingDemo : MonoBehaviour {
         FaceTowards(_teacher, BoardPoint(), dt, 3f);
         if (_phaseT >= 0.6f) {
           LoopCount++;
+          _passDone = true; // hold the idle state; re-arm needs the child to leave
           To(DemoPhase.Ready);
         }
         break;
@@ -468,7 +478,56 @@ public class CountingDemo : MonoBehaviour {
     TickFlight(dt);
     TickCarry();
     TickWave(dt);
-    TickLiveliness(dt);
+  }
+
+  // ---- audience gating (user order: one pass, then silence + playground) ----
+
+  bool _engaged;   // a lesson pass is running (or holding its final state)
+  bool _armed = true; // the child must be clear to arm the next pass
+  bool _passDone;     // the last pass reached its end (waiting for re-arm)
+
+  // Starts a clean pass. Called from WatchPlayer when an ARMED child walks in.
+  void BeginLesson() {
+    _engaged = true;
+    _armed = false;
+    _passDone = false;
+    ResetActors();
+    _phase = DemoPhase.Ready;
+    _phaseT = 0f;
+    _firedPick = false;
+    _placed = false;
+    _didPulse = false;
+    _saidNumber = false;
+    _saidToday = false;
+    _saidAssign = false;
+    _asked = false;
+    _cheered = false;
+    _ball0 = null;
+    _ball1 = null;
+    try { _audio.SetAudioFocus(AudioFocusMode.Learning); } catch (Exception) { }
+    try { Debug.Log("[CountingDemo] lesson start (audience arrived)", this); } catch (Exception) { }
+  }
+
+  // Child left: cut the voice immediately and return the stage to its idle,
+  // playground state (no speech, no half-played lesson left behind).
+  void AbortLesson() {
+    _engaged = false;
+    _armed = true;
+    _passDone = false;
+    StopVoice();
+    ResetActors();
+    _phase = DemoPhase.Ready;
+    _phaseT = 0f;
+    try { Debug.Log("[CountingDemo] lesson aborted (audience left): voice off, stage reset", this); }
+    catch (Exception) { }
+  }
+
+  void StopVoice() {
+    try {
+      if (_audio == null) return;
+      _audio.SetAudioFocus(AudioFocusMode.Muted);   // Director: stops all voice
+      _audio.SetAudioFocus(AudioFocusMode.Learning); // restore the normal focus
+    } catch (Exception) { }
   }
 
   // ---- liveliness (user round: "làm sinh động nhất có thể") ----------------
@@ -692,7 +751,8 @@ public class CountingDemo : MonoBehaviour {
   // ---- speech / gesture -----------------------------------------------------------
 
   void Speak(string text, SpeechStyle style, AudioPriority priority) {
-    if (_audio == null) return;
+    // Audience gate: no listener, no line (belt & braces with StopVoice).
+    if (_audio == null || !_engaged) return;
     try {
       var req = new DialogueRequest(text, DemoVoice, DialogueLang.Language, 1f, 1f, style,
         AudioFormat.Mp3_44100, priority);
@@ -751,17 +811,36 @@ public class CountingDemo : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  // ---- camera-first watching -------------------------------------------------------
+  // ---- camera-first watching + audience gate --------------------------------------
+
+  const float AbortMargin = 1.5f; // hysteresis: a step out never kills the lesson
 
   void WatchPlayer() {
-    if (_playerT == null || _cam == null || _camA == null || _lookA == null) return;
+    if (_playerT == null) return;
     try {
       Vector3 p = _playerT.position;
       if (p.x < 60f) return; // player not in the garden island
       Vector3 local = p - new Vector3(120f, 0f, 0f);
       float dx = local.x - _mouth.x, dz = local.z - _mouth.z;
       float d2 = dx * dx + dz * dz;
-      if (d2 <= WatchRadius * WatchRadius) {
+      float insideR = WatchRadius * WatchRadius;
+      float abortR = (WatchRadius + AbortMargin) * (WatchRadius + AbortMargin);
+      float clearR = (WatchRadius + RearmMargin) * (WatchRadius + RearmMargin);
+      bool inside = d2 <= insideR;
+      if (!inside) _armed = true; // must stand clear to arm the next pass
+
+      // Audience gate runs on its OWN (no camera needed): world/tests without a
+      // live SmartCamera still get the one-pass lesson contract.
+      if (inside && !_engaged && _armed) BeginLesson();
+      if (_engaged && d2 > abortR) {
+        AbortLesson();
+        _beatLatched = false; // walking back in re-frames the stage
+        return;
+      }
+
+      // Camera beat (optional: needs live stage + camera refs).
+      if (_cam == null || _camA == null || _lookA == null) return;
+      if (inside) {
         if (!_beatLatched) {
           _beatLatched = true;
           DemoBeatsFired++;
@@ -774,7 +853,7 @@ public class CountingDemo : MonoBehaviour {
             IssueShot();
           }
         }
-      } else if (_beatLatched && d2 > (WatchRadius + RearmMargin) * (WatchRadius + RearmMargin)) {
+      } else if (_beatLatched && d2 > clearR) {
         _beatLatched = false;
       }
     } catch (Exception) { }

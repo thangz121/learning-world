@@ -1336,3 +1336,30 @@ Quyết định kiến trúc (từ audit, EXTEND không REWRITE):
 - Lưu ý: chữ Milo/Mia/Tess + tên môn giữ nguyên; vocab (từ tiếng Anh) vẫn
   en-US theo thiết kế dạy tiếng Anh; pregen pack vẫn EN (câu VI phát qua TTS
   runtime + cache L2). Commit kèm phase này.
+
+## 50. S3-P2L2 - DEMO AUDIENCE GATE (user: "vừa vào vườn là phát âm thanh demo + lặp lại") (2026-09-23)
+
+- Lỗi user báo: vào Counting Garden là demo tự diễn + TỰ NÓI, và lặp đi lặp lại
+  tiếng mãi. Yêu cầu: phát 1 lần; nếu người chơi không chọn (không đứng xem)
+  thì tắt âm thanh + trả sân về trạng thái sân chơi.
+- Fix (CountingDemo): thêm AUDIENCE GATE —
+  * Không có khán giả (ngoài vùng xem): KHÔNG diễn, KHÔNG nói, sân idle
+    (bóng bob nhẹ, 2 cô trò đứng thở) => vườn là sân chơi.
+  * Trẻ đi vào vùng xem (bán kính 5m quanh viewing spot) => bắt đầu ĐÚNG 1
+    lượt từ đầu (BeginLesson: reset sạch + focus Learning).
+  * Hết lượt => `_passDone`: giữ nguyên trạng thái cuối, KHÔNG tự lặp; chỉ
+    chạy lại khi trẻ đi ra khỏi vùng (re-arm) rồi quay lại.
+  * Trẻ rời vùng giữa chừng => AbortLesson: SetAudioFocus(Muted) để CẮT tiếng
+    ngay (Director StopAll) rồi trả focus Learning, reset sân về idle (bóng về
+    sân, result ẩn, 2 cô trò về chỗ) — hết "nói với phòng trống".
+  * Speak() cũng chặn theo `_engaged` (belt & braces).
+  * Gate tách khỏi camera: audience chạy cả khi không có SmartCamera (test
+    không cần camera), beat camera vẫn như cũ khi ở trong vùng.
+- Pin mới CT-P50 ×3: không khán giả = 0 câu nói + idle; 1 lượt rồi im (đứng
+  thêm 60s không lặp, không nói thêm); rời giữa chừng = Focus Muted + reset
+  sân (bóng về home) + quay lại thì chạy lại. CT-P48C/P49C cập nhật theo
+  contract mới (test cần "khán giả" đứng ở viewing spot).
+- Verify: full EditMode **585/580/0/5**; build production **Succeeded**; boot
+  **FACE_OK 0 exception**. Build review: `Temp/opencode/s3p2l2-Build/LWE.exe`.
+- Commit + push kèm phase này (sau khi user hỏi "bản này đã mới nhất chưa" —
+  lúc đó 2 file fix còn dở trong worktree, GitHub vẫn ở e808d24).

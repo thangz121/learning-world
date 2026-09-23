@@ -26,11 +26,16 @@ public class CT_P48_CountingDemo {
 
   static void BuildDemo(out GameObject garden, out CountingGardenBuilder builder,
       out CountingDemo demo) {
+    // S3-P2L2: the lesson only runs for an AUDIENCE — the test child stands at
+    // the viewing spot (same contract as the live game).
     garden = new GameObject("P48GardenWorld");
     builder = garden.AddComponent<CountingGardenBuilder>();
     builder.BuildContent(garden.transform);
     demo = garden.AddComponent<CountingDemo>();
-    demo.Build(builder, null, null, null);
+    GameObject viewer = new GameObject("P48Audience");
+    viewer.transform.SetParent(garden.transform, true);
+    viewer.transform.position = CountingGardenBuilder.WorldOffset + builder.DemoMouth;
+    demo.Build(builder, viewer.transform, null, null);
   }
 
   static void TearDown(GameObject garden) {
@@ -179,7 +184,7 @@ public class CT_P48_CountingDemo {
         if (step > maxStep) maxStep = step;
         prevS = sp;
         prevT = tp;
-        if (demo.LoopCount >= 1 && demo.Phase == DemoPhase.TeacherLookBoard) break;
+        if (demo.LoopCount >= 1) break; // one pass, no replay (audience gate)
       }
       Assert.Less(iter, 4000, "the lesson completes (no stall)");
       Assert.GreaterOrEqual(demo.LoopCount, 1, "loop counter advances");

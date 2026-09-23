@@ -135,7 +135,11 @@ public class CT_P49_DialogueLanguage {
       FakeAudio audio = new FakeAudio();
       CountingDemo demo = garden.AddComponent<CountingDemo>();
       DialogueLang.Set(DialogueLanguage.Vietnamese);
-      demo.Build(builder, null, null, audio);
+      // Audience gate (S3-P2L2): a viewer at the spotting area runs the lesson.
+      GameObject viewer = new GameObject("P49Audience");
+      viewer.transform.SetParent(garden.transform, true);
+      viewer.transform.position = CountingGardenBuilder.WorldOffset + builder.DemoMouth;
+      demo.Build(builder, viewer.transform, null, audio);
       int guard = 0;
       while (demo.LoopCount < 1 && guard < 4000) { demo.Step(0.1f); guard++; }
       Assert.GreaterOrEqual(demo.LoopCount, 1, "lesson completes in Vietnamese mode");
