@@ -302,14 +302,19 @@ public class CT_P50_GardenZoneFlow {
         "pivot compensation keeps the stage centre in place");
       Assert.Less(Dist2D(builder.DemoCam.position, builder.DemoStageCenter), 3.0f,
         "shot A marker lives inside the miniature");
-      // Ambient demo: alive without any player, camera beats off, drives the gate.
+      // Demo + audience gate (S3-P2L2): the lesson acts only for a child at the
+      // viewing spot, one pass per visit; camera beats off (zone focus owns it).
       CountingDemo demo = garden.AddComponent<CountingDemo>();
       demo.CameraBeatsEnabled = false;
-      demo.Build(builder, null, null, null);
+      GameObject viewer = new GameObject("P50HViewer");
+      viewer.transform.SetParent(garden.transform, true);
+      viewer.transform.position = CountingGardenBuilder.WorldOffset + builder.DemoMouth;
+      demo.Build(builder, viewer.transform, null, null);
       Assert.IsNotNull(demo.transform, "demo built");
       DemoPhase startPhase = demo.Phase;
       for (int i = 0; i < 30; i++) demo.Step(0.1f);
-      Assert.AreNotEqual(startPhase, demo.Phase, "the demo runs with nobody playing (user order)");
+      Assert.AreNotEqual(startPhase, demo.Phase,
+        "with the child at the viewing spot the lesson starts (audience gate)");
       CountingGardenArea area = areaGo.AddComponent<CountingGardenArea>();
       GardenZonePanel panel = panelGo.AddComponent<GardenZonePanel>();
       panel.Build();
