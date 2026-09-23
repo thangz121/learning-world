@@ -248,6 +248,13 @@ public class CountingGame : MonoBehaviour {
       _demo.ObserveTarget = _player;
       _demo.OnIntroCompleted = OnIntroCompleted;
     }
+    // S3-P2Z9 (user order): the arena never replays the demo — the child came
+    // to PLAY. Control is handed over at build; the assignment ("đề bài") is
+    // read once the child reaches the play field (TickTask below).
+    if (_demo != null && _demo.NoIntroMode) {
+      Current = Phase.FreePlay;
+      try { if (_life != null) _life.Begin("arena play mode"); } catch (Exception) { }
+    }
     // Re-entry policy: a completed activity adopts its finished visual without
     // replaying the intro (the lifecycle lives in MathScene, so it survives).
     if (_life != null && _life.State == ActivityState.Completed) {
@@ -386,10 +393,74 @@ public class CountingGame : MonoBehaviour {
 
   // ---- wrong path beats (deterministic timer) ------------------------------------
 
-  void Update() {
-    TickResultPop(Time.deltaTime);
+  void Update() { TickForTests(Time.deltaTime); }
+
+  // Deterministic tick (EditMode cover: no live frame needed).
+  public void TickForTests(float dt) {
+    TickResultPop(dt);
+    TickTask(dt);
+    TickTaskBeats(dt);
     if (Current != Phase.Wrong) return;
-    TickWrong(Time.deltaTime);
+    TickWrong(dt);
+  }
+
+  // ---- task announcement (S3-P2Z9) -----------------------------------------------
+  // User: "đã vào arena thì không chạy lại demo, đưa ra đề bài luôn — nhưng đợi
+  // trẻ đến gần chỗ chơi mới bắt đầu đọc." So: one proximity-gated announcement
+  // on the way in, two short spaced lines (the demo's speech pacer handles the
+  // breathing room), then the actors observe while the child works.
+
+  public float TaskRadius = 3.0f;
+  bool _taskTold;
+  int _taskStep = -1;
+  float _taskT;
+  Vector3 _playSpotWorld;
+  bool _playSpotValid;
+
+  public bool TaskTold { get { return _taskTold; } }
+
+  Vector3 PlaySpotWorld() {
+    if (_playSpotValid) return _playSpotWorld;
+    Vector3 c = Vector3.zero;
+    int n = 0;
+    if (_builder != null && _builder.Activity != null && _builder.Activity.Balls != null) {
+      foreach (GameObject b in _builder.Activity.Balls) {
+        if (b == null) continue;
+        c += b.transform.position;
+        n++;
+      }
+    }
+    _playSpotWorld = n > 0 ? c / n : transform.position;
+    _playSpotValid = true;
+    return _playSpotWorld;
+  }
+
+  void TickTask(float dt) {
+    if (_taskTold || Current == Phase.Completed || _builder == null) return;
+    if (!PlayerNear(PlaySpotWorld(), TaskRadius)) return;
+    _taskTold = true;
+    _taskStep = 0;
+    _taskT = 0f;
+    try { Debug.Log("[CountingGame] task announced (child reached the field).", this); }
+    catch (Exception) { }
+  }
+
+  void TickTaskBeats(float dt) {
+    if (_taskStep < 0) return;
+    _taskT += dt;
+    if (_taskStep == 0 && _taskT >= 0.15f) {
+      _taskStep = 1;
+      if (_demo != null) {
+        _demo.TeacherSay("Put two balls in the basket!", "Bỏ hai bóng vào giỏ nhé!");
+        _demo.PointTeacherAt(BasketWorld(), 2.4f);
+      }
+    } else if (_taskStep == 1 && _taskT >= 2.8f) {
+      _taskStep = 2;
+      if (_demo != null) {
+        _demo.TeacherSay("The board says two!", "Bảng ghi số hai!");
+        _demo.PointTeacherAt(BoardWorld(), 2.2f);
+      }
+    }
   }
 
   void TickWrong(float dt) {

@@ -111,6 +111,10 @@ public class CountingDemo : MonoBehaviour {
   // the "Vào chơi / Quay lại" panel only AFTER the child watched the demo).
   public Action OnLoopCompleted;
   // S3-P2Z4 reference gameplay: the arena runs the lesson ONCE as the INTRO
+  // (S3-P2Z9) NoIntroMode: the arena is a PLAY space — the lesson never replays
+  // there; the teacher only announces the assignment when the child reaches the
+  // play field (CountingGame owns that beat).
+  public bool NoIntroMode;
   // (LoopForever=false) and then hands control to the child (OnIntroCompleted);
   // the garden miniature keeps looping forever.
   public bool LoopForever = true;
@@ -243,6 +247,12 @@ public class CountingDemo : MonoBehaviour {
     ResetActors();
     _phase = DemoPhase.Ready;
     _phaseT = 0f;
+    if (NoIntroMode) {
+      // Straight to observers: no lesson replay, no audience camera hijack.
+      // The game (CountingGame) announces the assignment on approach instead.
+      SkipToObserving();
+      AudienceGateEnabled = false;
+    }
   }
 
   bool _actorAttempt;

@@ -163,34 +163,62 @@ public class CT_P51_CountingGame {
     }
   }
 
-  // D. Intro handover: with LoopForever=false the lesson runs ONCE, then the
-  // actors observe and the game accepts the child's input.
-  [Test] public void P51D_IntroHandsOverControl() {
+  // D. S3-P2Z9 (user order): the arena NEVER replays the demo — the child came
+  // to play. The game starts in FreePlay with the actors observing, and the
+  // assignment ("đề bài") is announced only once the child reaches the field.
+  [Test] public void P51D_NoIntro_TaskAnnouncedOnApproach() {
     GameObject arena;
     CountingPlayBuilder builder = BuildArena(out arena);
     GameObject player = new GameObject("P51PlayerI");
-    // The audience gate needs the child INSIDE the arena watch radius (S3-P2L2).
-    player.transform.position = CountingPlayBuilder.WorldOffset + new Vector3(0f, 0f, -3f);
+    // The child spawns at the arena door, FAR from the play field. (In the test
+    // the arena root sits at the origin — the +180 island offset is applied by
+    // GameInstaller at runtime — so the player uses plain local-space coords.)
+    player.transform.position = new Vector3(0f, 0f, -3f);
     try {
       CountingDemo demo = arena.AddComponent<CountingDemo>();
       demo.LoopForever = false;
       demo.CameraBeatsEnabled = false;
-      demo.Build(builder, player.transform, null, null);
-      CountingGame game = BuildGame(builder, player.transform, demo);
-      int guard = 0;
-      while (!demo.IntroDone && guard < 4000) { demo.Step(0.1f); guard++; }
-      Assert.IsTrue(demo.IntroDone, "the lesson finishes (no endless loop)");
+      demo.NoIntroMode = true;
+      P51FakeAudio audio = new P51FakeAudio();
+      demo.Build(builder, player.transform, null, audio);
+      CountingGame game = arena.AddComponent<CountingGame>();
+      game.Build(demo, builder, player.transform, player.transform, null, audio);
+      Assert.IsTrue(demo.IntroDone, "no intro: the actors already observe");
       Assert.AreEqual(CountingGame.Phase.FreePlay, game.Current,
-        "the intro completion handed control to the child exactly once");
-      for (int i = 0; i < 400; i++) demo.Step(0.1f);
-      Assert.AreEqual(1, demo.LoopCount, "the intro never re-loops in the arena");
-      Assert.IsTrue(game.IntroDone, "game is in play mode");
-      Assert.AreEqual(CountingBall.BallState.Grounded, game.BallAt(0).State,
-        "balls are back home for the child's turn");
+        "the child may play immediately");
+      for (int i = 0; i < 200; i++) demo.Step(0.1f);
+      game.TickForTests(0.05f);
+      Assert.AreEqual(0, demo.LoopCount, "the demo NEVER replays in the arena");
+      Assert.IsFalse(game.TaskTold, "no assignment read while the child is at the door");
+      Assert.AreEqual(0, audio.Lines.Count, "silence until the child walks to the field");
+      // Walk to the play field (between the balls).
+      player.transform.position = builder.Activity.BallStand;
+      for (int i = 0; i < 20; i++) { game.TickForTests(0.05f); demo.Step(0.05f); }
+      Assert.IsTrue(game.TaskTold, "the assignment is read once the child reaches the field");
+      Assert.GreaterOrEqual(audio.Lines.Count, 1, "the teacher speaks the task");
+      bool ok = SafetyFilter.ValidateLine(audio.Lines[0], false, out string why);
+      Assert.IsTrue(ok, "task line passes SafetyFilter ('" + audio.Lines[0] + "' " + why + ")");
+      // The second beat arrives after the speech pacer had room to breathe.
+      for (int i = 0; i < 90; i++) { game.TickForTests(0.05f); demo.Step(0.05f); }
+      Assert.GreaterOrEqual(audio.Lines.Count, 2, "the board line follows the assignment");
     } finally {
       Object.DestroyImmediate(player);
       Object.DestroyImmediate(arena);
     }
+  }
+
+  sealed class P51FakeAudio : IAudioDirector {
+    public readonly List<string> Lines = new List<string>();
+    public System.Threading.Tasks.Task PlayVocabularyAsync(WordId wordId, VocabularyAudioMode mode) {
+      return System.Threading.Tasks.Task.CompletedTask;
+    }
+    public System.Threading.Tasks.Task SpeakAsync(DialogueRequest request) {
+      Lines.Add(request.Text);
+      return System.Threading.Tasks.Task.CompletedTask;
+    }
+    public void PlaySfx(SfxId id) { }
+    public void PlayMusic(MusicId id) { }
+    public void SetAudioFocus(AudioFocusMode mode) { }
   }
 
   // E. Re-entry policy: a completed lifecycle adopts the finished picture

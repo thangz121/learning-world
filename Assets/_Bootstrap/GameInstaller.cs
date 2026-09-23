@@ -293,7 +293,10 @@ public class GameInstaller : MonoBehaviour {
       try {
         CountingDemo intro = root.AddComponent<CountingDemo>();
         intro.LoopForever = false;
-        intro.CameraBeatsEnabled = true;
+        // S3-P2Z9 (user order): the arena is the PLAY space — no demo replay;
+        // the teacher reads the assignment once the child reaches the field.
+        intro.NoIntroMode = true;
+        intro.CameraBeatsEnabled = false;
         Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
           ? _activeBuilder.Player.transform : null;
         intro.Build(builder, playerT,

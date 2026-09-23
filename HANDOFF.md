@@ -1794,3 +1794,25 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
 - Test: CT-P50D mới (focused từ xa chạy; re-click không restart; nhả focus =
   Muted + reset bóng về home). Suite **604/599/0/5**. Build **Succeeded**; boot
   **FACE_OK 0 exception**. Temp tooling xóa sạch. Commit + push kèm phase này.
+
+## 59. S3-P2Z9 - ARENA: KHÔNG DIỄN LẠI DEMO, CHỈ ĐỌC ĐỀ BÀI KHI TỚI GẦN (user, 2026-09-23)
+
+- Lệnh user: vào arena để chơi thì KHÔNG chạy lại demo nữa, đưa ra đề bài luôn;
+  nhưng phải đợi trẻ đến gần (hoặc sát) chỗ chơi mới bắt đầu đọc đề.
+- Code:
+  * `CountingDemo.NoIntroMode` (set trong GameInstaller cho arena): Build xong
+    là `SkipToObserving()` + tắt audience gate — cô/trò đứng quan sát, KHÔNG
+    bao giờ diễn lại bài học, không camera hijack (CameraBeatsEnabled=false).
+  * `CountingGame`: vào arena là `Phase.FreePlay` ngay (trẻ chơi được luôn) +
+    bỏ nhịp chờ intro; thêm nhịp ĐỀ BÀI `TickTask/TickTaskBeats`: khi trẻ vào
+    bán kính 3.0m quanh tâm bãi bóng (tâm tính từ transform bóng thật) thì cô
+    đọc 2 câu cách nhau: "Put two balls in the basket!" (chỉ giỏ) rồi "The
+    board says two!" (chỉ bảng) — qua pacer ngắt nghỉ sẵn có; phát ĐÚNG 1 lần
+    mỗi lượt (TaskTold), không đọc khi đang ở cửa, không đọc khi đã Completed.
+  * `TickForTests(dt)` tách khỏi Update để test điều khiển thời gian.
+- Journey thật: vào arena -> `game=FreePlay/taskFalse demo=Observing/loops0`
+  đứng ở cửa 7s: IM LẶNG, không diễn lại ✓ -> đi vào bãi bóng (z=-1.1):
+  log `[CountingGame] task announced (child reached the field)` -> task=True ✓.
+- Test CT-P51D viết lại (no intro + đề bài theo khoảng cách + SafetyFilter +
+  beat 2 sau nhịp thở). Suite **604/599/0/5**; build **Succeeded**; boot
+  **FACE_OK 0 exception**. Temp tooling xóa sạch. Commit + push kèm phase này.
