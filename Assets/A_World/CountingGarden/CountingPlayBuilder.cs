@@ -23,7 +23,9 @@ public class CountingPlayBuilder : MonoBehaviour {
   public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -11.5f);
   // Follow camera: north of the child, looking south INTO the arena (the
   // lesson stage faces north) — same reading direction as the garden.
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 3.8f, -5.0f);
+  // S3-P2Z11 (journey shot): a touch higher/farther so the board's "2" stays
+  // fully inside the frame from the listen circle and the basket too.
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 4.1f, -5.3f);
 
   static readonly Color Lawn = new Color(0.38f, 0.64f, 0.36f);
   static readonly Color Meadow = new Color(0.46f, 0.71f, 0.42f);
@@ -36,6 +38,14 @@ public class CountingPlayBuilder : MonoBehaviour {
   static readonly Color BoardCream = new Color(0.99f, 0.95f, 0.85f);
   static readonly Color Gold = new Color(0.98f, 0.78f, 0.25f);
   static readonly Color AppleRed = new Color(0.85f, 0.25f, 0.25f);
+
+  // S3-P2Z11 (user: "phải có chỗ đứng cố định lúc nghe câu hỏi, sau khi nghe
+  // câu hỏi thì mới chơi"): the marked listen circle just before the ball
+  // field. The teacher reads the assignment only when the child stands here,
+  // and the balls only accept clicks after it was read.
+  public static readonly Vector3 ListenLocal = new Vector3(0f, 0f, 0.35f);
+  public GameObject ListenPad { get; private set; }
+  public GameObject ListenRing { get; private set; }
 
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
@@ -201,11 +211,14 @@ public class CountingPlayBuilder : MonoBehaviour {
       new Vector3(0.15f, 1.7f, 0.15f), BasketBrown);
     Box(parent, "CPBoardR", board + new Vector3(1.25f, 0.85f, 0f),
       new Vector3(0.15f, 1.7f, 0.15f), BasketBrown);
-    GameObject panel = Box(parent, "CPBoardPanel", board + new Vector3(0f, 2.35f, 0f),
+    // S3-P2Z10 (journey shot): the follow camera framed the board with its top
+    // cropped. Lowered the panel + digit so the whole "2" stays inside the
+    // gameplay view (user brief §11: the board holds the target at all times).
+    GameObject panel = Box(parent, "CPBoardPanel", board + new Vector3(0f, 1.95f, 0f),
       new Vector3(2.6f, 1.7f, 0.12f), BoardCream);
     SetMaterial(panel, LitEmissive(BoardCream, 0.22f));
     GameObject digit = CountingGardenBuilder.Digit2(parent, "CPNumber2",
-      board + new Vector3(0f, 1.62f, -0.09f), 1.3f, 1.0f, Gold, 90f);
+      board + new Vector3(0f, 1.42f, -0.09f), 1.3f, 1.0f, Gold, 90f);
     SetMaterial(digit, LitEmissive(Gold, 0.5f));
     r.Number = digit;
 
@@ -271,6 +284,58 @@ public class CountingPlayBuilder : MonoBehaviour {
     result.SetActive(false);
     r.Result = result;
 
+    // ---- listen circle (S3-P2Z11): fixed spot for the assignment -----------
+    ListenRing = Pad(parent, "CPListenRing", ListenLocal + new Vector3(0f, 0.006f, 0f),
+      3.1f, Gold);
+    Pad(parent, "CPListenEdge", ListenLocal + new Vector3(0f, 0.004f, 0f),
+      3.5f, new Color(0.80f, 0.42f, 0.20f));
+    // Sky-blue face so the circle reads against the sand path (cream-on-sand
+    // was invisible in the journey shot).
+    ListenPad = Pad(parent, "CPListenPad", ListenLocal + new Vector3(0f, 0.014f, 0f),
+      2.3f, new Color(0.62f, 0.85f, 0.97f));
+    SetMaterial(ListenPad, LitEmissive(new Color(0.62f, 0.85f, 0.97f), 0.14f));
+    for (int i = 0; i < 4; i++) {
+      float a = (i / 4f) * Mathf.PI * 2f + Mathf.PI * 0.25f;
+      Sphere(parent, "CPListenStud" + i,
+        ListenLocal + new Vector3(Mathf.Cos(a) * 1.02f, 0.06f, Mathf.Sin(a) * 1.02f),
+        0.16f, Gold, true);
+    }
+    Box(parent, "CPListenPost", ListenLocal + new Vector3(1.45f, 0.5f, 0.15f),
+      new Vector3(0.12f, 1.0f, 0.12f), BasketBrown);
+    Sphere(parent, "CPListenBell", ListenLocal + new Vector3(1.45f, 1.08f, 0.15f),
+      0.34f, Gold, true);
+
+    // ---- more eye candy (user: "gameplay chưa bắt mắt") --------------------
+    // Bunting under the entry arch.
+    Color[] bunting = { AppleRed, Gold, MintLeaf, WorldBeauty.BlossomDeep,
+      new Color(0.30f, 0.55f, 0.95f) };
+    for (int i = 0; i < 5; i++) {
+      GameObject flag = Box(parent, "CPBunting" + i,
+        new Vector3(-1.1f + i * 0.55f, 1.86f, -9.5f),
+        new Vector3(0.34f, 0.34f, 0.05f), bunting[i % bunting.Length]);
+      if (flag != null) {
+        flag.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        IgnoreFromBuild(flag);
+      }
+    }
+    // Counting stones + a toy block stack on the flanks (off every walk line).
+    Vector3[] stones = {
+      new Vector3(-3.1f, 0f, 0.6f), new Vector3(-4.2f, 0f, 2.0f),
+      new Vector3(3.9f, 0f, 2.3f),
+    };
+    for (int i = 0; i < stones.Length; i++) {
+      Cylinder(parent, "CPNumberStone" + i, stones[i] + new Vector3(0f, 0.05f, 0f),
+        0.8f, 0.1f, StoneGrey);
+      for (int b = 0; b <= i; b++) {
+        float t = i == 0 ? 0f : (b / (float)i - 0.5f);
+        Sphere(parent, "CPNumberStone" + i + "Bead" + b,
+          stones[i] + new Vector3(t * 0.45f, 0.18f, 0f), 0.17f, Gold, false);
+      }
+    }
+    Box(parent, "CPBlock0", new Vector3(4.2f, 0.25f, -0.6f), new Vector3(0.5f, 0.5f, 0.5f), AppleRed);
+    Box(parent, "CPBlock1", new Vector3(4.2f, 0.72f, -0.6f), new Vector3(0.45f, 0.45f, 0.45f), Gold);
+    Box(parent, "CPBlock2", new Vector3(3.65f, 0.22f, -0.7f), new Vector3(0.42f, 0.42f, 0.42f), MintLeaf);
+
     // Acting layout (compressed to child scale: the teacher/board are 8m from
     // the spawn, the balls 3-4m, the basket 2.4m from the cluster).
     r.NpcStart = new Vector3(-1.35f, 0f, 4.8f);
@@ -278,7 +343,7 @@ public class CountingPlayBuilder : MonoBehaviour {
     r.BallStand = new Vector3(-0.3f, 0f, 1.6f);
     r.BallStand2 = new Vector3(0.5f, 0f, 1.6f);
     r.BasketStand = new Vector3(1.8f, 0f, 1.4f);
-    r.BoardPoint = board + new Vector3(0f, 1.6f, -0.12f);
+    r.BoardPoint = board + new Vector3(0f, 1.45f, -0.12f);
     r.BallFieldPoint = new Vector3(0f, 0.6f, 1.6f);
 
     // Intro camera shots (A lesson, B balls, C basket/result) — the existing
@@ -363,7 +428,7 @@ public class CountingPlayBuilder : MonoBehaviour {
     return go;
   }
 
-  static void Pad(Transform parent, string name, Vector3 pos, float diameter, Color color) {
+  static GameObject Pad(Transform parent, string name, Vector3 pos, float diameter, Color color) {
     GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     pad.name = name;
     pad.transform.SetParent(parent, false);
@@ -371,6 +436,7 @@ public class CountingPlayBuilder : MonoBehaviour {
     pad.transform.localScale = new Vector3(diameter, 0.01f, diameter);
     pad.GetComponent<Renderer>().sharedMaterial = Lit(color);
     StripCollider(pad);
+    return pad;
   }
 
   static GameObject Cylinder(Transform parent, string name, Vector3 pos,

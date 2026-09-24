@@ -83,6 +83,10 @@ public class CountingDemo : MonoBehaviour {
     public Animator Animator;
     public CharacterPresentation Face;
     public Transform CarryAnchor;
+    // S3-P2Z11 (user: "bóng tự bay lên chứ không phải cầm bằng tay, giả quá"):
+    // the carried ball rides the rig's ACTUAL fist bone, so the PickUp bend and
+    // the walk move the ball with the hand. CarryAnchor stays as a fallback.
+    public Transform HandBone;
     public Transform WaveBone;
     public Quaternion WaveBase = Quaternion.identity;
     public bool Waving;
@@ -150,6 +154,9 @@ public class CountingDemo : MonoBehaviour {
   Vector3 _flyFrom, _flyTo;
   float _flyT, _flyDur, _flyLift;
   bool _flying;
+  NpcActor _flyHandActor; // non-null: the flight homes on this actor's fist
+  int _flyHandIndex;
+  bool _flyPopOnLand;     // a place flight wobbles the basket when it lands
   bool _carry0, _carry1;
   GameObject _ball0, _ball1; // the two chosen balls (indices into _balls)
 
@@ -309,6 +316,8 @@ public class CountingDemo : MonoBehaviour {
           if (a.WaveBone == null && (bone.name == "UpperArm.R" || bone.name == "Shoulder.R"))
             a.WaveBone = bone;
           if (a.HeadBone == null && bone.name == "Head") a.HeadBone = bone;
+          if (a.HandBone == null && (bone.name == "Fist.R" || bone.name == "Hand.R"))
+            a.HandBone = bone;
         }
       }
     }
@@ -335,6 +344,8 @@ public class CountingDemo : MonoBehaviour {
     _carry1 = false;
     _flying = false;
     _flyBall = null;
+    _flyHandActor = null;
+    _flyPopOnLand = false;
     try {
       if (_number != null) _number.transform.localScale = Vector3.one;
       if (_result != null) _result.SetActive(false);
@@ -522,18 +533,18 @@ public class CountingDemo : MonoBehaviour {
           _firedPick = true;
           Trigger(_student, "PickUp");
           _ball0 = PickBall(2);
-          Fly(_ball0, BallHome(2), CarrySlot(_student, 0), 0.25f, 0.9f, 0.5f);
+          // The ball waits for the bend (0.35s), then arcs INTO the moving
+          // fist; from 0.8s it is carried by the hand itself.
+          FlyToHand(_ball0, _student, 0, 0.35f, 0.4f, 0.3f);
           Sparkle(BallPoint(), 6, 41, 0.28f);
         }
+        if (_phaseT >= 0.8f) _carry0 = true;
         if (_phaseT >= 0.9f && !_didPulse) {
           _didPulse = true;
           Speak(DialogueLang.T("One ball.", "Một quả bóng."),
             SpeechStyle.Clear, AudioPriority.P2_Instruction);
         }
-        if (_phaseT >= 1.8f) {
-          _carry0 = true;
-          To(DemoPhase.PickTwo);
-        }
+        if (_phaseT >= 1.8f) To(DemoPhase.PickTwo);
         break;
       case DemoPhase.PickTwo:
         FaceTowards(_student, BallPoint2(), dt, 5f);
@@ -542,13 +553,11 @@ public class CountingDemo : MonoBehaviour {
           Trigger(_student, "PickUp");
           Pulse(_student, CharacterExpression.Surprised, 1.0f); // "got it!" beat
           _ball1 = PickBall(3);
-          Fly(_ball1, BallHome(3), CarrySlot(_student, 1), 0.25f, 0.9f, 0.5f);
+          FlyToHand(_ball1, _student, 1, 0.35f, 0.4f, 0.3f);
           Sparkle(BallPoint2(), 6, 42, 0.28f);
         }
-        if (_phaseT >= 1.4f) {
-          _carry1 = true;
-          To(DemoPhase.ShowTwo);
-        }
+        if (_phaseT >= 0.8f) _carry1 = true;
+        if (_phaseT >= 1.4f) To(DemoPhase.ShowTwo);
         break;
       case DemoPhase.ShowTwo:
         // Beat: the student faces the child holding BOTH balls, teacher reacts.
@@ -573,21 +582,23 @@ public class CountingDemo : MonoBehaviour {
         break;
       case DemoPhase.PlaceOne:
         FaceTowards(_student, BasketPoint(), dt, 5f);
-        if (!_placed) {
-          _placed = true;
+        // Reach over the rim first (the same PickUp bend), THEN the ball leaves
+        // the fist and drops the short distance into its slot.
+        if (!_firedPick) { _firedPick = true; Trigger(_student, "PickUp"); }
+        if (_carry0 && _phaseT >= 0.5f) {
           _carry0 = false;
-          Fly(_ball0, CarrySlot(_student, 0), BasketSlot(0), 0.1f, 0.8f, 0.4f);
-          BasketPop();
+          Fly(_ball0, _ball0.transform.localPosition, BasketSlot(0), 0f, 0.45f, 0.22f);
+          _flyPopOnLand = true;
         }
         if (_phaseT >= 1.1f) To(DemoPhase.PlaceTwo);
         break;
       case DemoPhase.PlaceTwo:
         FaceTowards(_student, BasketPoint(), dt, 5f);
-        if (!_placed) {
-          _placed = true;
+        if (!_firedPick) { _firedPick = true; Trigger(_student, "PickUp"); }
+        if (_carry1 && _phaseT >= 0.5f) {
           _carry1 = false;
-          Fly(_ball1, CarrySlot(_student, 1), BasketSlot(1), 0.1f, 0.8f, 0.4f);
-          BasketPop();
+          Fly(_ball1, _ball1.transform.localPosition, BasketSlot(1), 0f, 0.45f, 0.22f);
+          _flyPopOnLand = true;
         }
         if (_phaseT >= 1.1f) To(DemoPhase.TeacherAsks);
         break;
@@ -704,10 +715,35 @@ public class CountingDemo : MonoBehaviour {
     TickFlight(dt);
     TickCarry();
     TickWave(dt);
+    TickCarryPose(dt); // after the wave restore: the carry arm owns the pose
     TickPoint(_teacher, dt);
     TickPoint(_student, dt);
     TickNod(_teacher, dt);
     TickNod(_student, dt);
+  }
+
+  // S3-P2Z11b (user ảnh: "quả bóng đang chui vào giữa bụng"): while carrying,
+  // the arm is aimed so the fist (and the ball in it) comes to the chest hold
+  // point instead of hanging at the hip. A one-bone aim — no IK package, no
+  // rig assumptions (works on the mini 0.62x and the arena 1x alike).
+  void TickCarryPose(float dt) {
+    try {
+      if (_student == null || _student.WaveBone == null || _student.HandBone == null) return;
+      if (!_carry0 && !_carry1) return;   // nothing in the hands
+      if (_student.Waving || _student.PointT > 0f) return; // gesture owns the arm
+      Vector3 shoulder = _student.WaveBone.position;
+      Vector3 hand = _student.HandBone.position;
+      Vector3 holdLocal = _student.CarryAnchor != null
+        ? _student.CarryAnchor.localPosition : new Vector3(0f, 0.95f, -0.35f);
+      Vector3 hold = _student.Root.transform.TransformPoint(holdLocal);
+      Vector3 from = hand - shoulder;
+      Vector3 to = hold - shoulder;
+      if (from.sqrMagnitude < 1e-6f || to.sqrMagnitude < 1e-6f) return;
+      // TickWave restored the base pose just above, so aiming from the CURRENT
+      // (base) rotation every frame is stable — no smoothing state needed.
+      Quaternion delta = Quaternion.FromToRotation(from.normalized, to.normalized);
+      _student.WaveBone.rotation = delta * _student.WaveBone.rotation;
+    } catch (Exception) { }
   }
 
   // ---- audience gating (user order: one pass, then silence + playground) ----
@@ -956,8 +992,10 @@ public class CountingDemo : MonoBehaviour {
 
   void TickCarry() {
     try {
-      if (_carry0 && _ball0 != null && !_flying) _ball0.transform.localPosition = CarrySlot(_student, 0);
-      if (_carry1 && _ball1 != null && !_flying) _ball1.transform.localPosition = CarrySlot(_student, 1);
+      if (_carry0 && _ball0 != null && !_flying)
+        _ball0.transform.position = CarryWorld(_student, 0, _ball0.transform);
+      if (_carry1 && _ball1 != null && !_flying)
+        _ball1.transform.position = CarryWorld(_student, 1, _ball1.transform);
     } catch (Exception) { }
   }
 
@@ -968,6 +1006,25 @@ public class CountingDemo : MonoBehaviour {
     _flyT = -delay;
     _flyDur = Mathf.Max(0.2f, dur);
     _flyLift = lift;
+    _flyHandActor = null;   // fixed-target flight
+    _flyPopOnLand = false;
+    _flying = true;
+  }
+
+  // S3-P2Z11: a flight whose target is the actor's ANIMATED fist — the ball
+  // meets the hand where the hand actually is (bend, reach, walk), instead of
+  // flying to a fixed chest point ("bóng tự bay lên").
+  void FlyToHand(GameObject ball, NpcActor actor, int index, float delay, float dur, float lift) {
+    if (ball == null || actor == null) { return; }
+    _flyBall = ball;
+    _flyFrom = ball.transform.localPosition;
+    _flyTo = _flyFrom;
+    _flyT = -delay;
+    _flyDur = Mathf.Max(0.2f, dur);
+    _flyLift = lift;
+    _flyHandActor = actor;
+    _flyHandIndex = index;
+    _flyPopOnLand = false;
     _flying = true;
   }
 
@@ -976,6 +1033,11 @@ public class CountingDemo : MonoBehaviour {
     try {
       _flyT += dt;
       if (_flyT < 0f) return;
+      if (_flyHandActor != null) {
+        Vector3 handWorld = CarryWorld(_flyHandActor, _flyHandIndex, _flyBall.transform);
+        _flyTo = _flyBall.transform.parent != null
+          ? _flyBall.transform.parent.InverseTransformPoint(handWorld) : handWorld;
+      }
       float t = Mathf.Clamp01(_flyT / _flyDur);
       Vector3 mid = (_flyFrom + _flyTo) * 0.5f + new Vector3(0f, _flyLift, 0f);
       _flyBall.transform.localPosition = Vector3.Lerp(
@@ -983,10 +1045,13 @@ public class CountingDemo : MonoBehaviour {
       if (t >= 1f) {
         _popBall = _flyBall; // landing bounce (basket, hand, or home)
         _popT = 0f;
+        if (_flyPopOnLand) BasketPop();
         _flying = false;
         _flyBall = null;
+        _flyHandActor = null;
+        _flyPopOnLand = false;
       }
-    } catch (Exception) { _flying = false; }
+    } catch (Exception) { _flying = false; _flyHandActor = null; _flyPopOnLand = false; }
   }
 
   GameObject PickBall(int index) {
@@ -1020,13 +1085,27 @@ public class CountingDemo : MonoBehaviour {
     return _camA != null ? _camA.localPosition : _refs.Mouth;
   }
 
-  Vector3 CarrySlot(NpcActor actor, int i) {
-    if (actor != null && actor.CarryAnchor != null) {
-      Vector3 c = actor.CarryAnchor.localPosition;
-      Vector3 h = actor.Root.transform.localPosition;
-      return new Vector3(h.x + c.x + (i == 0 ? -0.13f : 0.13f), c.y, h.z + c.z);
+  // S3-P2Z11: the carried ball's WORLD position — on the rig's fist bone when
+  // the rig has one (so the bend/walk/reach moves the ball with the hand),
+  // with a lateral split so both balls stay readable. The offsets scale with
+  // the BALL's own world size (the garden miniature is 0.62x, the arena 1x),
+  // so the two balls never overlap at either scale.
+  Vector3 CarryWorld(NpcActor actor, int i, Transform ball) {
+    if (actor == null) return Vector3.zero;
+    float s = ball != null ? ball.lossyScale.x : 0.34f;
+    Vector3 basePos;
+    if (actor.HandBone != null) {
+      // Slightly in front of the fist (the model faces -root.forward) so the
+      // ball never sinks into the torso while the arm is aimed at the chest.
+      Vector3 fwd = -actor.Root.transform.forward;
+      basePos = actor.HandBone.position + fwd * (0.35f * s) + Vector3.up * (0.10f * s);
+    } else if (actor.CarryAnchor != null) {
+      basePos = actor.CarryAnchor.position;
+    } else {
+      basePos = actor.Root.transform.position + Vector3.up * (0.9f * s);
     }
-    return Vector3.zero;
+    Vector3 side = actor.Root.transform.right * ((i == 0 ? -0.60f : 0.60f) * s);
+    return basePos + side;
   }
 
   // Both landed balls must stay visible above the rim from the card camera

@@ -58,6 +58,13 @@ public sealed class PlayerVisual : MonoBehaviour {
   // If the Build-C walk-mid floats, cut toward 0; if stance sinks, raise base.
   const float WalkLiftLocal = 0.025f;
   int _movingHash;
+  int _pickupHash;
+  int _victoryHash;
+  // S3-P2Z10: after an action trigger the agent may still be gliding (velocity
+  // lingers past ResetPath), which kept the animator in Walk and swallowed the
+  // bend. Hold the body in the action pose briefly — unless the child actually
+  // chose to walk again (a new path releases it instantly).
+  float _actionHoldT;
 
   IGameEventBus _bus;
   IDisposable _questSub;
@@ -72,6 +79,8 @@ public sealed class PlayerVisual : MonoBehaviour {
     HideCapsuleRenderer();
     BuildVisual();
     _movingHash = Animator.StringToHash("Moving");
+    _pickupHash = Animator.StringToHash("PickUp");
+    _victoryHash = Animator.StringToHash("Victory");
   }
 
   // Injection boundary (MarketBuilder wires the bus; visual reacts to the
@@ -99,6 +108,11 @@ public sealed class PlayerVisual : MonoBehaviour {
   void Update() {
     if (_animator == null || _agent == null) return;
     bool moving = _agent.velocity.sqrMagnitude > 0.25f;
+    if (_actionHoldT > 0f) {
+      _actionHoldT -= Time.deltaTime;
+      bool walking = _agent.hasPath || _agent.pathPending;
+      moving = walking; // a new click releases the hold at once
+    }
     _animator.SetBool(_movingHash, moving);
     if (_presentation != null) _presentation.SetLiftOffset(moving ? WalkLiftLocal : 0f);
   }
@@ -138,6 +152,50 @@ public sealed class PlayerVisual : MonoBehaviour {
 
   public void PulseExpression(CharacterExpression e, float seconds) {
     if (_presentation != null) _presentation.PulseExpression(e, seconds);
+  }
+
+  // S3-P2Z10 reference gameplay: the child performs the SAME real actions the
+  // student NPC demonstrates — bend/reach down (PickUp clip), and a little
+  // victory when the basket reaches the board's number. Both are the clips the
+  // player's own rig ships (Player_CasualMale.fbx), so the body is the body
+  // that acts; no IK package, no placeholder.
+  public void PlayPickup() {
+    if (_animator == null) return;
+    _actionHoldT = 0.6f;
+    try {
+      _animator.SetBool(_movingHash, false);
+      _animator.SetTrigger(_pickupHash);
+    } catch (Exception) { }
+  }
+
+  public void PlayVictory() {
+    if (_animator == null) return;
+    _actionHoldT = 0.6f;
+    try {
+      _animator.SetBool(_movingHash, false);
+      _animator.SetTrigger(_victoryHash);
+    } catch (Exception) { }
+  }
+
+  // Is the body actually walking? (Used to gate "stop, then act" moments: the
+  // child must be standing at the ball/basket before the pickup/place plays.)
+  public bool IsMoving {
+    get { return _agent != null && _agent.velocity.sqrMagnitude > 0.04f; }
+  }
+
+  // Turn the child to face a world point (pickup: the ball; place: the basket).
+  // Smooth mode is skipped while the agent is walking (the agent owns rotation
+  // then) so it never fights path following; an explicit snap (the "stop, then
+  // act" moment) always lands, and the agent re-takes rotation on the next walk.
+  public void FaceTowards(Vector3 worldPoint, bool snap = false) {
+    if (!snap && IsMoving) return;
+    Vector3 d = worldPoint - transform.position;
+    d.y = 0f;
+    if (d.sqrMagnitude < 0.0004f) return;
+    Quaternion want = Quaternion.LookRotation(d.normalized);
+    transform.rotation = snap
+      ? want
+      : Quaternion.Slerp(transform.rotation, want, 1f - Mathf.Exp(-10f * Time.deltaTime));
   }
 
   void HideCapsuleRenderer() {

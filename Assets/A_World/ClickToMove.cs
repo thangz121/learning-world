@@ -35,6 +35,13 @@ public class ClickToMove : MonoBehaviour {
     get { return _hasDestination; }
   }
 
+  // S3-P2Z10: "stop, then act" gate for carry-and-place interactions — a place
+  // only happens once the child has actually stopped at the basket, never while
+  // they are still walking past it.
+  public bool IsMoving {
+    get { return _agent != null && _agent.velocity.sqrMagnitude > 0.04f; }
+  }
+
   public Vector3 Destination {
     get { return _agent != null ? _agent.destination : transform.position; }
   }

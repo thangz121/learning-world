@@ -1816,3 +1816,123 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
 - Test CT-P51D viết lại (no intro + đề bài theo khoảng cách + SafetyFilter +
   beat 2 sau nhịp thở). Suite **604/599/0/5**; build **Succeeded**; boot
   **FACE_OK 0 exception**. Temp tooling xóa sạch. Commit + push kèm phase này.
+
+## 60. S3-P2Z10 - REFERENCE GAMEPLAY CLOSURE: CHILD TỰ NHẶT/ĐẶT + JOURNEY (user brief 29 mục, 2026-09-24, máy nhà maynode)
+
+- Lệnh user: gửi lại TRỌN brief 29 mục "Xếp bóng vào rổ đúng số lượng" +
+  "chạy journey và fix lỗi tự động, không hỏi cho đến khi hoàn thành".
+- Audit theo brief: gameplay đã có từ P2Z5-P2Z9 (pick/carry/place thật, đếm
+  pip, sửa nhẹ bóng thứ 3, success, adopt). THIẾU đúng các mục hành động:
+  §5 trẻ phải CÚI NHẶT (trước đây bóng tự bay lên anchor tĩnh), §8 đặt phải
+  "stop rồi mới thả" (trước đây đi ngang rổ là bóng bay khỏi tay), §18 tiếng
+  động tác. Làm hết trong round này:
+  * `PlayerController.controller`: thêm state PickUp + Victory THẬT bằng clip
+    của chính rig player (probe FBX: PickUp fileID 7022811679865794533,
+    Victory 5008348457023331957 — cùng guid 0f9afea9…), trigger params +
+    transition cắt sang Walk khi trẻ đi tiếp.
+  * `PlayerVisual`: PlayPickup/PlayVictory/FaceTowards/IsMoving + ACTION HOLD
+    (agent còn trôi sau ResetPath từng giữ animator ở Walk, nuốt cú cúi).
+  * `CountingBall`: pickup DELAY (đợi tay cúi tới), place DELAY (bóng đi theo
+    nắm tay xuống tới miệng rổ rồi mới rơi 0.16m + nảy), bay theo tay động,
+    `OnLanded` callback (tiếng rổ + câu đếm + success bám đúng lúc bóng RƠI).
+  * `BasketZone`: stop-gated (chỉ đặt khi trẻ ĐÃ DỪNG ở rổ — đi ngang không
+    còn giật bóng khỏi tay).
+  * `CountingGame`: slot rổ thành bảng dữ liệu, SFX pickup/basket/success qua
+    `IAudioDirector`, victory nhẹ của nhân vật sau khi đặt.
+  * `AudioDirector.PlaySfx`: clip procedural thật (pickup chirp, basket plop,
+    success chime) — duck 0.35 dưới giọng nói, không cần asset ngoài.
+  * `GameInstaller`: bóng cầm nay theo NẮM TAY ĐỘNG (PlayerViz.HandBone).
+  * `CountingPlayBuilder`: hạ bảng số "2" (panel 2.35→1.95, digit 1.62→1.42,
+    BoardPoint 1.45) — journey shot cho thấy follow camera cắt mất đỉnh bảng.
+- **2 BUG THẬT do journey khui + fix**:
+  1. Re-entry KHÔNG adopt (từ S3-P2Z9): handover no-intro gọi `_life.Begin`
+     TRƯỚC chuỗi staged MarkAvailable/BeginEnter/MarkReady ⇒ lifecycle kẹt ở
+     Ready ⇒ MarkCompleted im lặng fail ⇒ mọi lần quay lại bắt đầu từ 0. Fix:
+     check Completed TRƯỚC, Begin SAU chuỗi staged (Ready→Active).
+  2. Re-entry nhìn rổ TRỐNG dù state Completed: `ApplyCompletedState` park
+     bóng TRƯỚC `_demo.SkipToObserving()` → ResetActors của demo kéo bóng về
+     home. Fix: chạy demo skip trước, park bóng + hiện result sau.
+- Test: CT-P51 G/H/I mới (clip PickUp/Victory resolve trên controller player +
+  source pin; timing delay pick/place + SFX theo lúc rơi; lifecycle settle
+  Completed cho re-entry) + P51E siết (bóng adopt phải NẰM THẬT trong rổ).
+  Suite **607/602/0/5** (baseline 604/599 + 3, 0 regression).
+- Journey THẬT (maynode, chuột inject Input System, full-HD, driver tạm đã
+  xóa): EN → cổng Toán → cổng Vườn Đếm → khu Sân đếm → "Vào chơi" → arena →
+  nhặt bóng 1 (anim log Idle→PickUp→Idle = có cúi thật) → rổ count=1 → bóng 2
+  → count=2 success pips=2 → bóng 3 → Wrong → cô đếm 1-2-3 + bóng dư về →
+  Completed → cổng về → vườn → vào lại → **adopt Completed count=2** → 0
+  exception. Ảnh 01..10 + journey.log: `Temp/opencode/p2z10-shots/`.
+- Build production (không driver) **Succeeded errors=0 warnings=2**
+  size=110,180,609; boot **FACE_OK 1×, 0 exception**, HUD 'Choose a gate!';
+  game production đang chạy cho user xem mắt (PID 27488).
+- Chưa commit (chờ lệnh).
+
+## 61. S3-P2Z11 - FEEDBACK ROUND: NPC CẦM BÓNG THẬT + CỔNG KHU VỀ ĐÚNG KHU + VÒNG NGHE (2026-09-24, maynode)
+
+- Lệnh user (4 ý): (1) NPC nhặt bóng xong bóng tự bay lên, không cầm bằng tay —
+  giả; (2) cổng các khu trò chơi trong sân đếm cho lùi về sát khu (đang để giữa
+  sân, sau thêm trò sẽ chật); (3) chỉ thấy 2 cổng rõ, các cổng khu khác chưa rõ;
+  (4) gameplay arena chưa bắt mắt — thêm chi tiết/hiệu ứng + phải có chỗ đứng
+  cố định nghe câu hỏi, nghe xong mới chơi.
+- (1) NPC CẦM BÓNG BẰNG TAY THẬT (`CountingDemo`):
+  * NpcActor += HandBone (Fist.R/Hand.R); bóng bay theo `FlyToHand` (target tính
+    lại mỗi frame = nắm tay động) + `CarryWorld` (world pos tại xương tay, tách
+    2 bóng theo size bóng thật — mini 0.62x và arena 1x không chồng nhau).
+  * Nhặt: bóng đợi cúi 0.35s rồi bay vào tay (0.4s), carry bật ở 0.8s; đặt: cúi
+    với tới miệng rổ (PickUp clip) rồi bóng rời tay rơi 0.45s vào slot + wobble
+    rổ khi CHẠM (không phải lúc bắt đầu bay).
+- (2)+(3) CỔNG KHU (`CountingGardenBuilder`):
+  * Demo door dời từ (0,2.6) giữa sân về sát plot (0,7.4) — kèm viewing spot,
+    zone-2 spot pad, CGZone2Anchor, audience gate radius (cùng một hằng số).
+    Focus camera zone 2 đổi sang 3/4 phía đông (2.9,1.9,6.3)->(-0.1,0.8,10.7)
+    để bé đứng ở cổng không chắn mini stage.
+  * 4 bed có cổng thật `BuildBedGate`: trụ trái cao mang post số (N hạt vàng),
+    trụ phải, xà màu theo cây trồng (cà rốt cam / dâu hồng đỏ / ngô vàng / bí
+    cam), 3 bóng hoa trên xà; xà + bóng bake-ignored (headroom), lối vào 2.2m
+    mở. Post số cũ ở giữa miệng (chắn lối) đã dời lên trụ trái.
+- (4) ARENA (`CountingPlayBuilder` + `CountingGame`):
+  * LISTEN CIRCLE cố định trước bãi bóng (0,0.35): đĩa xanh da trời + vành gold
+    pulse + 4 stud vàng + trụ chuông; `TaskRadius` 3.0->1.5 quanh vòng.
+  * Cổng chơi: `TryPick` khoá tới khi `TaskTold`; bấm bóng sớm = cô gọi về vòng
+    ("Stand on the circle first!", throttle 6s) + chỉ tay; khi đọc đề: ding +
+    sparkle + vành chuyển mint (đứng yên).
+  * Bắt mắt: bunting tam giác dưới cổng vào, 3 number stone có hạt, chồng block
+    đồ chơi, sparkle khi nhặt/đặt/thành công, trail sparkle theo bóng đang cầm,
+    pip pop khi tô vàng. Follow camera arena nâng nhẹ (0,4.1,-5.3) để bảng "2"
+    không bị cắt từ vòng nghe/giỏ.
+- Test: CT-P51J mới (vòng nghe tồn tại/đúng chỗ, bóng khoá trước khi nghe + câu
+  gọi về, đứng vòng -> TaskTold + ding + mở chơi); P51B/C/H/I thêm
+  `MarkTaskToldForTests` (seam). Suite **608/603/0/5** (0 regression).
+- Journey THẬT (maynode, chuột inject, full-HD, driver tạm đã xóa): garden (thấy
+  4 cổng bed + cổng demo sát khu) -> zone -> xem mini lesson (bé NPC cầm bóng
+  trong tay) -> panel -> arena -> đi vào VÒNG NGHE -> cô đọc đề -> nhặt 2 bóng
+  (anim Idle->PickUp->Idle) -> count=2 success pips=2 -> bóng 3 sửa nhẹ ->
+  Completed -> về vườn -> vào lại adopt count=2 -> 0 exception. Ảnh 00..12 +
+  journey.log: `Temp/opencode/p2z11-shots/`.
+- Build production **Succeeded errors=0 warnings=2** size=110,185,729; boot
+  **FACE_OK 1×, 0 exception**; game production đang chạy cho user xem mắt
+  (PID 24948). Chưa commit (chờ lệnh).
+
+## 62. S3-P2Z11b - FIX THEO ẢNH USER: CỘT CHẮN CAMERA + BÓNG Ở BỤNG (2026-09-24, maynode)
+
+- User gửi 2 ảnh + 2 lỗi: (1) "camera đang chiếu vào cái cột"; (2) "quả bóng đang
+  chui vào giữa bụng".
+- (1) CAMERA FOCUS KHU 2 (`CountingGardenBuilder.BuildZoneSpots`): camera cũ
+  (2.9,1.9,6.3) nằm SAU cổng demo (z7.4) nên trụ cổng (-1.7,7.4) cách 5m lọt
+  vào mép trái và phóng to. Dời vào TRONG plot: (1.4,1.85,7.9) nhìn
+  (0.15,0.8,11.0) — trụ cổng nằm sau camera, mặt cô/trò hướng thẳng, bảng "2"
+  giữa khung, giỏ ở rìa phải.
+- (2) BÓNG TRONG TAY NPC (`CountingDemo`):
+  * `TickCarryPose` (chạy SAU TickWave): khi đang cầm bóng, xoay UpperArm.R sao
+    cho hướng bàn tay chĩa về điểm giữ trước ngực (CarryAnchor local) — aim 1
+    xương, không cần IK/rig-assumption, đúng cả mini 0.62x lẫn arena 1x.
+  * `CarryWorld` đẩy bóng nhẹ về phía trước thân (-root.forward * 0.35 * size
+    bóng) để không lún vào bụng; bóng vẫn bám xương tay động.
+  * Ảnh journey xác nhận: PickTwo/PlaceOne — 2 bóng nằm ngang ngực trong tay,
+    không còn ở bụng.
+- Verify: suite **608/603/0/5**; build production **Succeeded errors=0
+  warnings=4** size=110,186,241; boot **FACE_OK 1×, 0 exception**; journey thật
+  0 exception (burst 7 ảnh mid-lesson log rõ phase StudentLook->PickOne->
+  PickTwo->WalkBasket->PlaceOne->TeacherAsks->Confirm). Ảnh:
+  `Temp/opencode/p2z11b-shots/`. Game production đang chạy (PID 21260).
+- Chưa commit (chờ lệnh).

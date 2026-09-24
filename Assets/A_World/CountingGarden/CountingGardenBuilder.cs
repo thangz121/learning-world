@@ -59,11 +59,14 @@ public class CountingGardenBuilder : MonoBehaviour {
   static readonly float[] ZoneAngles = { -70f, -35f, 0f, 35f, 70f };
 
   // Demo theatre (stage centre = ZoneCenters[2] = (0,11)); the viewing spot is
-  // the marked disc on the plaza's south rim, camera-first from there.
-  // Viewing spot: north of BOTH card cameras, so the child's own avatar can
-  // never stand between the camera and the lesson (round-5 capture: the
-  // player's head appeared in shot B's corner).
-  public static readonly Vector3 DemoMouthLocal = new Vector3(0f, 0f, 2.6f);
+  // the theatre's own DOOR at the plot edge.
+  // S3-P2Z11 (user: "cổng các khu trò chơi cho lùi về các khu trò chơi... hiện
+  // đang để giữa sân, sau này thêm trò khác sẽ rất chật"): the door used to sit
+  // at (0,2.6) on the plaza rim — 8.4m out. It now hugs the plot border (7.4),
+  // so the yard centre stays free for future games and every zone keeps its own
+  // threshold. The focus camera is a 3/4 from the east side, so the child at
+  // the door never stands between the camera and the mini stage.
+  public static readonly Vector3 DemoMouthLocal = new Vector3(0f, 0f, 7.4f);
   public const float DemoViewRadius = 5.0f;
   // Lesson staging (2-NPC mini lesson, user script S3-P2W): depth order from
   // the child's view (camera north of the stage, looking south) =
@@ -410,8 +413,13 @@ public class CountingGardenBuilder : MonoBehaviour {
       // so its focus camera sits much closer — the diorama fills the frame.
       Vector3 camPos, lookPos;
       if (z == 2) {
-        camPos = new Vector3(0.2f, 1.9f, 6.4f);
-        lookPos = new Vector3(0f, 0.9f, 10.6f);
+        // S3-P2Z11b (user ảnh: "camera đang chiếu vào cái cột"): the focus
+        // camera used to sit BEHIND the theatre door, so a door post filled
+        // the left edge. It now sits INSIDE the plot (past the door), almost
+        // on the centre line: faces of the actors, board centred, basket at
+        // the right edge — no post, no avatar between camera and stage.
+        camPos = new Vector3(1.4f, 1.85f, 7.9f);
+        lookPos = new Vector3(0.15f, 0.8f, 11.0f);
       } else {
         camPos = mouth - outDir * 3.6f + new Vector3(0f, 2.4f, 0f);
         lookPos = center + new Vector3(0f, 0.9f, 0f);
@@ -486,17 +494,14 @@ public class CountingGardenBuilder : MonoBehaviour {
           center + lat * (sign * 1.55f) + outDir * ((i - 0.5f) * 0.95f), outYaw, 0.92f);
       }
     }
-    // Numbered mouth post: N beads = the bed number.
+    // S3-P2Z11 (user: "chỉ thấy 2 cổng rõ ràng"): every bed now owns a real
+    // garden GATE at its mouth — two posts + a crop-accent beam — and the
+    // numbered post (N gold beads) rides the LEFT gatepost, so the doorway
+    // stays open (the old centre post stood in the middle of the entrance).
     Vector3 mouth = center - outDir * 1.35f;
-    Cylinder(parent, tag + "Post", mouth + new Vector3(0f, 0.45f, 0f), 0.16f, 0.9f, BasketBrown);
-    List<Transform> beads = new List<Transform>();
-    for (int i = 0; i < index + 1; i++) {
-      GameObject bead = Sphere(parent, tag + "PostBead" + i,
-        mouth + new Vector3(0f, 0.98f + i * 0.19f, 0f), 0.17f, Gold, false);
-      if (bead != null) beads.Add(bead.transform);
-    }
-    PlaceProp(parent, "flower_yellowA", tag + "FlowerL", mouth + lat * 0.75f, 0f, 0.9f);
-    PlaceProp(parent, "flower_yellowA", tag + "FlowerR", mouth - lat * 0.75f, 0f, 0.9f);
+    List<Transform> beads = BuildBedGate(parent, index, tag, mouth, lat, AccentFor(index));
+    PlaceProp(parent, "flower_yellowA", tag + "FlowerL", mouth + lat * 1.7f, 0f, 0.9f);
+    PlaceProp(parent, "flower_yellowA", tag + "FlowerR", mouth - lat * 1.7f, 0f, 0.9f);
     GameObject anchor = new GameObject(tag + "Anchor");
     anchor.transform.SetParent(parent, false);
     anchor.transform.localPosition = mouth;
@@ -507,6 +512,48 @@ public class CountingGardenBuilder : MonoBehaviour {
     GardenZoneVignette vig = vigGo.AddComponent<GardenZoneVignette>();
     vig.Phase = index * 0.9f;
     vig.Bind(beads, crops);
+  }
+
+  // One real garden gate per bed (S3-P2Z11): a tall numbered post on the left
+  // (N gold beads), a plain post on the right, a crop-accent beam across the
+  // top (bake-ignored — the headroom rule) and blossom balls on the beam. The
+  // doorway stays 2.2m open so the crescent walk passes straight through.
+  List<Transform> BuildBedGate(Transform parent, int index, string tag, Vector3 mouth,
+      Vector3 lat, Color accent) {
+    List<Transform> beads = new List<Transform>();
+    Vector3 postL = mouth + lat * 1.1f;
+    Vector3 postR = mouth - lat * 1.1f;
+    Cylinder(parent, tag + "Post", postL + new Vector3(0f, 0.85f, 0f),
+      0.17f, 1.7f, BasketBrown);
+    for (int i = 0; i < index + 1; i++) {
+      GameObject bead = Sphere(parent, tag + "PostBead" + i,
+        postL + new Vector3(0f, 1.82f + i * 0.19f, 0f), 0.17f, Gold, false);
+      if (bead != null) beads.Add(bead.transform);
+    }
+    Cylinder(parent, tag + "GatePostR", postR + new Vector3(0f, 0.7f, 0f),
+      0.15f, 1.4f, BasketBrown);
+    GameObject beam = Box(parent, tag + "GateBeam", mouth + new Vector3(0f, 1.52f, 0f),
+      new Vector3(0.13f, 0.13f, 2.5f), accent);
+    if (beam != null) {
+      beam.transform.localRotation = Quaternion.LookRotation(new Vector3(lat.x, 0f, lat.z));
+      IgnoreFromBuild(beam);
+    }
+    Sphere(parent, tag + "GateBall0", mouth + new Vector3(0f, 1.78f, 0f), 0.42f, accent, true);
+    Sphere(parent, tag + "GateBall1", mouth + lat * 0.55f + new Vector3(0f, 1.68f, 0f),
+      0.26f, Gold, true);
+    Sphere(parent, tag + "GateBall2", mouth - lat * 0.55f + new Vector3(0f, 1.68f, 0f),
+      0.26f, Gold, true);
+    return beads;
+  }
+
+  static Color AccentFor(int index) {
+    switch (index) {
+      case 0: return new Color(0.95f, 0.55f, 0.20f); // carrot
+      case 1: return new Color(0.90f, 0.30f, 0.42f); // strawberry
+      case 3: return new Color(0.98f, 0.80f, 0.28f); // corn
+      case 4: return new Color(0.90f, 0.45f, 0.15f); // pumpkin
+      default: return Gold;
+    }
   }
 
   // The demo theatre is a plot too: give it the same Zone2 anchor name the

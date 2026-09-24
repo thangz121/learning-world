@@ -52,6 +52,11 @@ public class AudioDirector : IAudioDirector {
 
   GameObject _voiceRoot;
   AudioSource _voice;
+  // S3-P2Z10: the world's action feedback (ball pickup pop, basket plop) is
+  // generated procedurally — no asset pipeline, no external dependency — and
+  // plays through its own source so it never touches the voice channel.
+  AudioSource _sfx;
+  readonly Dictionary<string, AudioClip> _sfxClips = new Dictionary<string, AudioClip>();
 
   public float MusicDuckRatio { get; private set; }
   public float AmbientDuckRatio { get; private set; }
@@ -119,12 +124,97 @@ public class AudioDirector : IAudioDirector {
 
   public void PlaySfx(SfxId id) {
     LastSfxId = id.Value;
-    if (IsVoicePlaying) {
-      Debug.Log("[AudioDirector] SFX '" + id.Value + "' ducked under speech "
-        + CurrentVoicePriority + " (unrelated SFX off during P1-P4).");
-      return;
+    if (Focus == AudioFocusMode.Muted) return; // the room is silenced on purpose
+    try {
+      EnsureSfxSource();
+      if (_sfx == null) return;
+      AudioClip clip = SfxClip(id.Value);
+      if (clip == null) return;
+      // A short action blip stays audible under a line (ducked), so the child
+      // always hears their own action land — the voice channel keeps priority.
+      float volume = IsVoicePlaying ? 0.35f : 0.8f;
+      _sfx.PlayOneShot(clip, volume);
+      if (IsVoicePlaying) {
+        Debug.Log("[AudioDirector] SFX '" + id.Value + "' ducked under speech "
+          + CurrentVoicePriority + ".");
+      }
+    } catch (Exception ex) {
+      Debug.LogWarning("[AudioDirector] SFX '" + id.Value + "' unavailable: " + ex.Message);
     }
-    Debug.Log("[AudioDirector] SFX play (W0 stub, no mixer yet): " + id.Value);
+  }
+
+  // Procedural one-shot clips (S3-P2Z10): a soft pickup chirp, a low basket
+  // plop, and a three-note success sparkle. Deterministic, asset-free.
+  AudioClip SfxClip(string id) {
+    if (string.IsNullOrEmpty(id)) return null;
+    AudioClip cached;
+    if (_sfxClips.TryGetValue(id, out cached) && cached != null) return cached;
+    AudioClip clip;
+    switch (id) {
+      case "pickup":
+        clip = Tone(id, 0.14f, 640f, 1020f, 0.5f, 5.5f);
+        break;
+      case "basket":
+        clip = Tone(id, 0.20f, 330f, 150f, 0.7f, 4.0f);
+        break;
+      case "success":
+        clip = SuccessChime(id);
+        break;
+      case "ding":
+        clip = Tone(id, 0.22f, 880f, 880f, 0.4f, 5.0f);
+        break;
+      default:
+        clip = Tone(id, 0.12f, 440f, 560f, 0.45f, 6f);
+        break;
+    }
+    if (clip != null) _sfxClips[id] = clip;
+    return clip;
+  }
+
+  static AudioClip Tone(string name, float seconds, float f0, float f1, float amp, float decay) {
+    const int rate = 44100;
+    int n = Mathf.Max(64, Mathf.CeilToInt(rate * seconds));
+    float[] data = new float[n];
+    double phase = 0.0;
+    for (int i = 0; i < n; i++) {
+      float t = i / (float)(n - 1);
+      float f = Mathf.Lerp(f0, f1, t);
+      phase += 2.0 * Math.PI * f / rate;
+      float env = Mathf.Min(1f, t * 40f) * Mathf.Exp(-decay * t);
+      data[i] = (float)System.Math.Sin(phase) * env * amp;
+    }
+    AudioClip clip = AudioClip.Create("sfx_" + name, n, 1, rate, false);
+    clip.SetData(data, 0);
+    return clip;
+  }
+
+  static AudioClip SuccessChime(string name) {
+    const int rate = 44100;
+    float[] notes = { 523.25f, 659.25f, 783.99f };
+    int per = Mathf.CeilToInt(rate * 0.13f);
+    int n = per * notes.Length;
+    float[] data = new float[n];
+    for (int k = 0; k < notes.Length; k++) {
+      double phase = 0.0;
+      for (int i = 0; i < per; i++) {
+        float t = i / (float)(per - 1);
+        phase += 2.0 * Math.PI * notes[k] / rate;
+        float env = Mathf.Min(1f, t * 40f) * Mathf.Exp(-5.0f * t);
+        data[k * per + i] = (float)System.Math.Sin(phase) * env * 0.45f;
+      }
+    }
+    AudioClip clip = AudioClip.Create("sfx_" + name, n, 1, rate, false);
+    clip.SetData(data, 0);
+    return clip;
+  }
+
+  void EnsureSfxSource() {
+    if (_sfx != null) return;
+    EnsureVoiceSource();
+    if (_voiceRoot == null) return;
+    _sfx = _voiceRoot.AddComponent<AudioSource>();
+    _sfx.playOnAwake = false;
+    _sfx.spatialBlend = 0f; // 2D action feedback, always readable
   }
 
   public void PlayMusic(MusicId id) {

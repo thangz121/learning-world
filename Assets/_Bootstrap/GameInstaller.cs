@@ -302,8 +302,19 @@ public class GameInstaller : MonoBehaviour {
         intro.Build(builder, playerT,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio);
         CountingGame game = root.AddComponent<CountingGame>();
+        // S3-P2Z10: the carried ball rides the child's ANIMATED fist (the same
+        // bone the apple/ball presenters use), not the static root anchor — so
+        // the pickup bend and the place reach actually move the ball with the
+        // hand. Falls back to the root anchor when the rig is unavailable.
         Transform hand = null;
-        try { hand = _activeBuilder != null ? _activeBuilder.PlayerHand : null; } catch (System.Exception) { }
+        try {
+          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
+              && _activeBuilder.PlayerViz.HandBone != null) {
+            hand = _activeBuilder.PlayerViz.HandBone;
+          } else if (_activeBuilder != null) {
+            hand = _activeBuilder.PlayerHand;
+          }
+        } catch (System.Exception) { }
         game.Build(intro, builder, playerT, hand,
           _gardenArea != null ? _gardenArea.GameLifecycle : null, Audio);
         if (_gardenArea != null) _gardenArea.BindGame(game);
