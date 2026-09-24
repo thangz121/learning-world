@@ -2131,4 +2131,5 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
   click ra cửa nam nếu chưa chờ handoff; về vườn bé đứng ngay trong bán kính
   plot (proximity chưa re-arm) → phải đi ra xa rồi quay lại mới focus được.
   Đây là hành vi đúng của game, driver phải biết.
-- Chưa commit (chờ lệnh).
+- ĐÃ COMMIT + PUSH: `b074b56` → `origin/main` (SSH từ maynode chạy được —
+  hết nợ "thử push một lần" của §63; `core.sshCommand` + key ACL đã đúng).
