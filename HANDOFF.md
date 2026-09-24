@@ -1936,3 +1936,70 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
   PickTwo->WalkBasket->PlaceOne->TeacherAsks->Confirm). Ảnh:
   `Temp/opencode/p2z11b-shots/`. Game production đang chạy (PID 21260).
 - Chưa commit (chờ lệnh).
+
+## 63. SESSION HANDOFF — TRẠNG THÁI MỚI NHẤT + QUY ƯỚC MÁY (2026-09-24, từ máy ASUS)
+
+### A. Bản mới nhất (GitHub origin/main = 3d18d41; ASUS đã sync đúng, cây sạch)
+
+- Reference gameplay "ĐƯA ĐÚNG SỐ LƯỢNG VÀO RỔ" (arena của khu Sân đếm):
+  intro CHẠY 1 LƯỢT (cô dạy số 2 + bé NPC làm mẫu THẬT, cầm bóng bằng tay) →
+  VÒNG NGHE (đứng vào vòng → cô mới đọc đề) → trẻ tự cúi nhặt bóng (animation
+  PickUp thật) → mang bóng theo tay → đặt khi ĐÃ DỪNG ở rổ → đếm 1→2 (pip +
+  câu cô + SFX) → bóng thứ 3 = sửa nhẹ (cô đếm 1-2-3, bóng dư bay về) →
+  success (result 2+tick + confetti + celebrate) → cổng Về → vào lại adopt
+  đúng trạng thái hoàn thành (2 bóng trong rổ).
+- Vườn Đếm: 4 cổng bed thật + cổng demo sát khu (không còn giữa sân); audience
+  gate (chỉ dạy khi trẻ đứng viewing spot, 1 lượt, rời cắt tiếng ngay); click
+  khu Sân đếm = chạy lại mini lesson rồi panel Vào chơi.
+- Toàn bộ text dùng font UTM Avo (`UiFont` + Resources/Fonts).
+- Chi tiết từng round: §53-§55 (merge + 7 bug journey ASUS), §56-§59 (các round
+  máy nhà: font, zone-focus, arena no-replay, gate warp), §60-§62 (P2Z10-11b:
+  con cúi nhặt thật + SFX, NPC cầm bóng bằng tay, cổng khu về sát plot, vòng
+  nghe + flair arena, fix camera cột/bóng bụng).
+- Suite mới nhất (theo máy nhà): **608/603/0/5**; build production **Succeeded**.
+- Build artifacts: ASUS `D:\Vscode\LangBuild\LWE.exe` (production, driver-free);
+  maynode `E:\LWW\LangBuild\LWE.exe` (đã copy đủ bytes; game đã tắt theo lệnh).
+- Evidence: `D:\Vscode\p2z5-final\*.png` (shots A-H/P1-P9 bản trước merge);
+  journey logs + ảnh các round máy nhà ghi trong §60-§62.
+
+### B. Quy ước máy (đang hiệu lực — giữ nguyên cho phiên sau)
+
+- ASUS (máy này): batch — EditMode suite, build, log, điều khiển máy nhà qua
+  SSH. Repo `D:\Vscode\little-world-english` (đã ở 3d18d41).
+- maynode (100.124.132.59, user Admin, SSH key `%USERPROFILE%\.ssh\id_ed25519`):
+  CHỈ foreground — mở game/UltraViewer trên desktop session qua Scheduled Task
+  LogonType Interactive. Repo `E:\LWW\learning-world` (đã ở 3d18d41).
+  - Mở game: task `LWE-Foreground` / script `run_lwe.ps1`, full-HD, mặc định
+    KHÔNG `-fullworld`.
+  - Tắt game: `Stop-Process -Name LWE -Force`.
+  - UltraViewer (user hay mất kết nối): bật
+    `C:\Program Files (x86)\UltraViewer\UltraViewer_Desktop.exe` bằng scheduled
+    task Interactive (đã dùng một lần: PID 27204).
+- Copy build ASUS → máy nhà: `scp -r`; PHẢI kill LWE trước (file bị khoá →
+  copy đứt = build trộn DLL mới/exe cũ — đã từng dính). Sau copy kiểm tra tổng
+  bytes 2 bên khớp.
+- Git khi máy nhà có việc mới: máy nhà KHÔNG push được qua HTTPS non-interactive
+  (thiếu credential) → đóng gói `git bundle create <file> 57db2bf..main` trên
+  máy nhà, scp về ASUS, `git fetch <bundle> main:refs/heads/tmp` →
+  `git merge --ff-only tmp` → `git push origin main` từ ASUS (đã áp dụng cho
+  3d18d41).
+- SSH key máy nhà đã add GitHub (fingerprint `SHA256:ONUh…XFncM`); đã fix ACL
+  private key (Windows OpenSSH từ chối key ACL mở — root cause của "mỗi lần
+  push đều hỏi") + đặt
+  `git config --global core.sshCommand "C:/Windows/System32/OpenSSH/ssh.exe -i C:/Users/Admin/.ssh/id_ed25519 -o IdentitiesOnly=yes"`
+  + remote máy nhà đang là SSH. **CÒN 1 VIỆC**: chạy thử `git push` ở máy nhà
+  một lần; nếu vẫn `Permission denied (publickey)` thì đổi remote về HTTPS
+  (`https://github.com/thangz121/learning-world.git`) như cũ.
+
+### C. Việc còn nợ cho phiên sau
+
+- Chạy journey click thật lại trên BẢN MỚI NHẤT (sau merge audience gate +
+  §60-62) để chốt VISUAL shots A-H + báo TECHNICAL/VISUAL theo
+  `docs/COUNTING_GAME_REPORT.md` (chưa làm lại sau các round này).
+- 4 khu skeleton còn lại chưa có gameplay; pattern đã sẵn:
+  `docs/COUNTING_GAME_BLUEPRINT.md` + `docs/COUNTING_GAME_REPORT.md` +
+  `docs/SUBJECT_WORLD_FOUNDATION.md`.
+- Duyệt mắt user còn nợ: gesture chỉ tay (đọc như giơ tay, chưa có hand IK),
+  re-entry camera, và xác nhận push SSH ở máy nhà.
+- Bàn phím máy nhà đang hỏng → user điều khiển bằng UltraViewer; mọi thao tác
+  foreground đều làm qua SSH scheduled task.
