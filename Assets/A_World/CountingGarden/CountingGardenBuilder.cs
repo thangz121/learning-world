@@ -34,7 +34,12 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class CountingGardenBuilder : MonoBehaviour {
   public const string SceneName = "CountingGardenScene";
-  public const int ZoneCount = 5;
+  // S3-P2Z12 (Gameplay #2): the crescent grew a sixth plot — the number-stair
+  // hill ("Đồi Bậc Thang") at the east end of the fan. The five original plots
+  // (4 crop beds + demo theatre) keep their indices/angles, so every authored
+  // coordinate of gameplay #1 is untouched.
+  public const int ZoneCount = 6;
+  public const int StairZoneIndex = 5;
 
   // Separate island far from MarketScene (0) and MathScene (+60x).
   public static readonly Vector3 WorldOffset = new Vector3(120f, 0f, 0f);
@@ -54,9 +59,11 @@ public class CountingGardenBuilder : MonoBehaviour {
   // look INTO the garden (the old +z offset stared at the entry arch with the
   // whole world behind the child; S3-P2V round-2 capture).
   public static readonly Vector3 FollowOffset = new Vector3(0f, 3.8f, -5.0f);
-  // Crescent: 5 plots at r9.5, fan -70..+70 deg from south (+z), index 2 = demo.
+  // Crescent: 6 plots at r9.5, fan -70..+105 deg from south (+z), index 2 = demo.
+  // The stair hill takes the open east end (+105), so the crescent walk gains
+  // two segments and nothing else moves.
   public const float CrescentRadius = 9.5f;
-  static readonly float[] ZoneAngles = { -70f, -35f, 0f, 35f, 70f };
+  static readonly float[] ZoneAngles = { -70f, -35f, 0f, 35f, 70f, 105f };
 
   // Demo theatre (stage centre = ZoneCenters[2] = (0,11)); the viewing spot is
   // the theatre's own DOOR at the plot edge.
@@ -132,6 +139,8 @@ public class CountingGardenBuilder : MonoBehaviour {
   static readonly Color MintLeaf = new Color(0.70f, 0.90f, 0.72f);
   static readonly Color StoneGrey = new Color(0.68f, 0.68f, 0.66f);
   static readonly Color BoardCream = new Color(0.99f, 0.95f, 0.85f);
+  // Gameplay #2 (stair hill) shared tones — same warm wood language as the beds.
+  public static readonly Color StepWood = new Color(0.62f, 0.45f, 0.28f);
 
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
@@ -331,7 +340,77 @@ public class CountingGardenBuilder : MonoBehaviour {
     BuildDemoDoorGate(parent);
     BuildBed(parent, 3, 5, "corn");
     BuildBed(parent, 4, 2, "pumpkin");
+    BuildStairHillPlot(parent, StairZoneIndex);
     BuildZoneSpots(parent);
+  }
+
+  // ---- S3-P2Z12 gameplay #2 plot: the number-stair hill -------------------------
+  // The garden-side MINIATURE of the "Bậc thang con số" arena: the same shaped
+  // hill (6 steps, target "3" board, goal flag) built at toy scale inside the
+  // plot, so the child sees what the door opens. The plot keeps the bed
+  // contract (CGZone5Pad/Border/Fence/Anchor + gate + vignette) so the picker
+  // and the layout tests read one shape for every plot.
+  // The diorama numbers live with StairLessonDemo (it builds the mini lesson);
+  // the plot keeps only the arena's target for its gate beads.
+  public const int StairTarget = 3;
+
+  void BuildStairHillPlot(Transform parent, int index) {
+    Vector3 center = ZoneCenters[index];
+    Vector3 outDir = (center - ArcCenter).normalized;
+    Vector3 lat = new Vector3(-outDir.z, 0f, outDir.x);
+    float latYaw = Mathf.Atan2(lat.x, lat.z) * Mathf.Rad2Deg;
+    float outYaw = Mathf.Atan2(outDir.x, outDir.z) * Mathf.Rad2Deg;
+    string tag = "CGZone" + index;
+    Vector3 mouth = center - outDir * 1.35f;
+    // Border ring + walkable pad (same language as the beds).
+    GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    ring.name = tag + "Border";
+    ring.transform.SetParent(parent, false);
+    ring.transform.localPosition = new Vector3(center.x, 0.004f, center.z);
+    ring.transform.localScale = new Vector3(3.5f, 0.006f, 2.7f);
+    ring.transform.localRotation = Quaternion.Euler(0f, latYaw, 0f);
+    ring.GetComponent<Renderer>().sharedMaterial = Lit(BorderWood);
+    StripCollider(ring);
+    GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    pad.name = tag + "Pad";
+    pad.transform.SetParent(parent, false);
+    pad.transform.localPosition = new Vector3(center.x, 0.008f, center.z);
+    pad.transform.localScale = new Vector3(3.0f, 0.012f, 2.2f);
+    pad.transform.localRotation = Quaternion.Euler(0f, latYaw, 0f);
+    pad.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.72f, 0.72f, 0.55f));
+    StripCollider(pad);
+    // NOTE (S3-P2Z12b): the diorama itself — the two-NPC mini lesson with its
+    // board/steps/arch — is built at RUNTIME by StairLessonDemo (a runtime
+    // component like the ball theatre's CountingDemo), so the plot keeps only
+    // its contract pieces (border/pad/fence/gate/anchor/vignette) here.
+    // Fence ring (bed contract: 3 outer + 2x2 ends).
+    for (int i = 0; i < 3; i++) {
+      float t = (i - 1) * 0.95f;
+      PlaceProp(parent, "fence_simpleLow", tag + "Fence" + i,
+        center + outDir * 1.12f + lat * t, latYaw, 0.92f);
+    }
+    for (int s = 0; s < 2; s++) {
+      float sign = (s == 0) ? -1f : 1f;
+      for (int i = 0; i < 2; i++) {
+        PlaceProp(parent, "fence_simpleLow", tag + "Fence" + (3 + s * 2 + i),
+          center + lat * (sign * 1.55f) + outDir * ((i - 0.5f) * 0.95f), outYaw, 0.92f);
+      }
+    }
+    // Gate at the mouth with THREE beads (the arena's target) + stair-sky accent.
+    List<Transform> beads = BuildBedGate(parent, index, tag, mouth, lat,
+      new Color(0.45f, 0.70f, 0.92f), StairTarget);
+    PlaceProp(parent, "flower_yellowA", tag + "FlowerL", mouth + lat * 1.7f, 0f, 0.9f);
+    PlaceProp(parent, "flower_yellowA", tag + "FlowerR", mouth - lat * 1.7f, 0f, 0.9f);
+    GameObject anchor = new GameObject(tag + "Anchor");
+    anchor.transform.SetParent(parent, false);
+    anchor.transform.localPosition = mouth;
+    // Always-on counting performance on the gate beads (like every plot).
+    GameObject vigGo = new GameObject(tag + "Vignette");
+    vigGo.transform.SetParent(parent, false);
+    vigGo.transform.localPosition = center;
+    GardenZoneVignette vig = vigGo.AddComponent<GardenZoneVignette>();
+    vig.Phase = index * 0.9f;
+    vig.Bind(beads, new List<Transform>());
   }
 
   // S3-P2Z6 (user: "demo ở sân không có cổng, đến giữa sân là nó tự chọn"):
@@ -402,12 +481,20 @@ public class CountingGardenBuilder : MonoBehaviour {
       pad.transform.SetParent(parent, false);
       pad.transform.localPosition = new Vector3(mouth.x, 0.04f, mouth.z);
       pad.transform.localScale = new Vector3(2.0f, 0.03f, 2.0f);
-      pad.GetComponent<Renderer>().sharedMaterial = Lit(z == 2 ? Gold : WorldBeauty.Petal);
+      bool staged = (z == 2 || z == StairZoneIndex);
+      pad.GetComponent<Renderer>().sharedMaterial = Lit(staged ? Gold : WorldBeauty.Petal);
       pad.AddComponent<GardenZoneSpot>(); // collider stays: this is the click door
       IgnoreFromBuild(pad);
       GardenZoneSpot spot = pad.GetComponent<GardenZoneSpot>();
       spot.zoneIndex = z;
-      spot.playEnabled = (z == 2);
+      spot.playEnabled = staged;
+      // Which LAZY play scene the door opens (empty = the reference arena).
+      // Gameplay #2 gets its own scene; nothing loads until the door is used.
+      spot.playSceneName = (z == StairZoneIndex) ? StairHillBuilder.SceneName
+        : (z == 2 ? CountingPlayBuilder.SceneName : "");
+      // Both staged plots preview through a garden miniature and wait for one
+      // try-run before the play door opens (ball theatre + stair hill).
+      spot.demoGate = (z == 2 || z == StairZoneIndex);
       // Focus framing: 3.6m back toward the plaza at child-comfort height,
       // looking at the plot's centre. Zone 2 is the MINIATURE stage (S3-P2Y),
       // so its focus camera sits much closer — the diorama fills the frame.
@@ -420,6 +507,11 @@ public class CountingGardenBuilder : MonoBehaviour {
         // the right edge — no post, no avatar between camera and stage.
         camPos = new Vector3(1.4f, 1.85f, 7.9f);
         lookPos = new Vector3(0.15f, 0.8f, 11.0f);
+      } else if (z == StairZoneIndex) {
+        // Gameplay #2: closer + lower so the stair hill (and its mini "3"
+        // board) fill the frame from the plaza side.
+        camPos = mouth - outDir * 3.1f + new Vector3(0f, 2.0f, 0f);
+        lookPos = center + new Vector3(0f, 0.75f, 0f);
       } else {
         camPos = mouth - outDir * 3.6f + new Vector3(0f, 2.4f, 0f);
         lookPos = center + new Vector3(0f, 0.9f, 0f);
@@ -519,13 +611,14 @@ public class CountingGardenBuilder : MonoBehaviour {
   // top (bake-ignored — the headroom rule) and blossom balls on the beam. The
   // doorway stays 2.2m open so the crescent walk passes straight through.
   List<Transform> BuildBedGate(Transform parent, int index, string tag, Vector3 mouth,
-      Vector3 lat, Color accent) {
+      Vector3 lat, Color accent, int beadCount = -1) {
     List<Transform> beads = new List<Transform>();
     Vector3 postL = mouth + lat * 1.1f;
     Vector3 postR = mouth - lat * 1.1f;
     Cylinder(parent, tag + "Post", postL + new Vector3(0f, 0.85f, 0f),
       0.17f, 1.7f, BasketBrown);
-    for (int i = 0; i < index + 1; i++) {
+    int beadsOnPost = beadCount >= 0 ? beadCount : index + 1;
+    for (int i = 0; i < beadsOnPost; i++) {
       GameObject bead = Sphere(parent, tag + "PostBead" + i,
         postL + new Vector3(0f, 1.82f + i * 0.19f, 0f), 0.17f, Gold, false);
       if (bead != null) beads.Add(bead.transform);
@@ -724,9 +817,29 @@ public class CountingGardenBuilder : MonoBehaviour {
   // bars ("chưa có số hoàn chỉnh"). Local +z maps to world -x at yaw 90 and the
   // north viewer reads screen-right = local +z, so B (upper vertical) sits at
   // +z and E (lower vertical) at -z, exactly like a real "2".
+  // CONNECTED seven-segment digits 0-9 — one table drives every number board.
+  // Same plane/thickness discipline as the original Digit2: segments overlap at
+  // the joints (length + t) so the glyph is one solid connected number, and
+  // per-segment X thickness avoids coplanar z-fighting (journey: striped bar).
+  // Local +z maps to world -x at yaw 90 and the north viewer reads screen-right
+  // = local +z, so B/C (right verticals) sit at +z and E/F (left) at -z.
   // Group origin at the base so emphasis pulses grow upward.
-  public static GameObject Digit2(Transform parent, string name, Vector3 origin, float h, float w,
-      Color color, float yawDeg) {
+  // Standard 7-seg sets, index = digit (out of range reads as 8).
+  public static readonly string[][] DigitSegSets = {
+    new[] { "A", "B", "C", "D", "E", "F" },       // 0
+    new[] { "B", "C" },                            // 1
+    new[] { "A", "B", "G", "E", "D" },             // 2
+    new[] { "A", "B", "G", "C", "D" },             // 3
+    new[] { "B", "C", "F", "G" },                  // 4
+    new[] { "A", "C", "D", "F", "G" },             // 5
+    new[] { "A", "C", "D", "E", "F", "G" },        // 6
+    new[] { "A", "B", "C" },                       // 7
+    new[] { "A", "B", "C", "D", "E", "F", "G" },   // 8
+    new[] { "A", "B", "C", "D", "F", "G" },        // 9
+  };
+
+  public static GameObject Digit(Transform parent, string name, Vector3 origin, float h, float w,
+      Color color, float yawDeg, int n) {
     GameObject g = new GameObject(name);
     g.transform.SetParent(parent, false);
     g.transform.localPosition = origin;
@@ -734,16 +847,53 @@ public class CountingGardenBuilder : MonoBehaviour {
     float t = Mathf.Max(0.09f, h * 0.19f);          // stroke thickness
     float hLen = w + t;                              // horizontal segments
     float vLen = h * 0.5f + t;                       // vertical segments (overlap)
-    // Per-segment X thickness: overlapping joints would otherwise leave
-    // coplanar faces that z-fight (journey screenshot: striped top bar).
-    Box(g.transform, name + "A", new Vector3(0f, h, 0f), new Vector3(t * 1.00f, t, hLen), color);
-    Box(g.transform, name + "B", new Vector3(0f, h * 0.75f, w * 0.5f),
-      new Vector3(t * 0.90f, vLen, t), color);
-    Box(g.transform, name + "G", new Vector3(0f, h * 0.5f, 0f), new Vector3(t * 1.06f, t, hLen), color);
-    Box(g.transform, name + "E", new Vector3(0f, h * 0.25f, -w * 0.5f),
-      new Vector3(t * 0.94f, vLen, t), color);
-    Box(g.transform, name + "D", new Vector3(0f, 0f, 0f), new Vector3(t * 1.03f, t, hLen), color);
+    string[] set = (n >= 0 && n < DigitSegSets.Length) ? DigitSegSets[n] : DigitSegSets[8];
+    foreach (string s in set) {
+      switch (s) {
+        case "A":
+          Box(g.transform, name + "A", new Vector3(0f, h, 0f),
+            new Vector3(t * 1.00f, t, hLen), color);
+          break;
+        case "B":
+          Box(g.transform, name + "B", new Vector3(0f, h * 0.75f, w * 0.5f),
+            new Vector3(t * 0.90f, vLen, t), color);
+          break;
+        case "C":
+          Box(g.transform, name + "C", new Vector3(0f, h * 0.25f, w * 0.5f),
+            new Vector3(t * 0.94f, vLen, t), color);
+          break;
+        case "D":
+          Box(g.transform, name + "D", new Vector3(0f, 0f, 0f),
+            new Vector3(t * 1.03f, t, hLen), color);
+          break;
+        case "E":
+          Box(g.transform, name + "E", new Vector3(0f, h * 0.25f, -w * 0.5f),
+            new Vector3(t * 0.94f, vLen, t), color);
+          break;
+        case "F":
+          Box(g.transform, name + "F", new Vector3(0f, h * 0.75f, -w * 0.5f),
+            new Vector3(t * 0.90f, vLen, t), color);
+          break;
+        case "G":
+          Box(g.transform, name + "G", new Vector3(0f, h * 0.5f, 0f),
+            new Vector3(t * 1.06f, t, hLen), color);
+          break;
+      }
+    }
     return g;
+  }
+
+  // Group origin at the base so emphasis pulses grow upward.
+  public static GameObject Digit2(Transform parent, string name, Vector3 origin, float h, float w,
+      Color color, float yawDeg) {
+    return Digit(parent, name, origin, h, w, color, yawDeg, 2);
+  }
+
+  // CONNECTED seven-segment "3" (A/B/G/C/D) — kept as a named wrapper so the
+  // gameplay #1/#2 pins keep reading; new code uses Digit(..., n).
+  public static GameObject Digit3(Transform parent, string name, Vector3 origin, float h, float w,
+      Color color, float yawDeg) {
+    return Digit(parent, name, origin, h, w, color, yawDeg, 3);
   }
 
   // Floor tick: short down-stroke + long up-stroke in the ZY plane.
@@ -762,9 +912,10 @@ public class CountingGardenBuilder : MonoBehaviour {
     // Plaza (orientation heart) + entry walk.
     Pad(parent, "CGPlazaPad", new Vector3(ArcCenter.x, 0.004f, ArcCenter.z), 7.6f, CourtyardSand);
     Seg(parent, "CGPathEntry", new Vector3(0f, 0f, -11f), new Vector3(0f, 0f, -1.0f), 1.7f);
-    // Crescent walk: an arc band joining every bed mouth (8 segments).
+    // Crescent walk: an arc band joining every plot mouth (10 segments — the
+    // two extra carry the walk east to the stair hill at +105).
     const float walkR = 8.0f;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 10; i++) {
       float a0 = -70f + i * 17.5f - 1.2f;
       float a1 = a0 + 17.5f + 2.4f;
       Vector3 p0 = ArcCenter + new Vector3(Mathf.Sin(a0 * Mathf.Deg2Rad) * walkR, 0f,

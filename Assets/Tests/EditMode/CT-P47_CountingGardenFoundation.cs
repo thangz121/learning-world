@@ -38,7 +38,8 @@ public class CT_P47_CountingGardenFoundation {
     try {
       CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
       builder.BuildContent(garden.transform);
-      Assert.AreEqual(5, builder.ZoneCenters.Count, "five crescent plots (4 beds + demo)");
+      // S3-P2Z12 re-pin: 6 plots (4 beds + demo theatre + number-stair hill).
+      Assert.AreEqual(6, builder.ZoneCenters.Count, "six crescent plots (4 beds + demo + stair hill)");
       Vector3 demo = builder.ZoneCenters[2];
       // Entry threshold + orientation + staging.
       Assert.IsNotNull(FindDeep(garden.transform, "CGThresholdL"), "entry threshold L");

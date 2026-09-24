@@ -148,6 +148,10 @@ public class GameInstaller : MonoBehaviour {
       BuildCountingPlayScene(scene);
       return;
     }
+    if (scene.name == StairHillBuilder.SceneName) {
+      BuildStairPlayScene(scene);
+      return;
+    }
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
@@ -233,16 +237,26 @@ public class GameInstaller : MonoBehaviour {
       // the garden hosts an AMBIENT MINIATURE of the lesson — it loops for
       // everyone and its card camera stays off (the zone focus frames it), plus
       // it drives the "panel after the try-run" gate through the area module.
+      Transform playerT2 = _activeBuilder != null && _activeBuilder.Player != null
+        ? _activeBuilder.Player.transform : null;
       try {
         CountingDemo mini = root.AddComponent<CountingDemo>();
         mini.CameraBeatsEnabled = false;
-        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
-          ? _activeBuilder.Player.transform : null;
-        mini.Build(builder, playerT,
+        mini.Build(builder, playerT2,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio);
         if (area != null) area.BindDemo(mini);
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] garden mini demo wiring failed (garden stays quiet): " + e.Message, this);
+      }
+      // S3-P2Z12b (user report "NPC dạy trẻ chơi ở đâu?"): the stair hill plot
+      // gets its OWN garden miniature — the two-NPC number lesson — so the plot
+      // never looks empty; it drives the same panel-after-one-pass gate.
+      try {
+        StairLessonDemo stairs = root.AddComponent<StairLessonDemo>();
+        stairs.Build(builder, playerT2, Audio);
+        if (area != null) area.BindDemo(CountingGardenBuilder.StairZoneIndex, stairs);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] stair garden mini demo wiring failed (plot stays scenery): " + e.Message, this);
       }
       try {
         Debug.Log("[GameInstaller] Counting Garden scene built (lazy) entry=" + (CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal).ToString("F1")
@@ -282,7 +296,9 @@ public class GameInstaller : MonoBehaviour {
       }
       if (area != null) {
         Vector3 entry = CountingPlayBuilder.WorldOffset + CountingPlayBuilder.EntryLocal;
-        area.SetPlay(entry, builder.Anchors);
+        area.SetPlay(entry, builder.Anchors, CountingPlayBuilder.WorldOffset,
+          CountingPlayBuilder.BoundX, CountingPlayBuilder.BoundZ, CountingPlayBuilder.FollowOffset,
+          null); // null objective = the area's default "Counting Playground"
         if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
       }
       // S3-P2Z4 REFERENCE GAMEPLAY (user design): the arena runs the Number-2
@@ -327,6 +343,64 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] CountingPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  // S3-P2Z12 GAMEPLAY #2 ("Bậc thang con số"): the Counting Garden's sixth plot
+  // opens its OWN lazy scene (StairPlayScene) through the same micro slot as the
+  // reference arena — built here on demand, never at boot, never stacked.
+  void BuildStairPlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "StairPlayWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] StairPlayScene has no StairPlayWorld root.", this);
+        return;
+      }
+      root.transform.position = StairHillBuilder.WorldOffset;
+      StairHillBuilder builder = root.GetComponent<StairHillBuilder>();
+      if (builder == null) builder = root.AddComponent<StairHillBuilder>();
+      // The round's mission comes from the area's ladder (progression/CLI);
+      // the boards stage that digit so the world always shows the mission.
+      int stairTarget = _gardenArea != null
+        ? _gardenArea.StairTarget : StairHillBuilder.Target;
+      builder.BoardTarget = StairHillBuilder.ClampTarget(stairTarget);
+      builder.Build();
+      CountingGardenArea area = _gardenArea;
+      if (area == null) {
+        try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        Vector3 entry = StairHillBuilder.WorldOffset + StairHillBuilder.EntryLocal;
+        area.SetPlay(entry, builder.Anchors, StairHillBuilder.WorldOffset,
+          StairHillBuilder.BoundX, StairHillBuilder.BoundZ, StairHillBuilder.FollowOffset,
+          DialogueLang.T(StairHillBuilder.ObjectiveEn, StairHillBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
+      }
+      // The activity (teacher + student + the child's climb). Lifecycle is the
+      // Math-side area's; the game plays the area's current target (one
+      // staircase, many targets — brief §34).
+      try {
+        NumberStairs game = root.AddComponent<NumberStairs>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
+          _gardenArea != null ? _gardenArea.StairLifecycle : null, stairTarget);
+        if (_gardenArea != null) _gardenArea.BindStairGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Number stairs wiring failed (hill stays empty): " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Stair Play scene built (gameplay #2) entry="
+          + (StairHillBuilder.WorldOffset + StairHillBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] StairPlayScene build failed: " + e.Message, this);
     }
   }
 

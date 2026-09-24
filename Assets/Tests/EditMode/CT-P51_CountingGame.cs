@@ -283,6 +283,10 @@ public class CT_P51_CountingGame {
     string root = Application.dataPath;
     string controller = System.IO.File.ReadAllText(System.IO.Path.Combine(root,
       "A_World", "Visuals", "Resources", "PlayerVisuals", "PlayerController.controller"));
+    // Line-ending agnostic (the asset came back CRLF from another machine and
+    // the LF-only substring below silently stopped matching — keep the pin,
+    // normalize the text).
+    controller = controller.Replace("\r\n", "\n");
     Assert.IsTrue(controller.Contains("m_Name: PickUp"), "player controller has a PickUp state");
     Assert.IsTrue(controller.Contains("m_Name: Victory"), "player controller has a Victory state");
     // The clips are the player rig's own (Player_CasualMale.fbx guid).

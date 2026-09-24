@@ -53,9 +53,10 @@ public class CT_P50_GardenZoneFlow {
     if (go != null) Object.DestroyImmediate(go);
   }
 
-  // A. Five zones, one door each: every plot carries a click pad with a
+  // A. Six zones, one door each: every plot carries a click pad with a
   // collider (ClickRouter's door) that never touches the NavMesh; camera pair
-  // present; ONLY the demo theatre (index 2) has play enabled.
+  // present; the demo theatre (index 2) and the stair hill (index 5) have play
+  // enabled — S3-P2Z12 gameplay #2 re-pin, deliberately two staged plots.
   [Test] public void P50A_ZoneSpotsBuilt() {
     GameObject garden;
     CountingGardenBuilder builder;
@@ -81,10 +82,20 @@ public class CT_P50_GardenZoneFlow {
           "spot " + z + " rides its plot mouth");
         if (spot.playEnabled) playCount++;
       }
-      Assert.AreEqual(1, playCount, "exactly one plot opens play");
+      Assert.AreEqual(2, playCount, "two staged plots open play (ball arena + stair hill)");
       Assert.IsTrue(spots[2].playEnabled, "the play plot is the demo theatre (index 2)");
+      Assert.IsTrue(spots[5].playEnabled, "the stair hill opens its own lazy play scene");
+      // Each staged plot names its scene; skeleton plots stay empty.
+      Assert.AreEqual(CountingPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[2]),
+        "the demo theatre opens the reference ball arena");
+      Assert.AreEqual(StairHillBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[5]),
+        "the stair hill opens StairPlayScene");
+      Assert.AreEqual(CountingPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[0]),
+        "skeleton plots fall back to the default arena name (never a lookup failure)");
       Assert.AreEqual(DialogueLang.T("Counting stage", "Sân đếm"), GardenZoneSpot.NameOf(2),
         "zone names follow the plot identity (language-agnostic pin)");
+      Assert.AreEqual(DialogueLang.T("Stair hill", "Đồi Bậc Thang"), GardenZoneSpot.NameOf(5),
+        "the sixth plot is the number-stair hill");
     } finally { TearDown(garden); }
   }
 

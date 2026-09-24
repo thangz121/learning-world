@@ -127,15 +127,16 @@ public class CT_P46_CountingGarden {
       "retry succeeds after the failure clears");
   }
 
-  // D. Garden scene content: FIVE fenced zones in an arc + entry/exit + anchors
-  // (v2 scope: enclosures only — no activities yet).
+  // D. Garden scene content: SIX fenced zones in an arc + entry/exit + anchors
+  // (v2 scope: enclosures only — activities live in lazy play scenes).
+  // S3-P2Z12 re-pin: the sixth plot is the number-stair hill (gameplay #2).
   [Test] public void P46D_GardenZonesAndAnchors() {
     GameObject garden = new GameObject("P46GardenWorld");
     try {
       CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
       builder.BuildContent(garden.transform);
-      Assert.AreEqual(5, CountingGardenBuilder.ZoneCount, "five zones");
-      Assert.AreEqual(5, builder.ZoneCenters.Count, "five zone centres exposed");
+      Assert.AreEqual(6, CountingGardenBuilder.ZoneCount, "six zones");
+      Assert.AreEqual(6, builder.ZoneCenters.Count, "six zone centres exposed");
       Assert.Greater(CountingGardenBuilder.WorldOffset.magnitude, 60f,
         "separate island (no overlap with Main/Math)");
       Vector3 c = CountingGardenBuilder.ArcCenter;

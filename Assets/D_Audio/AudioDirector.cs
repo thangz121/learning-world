@@ -163,6 +163,11 @@ public class AudioDirector : IAudioDirector {
       case "ding":
         clip = Tone(id, 0.22f, 880f, 880f, 0.4f, 5.0f);
         break;
+      // S3-P2Z12 gameplay #2: a soft wooden step — the child hears each tread
+      // land (low, short, never a drum hit).
+      case "step":
+        clip = Tone(id, 0.16f, 240f, 150f, 0.6f, 6.0f);
+        break;
       default:
         clip = Tone(id, 0.12f, 440f, 560f, 0.45f, 6f);
         break;

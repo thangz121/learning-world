@@ -20,6 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+// S3-P2Z12: the actor kit moved to LessonActors.cs (shared with gameplay #2).
+// The alias keeps every existing field/method reference in this file intact —
+// runtime behaviour is byte-equal, which is what the CT-P48 pins protect.
+using NpcActor = LessonActor;
 
 public enum DemoPhase {
   Ready,
@@ -49,7 +53,7 @@ public enum DemoPhase {
 }
 
 [DisallowMultipleComponent]
-public class CountingDemo : MonoBehaviour {
+public class CountingDemo : MonoBehaviour, IGardenZoneDemo {
   const float WalkSpeed = 0.9f;   // slow enough for a 4yo to follow
   const float WatchRadius = CountingGardenBuilder.DemoViewRadius;
   const float RearmMargin = 2.0f;
@@ -76,32 +80,7 @@ public class CountingDemo : MonoBehaviour {
   // controller works in both scenes without hardcoded map coordinates.
   Vector3 _islandOffset = CountingGardenBuilder.WorldOffset;
 
-  // Two staged NPCs (teacher + child student).
-  sealed class NpcActor {
-    public GameObject Root;
-    public Transform Visual;
-    public Animator Animator;
-    public CharacterPresentation Face;
-    public Transform CarryAnchor;
-    // S3-P2Z11 (user: "bóng tự bay lên chứ không phải cầm bằng tay, giả quá"):
-    // the carried ball rides the rig's ACTUAL fist bone, so the PickUp bend and
-    // the walk move the ball with the hand. CarryAnchor stays as a fallback.
-    public Transform HandBone;
-    public Transform WaveBone;
-    public Quaternion WaveBase = Quaternion.identity;
-    public bool Waving;
-    public float WaveT;
-    // Juice (S3-P2Y): squash/stretch around the authored visual scale.
-    public Vector3 BaseScale = Vector3.one;
-    public float SquashT;
-    // S3-P2Z4 gesture language: point-at-target + nod (procedural bones).
-    public Transform HeadBone;
-    public Vector3 PointTarget;
-    public float PointT;
-    public Quaternion HeadBase = Quaternion.identity;
-    public float NodT;
-  }
-
+  // Two staged NPCs (teacher + child student) — LessonActor (LessonActors.cs).
   NpcActor _teacher;
   NpcActor _student;
   bool _actorsBuilt;
@@ -284,59 +263,7 @@ public class CountingDemo : MonoBehaviour {
 
   NpcActor BuildNpc(Transform parent, string name, string prefabName, float scale,
       Vector3 stand, Color vest, Color hat) {
-    GameObject prefab = Resources.Load<GameObject>(prefabName);
-    if (prefab == null) {
-      Debug.LogError("[CountingDemo] Missing " + prefabName + "; actor parked.", this);
-      return null;
-    }
-    NpcActor a = new NpcActor();
-    a.Root = new GameObject(name);
-    a.Root.transform.SetParent(parent, false);
-    a.Root.transform.localPosition = stand;
-    a.Root.transform.localRotation = Quaternion.identity;
-    GameObject visual = Instantiate(prefab, a.Root.transform, false);
-    visual.name = name + "Visual";
-    visual.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-    visual.transform.localRotation = Quaternion.identity;
-    visual.transform.localScale = Vector3.one * scale;
-    a.Visual = visual.transform;
-    a.BaseScale = visual.transform.localScale;
-    a.Animator = visual.GetComponentInChildren<Animator>(true);
-    SkinnedMeshRenderer skin = visual.GetComponentInChildren<SkinnedMeshRenderer>(true);
-    Transform head = null, footL = null, footR = null;
-    if (skin != null) {
-      CharacterPresentation.TintSharedMaterials(skin, "Vest", vest);
-      CharacterPresentation.TintSharedMaterials(skin, "Hat", hat);
-      if (skin.bones != null) {
-        foreach (Transform bone in skin.bones) {
-          if (bone == null) continue;
-          if (head == null && bone.name == "Head") head = bone;
-          if (footL == null && bone.name == "Foot.L") footL = bone;
-          if (footR == null && bone.name == "Foot.R") footR = bone;
-          if (a.WaveBone == null && (bone.name == "UpperArm.R" || bone.name == "Shoulder.R"))
-            a.WaveBone = bone;
-          if (a.HeadBone == null && bone.name == "Head") a.HeadBone = bone;
-          if (a.HandBone == null && (bone.name == "Fist.R" || bone.name == "Hand.R"))
-            a.HandBone = bone;
-        }
-      }
-    }
-    if (a.HeadBone != null) a.HeadBase = a.HeadBone.localRotation;
-    a.Face = a.Root.AddComponent<CharacterPresentation>();
-    try { a.Face.SetupFace(skin, head, a.Root.transform, a.Visual); } catch (Exception) { }
-    try { a.Face.BuildFaceImmediate(); } catch (Exception) { }
-    try {
-      if (footL != null) a.Face.QueueShoe(footL, "ShoeL");
-      if (footR != null) a.Face.QueueShoe(footR, "ShoeR");
-      a.Face.BuildShoesImmediate();
-    } catch (Exception) { }
-    GameObject anchor = new GameObject(name + "CarryAnchor");
-    anchor.transform.SetParent(a.Root.transform, false);
-    anchor.transform.localPosition = new Vector3(0f, 0.95f, -0.35f);
-    a.CarryAnchor = anchor.transform;
-    // Click-through: the lesson must never eat walk clicks.
-    try { CharacterPresentation.DestroyColliders(a.Root); } catch (Exception) { }
-    return a;
+    return LessonActors.Build(parent, name, prefabName, scale, stand, vest, hat);
   }
 
   void ResetActors() {

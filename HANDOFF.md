@@ -2003,3 +2003,83 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
   re-entry camera, và xác nhận push SSH ở máy nhà.
 - Bàn phím máy nhà đang hỏng → user điều khiển bằng UltraViewer; mọi thao tác
   foreground đều làm qua SSH scheduled task.
+
+## 64. S3-P2Z12 — GAMEPLAY #2 "BẬC THANG CON SỐ" (2026-09-24, ASUS + maynode)
+
+- Lệnh user: thiết kế + triển khai gameplay #2 của Vườn Đếm theo brief 36 mục
+  (pattern COUNT→MOVE→SEQUENCE→STOP), dùng gameplay #1 làm reference
+  quality/architecture, không copy; chốt placement qua hỏi đáp.
+- PLACEMENT (user chốt): khu thứ 6 "Đồi Bậc Thang" (+105° vòng cung) + SCENE
+  RIÊNG lazy `StairPlayScene` — 5 khu cũ + gameplay #1 không đụng; một micro
+  slot (không load chồng, không load lúc boot) — user nhắc lại quy tắc lazy.
+- Code: `LessonActors.cs` (tách kit actor + PacedVoice từ CountingDemo, hành vi
+  byte-equal), `StairHillBuilder.cs` (+`StairRun` = nguồn DUY NHẤT xác định
+  "đang ở bậc nào": band XZ + cửa sổ cao độ ±0.32), `NumberStairs.cs` (intro →
+  demo bé NPC leo 1-2-3 → handoff → trẻ tự leo: đếm theo bàn chân, overshoot chỉ
+  khi ĐI LÊN (cô gọi về, không phạt), đứng vững bậc 3 = success), zone 6 + mini
+  hill + `Digit3` trong CountingGardenBuilder, `CountingGardenArea.SetPlay(...)`
+  tổng quát hoá theo scene (island/bounds/follow/objective) + `StairLifecycle`,
+  `GardenZoneSpot.playSceneName/demoGate`, GameInstaller `BuildStairPlayScene`,
+  AudioDirector thêm SFX `step`.
+- BUG THẬT fix trong round: (1) tread bị `Box()` strip collider → click xuyên
+  xuống đất sau đồi (BoxSolid giữ collider — pin P53C); (2) chữ số hở seam
+  z/shadow (digit lùi 18cm khỏi panel + NoShadows); (3) handoff bé NPC đứng lại
+  giữa cầu thang (đi 2 chặng base→về chỗ + climb chờ cầu thang sạch); (4)
+  overshoot đếm cả lúc đi XUỐNG (chỉ đếm khi lên).
+- Journey thật (maynode, driver tạm đã xoá): language card → cổng Toán → cổng
+  Vườn Đếm → khu 6 → panel → arena (lazy) → intro → demo 1-2-3 → handoff →
+  trẻ leo 1 → overshoot bậc 5 (overshoots=2) → về bậc 3 → success (result=True)
+  → đi bộ về vườn → **re-entry adopt (adopt=True result=True)** → 0 exception.
+  Ảnh 00..16: `D:\Vscode\p53j-shots3` (shots 15/16 ở 624x321 vì window đã thu
+  nhỏ giữa run theo lệnh user).
+- Driver lesson mới: gọi `InputSystem.Update()` tay làm press sống 1 input tick
+  (UI thấy, ClickToMove KHÔNG) → phải queue press + giữ 4 frame; cửa sổ mất
+  focus cần `backgroundBehavior=IgnoreFocus`; click ngoài màn hình phải clamp/
+  "walk-toward" theo mép.
+- Verify: EditMode **616/611/0/5** (cây sạch cuối, +CT-P53 ×8, re-pin P46D/P47A/
+  P50A có chủ đích, fix P51G CRLF do core.autocrlf=true trên ASUS); production
+  build **Succeeded errors=0 warnings=2** size=110.222.003 (driver-free, LWE.World
+  hash trùng bản journey) — boot smoke ASUS FACE_OK 0 exc, boot maynode
+  `[Boot] screen=640x360` FACE_OK 0 exc.
+
+## 65. S3-P2Z12b — MINI LESSON TRONG VƯỜN + CỬA SỔ NHỎ (user feedback + order, 2026-09-24)
+
+- User + ảnh: khu stair trong vườn "đã có gì ở đâu? NPC dạy trẻ chơi ở đâu? Sao
+  không hiện?" → đúng: khu 6 chỉ có mô hình tĩnh, khác hẳn khu 2 có cô+trò mini
+  diễn. Lệnh: làm lại chỉn chu.
+- Code: `IGardenZoneDemo.cs` (contract preview: LoopCount/PassDone/
+  StartFocusedLesson/StopFocusedLesson); `LessonMotion` trong LessonActors.cs
+  (kit walk/face/wave/point/nod/squash dùng chung, demo cũ giữ nguyên);
+  `StairLessonDemo.cs` (diorama mini 0.62: board "3" + 3 bậc chunky hạt 1..3 +
+  goal arch + cô Tess/trò Milo chạy kịch bản dạy thật, audience-gate 1 lượt/khách
+  + focused-run mở panel sau 1 pass); `CountingGardenArea` bind demo THEO KHU;
+  CountingDemo implements IGardenZoneDemo; `WindowPlacement.cs` (cờ
+  `-window-bottom-right`, inert mặc định — user order: game mở nhỏ nhất ở góc
+  phải-dưới máy nhà).
+- BUG THẬT: (1) patch màu tạo field tự tham chiếu (`Gold = Gold`) → mọi đạo cụ
+  mini render ĐEN (pin màu P53J); (2) exit "đi mù về phía nam" lệch cổng 1.5m >
+  disc 1.35 → đi xuyên không kích (ngắm thẳng cổng bằng WalkToWorld +
+  check chặt: arena-unloaded + fresh-instance); (3) camera Follow() spam mỗi
+  frame ở Success (guard 1 lần); (4) click giữa bậc chạm capsule người chơi
+  (ngắm mép trái bậc).
+- Verify: suite **619/614/0/5** (cây sạch cuối, +P53J/K/I, pin màu + routing);
+  production **Succeeded errors=0** size=110.223.317 (có mini lesson +
+  WindowPlacement) — boot maynode `[WindowPlacement] parked bottom-right
+  x=1280 y=720 size=640x360` FACE_OK 0 exc; game production chạy nhỏ góc
+  phải-dưới cho user nhìn.
+- Journey full-HD (driver tạm đã xoá): language EN → Toán → Vườn Đếm → khu 6 →
+  mini lesson → panel → arena (lazy) → intro → demo 1-2-3 → handoff → trẻ leo
+  1 → 2 (fix ngắm) → overshoot 5 (overshoots=2) → bậc 3 → success → **về qua
+  CỔNG THẬT (exit=True arena-unloaded=True)** → **vào lại instance MỚI adopt
+  (fresh-instance=True)** → 0 exception. Ảnh 00..16 (22 files):
+  `D:\Vscode\p53j-shots6`.
+- Docs: `docs/COUNTING_GAME2_BLUEPRINT.md` + `docs/COUNTING_GAME2_REPORT.md`
+  (TECHNICAL PASS / VISUAL REVIEW REQUIRED: feet-on-treads ±9cm do navmesh ramp
+  — height mesh là lever kế tiếp; framing camera chờ mắt user).
+- Chưa commit (chờ lệnh).
+- maynode: game production 640x360 đã chạy cho user nhìn; UI auto-hide dialogs
+  không cần; UltraViewer mở PID 2408. Việc còn: snap cửa sổ xuống góc phải-dưới
+  (script `snap_lwe.ps1` qua task `LWE-Snap` chạy trong session — file out
+  `C:\Users\Admin\snap_lwe.out`; SSH không thấy window handle). Máy nhà offline
+  giữa lúc làm → hẹn round sau hoàn tất snap + mắt user.
+- Chưa commit (chờ lệnh).

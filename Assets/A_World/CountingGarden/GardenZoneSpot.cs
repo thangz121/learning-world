@@ -16,14 +16,23 @@ public class GardenZoneSpot : MonoBehaviour, IClickTarget {
 
   public int zoneIndex;
   public bool playEnabled;
+  // S3-P2Z12 (Gameplay #2): which lazy play scene "Vào chơi" loads for this
+  // plot. Empty = the area falls back to the reference arena (zone 2 keeps it
+  // implicit; the stair hill names its own scene explicitly).
+  public string playSceneName = "";
+  // Only the demo theatre's lesson is previewed by the garden MINIATURE: its
+  // focus waits for one full try-run before the panel opens. The stair plot has
+  // no garden-side lesson, so it opens the panel at once.
+  public bool demoGate;
   public Transform CameraAnchor;
   public Transform LookAnchor;
   public CountingGardenArea Area;
 
   public void Bind(CountingGardenArea area) { Area = area; }
 
-  // Zone name pair: derived from the plot's own crop identity (the beds carry
-  // carrot/strawberry/corn/pumpkin; the middle plot is the lesson stage).
+  // Zone name pair: derived from the plot's own identity (the beds carry
+  // carrot/strawberry/corn/pumpkin; the middle plot is the lesson stage; the
+  // east-end plot is the number-stair hill — gameplay #2).
   public static string NameOf(int index) {
     switch (index) {
       case 0: return DialogueLang.T("Carrot patch", "Vườn cà rốt");
@@ -31,6 +40,7 @@ public class GardenZoneSpot : MonoBehaviour, IClickTarget {
       case 2: return DialogueLang.T("Counting stage", "Sân đếm");
       case 3: return DialogueLang.T("Corn patch", "Vườn ngô");
       case 4: return DialogueLang.T("Pumpkin patch", "Vườn bí");
+      case 5: return DialogueLang.T("Stair hill", "Đồi Bậc Thang");
       default: return DialogueLang.T("Garden", "Khu vườn");
     }
   }

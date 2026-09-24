@@ -55,13 +55,23 @@ public class CountingGardenArea : MonoBehaviour {
   int _playedZone = 2;        // remembered across the play round-trip
   Vector3 _playEntry;
   ActivityAnchors _playAnchors;
+  // S3-P2Z12: each play scene pushes its own island bounds / follow framing /
+  // objective when it loads (the area owns ONE micro slot, so one live set of
+  // values at a time — the garden reload restores its own).
+  Vector3 _playCenter;
+  float _playBoundX = CountingPlayBuilder.BoundX;
+  float _playBoundZ = CountingPlayBuilder.BoundZ;
+  Vector3 _playFollow = CountingPlayBuilder.FollowOffset;
+  string _playObjective;
   bool _proximityArmed = true;
   float _focusRefreshT;
   float _doubleClickT = -1f;
   // S3-P2Y (user order): the "Vào chơi / Quay lại" panel only appears AFTER the
   // child watched one full try-run of the zone's demo, so the choice is
-  // informed. The garden's ambient mini demo drives this gate.
-  CountingDemo _demo;
+  // informed. Each staged plot owns its own garden demo (zone 2 = ball lesson,
+  // zone 5 = number stairs) — the area routes by focused zone (S3-P2Z12b).
+  readonly Dictionary<int, IGardenZoneDemo> _demos = new Dictionary<int, IGardenZoneDemo>();
+  IGardenZoneDemo _demo; // the FOCUSED zone's demo (resolved in FocusZone)
   int _demoLoopBase;
   bool _awaitDemo;
 
@@ -94,6 +104,13 @@ public class CountingGardenArea : MonoBehaviour {
     IsBusy = false;
     IsInPlay = false;
     FocusedZone = -1;
+    // Diagnostic override for the current stair target ("-stair-target N",
+    // same CLI pattern as DialogueLang's "-lang vi"); inert otherwise.
+    try {
+      int cli = ParseStairTargetArg(Environment.GetCommandLineArgs(), StairDefaultTarget);
+      StairTarget = cli;
+      _stairLifeTarget = cli;
+    } catch (Exception) { }
   }
 
   // S3-P2V journey bug: the router bounds must follow the ACTIVE island or the
@@ -110,8 +127,18 @@ public class CountingGardenArea : MonoBehaviour {
     if (panel != null) panel.Bind(this);
   }
 
-  // Garden ambient demo (miniature): drives the "panel after the try-run" gate.
-  public void BindDemo(CountingDemo demo) { _demo = demo; }
+  // Garden ambient demos (miniatures): drive the "panel after the try-run" gate.
+  // Legacy single-arg form = the demo theatre's ball lesson (zone 2), kept for
+  // the existing call sites/tests; the two-arg form routes any zone's demo.
+  public void BindDemo(CountingDemo demo) { BindDemo(2, demo); }
+  public void BindDemo(int zoneIndex, IGardenZoneDemo demo) {
+    if (demo == null) _demos.Remove(zoneIndex);
+    else _demos[zoneIndex] = demo;
+  }
+  public IGardenZoneDemo DemoFor(int zoneIndex) {
+    IGardenZoneDemo demo;
+    return _demos.TryGetValue(zoneIndex, out demo) ? demo : null;
+  }
   public bool AwaitingDemo { get { return _awaitDemo; } }
 
   // S3-P2Z4 reference gameplay: the activity lifecycle lives HERE (MathScene)
@@ -121,6 +148,71 @@ public class CountingGardenArea : MonoBehaviour {
     new ActivityLifecycle("counting_game", "CountingGardenArea");
   public CountingGame Game { get; private set; }
   public void BindGame(CountingGame game) { Game = game; }
+
+  // S3-P2Z12 gameplay #2 ("Bậc thang con số"): the same lifecycle pattern for
+  // the stair hill — owned here, survives the lazy unload of StairPlayScene.
+  public ActivityLifecycle StairLifecycle { get; private set; } =
+    new ActivityLifecycle("number_stairs", "CountingGardenArea");
+  public NumberStairs StairGame { get; private set; }
+  public void BindStairGame(NumberStairs game) { StairGame = game; }
+
+  // Target ladder (brief §34/§35): ONE staircase, many targets — the target
+  // only decides which step the child must stop on. First visit teaches the
+  // reference 3, then difficulty climbs 5 -> 7 -> 9, then a 1-step breather
+  // loops back. In-memory only (save untouched, like every activity state).
+  // A diagnostic run pins ANY target with "-stair-target N" (same CLI pattern
+  // as DialogueLang's "-lang vi"), rejoining the ladder at 3 afterwards.
+  public const int StairDefaultTarget = 3;
+  public const string StairTargetFlag = "-stair-target";
+  public static readonly int[] StairProgression = { 3, 5, 7, 9, 1 };
+  public int StairTarget { get; private set; } = StairDefaultTarget;
+  int _stairLifeTarget = StairDefaultTarget;
+
+  // Pure helper (EditMode-coverable): the next ladder rung after t, or 3 when
+  // t is off-ladder (a diagnostic target rejoins the ladder).
+  public static int NextStairTarget(int t) {
+    for (int i = 0; i < StairProgression.Length; i++) {
+      if (StairProgression[i] == t) return StairProgression[(i + 1) % StairProgression.Length];
+    }
+    return StairDefaultTarget;
+  }
+
+  // Pure helper: read "-stair-target N" (1..9) from a command line, else the
+  // current target (the flag is optional and inert without a valid number).
+  public static int ParseStairTargetArg(string[] args, int fallback) {
+    if (args == null) return fallback;
+    for (int i = 0; i + 1 < args.Length; i++) {
+      if (!string.Equals(args[i], StairTargetFlag, StringComparison.OrdinalIgnoreCase)) continue;
+      int n;
+      if (int.TryParse(args[i + 1], out n) && n >= 1 && n <= StairHillBuilder.StepCount)
+        return n;
+      return fallback;
+    }
+    return fallback;
+  }
+
+  // When the child completes a target and returns to the garden, the NEXT
+  // visit teaches the next rung with a FRESH lifecycle (latch-free: it fires
+  // exactly when a Completed life still belongs to the current target).
+  // Re-entering mid-lesson (not Completed) replays the same target's lesson.
+  void MaybeAdvanceStairTarget() {
+    if (StairLifecycle == null) return;
+    if (StairLifecycle.State != ActivityState.Completed) return;
+    if (_stairLifeTarget != StairTarget) return;
+    int next = NextStairTarget(StairTarget);
+    StairTarget = next;
+    StairLifecycle = new ActivityLifecycle("number_stairs", "CountingGardenArea");
+    _stairLifeTarget = next;
+    try { Debug.Log("[CountingGarden] stair target advanced to " + next + ".", this); }
+    catch (Exception) { }
+  }
+
+  // Test seams (no live refs needed).
+  public void SetStairTargetForTests(int t) {
+    StairTarget = StairHillBuilder.ClampTarget(t);
+    _stairLifeTarget = StairTarget;
+  }
+  public void TickStairProgressionForTests() { MaybeAdvanceStairTarget(); }
 
   void PushIslandBounds(Vector3 center, float x, float z) {
     if (_router == null) return;
@@ -142,8 +234,7 @@ public class CountingGardenArea : MonoBehaviour {
   }
 
   void PushPlayBounds() {
-    PushIslandBounds(CountingPlayBuilder.WorldOffset,
-      CountingPlayBuilder.BoundX, CountingPlayBuilder.BoundZ);
+    PushIslandBounds(_playCenter, _playBoundX, _playBoundZ);
   }
 
   // Called by GameInstaller every time the garden scene finishes loading
@@ -165,13 +256,22 @@ public class CountingGardenArea : MonoBehaviour {
     _proximityArmed = true;
     _awaitDemo = false;
     _demo = null;
+    _demos.Clear();
     if (_panel != null) _panel.Hide();
   }
 
-  // Called by GameInstaller when the play scene finishes loading (lazy).
-  public void SetPlay(Vector3 entry, ActivityAnchors anchors) {
+  // Called by GameInstaller when a play scene finishes loading (lazy). Each
+  // arena pushes its island + framing + objective so the area never hardcodes
+  // one scene's coordinates (gameplay #2 is a second lazy scene).
+  public void SetPlay(Vector3 entry, ActivityAnchors anchors, Vector3 center,
+      float boundX, float boundZ, Vector3 followOffset, string objective = null) {
     _playEntry = entry;
     _playAnchors = anchors;
+    _playCenter = center;
+    _playBoundX = boundX;
+    _playBoundZ = boundZ;
+    _playFollow = followOffset;
+    _playObjective = objective;
   }
 
   // ---- travel beats ------------------------------------------------------------
@@ -260,7 +360,11 @@ public class CountingGardenArea : MonoBehaviour {
     FrameFocus(spot);
     // Staged zone: run the demo FIRST (the child watches the lesson), then the
     // panel offers play. Skeleton zones: focus + name, panel offers the way back.
-    if (spot.playEnabled && _demo != null && !_demo.PassDone) {
+    // S3-P2Z12b (user report "NPC dạy trẻ chơi ở đâu?"): EVERY staged plot owns
+    // a garden miniature — the ball theatre (zone 2) and the stair hill
+    // (zone 5) both show their two-NPC lesson before the play door opens.
+    _demo = DemoFor(index);
+    if (spot.playEnabled && spot.demoGate && _demo != null && !_demo.PassDone) {
       // S3-P2Z8: the focus ITSELF starts the lesson (a click from across the
       // yard used to just frame the camera and do nothing). The panel opens
       // once this pass completes (user order).
@@ -269,7 +373,7 @@ public class CountingGardenArea : MonoBehaviour {
       _demo.StartFocusedLesson();
       ShowObjective(DialogueLang.T("Watch!", "Xem nhé!"));
       if (_panel != null) _panel.Hide();
-    } else if (spot.playEnabled && _demo != null && _demo.PassDone) {
+    } else if (spot.playEnabled && spot.demoGate && _demo != null && _demo.PassDone) {
       // They already watched this visit: no forced replay — offer play at once.
       _awaitDemo = false;
       ShowObjective(spot.ZoneName);
@@ -349,10 +453,20 @@ public class CountingGardenArea : MonoBehaviour {
       return;
     }
     _playedZone = spot.zoneIndex;
-    EnterPlayAsync();
+    EnterPlayAsync(PlaySceneFor(spot));
   }
 
-  async void EnterPlayAsync() {
+  // Which lazy scene this plot's door opens (S3-P2Z12: gameplay #2 has its own).
+  public static string PlaySceneFor(GardenZoneSpot spot) {
+    if (spot != null && !string.IsNullOrEmpty(spot.playSceneName)) return spot.playSceneName;
+    return CountingPlayBuilder.SceneName;
+  }
+
+  string PlayObjective() {
+    return string.IsNullOrEmpty(_playObjective) ? PlayObjectiveText : _playObjective;
+  }
+
+  async void EnterPlayAsync(string sceneName) {
     IsBusy = true;
     bool entered = false;
     try {
@@ -364,7 +478,7 @@ public class CountingGardenArea : MonoBehaviour {
       // the anti-double-enter contract.) On ANY failure we reload the garden
       // and put the child back at its entry: no void, no stranded player.
       try { await _transition.ExitMicroAsync(_sceneOps); } catch (Exception) { }
-      try { entered = await _transition.EnterMicroAsync(_sceneOps, CountingPlayBuilder.SceneName); }
+      try { entered = await _transition.EnterMicroAsync(_sceneOps, sceneName); }
       catch (Exception e) {
         try { Debug.LogWarning("[CountingGarden] play load failed: " + e.Message, this); }
         catch (Exception) { }
@@ -389,11 +503,11 @@ public class CountingGardenArea : MonoBehaviour {
       if (_player != null) _player.WarpTo(_playEntry);
       PushPlayBounds();
       if (_camera != null && _player != null)
-        _camera.Follow(_player.transform, CountingPlayBuilder.FollowOffset);
+        _camera.Follow(_player.transform, _playFollow);
       if (_camera != null && _playAnchors != null && _playAnchors.Camera != null
           && _playAnchors.CameraLook != null)
         _camera.FrameAnchor(_playAnchors.Camera, _playAnchors.CameraLook, 2.2f);
-      ShowObjective(PlayObjectiveText);
+      ShowObjective(PlayObjective());
       try { Debug.Log("[CountingGarden] entered play arena (warp " + _playEntry.ToString("F1") + ").", this); }
       catch (Exception) { }
     } catch (Exception e) {
@@ -497,6 +611,7 @@ public class CountingGardenArea : MonoBehaviour {
     TickFocusRefresh();
     TickDemoGate();
     TickCancelClick();
+    MaybeAdvanceStairTarget();
   }
 
   // The try-run gate: once the ambient demo completes a full loop, the panel
