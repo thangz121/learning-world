@@ -60,10 +60,11 @@ public class CT_P54_StairTargets {
       game.Tick(0.1f);
   }
 
-  // Teleport-walk: the settle window (0.3s) commits each band exactly once.
+  // Teleport-walk: the settle window (0.3s) commits each band exactly once and
+  // the stand-above dwell (0.5s) lets a high band be judged (user round).
   static void StepTo(NumberStairs game, GameObject player, StairHillBuilder builder, int step) {
     player.transform.position = WorldStand(builder, step);
-    for (int i = 0; i < 5; i++) game.Tick(0.1f);
+    for (int i = 0; i < 8; i++) game.Tick(0.1f);
   }
 
   // A. Digit maps 0-9: every target stages its own glyph, nothing else moves.
@@ -188,9 +189,11 @@ public class CT_P54_StairTargets {
       AdvanceToClimb(game);
       Assert.AreEqual(9, game.DemoStepsClimbed, "the demo climbs all nine");
       // The landing (band 10) is standing PAST the target.
-      Vector3 landing = arena.transform.TransformPoint(new Vector3(0f, 9f * 0.16f, 4.6f + 9f * 0.66f + 1.0f));
+      Vector3 landing = arena.transform.TransformPoint(new Vector3(0f,
+        StairHillBuilder.StepCount * StairHillBuilder.Rise,
+        StairHillBuilder.BaseZ + StairHillBuilder.StepCount * StairHillBuilder.Tread + 1.0f));
       player.transform.position = landing;
-      for (int i = 0; i < 6; i++) game.Tick(0.1f);
+      for (int i = 0; i < 9; i++) game.Tick(0.1f); // settle + stand-above dwell
       Assert.AreEqual(10, game.CurrentStep, "the landing reads past the target");
       Assert.AreEqual(1, game.Overshoots, "guided once");
       Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "no fail, no reset (brief §19)");
@@ -433,9 +436,10 @@ public class CT_P54_StairTargets {
       for (int i = 5; i <= 8; i++) StepTo(game, player, builder, i);
       StepTo(game, player, builder, 9);
       Vector3 landing = arena.transform.TransformPoint(
-        new Vector3(0f, 9f * 0.16f, 4.6f + 9f * 0.66f + 1.0f));
+        new Vector3(0f, StairHillBuilder.StepCount * StairHillBuilder.Rise,
+        StairHillBuilder.BaseZ + StairHillBuilder.StepCount * StairHillBuilder.Tread + 1.0f));
       player.transform.position = landing;        // overshoot, then back
-      for (int i = 0; i < 6; i++) game.Tick(0.1f);
+      for (int i = 0; i < 9; i++) game.Tick(0.1f);
       StepTo(game, player, builder, 9);
       for (int i = 0; i < 20 && game.Current != NumberStairs.Phase.Success; i++) game.Tick(0.1f);
       Assert.AreEqual(NumberStairs.Phase.Success, game.Current, "target 9 completes");

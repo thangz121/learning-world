@@ -90,10 +90,11 @@ public class CT_P53_StairGame {
       game.Tick(0.1f);
   }
 
-  // Teleport-walk: the settle window (0.3s) commits each band exactly once.
+  // Teleport-walk: the settle window (0.3s) commits each band exactly once and
+  // the stand-above dwell (0.5s) lets a high band be judged (user round).
   static void SettleTo(NumberStairs game, GameObject player, StairHillBuilder builder, int step) {
     player.transform.position = WorldStand(builder, step);
-    for (int i = 0; i < 5; i++) game.Tick(0.1f);
+    for (int i = 0; i < 8; i++) game.Tick(0.1f);
   }
 
   // A. Garden: the sixth plot is the number-stair hill, with the bed contract
@@ -167,7 +168,8 @@ public class CT_P53_StairGame {
       Vector3 rootPos = arena.transform.position;
       Assert.AreEqual(0, run.StepAt(rootPos + new Vector3(0f, 0f, 1.0f)), "ground before the stairs");
       Assert.AreEqual(0, run.StepAt(rootPos + new Vector3(2.6f, 0f, 6.2f)), "beside the stairs");
-      Assert.AreEqual(0, run.StepAt(rootPos + new Vector3(0f, 0f, 6.2f)),
+      Assert.AreEqual(0, run.StepAt(rootPos + new Vector3(0f, 0f,
+        StairHillBuilder.BaseZ + 2.5f * StairHillBuilder.Tread)),
         "under the stairs (same XZ as step 3, ground height)");
       Assert.AreEqual(0, run.StepAt(rootPos + new Vector3(0f, 0f, -8f)), "the entry walk");
       // Deterministic backtrack: 3 -> 1 reads 1 (no accumulation, brief §20).

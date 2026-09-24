@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
 public class NumberStairs : MonoBehaviour {
@@ -31,14 +32,18 @@ public class NumberStairs : MonoBehaviour {
   }
 
   // Beat timings (one place; deterministic for Step(dt) tests).
-  const float SuccessDwell = 0.9f;      // "stand still on the target step" window
+  const float SuccessDwell = 1.1f;      // "stand still on the target step" window
+                                        // (user round: stand first, then judge)
   const float StepHold = 0.7f;          // teacher count beat between student steps
   const float OvershootNagCooldown = 5f;
   const float UnderNudgeCooldown = 8f;  // undershoot hint spacing (brief §20)
   const float UnderDwell = 2.0f;        // settled-below-target before a nudge
-  const float StepSettleSeconds = 0.15f; // band must hold this long to commit
+  const float OvershootDwell = 0.5f;    // standing above the target before the
+                                        // guidance fires (user round: walking
+                                        // through a high tread is not an answer)
+  const float StepSettleSeconds = 0.28f; // band must hold this long to commit
                                         // (brief §16: filters frame-scale flicker, but a steadily
-                                        // walking child (~0.3s per tread at 2.2m/s) still counts
+                                        // walking child (~0.4s per tread at 2.2m/s) still counts
                                         // every step — counts must never be skipped mid-climb)
   const float UnderNearStairsXZ = 4.5f; // base nudge only near the stair foot
   const float WalkSpeed = 0.85f;        // student legs
@@ -119,6 +124,10 @@ public class NumberStairs : MonoBehaviour {
   float _underT;
   int _pendingStep;
   float _pendingT;
+  int _overStep;      // band being held above the target (settle-before-judge)
+  float _overT;
+  bool _overCounted;
+  int _glowStep = -1; // selected/hovered tread currently lit (0 = none)
   float _victoryT = -1f;
   float _resultPopT = 1f;
   Vector3 _lastPos;
@@ -228,7 +237,42 @@ public class NumberStairs : MonoBehaviour {
       TickActing(dt);
       TickCamera(dt);
       TickJuice(dt);
+      TickGlow();
     } catch (Exception) { }
+  }
+
+  // User round "chọn bậc nào thì sáng bậc đó": while the child has control, the
+  // tread under the pointer lights up (pre-click aim), and while a click walks
+  // there, the DESTINATION tread stays lit (the choice is visible). Cleared when
+  // neither applies. Batch/tests have no mouse — silently dark.
+  void TickGlow() {
+    if (_builder == null) return;
+    int glow = 0;
+    if (Current == Phase.Climb || Current == Phase.Success) {
+      try {
+        Mouse mouse = Mouse.current;
+        Camera cam = Camera.main;
+        if (mouse != null && cam != null) {
+          Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
+          RaycastHit hit;
+          if (Physics.Raycast(ray, out hit, 200f)) {
+            StairTread tread = hit.collider != null
+              ? hit.collider.GetComponentInParent<StairTread>() : null;
+            if (tread != null) glow = tread.step;
+          }
+        }
+      } catch (Exception) { }
+      if (glow == 0 && _mover != null && _mover.HasDestination && _run != null) {
+        try {
+          int band = _run.BandAt(_mover.Destination);
+          if (band >= 1 && band <= StairHillBuilder.StepCount) glow = band;
+        } catch (Exception) { }
+      }
+    }
+    if (glow != _glowStep) {
+      _glowStep = glow;
+      try { _builder.GlowStep(glow); } catch (Exception) { }
+    }
   }
 
   void TickVoice(float dt) { if (_voice != null) _voice.Tick(dt); }
@@ -400,6 +444,27 @@ public class NumberStairs : MonoBehaviour {
       _pendingStep = band;
       _pendingT = 0f;
     }
+    // Overshoot is judged only after the child SETTLES above the target (user
+    // round): walking through a high tread is not an answer — standing there is.
+    if (band > Target) {
+      if (band != _overStep) { _overStep = band; _overT = 0f; _overCounted = false; }
+      _overT += dt;
+      if (!_overCounted && _overT >= OvershootDwell) {
+        _overCounted = true;
+        Overshoots++;
+        if (_overshootNagT <= 0f) {
+          _overshootNagT = OvershootNagCooldown;
+          Say("We only need " + N(Target) + ".", "Mình chỉ cần " + Nvi(Target) + ".");
+          Point(_teacher, StepWorld(Target), 2.2f);
+          Say("Come back down to " + N(Target) + "!", "Quay lại bậc " + Nvi(Target) + " nhé!");
+        }
+        Log("overshoot to step " + band + " (settled above; guide back, no fail)");
+      }
+    } else if (_overStep != 0) {
+      _overStep = 0;
+      _overT = 0f;
+      _overCounted = false;
+    }
     // Confirm only a STABLE stand on exactly the target step (brief §18/§29:
     // no CHECK button — the world notices, then waits ~1s).
     bool moving = IsPlayerMoving();
@@ -464,20 +529,8 @@ public class NumberStairs : MonoBehaviour {
       Log("step " + step + " (count follows the feet)");
       return;
     }
-    if (step > Target && step > prev) {
-      // Overshoot CLIMBING PAST the target: guidance, never game over (brief
-      // §19). Walking back DOWN through a high tread is not an overshoot (it is
-      // the child correcting) — only upward passes count and nag.
-      Overshoots++;
-      if (_overshootNagT <= 0f) {
-        _overshootNagT = OvershootNagCooldown;
-        Say("We only need " + N(Target) + ".", "Mình chỉ cần " + Nvi(Target) + ".");
-        Point(_teacher, StepWorld(Target), 2.2f);
-        Say("Come back down to " + N(Target) + "!", "Quay lại bậc " + Nvi(Target) + " nhé!");
-      }
-      Log("overshoot to step " + step + " (guide back, no fail)");
-      return;
-    }
+    // Overshoot is counted in TickClimb once the child SETTLES above the target
+    // (user round: walking through a high tread is not a wrong answer).
     if (step < prev) Log("back to step " + step + " (count follows the feet)");
   }
 
