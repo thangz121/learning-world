@@ -29,4 +29,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/A_World/BuildYard/BuildTowerScene.unity
     guid: 172fcfe2187443c6a34c84d4c90c1022
+  - enabled: 1
+    path: Assets/A_World/DeliveryVillage/DeliveryScene.unity
+    guid: 3897ce9dc6c24ebe81a80a3448d308b8
   m_configObjects: {}

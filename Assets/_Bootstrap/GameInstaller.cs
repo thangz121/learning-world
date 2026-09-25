@@ -160,6 +160,10 @@ public class GameInstaller : MonoBehaviour {
       BuildBuildTowerScene(scene);
       return;
     }
+    if (scene.name == DeliveryBuilder.SceneName) {
+      BuildDeliveryScene(scene);
+      return;
+    }
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
@@ -551,6 +555,80 @@ public class GameInstaller : MonoBehaviour {
     }
   }
 
+  // GAMEPLAY #5 ("Giao hàng đúng số"): the Math Hub's delivery_village gate
+  // opens its OWN lazy scene (DeliveryScene) through the same micro slot as
+  // the other hub worlds — built on demand, never at boot, never stacked.
+  void BuildDeliveryScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "DeliveryWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] DeliveryScene has no DeliveryWorld root.", this);
+        return;
+      }
+      root.transform.position = DeliveryBuilder.WorldOffset;
+      DeliveryBuilder builder = root.GetComponent<DeliveryBuilder>();
+      if (builder == null) builder = root.AddComponent<DeliveryBuilder>();
+      // The round's order comes from the area's ladder (progression/CLI); the
+      // boards stage that digit so the world always shows the order.
+      int deliverTarget = _deliveryArea != null
+        ? _deliveryArea.Target : DeliveryBuilder.Target;
+      builder.BoardTarget = DeliveryBuilder.ClampTarget(deliverTarget);
+      builder.Build();
+      DeliveryArea area = _deliveryArea;
+      if (area == null) {
+        try { area = FindObjectOfType<DeliveryArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        Vector3 entry = DeliveryBuilder.WorldOffset + DeliveryBuilder.EntryLocal;
+        area.SetWorld(entry, builder.Anchors,
+          DialogueLang.T(DeliveryBuilder.ObjectiveEn, DeliveryBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.DeliveryArea = area;
+      }
+      // The activity (teacher + student + receiver). Lifecycle is the
+      // Math-side area's; the game plays the area's current target (one stall,
+      // many orders — the same ladder discipline as #2-#4).
+      try {
+        DeliveryGame game = root.AddComponent<DeliveryGame>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        Transform hand = null;
+        try {
+          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
+              && _activeBuilder.PlayerViz.HandBone != null) {
+            hand = _activeBuilder.PlayerViz.HandBone;
+          } else if (_activeBuilder != null) {
+            hand = _activeBuilder.PlayerHand;
+          }
+        } catch (System.Exception) { }
+        if (hand == null) hand = playerT;
+        string miaVoice = null;
+        try {
+          NpcDefinition mia = NpcRoster.Get("mia");
+          if (mia != null) miaVoice = mia.voice;
+        } catch (System.Exception) { }
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
+          _deliveryArea != null ? _deliveryArea.Lifecycle : null, deliverTarget,
+          _deliveryArea != null ? (System.Action<int>)_deliveryArea.NotifyCompleted : null,
+          miaVoice);
+        if (_deliveryArea != null) _deliveryArea.BindGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Delivery wiring failed (village stays empty): " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Delivery scene built (gameplay #5) entry="
+          + (DeliveryBuilder.WorldOffset + DeliveryBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] DeliveryScene build failed: " + e.Message, this);
+    }
+  }
+
   // Phase 3.0.x S3: Math playable-skeleton wiring (runs on the main thread
   // inside the sceneLoaded callback, before the loader task completes).
   // Tess host + quest director + counting-object bus bindings. Best-effort:
@@ -680,6 +758,31 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Build Yard area wiring failed: " + e.Message, this);
       }
+      // S3-P2Z15 GAMEPLAY #5: the Delivery Village's own area module (living
+      // in MathScene like the others) drives gate -> micro-world travel.
+      try {
+        DeliveryArea deliveryArea = root.GetComponent<DeliveryArea>();
+        if (deliveryArea == null) {
+          GameObject deliveryGo = new GameObject("DeliveryArea");
+          deliveryGo.transform.SetParent(root.transform, true);
+          deliveryArea = deliveryGo.AddComponent<DeliveryArea>();
+        }
+        _deliveryArea = deliveryArea;
+        deliveryArea.Bind(
+          WorldTransitions,
+          SceneOps,
+          _activeBuilder != null ? _activeBuilder.Player : null,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
+          _activeBuilder != null ? _activeBuilder.Hud : null,
+          MathWorldBuilder.WorldOffset + MathWorldBuilder.DeliveryHubReturnLocal);
+        deliveryArea.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
+        if (builder.DeliveryPortal != null) builder.DeliveryPortal.DeliveryArea = deliveryArea;
+        try { Debug.Log("[GameInstaller] Delivery area wired (portal="
+          + (builder.DeliveryPortal != null) + ").", this); }
+        catch (System.Exception) { }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Delivery area wiring failed: " + e.Message, this);
+      }
     } catch (System.Exception e) {
       Debug.LogWarning("[GameInstaller] Math content wiring failed (world stays enterable): " + e.Message, this);
     }
@@ -694,6 +797,7 @@ public class GameInstaller : MonoBehaviour {
   MarketBuilder _activeBuilder;
   CountingGardenArea _gardenArea;
   BuildTowerArea _buildArea;
+  DeliveryArea _deliveryArea;
 
   public PlayerGender CurrentGender {
     get {

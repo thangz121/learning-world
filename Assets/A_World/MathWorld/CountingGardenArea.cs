@@ -24,7 +24,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
-public class CountingGardenArea : MonoBehaviour {
+public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
   public const string AreaId = "counting_garden";
   const float TunnelSeconds = 0.35f;
   // Focus beat: re-issued every 4.5s (the camera's own FrameAnchor countdown

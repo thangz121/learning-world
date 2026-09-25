@@ -1,28 +1,25 @@
-// A_World/BuildYard/BuildTowerArea.cs — S3-P2Z14 GAMEPLAY #4 vertical slice
-// "XÂY THÁP THEO SỐ" (build the tower by number). The Build Yard is its OWN
-// Micro-World: the Math Hub's build_yard gate (crane + blocks) opens the LAZY
-// BuildTowerScene through the shared micro slot — never at boot, never stacked,
-// no second loader. This scene-local MODULE (living in MathScene, which stays
-// loaded underneath) owns the travel beats exactly like CountingGardenArea:
-// tunnel -> EnterMicro -> warp to the world's entry -> island bounds -> camera
-// follow/reveal -> HUD objective, and the mirrored exit home.
-// It also owns the activity's ActivityLifecycle + target ladder so the state
-// survives the arena unload (in-memory only, save untouched) and a re-entry
-// adopts the finished picture instead of replaying the lesson.
+// A_World/DeliveryVillage/DeliveryArea.cs — S3-P2Z15 GAMEPLAY #5 vertical
+// slice "GIAO HÀNG ĐÚNG SỐ" (deliver the apples). The Delivery Village is its
+// OWN Micro-World: the Math Hub's delivery_village gate (cottage + parcels)
+// opens the LAZY DeliveryScene through the shared micro slot — never at boot,
+// never stacked, no second loader. This scene-local MODULE (living in
+// MathScene, which stays loaded underneath) owns the travel beats exactly like
+// the garden/build areas: tunnel -> EnterMicro -> warp to the world's entry ->
+// island bounds -> camera follow/reveal -> HUD objective, and the mirrored
+// exit home. It also owns the activity's ActivityLifecycle + target ladder so
+// the state survives the arena unload (in-memory only, save untouched) and a
+// re-entry adopts the finished picture instead of replaying the lesson.
 // C# 9.0 only.
 using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
-  public const string AreaId = "build_yard";
+public class DeliveryArea : MonoBehaviour, IMicroWorldArea {
+  public const string AreaId = "delivery_village";
   const float TunnelSeconds = 0.35f;
 
-  public Vector3 HubReturnPos;    // Math-hub landing after exiting the yard
-  public ActivityAnchors Anchors; // yard scene registry (after load)
-  // The hub landmark beside the build gate: its mini tower height reflects the
-  // last completed target (brief §25 progression reflection).
-  public BuildYardLandmark Landmark;
+  public Vector3 HubReturnPos;    // Math-hub landing after exiting the village
+  public ActivityAnchors Anchors; // village scene registry (after load)
 
   WorldTransition _transition;
   ISceneOps _sceneOps;
@@ -42,29 +39,28 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
   public ClickToMove Player { get { return _player; } }
   public WorldTransition Transition { get { return _transition; } }
   public static string WorldObjectiveText {
-    get { return DialogueLang.T("Build Yard", "Sân Xây Dựng"); }
+    get { return DialogueLang.T("Delivery Village", "Làng Giao Hàng"); }
   }
 
   // The activity lifecycle lives HERE (MathScene) so it survives the arena's
-  // lazy unload — re-entry adopts the completed tower instead of replaying.
+  // lazy unload — re-entry adopts the delivered crate instead of replaying.
   public ActivityLifecycle Lifecycle { get; private set; } =
-    new ActivityLifecycle("build_tower", "BuildTowerArea");
-  public BuildTowerGame Game { get; private set; }
-  public void BindGame(BuildTowerGame game) { Game = game; }
+    new ActivityLifecycle("deliver_apples", "DeliveryArea");
+  public DeliveryGame Game { get; private set; }
+  public void BindGame(DeliveryGame game) { Game = game; }
 
-  // ---- target ladder (ONE arena, many targets: 1..9) --------------------------
-  // The target only decides how many blocks the tower gets. First visit teaches
-  // the reference 3, then the tower climbs 5 -> 7 -> 9, then a 1-block breather
-  // loops back. In-memory only (save untouched, like every activity state).
-  // A diagnostic run pins ANY target with "-build-target N" (same CLI pattern
-  // as the stair/rabbit ladders), rejoining the ladder at 3 afterwards.
-  public const int DefaultTarget = 3;
-  public const string TargetFlag = "-build-target";
-  public static readonly int[] Progression = { 3, 5, 7, 9, 1 };
+  // ---- target ladder (ONE village, many orders: 1..9) -------------------------
+  // The target only decides how many apples the order needs. First visit
+  // teaches the brief's reference 4, then the order climbs 5 -> 7 -> 9, then a
+  // 1-3 breather loops back. In-memory only (save untouched).
+  // A diagnostic run pins ANY target with "-deliver-target N" (same CLI pattern
+  // as the stair/rabbit/build ladders), rejoining the ladder at 4 afterwards.
+  public const int DefaultTarget = 4;
+  public const string TargetFlag = "-deliver-target";
+  public static readonly int[] Progression = { 4, 5, 7, 9, 1, 3 };
   public int Target { get; private set; } = DefaultTarget;
   int _lifeTarget = DefaultTarget;
-  // Last completed height pushed to the hub landmark (survives the scene swap
-  // while MathScene lives; MathScene rebuild restores it from the installer).
+  // Last completed order (report/tests only; the hub gate needs no landmark).
   public int LastCompletedTarget { get; private set; }
 
   public static int NextTarget(int t) {
@@ -79,40 +75,29 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
     for (int i = 0; i + 1 < args.Length; i++) {
       if (!string.Equals(args[i], TargetFlag, StringComparison.OrdinalIgnoreCase)) continue;
       int n;
-      if (int.TryParse(args[i + 1], out n) && n >= 1 && n <= BuildTowerBuilder.MaxTarget)
+      if (int.TryParse(args[i + 1], out n) && n >= 1 && n <= DeliveryBuilder.MaxTarget)
         return n;
       return fallback;
     }
     return fallback;
   }
 
-  // The ladder advances ONLY when the child has LEFT the yard (mirror of the
-  // garden's IsInPlay gate for #2/#3): a completed round keeps its target while
-  // the child is still inside — so placing a spare block after success runs the
-  // gentle correction lesson instead of silently counting toward the next rung.
-  // The next entry then stages a FRESH life for the next target.
   void MaybeAdvanceTarget() {
     if (Lifecycle == null) return;
     if (Lifecycle.State != ActivityState.Completed) return;
     if (_lifeTarget != Target) return;
     int next = NextTarget(Target);
     Target = next;
-    Lifecycle = new ActivityLifecycle("build_tower", "BuildTowerArea");
+    Lifecycle = new ActivityLifecycle("deliver_apples", "DeliveryArea");
     _lifeTarget = next;
-    try { Debug.Log("[BuildTowerArea] target advanced to " + next + ".", this); } catch (Exception) { }
+    try { Debug.Log("[DeliveryArea] target advanced to " + next + ".", this); } catch (Exception) { }
   }
 
-  // The game reports a finished tower (success or a corrected overshoot): the
-  // hub landmark grows to the completed height.
+  // The game reports a finished order (success or a corrected overshoot).
   public void NotifyCompleted(int target) {
     LastCompletedTarget = target <= 0 ? Target : target;
-    if (Landmark != null) Landmark.ShowHeight(LastCompletedTarget);
-    try { Debug.Log("[BuildTowerArea] tower completed at " + LastCompletedTarget
-      + " blocks (landmark updated).", this); } catch (Exception) { }
-  }
-
-  public void PushLandmarkState() {
-    if (Landmark != null && LastCompletedTarget > 0) Landmark.ShowHeight(LastCompletedTarget);
+    try { Debug.Log("[DeliveryArea] order completed at " + LastCompletedTarget
+      + " apples.", this); } catch (Exception) { }
   }
 
   public void Bind(WorldTransition transition, ISceneOps sceneOps, ClickToMove player,
@@ -133,10 +118,10 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
   }
 
   // The router bounds must follow the ACTIVE island or the child cannot walk
-  // inside the yard (same lesson as the garden/arenas).
+  // inside the village (same lesson as the garden/build arenas).
   public void BindRouter(ClickRouter router) { _router = router; }
 
-  // Called by GameInstaller when the yard scene finishes loading (lazy).
+  // Called by GameInstaller when the village scene finishes loading (lazy).
   public void SetWorld(Vector3 entry, ActivityAnchors anchors, string objective) {
     _worldEntry = entry;
     Anchors = anchors;
@@ -152,9 +137,9 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
     } catch (Exception) { }
   }
 
-  void PushBuildBounds() {
-    PushIslandBounds(BuildTowerBuilder.WorldOffset,
-      BuildTowerBuilder.BoundX, BuildTowerBuilder.BoundZ);
+  void PushVillageBounds() {
+    PushIslandBounds(DeliveryBuilder.WorldOffset,
+      DeliveryBuilder.BoundX, DeliveryBuilder.BoundZ);
   }
 
   void PushMathBounds() {
@@ -172,9 +157,9 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
       CacheObjective();
       bool loaded = false;
       try {
-        loaded = await _transition.EnterMicroAsync(_sceneOps, BuildTowerBuilder.SceneName);
+        loaded = await _transition.EnterMicroAsync(_sceneOps, DeliveryBuilder.SceneName);
       } catch (Exception e) {
-        try { Debug.LogWarning("[BuildTowerArea] micro load failed: " + e.Message, this); }
+        try { Debug.LogWarning("[DeliveryArea] micro load failed: " + e.Message, this); }
         catch (Exception) { }
       }
       if (!loaded) {
@@ -186,16 +171,16 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
       }
       IsInside = true;
       if (_player != null) _player.WarpTo(_worldEntry);
-      PushBuildBounds();
+      PushVillageBounds();
       if (_camera != null && _player != null)
-        _camera.Follow(_player.transform, BuildTowerBuilder.FollowOffset);
+        _camera.Follow(_player.transform, DeliveryBuilder.FollowOffset);
       if (_camera != null && Anchors != null && Anchors.Camera != null && Anchors.CameraLook != null)
         _camera.FrameAnchor(Anchors.Camera, Anchors.CameraLook, 2.4f);
       ShowObjective(string.IsNullOrEmpty(_objective) ? WorldObjectiveText : _objective);
-      try { Debug.Log("[BuildTowerArea] entered Build Yard (warp " + _worldEntry.ToString("F1") + ").", this); }
+      try { Debug.Log("[DeliveryArea] entered Delivery Village (warp " + _worldEntry.ToString("F1") + ").", this); }
       catch (Exception) { }
     } catch (Exception e) {
-      try { Debug.LogWarning("[BuildTowerArea] enter issue: " + e.Message, this); } catch (Exception) { }
+      try { Debug.LogWarning("[DeliveryArea] enter issue: " + e.Message, this); } catch (Exception) { }
     }
     IsBusy = false;
     StopTunnelSoon();
@@ -213,12 +198,10 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
       RestoreObjective();
       try { await _transition.ExitMicroAsync(_sceneOps); } catch (Exception) { }
       IsInside = false;
-      // Rank up only after the child really left the yard (round is over).
-      MaybeAdvanceTarget();
-      try { Debug.Log("[BuildTowerArea] exited (warp " + HubReturnPos.ToString("F1") + ").", this); }
+      try { Debug.Log("[DeliveryArea] exited (warp " + HubReturnPos.ToString("F1") + ").", this); }
       catch (Exception) { }
     } catch (Exception e) {
-      try { Debug.LogWarning("[BuildTowerArea] exit issue: " + e.Message, this); } catch (Exception) { }
+      try { Debug.LogWarning("[DeliveryArea] exit issue: " + e.Message, this); } catch (Exception) { }
     }
     IsBusy = false;
     StopTunnelSoon();
@@ -235,14 +218,11 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
   public bool TryExitForTests() {
     if (!CanExit) return false;
     IsInside = false;
-    // The live leave path advances the ladder here (never mid-round): a fresh
-    // lesson for the next rung is staged by the NEXT entry.
-    MaybeAdvanceTarget();
     return true;
   }
 
   public void SetTargetForTests(int t) {
-    Target = Mathf.Clamp(t, 1, BuildTowerBuilder.MaxTarget);
+    Target = Mathf.Clamp(t, 1, DeliveryBuilder.MaxTarget);
     _lifeTarget = Target;
   }
 
@@ -257,8 +237,8 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
         try { if (_hud != null) _hud.StopTunnel(); } catch (Exception) { }
       }
     }
-    // No ladder tick here on purpose: the target advances on LEAVE (ExitToHub /
-      // TryExitForTests), exactly like the garden's IsInPlay gate in #2/#3.
+    if (!IsInside || IsBusy) return;
+    MaybeAdvanceTarget();
   }
 
   void StopTunnelSoon() { _tunnelT = TunnelSeconds; }

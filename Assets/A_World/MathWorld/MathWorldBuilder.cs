@@ -455,6 +455,25 @@ public class MathWorldBuilder : MonoBehaviour {
       hint.Build(buildPortal);
       BuildYardHint = hint;
     }
+    // S3-P2Z15 GAMEPLAY #5: the delivery_village gate opens its OWN micro-world
+    // (DeliveryScene) through the same shared slot — identical walk-in portal
+    // contract (whole-arch coverage, cold-start latch).
+    MicroWorldGate delivery = FindMicroGate("delivery_village");
+    if (delivery != null && delivery.EntryAnchor != null) {
+      Vector3 toHub = hub - delivery.transform.position;
+      toHub.y = 0f;
+      if (toHub.sqrMagnitude < 0.001f) toHub = new Vector3(0f, 0f, 1f);
+      toHub.Normalize();
+      GameObject deliveryPortalGo = new GameObject("DeliveryPortal");
+      deliveryPortalGo.transform.SetParent(parent);
+      deliveryPortalGo.transform.position = delivery.transform.position + toHub * 0.7f;
+      MicroWorldPortal deliveryPortal = deliveryPortalGo.AddComponent<MicroWorldPortal>();
+      deliveryPortal.ExitMode = false;
+      deliveryPortal.fireRadius = 1.8f;
+      deliveryPortal.areaId = DeliveryArea.AreaId;
+      DeliveryPortal = deliveryPortal;
+      Pad(parent, "DeliveryPortalDisc", deliveryPortalGo.transform.localPosition, 3.0f, CourtyardSand);
+    }
   }
 
   // S1 ring: one circulation loop through every gate mouth (lighter sand than
@@ -1164,6 +1183,10 @@ public class MathWorldBuilder : MonoBehaviour {
   // Exit landing: 3.5m hub-side of the portal (fireRadius 1.8 + rearm 0.8 =
   // 2.6 -> the arrival can never instantly re-fire the portal).
   public static readonly Vector3 BuildYardHubReturnLocal = new Vector3(4.4f, 0f, -8.8f);
+  // S3-P2Z15 gameplay #5: the delivery_village gate's walk-in portal (no hub
+  // landmark this round — the brief does not ask for one).
+  public MicroWorldPortal DeliveryPortal { get; private set; }
+  public static readonly Vector3 DeliveryHubReturnLocal = new Vector3(-7.6f, 0f, -7.6f);
 
   void BuildGardenCrops(Transform parent) {
     // Kenney Food Kit (CC0): identical crops per bed, child-scale counts.
