@@ -426,6 +426,26 @@ public class MathWorldBuilder : MonoBehaviour {
       CountingGardenPortal = portal;
       Pad(parent, "CountingGardenPortalDisc", portalGo.transform.localPosition, 3.0f, CourtyardSand);
     }
+    // S3-P2Z14 GAMEPLAY #4: the build_yard gate opens its OWN micro-world
+    // (BuildTowerScene) through the same shared slot — identical walk-in
+    // portal contract (whole-arch coverage, cold-start latch). The mini-tower
+    // landmark beside the gate reflects the last completed target.
+    MicroWorldGate build = FindMicroGate("build_yard");
+    if (build != null && build.EntryAnchor != null) {
+      Vector3 toHub = hub - build.transform.position;
+      toHub.y = 0f;
+      if (toHub.sqrMagnitude < 0.001f) toHub = new Vector3(0f, 0f, 1f);
+      toHub.Normalize();
+      GameObject buildPortalGo = new GameObject("BuildTowerPortal");
+      buildPortalGo.transform.SetParent(parent);
+      buildPortalGo.transform.position = build.transform.position + toHub * 0.7f;
+      MicroWorldPortal buildPortal = buildPortalGo.AddComponent<MicroWorldPortal>();
+      buildPortal.ExitMode = false;
+      buildPortal.fireRadius = 1.8f;
+      buildPortal.areaId = BuildTowerArea.AreaId;
+      BuildTowerPortal = buildPortal;
+      Pad(parent, "BuildTowerPortalDisc", buildPortalGo.transform.localPosition, 3.0f, CourtyardSand);
+    }
   }
 
   // S1 ring: one circulation loop through every gate mouth (lighter sand than
@@ -700,6 +720,13 @@ public class MathWorldBuilder : MonoBehaviour {
     barrel.transform.localScale = new Vector3(0.5f, 0.8f, 0.5f);
     barrel.GetComponent<Renderer>().sharedMaterial = Lit(SoilBrown);
     StripCollider(barrel);
+    // S3-P2Z14 gameplay #4: the progress landmark — a mini block tower beside
+    // the arch (local +x of the body, clear of the label, the portal and the
+    // walkway) whose height reflects the last completed target.
+    GameObject landmarkGo = new GameObject("MathBuildYardLandmark");
+    BuildYardLandmark landmark = landmarkGo.AddComponent<BuildYardLandmark>();
+    landmark.Build(gate.transform, new Vector3(2.9f, 0f, GateBodyZ + 0.15f));
+    BuildTowerLandmark = landmark;
   }
 
   // 09 Number Bridge (PATH/SEQUENCE/ORDER): a chunky stone arch bridge with a
@@ -1119,6 +1146,13 @@ public class MathWorldBuilder : MonoBehaviour {
   // in by GameInstaller on each lazy load (the garden is a separate scene now).
   public MicroWorldPortal CountingGardenPortal { get; private set; }
   public static readonly Vector3 GardenHubReturnLocal = new Vector3(-7.1f, 0f, -1.9f);
+  // S3-P2Z14 gameplay #4: the build_yard gate's walk-in portal + the mini-tower
+  // landmark beside it (its height reflects the last completed target).
+  public MicroWorldPortal BuildTowerPortal { get; private set; }
+  public BuildYardLandmark BuildTowerLandmark { get; private set; }
+  // Exit landing: 3.5m hub-side of the portal (fireRadius 1.8 + rearm 0.8 =
+  // 2.6 -> the arrival can never instantly re-fire the portal).
+  public static readonly Vector3 BuildYardHubReturnLocal = new Vector3(4.4f, 0f, -8.8f);
 
   void BuildGardenCrops(Transform parent) {
     // Kenney Food Kit (CC0): identical crops per bed, child-scale counts.

@@ -156,6 +156,10 @@ public class GameInstaller : MonoBehaviour {
       BuildRabbitPlayScene(scene);
       return;
     }
+    if (scene.name == BuildTowerBuilder.SceneName) {
+      BuildBuildTowerScene(scene);
+      return;
+    }
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
@@ -476,6 +480,76 @@ public class GameInstaller : MonoBehaviour {
     }
   }
 
+  // GAMEPLAY #4 ("Xây tháp theo số"): the Math Hub's build_yard gate opens its
+  // OWN lazy scene (BuildTowerScene) through the same micro slot as the garden
+  // worlds — built here on demand, never at boot, never stacked. Travel beats
+  // are owned by BuildTowerArea (living in MathScene); this method only builds
+  // the world + wires the activity, same best-effort discipline as #1-#3.
+  void BuildBuildTowerScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "BuildTowerWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] BuildTowerScene has no BuildTowerWorld root.", this);
+        return;
+      }
+      root.transform.position = BuildTowerBuilder.WorldOffset;
+      BuildTowerBuilder builder = root.GetComponent<BuildTowerBuilder>();
+      if (builder == null) builder = root.AddComponent<BuildTowerBuilder>();
+      // The round's mission comes from the area's ladder (progression/CLI);
+      // the boards stage that digit so the world always shows the mission.
+      int buildTarget = _buildArea != null
+        ? _buildArea.Target : BuildTowerBuilder.Target;
+      builder.BoardTarget = BuildTowerBuilder.ClampTarget(buildTarget);
+      builder.Build();
+      BuildTowerArea area = _buildArea;
+      if (area == null) {
+        try { area = FindObjectOfType<BuildTowerArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        Vector3 entry = BuildTowerBuilder.WorldOffset + BuildTowerBuilder.EntryLocal;
+        area.SetWorld(entry, builder.Anchors,
+          DialogueLang.T(BuildTowerBuilder.ObjectiveEn, BuildTowerBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.BuildArea = area;
+      }
+      // The activity (teacher + student + the child's build). Lifecycle is the
+      // Math-side area's; the game plays the area's current target (one yard,
+      // many targets — the same ladder discipline as #2/#3).
+      try {
+        BuildTowerGame game = root.AddComponent<BuildTowerGame>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        Transform hand = null;
+        try {
+          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
+              && _activeBuilder.PlayerViz.HandBone != null) {
+            hand = _activeBuilder.PlayerViz.HandBone;
+          } else if (_activeBuilder != null) {
+            hand = _activeBuilder.PlayerHand;
+          }
+        } catch (System.Exception) { }
+        if (hand == null) hand = playerT;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
+          _buildArea != null ? _buildArea.Lifecycle : null, buildTarget,
+          _buildArea != null ? (System.Action<int>)_buildArea.NotifyCompleted : null);
+        if (_buildArea != null) _buildArea.BindGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Build tower wiring failed (yard stays empty): " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Build Tower scene built (gameplay #4) entry="
+          + (BuildTowerBuilder.WorldOffset + BuildTowerBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] BuildTowerScene build failed: " + e.Message, this);
+    }
+  }
+
   // Phase 3.0.x S3: Math playable-skeleton wiring (runs on the main thread
   // inside the sceneLoaded callback, before the loader task completes).
   // Tess host + quest director + counting-object bus bindings. Best-effort:
@@ -567,12 +641,43 @@ public class GameInstaller : MonoBehaviour {
         if (builder.CountingGardenPortal != null) builder.CountingGardenPortal.Area = area;
         MicroWorldPortal[] portals = root.GetComponentsInChildren<MicroWorldPortal>(true);
         foreach (MicroWorldPortal portal in portals) {
-          if (portal != null) portal.Area = area;
+          // S3-P2Z14: the build_yard portal belongs to its OWN area (gameplay
+          // #4) — never let the garden swallow it.
+          if (portal != null && portal.areaId == CountingGardenArea.AreaId) portal.Area = area;
         }
         try { Debug.Log("[GameInstaller] Counting Garden area wired (" + portals.Length + " hub portals).", this); }
         catch (System.Exception) { }
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Counting Garden wiring failed: " + e.Message, this);
+      }
+      // S3-P2Z14 GAMEPLAY #4: the Build Yard's own area module (living in
+      // MathScene like the garden's) drives gate -> micro-world travel and
+      // receives the yard scene's entry + anchors on each load.
+      try {
+        BuildTowerArea buildArea = root.GetComponent<BuildTowerArea>();
+        if (buildArea == null) {
+          GameObject buildGo = new GameObject("BuildTowerArea");
+          buildGo.transform.SetParent(root.transform, true);
+          buildArea = buildGo.AddComponent<BuildTowerArea>();
+        }
+        _buildArea = buildArea;
+        buildArea.Bind(
+          WorldTransitions,
+          SceneOps,
+          _activeBuilder != null ? _activeBuilder.Player : null,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
+          _activeBuilder != null ? _activeBuilder.Hud : null,
+          MathWorldBuilder.WorldOffset + MathWorldBuilder.BuildYardHubReturnLocal);
+        buildArea.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
+        buildArea.Landmark = builder.BuildTowerLandmark;
+        buildArea.PushLandmarkState();
+        if (builder.BuildTowerPortal != null) builder.BuildTowerPortal.BuildArea = buildArea;
+        try { Debug.Log("[GameInstaller] Build Yard area wired (portal="
+          + (builder.BuildTowerPortal != null) + " landmark="
+          + (builder.BuildTowerLandmark != null) + ").", this); }
+        catch (System.Exception) { }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Build Yard area wiring failed: " + e.Message, this);
       }
     } catch (System.Exception e) {
       Debug.LogWarning("[GameInstaller] Math content wiring failed (world stays enterable): " + e.Message, this);
@@ -587,6 +692,7 @@ public class GameInstaller : MonoBehaviour {
   // intact, no save-format break).
   MarketBuilder _activeBuilder;
   CountingGardenArea _gardenArea;
+  BuildTowerArea _buildArea;
 
   public PlayerGender CurrentGender {
     get {
