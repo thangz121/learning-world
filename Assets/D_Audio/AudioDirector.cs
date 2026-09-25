@@ -168,6 +168,11 @@ public class AudioDirector : IAudioDirector {
       case "step":
         clip = Tone(id, 0.16f, 240f, 150f, 0.6f, 6.0f);
         break;
+      // Gameplay #3: a soft two-bite munch — the bunny audibly eats the carrot
+      // (short, low, friendly; never a crunch).
+      case "munch":
+        clip = Tone(id, 0.18f, 420f, 180f, 0.6f, 7.0f);
+        break;
       default:
         clip = Tone(id, 0.12f, 440f, 560f, 0.45f, 6f);
         break;

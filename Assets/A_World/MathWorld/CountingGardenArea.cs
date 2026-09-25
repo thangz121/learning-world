@@ -111,6 +111,13 @@ public class CountingGardenArea : MonoBehaviour {
       StairTarget = cli;
       _stairLifeTarget = cli;
     } catch (Exception) { }
+    // Diagnostic override for the current rabbit target ("-rabbit-target N",
+    // same CLI pattern as the stair ladder); inert otherwise.
+    try {
+      int cliRabbit = ParseRabbitTargetArg(Environment.GetCommandLineArgs(), RabbitDefaultTarget);
+      RabbitTarget = cliRabbit;
+      _rabbitLifeTarget = cliRabbit;
+    } catch (Exception) { }
   }
 
   // S3-P2V journey bug: the router bounds must follow the ACTIVE island or the
@@ -213,6 +220,71 @@ public class CountingGardenArea : MonoBehaviour {
     _stairLifeTarget = StairTarget;
   }
   public void TickStairProgressionForTests() { MaybeAdvanceStairTarget(); }
+
+  // Gameplay #3 ("Cho thỏ ăn đúng số"): the same lifecycle pattern for the
+  // rabbit patch — owned here, survives the lazy unload of RabbitPlayScene.
+  public ActivityLifecycle RabbitLifecycle { get; private set; } =
+    new ActivityLifecycle("rabbit_feed", "CountingGardenArea");
+  public RabbitFeed RabbitGame { get; private set; }
+  public void BindRabbitGame(RabbitFeed game) { RabbitGame = game; }
+
+  // Target ladder: ONE patch, many targets — the target only decides how many
+  // carrots the bunny gets. First visit teaches the reference 3, then the
+  // count climbs 4 -> 5 -> 6 -> 7 -> 8 -> 9, then a 1-2 breather loops back.
+  // In-memory only (save untouched, like every activity state).
+  // A diagnostic run pins ANY target with "-rabbit-target N" (same CLI pattern
+  // as the stair ladder), rejoining the ladder at 3 afterwards.
+  public const int RabbitDefaultTarget = 3;
+  public const string RabbitTargetFlag = "-rabbit-target";
+  public static readonly int[] RabbitProgression = { 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+  public int RabbitTarget { get; private set; } = RabbitDefaultTarget;
+  int _rabbitLifeTarget = RabbitDefaultTarget;
+
+  // Pure helper (EditMode-coverable): the next ladder rung after t, or 3 when
+  // t is off-ladder (a diagnostic target rejoins the ladder).
+  public static int NextRabbitTarget(int t) {
+    for (int i = 0; i < RabbitProgression.Length; i++) {
+      if (RabbitProgression[i] == t) return RabbitProgression[(i + 1) % RabbitProgression.Length];
+    }
+    return RabbitDefaultTarget;
+  }
+
+  // Pure helper: read "-rabbit-target N" (1..9) from a command line, else the
+  // current target (the flag is optional and inert without a valid number).
+  public static int ParseRabbitTargetArg(string[] args, int fallback) {
+    if (args == null) return fallback;
+    for (int i = 0; i + 1 < args.Length; i++) {
+      if (!string.Equals(args[i], RabbitTargetFlag, StringComparison.OrdinalIgnoreCase)) continue;
+      int n;
+      if (int.TryParse(args[i + 1], out n) && n >= 1 && n <= RabbitPlayBuilder.MaxTarget)
+        return n;
+      return fallback;
+    }
+    return fallback;
+  }
+
+  // When the child completes a target and returns to the garden, the NEXT
+  // visit teaches the next rung with a FRESH lifecycle (latch-free: it fires
+  // exactly when a Completed life still belongs to the current target).
+  // Re-entering mid-lesson (not Completed) replays the same target's lesson.
+  void MaybeAdvanceRabbitTarget() {
+    if (RabbitLifecycle == null) return;
+    if (RabbitLifecycle.State != ActivityState.Completed) return;
+    if (_rabbitLifeTarget != RabbitTarget) return;
+    int next = NextRabbitTarget(RabbitTarget);
+    RabbitTarget = next;
+    RabbitLifecycle = new ActivityLifecycle("rabbit_feed", "CountingGardenArea");
+    _rabbitLifeTarget = next;
+    try { Debug.Log("[CountingGarden] rabbit target advanced to " + next + ".", this); }
+    catch (Exception) { }
+  }
+
+  // Test seams (no live refs needed).
+  public void SetRabbitTargetForTests(int t) {
+    RabbitTarget = RabbitPlayBuilder.ClampTarget(t);
+    _rabbitLifeTarget = RabbitTarget;
+  }
+  public void TickRabbitProgressionForTests() { MaybeAdvanceRabbitTarget(); }
 
   void PushIslandBounds(Vector3 center, float x, float z) {
     if (_router == null) return;
@@ -615,6 +687,7 @@ public class CountingGardenArea : MonoBehaviour {
     TickDemoGate();
     TickCancelClick();
     MaybeAdvanceStairTarget();
+    MaybeAdvanceRabbitTarget();
   }
 
   // The try-run gate: once the ambient demo completes a full loop, the panel

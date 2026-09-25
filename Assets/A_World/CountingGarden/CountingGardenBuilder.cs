@@ -40,6 +40,9 @@ public class CountingGardenBuilder : MonoBehaviour {
   // coordinate of gameplay #1 is untouched.
   public const int ZoneCount = 6;
   public const int StairZoneIndex = 5;
+  // Gameplay #3 ("Cho thỏ ăn đúng số"): the carrot patch (zone 0) opens the
+  // rabbit arena. The bed keeps its dressing; the door gains a play scene.
+  public const int RabbitZoneIndex = 0;
 
   // Separate island far from MarketScene (0) and MathScene (+60x).
   public static readonly Vector3 WorldOffset = new Vector3(120f, 0f, 0f);
@@ -467,9 +470,9 @@ public class CountingGardenBuilder : MonoBehaviour {
   // S3 P2X (user order §47B): every plot gets a GardenZoneSpot — a thin click
   // pad at the mouth (collider KEPT for ClickRouter, bake-ignored so the pad
   // never textures the NavMesh) plus its own camera/look pair for the focus
-  // beat. Zone 2 (the demo theatre) is the only plot with staged play today;
-  // the 4 skeleton beds stay look-only. All positions derive from the same
-  // crescent math as the beds (no magic numbers duplicated).
+  // beat. Zones 2 (demo theatre), 5 (stair hill) and 0 (carrot patch / rabbit)
+  // are staged with play; the 3 remaining beds stay look-only. All positions
+  // derive from the same crescent math as the beds (no magic numbers duplicated).
   void BuildZoneSpots(Transform parent) {
     ZoneSpots.Clear();
     for (int z = 0; z < ZoneCount; z++) {
@@ -481,7 +484,7 @@ public class CountingGardenBuilder : MonoBehaviour {
       pad.transform.SetParent(parent, false);
       pad.transform.localPosition = new Vector3(mouth.x, 0.04f, mouth.z);
       pad.transform.localScale = new Vector3(2.0f, 0.03f, 2.0f);
-      bool staged = (z == 2 || z == StairZoneIndex);
+      bool staged = (z == 2 || z == StairZoneIndex || z == RabbitZoneIndex);
       pad.GetComponent<Renderer>().sharedMaterial = Lit(staged ? Gold : WorldBeauty.Petal);
       pad.AddComponent<GardenZoneSpot>(); // collider stays: this is the click door
       IgnoreFromBuild(pad);
@@ -489,11 +492,15 @@ public class CountingGardenBuilder : MonoBehaviour {
       spot.zoneIndex = z;
       spot.playEnabled = staged;
       // Which LAZY play scene the door opens (empty = the reference arena).
-      // Gameplay #2 gets its own scene; nothing loads until the door is used.
+      // Gameplay #2 gets its own scene, gameplay #3 (the carrot patch) its
+      // own rabbit scene; nothing loads until the door is used.
       spot.playSceneName = (z == StairZoneIndex) ? StairHillBuilder.SceneName
+        : (z == RabbitZoneIndex) ? RabbitPlayBuilder.SceneName
         : (z == 2 ? CountingPlayBuilder.SceneName : "");
-      // Both staged plots preview through a garden miniature and wait for one
-      // try-run before the play door opens (ball theatre + stair hill).
+      // The ball theatre + the stair hill preview through a garden miniature
+      // and wait for one try-run before the play door opens. The rabbit plot
+      // opens the panel at once: its full teacher/student lesson runs INSIDE
+      // the arena (brief: the demo must be visible with patch + bunny together).
       spot.demoGate = (z == 2 || z == StairZoneIndex);
       // Focus framing: 3.6m back toward the plaza at child-comfort height,
       // looking at the plot's centre. Zone 2 is the MINIATURE stage (S3-P2Y),

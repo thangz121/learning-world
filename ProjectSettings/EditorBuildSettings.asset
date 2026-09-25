@@ -23,4 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/A_World/CountingGarden/StairPlayScene.unity
     guid: 4a09d11985f94d228bc6c16c7712956c
+  - enabled: 1
+    path: Assets/A_World/CountingGarden/RabbitPlayScene.unity
+    guid: c8c15dd7324e449e92940917a6185699
   m_configObjects: {}
