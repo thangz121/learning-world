@@ -23,18 +23,20 @@ using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
 public class NumberStairs : MonoBehaviour {
+  // S3-P2Z13 user round: the arena teaches NOTHING by demo (the garden
+  // miniature does that once, outside) — the child walks to the marked circle,
+  // the teacher asks the question there, and after every win the NEXT question
+  // continues from the step the child is already standing on.
   public enum Phase {
-    Intro,    // teacher links the board's 3 to three steps
-    Demo,     // the student walks up and counts 1, 2, 3
-    Handoff,  // "Now it's your turn!" + camera returns to the child
+    Wait,     // the child walks to the marked circle; nothing is taught yet
+    Intro,    // the teacher asks the question (board -> number -> climb N)
     Climb,    // the child climbs; step identity drives feedback + success
-    Success,  // standing on step 3 — celebrated, activity settled
+    Success,  // a round is won (chained) or the whole visit is settled
   }
 
   // Beat timings (one place; deterministic for Step(dt) tests).
   const float SuccessDwell = 1.1f;      // "stand still on the target step" window
                                         // (user round: stand first, then judge)
-  const float StepHold = 0.7f;          // teacher count beat between student steps
   const float OvershootNagCooldown = 5f;
   const float UnderNudgeCooldown = 8f;  // undershoot hint spacing (brief §20)
   const float UnderDwell = 2.0f;        // settled-below-target before a nudge
@@ -46,7 +48,6 @@ public class NumberStairs : MonoBehaviour {
                                         // walking child (~0.4s per tread at 2.2m/s) still counts
                                         // every step — counts must never be skipped mid-climb)
   const float UnderNearStairsXZ = 4.5f; // base nudge only near the stair foot
-  const float WalkSpeed = 0.85f;        // student legs
   public static readonly Vector3 FollowOffset = StairHillBuilder.FollowOffset;
 
   // Number words (brief §17): Vietnamese first; English prepared alongside.
@@ -77,8 +78,6 @@ public class NumberStairs : MonoBehaviour {
   public int UndershootNudges { get; private set; }
   public bool IntroDone { get { return Current != Phase.Intro; } }
   public bool ResultShown { get { return _result != null && _result.activeSelf; } }
-  public bool DemoStarted { get { return Current != Phase.Intro; } }
-  public int DemoStepsClimbed { get { return _demoStep; } }
 
   StairHillBuilder _builder;
   StairRun _run;
@@ -98,7 +97,7 @@ public class NumberStairs : MonoBehaviour {
   GameObject _board;
   GameObject _result;
   GameObject[] _stepCues;
-  Transform _camTeaching, _lookTeaching, _camDemo, _lookDemo, _camSuccess, _lookSuccess;
+  Transform _camTeaching, _lookTeaching, _camSuccess, _lookSuccess;
 
   float _phaseT;
   float _dwellT;
@@ -107,17 +106,25 @@ public class NumberStairs : MonoBehaviour {
   bool _cameraDone; // camera handed back to the child for good
   int _shot; // 0 teaching, 1 demo, 2 success
 
-  // Intro flags.
-  bool _saidBoard, _saidNumber, _saidThree, _saidToday, _saidCount;
-  // Demo sub-state.
-  int _demoStage;      // 0 walk to base, 1 walking up, 2 done
-  int _demoStep;       // last step the student reached (1..3)
-  float _demoHoldT;
-  bool _saidWatch, _saidYes;
-  // Handoff flags.
-  bool _saidTurn, _saidClimb, _followHanded, _studentReturned;
-  int _studentLeg;
+  // Intro flags (the question script).
+  bool _saidBoard, _saidNumber, _saidClimb;
+  // Wait-phase guidance.
+  bool _waitCalled;
+  bool _followHanded;   // child has control (the camera follows between shots)
   bool _successHanded;
+  bool _finalized;      // the visit's LAST question was settled (result shown)
+  // User round: keep asking from where the child stands. On success the target
+  // advances to the next rung and the child keeps climbing; when the ladder
+  // wraps back to the start target, the visit finalizes. Tests that pin the
+  // single-question mechanics switch this off.
+  public bool ChainOnSuccess = true;
+  int _ladderStart = -1;
+  float _chainT = -1f;
+  // The marked play spot (the question is read only when the child stands here).
+  const float TaskRadius = 1.45f;
+  float _listenT;
+  bool _listenSettled;
+  Vector3 _listenRingBase = Vector3.one;
   // Climb flags.
   float _overshootNagT;
   float _underCooldownT;
@@ -157,8 +164,6 @@ public class NumberStairs : MonoBehaviour {
     _stepCues = _builder.StepCues;
     _camTeaching = _builder.CamTeaching;
     _lookTeaching = _builder.LookTeaching;
-    _camDemo = _builder.CamDemo;
-    _lookDemo = _builder.LookDemo;
     _camSuccess = _builder.CamSuccess;
     _lookSuccess = _builder.LookSuccess;
 
@@ -178,11 +183,15 @@ public class NumberStairs : MonoBehaviour {
       try {
         _life.MarkAvailable("number_stairs staged");
         _life.BeginEnter("stair scene built");
-        _life.MarkReady("intro staged");
+        _life.MarkReady("circle staged");
       } catch (Exception) { }
     }
+    _ladderStart = Target;
+    Current = Phase.Wait;
+    if (_builder != null && _builder.ListenRing != null)
+      _listenRingBase = _builder.ListenRing.transform.localScale;
     _lastPos = _player != null ? _player.position : Vector3.zero;
-    try { Debug.Log("[NumberStairs] activity staged (intro will play).", this); } catch (Exception) { }
+    try { Debug.Log("[NumberStairs] activity staged (waiting on the circle).", this); } catch (Exception) { }
   }
 
   void BuildActors() {
@@ -205,6 +214,8 @@ public class NumberStairs : MonoBehaviour {
   void ApplyCompletedState(string reason) {
     Current = Phase.Success;
     _phaseT = 0f;
+    _finalized = true;
+    _successHanded = true;
     _followHanded = true;
     _cameraDone = true;
     if (_result != null) _result.SetActive(true);
@@ -228,12 +239,12 @@ public class NumberStairs : MonoBehaviour {
     try {
       TickVoice(dt);
       switch (Current) {
+        case Phase.Wait: TickWait(dt); break;
         case Phase.Intro: TickIntro(dt); break;
-        case Phase.Demo: TickDemo(dt); break;
-        case Phase.Handoff: TickHandoff(dt); break;
         case Phase.Climb: TickClimb(dt); break;
         case Phase.Success: TickSuccess(dt); break;
       }
+      TickListen(dt);
       TickActing(dt);
       TickCamera(dt);
       TickJuice(dt);
@@ -279,148 +290,90 @@ public class NumberStairs : MonoBehaviour {
 
   void To(Phase next) { Current = next; _phaseT = 0f; }
 
-  // ---- teacher intro (brief §6) --------------------------------------------------
-  // The board holds the round's target (brief §9): every line below is composed
-  // from it, so the SAME script teaches 1..9 without a second lesson.
+  // The stand point of a tread (teacher points + confirm targets).
+  Vector3 StepLocal(int step) { return _run != null ? _run.StandLocal(step) : Vector3.zero; }
+  Vector3 StepWorld(int step) { return _root != null ? _root.TransformPoint(StepLocal(step)) : Vector3.zero; }
+
+  // ---- wait for the child on the marked circle (S3-P2Z13 user round) -------------
+  // "Khi vào arena thì hiện hướng dẫn đến chỗ vị trí đứng chơi game. Khi player
+  // đến vị trí đó thì câu hỏi mới được đọc." The teacher idles, the circle
+  // pulses and (if the child lingers) calls them over once; the question is
+  // read ONLY when the child actually stands on the circle.
+
+  public bool QuestionTold { get { return _listenSettled; } }
+
+  Vector3 ListenWorld() {
+    if (_builder != null && _builder.ListenPad != null)
+      return _builder.ListenPad.transform.position;
+    return _root != null ? _root.TransformPoint(StairHillBuilder.ListenLocal) : Vector3.zero;
+  }
+
+  bool PlayerOnCircle() {
+    if (_player == null) return false;
+    Vector3 p = _player.position;
+    Vector3 q = ListenWorld();
+    float dx = p.x - q.x, dz = p.z - q.z;
+    return dx * dx + dz * dz <= TaskRadius * TaskRadius;
+  }
+
+  void TickWait(float dt) {
+    _phaseT += dt;
+    FaceTowards(_teacher, PlayerLocal(), dt, 3f);
+    FaceTowards(_student, PlayerLocal(), dt, 2.5f);
+    if (!_waitCalled && _phaseT >= 5f) {
+      _waitCalled = true;
+      Wave(_teacher);
+      Say("Stand on the circle!", "Con đứng vào vòng nhé!");
+      Point(_teacher, ListenWorld(), 2.4f);
+    }
+    if (PlayerOnCircle()) StartQuestion();
+  }
+
+  void StartQuestion() {
+    _listenSettled = true;
+    _saidBoard = false;
+    _saidNumber = false;
+    _saidClimb = false;
+    To(Phase.Intro);
+    SetShot(0);
+    Log("question read (child on the circle): number " + Target);
+  }
+
+  // ---- teacher question (no demo in the arena — the garden teaches once) ---------
 
   void TickIntro(float dt) {
     _phaseT += dt;
     float t = _phaseT;
     FaceTowards(_teacher, BoardLocal(), dt, 4f);
     FaceTowards(_student, TeacherLocal(), dt, 3f);
-    if (!_saidBoard && t >= 1.2f) {
+    if (!_saidBoard && t >= 0.5f) {
       _saidBoard = true;
       Wave(_teacher);
       Say("Look at the board!", "Nhìn lên bảng nhé!");
       Point(_teacher, BoardWorld(), 2.4f);
     }
-    if (!_saidNumber && t >= 3.4f) {
+    if (!_saidNumber && t >= 2.4f) {
       _saidNumber = true;
       Say("This is number " + N(Target) + ".", "Đây là số " + Nvi(Target) + ".");
+      PulseBoard(1.2f);
     }
-    if (!_saidThree && t >= 5.6f) {
-      _saidThree = true;
-      Say(CountEn[Target - 1], CountVi[Target - 1]);
-      PulseBoard(1.4f);
-    }
-    if (!_saidToday && t >= 7.2f) {
-      _saidToday = true;
-      FaceTowards(_teacher, StairsLocal(), dt, 4f);
-      Say("Today, we climb " + N(Target) + " " + Steps(Target) + ".",
-        "Hôm nay leo " + Nvi(Target) + " bậc.");
-      Point(_teacher, StairsWorld(), 2.8f);
-    }
-    if (!_saidCount && t >= 10.2f) {
-      _saidCount = true;
-      Wave(_teacher);
-      Say("Let's count!", "Cùng đếm nhé!");
-    }
-    if (t >= 11.4f) {
-      To(Phase.Demo);
-      SetShot(1);
-      FaceTowards(_student, StairsLocal(), dt, 4f);
-    }
-  }
-
-  // ---- student demonstration (brief §7-§9) ---------------------------------------
-  // Sub-state: 0 = walk to the stair foot, 1 = walking onto step _demoStep,
-  // 2 = hold the count beat on that tread, 3 = confirm + prepare the handover.
-  void TickDemo(float dt) {
-    _phaseT += dt;
-    if (!_saidWatch) {
-      _saidWatch = true;
-      Say("Watch your friend!", "Xem bạn làm nhé!");
-      Point(_teacher, StairsWorld(), 2.4f);
-    }
-    switch (_demoStage) {
-      case 0:
-        FaceTowards(_student, StairsLocal(), dt, 5f);
-        if (_phaseT >= 1.2f && WalkTo(_student, StairHillBuilder.StudentBase, dt)) {
-          _demoStage = 1;
-          _demoStep = 1;
-        }
-        break;
-      case 1:
-        FaceTowards(_student, StairsLocal(), dt, 5f);
-        if (WalkTo(_student, StepLocal(_demoStep), dt)) {
-          PlaySfx("step");
-          PulseStep(_demoStep);
-          Point(_teacher, StepWorld(_demoStep), 1.8f);
-          // One step = one count, from the same tables as the child's climb.
-          Say(CountEn[_demoStep - 1], CountVi[_demoStep - 1]);
-          _demoStage = 2;
-          _demoHoldT = StepHold;
-        }
-        break;
-      case 2:
-        _demoHoldT -= dt;
-        if (_demoHoldT <= 0f) {
-          if (_demoStep < Target) { _demoStep++; _demoStage = 1; }
-          else { _demoStage = 3; _demoHoldT = 1.4f; }
-        }
-        break;
-      default:
-        FaceTowards(_student, PlayerLocal(), dt, 3f);
-        _demoHoldT -= dt;
-        if (!_saidYes && _demoHoldT <= 1.0f) {
-          _saidYes = true;
-          Say("Yes! " + Cap(N(Target)) + " " + Steps(Target) + "!",
-            "Đúng rồi! " + Cap(Nvi(Target)) + " bậc!");
-          Point(_teacher, StepWorld(Target), 2.2f);
-          CelebrateActor(_student, soft: true);
-          Sparkle(StepWorld(Target) + new Vector3(0f, 0.2f, 0f), 8, 91, 0.4f);
-        }
-        if (_demoHoldT <= 0f) To(Phase.Handoff);
-        break;
-    }
-  }
-
-  // The student's per-step target is the NEXT stand point; after reaching step
-  // N the demo advances by incrementing _demoStep on the following hold.
-  Vector3 StepLocal(int step) { return _run != null ? _run.StandLocal(step) : Vector3.zero; }
-  Vector3 StepWorld(int step) { return _root != null ? _root.TransformPoint(StepLocal(step)) : Vector3.zero; }
-
-  // ---- handoff (brief §10/§28) ---------------------------------------------------
-
-  void TickHandoff(float dt) {
-    _phaseT += dt;
-    float t = _phaseT;
-    if (!_saidTurn && t >= 0.4f) {
-      _saidTurn = true;
-      FaceTowards(_teacher, PlayerLocal(), dt, 5f);
-      Say("Now it's your turn!", "Giờ đến lượt con!");
-    }
-    if (!_saidClimb && t >= 2.4f) {
+    if (!_saidClimb && t >= 4.4f) {
       _saidClimb = true;
+      FaceTowards(_teacher, StairsLocal(), dt, 4f);
       Say("Climb " + N(Target) + " " + Steps(Target) + "!",
         "Con lên " + Nvi(Target) + " bậc nhé!");
-      Point(_teacher, StairsWorld(), 2.6f);
+      Point(_teacher, StairsWorld(), 2.8f);
     }
-    // The student walks OFF the stairs — down to the base, then beside the
-    // teacher — so he is never standing in the child's climb path (journey
-    // shot: he used to stop mid-staircase and the child walked through him).
-    if (!_studentReturned) {
-      if (_studentLeg == 0) {
-        if (WalkTo(_student, StairHillBuilder.StudentBase, dt)) _studentLeg = 1;
-      } else if (WalkTo(_student, StairHillBuilder.StudentReturn, dt)) {
-        _studentReturned = true;
-      }
-      if (t >= 8.0f) _studentReturned = true; // safety: the lesson never stalls
-    } else {
-      FaceTowards(_student, StairsLocal(), dt, 2.5f);
-    }
-    // Camera back to the child at 4.2s; control is theirs — but only once the
-    // student has actually cleared the stairs (movement was never locked).
-    if (!_followHanded && t >= 4.2f) {
-      _followHanded = true;
-      Follow();
-      if (_life != null) { try { _life.Begin("handoff done"); } catch (Exception) { } }
-    }
-    if (_followHanded && Current == Phase.Handoff && (_studentReturned || t >= 8.0f)) {
-      To(Phase.Climb);
-      _lastPos = _player != null ? _player.position : Vector3.zero;
-      try { Debug.Log("[NumberStairs] child control (climb phase).", this); } catch (Exception) { }
-    }
+    if (t >= 5.9f) StartClimb();
+  }
+
+  void StartClimb() {
+    To(Phase.Climb);
+    Follow();
+    _followHanded = true;
+    if (_life != null) { try { _life.Begin("question read"); } catch (Exception) { } }
+    _lastPos = _player != null ? _player.position : Vector3.zero;
+    Log("child control (climb phase).");
   }
 
   // ---- the child's climb (brief §11-§21) -----------------------------------------
@@ -542,43 +495,81 @@ public class NumberStairs : MonoBehaviour {
     return d.sqrMagnitude > 0.0004f;
   }
 
+  // A round was won. The user round chains the questions: on a chained win the
+  // child KEEPS their position and the next question follows (no walk back, no
+  // re-entry); the LAST rung of the ladder settles the visit (result board +
+  // shared lifecycle) exactly like before.
   void Success() {
-    if (Current == Phase.Success) return;
-    Current = Phase.Success;
-    _phaseT = 0f;
+    if (Current == Phase.Success || _finalized) return;
+    To(Phase.Success);
     _dwellT = 0f;
     _underT = 0f;
     PlaySfx("success");
-    // Confirm with the target itself, then RECOUNT 1..Target (brief §28:
-    // "Hai... ba... bốn... năm!") — the recap lines wait their turn in the
-    // pacer's single slot (TickRecap), never a burst.
-    Say(Cap(N(Target)) + " " + Steps(Target) + "! Well done!",
-      Cap(Nvi(Target)) + " bậc! Giỏi!");
-    _recapEn.Clear();
-    _recapVi.Clear();
-    for (int i = 1; i <= Target; i++) {
-      _recapEn.Enqueue(CountEn[i - 1]);
-      _recapVi.Enqueue(CountVi[i - 1]);
-    }
+    _victoryT = 0.9f; // the child's own little victory, after the reach settles
     Point(_teacher, StepWorld(Target), 2.2f);
     if (_teacher != null) { Wave(_teacher); CelebrateActor(_teacher, soft: false); }
     if (_student != null) CelebrateActor(_student, soft: false);
     Sparkle(StepWorld(Target) + new Vector3(0f, 0.25f, 0f), 12, 92, 0.55f);
     Sparkle(PlayerWorld() + new Vector3(0f, 0.9f, 0f), 10, 93, 0.5f);
-    if (_result != null) {
-      _result.SetActive(true);
-      _result.transform.localScale = Vector3.one * 0.65f;
-      _resultPopT = 0f;
+    int next = StairHillBuilder.ClampTarget(CountingGardenArea.NextStairTarget(Target));
+    bool last = !ChainOnSuccess || _ladderStart < 0 || next == _ladderStart;
+    if (last) {
+      _finalized = true;
+      Follow(); // the round camera stays with the child until the celebration
+      // Confirm with the target itself, then RECOUNT 1..Target (brief §28:
+      // "Hai... ba... bốn... năm!") — the recap lines wait their turn in the
+      // pacer's single slot (TickRecap), never a burst.
+      Say(Cap(N(Target)) + " " + Steps(Target) + "! Well done!",
+        Cap(Nvi(Target)) + " bậc! Giỏi!");
+      _recapEn.Clear();
+      _recapVi.Clear();
+      for (int i = 1; i <= Target; i++) {
+        _recapEn.Enqueue(CountEn[i - 1]);
+        _recapVi.Enqueue(CountVi[i - 1]);
+      }
+      if (_result != null) {
+        _result.SetActive(true);
+        _result.transform.localScale = Vector3.one * 0.65f;
+        _resultPopT = 0f;
+      }
+      SetShot(2);
+      if (_life != null) {
+        try {
+          if (_life.State != ActivityState.Completed)
+            _life.MarkCompleted("stood on step " + Target);
+        } catch (Exception) { }
+      }
+      Log("SUCCESS (visit settled): child stands on step " + Target);
+      return;
     }
-    SetShot(2);
-    _victoryT = 0.9f; // the child's own little victory, after the reach settles
-    if (_life != null) {
-      try {
-        if (_life.State != ActivityState.Completed)
-          _life.MarkCompleted("stood on step " + Target);
-      } catch (Exception) { }
-    }
-    Log("SUCCESS: child stands on step " + Target);
+    // Chained round: a short confirm, then the next question from where the
+    // child already stands (user: "từ bậc 3 đi tiếp cho câu hỏi sau").
+    Follow();
+    Say(Cap(N(Target)) + " " + Steps(Target) + "! Well done!",
+      Cap(Nvi(Target)) + " bậc! Giỏi!");
+    _chainT = 3.0f;
+    Log("round won on step " + Target + " — next question follows");
+  }
+
+  // The next rung of the ladder: swap the board digit in place and re-ask. The
+  // child does not move; the climb continues from the step they stand on.
+  void AskNextQuestion() {
+    Target = StairHillBuilder.ClampTarget(CountingGardenArea.NextStairTarget(Target));
+    if (_builder != null) _builder.SetTarget(Target);
+    _pendingStep = CurrentStep;
+    _pendingT = 0f;
+    _dwellT = 0f;
+    _underT = 0f;
+    _overStep = 0;
+    _overT = 0f;
+    _overCounted = false;
+    _saidBoard = true;      // no "look at the board" twice in a visit
+    _saidNumber = false;
+    _saidClimb = false;
+    To(Phase.Intro);
+    _phaseT = 1.9f;         // resume at the number line
+    SetShot(0);
+    Log("next question: number " + Target);
   }
 
   // One recap line in flight at a time (PacedVoice is newest-wins by design —
@@ -590,9 +581,17 @@ public class NumberStairs : MonoBehaviour {
 
   void TickSuccess(float dt) {
     _phaseT += dt;
-    TickRecap();
     FaceTowards(_teacher, PlayerLocal(), dt, 2f);
     FaceTowards(_student, PlayerLocal(), dt, 2f);
+    // Chained round: hold the win pose briefly, then ask the next question.
+    if (!_finalized) {
+      if (_chainT > 0f) {
+        _chainT -= dt;
+        if (_chainT <= 0f) AskNextQuestion();
+      }
+      return;
+    }
+    TickRecap();
     // Hand the camera back after the celebration frame (the child plays on).
     // Once only: an unguarded call spammed Follow() every frame (journey log).
     if (_phaseT >= 4.6f && !_successHanded) {
@@ -600,6 +599,27 @@ public class NumberStairs : MonoBehaviour {
       _cameraDone = true;
       Follow();
     }
+  }
+
+  // The marked circle pulses while the question waits, then settles to a calm
+  // mint once the question was told (the spot "switches on").
+  bool _settledLatch;
+
+  void TickListen(float dt) {
+    if (_builder == null || _builder.ListenRing == null) return;
+    if (!_listenSettled) {
+      if (Current != Phase.Wait) return;
+      _listenT += dt;
+      float s = 1f + 0.075f * Mathf.Sin(_listenT * 3.4f);
+      _builder.ListenRing.transform.localScale =
+        new Vector3(_listenRingBase.x * s, _listenRingBase.y, _listenRingBase.z * s);
+      return;
+    }
+    if (_settledLatch) return;
+    _settledLatch = true;
+    _builder.ListenRing.transform.localScale = _listenRingBase;
+    Renderer r = _builder.ListenRing.GetComponent<Renderer>();
+    if (r != null) r.sharedMaterial = _builder.ListenSettledMaterial();
   }
 
   // ---- camera (brief §27) --------------------------------------------------------
@@ -614,7 +634,6 @@ public class NumberStairs : MonoBehaviour {
     if (_cam == null) return;
     Transform c, l;
     if (_shot == 2) { c = _camSuccess; l = _lookSuccess; }
-    else if (_shot == 1) { c = _camDemo; l = _lookDemo; }
     else { c = _camTeaching; l = _lookTeaching; }
     if (c == null || l == null) return;
     _shotIssued = true;
@@ -624,14 +643,16 @@ public class NumberStairs : MonoBehaviour {
 
   void TickCamera(float dt) {
     if (_cameraDone) return; // hand-back happened (or adopt): never re-frame
-    if (_followHanded && Current != Phase.Success) return;
+    // A chained (light) win keeps the camera with the child.
+    if (Current == Phase.Success && !_finalized) return;
+    if (_followHanded && Current != Phase.Success && Current != Phase.Intro) return;
     if (!_shotIssued) {
       // Let the area's arrival reveal (2.2s) play first, then hold the
-      // teaching frame while the teacher introduces the board.
+      // teaching frame while the teacher asks the question.
       if (Current == Phase.Intro && _phaseT >= 2.0f) IssueShot();
       return;
     }
-    if (Current != Phase.Intro && Current != Phase.Demo && Current != Phase.Success) return;
+    if (Current != Phase.Intro && Current != Phase.Success) return;
     _shotT -= dt;
     if (_shotT <= 0f) IssueShot();
   }
@@ -691,35 +712,6 @@ public class NumberStairs : MonoBehaviour {
       a.Root.transform.localRotation = Quaternion.LookRotation(d);
     } catch (Exception) { }
   }
-
-  // Walk in the LOCAL space including Y (the student physically climbs the
-  // treads; no teleport — brief §7/§14). Arrives within 0.12m.
-  bool WalkTo(LessonActor a, Vector3 targetLocal, float dt) {
-    if (a == null || a.Root == null) return true;
-    Vector3 p = a.Root.transform.localPosition;
-    Vector3 flat = new Vector3(targetLocal.x - p.x, 0f, targetLocal.z - p.z);
-    float dist = flat.magnitude;
-    float dy = targetLocal.y - p.y;
-    if (dist <= 0.12f && Mathf.Abs(dy) <= 0.06f) return true;
-    FaceTowards(a, targetLocal, dt, 6f);
-    float step = Mathf.Min(WalkSpeed * dt, Mathf.Max(dist, Mathf.Abs(dy)));
-    Vector3 dir = dist > 0.0001f ? flat / dist : Vector3.zero;
-    Vector3 next = new Vector3(p.x + dir.x * Mathf.Min(step, dist), p.y, p.z + dir.z * Mathf.Min(step, dist));
-    // Follow the tread profile smoothly (climb or descend) instead of snapping.
-    next.y = Mathf.MoveTowards(p.y, targetLocal.y, WalkSpeed * dt * 0.9f);
-    a.Root.transform.localPosition = next;
-    _walkT += dt;
-    try {
-      if (a.Visual != null) {
-        Vector3 v = a.Visual.localPosition;
-        v.y = 0.02f + Mathf.Abs(Mathf.Sin(_walkT * 9f)) * 0.05f;
-        a.Visual.localPosition = v;
-      }
-    } catch (Exception) { }
-    return false;
-  }
-
-  float _walkT;
 
   void Wave(LessonActor a) { if (a != null) a.WaveT = 1.4f; }
 

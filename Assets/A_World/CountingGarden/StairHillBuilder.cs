@@ -11,6 +11,7 @@
 // landing with the goal arch. All code-built (primitives + shared materials),
 // NavMesh baked at runtime on THIS root only (CollectObjects.Children — J8).
 // No bus/quest/save here: presentation + the door. C# 9.0 only.
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,7 +26,10 @@ public class StairHillBuilder : MonoBehaviour {
   // Arrival spawn clears the exit portal fire radius (J4 lesson: the portal
   // only arms after the child walks clear once).
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -3f);
-  public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -11.5f);
+  // User round "cổng trở về quá xa sân chơi": the exit used to sit at z=-11.5
+  // (past the decorative entry arch, ~16m from the stair foot). It now stands
+  // at the plaza path's end, ~10m from the stairs and BEFORE the arch.
+  public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -5.6f);
   // Follow camera: south of the child, looking north INTO the hill (the stairs
   // rise away from the arrival, so the child always sees the next step).
   public static readonly Vector3 FollowOffset = new Vector3(0f, 4.2f, -5.6f);
@@ -107,6 +111,16 @@ public class StairHillBuilder : MonoBehaviour {
   public GameObject NumberBoard { get; private set; }   // target digit (pulses)
   public GameObject Result { get; private set; }        // target + tick (hidden)
   public GameObject[] StepCues { get; private set; }    // bead row per step
+  // User round: the marked play spot in front of the stair foot. The teacher
+  // reads the question only once the child stands here (the ball arena's listen
+  // circle pattern); the ring pulses until it is read.
+  public static readonly Vector3 ListenLocal = new Vector3(0f, 0f, 3.4f);
+  public GameObject ListenPad { get; private set; }
+  public GameObject ListenRing { get; private set; }
+  Transform _boardGroup;
+  Transform _resultGroup;
+  GameObject _boardDigit;
+  GameObject _resultDigit;
   Renderer[] _stepTops;                                 // torched while selected
   Material _stepGlowMat;
   public Transform CamTeaching { get; private set; }
@@ -138,6 +152,36 @@ public class StairHillBuilder : MonoBehaviour {
   Material GlowMat() {
     if (_stepGlowMat == null) _stepGlowMat = LitEmissive(Gold, 0.85f);
     return _stepGlowMat;
+  }
+
+  // The listen ring settles to calm mint once the question was told.
+  Material _listenSettledMat;
+  public Material ListenSettledMaterial() {
+    if (_listenSettledMat == null)
+      _listenSettledMat = LitEmissive(new Color(0.55f, 0.85f, 0.60f), 0.25f);
+    return _listenSettledMat;
+  }
+
+  // User round (chained questions): the next question swaps the board's digit
+  // in place — no scene reload, no walk back to the start.
+  public void SetTarget(int n) {
+    BoardTarget = ClampTarget(n);
+    RebuildDigit(ref _boardDigit, _boardGroup, "SHNumberDigit",
+      new Vector3(0f, 1.5f, -0.18f), 1.15f, 0.9f, 0.5f);
+    RebuildDigit(ref _resultDigit, _resultGroup, "SHResultDigit",
+      new Vector3(0f, 1.2f, -0.18f), 0.6f, 0.45f, 0.45f);
+    NumberBoard = _boardDigit;
+  }
+
+  void RebuildDigit(ref GameObject digit, Transform group, string name,
+      Vector3 pos, float w, float h, float emission) {
+    if (group == null) return;
+    if (digit != null) {
+      try { CharacterPresentation.DestroyNow(digit); } catch (Exception) { }
+    }
+    digit = CountingGardenBuilder.Digit(group, name, pos, w, h, Gold, 90f, BoardTarget);
+    SetMaterial(digit, LitEmissive(Gold, emission));
+    NoShadows(digit);
   }
 
   // Runtime NavMesh bake for THIS scene only (CollectObjects.Children on the
@@ -226,7 +270,8 @@ public class StairHillBuilder : MonoBehaviour {
       WorldBeauty.BlossomPink);
     Pad(parent, "SHThresholdL", new Vector3(-1.5f, 0.005f, -3.6f), 1.0f, StoneGrey);
     Pad(parent, "SHThresholdR", new Vector3(1.5f, 0.005f, -3.6f), 1.0f, StoneGrey);
-    Pad(parent, "SHExitDisc", new Vector3(0f, 0.01f, -11.1f), 3.2f, WorldBeauty.Petal);
+    float exitZ = ExitLocal.z;
+    Pad(parent, "SHExitDisc", new Vector3(0f, 0.01f, exitZ + 0.4f), 3.2f, WorldBeauty.Petal);
     GameObject exitGo = new GameObject("SHExitPortal");
     exitGo.transform.SetParent(parent, false);
     exitGo.transform.localPosition = ExitLocal;
@@ -236,12 +281,12 @@ public class StairHillBuilder : MonoBehaviour {
     exit.fireRadius = 1.35f;
     exit.areaId = CountingGardenArea.AreaId;
     ExitPortal = exit;
-    Box(parent, "SHExitPostL", new Vector3(-1.6f, 0.9f, -11.5f),
+    Box(parent, "SHExitPostL", new Vector3(-1.6f, 0.9f, exitZ),
       new Vector3(0.16f, 1.8f, 0.16f), MintLeaf);
-    Box(parent, "SHExitPostR", new Vector3(1.6f, 0.9f, -11.5f),
+    Box(parent, "SHExitPostR", new Vector3(1.6f, 0.9f, exitZ),
       new Vector3(0.16f, 1.8f, 0.16f), MintLeaf);
-    Sphere(parent, "SHExitCapL", new Vector3(-1.6f, 1.9f, -11.5f), 0.4f, MintLeaf, true);
-    Sphere(parent, "SHExitCapR", new Vector3(1.6f, 1.9f, -11.5f), 0.4f, MintLeaf, true);
+    Sphere(parent, "SHExitCapL", new Vector3(-1.6f, 1.9f, exitZ), 0.4f, MintLeaf, true);
+    Sphere(parent, "SHExitCapR", new Vector3(1.6f, 1.9f, exitZ), 0.4f, MintLeaf, true);
   }
 
   void BuildPaths(Transform parent) {
@@ -420,6 +465,8 @@ public class StairHillBuilder : MonoBehaviour {
     SetMaterial(digit, LitEmissive(Gold, 0.5f));
     NoShadows(digit);
     NumberBoard = digit;
+    _boardGroup = board.transform;
+    _boardDigit = digit;
 
     GameObject result = new GameObject("SHResult");
     result.transform.SetParent(parent, false);
@@ -438,6 +485,8 @@ public class StairHillBuilder : MonoBehaviour {
       new Vector3(0f, 1.82f, -0.18f), 0.3f, MintLeaf);
     result.SetActive(false);
     Result = result;
+    _resultGroup = result.transform;
+    _resultDigit = resultDigit;
 
     // Camera markers (scene-authored transforms, no second camera system).
     CamTeaching = Marker(parent, "SHCamTeaching", CamTeachingPos);
@@ -448,6 +497,31 @@ public class StairHillBuilder : MonoBehaviour {
     LookSuccess = Marker(parent, "SHLookSuccess", CamSuccessLook);
     // A soft stage pool at the stair foot ("this is the stage").
     DemoJuice.AttachSpotlight(parent, "SHStageLight", new Vector3(0f, 0.018f, 3.4f), 5.6f);
+    BuildListenCircle(parent);
+  }
+
+  // The marked play spot (S3-P2Z13 user round "hiện hướng dẫn đến chỗ đứng
+  // chơi, đến nơi mới đọc câu hỏi"): same construction as the ball arena's
+  // listen circle — gold ring + sky pad + corner studs + a calling bell post.
+  // Drawn ON TOP of the soft stage pool so it always reads.
+  void BuildListenCircle(Transform parent) {
+    ListenRing = Pad(parent, "SHListenRing", ListenLocal + new Vector3(0f, 0.024f, 0f),
+      3.1f, Gold);
+    Pad(parent, "SHListenEdge", ListenLocal + new Vector3(0f, 0.021f, 0f),
+      3.5f, new Color(0.80f, 0.42f, 0.20f));
+    ListenPad = Pad(parent, "SHListenPad", ListenLocal + new Vector3(0f, 0.032f, 0f),
+      2.3f, new Color(0.62f, 0.85f, 0.97f));
+    SetMaterial(ListenPad, LitEmissive(new Color(0.62f, 0.85f, 0.97f), 0.14f));
+    for (int i = 0; i < 4; i++) {
+      float a = (i / 4f) * Mathf.PI * 2f + Mathf.PI * 0.25f;
+      Sphere(parent, "SHListenStud" + i,
+        ListenLocal + new Vector3(Mathf.Cos(a) * 1.02f, 0.06f, Mathf.Sin(a) * 1.02f),
+        0.16f, Gold, true);
+    }
+    Box(parent, "SHListenPost", ListenLocal + new Vector3(1.45f, 0.5f, 0.15f),
+      new Vector3(0.12f, 1.0f, 0.12f), BasketBrown);
+    Sphere(parent, "SHListenBell", ListenLocal + new Vector3(1.45f, 1.08f, 0.15f),
+      0.34f, Gold, true);
   }
 
   static Transform Marker(Transform parent, string name, Vector3 pos) {
@@ -532,7 +606,7 @@ public class StairHillBuilder : MonoBehaviour {
     return go;
   }
 
-  static void Pad(Transform parent, string name, Vector3 pos, float diameter, Color color) {
+  static GameObject Pad(Transform parent, string name, Vector3 pos, float diameter, Color color) {
     GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     pad.name = name;
     pad.transform.SetParent(parent, false);
@@ -540,6 +614,7 @@ public class StairHillBuilder : MonoBehaviour {
     pad.transform.localScale = new Vector3(diameter, 0.01f, diameter);
     pad.GetComponent<Renderer>().sharedMaterial = Lit(color);
     StripCollider(pad);
+    return pad;
   }
 
   static GameObject Cylinder(Transform parent, string name, Vector3 pos,

@@ -508,10 +508,13 @@ public class CountingGardenBuilder : MonoBehaviour {
         camPos = new Vector3(1.4f, 1.85f, 7.9f);
         lookPos = new Vector3(0.15f, 0.8f, 11.0f);
       } else if (z == StairZoneIndex) {
-        // Gameplay #2: closer + lower so the stair hill (and its mini "3"
-        // board) fill the frame from the plaza side.
-        camPos = mouth - outDir * 3.1f + new Vector3(0f, 2.0f, 0f);
-        lookPos = center + new Vector3(0f, 0.75f, 0f);
+        // Gameplay #2 + user round ảnh "bị dính cái cổng nên không nhìn hết":
+        // the focus camera used to sit OUTSIDE the gate (mouth - 3.1m), so the
+        // gate post + blossom filled the near edge of the frame. Like zone 2's
+        // fix, it now sits INSIDE the plot, past the mouth, and looks across
+        // the diorama — no gate between camera and miniature.
+        camPos = mouth + outDir * 0.55f + new Vector3(0f, 1.85f, 0f);
+        lookPos = center + outDir * 1.55f + new Vector3(0f, 0.65f, 0f);
       } else {
         camPos = mouth - outDir * 3.6f + new Vector3(0f, 2.4f, 0f);
         lookPos = center + new Vector3(0f, 0.9f, 0f);
@@ -608,33 +611,35 @@ public class CountingGardenBuilder : MonoBehaviour {
 
   // One real garden gate per bed (S3-P2Z11): a tall numbered post on the left
   // (N gold beads), a plain post on the right, a crop-accent beam across the
-  // top (bake-ignored — the headroom rule) and blossom balls on the beam. The
-  // doorway stays 2.2m open so the crescent walk passes straight through.
+  // top (bake-ignored — the headroom rule) and blossom balls on the beam.
+  // User round ("player còn cao hơn cả cổng"): the beam sat at 1.52m — lower
+  // than the child (1.6m collider), so they clipped through it. The whole gate
+  // rose ~0.5m: the doorway is 2.0m clear now, still child-scaled.
   List<Transform> BuildBedGate(Transform parent, int index, string tag, Vector3 mouth,
       Vector3 lat, Color accent, int beadCount = -1) {
     List<Transform> beads = new List<Transform>();
     Vector3 postL = mouth + lat * 1.1f;
     Vector3 postR = mouth - lat * 1.1f;
-    Cylinder(parent, tag + "Post", postL + new Vector3(0f, 0.85f, 0f),
-      0.17f, 1.7f, BasketBrown);
+    Cylinder(parent, tag + "Post", postL + new Vector3(0f, 1.1f, 0f),
+      0.17f, 2.2f, BasketBrown);
     int beadsOnPost = beadCount >= 0 ? beadCount : index + 1;
     for (int i = 0; i < beadsOnPost; i++) {
       GameObject bead = Sphere(parent, tag + "PostBead" + i,
-        postL + new Vector3(0f, 1.82f + i * 0.19f, 0f), 0.17f, Gold, false);
+        postL + new Vector3(0f, 2.32f + i * 0.18f, 0f), 0.17f, Gold, false);
       if (bead != null) beads.Add(bead.transform);
     }
-    Cylinder(parent, tag + "GatePostR", postR + new Vector3(0f, 0.7f, 0f),
-      0.15f, 1.4f, BasketBrown);
-    GameObject beam = Box(parent, tag + "GateBeam", mouth + new Vector3(0f, 1.52f, 0f),
+    Cylinder(parent, tag + "GatePostR", postR + new Vector3(0f, 0.9f, 0f),
+      0.15f, 1.8f, BasketBrown);
+    GameObject beam = Box(parent, tag + "GateBeam", mouth + new Vector3(0f, 1.98f, 0f),
       new Vector3(0.13f, 0.13f, 2.5f), accent);
     if (beam != null) {
       beam.transform.localRotation = Quaternion.LookRotation(new Vector3(lat.x, 0f, lat.z));
       IgnoreFromBuild(beam);
     }
-    Sphere(parent, tag + "GateBall0", mouth + new Vector3(0f, 1.78f, 0f), 0.42f, accent, true);
-    Sphere(parent, tag + "GateBall1", mouth + lat * 0.55f + new Vector3(0f, 1.68f, 0f),
+    Sphere(parent, tag + "GateBall0", mouth + new Vector3(0f, 2.24f, 0f), 0.42f, accent, true);
+    Sphere(parent, tag + "GateBall1", mouth + lat * 0.55f + new Vector3(0f, 2.14f, 0f),
       0.26f, Gold, true);
-    Sphere(parent, tag + "GateBall2", mouth - lat * 0.55f + new Vector3(0f, 1.68f, 0f),
+    Sphere(parent, tag + "GateBall2", mouth - lat * 0.55f + new Vector3(0f, 2.14f, 0f),
       0.26f, Gold, true);
     return beads;
   }

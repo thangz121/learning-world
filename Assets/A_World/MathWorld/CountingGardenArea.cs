@@ -364,20 +364,18 @@ public class CountingGardenArea : MonoBehaviour {
     // a garden miniature — the ball theatre (zone 2) and the stair hill
     // (zone 5) both show their two-NPC lesson before the play door opens.
     _demo = DemoFor(index);
-    if (spot.playEnabled && spot.demoGate && _demo != null && !_demo.PassDone) {
+    if (spot.playEnabled && spot.demoGate && _demo != null) {
       // S3-P2Z8: the focus ITSELF starts the lesson (a click from across the
       // yard used to just frame the camera and do nothing). The panel opens
       // once this pass completes (user order).
+      // User round: clicking OR walking into a plot now RESETS the miniature
+      // and replays it focused (the old "already watched this visit" branch
+      // left the plot quiet on every later visit).
       _awaitDemo = true;
       _demoLoopBase = _demo.LoopCount;
       _demo.StartFocusedLesson();
       ShowObjective(DialogueLang.T("Watch!", "Xem nhé!"));
       if (_panel != null) _panel.Hide();
-    } else if (spot.playEnabled && spot.demoGate && _demo != null && _demo.PassDone) {
-      // They already watched this visit: no forced replay — offer play at once.
-      _awaitDemo = false;
-      ShowObjective(spot.ZoneName);
-      if (_panel != null) _panel.ShowFor(spot.ZoneName, true);
     } else {
       _awaitDemo = false;
       ShowObjective(spot.ZoneName);
@@ -477,7 +475,12 @@ public class CountingGardenArea : MonoBehaviour {
       // (EnterMicroAsync refuses while another micro is loaded — that guard is
       // the anti-double-enter contract.) On ANY failure we reload the garden
       // and put the child back at its entry: no void, no stranded player.
+      // Honest step logs: a stuck scene op is visible in Player.log.
+      try { Debug.Log("[CountingGarden] enter-play: unloading the garden micro.", this); }
+      catch (Exception) { }
       try { await _transition.ExitMicroAsync(_sceneOps); } catch (Exception) { }
+      try { Debug.Log("[CountingGarden] enter-play: loading '" + sceneName + "'.", this); }
+      catch (Exception) { }
       try { entered = await _transition.EnterMicroAsync(_sceneOps, sceneName); }
       catch (Exception e) {
         try { Debug.LogWarning("[CountingGarden] play load failed: " + e.Message, this); }

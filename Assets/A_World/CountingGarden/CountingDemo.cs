@@ -375,7 +375,9 @@ public class CountingDemo : MonoBehaviour, IGardenZoneDemo {
         // After a completed pass the actors hold the final idle state; the
         // lesson restarts only after the child walks away and comes back.
         if (_passDone && LoopForever) break;
-        if (_phaseT >= 0.8f) {
+        // User round: hold ~1.5s when a pass starts so the child settles and
+        // looks at the stage before the lesson speaks.
+        if (_phaseT >= 1.6f) {
           To(DemoPhase.TeacherLookBoard);
           if (!LoopForever && CameraBeatsEnabled) IssueShot(); // frame the lesson
         }

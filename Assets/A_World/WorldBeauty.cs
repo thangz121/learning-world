@@ -288,7 +288,12 @@ public static class WorldBeauty {
 
   // ---- local helpers (shared material cache, collider/bake discipline) --------
 
-  public static void Ball(Transform parent, string goName, Vector3 pos, float diameter, Color color) {
+  // Decor blossoms sit ABOVE walk corridors (gate beams, arches). They carry no
+  // collider, but a render-mesh NavMesh bake reads their bounds as an obstacle
+  // when they hang below the agent height and ERODES the floor under them (user
+  // round: the pink gate's blossom blocked the walk to the exit gate). Every
+  // ball is presentation only — keep it out of the bake.
+  public static GameObject Ball(Transform parent, string goName, Vector3 pos, float diameter, Color color) {
     GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     go.name = goName;
     go.transform.SetParent(parent);
@@ -296,6 +301,8 @@ public static class WorldBeauty {
     go.transform.localScale = new Vector3(diameter, diameter, diameter);
     go.GetComponent<Renderer>().sharedMaterial = Lit(color);
     StripCollider(go);
+    IgnoreFromBuild(go);
+    return go;
   }
 
   static void StripCollider(GameObject go) {

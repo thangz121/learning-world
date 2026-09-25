@@ -271,8 +271,10 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
       _beatT += dt;
       switch (_beat) {
         case 0: // "Look at the board!"
+          // User round: hold ~1.5s when the pass starts so the child settles
+          // and looks at the plot before the lesson speaks.
           LessonMotion.FaceTowards(_teacher, BoardPoint, dt, 4f);
-          if (_beatT >= 0.35f) {
+          if (_beatT >= 1.5f) {
             Say("Look at the board!", "Nhìn lên bảng nhé!");
             LessonMotion.PointAt(_teacher, BoardPoint, 2.0f);
             Next();

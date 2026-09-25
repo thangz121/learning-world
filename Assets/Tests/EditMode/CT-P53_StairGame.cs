@@ -85,7 +85,15 @@ public class CT_P53_StairGame {
     return builder.Stairs.transform.TransformPoint(builder.Stairs.StandLocal(step));
   }
 
-  static void AdvanceToClimb(NumberStairs game, float maxSeconds = 60f) {
+  // S3-P2Z13 (user round): the arena plays NO student demo and the question is
+  // read only once the child stands on the marked circle — the helper walks the
+  // player there first, then ticks to the climb phase.
+  static void AdvanceToClimb(NumberStairs game, GameObject player, StairHillBuilder builder,
+      float maxSeconds = 60f) {
+    Vector3 circle = builder.ListenPad != null
+      ? builder.ListenPad.transform.position
+      : builder.transform.TransformPoint(StairHillBuilder.ListenLocal);
+    player.transform.position = circle;
     for (float t = 0f; t < maxSeconds && game.Current != NumberStairs.Phase.Climb; t += 0.1f)
       game.Tick(0.1f);
   }
@@ -257,9 +265,9 @@ public class CT_P53_StairGame {
     } finally { Object.DestroyImmediate(arena); }
   }
 
-  // D. Full flow: intro -> student demo (3 counted steps) -> handoff -> the
-  // child's climb; the count follows the feet (1->2->1->3), and a stable stand
-  // on step 3 settles the activity through the shared lifecycle.
+  // D. Full flow: wait on the circle -> question -> the child's climb; the
+  // count follows the feet (1->2->1->3), and a stable stand on step 3 settles
+  // the activity through the shared lifecycle. (No arena demo any more.)
   [Test] public void P53D_FlowClimbBacktrackSuccess() {
     GameObject arena;
     StairHillBuilder builder = BuildArena(out arena);
@@ -268,14 +276,14 @@ public class CT_P53_StairGame {
       FakeAudio audio = new FakeAudio();
       ActivityLifecycle life = new ActivityLifecycle("number_stairs", "test");
       NumberStairs game = arena.AddComponent<NumberStairs>();
+      game.ChainOnSuccess = false; // single-question mechanics (chaining has its own test)
       game.Build(builder, player.transform, null, audio, life);
-      Assert.AreEqual(NumberStairs.Phase.Intro, game.Current, "fresh entry plays the lesson");
-      Assert.AreEqual(ActivityState.Ready, life.State, "staged until the handoff");
-      AdvanceToClimb(game);
-      Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "handoff reached");
+      Assert.AreEqual(NumberStairs.Phase.Wait, game.Current, "fresh entry waits on the circle");
+      Assert.AreEqual(ActivityState.Ready, life.State, "staged until the child stands on the circle");
+      AdvanceToClimb(game, player, builder);
+      Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "question told on the circle");
+      Assert.IsTrue(game.QuestionTold, "the question was read");
       Assert.AreEqual(ActivityState.Active, life.State, "the child owns the input");
-      Assert.AreEqual(3, game.DemoStepsClimbed, "the student demonstrated three steps");
-      Assert.GreaterOrEqual(audio.Sfx.FindAll(s => s == "step").Count, 3, "each demo step sounded");
       // Climb: 1 -> 2 (count follows the feet) -> back to 1 -> up to 3.
       SettleTo(game, player, builder, 1);
       Assert.AreEqual(1, game.CurrentStep, "step 1");
@@ -310,9 +318,10 @@ public class CT_P53_StairGame {
     GameObject player = new GameObject("P53PlayerO");
     try {
       NumberStairs game = arena.AddComponent<NumberStairs>();
+      game.ChainOnSuccess = false;
       ActivityLifecycle life = new ActivityLifecycle("number_stairs", "test");
       game.Build(builder, player.transform, null, new FakeAudio(), life);
-      AdvanceToClimb(game);
+      AdvanceToClimb(game, player, builder);
       SettleTo(game, player, builder, 4);
       Assert.AreEqual(4, game.CurrentStep, "the body is on step 4");
       Assert.AreEqual(1, game.Overshoots, "guided once");
@@ -381,11 +390,11 @@ public class CT_P53_StairGame {
       game.Build(builder, player.transform, null, audio, life);
       Assert.AreEqual(NumberStairs.Phase.Success, game.Current, "adopts the settled state");
       Assert.IsTrue(game.ResultShown, "the finished picture is shown");
-      Assert.AreEqual(0, game.DemoStepsClimbed, "no demo replay");
+      Assert.IsFalse(game.QuestionTold, "no question on adopt");
       Assert.AreEqual(0, audio.Lines.Count, "no speech on adopt");
       for (int i = 0; i < 200; i++) game.Tick(0.1f);
       Assert.AreEqual(NumberStairs.Phase.Success, game.Current, "the lesson never replays on re-entry");
-      Assert.AreEqual(0, game.DemoStepsClimbed, "and the student stays put");
+      Assert.IsFalse(game.QuestionTold, "and the child is never re-taught");
       // The child may still climb freely on a re-entry (no lock, no re-check).
       player.transform.position = WorldStand(builder, 4);
       game.Tick(0.1f);
@@ -519,20 +528,15 @@ public class CT_P53_StairGame {
   }
 
   // H. Speech: every new line passes the SafetyFilter (NPC cap = 6 words) in
-  // both languages, and the recorded beats match the brief (board -> three ->
-  // stairs -> counts -> turn -> success).
+  // both languages, and the recorded beats match the round (circle -> board ->
+  // number -> climb -> counts -> success).
   [Test] public void P53H_SpeechAndSafety() {
     var pairs = new (string en, string vi)[] {
+      ("Stand on the circle!", "Con đứng vào vòng nhé!"),
       ("Look at the board!", "Nhìn lên bảng nhé!"),
       ("This is number three.", "Đây là số ba."),
-      ("Three.", "Ba."),
-      ("Today, we climb three steps.", "Hôm nay leo ba bậc."),
-      ("Let's count!", "Cùng đếm nhé!"),
-      ("Watch your friend!", "Xem bạn làm nhé!"),
       ("One.", "Một."),
       ("Two.", "Hai."),
-      ("Yes! Three steps!", "Đúng rồi! Ba bậc!"),
-      ("Now it's your turn!", "Giờ đến lượt con!"),
       ("Climb three steps!", "Con lên ba bậc nhé!"),
       ("We only need three.", "Mình chỉ cần ba."),
       ("Come back to three!", "Quay lại bậc ba nhé!"),
@@ -550,14 +554,13 @@ public class CT_P53_StairGame {
     try {
       FakeAudio audio = new FakeAudio();
       NumberStairs game = arena.AddComponent<NumberStairs>();
+      game.ChainOnSuccess = false;
       game.Build(builder, player.transform, null, audio, new ActivityLifecycle("number_stairs", "test"));
-      AdvanceToClimb(game);
+      AdvanceToClimb(game, player, builder);
       Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("This is number three.", "Đây là số ba.")),
         "the teacher names the number at the board");
-      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Today, we climb three steps.", "Hôm nay leo ba bậc.")),
+      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Climb three steps!", "Con lên ba bậc nhé!")),
         "the teacher links the number to the climb");
-      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Now it's your turn!", "Giờ đến lượt con!")),
-        "the handoff line is spoken");
       // Climb to the target and settle: the success line lands too.
       SettleTo(game, player, builder, 3);
       for (int i = 0; i < 30 && game.Current != NumberStairs.Phase.Success; i++) game.Tick(0.1f);
