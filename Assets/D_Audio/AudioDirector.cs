@@ -173,6 +173,11 @@ public class AudioDirector : IAudioDirector {
       case "munch":
         clip = Tone(id, 0.18f, 420f, 180f, 0.6f, 7.0f);
         break;
+      // Gameplay #4: a wooden block clack — the tower audibly gains a piece
+      // (short, low, thumpy; never a sharp knock).
+      case "block":
+        clip = Tone(id, 0.15f, 210f, 120f, 0.65f, 8.0f);
+        break;
       default:
         clip = Tone(id, 0.12f, 440f, 560f, 0.45f, 6f);
         break;

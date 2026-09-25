@@ -10,6 +10,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class MicroWorldPortal : MonoBehaviour {
   public CountingGardenArea Area;
+  // Gameplay #4 (S3-P2Z14): an independent micro-world (Build Yard) uses the
+  // same walk-in portal contract. Exactly ONE of the two targets is set.
+  public BuildTowerArea BuildArea;
   public bool ExitMode;
   // S3 P2X play arena: this exit unloads the play scene and brings the child
   // back to the Counting Garden (the exit portal of the GARDEN keeps
@@ -26,8 +29,7 @@ public class MicroWorldPortal : MonoBehaviour {
   bool _wasInside = true;
 
   void Update() {
-    if (Area == null) return;
-    ClickToMove player = Area.Player;
+    ClickToMove player = Area != null ? Area.Player : (BuildArea != null ? BuildArea.Player : null);
     if (player == null) return;
     Vector3 p = player.transform.position;
     float dx = p.x - transform.position.x;
@@ -35,9 +37,9 @@ public class MicroWorldPortal : MonoBehaviour {
     float d2 = dx * dx + dz * dz;
     if (!_wasInside && d2 <= fireRadius * fireRadius) {
       _wasInside = true;
-      if (PlayExit) Area.ExitPlayToGarden();
-      else if (ExitMode) Area.ExitToHub();
-      else Area.EnterFromHub();
+      if (PlayExit) { if (Area != null) Area.ExitPlayToGarden(); }
+      else if (ExitMode) { if (BuildArea != null) BuildArea.ExitToHub(); else if (Area != null) Area.ExitToHub(); }
+      else { if (BuildArea != null) BuildArea.EnterFromHub(); else if (Area != null) Area.EnterFromHub(); }
     } else if (_wasInside && d2 > (fireRadius + rearmMargin) * (fireRadius + rearmMargin)) {
       _wasInside = false;
     }
