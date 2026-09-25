@@ -28,7 +28,7 @@ public static class TempP56JourneyBoot {
 }
 
 public class TempP56Journey : MonoBehaviour {
-  const string ShotDir = "D:/Vscode/p56j-shots";
+  string _shotDir = "E:/LWW/p56j-shots";
   int _shots;
   int _clicks;
   int _placed;
@@ -37,7 +37,14 @@ public class TempP56Journey : MonoBehaviour {
   ClickToMove _player;
 
   void Start() {
-    try { System.IO.Directory.CreateDirectory(ShotDir); } catch (Exception) { }
+    // Evidence folder configurable per run (-shot-dir E:/LWW/p56j-shots-t5).
+    string[] args = Environment.GetCommandLineArgs();
+    for (int i = 0; i + 1 < args.Length; i++) {
+      if (string.Equals(args[i], "-shot-dir", StringComparison.OrdinalIgnoreCase)) {
+        _shotDir = args[i + 1];
+      }
+    }
+    try { System.IO.Directory.CreateDirectory(_shotDir); } catch (Exception) { }
     try { InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus; }
     catch (Exception) { }
     StartCoroutine(Main());
@@ -47,9 +54,24 @@ public class TempP56Journey : MonoBehaviour {
     try { Debug.Log("[P56J] " + m); } catch (Exception) { }
   }
 
+  // Journey tooling only: hide the dev system dialogs (mic offer) exactly like
+  // a child tapping "Bỏ qua", so the language card can appear and no modal
+  // keeps covering the evidence. Production gameplay is untouched.
+  void DismissSystemDialogs() {
+    try {
+      MicSetupDialog mic = FindObjectOfType<MicSetupDialog>();
+      if (mic != null && mic.IsShowing) { mic.Hide(); Log("dismissed mic dialog"); }
+      PhoneCameraHud camHud = FindObjectOfType<PhoneCameraHud>();
+      if (camHud != null && camHud.IsShowing) camHud.SetRecordingHide(true);
+      MicStatusHud micHud = FindObjectOfType<MicStatusHud>();
+      if (micHud != null && micHud.enabled) { micHud.enabled = false; micHud.gameObject.SetActive(false); }
+    } catch (Exception) { }
+  }
+
   void Shot(string label) {
     try {
-      string path = ShotDir + "/" + _shots.ToString("00") + "_" + label + ".png";
+      DismissSystemDialogs();
+      string path = _shotDir + "/" + _shots.ToString("00") + "_" + label + ".png";
       ScreenCapture.CaptureScreenshot(path);
       Log("SHOT " + _shots.ToString("00") + " " + label + " clicks=" + _clicks);
       _shots++;
@@ -61,8 +83,12 @@ public class TempP56Journey : MonoBehaviour {
     yield return new WaitForSeconds(6f);
     Shot("00_boot");
     // 1. Language card -> English.
-    yield return WaitFor(delegate { return FindObjectOfType<LanguageDialog>() != null; }, 30f, "language dialog");
+    yield return WaitFor(delegate {
+      DismissSystemDialogs(); // the mic offer would keep the language card queued
+      return FindObjectOfType<LanguageDialog>() != null;
+    }, 30f, "language dialog");
     yield return new WaitForSeconds(1f);
+    DismissSystemDialogs();
     if (!ClickButtonByName("EnBox")) Log("WARN: EnBox not found");
     yield return new WaitForSeconds(2f);
     Shot("01_language");
@@ -97,25 +123,21 @@ public class TempP56Journey : MonoBehaviour {
       }
       return false;
     }, 30f, "build gate found");
-    if (buildGate != null) yield return WalkToWorld(buildGate.transform.position, 3.0f, 120f, "build gate");
+    if (buildGate != null) yield return WalkToWorld(buildGate.transform.position, 3.0f, 60f, "build gate");
     yield return new WaitForSeconds(0.5f);
     Shot("03_build_gate");
+    // Step through the arch: the walk-in portal fires on its own (no UI).
+    if (buildGate != null) {
+      yield return WalkUntil(delegate {
+        BuildTowerArea a = FindObjectOfType<BuildTowerArea>();
+        return a != null && a.IsInside;
+      }, buildGate.transform.position, 0.8f, 90f, "through the build gate");
+    }
     BuildTowerArea area = null;
     yield return WaitFor(delegate {
       area = FindObjectOfType<BuildTowerArea>();
       return area != null && area.IsInside;
-    }, 10f, "build yard entered (transition)");
-    if (area != null && !area.IsInside) {
-      // Not inside yet: step through the arch and let the portal fire.
-      yield return WalkUntil(delegate {
-        area = FindObjectOfType<BuildTowerArea>();
-        return area != null && area.IsInside;
-      }, buildGate.transform.position, 0.8f, 60f, "through the gate");
-    }
-    yield return WaitFor(delegate {
-      area = FindObjectOfType<BuildTowerArea>();
-      return area != null && area.IsInside;
-    }, 60f, "build yard entered (transition)");
+    }, 30f, "build yard entered (transition)");
     Shot("04_transition");
     BuildTowerGame game = null;
     yield return WaitFor(delegate {
@@ -192,7 +214,10 @@ public class TempP56Journey : MonoBehaviour {
     yield return new WaitForSeconds(2f);
     Shot("16_return_hub");
     yield return WaitFor(delegate { return area != null && !area.IsInside; }, 30f, "area back outside");
-    // 9. Re-entry -> adopt the finished tower (fresh instance, no replay).
+    // 9. Re-entry: the ladder advanced when the child LEFT the completed round
+    // (advance-on-leave) -> the fresh instance stages the NEXT target with an
+    // empty pad. No stale tower, no auto-completion, no duplicate instance.
+    int expected = BuildTowerArea.NextTarget(target);
     yield return WalkUntil(delegate {
       Scene s = SceneManager.GetSceneByName(BuildTowerBuilder.SceneName);
       return s.IsValid() && s.isLoaded && FindObjectOfType<BuildTowerGame>() != game;
@@ -206,11 +231,17 @@ public class TempP56Journey : MonoBehaviour {
       return false;
     }, 120f, "fresh build yard");
     yield return WaitFor(delegate {
-      return game2 != null && game2.Current == BuildTowerGame.Phase.Success;
-    }, 60f, "adopt completed");
+      return game2 != null && game2.Current != BuildTowerGame.Phase.Success;
+    }, 60f, "fresh lesson (never a stale success)");
     yield return new WaitForSeconds(2f);
-    Shot("17_reentry_adopt");
-    Log("ADOPT count=" + game2.Count + " result=" + game2.ResultShown + " life=" + LifeState(area));
+    Shot("17_reentry_next_target");
+    int instances = FindObjectsOfType<BuildTowerGame>().Length;
+    Log("REENTRY target=" + game2.Target + " expected=" + expected
+      + " count=" + game2.Count + " phase=" + game2.Current
+      + " instances=" + instances + " life=" + LifeState(area));
+    if (game2.Target != expected) { Log("ERROR: ladder did not advance on leave"); _errors++; }
+    if (game2.Count != 0) { Log("ERROR: stale tower on re-entry"); _errors++; }
+    if (instances != 1) { Log("ERROR: duplicate BuildTowerGame instances"); _errors++; }
     Log("JOURNEY_END shots=" + _shots + " clicks=" + _clicks + " placed=" + _placed + " errors=" + _errors);
   }
 

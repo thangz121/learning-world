@@ -536,7 +536,8 @@ public class GameInstaller : MonoBehaviour {
         game.Build(builder, playerT,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
           _buildArea != null ? _buildArea.Lifecycle : null, buildTarget,
-          _buildArea != null ? (System.Action<int>)_buildArea.NotifyCompleted : null);
+          _buildArea != null ? (System.Action<int>)_buildArea.NotifyCompleted : null,
+          hand);
         if (_buildArea != null) _buildArea.BindGame(game);
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Build tower wiring failed (yard stays empty): " + e.Message, this);

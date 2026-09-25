@@ -86,6 +86,11 @@ public class BuildTowerArea : MonoBehaviour {
     return fallback;
   }
 
+  // The ladder advances ONLY when the child has LEFT the yard (mirror of the
+  // garden's IsInPlay gate for #2/#3): a completed round keeps its target while
+  // the child is still inside — so placing a spare block after success runs the
+  // gentle correction lesson instead of silently counting toward the next rung.
+  // The next entry then stages a FRESH life for the next target.
   void MaybeAdvanceTarget() {
     if (Lifecycle == null) return;
     if (Lifecycle.State != ActivityState.Completed) return;
@@ -208,6 +213,8 @@ public class BuildTowerArea : MonoBehaviour {
       RestoreObjective();
       try { await _transition.ExitMicroAsync(_sceneOps); } catch (Exception) { }
       IsInside = false;
+      // Rank up only after the child really left the yard (round is over).
+      MaybeAdvanceTarget();
       try { Debug.Log("[BuildTowerArea] exited (warp " + HubReturnPos.ToString("F1") + ").", this); }
       catch (Exception) { }
     } catch (Exception e) {
@@ -228,6 +235,9 @@ public class BuildTowerArea : MonoBehaviour {
   public bool TryExitForTests() {
     if (!CanExit) return false;
     IsInside = false;
+    // The live leave path advances the ladder here (never mid-round): a fresh
+    // lesson for the next rung is staged by the NEXT entry.
+    MaybeAdvanceTarget();
     return true;
   }
 
@@ -247,8 +257,8 @@ public class BuildTowerArea : MonoBehaviour {
         try { if (_hud != null) _hud.StopTunnel(); } catch (Exception) { }
       }
     }
-    if (!IsInside || IsBusy) return;
-    MaybeAdvanceTarget();
+    // No ladder tick here on purpose: the target advances on LEAVE (ExitToHub /
+      // TryExitForTests), exactly like the garden's IsInPlay gate in #2/#3.
   }
 
   void StopTunnelSoon() { _tunnelT = TunnelSeconds; }

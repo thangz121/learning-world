@@ -6,9 +6,9 @@ using UnityEditor;
 using UnityEngine;
 
 public static class TempBuildP56 {
-  public static void Build() { BuildTo("D:/Vscode/P56Build"); }
+  public static void Build() { BuildTo("E:/LWW/P56Build"); }
 
-  public static void BuildJourney() { BuildTo("D:/Vscode/P56JBuild"); }
+  public static void BuildJourney() { BuildTo("E:/LWW/P56JBuild"); }
 
   static void BuildTo(string outDir) {
     Directory.CreateDirectory(outDir);

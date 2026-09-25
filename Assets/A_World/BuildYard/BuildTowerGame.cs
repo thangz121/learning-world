@@ -54,6 +54,9 @@ public class TowerBlock : MonoBehaviour, IClickTarget {
 
   public bool IsAvailable { get { return State == BlockState.Available; } }
   public bool IsFlying { get { return _flying; } }
+  // The next-step cue (brief §30): exactly ONE available block gently bounces
+  // while the child still has blocks to place — the silent "take this one".
+  public bool IsHint;
 
   public void Bind(BuildTowerGame game, Transform hand) {
     Game = game;
@@ -243,11 +246,15 @@ public class TowerBlock : MonoBehaviour, IClickTarget {
       float s = 1f + 0.14f * Mathf.Sin(Mathf.PI * _bounceT);
       transform.localScale = _baseScale * s;
       if (_bounceT >= 1f) transform.localScale = _baseScale;
+      return;
     }
-    if (State == BlockState.Available && Game != null && Game.PlayerNear(transform.position, 2.4f)) {
-      float s = 1f + 0.06f * Mathf.Sin(Time.time * 4f);
+    if (State != BlockState.Available) return;
+    bool near = Game != null && Game.PlayerNear(transform.position, 2.4f);
+    if (IsHint || near) {
+      float amp = IsHint ? 0.08f : 0.05f;
+      float s = 1f + amp * Mathf.Sin(Time.time * 4f);
       transform.localScale = _baseScale * s;
-    } else if (State == BlockState.Available && _bounceT >= 1f) {
+    } else {
       transform.localScale = _baseScale;
     }
   }
@@ -381,6 +388,7 @@ public class BuildTowerGame : MonoBehaviour {
   int _shot;
 
   bool _saidBoard, _saidNumber, _saidCountWord, _saidToday, _saidBuild;
+  bool _saidBuilt;
   int _demoStage; // 0 walk to yard, 1 picking, 2 walk to pad, 3 placing, 4 hold, 5 confirm
   int _demoPlaced;
   float _demoHoldT;
@@ -408,10 +416,14 @@ public class BuildTowerGame : MonoBehaviour {
   int _sparkleSeed = 1300;
   TowerBlock _pulsing;
   float _pulseT;
+  TowerBlock _hint;
+
+  // Test seam: which block currently carries the silent next-step cue.
+  public TowerBlock HintForTests { get { return _hint; } }
 
   public void Build(BuildTowerBuilder builder, Transform player, SmartCamera cam,
       IAudioDirector audio, ActivityLifecycle life, int target,
-      Action<int> onCompleted = null) {
+      Action<int> onCompleted = null, Transform hand = null) {
     _builder = builder;
     _player = player;
     _cam = cam;
@@ -421,7 +433,12 @@ public class BuildTowerGame : MonoBehaviour {
     Target = BuildTowerBuilder.ClampTarget(target <= 0 ? BuildTowerBuilder.Target : target);
     _viz = player != null ? player.GetComponent<PlayerVisual>() : null;
     _mover = player != null ? player.GetComponent<ClickToMove>() : null;
-    _playerHand = player;
+    // The carried block rides the child's REAL fist bone (brief §13): the
+    // installer passes PlayerVisual.HandBone; the fallbacks keep tests and
+    // exotic rigs safe (never a block glued to the root while the hand bends).
+    _playerHand = hand;
+    if (_playerHand == null && _viz != null && _viz.HandBone != null) _playerHand = _viz.HandBone;
+    if (_playerHand == null) _playerHand = player;
     if (_builder == null) {
       Debug.LogWarning("[BuildTowerGame] no builder; activity parked.", this);
       return;
@@ -559,7 +576,27 @@ public class BuildTowerGame : MonoBehaviour {
       TickActing(dt);
       TickCamera(dt);
       TickJuice(dt);
+      UpdateBlockHint();
     } catch (Exception) { }
+  }
+
+  // The silent next-step cue: while the child still owes blocks (and is not
+  // already carrying one), exactly ONE available block breathes — the one the
+  // eye should land on. No UI, no text (brief §30 readability).
+  void UpdateBlockHint() {
+    bool want = (Current == Phase.Building || Current == Phase.Success)
+      && Carried == null && Count < Target;
+    TowerBlock first = null;
+    if (want) {
+      for (int i = 0; i < _blocks.Count; i++) {
+        TowerBlock b = _blocks[i];
+        if (b != null && b.IsAvailable) { first = b; break; }
+      }
+    }
+    if (first == _hint) return;
+    if (_hint != null) _hint.IsHint = false;
+    _hint = first;
+    if (_hint != null) _hint.IsHint = true;
   }
 
   void TickVoice(float dt) { if (_voice != null) _voice.Tick(dt); }
@@ -977,8 +1014,18 @@ public class BuildTowerGame : MonoBehaviour {
   }
 
   void TickRecap() {
-    if (_recapEn.Count <= 0 || _voice == null || !_voice.Idle || _voice.HasLine) return;
-    Say(_recapEn.Dequeue(), _recapVi.Dequeue());
+    if (_voice == null || !_voice.Idle || _voice.HasLine) return;
+    if (_recapEn.Count > 0) {
+      Say(_recapEn.Dequeue(), _recapVi.Dequeue());
+      return;
+    }
+    // Closer (brief §23): the teacher names the finished tower once the recap
+    // has landed ("You built a tower of nine!" — exactly the 6-word NPC cap).
+    if (!_saidBuilt) {
+      _saidBuilt = true;
+      Say("You built a tower of " + N(Target) + "!",
+        "Con xây được tháp " + Nvi(Target) + " khối!");
+    }
   }
 
   // ---- correction beats (deterministic timer) ---------------------------------------

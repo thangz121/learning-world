@@ -117,3 +117,38 @@ world + entry [x] orientation (teacher+board) [x] real demo [x] handoff
 [x] re-entry adopt [x] EditMode 657/652/0/5 [x] production build + boot smoke.
 [ ] standalone journey + evidence — **pending maynode** (user order).
 [ ] human visual review — pending.
+
+## 8. maynode build round (2026-09-25) — implementation closure, journey deferred
+
+User order for this round: finish building game #4 first; the full standalone
+journey runs only after the FINAL ASUS bundle is merged. No journey was run.
+
+Changes (all source-level, no screenshot/edit fakery):
+
+- Carry hand bug fixed: `BuildTowerGame.Build(..., Transform hand = null)`
+  resolves `PlayerVisual.HandBone`; `GameInstaller.BuildBuildTowerScene`
+  passes the resolved hand. The block now rides the fist (P56O).
+- Ladder timing fixed: `BuildTowerArea` advances the target only on LEAVE
+  (`ExitToHub`/`TryExitForTests`), so a completed round keeps its target while
+  the child is inside (spare block = correction) and re-entry stages the next
+  rung with a fresh lifecycle (P56P).
+- Gate approach glow `BuildYardGateHint` + silent next-block cue (P56Q/P56R).
+- Flows at target 1 and 7 + entry/exit clearance tests (P56S/P56T).
+- Journey drivers: per-driver flags (`-journey` tower, `-journey55` rabbit),
+  maynode output dirs, dev-dialog dismissal before every shot, editable
+  `-shot-dir`, and the re-entry leg now checks the next-rung fresh lesson (the
+  old leg expected a stale "adopt success" that the live ladder can never
+  produce). See `docs/JOURNEY_DRIVERS.md`.
+
+Verification (maynode, batch):
+
+- EditMode suite: **664 total / 659 passed / 0 failed / 5 skipped** (baseline
+  660/655 before this round + 4 tests, 0 regression).
+- Production standalone build (`TempBuildP56.Build`, 8 scenes incl.
+  BuildTowerScene): **Succeeded errors=0 warnings=42**; `LWE.World.dll` fresh
+  with all changes.
+- Boot smoke (1280x720 windowed, no `-journey`): `[Boot] hud='Chọn một cổng
+  nhé!'`, FACE_OK, **0 exceptions**, no `[P56J]` line (drivers inert).
+
+Remaining before PASS: merge the final ASUS bundle → full standalone journey
+(t3/t5/t9 evidence) → human visual review.

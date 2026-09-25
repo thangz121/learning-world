@@ -150,3 +150,43 @@ pick/carry/place; block state; real tower; 1-9; under/over handled; audio
 matches action; camera serves action; completion/reward/exit/return/re-entry;
 EditMode + Windows build + standalone journey + evidence; human visual review
 pending (TECHNICAL PASS / VISUAL REVIEW REQUIRED split in the report).
+
+## 14. maynode build round (2026-09-25): independent research + live-flow fixes
+
+Independent GitHub-first research (this round) — ADOPT / ADAPT / REFERENCE / REJECT:
+
+| source | verdict | what was taken |
+|---|---|---|
+| Arsenic-23/FortniteStyle-Building-System (grid snap + ghost valid/invalid + explicit build) | REFERENCE | confirms ghost + explicit confirm + occupancy; no networking/grid imported (the stack index IS the counting contract) |
+| adammyhre gist SimpleBuildPlacer (socket snapping, `skipSocketIfOccupied`) | REFERENCE | socket occupancy ≈ our one-block-per-slot rule; the free socket graph is rejected |
+| SST-Systems/Interaction-Objects (hand joint carry + outline hover) | ADAPT (idea) | the carried block rides the REAL fist bone (bug fixed below); proximity pulse is our highlight, no outline package |
+| Unity-Technologies/BossRoom `PickUpAction` (parent to hand socket + PositionConstraint) | REFERENCE | same hand-socket pattern via the existing `CharacterPresentation` hand bone |
+| tmorgner/UnityTutorialSystem `NextEventSelector` ("bouncing ball over the next step") | ADAPT | the silent next-block cue: one available block breathes while the child still owes blocks |
+| thefuntastic/Unity3d-Finite-State-Machine + blaz-cerpnjak FSM | REJECT dependency | the Tick-driven phase enum + ActivityLifecycle already covers the sequence; no package |
+| Cinemachine 3rd-person / austephner camera-collision | REJECT | open arena with authored shots; SmartCamera beats already suffice |
+
+Fixes from the live-flow audit (real bugs in the ASUS slice, fixed at source):
+
+1. **Carry followed the player ROOT** (the installer computed the hand but never
+   passed it), so the block dragged at the child's feet. `BuildTowerGame.Build`
+   now takes an optional hand and resolves `PlayerVisual.HandBone`; the
+   installer passes it. Pinned by P56O (the block tracks the fist across the
+   arena).
+2. **The target ladder advanced the instant Success fired**, so (a) the
+   overshoot correction could never trigger in live play (the spare counted
+   toward the next rung while the board still showed the old target), and
+   (b) a completed round leaked into the next rung mid-round. The advance now
+   happens ONLY when the child LEAVES the yard (`ExitToHub`), mirroring the
+   garden's IsInPlay gate for #2/#3: a completed round keeps its target, a
+   spare block runs the gentle correction, and leaving advances exactly one
+   rung with a fresh lifecycle for the next entry. Pinned by P56P.
+3. **Gate interaction cue (brief §2):** `BuildYardGateHint` — a soft breathing
+   gold glow on the threshold pad when the child enters the 5m approach radius.
+   Presentation only; the portal keeps the walk-in trigger + cold-start
+   debounce (passing by never fires it). Pinned by P56Q.
+4. **Silent next-step cue (brief §30):** exactly one available block breathes
+   while the child still owes blocks and no block is in hand. Pinned by P56R.
+5. Flows at target 1 and 7 added (P56S) + entry/exit clearance (P56T).
+
+Test count: CT-P56 is now 20 tests; full suite 664/659/0/5 (the merge with the
+maynode stair round had moved the baseline to 660 before this round).

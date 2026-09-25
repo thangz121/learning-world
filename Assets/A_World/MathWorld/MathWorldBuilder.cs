@@ -445,6 +445,15 @@ public class MathWorldBuilder : MonoBehaviour {
       buildPortal.areaId = BuildTowerArea.AreaId;
       BuildTowerPortal = buildPortal;
       Pad(parent, "BuildTowerPortalDisc", buildPortalGo.transform.localPosition, 3.0f, CourtyardSand);
+      // Gate interaction cue (brief §2): a soft breathing glow on the doorway
+      // pad when the child approaches. Presentation only — the portal owns the
+      // walk-in trigger and its cold-start debounce, so passing by never fires.
+      GameObject hintGo = new GameObject("BuildYardGateHint");
+      hintGo.transform.SetParent(parent);
+      hintGo.transform.position = buildPortalGo.transform.position;
+      BuildYardGateHint hint = hintGo.AddComponent<BuildYardGateHint>();
+      hint.Build(buildPortal);
+      BuildYardHint = hint;
     }
   }
 
@@ -1150,6 +1159,8 @@ public class MathWorldBuilder : MonoBehaviour {
   // landmark beside it (its height reflects the last completed target).
   public MicroWorldPortal BuildTowerPortal { get; private set; }
   public BuildYardLandmark BuildTowerLandmark { get; private set; }
+  // The gate's approach glow (brief §2 interaction cue; presentation only).
+  public BuildYardGateHint BuildYardHint { get; private set; }
   // Exit landing: 3.5m hub-side of the portal (fireRadius 1.8 + rearm 0.8 =
   // 2.6 -> the arrival can never instantly re-fire the portal).
   public static readonly Vector3 BuildYardHubReturnLocal = new Vector3(4.4f, 0f, -8.8f);

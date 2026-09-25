@@ -2199,3 +2199,44 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
   (xem §66/§67 cách làm); driver temp nằm ngoài commit, xoá sau khi xong.
 - maynode: đã push round này lên `origin/main`; game production chạy cho user
   xem; toàn bộ log/ảnh nằm trong `E:\LWW\P53JBuild\` (không commit).
+
+## 69. S3-P2Z14B — GAME #4 BUILD ROUND TRÊN MAYNODE (2026-09-25)
+
+- Lệnh user: "build cái tôi prompt trước" (brief 33 mục XÂY THÁP THEO SỐ) —
+  chưa chạy journey; sẽ đợi ASUS gửi 1 bundle CUỐI, gộp tất cả rồi journey
+  đầu-cuối. **KHÔNG push** cho tới khi user lệnh. Tôi đã chạy journey sớm 1 lần
+  khi chưa xong → user nhắc; dừng journey từ đây.
+- Cây hiện tại: nhánh `asus-merge-check` = main (stair round 2) + game#3
+  (79e9d60) + game#4 bundle 1504 (1679fbc + driver 8a2f7f8) + round này. Merge
+  1504 sạch, không conflict.
+- AUDIT + FIX 2 BUG THẬT của slice ASUS:
+  1. Carry bám ROOT player, không phải bàn tay (installer tính `hand` nhưng
+     không truyền): block lê dưới chân. Fix: `BuildTowerGame.Build(..., hand)`
+     + resolve `PlayerVisual.HandBone`; installer truyền hand. Pin P56O.
+  2. Ladder auto-advance NGAY khi Success → overshoot correction không bao giờ
+     chạy live (block dư tính sang rung kế với bảng cũ) + re-entry lệch rung.
+     Fix: advance CHỈ khi rời yard (`ExitToHub`/`TryExitForTests`) — đúng gate
+     IsInPlay của #2/#3; round xong giữ target (block dư = correction), rời
+     yard mới lên rung kế với lifecycle mới. Pin P56P.
+- ADD theo brief: `BuildYardGateHint` (glow vàng thở ở đệm cổng khi vào bán
+  kính 5m — presentation-only, portal vẫn giữ trigger + cold-start debounce;
+  P56Q) + next-block cue (đúng 1 block available nhấp nhô khi còn nợ khối, ẩn
+  khi đang cầm; P56R — học từ UnityTutorialSystem NextEventSelector).
+- TEST: +P56O/P/Q/R/S (flow target 1 + 7) /T (entry clear exit) → CT-P56 = 20
+  test. Suite **664/659/0/5** (baseline 660/655, 0 regression).
+- BUILD production `TempBuildP56.Build` (8 scenes): **Succeeded errors=0
+  warnings=42**, `LWE.World.dll` tươi (15:59). Boot smoke 1280x720 (không
+  `-journey`): `[Boot] hud='Chọn một cổng nhé!'`, FACE_OK, **0 exception**,
+  không dòng `[P56J]` (driver inert).
+- DRIVER (tooling, trong repo theo standing order): P55 đổi flag
+  `-journey` → `-journey55` (2 driver từng cùng boot → tranh click, khui ở
+  journey sớm); P56 thêm `-shot-dir` + `-lang en` path + tự ẩn Mic/PhoneCamera
+  HUD trước mỗi shot; leg re-entry nay kiểm tra "rung kế fresh lesson" (thay
+  vì chờ adopt cũ — live ladder không bao giờ adopt sau khi rời yard); build
+  driver P56 xuất `E:/LWW/P56Build` + `E:/LWW/P56JBuild`. Docs:
+  `docs/JOURNEY_DRIVERS.md` cập nhật. Blueprint/Report §14/§8 ghi research
+  độc lập + quyết định.
+- Journey sớm (trước khi user nhắc) khui đúng 2 lỗi tooling trên + card Mic
+  phủ màn hình suốt run — đã sửa, chưa chạy lại.
+- CHỜ: ASUS bundle cuối → merge → full standalone journey (t3/t5/t9 + evidence
+  §29) → human visual review. Chưa commit/push gì.

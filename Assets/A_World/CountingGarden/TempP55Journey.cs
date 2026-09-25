@@ -19,8 +19,10 @@ public static class TempP55JourneyBoot {
   static void Boot() {
     string[] args = Environment.GetCommandLineArgs();
     bool want = false;
+    // Driver-specific flag: both journey drivers are committed, so a plain
+    // "-journey" must never boot TWO drivers at once (they fight over clicks).
     foreach (string a in args) {
-      if (string.Equals(a, "-journey", StringComparison.OrdinalIgnoreCase)) { want = true; break; }
+      if (string.Equals(a, "-journey55", StringComparison.OrdinalIgnoreCase)) { want = true; break; }
     }
     if (!want) return;
     GameObject go = new GameObject("TempP55Journey");
@@ -30,7 +32,7 @@ public static class TempP55JourneyBoot {
 }
 
 public class TempP55Journey : MonoBehaviour {
-  const string ShotDir = "D:/Vscode/p55j-shots";
+  const string ShotDir = "E:/LWW/p55j-shots";
   int _shots;
   int _clicks;
   int _fed;
