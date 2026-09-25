@@ -152,6 +152,10 @@ public class GameInstaller : MonoBehaviour {
       BuildStairPlayScene(scene);
       return;
     }
+    if (scene.name == RabbitPlayBuilder.SceneName) {
+      BuildRabbitPlayScene(scene);
+      return;
+    }
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
@@ -401,6 +405,74 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] StairPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  // GAMEPLAY #3 ("Cho thỏ ăn đúng số"): the Counting Garden's carrot patch
+  // opens its OWN lazy scene (RabbitPlayScene) through the same micro slot as
+  // the two earlier arenas — built here on demand, never at boot, never stacked.
+  void BuildRabbitPlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "RabbitPlayWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] RabbitPlayScene has no RabbitPlayWorld root.", this);
+        return;
+      }
+      root.transform.position = RabbitPlayBuilder.WorldOffset;
+      RabbitPlayBuilder builder = root.GetComponent<RabbitPlayBuilder>();
+      if (builder == null) builder = root.AddComponent<RabbitPlayBuilder>();
+      // The round's mission comes from the area's ladder (progression/CLI);
+      // the boards stage that digit so the world always shows the mission.
+      int rabbitTarget = _gardenArea != null
+        ? _gardenArea.RabbitTarget : RabbitPlayBuilder.Target;
+      builder.BoardTarget = RabbitPlayBuilder.ClampTarget(rabbitTarget);
+      builder.Build();
+      CountingGardenArea area = _gardenArea;
+      if (area == null) {
+        try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        Vector3 entry = RabbitPlayBuilder.WorldOffset + RabbitPlayBuilder.EntryLocal;
+        area.SetPlay(entry, builder.Anchors, RabbitPlayBuilder.WorldOffset,
+          RabbitPlayBuilder.BoundX, RabbitPlayBuilder.BoundZ, RabbitPlayBuilder.FollowOffset,
+          DialogueLang.T(RabbitPlayBuilder.ObjectiveEn, RabbitPlayBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
+      }
+      // The activity (teacher + student + the child's feeding). Lifecycle is
+      // the Math-side area's; the game plays the area's current target (one
+      // patch, many targets — the same ladder discipline as gameplay #2).
+      try {
+        RabbitFeed game = root.AddComponent<RabbitFeed>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        Transform hand = null;
+        try {
+          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
+              && _activeBuilder.PlayerViz.HandBone != null) {
+            hand = _activeBuilder.PlayerViz.HandBone;
+          } else if (_activeBuilder != null) {
+            hand = _activeBuilder.PlayerHand;
+          }
+        } catch (System.Exception) { }
+        if (hand == null) hand = playerT;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
+          _gardenArea != null ? _gardenArea.RabbitLifecycle : null, rabbitTarget);
+        if (_gardenArea != null) _gardenArea.BindRabbitGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Rabbit feed wiring failed (patch stays empty): " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Rabbit Play scene built (gameplay #3) entry="
+          + (RabbitPlayBuilder.WorldOffset + RabbitPlayBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] RabbitPlayScene build failed: " + e.Message, this);
     }
   }
 

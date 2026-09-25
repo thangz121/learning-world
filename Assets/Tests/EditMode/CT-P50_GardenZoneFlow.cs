@@ -55,8 +55,9 @@ public class CT_P50_GardenZoneFlow {
 
   // A. Six zones, one door each: every plot carries a click pad with a
   // collider (ClickRouter's door) that never touches the NavMesh; camera pair
-  // present; the demo theatre (index 2) and the stair hill (index 5) have play
-  // enabled — S3-P2Z12 gameplay #2 re-pin, deliberately two staged plots.
+  // present; the demo theatre (index 2), the stair hill (index 5) and the
+  // carrot patch (index 0) have play enabled — gameplay #3 re-pin,
+  // deliberately three staged plots.
   [Test] public void P50A_ZoneSpotsBuilt() {
     GameObject garden;
     CountingGardenBuilder builder;
@@ -82,15 +83,18 @@ public class CT_P50_GardenZoneFlow {
           "spot " + z + " rides its plot mouth");
         if (spot.playEnabled) playCount++;
       }
-      Assert.AreEqual(2, playCount, "two staged plots open play (ball arena + stair hill)");
+      Assert.AreEqual(3, playCount, "three staged plots open play (ball arena + stair hill + rabbit)");
       Assert.IsTrue(spots[2].playEnabled, "the play plot is the demo theatre (index 2)");
       Assert.IsTrue(spots[5].playEnabled, "the stair hill opens its own lazy play scene");
+      Assert.IsTrue(spots[0].playEnabled, "the carrot patch opens its own rabbit play scene");
       // Each staged plot names its scene; skeleton plots stay empty.
       Assert.AreEqual(CountingPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[2]),
         "the demo theatre opens the reference ball arena");
       Assert.AreEqual(StairHillBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[5]),
         "the stair hill opens StairPlayScene");
-      Assert.AreEqual(CountingPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[0]),
+      Assert.AreEqual(RabbitPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[0]),
+        "the carrot patch opens RabbitPlayScene");
+      Assert.AreEqual(CountingPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[1]),
         "skeleton plots fall back to the default arena name (never a lookup failure)");
       Assert.AreEqual(DialogueLang.T("Counting stage", "Sân đếm"), GardenZoneSpot.NameOf(2),
         "zone names follow the plot identity (language-agnostic pin)");
@@ -373,8 +377,14 @@ public class CT_P50_GardenZoneFlow {
       Assert.IsFalse(area.TryEnterPlayForTests(), "cannot play from outside the garden");
       Assert.IsTrue(area.TryEnterForTests(), "enter the garden");
       Assert.IsFalse(area.TryEnterPlayForTests(), "cannot play without a focused zone");
-      area.FocusZone(0);
+      area.FocusZone(1);
       Assert.IsFalse(area.TryEnterPlayForTests(), "a skeleton plot never opens play");
+      // Gameplay #3: the carrot patch is staged and opens its panel at once
+      // (no garden try-run — the full lesson runs inside the rabbit arena).
+      area.FocusZone(0);
+      Assert.IsFalse(area.AwaitingDemo, "the rabbit plot needs no garden try-run");
+      Assert.IsTrue(area.TryEnterPlayForTests(), "the carrot patch opens play");
+      Assert.IsTrue(area.TryExitPlayForTests(), "back to the garden before the next focus");
       area.FocusZone(2);
       Assert.IsTrue(area.CanExit, "exit door available before play");
       Assert.IsTrue(area.TryEnterPlayForTests(), "staged plot opens play");
