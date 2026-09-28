@@ -327,21 +327,21 @@ public class DeliveryZone : MonoBehaviour, IClickTarget {
 [DisallowMultipleComponent]
 public class DeliveryGame : MonoBehaviour {
   public enum Phase {
+    Wait,      // the child walks to the marked play spot; nothing is taught yet
     Intro,     // teacher reads the order (Mia needs N apples)
-    Demo,      // the student fetches and hands over N apples
-    Handoff,   // "Now it's your turn!" + the demo crate tidies home
     Delivering,// the child picks, carries and hands over; the teacher counts
     Success,   // the order is complete — celebrated, field stays open
     Correct,   // one too many: a gentle counting correction, then Success
   }
 
   // Beat timings (one place; deterministic for Tick tests).
-  const float DemoHold = 0.7f;           // teacher count beat per demo apple
   const float OvershootNagCooldown = 5f;
   const float UnderNudgeCooldown = 8f;
   const float UnderDwell = 2.0f;         // settled-below-order before a nudge
   const float UnderNearXZ = 5.0f;        // nudge only near the work
-  const float WalkSpeed = 0.85f;         // student legs
+  // S3-P2Z19 (user round): the guidance waits for the area's arrival reveal,
+  // then asks the child onto the marked spot; the question is read ONLY there.
+  const float WaitCallSeconds = 2.4f;
   public static readonly Vector3 FollowOffset = DeliveryBuilder.FollowOffset;
 
   // Number words: Vietnamese first; English prepared alongside. Every composed
@@ -365,15 +365,14 @@ public class DeliveryGame : MonoBehaviour {
     return string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
   }
 
-  public Phase Current { get; private set; } = Phase.Intro;
+  public Phase Current { get; private set; } = Phase.Wait;
   public int Target { get; private set; } = DeliveryBuilder.Target;
   public int Count { get; private set; }
   public DeliveryItem Carried { get; private set; }
   public int Overshoots { get; private set; }
   public int UndershootNudges { get; private set; }
   public int WrongItemRefusals { get; private set; }
-  public int DemoApplesDelivered { get { return _demoDelivered; } }
-  public bool IntroDone { get { return Current != Phase.Intro; } }
+  public bool IntroDone { get { return Current != Phase.Wait && Current != Phase.Intro; } }
   public bool ResultShown { get { return _result != null && _result.activeSelf; } }
   public bool ExitCueShown { get { return _exitCue != null && _exitCue.activeSelf; } }
   public int ItemCountTotal { get { return _items.Count; } }
@@ -409,7 +408,6 @@ public class DeliveryGame : MonoBehaviour {
 
   readonly List<DeliveryItem> _items = new List<DeliveryItem>();
   readonly List<DeliveryItem> _delivered = new List<DeliveryItem>();
-  readonly Queue<DeliveryItem> _resetQueue = new Queue<DeliveryItem>();
 
   public float PickDelay = 0.45f;
   public float DeliverDelay = 0.45f;
@@ -421,13 +419,9 @@ public class DeliveryGame : MonoBehaviour {
   bool _followHanded;
   int _shot;
 
-  bool _saidBoard, _saidOrder, _saidCountWord, _saidGo, _saidPick;
-  int _demoStage; // 0 walk to stall, 1 picking, 2 walk to receiver, 3 delivering, 4 hold, 5 confirm
-  int _demoDelivered;
-  float _demoHoldT;
-  bool _saidWatch, _saidYes;
-  bool _saidTurn, _saidTask;
-  bool _studentReturned;
+  bool _saidBoard, _saidOrder;
+  bool _waitCalled;      // the walk-in guidance was spoken
+  float _ringPulseT;
   float _victoryT = -1f;
   float _resultPopT = 1f;
   float _boardPulseT;
@@ -444,7 +438,6 @@ public class DeliveryGame : MonoBehaviour {
   float _underCooldownT;
   float _underT;
   float _wrongCooldownT;
-  float _resetT;
   bool _saidExit;
 
   // Receiver life: notice/face tracking + a receive gesture window.
@@ -458,7 +451,8 @@ public class DeliveryGame : MonoBehaviour {
 
   public void Build(DeliveryBuilder builder, Transform player, SmartCamera cam,
       IAudioDirector audio, ActivityLifecycle life, int target,
-      Action<int> onCompleted = null, string receiverVoiceId = null) {
+      Action<int> onCompleted = null, string receiverVoiceId = null,
+      Transform hand = null) {
     _builder = builder;
     _player = player;
     _cam = cam;
@@ -469,7 +463,11 @@ public class DeliveryGame : MonoBehaviour {
     Target = DeliveryBuilder.ClampTarget(target <= 0 ? DeliveryBuilder.Target : target);
     _viz = player != null ? player.GetComponent<PlayerVisual>() : null;
     _mover = player != null ? player.GetComponent<ClickToMove>() : null;
-    _playerHand = player;
+    // The carried apple rides the child's REAL fist bone (same lesson as #4):
+    // the installer passes PlayerVisual.HandBone; fallbacks keep tests safe.
+    _playerHand = hand;
+    if (_playerHand == null && _viz != null && _viz.HandBone != null) _playerHand = _viz.HandBone;
+    if (_playerHand == null) _playerHand = player;
     if (_builder == null) {
       Debug.LogWarning("[DeliveryGame] no builder; activity parked.", this);
       return;
@@ -618,9 +616,8 @@ public class DeliveryGame : MonoBehaviour {
         if (_items[i] != null) _items[i].TickForTests(dt);
       }
       switch (Current) {
+        case Phase.Wait: TickWait(dt); break;
         case Phase.Intro: TickIntro(dt); break;
-        case Phase.Demo: TickDemo(dt); break;
-        case Phase.Handoff: TickHandoff(dt); break;
         case Phase.Delivering: TickDelivering(dt); break;
         case Phase.Success: TickSuccess(dt); break;
         case Phase.Correct: TickCorrect(dt); break;
@@ -638,211 +635,95 @@ public class DeliveryGame : MonoBehaviour {
   }
   void To(Phase next) { Current = next; _phaseT = 0f; }
 
-  // ---- teacher intro ----------------------------------------------------------
-  // The board holds the order: every line below is composed from the target, so
-  // the SAME script reads 1..9 without a second lesson.
+  // ---- wait on the marked play spot (S3-P2Z19 user round) -----------------------
+  // "Tất cả các game sau khi đã vào arena thì không phát lại demo nữa mà chỉ
+  // chờ player bước đến đúng vị trí chơi thì bắt đầu đọc câu hỏi." The teacher
+  // idles, the spot pulses, the guidance line asks the child over; the question
+  // is read ONLY when the child actually stands on the spot.
+
+  Vector3 PlaySpotWorld() {
+    if (_builder != null && _builder.PlaySpot != null)
+      return _builder.PlaySpot.transform.position;
+    return _root != null ? _root.TransformPoint(DeliveryBuilder.PlaySpotLocal) : Vector3.zero;
+  }
+
+  bool PlayerOnSpot() {
+    if (_player == null) return false;
+    Vector3 p = _player.position;
+    Vector3 q = PlaySpotWorld();
+    float dx = p.x - q.x, dz = p.z - q.z;
+    return dx * dx + dz * dz <= DeliveryBuilder.PlaySpotRadius * DeliveryBuilder.PlaySpotRadius;
+  }
+
+  void TickWait(float dt) {
+    _phaseT += dt;
+    FaceTowards(_teacher, PlayerLocal(), dt, 3f);
+    FaceTowards(_student, PlayerLocal(), dt, 2.5f);
+    PulsePlayRing(dt);
+    // The "Come here!" sign hides once the child is close — never blocks the frame.
+    if (_builder != null && _builder.PlaySign != null) {
+      bool near = PlayerNear(PlaySpotWorld(), 5.5f);
+      if (_builder.PlaySign.activeSelf == near) _builder.PlaySign.SetActive(!near);
+    }
+    if (!_waitCalled && _phaseT >= WaitCallSeconds) {
+      _waitCalled = true;
+      Wave(_teacher);
+      Say("Step into the play spot!", "Hãy bước vào vị trí chơi nhé!");
+      Point(_teacher, PlaySpotWorld(), 2.4f);
+    }
+    if (PlayerOnSpot()) StartQuestion();
+  }
+
+  void StartQuestion() {
+    To(Phase.Intro);
+    Log("question read (child on the play spot): order " + Target);
+  }
+
+  void PulsePlayRing(float dt) {
+    if (_builder == null || _builder.PlayRing == null) return;
+    _ringPulseT += dt;
+    float s = 1f + 0.07f * Mathf.Sin(_ringPulseT * 3.4f);
+    try { _builder.PlayRing.transform.localScale = new Vector3(2.5f * s, 0.01f, 2.5f * s); }
+    catch (Exception) { }
+  }
+
+  // ---- teacher intro (MINIMAL — S3-P2Z20 user: "đừng hướng dẫn tận răng") ----
+  // The board shows the order; the teacher only asks the child to look and
+  // states the job. Two short lines, then the child works it out.
 
   void TickIntro(float dt) {
     _phaseT += dt;
     float t = _phaseT;
     FaceTowards(_teacher, BoardLocal(), dt, 4f);
     FaceTowards(_student, TeacherLocal(), dt, 3f);
-    if (!_saidBoard && t >= 1.2f) {
+    if (!_saidBoard && t >= 0.5f) {
       _saidBoard = true;
       Wave(_teacher);
       Say("Look at the board!", "Nhìn lên bảng nhé!");
       Point(_teacher, BoardWorld(), 2.4f);
     }
-    if (!_saidOrder && t >= 3.4f) {
+    if (!_saidOrder && t >= 2.2f) {
       _saidOrder = true;
-      Say("Mia needs " + N(Target) + " " + Apples(Target) + "!",
-        "Mia cần " + Nvi(Target) + " quả táo!");
+      // S3-P2Z23 (user: "không nói đây là số mấy, trẻ tự nhận biết"): the order
+      // count is not spoken — the board shows it.
+      Say("Deliver to Mia!", "Giao cho Mia nhé!");
       Point(_teacher, BoardWorld(), 2.2f);
-    }
-    if (!_saidCountWord && t >= 5.6f) {
-      _saidCountWord = true;
-      Say(AppleEn[Target - 1], AppleVi[Target - 1]);
       PulseBoard(1.4f);
     }
-    if (!_saidPick && t >= 7.2f) {
-      _saidPick = true;
-      FaceTowards(_teacher, StallLocal(), dt, 4f);
-      Say("Pick " + N(Target) + " " + Apples(Target) + "!",
-        "Lấy " + Nvi(Target) + " quả táo nhé!");
-      Point(_teacher, StallWorld(), 2.8f);
-    }
-    if (!_saidGo && t >= 10.2f) {
-      _saidGo = true;
-      Wave(_teacher);
-      Say("Let's deliver!", "Cùng đi giao nhé!");
-    }
-    if (t >= 11.4f) {
-      To(Phase.Demo);
-      SetShot(1);
-      FaceTowards(_student, StallLocal(), dt, 4f);
-    }
+    if (t >= 3.6f) StartDelivering();
   }
 
-  // ---- student demonstration ---------------------------------------------------
-  // One apple at a time, for real: walk to the stall -> pick (arc to the
-  // student's fist) -> walk to the booth -> hand over (arc to Mia's hands, she
-  // reacts and thanks, teacher counts) -> next. No teleport, no snaps.
-  void TickDemo(float dt) {
-    _phaseT += dt;
-    if (!_saidWatch) {
-      _saidWatch = true;
-      Say("Watch your friend!", "Xem bạn làm nhé!");
-      Point(_teacher, StallWorld(), 2.4f);
-    }
-    DeliveryItem item = _demoDelivered < _items.Count ? _items[_demoDelivered] : null;
-    switch (_demoStage) {
-      case 0:
-        FaceTowards(_student, StallLocal(), dt, 5f);
-        if (_phaseT >= 1.2f && WalkTo(_student, DeliveryBuilder.StallStand, dt)) {
-          _demoStage = 1;
-          if (item != null) {
-            item.SetHand(StudentHand());
-            FaceTowards(_student, StallLocal(), dt, 5f);
-            item.BeginCarry(0.3f);
-          }
-        }
-        break;
-      case 1:
-        if (item == null || item.State == DeliveryItem.ItemState.Carried) {
-          _demoStage = 2;
-        }
-        break;
-      case 2:
-        FaceTowards(_student, ReceiverLocal(), dt, 5f);
-        if (WalkTo(_student, DeliveryBuilder.ReceiverStand, dt)) {
-          _demoStage = 3;
-          if (item != null) {
-            item.OnDelivered = OnDemoDelivered;
-            item.BeginDeliver(ReceiverHandLocal(), CrateSlotLocal(_demoDelivered), _demoDelivered, 0.3f);
-          }
-        }
-        break;
-      case 3:
-        if (item == null || item.State == DeliveryItem.ItemState.Delivered) {
-          _demoStage = 4;
-          _demoHoldT = DemoHold;
-        }
-        break;
-      case 4:
-        _demoHoldT -= dt;
-        if (_demoHoldT <= 0f) {
-          _demoDelivered++;
-          if (_demoDelivered < Target) { _demoStage = 0; }
-          else { _demoStage = 5; _demoHoldT = 1.6f; }
-        }
-        break;
-      default:
-        FaceTowards(_student, PlayerLocal(), dt, 3f);
-        _demoHoldT -= dt;
-        if (!_saidYes && _demoHoldT <= 1.0f) {
-          _saidYes = true;
-          Say("Yes! " + Cap(N(Target)) + " " + Apples(Target) + "!",
-            "Đúng rồi! " + Cap(Nvi(Target)) + " quả táo!");
-          Point(_teacher, ReceiverWorld(), 2.2f);
-          CelebrateActor(_student, soft: true);
-          CelebrateReceiver();
-          Sparkle(ReceiverWorld() + new Vector3(0f, 0.9f, 0f), 8, 91, 0.4f);
-        }
-        if (_demoHoldT <= 0f) {
-          StartResetCrate();
-          To(Phase.Handoff);
-        }
-        break;
-    }
+  void StartDelivering() {
+    To(Phase.Delivering);
+    Follow();
+    _followHanded = true;
+    if (_life != null) { try { _life.Begin("question read"); } catch (Exception) { } }
+    _lastPos = _player != null ? _player.position : Vector3.zero;
+    try { Debug.Log("[DeliveryGame] child control (delivering phase).", this); } catch (Exception) { }
   }
 
-  void OnDemoDelivered() {
-    ReceiveGesture();
-    ReactReceiver();
-    PlaySfx("give");
-    int k = Mathf.Min(_demoDelivered + 1, Target);
-    Say(AppleEn[k - 1], AppleVi[k - 1]);
-    Point(_teacher, ReceiverWorld(), 1.6f);
-  }
-
-  // The demo crate tidies back to the stall (gentle arcs, staggered) so the
-  // child starts from an empty crate and delivers the order themselves.
-  void StartResetCrate() {
-    _resetQueue.Clear();
-    _resetT = 0f;
-    for (int i = 0; i < _delivered.Count; i++) {
-      DeliveryItem b = _delivered[i];
-      if (b != null) _resetQueue.Enqueue(b);
-    }
-    _delivered.Clear();
-    Count = 0;
-  }
-
-  void TickResetCrate(float dt) {
-    if (_resetQueue.Count <= 0) return;
-    _resetT -= dt;
-    if (_resetT > 0f) return;
-    _resetT = 0.09f;
-    DeliveryItem b = _resetQueue.Dequeue();
-    if (b != null && b.State != DeliveryItem.ItemState.Available) {
-      b.SetHand(_playerHand);
-      b.OnDelivered = null;
-      b.OnParked = null;
-      b.BeginReturnHome();
-    }
-  }
-
-  // Safety net: by the time the child gets control, every apple is pickable.
-  void FinishResetCrate() {
-    _resetQueue.Clear();
-    for (int i = 0; i < _items.Count; i++) {
-      DeliveryItem b = _items[i];
-      if (b == null) continue;
-      b.SetHand(_playerHand);
-      b.OnDelivered = null;
-      b.OnParked = null;
-      if (b.State != DeliveryItem.ItemState.Available) b.ResetHome();
-    }
-    Count = 0;
-    _delivered.Clear();
-  }
-
-  // ---- handoff ------------------------------------------------------------------
-
-  void TickHandoff(float dt) {
-    _phaseT += dt;
-    float t = _phaseT;
-    TickResetCrate(dt);
-    if (!_saidTurn && t >= 0.4f) {
-      _saidTurn = true;
-      FaceTowards(_teacher, PlayerLocal(), dt, 5f);
-      Say("Now it's your turn!", "Giờ đến lượt con!");
-    }
-    if (!_saidTask && t >= 2.4f) {
-      _saidTask = true;
-      Say("Mia needs " + N(Target) + " " + Apples(Target) + "!",
-        "Mia cần " + Nvi(Target) + " quả táo!");
-      Point(_teacher, ReceiverWorld(), 2.6f);
-    }
-    // The student walks back beside the teacher so he never blocks the booth.
-    if (!_studentReturned) {
-      if (WalkTo(_student, DeliveryBuilder.StudentReturn, dt)) _studentReturned = true;
-      if (t >= 8.0f) _studentReturned = true; // safety: the lesson never stalls
-    } else {
-      FaceTowards(_student, ReceiverLocal(), dt, 2.5f);
-    }
-    if (!_followHanded && t >= 4.2f) {
-      _followHanded = true;
-      Follow();
-      if (_life != null) { try { _life.Begin("handoff done"); } catch (Exception) { } }
-    }
-    if (_followHanded && Current == Phase.Handoff && (_studentReturned || t >= 8.0f)) {
-      FinishResetCrate();
-      To(Phase.Delivering);
-      _lastPos = _player != null ? _player.position : Vector3.zero;
-      try { Debug.Log("[DeliveryGame] child control (delivering phase).", this); } catch (Exception) { }
-    }
-  }
+  // (S3-P2Z19: the in-arena student demo + handoff beats are GONE — the garden
+  // miniature teaches once; the arena reads the question on the play spot.)
 
   // ---- the child's delivery ------------------------------------------------------
   // Real actions in the world: click an apple (walk -> bend -> carry in the
@@ -877,6 +758,8 @@ public class DeliveryGame : MonoBehaviour {
       if (_wrongCooldownT <= 0f) {
         _wrongCooldownT = 4f;
         WrongItemRefusals++;
+        // S3-P2Z33: warm "not that one" feedback.
+        GameJuice.WrongFx(null, _fx, ReceiverWorld());
         Say("Not an apple!", "Không phải táo!");
         Log("wrong item refused (kind=" + item.Kind + ")");
       }
@@ -951,6 +834,8 @@ public class DeliveryGame : MonoBehaviour {
     To(Phase.Success);
     PlaySfx("success");
     Sparkle(ReceiverWorld() + new Vector3(0f, 1.0f, 0f), 14, _sparkleSeed++, 0.8f);
+    // S3-P2Z33: layered win feedback.
+    GameJuice.CorrectFx(_fx, ReceiverWorld() + new Vector3(0f, 1.0f, 0f), false);
     Say(Cap(N(Target)) + " " + Apples(Target) + "! Well done!",
       Cap(Nvi(Target)) + " quả táo! Giỏi!");
     // The recap 1..Target waits its turn in the pacer's single slot (same
@@ -991,27 +876,10 @@ public class DeliveryGame : MonoBehaviour {
   void TickDelivering(float dt) {
     _phaseT += dt;
     if (_overshootNagT > 0f) _overshootNagT -= dt;
-    if (_underCooldownT > 0f) _underCooldownT -= dt;
     if (_wrongCooldownT > 0f) _wrongCooldownT -= dt;
     TickDeliverProximity();
-    // Undershoot nudge: settled BELOW the order earns a gentle "how many
-    // more" — near the work only, never across the arena, never spam.
-    bool moving = IsPlayerMoving();
-    if (Count < Target && !moving && NearWork()) {
-      _underT += dt;
-      if (_underT >= UnderDwell && _underCooldownT <= 0f) {
-        _underCooldownT = UnderNudgeCooldown;
-        _underT = 0f;
-        UndershootNudges++;
-        int remain = Target - Count;
-        Say(Cap(N(remain)) + " more " + Apples(remain) + "!",
-          "Còn " + Nvi(remain) + " quả nữa nhé!");
-        Point(_teacher, Count == 0 ? StallWorld() : ReceiverWorld(), 2.0f);
-        Log("undershoot at " + Count + " (" + remain + " more)");
-      }
-    } else {
-      _underT = 0f;
-    }
+    // S3-P2Z22 (user: no "còn N nữa" hint — the child thinks). The undershoot
+    // nudge is GONE; the order board shows the count.
     _lastPos = _player != null ? _player.position : Vector3.zero;
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
@@ -1164,14 +1032,16 @@ public class DeliveryGame : MonoBehaviour {
 
   void TickCamera(float dt) {
     if (_cameraDone) return;
-    if (_followHanded && Current != Phase.Success) return;
+    // After a correction sets _followHanded, stop re-issuing the success shot
+    // (S3-P2Z17 journey finding: camera stuck in Interaction blocked the exit).
+    if (_followHanded) return;
     if (!_shotIssued) {
       // Let the area's arrival reveal (2.2s) play first, then hold the
       // teaching frame while the teacher reads the order.
       if (Current == Phase.Intro && _phaseT >= 2.0f) IssueShot();
       return;
     }
-    if (Current != Phase.Intro && Current != Phase.Demo && Current != Phase.Success) return;
+    if (Current != Phase.Intro && Current != Phase.Success) return;
     _shotT -= dt;
     if (_shotT <= 0f) IssueShot();
   }
@@ -1250,13 +1120,6 @@ public class DeliveryGame : MonoBehaviour {
 
   // ---- actor motion / gestures (same acting language as #1-#4) ----------------------
 
-  Transform StudentHand() {
-    if (_student == null) return _playerHand;
-    if (_student.HandBone != null) return _student.HandBone;
-    if (_student.CarryAnchor != null) return _student.CarryAnchor;
-    return _playerHand;
-  }
-
   Vector3 ReceiverHandLocal() {
     Vector3 world = ReceiverHandWorld();
     return _root != null ? _root.InverseTransformPoint(world) : world;
@@ -1273,19 +1136,6 @@ public class DeliveryGame : MonoBehaviour {
 
   Vector3 CrateSlotLocal(int i) {
     return DeliveryBuilder.CrateSlot(i, DeliveryBuilder.BoothCounter);
-  }
-
-  bool WalkTo(LessonActor a, Vector3 targetLocal, float dt) {
-    if (a == null || a.Root == null) return true;
-    Vector3 p = a.Root.transform.localPosition;
-    Vector3 flat = new Vector3(targetLocal.x - p.x, 0f, targetLocal.z - p.z);
-    float dist = flat.magnitude;
-    if (dist <= 0.12f) return true;
-    FaceTowards(a, targetLocal, dt, 6f);
-    float step = Mathf.Min(WalkSpeed * dt, dist);
-    Vector3 dir = dist > 0.0001f ? flat / dist : Vector3.zero;
-    a.Root.transform.localPosition = new Vector3(p.x + dir.x * step, p.y, p.z + dir.z * step);
-    return false;
   }
 
   void FaceTowards(LessonActor a, Vector3 targetLocal, float dt, float rate) {

@@ -30,7 +30,9 @@ public class RabbitPlayBuilder : MonoBehaviour {
   // Follow camera: north of the child, looking south INTO the arena (the
   // lesson stage faces north) — same reading direction as the two earlier
   // arenas.
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 4.1f, -5.3f);
+  // S3-P2Z23 (user: "cao quá"): lowered from 4.1 so the bowl/patch read at eye
+  // level instead of a steep top-down.
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 3.1f, -5.4f);
 
   public const string ObjectiveEn = "Feed the Bunny";
   public const string ObjectiveVi = "Cho Thỏ Ăn";
@@ -43,6 +45,13 @@ public class RabbitPlayBuilder : MonoBehaviour {
   // The round's mission comes from the area's ladder (progression/CLI); the
   // boards stage that digit so the world always shows the mission.
   public int BoardTarget = Target;
+
+  // S3-P2Z26 (user: random numbers + +/- within 10): the board shows the ROUND
+  // EXPRESSION. kind: 0 = plain number, 1 = a+b, 2 = a-b. Defaults render the
+  // plain BoardTarget digit, so every existing build/test path is untouched.
+  public int QuestionKind;
+  public int QuestionA = Target;
+  public int QuestionB;
 
   public static int ClampTarget(int t) {
     if (t < 1) return 1;
@@ -73,16 +82,42 @@ public class RabbitPlayBuilder : MonoBehaviour {
   // The carrot patch (west) and the rabbit (east): a ~3m loop between them.
   public static readonly Vector3 PatchCenter = new Vector3(-1.6f, 0f, 3.0f);
   public static readonly Vector3 PatchStand = new Vector3(-1.5f, 0f, 1.55f);
-  public static readonly Vector3 RabbitHome = new Vector3(2.3f, 0f, 3.9f);
-  public static readonly Vector3 BowlPos = new Vector3(2.3f, 0f, 3.1f);
-  public static readonly Vector3 FeedStand = new Vector3(1.5f, 0f, 2.2f);
+  // S3-P2Z19 (user round: "đẩy bunny + bát ăn lên nóc hutch"): the bunny and
+  // its bowl sit ON the hutch roof (roof top ~1.31m); the child feeds from the
+  // ground beside the hutch, reaching up. The bowl is the counter now — fed
+  // carrots visibly pile in it (the old pip board is gone).
+  public const float RoofTopY = 1.34f;
+  public static readonly Vector3 RabbitHome = new Vector3(3.35f, RoofTopY, 4.15f);
+  public static readonly Vector3 BowlPos = new Vector3(3.35f, RoofTopY, 3.42f);
+  public static readonly Vector3 FeedStand = new Vector3(2.25f, 0f, 2.55f);
+  // The play spot: the child walks here first; the question is read on arrival
+  // (same contract as the stair arena's marked circle).
+  public static readonly Vector3 PlaySpotLocal = new Vector3(0.4f, 0f, 1.4f);
+  public const float PlaySpotRadius = 1.7f;
 
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
   public MicroWorldPortal ExitPortal { get; private set; }
   public GameObject NumberBoard { get; private set; } // target digit (pulses)
   public GameObject Result { get; private set; }      // target + tick (hidden)
-  public GameObject[] CountPips { get; private set; }
+  // S3-P2Z19: the marked play spot (the question is read only on arrival).
+  public GameObject PlaySpot { get; private set; }
+  public GameObject PlayRing { get; private set; }
+  // S3-P2Z20: the floating "Come here!" sign (hidden as the child arrives so it
+  // never blocks the lesson frame).
+  public GameObject PlaySign { get; private set; }
+  // S3-P2Z23: the "Nộp bài" (submit) bell at the work area; the child rings it
+  // to turn the bowl's count in — right or wrong.
+  // S3-P2Z24 (user round: "2 bảng tranh chỗ, chỗ nộp bài khó nhìn"): the old
+  // spot (1.5, 2.95) sat right beside the result board — the two boards
+  // physically overlapped. S3-P2Z32: the previous spot (-2.6, 0.6) sat BETWEEN
+  // the follow camera and the carrot patch, so a click aimed at a patch carrot
+  // hit the submit zone first — the child stood still (never picked) and stray
+  // clicks rang the bell (journey finding). The bell now stands on its own
+  // marked pad on the open plaza, SOUTH-WEST, clear of the patch sightline,
+  // every board AND of the three camera rigs (z -2.4..-1.0, x 0.4..2.6).
+  public Transform SubmitAnchor { get; private set; }
+  public static readonly Vector3 SubmitLocal = new Vector3(-4.8f, 0f, -0.6f);
   public List<GameObject> Carrots { get; private set; } = new List<GameObject>();
   public Vector3[] CarrotHomes { get; private set; }
   public GameObject RabbitRoot { get; private set; }
@@ -101,7 +136,21 @@ public class RabbitPlayBuilder : MonoBehaviour {
   // Scene entry (GameInstaller calls this after the lazy load).
   public void Build() {
     BuildContent(transform);
+    // S3-P2Z17 journey bug: low decor render meshes bake into the NavMesh and
+    // carved the plaza into islands (the child stood at (0, 0.9) and no click
+    // could move them). The walkable surface here is the flat ground only, so
+    // every decor renderer is excluded from the bake.
+    IgnoreAllDecorExceptGround(transform, "RPGround");
     BuildNavMesh(transform);
+  }
+
+  static void IgnoreAllDecorExceptGround(Transform root, string groundName) {
+    if (root == null) return;
+    foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true)) {
+      if (r == null || r.gameObject == null) continue;
+      if (r.gameObject.name == groundName) continue;
+      IgnoreFromBuild(r.gameObject);
+    }
   }
 
   // Runtime NavMesh bake for THIS scene only (CollectObjects.Children on the
@@ -123,6 +172,7 @@ public class RabbitPlayBuilder : MonoBehaviour {
     BuildPatch(root);
     BuildRabbit(root);
     BuildCountAndResult(root);
+    BuildSubmit(root);
     BuildCameras(root);
     BuildAnchors(root);
     GameObject entry = new GameObject("EntryPoint");
@@ -245,11 +295,94 @@ public class RabbitPlayBuilder : MonoBehaviour {
     GameObject panel = Box(parent, "RPBoardPanel", BoardPos + new Vector3(0f, 1.95f, 0f),
       new Vector3(2.6f, 1.7f, 0.12f), BoardCream);
     SetMaterial(panel, LitEmissive(BoardCream, 0.22f));
-    int n = ClampTarget(BoardTarget);
-    NumberBoard = CountingGardenBuilder.Digit(parent, "RPNumberDigit",
-      BoardPos + new Vector3(0f, 1.42f, -0.09f), 1.3f, 1.0f, Gold, 90f, n);
-    SetMaterial(NumberBoard, LitEmissive(Gold, 0.5f));
-    IgnoreFromBuild(NumberBoard);
+    int qa = QuestionKind == 0 ? BoardTarget : QuestionA;
+    BuildQuestion(parent, QuestionKind, qa, QuestionB, -1);
+  }
+
+  // The question group ("RPQuestion"): a single digit for a plain number, or
+  // two digits + an operator for a+b / a-b. NumberBoard points at the group so
+  // the game can pulse/scale it through the number-swap animation.
+  // S3-P2Z27 (user: "nếu đúng thì trên bảng hiện 4-2=2"): when result >= 0 the
+  // group renders the SOLVED equation (a op b = r) in a tighter 5-glyph layout.
+  void BuildQuestion(Transform parent, int kind, int a, int b, int result) {
+    GameObject group = new GameObject("RPQuestion");
+    group.transform.SetParent(parent, false);
+    group.transform.localPosition = BoardPos + new Vector3(0f, 1.42f, -0.09f);
+    PopulateQuestion(group.transform, kind, a, b, result);
+    NumberBoard = group;
+  }
+
+  void PopulateQuestion(Transform group, int kind, int a, int b, int result) {
+    a = ClampTarget(a);
+    b = ClampTarget(b);
+    if (kind == 0) {
+      GameObject d = CountingGardenBuilder.Digit(group, "RPNumberDigit",
+        Vector3.zero, 1.3f, 1.0f, Gold, 90f, a);
+      SetMaterial(d, LitEmissive(Gold, 0.5f));
+      return;
+    }
+    bool solved = result >= 0;
+    if (!solved) {
+      const float dh = 1.05f;
+      const float dw = 0.68f;
+      DigitAt(group, "RPNumberDigitA", -0.72f, dh, dw, a);
+      DigitAt(group, "RPNumberDigitB", 0.72f, dh, dw, b);
+      Operator(group, kind, 0f, dh * 0.5f, 0.5f);
+      return;
+    }
+    // Solved: a op b = r, five evenly spaced glyphs.
+    const float sh = 0.8f;
+    const float sw = 0.36f;
+    float oy = sh * 0.5f;
+    DigitAt(group, "RPNumberDigitA", -1.0f, sh, sw, a);
+    Operator(group, kind, -0.5f, oy, 0.36f);
+    DigitAt(group, "RPNumberDigitB", 0f, sh, sw, b);
+    Equals(group, 0.5f, oy, 0.36f);
+    DigitAt(group, "RPNumberDigitR", 1.0f, sh, sw, result);
+  }
+
+  void DigitAt(Transform group, string name, float x, float h, float w, int n) {
+    GameObject d = CountingGardenBuilder.Digit(group, name, new Vector3(x, 0f, 0f),
+      h, w, Gold, 90f, ClampTarget(n));
+    SetMaterial(d, LitEmissive(Gold, 0.5f));
+  }
+
+  static void Operator(Transform group, int kind, float x, float y, float len) {
+    Box(group, "RPQuestionOpH", new Vector3(x, y, 0f), new Vector3(len, 0.12f, 0.12f), Gold);
+    if (kind == 1) {
+      Box(group, "RPQuestionOpV", new Vector3(x, y, 0f), new Vector3(0.12f, len, 0.12f), Gold);
+    }
+  }
+
+  static void Equals(Transform group, float x, float y, float len) {
+    Box(group, "RPQuestionEq0", new Vector3(x, y - 0.1f, 0f), new Vector3(len, 0.12f, 0.12f), Gold);
+    Box(group, "RPQuestionEq1", new Vector3(x, y + 0.1f, 0f), new Vector3(len, 0.12f, 0.12f), Gold);
+  }
+
+  // S3-P2Z25/26/27 (user: after a correct submit the NEXT question appears with
+  // an animation; a correct +/- round shows its solved equation): re-spawn the
+  // board question at runtime. result >= 0 renders "a op b = result".
+  public GameObject SpawnQuestion(int kind, int a, int b, int result = -1) {
+    Transform old = transform.Find("RPQuestion");
+    if (old != null) {
+      try { CharacterPresentation.DestroyNow(old.gameObject); } catch (System.Exception) { }
+    }
+    BuildQuestion(transform, kind, a, b, result);
+    return NumberBoard;
+  }
+
+  // The result board's digit, rebuilt when the target advances so the next
+  // payoff shows the right number.
+  public GameObject SpawnResultDigit(int n) {
+    if (Result == null) return null;
+    Transform old = Result.transform.Find("RPResultDigit");
+    if (old != null) {
+      try { CharacterPresentation.DestroyNow(old.gameObject); } catch (System.Exception) { }
+    }
+    GameObject d = CountingGardenBuilder.Digit(Result.transform, "RPResultDigit",
+      new Vector3(0f, 1.2f, -0.09f), 0.6f, 0.45f, Gold, 90f, ClampTarget(n));
+    SetMaterial(d, LitEmissive(Gold, 0.45f));
+    return d;
   }
 
   void BuildPatch(Transform parent) {
@@ -266,13 +399,11 @@ public class RabbitPlayBuilder : MonoBehaviour {
       new Vector3(0.16f, 0.24f, 3.2f), FenceWood);
     Box(parent, "RPPatchRimN", PatchCenter + new Vector3(0f, 0.12f, 1.6f),
       new Vector3(4.4f, 0.24f, 0.16f), FenceWood);
-    // A small sign: this is the carrot corner (carrot-top marker).
+    // A small sign: this is the carrot corner (a real carrot marker now —
+    // S3-P2Z19 user round: the old orange-egg props were "quá xấu").
     Box(parent, "RPPatchSignPost", PatchCenter + new Vector3(-1.9f, 0.5f, -1.3f),
       new Vector3(0.12f, 1.0f, 0.12f), FenceWood);
-    Sphere(parent, "RPPatchSignTop", PatchCenter + new Vector3(-1.9f, 1.08f, -1.3f),
-      0.3f, CarrotOrange, true);
-    Sphere(parent, "RPPatchSignLeaf", PatchCenter + new Vector3(-1.9f, 1.28f, -1.3f),
-      0.2f, LeafGreen, true);
+    PropKit.Place(parent, "carrot", PatchCenter + new Vector3(-1.9f, 1.12f, -1.3f), 30f, 1.4f);
 
     // Ten carrots in a natural cluster (find-and-choose, never a test row).
     Vector3[] offs = {
@@ -285,38 +416,16 @@ public class RabbitPlayBuilder : MonoBehaviour {
     Carrots.Clear();
     CarrotHomes = new Vector3[CarrotCount];
     for (int i = 0; i < CarrotCount; i++) {
-      Vector3 home = new Vector3(PatchCenter.x + offs[i].x, 0.12f, PatchCenter.z + offs[i].z);
+      // S3-P2Z19 (user: "hình ảnh carrot quá xấu"): the arena now uses the
+      // SAME Kenney carrot.fbx the garden beds use — the old sphere-egg
+      // primitive is gone. The root stays the click/flight handle.
+      Vector3 home = new Vector3(PatchCenter.x + offs[i].x, 0.015f, PatchCenter.z + offs[i].z);
       CarrotHomes[i] = home;
       GameObject carrot = new GameObject("RPCarrot" + i);
       carrot.transform.SetParent(parent, false);
       carrot.transform.localPosition = home;
-      carrot.transform.localRotation = Quaternion.Euler(0f, (i * 47f) % 360f, 8f);
-      // Orange body (half-sunk) + green leaves: reads as a carrot at distance.
-      GameObject body = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      body.name = "Body";
-      body.transform.SetParent(carrot.transform, false);
-      body.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-      body.transform.localScale = new Vector3(0.24f, 0.34f, 0.24f);
-      body.GetComponent<Renderer>().sharedMaterial = Lit(CarrotOrange);
-      StripCollider(body);
-      GameObject leaf0 = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      leaf0.name = "Leaf0";
-      leaf0.transform.SetParent(carrot.transform, false);
-      leaf0.transform.localPosition = new Vector3(0.05f, 0.24f, 0f);
-      leaf0.transform.localScale = new Vector3(0.1f, 0.22f, 0.1f);
-      leaf0.transform.localRotation = Quaternion.Euler(0f, 0f, -18f);
-      leaf0.GetComponent<Renderer>().sharedMaterial = Lit(LeafGreen);
-      StripCollider(leaf0);
-      IgnoreFromBuild(leaf0);
-      GameObject leaf1 = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      leaf1.name = "Leaf1";
-      leaf1.transform.SetParent(carrot.transform, false);
-      leaf1.transform.localPosition = new Vector3(-0.05f, 0.24f, 0f);
-      leaf1.transform.localScale = new Vector3(0.1f, 0.22f, 0.1f);
-      leaf1.transform.localRotation = Quaternion.Euler(0f, 0f, 18f);
-      leaf1.GetComponent<Renderer>().sharedMaterial = Lit(LeafGreen);
-      StripCollider(leaf1);
-      IgnoreFromBuild(leaf1);
+      carrot.transform.localRotation = Quaternion.Euler(0f, (i * 47f) % 360f, 0f);
+      PropKit.Place(carrot.transform, "carrot", Vector3.zero, 0f, 1.0f);
       Carrots.Add(carrot);
     }
   }
@@ -340,14 +449,15 @@ public class RabbitPlayBuilder : MonoBehaviour {
     GameObject bowl = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     bowl.name = "RPFeedBowl";
     bowl.transform.SetParent(parent, false);
-    bowl.transform.localPosition = new Vector3(BowlPos.x, 0.07f, BowlPos.z);
-    bowl.transform.localScale = new Vector3(0.95f, 0.14f, 0.95f);
+    bowl.transform.localPosition = new Vector3(BowlPos.x, BowlPos.y, BowlPos.z);
+    // S3-P2Z20: shallower dish so the fed carrots stand clearly on top (+0.13).
+    bowl.transform.localScale = new Vector3(0.95f, 0.10f, 0.95f);
     bowl.GetComponent<Renderer>().sharedMaterial = Lit(WorldBeauty.BlossomCream);
     StripCollider(bowl);
     GameObject bowlRim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     bowlRim.name = "RPFeedBowlRim";
     bowlRim.transform.SetParent(parent, false);
-    bowlRim.transform.localPosition = new Vector3(BowlPos.x, 0.03f, BowlPos.z);
+    bowlRim.transform.localPosition = new Vector3(BowlPos.x, BowlPos.y - 0.04f, BowlPos.z);
     bowlRim.transform.localScale = new Vector3(1.15f, 0.06f, 1.15f);
     bowlRim.GetComponent<Renderer>().sharedMaterial = Lit(Gold);
     StripCollider(bowlRim);
@@ -447,33 +557,37 @@ public class RabbitPlayBuilder : MonoBehaviour {
   }
 
   void BuildCountAndResult(Transform parent) {
-    // Count display: nine slots in a 3x3 grid (grey empty, gold as fed) —
-    // the board reads "0/9 .. 9/9" at a glance for every target, no text.
-    GameObject count = new GameObject("RPCountDisplay");
-    count.transform.SetParent(parent, false);
-    count.transform.localPosition = new Vector3(3.8f, 0f, 1.9f);
-    Box(count.transform, "RPCountPost", new Vector3(0f, 0.6f, 0f),
-      new Vector3(0.12f, 1.2f, 0.12f), FenceWood);
-    GameObject frame = Box(count.transform, "RPCountFrame", new Vector3(0f, 1.7f, 0f),
-      new Vector3(1.35f, 1.35f, 0.1f), BoardCream);
-    SetMaterial(frame, LitEmissive(BoardCream, 0.18f));
-    frame.transform.localRotation = Quaternion.Euler(0f, -25f, 0f);
-    CountPips = new GameObject[MaxTarget];
-    for (int i = 0; i < MaxTarget; i++) {
-      int col = i % 3, row = i / 3;
-      GameObject pip = Cylinder(count.transform, "RPCountPip" + i,
-        new Vector3((col - 1) * 0.36f, 1.28f + (2 - row) * 0.36f, -0.10f), 0.3f, 0.02f, StoneGrey);
-      pip.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-      IgnoreFromBuild(pip);
-      CountPips[i] = pip;
-    }
+    // S3-P2Z19 (user round: "2 cái biển lặp — xóa một"): the 3x3 pip board is
+    // GONE (it read as a second number board beside the target board). The
+    // count now reads from the BOWL itself: every fed carrot visibly piles in
+    // it (RabbitFeed parks them in BowlSlot order).
+    //
+    // The marked play spot: the child walks here first; the question is read on
+    // arrival (same contract as the stair arena's circle). Gold ring + cream
+    // pad + a floating "Come here!" sign.
+    GameObject spot = new GameObject("RPPlaySpot");
+    spot.transform.SetParent(parent, false);
+    spot.transform.localPosition = PlaySpotLocal;
+    PlaySpot = spot;
+    Pad(parent, "RPPlayEdge", PlaySpotLocal + new Vector3(0f, 0.020f, 0f), 3.1f, BoardCream);
+    PlayRing = Pad(parent, "RPPlayRing", PlaySpotLocal + new Vector3(0f, 0.026f, 0f), 2.5f, Gold);
+    Pad(parent, "RPPlayPad", PlaySpotLocal + new Vector3(0f, 0.032f, 0f), 2.1f,
+      new Color(0.99f, 0.93f, 0.72f));
+    GameObject signGo = new GameObject("RPPlaySign");
+    signGo.transform.SetParent(parent, false);
+    signGo.transform.localPosition = PlaySpotLocal + new Vector3(0f, 1.5f, 0f);
+    WorldNameLabel sign = signGo.AddComponent<WorldNameLabel>();
+    sign.Setup(DialogueLang.T("Come here!", "Vào đây!"), null, 0f);
+    PlaySign = signGo;
 
-    // Result board ("N + tick"): right-front of the bowl, OFF the spawn
-    // sightline (same lesson as gameplay #1).
+    // Result board ("N + tick"): LEFT of the bowl, on the payoff axis. S3-P2Z18
+    // user round: the old right-front spot sat beside the success camera (the
+    // shot cropped the board at the bottom corner); left of the bowl the payoff
+    // frame reads child+bowl -> board with the board facing the child.
     int n = ClampTarget(BoardTarget);
     GameObject result = new GameObject("RPResult");
     result.transform.SetParent(parent, false);
-    result.transform.localPosition = new Vector3(3.2f, 0f, -0.4f);
+    result.transform.localPosition = new Vector3(0.9f, 0f, 3.3f);
     Box(result.transform, "RPResultPost", new Vector3(0f, 0.65f, 0f),
       new Vector3(0.13f, 1.3f, 0.13f), FenceWood);
     GameObject resultFrame = Box(result.transform, "RPResultFrame", new Vector3(0f, 1.6f, 0f),
@@ -489,6 +603,47 @@ public class RabbitPlayBuilder : MonoBehaviour {
     DemoJuice.AttachSpotlight(parent, "RPGameSpotlight", new Vector3(0.4f, 0.018f, 3.2f), 5.4f);
   }
 
+  // S3-P2Z23: the submit bell (user: "có cơ chế nộp bài"). A wooden post + a
+  // gold bell + a small standing sign; the child rings it to turn the bowl's
+  // count in — the bowl can be too few, exact, or too many.
+  // S3-P2Z24: enlarged + moved to its own gold-ringed pad on the open plaza so
+  // the station reads clearly (user: "2 bảng tranh nhau chỗ đứng", "chỗ nộp bài
+  // khó nhìn"). Name "RPSubmitRing" is the pad the games/tests pin.
+  void BuildSubmit(Transform parent) {
+    Vector3 p = SubmitLocal;
+    Pad(parent, "RPSubmitRing", new Vector3(p.x, 0.014f, p.z), 2.0f, Gold);
+    Pad(parent, "RPSubmitPad", new Vector3(p.x, 0.020f, p.z), 1.5f, MintLeaf);
+    GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    post.name = "RPSubmitPost";
+    post.transform.SetParent(parent, false);
+    post.transform.localPosition = new Vector3(p.x, 0.62f, p.z);
+    post.transform.localScale = new Vector3(0.16f, 0.62f, 0.16f);
+    post.GetComponent<Renderer>().sharedMaterial = Lit(FenceWood);
+    StripCollider(post);
+    IgnoreFromBuild(post);
+    GameObject bell = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    bell.name = "RPSubmitBell";
+    bell.transform.SetParent(parent, false);
+    bell.transform.localPosition = new Vector3(p.x, 1.42f, p.z);
+    bell.transform.localScale = new Vector3(0.46f, 0.46f, 0.46f);
+    bell.GetComponent<Renderer>().sharedMaterial = LitEmissive(Gold, 0.25f);
+    StripCollider(bell);
+    IgnoreFromBuild(bell);
+    GameObject board = Box(parent, "RPSubmitSign", new Vector3(p.x, 1.95f, p.z),
+      new Vector3(1.1f, 0.5f, 0.08f), BoardCream);
+    SetMaterial(board, LitEmissive(BoardCream, 0.16f));
+    IgnoreFromBuild(board);
+    GameObject labelGo = new GameObject("RPSubmitLabel");
+    labelGo.transform.SetParent(parent, false);
+    labelGo.transform.localPosition = new Vector3(p.x, 2.45f, p.z);
+    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
+    label.Setup(DialogueLang.T("Submit", "Nộp bài"), null, 0f);
+    GameObject anchor = new GameObject("RPSubmitAnchor");
+    anchor.transform.SetParent(parent, false);
+    anchor.transform.localPosition = p;
+    SubmitAnchor = anchor.transform;
+  }
+
   void BuildCameras(Transform parent) {
     // A: the lesson (board + teacher + student + patch glimpse).
     CamTeaching = CamAnchor(parent, "RPCamA", new Vector3(0.5f, 2.3f, -1.6f));
@@ -496,9 +651,10 @@ public class RabbitPlayBuilder : MonoBehaviour {
     // B: the demo (patch + student + rabbit, one wide frame).
     CamDemo = CamAnchor(parent, "RPCamB", new Vector3(0.4f, 2.7f, -2.4f));
     LookDemo = CamAnchor(parent, "RPLookB", new Vector3(0.4f, 0.7f, 3.4f));
-    // C: the payoff (player + rabbit + board + result).
-    CamSuccess = CamAnchor(parent, "RPCamC", new Vector3(2.8f, 2.0f, -0.8f));
-    LookSuccess = CamAnchor(parent, "RPLookC", new Vector3(1.6f, 1.0f, 3.6f));
+    // C: the payoff (player + roof bunny/bowl + board + result). S3-P2Z19:
+    // raised to hold the roof-level bowl (the counter) in the frame.
+    CamSuccess = CamAnchor(parent, "RPCamC", new Vector3(2.6f, 2.3f, -1.0f));
+    LookSuccess = CamAnchor(parent, "RPLookC", new Vector3(2.4f, 1.5f, 3.6f));
   }
 
   static Transform CamAnchor(Transform parent, string name, Vector3 pos) {
@@ -597,7 +753,8 @@ public class RabbitPlayBuilder : MonoBehaviour {
   static void IgnoreFromBuild(GameObject go) {
     if (go == null) return;
     try {
-      Unity.AI.Navigation.NavMeshModifier mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+      Unity.AI.Navigation.NavMeshModifier mod = go.GetComponent<Unity.AI.Navigation.NavMeshModifier>();
+      if (mod == null) mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
       mod.ignoreFromBuild = true;
     } catch (System.Exception) { }
   }

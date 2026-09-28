@@ -70,8 +70,18 @@ public class NumberStairs : MonoBehaviour {
     return string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
   }
 
+  // S3-P2Z32 ("trục số bằng thân thể"): the stairs now ask the SAME family of
+  // questions as the carrot arena — a plain number, an addition (climb A+B) or
+  // a subtraction (start at A, go down to A-B). Defaults to Plain so every
+  // existing build/test path is untouched; GameInstaller turns it on live.
+  public enum RoundKind { Plain = 0, Add = 1, Sub = 2 }
+
   public Phase Current { get; private set; } = Phase.Intro;
   public int Target { get; private set; } = StairHillBuilder.Target;
+  public RoundKind Kind { get; private set; } = RoundKind.Plain;
+  public int OpA { get; private set; } = StairHillBuilder.Target;
+  public int OpB { get; private set; }
+  public bool ArithmeticEnabled;
   public int CurrentStep { get; private set; }
   public int HighestStep { get; private set; }
   public int Overshoots { get; private set; }
@@ -142,6 +152,23 @@ public class NumberStairs : MonoBehaviour {
   // is owned here — one line in flight, the rest wait (brief §28).
   readonly Queue<string> _recapEn = new Queue<string>();
   readonly Queue<string> _recapVi = new Queue<string>();
+  // S3-P2Z32: the paced queue for an operation round (have/want/how-many +
+  // explanation). Same discipline as the recap — one line at a time.
+  readonly Queue<string> _askEn = new Queue<string>();
+  readonly Queue<string> _askVi = new Queue<string>();
+  // Live-mode chaining: hold the win until the explanation has finished, then
+  // ask the next random round in place.
+  bool _liveNext;
+  float _liveT;
+  // S3-P2Z32 "nhắc lại nhẹ": a settled stand on a non-target step re-reads the
+  // have/want question once in a while (never a fail, never while plain).
+  float _reaskT;
+  bool _reaskArmed = true;
+  const float ReaskDwell = 6f;      // settled on a non-target step before a re-ask
+  // Live arithmetic visits are a bounded lesson (like the ladder): a handful of
+  // random questions from the area's first target, then the visit settles.
+  const int ArithmeticRounds = 5;
+  int _roundsPlayed;
 
   public void Build(StairHillBuilder builder, Transform player, SmartCamera cam,
       IAudioDirector audio, ActivityLifecycle life, int target = 0) {
@@ -151,6 +178,14 @@ public class NumberStairs : MonoBehaviour {
     _audio = audio;
     _life = life;
     Target = StairHillBuilder.ClampTarget(target <= 0 ? StairHillBuilder.Target : target);
+    // S3-P2Z32: the visit opens on a PLAIN question for the area's target; the
+    // live arithmetical rounds (add/sub/plain from the current step) follow
+    // after each win. ArithmeticEnabled stays false in tests, so the plain
+    // ladder mechanics (P53/P54) are untouched.
+    Kind = RoundKind.Plain;
+    OpA = Target;
+    OpB = 0;
+    _roundsPlayed = 0;
     _viz = player != null ? player.GetComponent<PlayerVisual>() : null;
     _mover = player != null ? player.GetComponent<ClickToMove>() : null;
     if (_builder == null) {
@@ -166,6 +201,8 @@ public class NumberStairs : MonoBehaviour {
     _lookTeaching = _builder.LookTeaching;
     _camSuccess = _builder.CamSuccess;
     _lookSuccess = _builder.LookSuccess;
+    // The number rail shows the whole line with the round's target orb lit.
+    try { _builder.SetRail(0, Target); } catch (Exception) { }
 
     BuildActors();
     GameObject fx = new GameObject("NSFx");
@@ -238,6 +275,7 @@ public class NumberStairs : MonoBehaviour {
     if (dt <= 0f || _builder == null) return;
     try {
       TickVoice(dt);
+      TickAsk();
       switch (Current) {
         case Phase.Wait: TickWait(dt); break;
         case Phase.Intro: TickIntro(dt); break;
@@ -288,6 +326,125 @@ public class NumberStairs : MonoBehaviour {
 
   void TickVoice(float dt) { if (_voice != null) _voice.Tick(dt); }
 
+  // Paced operation/explanation queue (one line at a time, same discipline as
+  // the success recap). Used for +/- rounds only; plain stays on the timed
+  // intro so every existing timing pin is untouched.
+  void TickAsk() {
+    if (_askEn.Count <= 0 || _voice == null || !_voice.Idle || _voice.HasLine) return;
+    Say(_askEn.Dequeue(), _askVi.Dequeue());
+  }
+  bool AskSpoken() {
+    if (_askEn.Count > 0) return false;
+    if (_voice == null) return true;
+    return _voice.Idle && !_voice.HasLine;
+  }
+  void Ask(string en, string vi) { _askEn.Enqueue(en); _askVi.Enqueue(vi); }
+  void ClearAsk() { _askEn.Clear(); _askVi.Clear(); }
+
+  // The "have / want / how many" question for a +/- round, read one short line
+  // at a time (SafetyFilter NPC cap <= 6 tokens each). The child's BODY is the
+  // first operand: they already stand on step A, so the question is where to go.
+  void AskOperationQuestion() {
+    bool add = Kind == RoundKind.Add;
+    int want = Target;
+    Ask("You are on step " + N(OpA) + ".", "Con đang ở bậc " + Nvi(OpA) + ".");
+    Ask(add ? ("Climb to step " + N(want) + ".") : ("Go down to step " + N(want) + "."),
+      add ? ("Cần tới bậc " + Nvi(want) + ".") : ("Cần xuống bậc " + Nvi(want) + "."));
+    Ask(add ? "How many more steps?" : "How many steps down?",
+      add ? "Đi thêm mấy bậc?" : "Đi xuống mấy bậc?");
+    Ask(add ? ("To reach step " + N(want) + ".") : ("To reach step " + N(want) + "."),
+      add ? ("Để tới bậc " + Nvi(want) + ".") : ("Để tới bậc " + Nvi(want) + "."));
+  }
+
+  // The solved-equation explanation after a correct +/- round (board shows
+  // "A + B = C"); held until spoken before the next question is asked.
+  void QueueExplanation() {
+    bool add = Kind == RoundKind.Add;
+    Ask(add ? "That's right! This is addition." : "That's right! This is subtraction.",
+      add ? "Đúng rồi! Đây là phép cộng." : "Đúng rồi! Đây là phép trừ.");
+    Ask(Cap(N(OpA)) + " " + Steps(OpA) + (add ? " plus " : " minus ") + N(OpB) + ".",
+      Cap(Nvi(OpA)) + " bậc " + (add ? "cộng " : "trừ ") + Nvi(OpB) + " bậc.");
+    Ask(add ? (Cap(N(Target)) + " steps altogether.") : (Cap(N(Target)) + " steps are left."),
+      add ? ("Được " + Nvi(Target) + " bậc tất cả.") : ("Còn " + Nvi(Target) + " bậc."));
+  }
+
+  // ---- round staging (S3-P2Z32) -------------------------------------------------
+
+  // kind: Plain -> Target = a; Add -> Target = a+b; Sub -> Target = a-b (guarded).
+  void SetRound(RoundKind kind, int a, int b) {
+    Kind = kind;
+    OpA = StairHillBuilder.ClampTarget(a);
+    if (kind == RoundKind.Plain) { OpB = 0; Target = OpA; return; }
+    OpB = StairHillBuilder.ClampTarget(b);
+    if (kind == RoundKind.Sub) {
+      if (OpB >= OpA) OpB = Mathf.Max(1, OpA - 1);
+      Target = StairHillBuilder.ClampTarget(OpA - OpB);
+    } else {
+      int maxB = Mathf.Max(1, StairHillBuilder.StepCount - OpA);
+      if (OpB > maxB) OpB = maxB;
+      Target = StairHillBuilder.ClampTarget(OpA + OpB);
+    }
+  }
+
+  // The next round, played FROM the step the child already stands on (the
+  // stair body IS the first operand — the carrot arena's "prefill"). Add and
+  // Sub are only offered when the ladder can hold them; plain is always
+  // possible. Never the same result twice in a row.
+  void SetRoundRandomFromCurrent() {
+    int from = Mathf.Clamp(CurrentStep, 1, StairHillBuilder.StepCount);
+    int prev = Target;
+    bool canAdd = from < StairHillBuilder.StepCount;
+    bool canSub = from > 1;
+    for (int guard = 0; guard < 40; guard++) {
+      int roll = UnityEngine.Random.Range(0, 3);
+      if (roll == 0 || (!canAdd && !canSub)) {
+        int t = UnityEngine.Random.Range(1, StairHillBuilder.StepCount + 1);
+        if (t == from) t = from < StairHillBuilder.StepCount ? from + 1 : from - 1;
+        SetRound(RoundKind.Plain, t, 0);
+      } else if (roll == 1 && canAdd) {
+        int b = UnityEngine.Random.Range(1, StairHillBuilder.StepCount - from + 1);
+        SetRound(RoundKind.Add, from, b);
+      } else if (canSub) {
+        int b = UnityEngine.Random.Range(1, from);
+        SetRound(RoundKind.Sub, from, b);
+      } else {
+        int b = UnityEngine.Random.Range(1, StairHillBuilder.StepCount - from + 1);
+        SetRound(RoundKind.Add, from, b);
+      }
+      if (Target != prev || guard >= 39) break;
+    }
+  }
+
+  // Rebuild the board (expression/solved), the result digit and the rail lights
+  // for the current round + position.
+  void RefreshQuestionBoard() {
+    if (_builder == null) return;
+    _builder.SetQuestion((int)Kind, OpA, OpB);
+    _builder.SetResult(Target);
+    _board = _builder.NumberBoard;
+    _builder.SetRail(CurrentStep, Target);
+    _boardPulseT = 0f;
+  }
+
+  // Test seam: pin a specific round (deterministic; live generates randomly).
+  public void SetRoundForTests(int kind, int a, int b) {
+    SetRound((RoundKind)Mathf.Clamp(kind, 0, 2), a, b);
+    RefreshQuestionBoard();
+  }
+
+  // Test seam: force the NEXT round picked by the correct-submit transition
+  // (kind < 0 = the normal live path).
+  public void ForceNextRoundForTests(int kind, int a, int b) {
+    _forcedKind = kind;
+    _forcedA = a;
+    _forcedB = b;
+  }
+  int _forcedKind = -1;
+  int _forcedA, _forcedB;
+
+  // Test seam for the explanation gate.
+  public bool ExplanationSpokenForTests() { return AskSpoken(); }
+
   void To(Phase next) { Current = next; _phaseT = 0f; }
 
   // The stand point of a tread (teacher points + confirm targets).
@@ -334,6 +491,9 @@ public class NumberStairs : MonoBehaviour {
     _saidBoard = false;
     _saidNumber = false;
     _saidClimb = false;
+    _liveNext = false;
+    _liveT = 0f;
+    ClearAsk();
     To(Phase.Intro);
     SetShot(0);
     Log("question read (child on the circle): number " + Target);
@@ -346,6 +506,10 @@ public class NumberStairs : MonoBehaviour {
     float t = _phaseT;
     FaceTowards(_teacher, BoardLocal(), dt, 4f);
     FaceTowards(_student, TeacherLocal(), dt, 3f);
+    // S3-P2Z32: an addition/subtraction round reads its have/want/how-many
+    // question (paced), then hands over once the last line has played. Plain
+    // rounds keep the historic timed intro (P53/P54 pins).
+    if (Kind != RoundKind.Plain) { TickIntroOperation(dt, t); return; }
     if (!_saidBoard && t >= 0.5f) {
       _saidBoard = true;
       Wave(_teacher);
@@ -360,11 +524,34 @@ public class NumberStairs : MonoBehaviour {
     if (!_saidClimb && t >= 4.4f) {
       _saidClimb = true;
       FaceTowards(_teacher, StairsLocal(), dt, 4f);
-      Say("Climb " + N(Target) + " " + Steps(Target) + "!",
-        "Con lên " + Nvi(Target) + " bậc nhé!");
+      // Live arithmetic plain rounds read "go to" (the body is on the line);
+      // the historic "Climb N steps" stays for the plain ladder (tests/journey).
+      if (ArithmeticEnabled) {
+        Say("Go to step " + N(Target) + ".", "Đi tới bậc " + Nvi(Target) + ".");
+      } else {
+        Say("Climb " + N(Target) + " " + Steps(Target) + "!",
+          "Con lên " + Nvi(Target) + " bậc nhé!");
+      }
       Point(_teacher, StairsWorld(), 2.8f);
     }
     if (t >= 5.9f) StartClimb();
+  }
+
+  void TickIntroOperation(float dt, float t) {
+    if (!_saidBoard && t >= 0.4f) {
+      _saidBoard = true;
+      Wave(_teacher);
+      Say("Look at the board!", "Nhìn lên bảng nhé!");
+      Point(_teacher, BoardWorld(), 2.4f);
+    }
+    if (!_saidNumber && t >= 1.4f) {
+      _saidNumber = true;
+      AskOperationQuestion();
+      PulseBoard(1.2f);
+    }
+    // Hand over only once the whole question has been read (or a hard timeout).
+    if (t >= 3.0f && AskSpoken()) { StartClimb(); return; }
+    if (t >= 14f) StartClimb();
   }
 
   void StartClimb() {
@@ -397,9 +584,15 @@ public class NumberStairs : MonoBehaviour {
       _pendingStep = band;
       _pendingT = 0f;
     }
-    // Overshoot is judged only after the child SETTLES above the target (user
-    // round): walking through a high tread is not an answer — standing there is.
-    if (band > Target) {
+    // Overshoot is judged only after the child SETTLES past the target (user
+    // round): walking through a tread is not an answer — standing there is.
+    // S3-P2Z32: direction-aware. On a SUBTRACTION round the child STARTS on
+    // step OpA (above the result) and walks DOWN, so standing above the target
+    // is the normal start, never a nag; the "too far" side is BELOW the result.
+    bool pastTarget = Kind == RoundKind.Sub
+      ? (band >= 1 && band < Target)
+      : (band > Target);
+    if (pastTarget) {
       if (band != _overStep) { _overStep = band; _overT = 0f; _overCounted = false; }
       _overT += dt;
       if (!_overCounted && _overT >= OvershootDwell) {
@@ -409,9 +602,13 @@ public class NumberStairs : MonoBehaviour {
           _overshootNagT = OvershootNagCooldown;
           Say("We only need " + N(Target) + ".", "Mình chỉ cần " + Nvi(Target) + ".");
           Point(_teacher, StepWorld(Target), 2.2f);
-          Say("Come back down to " + N(Target) + "!", "Quay lại bậc " + Nvi(Target) + " nhé!");
+          if (Kind == RoundKind.Sub) {
+            Say("Come back up to " + N(Target) + "!", "Lên lại bậc " + Nvi(Target) + " nhé!");
+          } else {
+            Say("Come back down to " + N(Target) + "!", "Quay lại bậc " + Nvi(Target) + " nhé!");
+          }
         }
-        Log("overshoot to step " + band + " (settled above; guide back, no fail)");
+        Log("overshoot to step " + band + " (settled past; guide back, no fail)");
       }
     } else if (_overStep != 0) {
       _overStep = 0;
@@ -427,24 +624,25 @@ public class NumberStairs : MonoBehaviour {
     } else {
       _dwellT = 0f;
     }
-    // Undershoot nudge (brief §20): settled BELOW the target earns a gentle
-    // "how many more" — never pointing at the target step itself, never spam.
-    if (CurrentStep >= 0 && CurrentStep < Target && !moving
-        && (CurrentStep >= 1 || NearStairFoot())) {
-      _underT += dt;
-      if (_underT >= UnderDwell && _underCooldownT <= 0f) {
-        _underCooldownT = UnderNudgeCooldown;
-        _underT = 0f;
-        UndershootNudges++;
-        int remain = Target - CurrentStep;
-        Say(Cap(N(remain)) + " more " + Steps(remain) + "!",
-          "Còn " + Nvi(remain) + " bậc nữa nhé!");
-        Point(_teacher, StairsWorld(), 2.0f);
-        Log("undershoot at step " + CurrentStep + " (" + remain + " more)");
+    // S3-P2Z32 "nhắc lại nhẹ": on a +/- round, a settled stand on a NON-target
+    // step re-reads the have/want/how-many question once in a while (never a
+    // fail, never scolding). Re-arms as soon as the child moves or arrives.
+    if (Kind != RoundKind.Plain && CurrentStep >= 1 && !moving
+        && _voice != null && _voice.Idle && !_voice.HasLine && AskSpoken()) {
+      _reaskT += dt;
+      if (_reaskT >= ReaskDwell && _reaskArmed) {
+        _reaskArmed = false;
+        _reaskT = 0f;
+        AskOperationQuestion();
+        Point(_teacher, BoardWorld(), 2.4f);
+        Log("gentle re-ask on step " + CurrentStep + " (target " + Target + ")");
       }
-    } else {
-      _underT = 0f;
+    } else if (moving || CurrentStep == Target) {
+      _reaskT = 0f;
+      _reaskArmed = true;
     }
+    // S3-P2Z22 (user: no "còn N nữa" hint — the child thinks). Undershoot nudge
+    // removed; the board shows the target step.
     _lastPos = _player.position;
     // The teacher keeps watching the child.
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
@@ -473,6 +671,8 @@ public class NumberStairs : MonoBehaviour {
 
   void OnStepChanged(int prev, int step) {
     if (step > HighestStep) HighestStep = step;
+    // S3-P2Z32: the number rail lights 1..step as the body climbs the line.
+    if (_builder != null) { try { _builder.SetRail(step, Target); } catch (Exception) { } }
     if (step > prev && step >= 1 && step <= Target) {
       // One step = one count (never accumulate: the count IS the current step).
       PlaySfx("step");
@@ -511,8 +711,21 @@ public class NumberStairs : MonoBehaviour {
     if (_student != null) CelebrateActor(_student, soft: false);
     Sparkle(StepWorld(Target) + new Vector3(0f, 0.25f, 0f), 12, 92, 0.55f);
     Sparkle(PlayerWorld() + new Vector3(0f, 0.9f, 0f), 10, 93, 0.5f);
+    // S3-P2Z33: layered win feedback (ring + sparkle + flash-free camera punch;
+    // the last rung gets the big cut).
     int next = StairHillBuilder.ClampTarget(CountingGardenArea.NextStairTarget(Target));
-    bool last = !ChainOnSuccess || _ladderStart < 0 || next == _ladderStart;
+    bool last;
+    if (ArithmeticEnabled) {
+      // Live arithmetic is a bounded lesson: a handful of random rounds from the
+      // area's opening target, then the visit settles (so the lifecycle + exit
+      // still work). Tests keep the deterministic ladder.
+      _roundsPlayed++;
+      last = !ChainOnSuccess || _roundsPlayed >= ArithmeticRounds;
+    } else {
+      last = !ChainOnSuccess || _ladderStart < 0 || next == _ladderStart;
+    }
+    GameJuice.CorrectFx(_fx, StepWorld(Target), last);
+    if (_builder != null) GameJuice.Pop(_builder.NumberBoard != null ? _builder.NumberBoard.transform : null, 0.10f, 0.3f);
     if (last) {
       _finalized = true;
       Follow(); // the round camera stays with the child until the celebration
@@ -545,15 +758,57 @@ public class NumberStairs : MonoBehaviour {
     // Chained round: a short confirm, then the next question from where the
     // child already stands (user: "từ bậc 3 đi tiếp cho câu hỏi sau").
     Follow();
+    if (Kind != RoundKind.Plain) {
+      // A +/- round resolves its equation on the board ("A + B = C") and reads
+      // the explanation; the next question is held until every line is spoken
+      // (S3-P2Z32, mirroring the carrot arena).
+      if (_builder != null) {
+        try { _builder.SetQuestion((int)Kind, OpA, OpB, Target); } catch (Exception) { }
+        _board = _builder != null ? _builder.NumberBoard : _board;
+      }
+      QueueExplanation();
+      _liveNext = true;
+      _liveT = 0f;
+      Log("operation round won: " + OpA + " " + Kind + " " + OpB + " = " + Target);
+      return;
+    }
     Say(Cap(N(Target)) + " " + Steps(Target) + "! Well done!",
       Cap(Nvi(Target)) + " bậc! Giỏi!");
     _chainT = 3.0f;
     Log("round won on step " + Target + " — next question follows");
   }
 
-  // The next rung of the ladder: swap the board digit in place and re-ask. The
-  // child does not move; the climb continues from the step they stand on.
+  // The next round, staged IN PLACE: the child keeps their step and the new
+  // question is read (arithmetic) or the next rung is asked (plain ladder).
   void AskNextQuestion() {
+    if (ArithmeticEnabled) {
+      if (_forcedKind >= 0) {
+        SetRound((RoundKind)Mathf.Clamp(_forcedKind, 0, 2), _forcedA, _forcedB);
+        _forcedKind = -1;
+      } else {
+        SetRoundRandomFromCurrent();
+      }
+      RefreshQuestionBoard();
+      ClearAsk();
+      _pendingStep = CurrentStep;
+      _pendingT = 0f;
+      _dwellT = 0f;
+      _underT = 0f;
+      _reaskT = 0f;
+      _reaskArmed = true;
+      _overStep = 0;
+      _overT = 0f;
+      _overCounted = false;
+      _saidBoard = true;      // no "look at the board" twice in a visit
+      _saidNumber = Kind != RoundKind.Plain;
+      _saidClimb = false;
+      if (Kind != RoundKind.Plain) AskOperationQuestion();
+      To(Phase.Intro);
+      _phaseT = 0f;
+      SetShot(0);
+      Log("next question: kind=" + Kind + " a=" + OpA + " b=" + OpB + " target=" + Target);
+      return;
+    }
     Target = StairHillBuilder.ClampTarget(CountingGardenArea.NextStairTarget(Target));
     if (_builder != null) _builder.SetTarget(Target);
     _pendingStep = CurrentStep;
@@ -585,6 +840,12 @@ public class NumberStairs : MonoBehaviour {
     FaceTowards(_student, PlayerLocal(), dt, 2f);
     // Chained round: hold the win pose briefly, then ask the next question.
     if (!_finalized) {
+      if (_liveNext) {
+        // +/- win: hold until the explanation has fully played, then move on.
+        _liveT += dt;
+        if (_liveT >= 1.2f && AskSpoken()) { _liveNext = false; AskNextQuestion(); }
+        return;
+      }
       if (_chainT > 0f) {
         _chainT -= dt;
         if (_chainT <= 0f) AskNextQuestion();

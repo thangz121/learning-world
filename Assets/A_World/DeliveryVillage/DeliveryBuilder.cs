@@ -52,6 +52,10 @@ public class DeliveryBuilder : MonoBehaviour {
   public static readonly Vector3 MiaStart = new Vector3(3.0f, 0f, 3.95f);
   public static readonly Vector3 BoothCounter = new Vector3(2.7f, 0f, 3.2f);
   public const float CounterTopY = 0.9f;
+  // S3-P2Z19 user round: after entering the arena the child walks to the marked
+  // play spot; the question is read ONLY on arrival (no in-arena demo).
+  public static readonly Vector3 PlaySpotLocal = new Vector3(0f, 0f, 1.5f);
+  public const float PlaySpotRadius = 1.7f;
 
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
@@ -64,6 +68,11 @@ public class DeliveryBuilder : MonoBehaviour {
   public Transform DeliveryAnchor { get; private set; } // the receiver's door
   public GameObject Crate { get; private set; }         // delivered apples live here
   public GameObject ExitCue { get; private set; }       // shown after completion
+  // S3-P2Z19: the marked play spot (the question is read only on arrival).
+  public GameObject PlaySpot { get; private set; }
+  public GameObject PlayRing { get; private set; }
+  // S3-P2Z20: the "Come here!" sign (hidden as the child arrives).
+  public GameObject PlaySign { get; private set; }
   public Transform CamTeaching { get; private set; }
   public Transform LookTeaching { get; private set; }
   public Transform CamDemo { get; private set; }
@@ -110,7 +119,19 @@ public class DeliveryBuilder : MonoBehaviour {
   // Scene entry (GameInstaller calls this after the lazy load).
   public void Build() {
     BuildContent(transform);
+    // Flat-ground discipline (rabbit/journey lesson): every decor renderer is
+    // excluded from the bake so no low mesh can carve the play surface.
+    IgnoreAllDecorExceptGround(transform, "DVGround");
     BuildNavMesh(transform);
+  }
+
+  static void IgnoreAllDecorExceptGround(Transform root, string groundName) {
+    if (root == null) return;
+    foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true)) {
+      if (r == null || r.gameObject == null) continue;
+      if (r.gameObject.name == groundName) continue;
+      IgnoreFromBuild(r.gameObject);
+    }
   }
 
   // Runtime NavMesh bake for THIS scene only (CollectObjects.Children on the
@@ -127,6 +148,7 @@ public class DeliveryBuilder : MonoBehaviour {
     BuildGround(root);
     BuildEntryAndExit(root);
     BuildPaths(root);
+    BuildPlaySpot(root);
     BuildDressing(root);
     BuildOrderBoard(root);
     BuildStall(root);
@@ -233,6 +255,25 @@ public class DeliveryBuilder : MonoBehaviour {
     Seg(parent, "DVPathLane", new Vector3(-1.9f, 0f, 1.8f), new Vector3(1.9f, 0f, 1.8f), 1.5f);
     Seg(parent, "DVPathStall", new Vector3(-2.6f, 0f, 2.0f), new Vector3(-2.2f, 0f, 1.5f), 1.3f);
     Seg(parent, "DVPathBooth", new Vector3(2.4f, 0f, 2.0f), new Vector3(2.2f, 0f, 1.6f), 1.3f);
+  }
+
+  // The marked play spot (S3-P2Z19 user round): the child walks here; the
+  // question is read on arrival (same contract as the earlier arenas).
+  void BuildPlaySpot(Transform parent) {
+    GameObject spot = new GameObject("DVPlaySpot");
+    spot.transform.SetParent(parent, false);
+    spot.transform.localPosition = PlaySpotLocal;
+    PlaySpot = spot;
+    Pad(parent, "DVPlayEdge", PlaySpotLocal + new Vector3(0f, 0.020f, 0f), 3.1f, BoardCream);
+    PlayRing = Pad(parent, "DVPlayRing", PlaySpotLocal + new Vector3(0f, 0.026f, 0f), 2.5f, Gold);
+    Pad(parent, "DVPlayPad", PlaySpotLocal + new Vector3(0f, 0.032f, 0f), 2.1f,
+      new Color(0.99f, 0.93f, 0.72f));
+    GameObject signGo = new GameObject("DVPlaySign");
+    signGo.transform.SetParent(parent, false);
+    signGo.transform.localPosition = PlaySpotLocal + new Vector3(0f, 1.5f, 0f);
+    WorldNameLabel sign = signGo.AddComponent<WorldNameLabel>();
+    sign.Setup(DialogueLang.T("Come here!", "Vào đây!"), null, 0f);
+    PlaySign = signGo;
   }
 
   void BuildDressing(Transform parent) {
@@ -433,10 +474,14 @@ public class DeliveryBuilder : MonoBehaviour {
   }
 
   void BuildCountAndResult(Transform parent) {
+    // Result board ("N + tick"): RIGHT of the receiving booth on the payoff
+    // axis (S3-P2Z18 user round: the old right-front spot sat beside the
+    // success camera and the payoff shot cropped it). Clear of the counter,
+    // the crate and the parcel stack.
     int n = ClampTarget(BoardTarget);
     GameObject result = new GameObject("DVResult");
     result.transform.SetParent(parent, false);
-    result.transform.localPosition = new Vector3(3.4f, 0f, -0.6f);
+    result.transform.localPosition = new Vector3(4.6f, 0f, 2.9f);
     Box(result.transform, "DVResultPost", new Vector3(0f, 0.65f, 0f),
       new Vector3(0.13f, 1.3f, 0.13f), FenceWood);
     GameObject resultFrame = Box(result.transform, "DVResultFrame", new Vector3(0f, 1.6f, 0f),
@@ -591,7 +636,8 @@ public class DeliveryBuilder : MonoBehaviour {
   static void IgnoreFromBuild(GameObject go) {
     if (go == null) return;
     try {
-      Unity.AI.Navigation.NavMeshModifier mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+      Unity.AI.Navigation.NavMeshModifier mod = go.GetComponent<Unity.AI.Navigation.NavMeshModifier>();
+      if (mod == null) mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
       mod.ignoreFromBuild = true;
     } catch (System.Exception) { }
   }

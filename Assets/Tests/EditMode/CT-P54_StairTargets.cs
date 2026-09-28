@@ -212,9 +212,9 @@ public class CT_P54_StairTargets {
     }
   }
 
-  // E. Undershoot (target 5): a settled stand below the target earns ONE gentle
-  // "how many more" (never the target step, never spam); the climb still wins.
-  [Test] public void P54E_UndershootNudge() {
+  // E. Undershoot (target 5): S3-P2Z22 (user: "để trẻ tự suy nghĩ") a settled
+  // stand below the target earns NO "how many more" hint; the climb still wins.
+  [Test] public void P54E_UndershootNoHint() {
     GameObject arena;
     StairHillBuilder builder = BuildArena(out arena);
     GameObject player = new GameObject("P54PlayerU");
@@ -228,14 +228,13 @@ public class CT_P54_StairTargets {
       int mark = audio.Lines.Count;
       StepTo(game, player, builder, 2);
       for (int i = 0; i < 30; i++) game.Tick(0.1f); // settle 3s on step 2
-      Assert.AreEqual(1, game.UndershootNudges, "one nudge for the settled stand");
-      Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "a nudge is not a fail");
+      Assert.AreEqual(0, game.UndershootNudges, "no 'how many more' hint (child thinks)");
+      Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "no hint, no fail");
       string nudge = DialogueLang.T("Three more steps!", "Còn ba bậc nữa nhé!");
-      Assert.IsTrue(audio.Lines.GetRange(mark, audio.Lines.Count - mark).Contains(nudge),
-        "the nudge names the REMAINDER, never the target step");
-      for (int i = 0; i < 40; i++) game.Tick(0.1f); // cooldown: no nagging
-      Assert.AreEqual(1, game.UndershootNudges, "no spam while standing (brief §16)");
-      // The base of the stairs nudges too (target 1: a fresh stand at the foot).
+      Assert.IsFalse(audio.Lines.GetRange(mark, audio.Lines.Count - mark).Contains(nudge),
+        "the remainder hint is gone");
+      for (int i = 0; i < 40; i++) game.Tick(0.1f);
+      Assert.AreEqual(0, game.UndershootNudges, "still no hint");
       StepTo(game, player, builder, 3);
       StepTo(game, player, builder, 4);
       StepTo(game, player, builder, 5);
@@ -401,12 +400,12 @@ public class CT_P54_StairTargets {
       Assert.IsTrue(audio.Lines.Contains(
         DialogueLang.T("Climb one step!", "Con lên một bậc nhé!")),
         "intro uses the singular");
-      // Stand at the foot: the base nudge names the one remaining step.
+      // Stand at the foot: S3-P2Z22 no hint is spoken any more.
       player.transform.position = arena.transform.position + new Vector3(0f, 0f, 2.0f);
       for (int i = 0; i < 30; i++) game.Tick(0.1f);
-      Assert.AreEqual(1, game.UndershootNudges, "the foot gets one gentle nudge");
-      Assert.IsTrue(audio.Lines.Contains(
-        DialogueLang.T("One more step!", "Còn một bậc nữa nhé!")), "singular nudge");
+      Assert.AreEqual(0, game.UndershootNudges, "no hint at the foot");
+      Assert.IsFalse(audio.Lines.Contains(
+        DialogueLang.T("One more step!", "Còn một bậc nữa nhé!")), "no singular nudge");
       StepTo(game, player, builder, 1);
       for (int i = 0; i < 20 && game.Current != NumberStairs.Phase.Success; i++) game.Tick(0.1f);
       Assert.AreEqual(NumberStairs.Phase.Success, game.Current, "one step completes");
@@ -455,8 +454,162 @@ public class CT_P54_StairTargets {
         Assert.IsTrue(ok, "line passes the NPC cap: '" + line + "' (" + why + ")");
       }
       Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Nine.", "Chín.")), "nine counted");
-      Assert.IsTrue(audio.Lines.Contains(
-        DialogueLang.T("Five more steps!", "Còn năm bậc nữa nhé!")), "undershoot names the remainder");
+      Assert.IsFalse(audio.Lines.Contains(
+        DialogueLang.T("Five more steps!", "Còn năm bậc nữa nhé!")), "no remainder hint (child thinks)");
+    } finally {
+      Object.DestroyImmediate(player);
+      Object.DestroyImmediate(arena);
+    }
+  }
+
+  // M. Arithmetic round model (S3-P2Z32): +/- rounds carry operands + a guarded
+  // result; the board stages the expression (A op B) and the operator glyph.
+  [Test] public void P54M_ArithmeticRoundModel() {
+    GameObject arena;
+    StairHillBuilder builder = BuildArena(out arena);
+    GameObject player = new GameObject("P54PlayerAR");
+    try {
+      builder.BuildContent(arena.transform);
+      NumberStairs game = arena.AddComponent<NumberStairs>();
+      game.Build(builder, player.transform, null, new FakeAudio(),
+        new ActivityLifecycle("number_stairs", "test"), 3);
+      game.SetRoundForTests((int)NumberStairs.RoundKind.Sub, 5, 2);
+      Assert.AreEqual(NumberStairs.RoundKind.Sub, game.Kind, "sub round");
+      Assert.AreEqual(5, game.OpA, "first operand (the body's step)");
+      Assert.AreEqual(2, game.OpB, "second operand");
+      Assert.AreEqual(3, game.Target, "5 - 2 = 3");
+      Assert.IsNotNull(FindDeep(arena.transform, "SHQuestion"), "expression group staged");
+      Assert.IsNotNull(FindDeep(arena.transform, "SHNumberDigitA"), "operand A glyph");
+      Assert.IsNotNull(FindDeep(arena.transform, "SHNumberDigitB"), "operand B glyph");
+      Assert.IsNull(FindDeep(arena.transform, "SHQuestionOpV"), "minus has no vertical bar");
+      game.SetRoundForTests((int)NumberStairs.RoundKind.Add, 3, 4);
+      Assert.AreEqual(7, game.Target, "3 + 4 = 7");
+      Assert.IsNotNull(FindDeep(arena.transform, "SHQuestionOpV"), "plus draws the cross");
+      game.SetRoundForTests((int)NumberStairs.RoundKind.Sub, 2, 5);
+      Assert.AreEqual(1, game.OpB, "sub B clamps below A");
+      Assert.AreEqual(1, game.Target, "2 - 1 = 1 (never zero/negative)");
+    } finally { Object.DestroyImmediate(player); Object.DestroyImmediate(arena); }
+  }
+
+  // N. Live arithmetic: a win shows the SOLVED equation and reads the
+  // explanation before the next round is asked IN PLACE (child keeps their
+  // step). The first question stays plain (the area's opening target).
+  [Test] public void P54N_OperationWinSolvedBoardAndNextInPlace() {
+    GameObject arena;
+    StairHillBuilder builder = BuildArena(out arena);
+    GameObject player = new GameObject("P54PlayerAN");
+    try {
+      builder.BoardTarget = 3;
+      builder.BuildContent(arena.transform);
+      FakeAudio audio = new FakeAudio();
+      NumberStairs game = arena.AddComponent<NumberStairs>();
+      game.ArithmeticEnabled = true;
+      game.Build(builder, player.transform, null, audio,
+        new ActivityLifecycle("number_stairs", "test"), 3);
+      game.ForceNextRoundForTests((int)NumberStairs.RoundKind.Add, 3, 2);
+      AdvanceToClimb(game, player, builder);
+      Assert.AreEqual(NumberStairs.RoundKind.Plain, game.Kind, "first round is plain (the target)");
+      StepTo(game, player, builder, 3);
+      for (int t = 0; t < 40 && game.Current != NumberStairs.Phase.Success; t++) game.Tick(0.1f);
+      Assert.AreEqual(NumberStairs.Phase.Success, game.Current, "plain round won");
+      for (int t = 0; t < 220 && game.Target != 5; t++) game.Tick(0.1f);
+      Assert.AreEqual(5, game.Target, "next add round 3+2=5");
+      Assert.AreEqual(NumberStairs.RoundKind.Add, game.Kind, "add round staged");
+      Assert.AreEqual(3, game.CurrentStep, "child keeps their step (no walk back)");
+      Assert.IsFalse(game.ResultShown, "intermediate wins never settle the visit");
+      Assert.IsNotNull(FindDeep(arena.transform, "SHNumberDigitA"), "expression A on the board");
+      Assert.IsNotNull(FindDeep(arena.transform, "SHQuestionOpV"), "the + operator on the board");
+      for (int t = 0; t < 220 && game.Current != NumberStairs.Phase.Climb; t++) game.Tick(0.1f);
+      Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "operation question read");
+      StepTo(game, player, builder, 4);
+      StepTo(game, player, builder, 5);
+      for (int t = 0; t < 40 && game.Current != NumberStairs.Phase.Success; t++) game.Tick(0.1f);
+      Assert.AreEqual(NumberStairs.Phase.Success, game.Current, "add round won");
+      Assert.IsNotNull(FindDeep(arena.transform, "SHNumberDigitR"), "solved result glyph");
+      Assert.IsNotNull(FindDeep(arena.transform, "SHQuestionEq0"), "the = sign");
+      int solvedTarget = game.Target;
+      for (int t = 0; t < 400 && !game.ExplanationSpokenForTests(); t++) game.Tick(0.1f);
+      Assert.IsTrue(game.ExplanationSpokenForTests(), "explanation fully spoken");
+      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("That's right! This is addition.",
+        "Đúng rồi! Đây là phép cộng.")), "addition explained");
+      Assert.AreEqual(5, game.CurrentStep, "the child still stands on step 5");
+      for (int t = 0; t < 220 && game.Target == solvedTarget; t++) game.Tick(0.1f);
+      Assert.AreNotEqual(solvedTarget, game.Target, "the next random round follows in place");
+    } finally { Object.DestroyImmediate(player); Object.DestroyImmediate(arena); }
+  }
+
+  // O. Gentle re-ask (S3-P2Z32 "nhắc lại nhẹ"): on a +/- round, a settled stand
+  // on a NON-target step re-reads the have/want question — never a scold.
+  [Test] public void P54O_GentleReaskOnWrongStep() {
+    GameObject arena;
+    StairHillBuilder builder = BuildArena(out arena);
+    GameObject player = new GameObject("P54PlayerGR");
+    try {
+      builder.BuildContent(arena.transform);
+      FakeAudio audio = new FakeAudio();
+      NumberStairs game = arena.AddComponent<NumberStairs>();
+      game.Build(builder, player.transform, null, audio,
+        new ActivityLifecycle("number_stairs", "test"), 3);
+      game.SetRoundForTests((int)NumberStairs.RoundKind.Add, 3, 2); // 3 + 2 = 5
+      AdvanceToClimb(game, player, builder);
+      Assert.IsTrue(game.QuestionTold, "the question was read");
+      int mark = audio.Lines.Count;
+      StepTo(game, player, builder, 2);              // a non-target step
+      for (int t = 0; t < 110; t++) game.Tick(0.1f); // ~11s settled
+      Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "no fail on a wrong step");
+      int asks = audio.Lines.GetRange(mark, audio.Lines.Count - mark)
+        .FindAll(s => s == DialogueLang.T("How many more steps?", "Đi thêm mấy bậc?")).Count;
+      Assert.GreaterOrEqual(asks, 1, "the have/want question is gently re-read");
+      Assert.AreEqual(0, game.UndershootNudges, "never the old remainder hint");
+    } finally { Object.DestroyImmediate(player); Object.DestroyImmediate(arena); }
+  }
+
+  // P. Number-line rail (S3-P2Z32 "dải trục số"): one orb per step; climbed
+  // steps light gold, the round's target orb takes the sky colour.
+  [Test] public void P54P_NumberRailLights() {
+    GameObject arena;
+    StairHillBuilder builder = BuildArena(out arena);
+    try {
+      builder.BuildContent(arena.transform);
+      for (int i = 1; i <= 9; i++)
+        Assert.IsNotNull(FindDeep(arena.transform, "SHNumberRailOrb" + i), "rail orb " + i);
+      Transform orb1 = FindDeep(arena.transform, "SHNumberRailOrb1");
+      Transform orb5 = FindDeep(arena.transform, "SHNumberRailOrb5");
+      builder.SetRail(0, 0);
+      Color dim = orb1.GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
+      builder.SetRail(2, 5);
+      Color lit = orb1.GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
+      Color goal = orb5.GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
+      Assert.Greater(lit.r, dim.r + 0.05f, "orb 1 lights as the child climbs");
+      Assert.Greater(goal.b, goal.r, "the target orb reads sky (blue > red)");
+    } finally { Object.DestroyImmediate(arena); }
+  }
+
+  // Q. Subtraction direction (S3-P2Z32): the child STARTS on step OpA (above
+  // the result) and walks down — that start is never an "overshoot"; the
+  // "too far" side is BELOW the result.
+  [Test] public void P54Q_SubRoundOvershootIsDirectionAware() {
+    GameObject arena;
+    StairHillBuilder builder = BuildArena(out arena);
+    GameObject player = new GameObject("P54PlayerQ");
+    try {
+      builder.BuildContent(arena.transform);
+      FakeAudio audio = new FakeAudio();
+      NumberStairs game = arena.AddComponent<NumberStairs>();
+      game.Build(builder, player.transform, null, audio,
+        new ActivityLifecycle("number_stairs", "test"), 3);
+      game.SetRoundForTests((int)NumberStairs.RoundKind.Sub, 7, 4); // 7 - 4 = 3
+      AdvanceToClimb(game, player, builder);
+      Assert.AreEqual(7, game.OpA, "starts on step 7");
+      Assert.AreEqual(3, game.Target, "result step 3");
+      StepTo(game, player, builder, 7);              // the starting operand
+      for (int i = 0; i < 12; i++) game.Tick(0.1f);
+      Assert.AreEqual(0, game.Overshoots, "the subtraction start is never a nag");
+      Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "still climbing");
+      StepTo(game, player, builder, 2);              // below the result
+      for (int i = 0; i < 12; i++) game.Tick(0.1f);
+      Assert.GreaterOrEqual(game.Overshoots, 1, "below the result is guided back");
+      Assert.AreEqual(NumberStairs.Phase.Climb, game.Current, "no fail on a wrong step");
     } finally {
       Object.DestroyImmediate(player);
       Object.DestroyImmediate(arena);

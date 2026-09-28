@@ -61,6 +61,11 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
   public const int DefaultTarget = 3;
   public const string TargetFlag = "-build-target";
   public static readonly int[] Progression = { 3, 5, 7, 9, 1 };
+  // S3-P2Z20 user: "tạo cơ chế random câu hỏi các con số" — live play draws a
+  // RANDOM target each round (never the same twice in a row); the installer
+  // turns this on. Tests leave it off, so the deterministic ladder + CLI stay
+  // pinned exactly as before.
+  public bool RandomTargets;
   public int Target { get; private set; } = DefaultTarget;
   int _lifeTarget = DefaultTarget;
   // Last completed height pushed to the hub landmark (survives the scene swap
@@ -95,7 +100,14 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
     if (Lifecycle == null) return;
     if (Lifecycle.State != ActivityState.Completed) return;
     if (_lifeTarget != Target) return;
-    int next = NextTarget(Target);
+    int next;
+    if (RandomTargets) {
+      next = Target;
+      for (int guard = 0; guard < 32 && next == Target; guard++)
+        next = UnityEngine.Random.Range(1, BuildTowerBuilder.MaxTarget + 1);
+    } else {
+      next = NextTarget(Target);
+    }
     Target = next;
     Lifecycle = new ActivityLifecycle("build_tower", "BuildTowerArea");
     _lifeTarget = next;
@@ -179,6 +191,11 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
       }
       if (!loaded) {
         // Honest failure: stay in the hub, restore the HUD, no fake progress.
+        try {
+          UnityEngine.Debug.LogWarning("[BuildTowerArea] micro load refused: "
+            + (_transition != null ? _transition.LastError : "no transition")
+            + " state=" + (_transition != null ? _transition.State.ToString() : "-"), this);
+        } catch (Exception) { }
         RestoreObjective();
         IsBusy = false;
         StopTunnelSoon();

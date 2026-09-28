@@ -17,8 +17,9 @@ public static class TempP56JourneyBoot {
   static void Boot() {
     string[] args = Environment.GetCommandLineArgs();
     bool want = false;
+    // Driver-specific flag (the full-journey driver + P57 share the repo).
     foreach (string a in args) {
-      if (string.Equals(a, "-journey", StringComparison.OrdinalIgnoreCase)) { want = true; break; }
+      if (string.Equals(a, "-journey56", StringComparison.OrdinalIgnoreCase)) { want = true; break; }
     }
     if (!want) return;
     GameObject go = new GameObject("TempP56Journey");
@@ -150,15 +151,11 @@ public class TempP56Journey : MonoBehaviour {
     Shot("05_world_entry");
     int target = game.Target;
     Log("target=" + target + " (area ladder)");
-    // 4. Intro + demo + handoff (poll the REAL phases).
-    yield return new WaitForSeconds(9f);
-    Shot("06_intro_board");
-    yield return WaitFor(delegate { return game.Current == BuildTowerGame.Phase.Demo; }, 60f, "demo started");
-    yield return new WaitForSeconds(12f);
-    Shot("07_demo_build");
-    yield return WaitFor(delegate { return game.DemoBlocksPlaced >= target; }, 300f, "demo stacked " + target);
-    Shot("08_demo_done");
-    yield return WaitFor(delegate { return game.Current == BuildTowerGame.Phase.Building; }, 60f, "child control");
+    // 4. No in-arena demo (S3-P2Z19): walk to the marked play spot; the
+    // question is read on arrival, then the child gets control.
+    yield return WalkToWorld(BuildTowerBuilder.WorldOffset + BuildTowerBuilder.PlaySpotLocal,
+      1.4f, 90f, "tower play spot");
+    yield return WaitFor(delegate { return game.Current == BuildTowerGame.Phase.Building; }, 90f, "child control");
     Shot("09_handoff");
     // 5. The child's round: pick -> carry -> place, one block at a time.
     for (int i = 0; i < target; i++) {

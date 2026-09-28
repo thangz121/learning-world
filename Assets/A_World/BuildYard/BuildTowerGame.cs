@@ -291,21 +291,22 @@ public class BuildPadZone : MonoBehaviour, IClickTarget {
 [DisallowMultipleComponent]
 public class BuildTowerGame : MonoBehaviour {
   public enum Phase {
+    Wait,     // the child walks to the marked play spot; nothing is taught yet
     Intro,    // teacher links the board's number to blocks for the tower
-    Demo,     // the student fetches N blocks one by one and stacks them
-    Handoff,  // "Now it's your turn!" + the demo tower tidies back to the yard
     Building, // the child picks, carries and places; the teacher counts along
     Success,  // the tower has the target height — celebrated, field stays open
     Correct,  // one too many: a gentle counting correction, then Success again
   }
 
   // Beat timings (one place; deterministic for Tick tests).
-  const float DemoHold = 0.7f;           // teacher count beat per demo block
   const float OvershootNagCooldown = 5f;
   const float UnderNudgeCooldown = 8f;
   const float UnderDwell = 2.0f;         // settled-below-target before a nudge
   const float UnderNearXZ = 4.5f;        // nudge only near the yard/pad
-  const float WalkSpeed = 0.85f;         // student legs
+  // S3-P2Z19 (user: "khi vào arena ... đọc hướng dẫn 'Hãy bước vào vị trí chơi
+  // nhé'"): the guidance waits for the area's arrival reveal (2.2s), then asks
+  // the child onto the marked spot; the question is read ONLY on arrival.
+  const float WaitCallSeconds = 2.4f;
   public static readonly Vector3 FollowOffset = BuildTowerBuilder.FollowOffset;
 
   // Number words: Vietnamese first; English prepared alongside. Every composed
@@ -329,14 +330,13 @@ public class BuildTowerGame : MonoBehaviour {
     return string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
   }
 
-  public Phase Current { get; private set; } = Phase.Intro;
+  public Phase Current { get; private set; } = Phase.Wait;
   public int Target { get; private set; } = BuildTowerBuilder.Target;
   public int Count { get; private set; }
   public TowerBlock Carried { get; private set; }
   public int Overshoots { get; private set; }
   public int UndershootNudges { get; private set; }
-  public int DemoBlocksPlaced { get { return _demoPlaced; } }
-  public bool IntroDone { get { return Current != Phase.Intro; } }
+  public bool IntroDone { get { return Current != Phase.Wait && Current != Phase.Intro; } }
   public bool ResultShown { get { return _result != null && _result.activeSelf; } }
   public int BlockCountTotal { get { return _blocks.Count; } }
   public TowerBlock BlockAt(int i) { return i >= 0 && i < _blocks.Count ? _blocks[i] : null; }
@@ -375,7 +375,6 @@ public class BuildTowerGame : MonoBehaviour {
 
   readonly List<TowerBlock> _blocks = new List<TowerBlock>();
   readonly List<TowerBlock> _placed = new List<TowerBlock>();
-  readonly Queue<TowerBlock> _resetQueue = new Queue<TowerBlock>();
 
   public float PickDelay = 0.45f;
   public float PlaceDelay = 0.45f;
@@ -387,14 +386,10 @@ public class BuildTowerGame : MonoBehaviour {
   bool _followHanded;
   int _shot;
 
-  bool _saidBoard, _saidNumber, _saidCountWord, _saidToday, _saidBuild;
+  bool _saidBoard, _saidToday;
   bool _saidBuilt;
-  int _demoStage; // 0 walk to yard, 1 picking, 2 walk to pad, 3 placing, 4 hold, 5 confirm
-  int _demoPlaced;
-  float _demoHoldT;
-  bool _saidWatch, _saidYes;
-  bool _saidTurn, _saidTask;
-  bool _studentReturned;
+  bool _waitCalled;      // the walk-in guidance was spoken
+  float _ringPulseT;
   float _victoryT = -1f;
   float _resultPopT = 1f;
   float _boardPulseT;
@@ -411,7 +406,6 @@ public class BuildTowerGame : MonoBehaviour {
   float _overshootNagT;
   float _underCooldownT;
   float _underT;
-  float _resetT;
 
   int _sparkleSeed = 1300;
   TowerBlock _pulsing;
@@ -566,9 +560,8 @@ public class BuildTowerGame : MonoBehaviour {
         if (_blocks[i] != null) _blocks[i].TickForTests(dt);
       }
       switch (Current) {
+        case Phase.Wait: TickWait(dt); break;
         case Phase.Intro: TickIntro(dt); break;
-        case Phase.Demo: TickDemo(dt); break;
-        case Phase.Handoff: TickHandoff(dt); break;
         case Phase.Building: TickBuilding(dt); break;
         case Phase.Success: TickSuccess(dt); break;
         case Phase.Correct: TickCorrect(dt); break;
@@ -602,204 +595,97 @@ public class BuildTowerGame : MonoBehaviour {
   void TickVoice(float dt) { if (_voice != null) _voice.Tick(dt); }
   void To(Phase next) { Current = next; _phaseT = 0f; }
 
-  // ---- teacher intro ----------------------------------------------------------
-  // The board holds the round's target: every line below is composed from it,
-  // so the SAME script teaches 1..9 without a second lesson.
+  // ---- wait on the marked play spot (S3-P2Z19 user round) -----------------------
+  // "Tất cả các game sau khi đã vào arena thì không phát lại demo nữa mà chỉ
+  // chờ player bước đến đúng vị trí chơi thì bắt đầu đọc câu hỏi." The teacher
+  // idles, the spot pulses, the guidance line asks the child over; the question
+  // is read ONLY when the child actually stands on the spot.
+
+  Vector3 PlaySpotWorld() {
+    if (_builder != null && _builder.PlaySpot != null)
+      return _builder.PlaySpot.transform.position;
+    return _root != null ? _root.TransformPoint(BuildTowerBuilder.PlaySpotLocal) : Vector3.zero;
+  }
+
+  bool PlayerOnSpot() {
+    if (_player == null) return false;
+    Vector3 p = _player.position;
+    Vector3 q = PlaySpotWorld();
+    float dx = p.x - q.x, dz = p.z - q.z;
+    return dx * dx + dz * dz <= BuildTowerBuilder.PlaySpotRadius * BuildTowerBuilder.PlaySpotRadius;
+  }
+
+  void TickWait(float dt) {
+    _phaseT += dt;
+    FaceTowards(_teacher, PlayerLocal(), dt, 3f);
+    FaceTowards(_student, PlayerLocal(), dt, 2.5f);
+    PulsePlayRing(dt);
+    // The "Come here!" sign hides once the child is close — never blocks the frame.
+    if (_builder != null && _builder.PlaySign != null) {
+      bool near = PlayerNear(PlaySpotWorld(), 5.5f);
+      if (_builder.PlaySign.activeSelf == near) _builder.PlaySign.SetActive(!near);
+    }
+    if (!_waitCalled && _phaseT >= WaitCallSeconds) {
+      _waitCalled = true;
+      Wave(_teacher);
+      Say("Step into the play spot!", "Hãy bước vào vị trí chơi nhé!");
+      Point(_teacher, PlaySpotWorld(), 2.4f);
+    }
+    if (PlayerOnSpot()) StartQuestion();
+  }
+
+  void StartQuestion() {
+    To(Phase.Intro);
+    Log("question read (child on the play spot): number " + Target);
+  }
+
+  void PulsePlayRing(float dt) {
+    if (_builder == null || _builder.PlayRing == null) return;
+    _ringPulseT += dt;
+    float s = 1f + 0.07f * Mathf.Sin(_ringPulseT * 3.4f);
+    try { _builder.PlayRing.transform.localScale = new Vector3(2.5f * s, 0.01f, 2.5f * s); }
+    catch (Exception) { }
+  }
+
+  // ---- teacher intro (MINIMAL — S3-P2Z20 user: "đừng hướng dẫn tận răng,
+  // hãy để trẻ suy nghĩ") ------------------------------------------------------
+  // The board already shows the number; the teacher only asks the child to look
+  // and names the job. Two short lines, then the child reads the board.
 
   void TickIntro(float dt) {
     _phaseT += dt;
     float t = _phaseT;
     FaceTowards(_teacher, BoardLocal(), dt, 4f);
     FaceTowards(_student, TeacherLocal(), dt, 3f);
-    if (!_saidBoard && t >= 1.2f) {
+    if (!_saidBoard && t >= 0.5f) {
       _saidBoard = true;
       Wave(_teacher);
       Say("Look at the board!", "Nhìn lên bảng nhé!");
       Point(_teacher, BoardWorld(), 2.4f);
     }
-    if (!_saidNumber && t >= 3.4f) {
-      _saidNumber = true;
-      Say("This is number " + N(Target) + ".", "Đây là số " + Nvi(Target) + ".");
-    }
-    if (!_saidCountWord && t >= 5.6f) {
-      _saidCountWord = true;
-      Say(BlockEn[Target - 1], BlockVi[Target - 1]);
-      PulseBoard(1.4f);
-    }
-    if (!_saidToday && t >= 7.2f) {
+    if (!_saidToday && t >= 2.2f) {
       _saidToday = true;
       FaceTowards(_teacher, PadLocal(), dt, 4f);
-      Say("Build a tower of " + N(Target) + "!", "Xây tháp " + Nvi(Target) + " khối nhé!");
+      // S3-P2Z23 (user: "không nói đây là số mấy, trẻ tự nhận biết"): the number
+      // is not spoken — the board shows it.
+      Say("Build the tower!", "Xây tháp nhé!");
       Point(_teacher, PadWorld(), 2.8f);
+      PulseBoard(1.4f);
     }
-    if (!_saidBuild && t >= 10.2f) {
-      _saidBuild = true;
-      Wave(_teacher);
-      Say("Let's build!", "Cùng xây nhé!");
-    }
-    if (t >= 11.4f) {
-      To(Phase.Demo);
-      SetShot(1);
-      FaceTowards(_student, YardLocal(), dt, 4f);
-    }
+    if (t >= 3.6f) StartBuilding();
   }
 
-  // ---- student demonstration ---------------------------------------------------
-  // One block at a time, for real: walk to the yard -> pick (arc to the
-  // student's fist) -> walk to the pad -> place (arc onto the stack, wooden
-  // clack, tower grows) -> next. No teleport, no snaps.
-  void TickDemo(float dt) {
-    _phaseT += dt;
-    if (!_saidWatch) {
-      _saidWatch = true;
-      Say("Watch your friend!", "Xem bạn làm nhé!");
-      Point(_teacher, YardWorld(), 2.4f);
-    }
-    TowerBlock block = _demoPlaced < _blocks.Count ? _blocks[_demoPlaced] : null;
-    switch (_demoStage) {
-      case 0:
-        FaceTowards(_student, YardLocal(), dt, 5f);
-        if (_phaseT >= 1.2f && WalkTo(_student, BuildTowerBuilder.YardStand, dt)) {
-          _demoStage = 1;
-          if (block != null) {
-            block.SetHand(StudentHand());
-            FaceTowards(_student, YardLocal(), dt, 5f);
-            block.BeginCarry(0.3f);
-          }
-        }
-        break;
-      case 1:
-        if (block == null || block.State == TowerBlock.BlockState.Carried) {
-          _demoStage = 2;
-        }
-        break;
-      case 2:
-        FaceTowards(_student, PadLocal(), dt, 5f);
-        if (WalkTo(_student, BuildTowerBuilder.PadStand, dt)) {
-          _demoStage = 3;
-          if (block != null) {
-            block.OnPlaced = OnDemoPlaced;
-            block.BeginPlace(_demoPlaced, BuildTowerBuilder.StackSlot(_demoPlaced, BuildTowerBuilder.PadPos), 0.3f);
-          }
-        }
-        break;
-      case 3:
-        if (block == null || block.State == TowerBlock.BlockState.Placed) {
-          _demoStage = 4;
-          _demoHoldT = DemoHold;
-        }
-        break;
-      case 4:
-        _demoHoldT -= dt;
-        if (_demoHoldT <= 0f) {
-          _demoPlaced++;
-          if (_demoPlaced < Target) { _demoStage = 0; }
-          else { _demoStage = 5; _demoHoldT = 1.6f; }
-        }
-        break;
-      default:
-        FaceTowards(_student, PlayerLocal(), dt, 3f);
-        _demoHoldT -= dt;
-        if (!_saidYes && _demoHoldT <= 1.0f) {
-          _saidYes = true;
-          Say("Yes! " + Cap(N(Target)) + " " + Blocks(Target) + "!",
-            "Đúng rồi! " + Cap(Nvi(Target)) + " khối!");
-          Point(_teacher, PadWorld(), 2.2f);
-          CelebrateActor(_student, soft: true);
-          Sparkle(PadWorld() + new Vector3(0f, BuildTowerBuilder.TowerTopY(Target), 0f), 8, 91, 0.4f);
-        }
-        if (_demoHoldT <= 0f) {
-          StartResetYard();
-          To(Phase.Handoff);
-        }
-        break;
-    }
+  void StartBuilding() {
+    To(Phase.Building);
+    Follow();
+    _followHanded = true;
+    if (_life != null) { try { _life.Begin("question read"); } catch (Exception) { } }
+    _lastPos = _player != null ? _player.position : Vector3.zero;
+    try { Debug.Log("[BuildTowerGame] child control (building phase).", this); } catch (Exception) { }
   }
 
-  void OnDemoPlaced() {
-    PlaySfx("block");
-    int k = Mathf.Min(_demoPlaced + 1, Target);
-    FeedFeedback(k);
-    Say(BlockEn[k - 1], BlockVi[k - 1]);
-    Point(_teacher, PadWorld(), 1.6f);
-  }
-
-  // The demo tower tidies back to the yard (gentle arcs, staggered) so the
-  // child starts from an empty pad and builds the tower themselves.
-  void StartResetYard() {
-    _resetQueue.Clear();
-    _resetT = 0f;
-    for (int i = 0; i < _placed.Count; i++) {
-      TowerBlock b = _placed[i];
-      if (b != null) _resetQueue.Enqueue(b);
-    }
-    _placed.Clear();
-    Count = 0;
-    if (_ghost != null) _ghost.SetActive(false);
-  }
-
-  void TickResetYard(float dt) {
-    if (_resetQueue.Count <= 0) return;
-    _resetT -= dt;
-    if (_resetT > 0f) return;
-    _resetT = 0.09f;
-    TowerBlock b = _resetQueue.Dequeue();
-    if (b != null && b.State != TowerBlock.BlockState.Available) {
-      b.SetHand(_playerHand);
-      b.OnPlaced = null;
-      b.BeginReturnHome();
-    }
-  }
-
-  // Safety net: by the time the child gets control, every block is pickable.
-  void FinishResetYard() {
-    _resetQueue.Clear();
-    for (int i = 0; i < _blocks.Count; i++) {
-      TowerBlock b = _blocks[i];
-      if (b == null) continue;
-      b.SetHand(_playerHand);
-      b.OnPlaced = null;
-      if (b.State != TowerBlock.BlockState.Available) b.ResetHome();
-    }
-    Count = 0;
-    _placed.Clear();
-  }
-
-  // ---- handoff ------------------------------------------------------------------
-
-  void TickHandoff(float dt) {
-    _phaseT += dt;
-    float t = _phaseT;
-    TickResetYard(dt);
-    if (!_saidTurn && t >= 0.4f) {
-      _saidTurn = true;
-      FaceTowards(_teacher, PlayerLocal(), dt, 5f);
-      Say("Now it's your turn!", "Giờ đến lượt con!");
-    }
-    if (!_saidTask && t >= 2.4f) {
-      _saidTask = true;
-      Say("Build a tower of " + N(Target) + "!", "Xây tháp " + Nvi(Target) + " khối nhé!");
-      Point(_teacher, PadWorld(), 2.6f);
-    }
-    // The student walks back beside the teacher so he never blocks the pad.
-    if (!_studentReturned) {
-      if (WalkTo(_student, BuildTowerBuilder.StudentReturn, dt)) _studentReturned = true;
-      if (t >= 8.0f) _studentReturned = true; // safety: the lesson never stalls
-    } else {
-      FaceTowards(_student, PadLocal(), dt, 2.5f);
-    }
-    if (!_followHanded && t >= 4.2f) {
-      _followHanded = true;
-      Follow();
-      if (_life != null) { try { _life.Begin("handoff done"); } catch (Exception) { } }
-    }
-    if (_followHanded && Current == Phase.Handoff && (_studentReturned || t >= 8.0f)) {
-      FinishResetYard();
-      To(Phase.Building);
-      _lastPos = _player != null ? _player.position : Vector3.zero;
-      try { Debug.Log("[BuildTowerGame] child control (building phase).", this); } catch (Exception) { }
-    }
-  }
+  // (S3-P2Z19: the in-arena student demo + handoff beats are GONE — the garden
+  // miniature teaches once; the arena reads the question on the play spot.)
 
   // ---- the child's build ---------------------------------------------------------
   // Real actions in the world: click a block (walk -> bend -> carry in the
@@ -898,6 +784,8 @@ public class BuildTowerGame : MonoBehaviour {
     PlaySfx("success");
     Sparkle(PadWorld() + new Vector3(0f, BuildTowerBuilder.TowerTopY(Target) + 0.2f, 0f),
       14, _sparkleSeed++, 0.8f);
+    // S3-P2Z33: layered win feedback.
+    GameJuice.CorrectFx(_fx, PadWorld() + new Vector3(0f, BuildTowerBuilder.TowerTopY(Target) + 0.2f, 0f), false);
     Say(Cap(N(Target)) + " " + Blocks(Target) + "! Well done!",
       Cap(Nvi(Target)) + " khối! Giỏi!");
     // The recap 1..Target waits its turn in the pacer's single slot (same
@@ -933,27 +821,10 @@ public class BuildTowerGame : MonoBehaviour {
   void TickBuilding(float dt) {
     _phaseT += dt;
     if (_overshootNagT > 0f) _overshootNagT -= dt;
-    if (_underCooldownT > 0f) _underCooldownT -= dt;
     TickPlaceProximity();
     TickGhost(dt);
-    // Undershoot nudge: settled BELOW the target earns a gentle "how many
-    // more" — near the yard or the pad only, never across the arena, never spam.
-    bool moving = IsPlayerMoving();
-    if (Count < Target && !moving && NearWork()) {
-      _underT += dt;
-      if (_underT >= UnderDwell && _underCooldownT <= 0f) {
-        _underCooldownT = UnderNudgeCooldown;
-        _underT = 0f;
-        UndershootNudges++;
-        int remain = Target - Count;
-        Say(Cap(N(remain)) + " more " + Blocks(remain) + "!",
-          "Còn " + Nvi(remain) + " khối nữa nhé!");
-        Point(_teacher, Count == 0 ? YardWorld() : PadWorld(), 2.0f);
-        Log("undershoot at " + Count + " (" + remain + " more)");
-      }
-    } else {
-      _underT = 0f;
-    }
+    // S3-P2Z22 (user: no "còn N nữa" hint — the child thinks). The undershoot
+    // nudge is GONE; the board shows the target.
     _lastPos = _player != null ? _player.position : Vector3.zero;
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
@@ -1141,14 +1012,16 @@ public class BuildTowerGame : MonoBehaviour {
 
   void TickCamera(float dt) {
     if (_cameraDone) return;
-    if (_followHanded && Current != Phase.Success) return;
+    // After a correction sets _followHanded, stop re-issuing the success shot
+    // (S3-P2Z17 journey finding: camera stuck in Interaction blocked the exit).
+    if (_followHanded) return;
     if (!_shotIssued) {
       // Let the area's arrival reveal (2.2s) play first, then hold the
       // teaching frame while the teacher introduces the board.
       if (Current == Phase.Intro && _phaseT >= 2.0f) IssueShot();
       return;
     }
-    if (Current != Phase.Intro && Current != Phase.Demo && Current != Phase.Success) return;
+    if (Current != Phase.Intro && Current != Phase.Success) return;
     _shotT -= dt;
     if (_shotT <= 0f) IssueShot();
   }
@@ -1160,26 +1033,6 @@ public class BuildTowerGame : MonoBehaviour {
   }
 
   // ---- actor motion / gestures (same acting language as #1-#3) ----------------------
-
-  Transform StudentHand() {
-    if (_student == null) return _playerHand;
-    if (_student.HandBone != null) return _student.HandBone;
-    if (_student.CarryAnchor != null) return _student.CarryAnchor;
-    return _playerHand;
-  }
-
-  bool WalkTo(LessonActor a, Vector3 targetLocal, float dt) {
-    if (a == null || a.Root == null) return true;
-    Vector3 p = a.Root.transform.localPosition;
-    Vector3 flat = new Vector3(targetLocal.x - p.x, 0f, targetLocal.z - p.z);
-    float dist = flat.magnitude;
-    if (dist <= 0.12f) return true;
-    FaceTowards(a, targetLocal, dt, 6f);
-    float step = Mathf.Min(WalkSpeed * dt, dist);
-    Vector3 dir = dist > 0.0001f ? flat / dist : Vector3.zero;
-    a.Root.transform.localPosition = new Vector3(p.x + dir.x * step, p.y, p.z + dir.z * step);
-    return false;
-  }
 
   void FaceTowards(LessonActor a, Vector3 targetLocal, float dt, float rate) {
     if (a == null || a.Root == null) return;

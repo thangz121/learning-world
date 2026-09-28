@@ -103,17 +103,26 @@ public class ClickRouter : MonoBehaviour {
     TickPending();
   }
 
+  public static bool Diag;
+
   void HandleClick() {
     if (_player == null) return;
-    if (_gate != null && !_gate.CanRouteWorld) return; // P1-6: beat in flight, drop the tap
-    if (IsPointerOverUi()) return; // HUD button clicks must not move the player
+    if (_gate != null && !_gate.CanRouteWorld) { if (Diag) Debug.Log("[ClickDiag] dropped: gate=" + _gate.Blocker()); return; }
+    if (IsPointerOverUi()) { if (Diag) Debug.Log("[ClickDiag] dropped: pointer over UI"); return; }
     Camera cam = Camera.main;
     if (cam == null) return;
     Mouse mouse = Mouse.current;
     if (mouse == null) return;
     Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
-    if (!ClickRay(ray, out RaycastHit hit)) return; // the child's own body never routes
-    if (Mathf.Abs(hit.point.x - boundCenter.x) > boundX || Mathf.Abs(hit.point.z - boundCenter.z) > boundZ) return; // (d) ignore
+    if (!ClickRay(ray, out RaycastHit hit)) { if (Diag) Debug.Log("[ClickDiag] dropped: no hit"); return; }
+    if (Diag) Debug.Log("[ClickDiag] hit=" + (hit.collider != null ? hit.collider.name : "?")
+      + " pt=" + hit.point.ToString("F1") + " player=" + _player.transform.position.ToString("F1"));
+    if (Mathf.Abs(hit.point.x - boundCenter.x) > boundX || Mathf.Abs(hit.point.z - boundCenter.z) > boundZ) { if (Diag) Debug.Log("[ClickDiag] dropped: out of bounds"); return; } // (d) ignore
+
+    // Draggable objects (fed carrots in the rabbit bowl) own the pointer: the
+    // scene's drag handler manipulates them; never ALSO walk/click here.
+    IDragTarget dragTarget = hit.collider.GetComponentInParent<IDragTarget>();
+    if (dragTarget != null && dragTarget.CanDragNow) return;
 
     Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
     if (interactable != null) { // (a) typed world object
@@ -336,6 +345,8 @@ public class ClickRouter : MonoBehaviour {
     if (_player == null || hit == null) return;
     if (_gate != null && !_gate.CanRouteWorld) return; // P1-6: beat in flight, drop the tap
     if (Mathf.Abs(point.x - boundCenter.x) > boundX || Mathf.Abs(point.z - boundCenter.z) > boundZ) return;
+    IDragTarget dragTarget = hit.GetComponentInParent<IDragTarget>();
+    if (dragTarget != null && dragTarget.CanDragNow) return;
     Interactable interactable = hit.GetComponentInParent<Interactable>();
     if (interactable != null) {
       _player.MoveTo(point);

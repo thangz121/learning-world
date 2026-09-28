@@ -18,8 +18,9 @@ public static class TempP57JourneyBoot {
   static void Boot() {
     string[] args = Environment.GetCommandLineArgs();
     bool want = false;
+    // Driver-specific flag (the full-journey driver + P56 share the repo).
     foreach (string a in args) {
-      if (string.Equals(a, "-journey", StringComparison.OrdinalIgnoreCase)) { want = true; break; }
+      if (string.Equals(a, "-journey57", StringComparison.OrdinalIgnoreCase)) { want = true; break; }
     }
     if (!want) return;
     GameObject go = new GameObject("TempP57Journey");
@@ -127,17 +128,11 @@ public class TempP57Journey : MonoBehaviour {
     Shot("05_world_entry");
     int target = game.Target;
     Log("target=" + target + " (area ladder)");
-    // 4. Order + demo + handoff (poll the REAL phases).
-    yield return new WaitForSeconds(9f);
-    Shot("06_order_board");
-    yield return WaitFor(delegate { return game.Current == DeliveryGame.Phase.Demo; }, 60f, "demo started");
-    yield return new WaitForSeconds(12f);
-    Shot("07_demo_pickup");
-    yield return WaitFor(delegate { return game.DemoApplesDelivered >= 1; }, 120f, "first demo handover");
-    Shot("08_demo_handover");
-    yield return WaitFor(delegate { return game.DemoApplesDelivered >= target; }, 420f, "demo delivered " + target);
-    Shot("09_demo_done");
-    yield return WaitFor(delegate { return game.Current == DeliveryGame.Phase.Delivering; }, 60f, "child control");
+    // 4. No in-arena demo (S3-P2Z19): walk to the marked play spot; the order
+    // is read on arrival, then the child gets control.
+    yield return WalkToWorld(DeliveryBuilder.WorldOffset + DeliveryBuilder.PlaySpotLocal,
+      1.4f, 90f, "delivery play spot");
+    yield return WaitFor(delegate { return game.Current == DeliveryGame.Phase.Delivering; }, 90f, "child control");
     Shot("10_handoff");
     // 5. The child's round: pick -> carry -> hand over, one apple at a time.
     for (int i = 0; i < target; i++) {

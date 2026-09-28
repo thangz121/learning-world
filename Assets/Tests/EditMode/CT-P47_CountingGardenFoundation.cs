@@ -1,8 +1,8 @@
-// CT-P47: S3 P1/P2V COUNTING GARDEN FOUNDATION (recomposed layout).
-// Pins the visual-recomposition contract on top of the v2 lazy-scene contract:
-// plaza + number stones, crescent of 4 garden beds + demo theatre, reward
-// pocket, entry threshold/exit landmark, camera-first demo stage, and the
-// no-gameplay firewall (static presentation only).
+// CT-P47: COUNTING GARDEN FOUNDATION (two-plot layout).
+// Pins the layout contract on top of the v2 lazy-scene contract: plaza +
+// number stones, crescent of 2 plots (carrot bed + number-stair hill), reward
+// pocket, entry threshold/exit landmark, and the no-gameplay firewall
+// (static presentation only).
 // C# 9.0 only.
 using NUnit.Framework;
 using UnityEngine;
@@ -32,15 +32,13 @@ public class CT_P47_CountingGardenFoundation {
     return Dist2D(p, new Vector3(a.x + abx * t, 0f, a.z + abz * t));
   }
 
-  // A. Zones/space exist with their Phase-1 roles (beds + demo + identity).
+  // A. Zones/space exist with their Phase-1 roles (carrot bed + stair hill).
   [Test] public void P47A_FoundationZonesHaveRoles() {
     GameObject garden = new GameObject("P47GardenWorld");
     try {
       CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
       builder.BuildContent(garden.transform);
-      // S3-P2Z12 re-pin: 6 plots (4 beds + demo theatre + number-stair hill).
-      Assert.AreEqual(6, builder.ZoneCenters.Count, "six crescent plots (4 beds + demo + stair hill)");
-      Vector3 demo = builder.ZoneCenters[2];
+      Assert.AreEqual(2, builder.ZoneCenters.Count, "two crescent plots (carrot + stair hill)");
       // Entry threshold + orientation + staging.
       Assert.IsNotNull(FindDeep(garden.transform, "CGThresholdL"), "entry threshold L");
       Assert.IsNotNull(FindDeep(garden.transform, "CGThresholdR"), "entry threshold R");
@@ -53,43 +51,31 @@ public class CT_P47_CountingGardenFoundation {
         Assert.IsNotNull(FindDeep(garden.transform, "CGNumberStone" + i + "Bead" + i),
           "number stone " + i + " carries " + (i + 1) + " beads");
       }
-      // DEMO THEATRE: number board + 2 apples + basket + hidden result board.
-      string[] demoKit = { "CGDemoBoardPanel", "CGDemoBoardL", "CGDemoBoardR",
-        "CGDemoNumber2", "CGDemoBallField", "CGDemoBall0", "CGDemoBall4",
-        "CGDemoBasket", "CGDemoResultFrame", "CGDemoResultTwo", "CGDemoResultCheckArm" };
-      foreach (string n in demoKit) {
-        Transform t = FindDeep(garden.transform, n);
-        Assert.IsNotNull(t, "demo static " + n);
-        // .position: result-board parts are nested under their group.
-        Assert.Less(Dist2D(t.position, demo), 4.0f, n + " sits inside the demo theatre");
+      // CARROT BED (zone 0): soil + counted crops + numbered mouth post + fence.
+      Vector3 carrot = builder.ZoneCenters[0];
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone0Pad"), "carrot soil");
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone0Fence0"), "carrot fence");
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone0Anchor"), "carrot mouth anchor");
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone0Post"), "carrot numbered post");
+      for (int c = 0; c < 3; c++) {
+        Transform crop = FindDeep(garden.transform, "CGZone0Crop" + c);
+        Assert.IsNotNull(crop, "carrot crop " + c);
+        Assert.Less(Dist2D(crop.localPosition, carrot), 2.2f, "crop inside the carrot bed");
       }
-      Assert.IsFalse(builder.DemoResult.activeSelf, "result hidden until the apples land");
-      // GARDEN BEDS: soil + counted crops + numbered mouth post + fence.
-      int[] bedIndices = { 0, 1, 3, 4 };
-      int[] cropCounts = { 3, 4, 5, 2 };
-      for (int i = 0; i < bedIndices.Length; i++) {
-        int z = bedIndices[i];
-        Vector3 center = builder.ZoneCenters[z];
-        Assert.IsNotNull(FindDeep(garden.transform, "CGZone" + z + "Pad"), "bed soil " + z);
-        Assert.IsNotNull(FindDeep(garden.transform, "CGZone" + z + "Fence0"), "bed fence " + z);
-        Assert.IsNotNull(FindDeep(garden.transform, "CGZone" + z + "Anchor"), "bed mouth anchor " + z);
-        Assert.IsNotNull(FindDeep(garden.transform, "CGZone" + z + "Post"), "numbered post " + z);
-        for (int c = 0; c < cropCounts[i]; c++) {
-          Transform crop = FindDeep(garden.transform, "CGZone" + z + "Crop" + c);
-          Assert.IsNotNull(crop, "bed " + z + " crop " + c);
-          Assert.Less(Dist2D(crop.localPosition, center), 2.2f, "crop inside its bed");
-        }
-        Assert.IsNotNull(FindDeep(garden.transform, "CGZone" + z + "PostBead" + z),
-          "bed " + z + " mouth post carries " + (z + 1) + " beads");
-      }
-      // FEEDBACK / REWARD pocket + EXIT landmark.
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone0PostBead0"), "carrot post bead 0");
+      // STAIR HILL (zone 1): the second plot keeps the bed contract.
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone1Border"), "stair border");
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone1Pad"), "stair pad");
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone1Fence0"), "stair fence");
+      Assert.IsNotNull(FindDeep(garden.transform, "CGZone1Anchor"), "stair mouth anchor");
+      // FEEDBACK / REWARD pocket + EXIT landmark + walks.
       Assert.IsNotNull(FindDeep(garden.transform, "CGRewardDisc"), "reward disc");
       Assert.IsNotNull(FindDeep(garden.transform, "CGRewardPlinth"), "reward plinth (empty)");
       Assert.IsNotNull(FindDeep(garden.transform, "CGRewardBeam"), "reward garland beam");
       Assert.IsNotNull(FindDeep(garden.transform, "CGExitPostL"), "exit landmark L");
       Assert.IsNotNull(FindDeep(garden.transform, "CGExitPostR"), "exit landmark R");
       Assert.IsNotNull(FindDeep(garden.transform, "CGPathCrescent0"), "crescent walk");
-      Assert.IsNotNull(FindDeep(garden.transform, "CGPathDemoSpur"), "demo approach walk");
+      Assert.IsNotNull(FindDeep(garden.transform, "CGPathCarrotSpur"), "carrot approach walk");
     } finally { Object.DestroyImmediate(garden); }
   }
 
@@ -140,12 +126,13 @@ public class CT_P47_CountingGardenFoundation {
       Assert.IsNotNull(a.Reward, "reward anchor");
       Assert.IsNotNull(a.Exit, "exit anchor");
       Assert.AreEqual(CountingGardenBuilder.EntryLocal, a.Entry.localPosition, "entry = spawn");
-      Assert.Less(Dist2D(a.GameplayFocus.localPosition, builder.DemoStageCenter), 0.1f,
-        "focus anchor = demo theatre");
-      Assert.Less(Dist2D(a.Npc.localPosition, CountingGardenBuilder.DemoNpcStart), 0.1f,
-        "NPC anchor rides the demo stage start (the performance space)");
-      Transform disc = FindDeep(garden.transform, "CGRewardDisc");
-      Assert.Less(Dist2D(a.Reward.localPosition, disc.localPosition), 1.0f,
+      Assert.Less(Dist2D(a.GameplayFocus.localPosition, CountingGardenBuilder.ArcCenter), 0.1f,
+        "focus anchor = plaza heart");
+      Transform disc = FindDeep(garden.transform, "CGNpcStagingDisc");
+      Assert.Less(Dist2D(a.Npc.localPosition, disc.localPosition), 0.1f,
+        "NPC anchor rides the staging disc");
+      Transform reward = FindDeep(garden.transform, "CGRewardDisc");
+      Assert.Less(Dist2D(a.Reward.localPosition, reward.localPosition), 1.0f,
         "reward anchor rides the celebration medallion");
       Assert.Less(a.Camera.localPosition.z, a.Entry.localPosition.z,
         "arrival camera sits NORTH (behind) the entry");
@@ -154,13 +141,6 @@ public class CT_P47_CountingGardenFoundation {
       float camDist = Vector3.Distance(a.Camera.localPosition, a.CameraLook.localPosition);
       Assert.Greater(camDist, 10f, "arrival frames the whole garden, not a close-up");
       Assert.Less(camDist, 25f, "arrival keeps the world readable (kids-eye medium)");
-      // Demo card camera: west of the stage, looking at it, lower/closer than
-      // the arrival (an instruction card, not a landscape).
-      Assert.Less(builder.DemoCam.localPosition.z, builder.DemoStageCenter.z,
-        "demo camera sits on the plaza side of the stage");
-      Assert.Less(builder.DemoCam.localPosition.y, 3f, "demo camera is at child-comfort height");
-      Assert.Less(Dist2D(builder.DemoLook.localPosition, builder.DemoStageCenter), 1.5f,
-        "demo look point is the stage centre");
     } finally { Object.DestroyImmediate(garden); }
   }
 
@@ -172,32 +152,18 @@ public class CT_P47_CountingGardenFoundation {
       CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
       builder.BuildContent(garden.transform);
       Vector3 entryA = new Vector3(0f, 0f, -11f), entryB = new Vector3(0f, 0f, -1f);
-      Vector3 plaza = CountingGardenBuilder.ArcCenter;
-      Vector3 stage = builder.DemoStageCenter;
-      // Orientation trio clears the entry walk + the plaza->demo axis.
+      // Orientation trio clears the entry walk.
       for (int i = 0; i < 3; i++) {
         Transform trio = FindDeep(garden.transform, "CGOrientTrio" + i);
         Assert.Greater(DistToSeg2D(trio.localPosition, entryA, entryB), 1.6f,
           "landmark trio off the entry walk");
-        Assert.Greater(DistToSeg2D(trio.localPosition, plaza, stage), 1.4f,
-          "landmark trio off the demo axis");
       }
-      // Reward plinth + posts clear the entry walk and the demo axis.
-      Assert.Greater(DistToSeg2D(FindDeep(garden.transform, "CGRewardPlinth").localPosition,
-        plaza, stage), 2.0f, "reward plinth off the demo axis");
+      // Reward garland post clears the entry walk.
       Assert.Greater(DistToSeg2D(FindDeep(garden.transform, "CGRewardPostL").localPosition,
         entryA, entryB), 2.0f, "garland post off the entry walk");
-      // Demo props stay in the stage's front row (never on the approach walk:
-      // the spur runs (0,4.6)->(0,8.4), so measure against THAT segment).
-      Vector3 spurA = new Vector3(0f, 0f, 4.6f), spurB = new Vector3(0f, 0f, 8.4f);
-      foreach (string n in new[] { "CGDemoBoardPanel", "CGDemoBallField", "CGDemoBasket" }) {
-        Transform t = FindDeep(garden.transform, n);
-        Assert.Greater(DistToSeg2D(t.position, spurA, spurB), 0.9f,
-          n + " sits past the stage mouth, not on the approach");
-      }
       // Discs are thin walkable pads (never step walls for the climber).
       foreach (string n in new[] { "CGThresholdL", "CGNpcStagingDisc", "CGRewardDisc",
-        "CGPlazaPad", "CGDemoStagePad" }) {
+        "CGPlazaPad" }) {
         Transform p = FindDeep(garden.transform, n);
         Assert.Less(p.localScale.y, 0.05f, n + " stays a walkable pad");
       }
@@ -224,20 +190,18 @@ public class CT_P47_CountingGardenFoundation {
       builder.BuildContent(garden.transform);
       Vector3 hub = CountingGardenBuilder.ArcCenter;
       string[] foundation = { "CGThresholdL", "CGOrientTrio1", "CGNpcStagingDisc",
-        "CGDemoBoardPanel", "CGRewardDisc", "CGExitPostL", "CGNumberStone4" };
+        "CGRewardDisc", "CGExitPostL", "CGNumberStone4" };
       foreach (string n in foundation) {
         Transform t = FindDeep(garden.transform, n);
         Assert.Less(Dist2D(t.localPosition, hub), 16f, n + " fits the island (hedge r19)");
       }
-      float entryToDemo = Dist2D(CountingGardenBuilder.EntryLocal, builder.DemoStageCenter);
-      Assert.Greater(entryToDemo, 8f, "the garden is a place to explore, not a closet");
-      Assert.Less(entryToDemo, 25f, "the garden is a stroll, not a hike (4yo legs)");
-      // Crescent: uniform, walkable spacing between the activity plots.
-      for (int i = 0; i < builder.ZoneCenters.Count - 1; i++) {
-        float chord = Dist2D(builder.ZoneCenters[i], builder.ZoneCenters[i + 1]);
-        Assert.Greater(chord, 4.5f, "plots keep their own identity (no overlap)");
-        Assert.Less(chord, 8f, "plots stay neighbours (no dead walks)");
-      }
+      float entryToPlots = Dist2D(CountingGardenBuilder.EntryLocal, builder.ZoneCenters[1]);
+      Assert.Greater(entryToPlots, 8f, "the garden is a place to explore, not a closet");
+      Assert.Less(entryToPlots, 25f, "the garden is a stroll, not a hike (4yo legs)");
+      // Crescent: the two plots keep their own identity (no overlap).
+      float chord = Dist2D(builder.ZoneCenters[0], builder.ZoneCenters[1]);
+      Assert.Greater(chord, 4.5f, "plots keep their own identity (no overlap)");
+      Assert.Less(chord, 16f, "plots stay within the same plaza (no dead walks)");
     } finally { Object.DestroyImmediate(garden); }
   }
 }

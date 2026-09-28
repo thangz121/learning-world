@@ -412,13 +412,18 @@ public class MathWorldBuilder : MonoBehaviour {
       // centre — stepping through from inside never crossed it). The trigger
       // now covers the WHOLE arch: 0.7m hub-side of the gate centre with a
       // 1.8m radius (covers mouth + interior + a step behind).
-      Vector3 toHub = hub - counting.transform.position;
+      // LOCAL-space math on purpose: GameInstaller moves the MathWorld root to
+      // WorldOffset BEFORE BuildContent runs, so mixing world transform.position
+      // with the local hub (0,0,0) put the portal on the WRONG side of the arch
+      // (found by the S3-P2Z17 journey: the child stood at the mouth, 2.4m from
+      // the trigger, and the door never fired).
+      Vector3 toHub = hub - counting.transform.localPosition;
       toHub.y = 0f;
       if (toHub.sqrMagnitude < 0.001f) toHub = new Vector3(0f, 0f, 1f);
       toHub.Normalize();
       GameObject portalGo = new GameObject("CountingGardenPortal");
-      portalGo.transform.SetParent(parent);
-      portalGo.transform.position = counting.transform.position + toHub * 0.7f;
+      portalGo.transform.SetParent(parent, false);
+      portalGo.transform.localPosition = counting.transform.localPosition + toHub * 0.7f;
       MicroWorldPortal portal = portalGo.AddComponent<MicroWorldPortal>();
       portal.ExitMode = false;
       portal.fireRadius = 1.8f;
@@ -432,13 +437,13 @@ public class MathWorldBuilder : MonoBehaviour {
     // landmark beside the gate reflects the last completed target.
     MicroWorldGate build = FindMicroGate("build_yard");
     if (build != null && build.EntryAnchor != null) {
-      Vector3 toHub = hub - build.transform.position;
+      Vector3 toHub = hub - build.transform.localPosition;
       toHub.y = 0f;
       if (toHub.sqrMagnitude < 0.001f) toHub = new Vector3(0f, 0f, 1f);
       toHub.Normalize();
       GameObject buildPortalGo = new GameObject("BuildTowerPortal");
-      buildPortalGo.transform.SetParent(parent);
-      buildPortalGo.transform.position = build.transform.position + toHub * 0.7f;
+      buildPortalGo.transform.SetParent(parent, false);
+      buildPortalGo.transform.localPosition = build.transform.localPosition + toHub * 0.7f;
       MicroWorldPortal buildPortal = buildPortalGo.AddComponent<MicroWorldPortal>();
       buildPortal.ExitMode = false;
       buildPortal.fireRadius = 1.8f;
@@ -448,25 +453,50 @@ public class MathWorldBuilder : MonoBehaviour {
       // Gate interaction cue (brief §2): a soft breathing glow on the doorway
       // pad when the child approaches. Presentation only — the portal owns the
       // walk-in trigger and its cold-start debounce, so passing by never fires.
-      GameObject hintGo = new GameObject("BuildYardGateHint");
+      GameObject hintGo = new GameObject("MicroGateHint");
       hintGo.transform.SetParent(parent);
       hintGo.transform.position = buildPortalGo.transform.position;
-      BuildYardGateHint hint = hintGo.AddComponent<BuildYardGateHint>();
+      MicroGateHint hint = hintGo.AddComponent<MicroGateHint>();
       hint.Build(buildPortal);
       BuildYardHint = hint;
+    }
+    // S3-P2Z17 GAMEPLAY #6: the match_meadow gate (two matching halves, aqua)
+    // opens its OWN micro-world (MatchMeadowScene) through the same shared
+    // slot — identical walk-in portal contract + approach glow.
+    MicroWorldGate match = FindMicroGate("match_meadow");
+    if (match != null && match.EntryAnchor != null) {
+      Vector3 matchToHub = hub - match.transform.localPosition;
+      matchToHub.y = 0f;
+      if (matchToHub.sqrMagnitude < 0.001f) matchToHub = new Vector3(0f, 0f, 1f);
+      matchToHub.Normalize();
+      GameObject matchPortalGo = new GameObject("MatchPortal");
+      matchPortalGo.transform.SetParent(parent, false);
+      matchPortalGo.transform.localPosition = match.transform.localPosition + matchToHub * 0.7f;
+      MicroWorldPortal matchPortal = matchPortalGo.AddComponent<MicroWorldPortal>();
+      matchPortal.ExitMode = false;
+      matchPortal.fireRadius = 1.8f;
+      matchPortal.areaId = MatchArea.AreaId;
+      MatchPortal = matchPortal;
+      Pad(parent, "MatchPortalDisc", matchPortalGo.transform.localPosition, 3.0f, CourtyardSand);
+      GameObject matchHintGo = new GameObject("MatchGateHint");
+      matchHintGo.transform.SetParent(parent);
+      matchHintGo.transform.position = matchPortalGo.transform.position;
+      MicroGateHint matchHint = matchHintGo.AddComponent<MicroGateHint>();
+      matchHint.Build(matchPortal);
+      MatchHint = matchHint;
     }
     // S3-P2Z15 GAMEPLAY #5: the delivery_village gate opens its OWN micro-world
     // (DeliveryScene) through the same shared slot — identical walk-in portal
     // contract (whole-arch coverage, cold-start latch).
     MicroWorldGate delivery = FindMicroGate("delivery_village");
     if (delivery != null && delivery.EntryAnchor != null) {
-      Vector3 toHub = hub - delivery.transform.position;
+      Vector3 toHub = hub - delivery.transform.localPosition;
       toHub.y = 0f;
       if (toHub.sqrMagnitude < 0.001f) toHub = new Vector3(0f, 0f, 1f);
       toHub.Normalize();
       GameObject deliveryPortalGo = new GameObject("DeliveryPortal");
-      deliveryPortalGo.transform.SetParent(parent);
-      deliveryPortalGo.transform.position = delivery.transform.position + toHub * 0.7f;
+      deliveryPortalGo.transform.SetParent(parent, false);
+      deliveryPortalGo.transform.localPosition = delivery.transform.localPosition + toHub * 0.7f;
       MicroWorldPortal deliveryPortal = deliveryPortalGo.AddComponent<MicroWorldPortal>();
       deliveryPortal.ExitMode = false;
       deliveryPortal.fireRadius = 1.8f;
@@ -1179,7 +1209,7 @@ public class MathWorldBuilder : MonoBehaviour {
   public MicroWorldPortal BuildTowerPortal { get; private set; }
   public BuildYardLandmark BuildTowerLandmark { get; private set; }
   // The gate's approach glow (brief §2 interaction cue; presentation only).
-  public BuildYardGateHint BuildYardHint { get; private set; }
+  public MicroGateHint BuildYardHint { get; private set; }
   // Exit landing: 3.5m hub-side of the portal (fireRadius 1.8 + rearm 0.8 =
   // 2.6 -> the arrival can never instantly re-fire the portal).
   public static readonly Vector3 BuildYardHubReturnLocal = new Vector3(4.4f, 0f, -8.8f);
@@ -1187,6 +1217,11 @@ public class MathWorldBuilder : MonoBehaviour {
   // landmark this round — the brief does not ask for one).
   public MicroWorldPortal DeliveryPortal { get; private set; }
   public static readonly Vector3 DeliveryHubReturnLocal = new Vector3(-7.6f, 0f, -7.6f);
+  // S3-P2Z17 gameplay #6: the match_meadow gate's walk-in portal + approach glow.
+  public MicroWorldPortal MatchPortal { get; private set; }
+  public MicroGateHint MatchHint { get; private set; }
+  // Exit landing: 3.8m hub-side of the portal (fireRadius 1.8 + rearm 0.8 = 2.6).
+  public static readonly Vector3 MatchHubReturnLocal = new Vector3(8.2f, 0f, 7.6f);
 
   void BuildGardenCrops(Transform parent) {
     // Kenney Food Kit (CC0): identical crops per bed, child-scale counts.

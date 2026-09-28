@@ -101,8 +101,18 @@ public sealed class WorldTransition {
 
   public async Task<bool> EnterMicroAsync(ISceneOps ops, string sceneName) {
     if (ops == null || string.IsNullOrEmpty(sceneName)) return false;
-    if (State != WorldTransitionState.InSubject) return false;
-    if (MicroBusy || !string.IsNullOrEmpty(MicroScene)) return false;
+    if (State != WorldTransitionState.InSubject) {
+      // Dev-truthful refusal (silent by contract): a consumer polling IsInside
+      // needs to know WHY the door did not open.
+      UnityEngine.Debug.LogWarning("[WorldTransition] enter micro refused: state=" + State
+        + " (want InSubject) scene=" + sceneName);
+      return false;
+    }
+    if (MicroBusy || !string.IsNullOrEmpty(MicroScene)) {
+      UnityEngine.Debug.LogWarning("[WorldTransition] enter micro refused: busy=" + MicroBusy
+        + " micro=" + MicroScene + " scene=" + sceneName);
+      return false;
+    }
     MicroBusy = true;
     LastError = null;
     try {

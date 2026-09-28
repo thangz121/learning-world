@@ -1,16 +1,16 @@
-// A_World/BuildYard/BuildYardGateHint.cs — S3-P2Z14 GAMEPLAY #4.
-// The Build Gate's gentle interaction cue (brief §2): when the child walks into
-// the approach radius, a soft gold glow breathes over the threshold pad. It is
-// presentation only — the MicroWorldPortal owns the walk-in trigger and its
-// cold-start debounce; this component never moves, never takes input, never
-// shows UI, and every piece is collider-free + bake-ignored so the hub's
-// reviewed walk surface is untouched.
-// C# 9.0 only.
+// A_World/BuildYard/MicroGateHint.cs — S3-P2Z14/P2Z17.
+// A micro-world gate's gentle interaction cue (brief §2): when the child walks
+// into the approach radius, a soft breathing glow appears over the threshold
+// pad. It is presentation only — the MicroWorldPortal owns the walk-in trigger
+// and its cold-start debounce; this component never moves, never takes input,
+// never shows UI, and every piece is collider-free + bake-ignored so the hub's
+// reviewed walk surface is untouched. Used by the Build Yard gate (#4) and the
+// Match Meadow gate (#6). C# 9.0 only.
 using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class BuildYardGateHint : MonoBehaviour {
+public class MicroGateHint : MonoBehaviour {
   public MicroWorldPortal Portal;
   public float ApproachRadius = 5.0f;
   public float GlowDiameter = 3.1f;
@@ -23,7 +23,7 @@ public class BuildYardGateHint : MonoBehaviour {
   public void Build(MicroWorldPortal portal) {
     Portal = portal;
     GameObject glow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    glow.name = "BuildYardGateGlow";
+    glow.name = name + "Glow";
     glow.transform.SetParent(transform, false);
     glow.transform.localPosition = new Vector3(0f, 0.035f, 0f);
     glow.transform.localScale = new Vector3(GlowDiameter, 0.012f, GlowDiameter);
@@ -58,11 +58,19 @@ public class BuildYardGateHint : MonoBehaviour {
   }
 
   void Update() {
-    ClickToMove player = Portal != null && Portal.BuildArea != null
-      ? Portal.BuildArea.Player : null;
+    ClickToMove player = ResolvePlayer();
     float want = player != null ? NearForTests(player.transform.position) : 0f;
     _near = Mathf.MoveTowards(_near, want, Time.deltaTime / 0.35f);
     ApplyGlow();
+  }
+
+  ClickToMove ResolvePlayer() {
+    if (Portal == null) return null;
+    if (Portal.Area != null) return Portal.Area.Player;
+    if (Portal.BuildArea != null) return Portal.BuildArea.Player;
+    if (Portal.DeliveryArea != null) return Portal.DeliveryArea.Player;
+    if (Portal.MatchArea != null) return Portal.MatchArea.Player;
+    return null;
   }
 
   void ApplyGlow() {

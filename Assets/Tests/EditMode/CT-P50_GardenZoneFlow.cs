@@ -1,9 +1,9 @@
 // CT-P50: S3 P2X GARDEN ZONE FLOW (user order §47B).
 // Pins the "pick a plot -> play its own arena" contract on top of the S2 lazy
-// micro-world machinery: five click/proximity zone spots (only the demo plot
-// opens play), the pink 2-button panel, the double-click cancel, the play
-// arena scene (same authored lesson layout, its own exit door), and the
-// EnterMicro/ExitMicro swap (anti-double-enter, honest failure).
+// micro-world machinery: two click/proximity zone spots (both open play), the
+// pink 2-button panel, the double-click cancel, the play arena swap through
+// the shared micro slot, and the EnterMicro/ExitMicro swap (anti-double-enter,
+// honest failure).
 // C# 9.0 only.
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -53,11 +53,10 @@ public class CT_P50_GardenZoneFlow {
     if (go != null) Object.DestroyImmediate(go);
   }
 
-  // A. Six zones, one door each: every plot carries a click pad with a
+  // A. Two zones, one door each: every plot carries a click pad with a
   // collider (ClickRouter's door) that never touches the NavMesh; camera pair
-  // present; the demo theatre (index 2), the stair hill (index 5) and the
-  // carrot patch (index 0) have play enabled — gameplay #3 re-pin,
-  // deliberately three staged plots.
+  // present; both staged plots (carrot/rabbit zone 0, stair hill zone 1) open
+  // play.
   [Test] public void P50A_ZoneSpotsBuilt() {
     GameObject garden;
     CountingGardenBuilder builder;
@@ -76,30 +75,25 @@ public class CT_P50_GardenZoneFlow {
         Assert.IsTrue((bool)p.GetValue(mod, null), "spot " + z + " never bakes");
         Assert.IsNotNull(spot.CameraAnchor, "spot " + z + " has a focus camera");
         Assert.IsNotNull(spot.LookAnchor, "spot " + z + " has a focus look point");
-        // The demo theatre's mouth is the plaza viewing spot (its stage sits
-        // 8.4m south) — the other four ride their crescent mouths.
-        Vector3 mouth = (z == 2) ? builder.DemoMouth : builder.ZoneCenters[z];
+        Vector3 mouth = builder.ZoneCenters[z];
         Assert.Less(Dist2D(spot.transform.position, mouth), 2.0f,
           "spot " + z + " rides its plot mouth");
         if (spot.playEnabled) playCount++;
       }
-      Assert.AreEqual(3, playCount, "three staged plots open play (ball arena + stair hill + rabbit)");
-      Assert.IsTrue(spots[2].playEnabled, "the play plot is the demo theatre (index 2)");
-      Assert.IsTrue(spots[5].playEnabled, "the stair hill opens its own lazy play scene");
+      Assert.AreEqual(2, playCount, "both staged plots open play (rabbit + stair)");
       Assert.IsTrue(spots[0].playEnabled, "the carrot patch opens its own rabbit play scene");
-      // Each staged plot names its scene; skeleton plots stay empty.
-      Assert.AreEqual(CountingPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[2]),
-        "the demo theatre opens the reference ball arena");
-      Assert.AreEqual(StairHillBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[5]),
-        "the stair hill opens StairPlayScene");
+      Assert.IsTrue(spots[1].playEnabled, "the stair hill opens its own lazy play scene");
+      // Each staged plot names its own lazy scene.
       Assert.AreEqual(RabbitPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[0]),
         "the carrot patch opens RabbitPlayScene");
-      Assert.AreEqual(CountingPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[1]),
-        "skeleton plots fall back to the default arena name (never a lookup failure)");
-      Assert.AreEqual(DialogueLang.T("Counting stage", "Sân đếm"), GardenZoneSpot.NameOf(2),
+      Assert.AreEqual(StairHillBuilder.SceneName, CountingGardenArea.PlaySceneFor(spots[1]),
+        "the stair hill opens StairPlayScene");
+      Assert.IsTrue(spots[0].demoGate && spots[1].demoGate,
+        "both staged plots preview through their garden miniature first");
+      Assert.AreEqual(DialogueLang.T("Carrot patch", "Vườn cà rốt"), GardenZoneSpot.NameOf(0),
         "zone names follow the plot identity (language-agnostic pin)");
-      Assert.AreEqual(DialogueLang.T("Stair hill", "Đồi Bậc Thang"), GardenZoneSpot.NameOf(5),
-        "the sixth plot is the number-stair hill");
+      Assert.AreEqual(DialogueLang.T("Stair hill", "Đồi Bậc Thang"), GardenZoneSpot.NameOf(1),
+        "the second plot is the number-stair hill");
     } finally { TearDown(garden); }
   }
 
@@ -115,14 +109,14 @@ public class CT_P50_GardenZoneFlow {
       area.SetGarden(CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal,
         builder.Anchors, spots);
       Assert.IsFalse(area.IsFocused, "no focus before entering");
-      area.FocusZone(2);
+      area.FocusZone(0);
       Assert.IsFalse(area.IsFocused, "no focus while outside the garden");
       Assert.IsTrue(area.TryEnterForTests(), "enter the garden");
-      area.FocusZone(2);
+      area.FocusZone(0);
       Assert.IsTrue(area.IsFocused, "click focus set");
-      Assert.AreEqual(2, area.FocusedZone, "focus remembers the zone");
+      Assert.AreEqual(0, area.FocusedZone, "focus remembers the zone");
       area.FocusZone(99);
-      Assert.AreEqual(2, area.FocusedZone, "a bogus zone never clears the focus");
+      Assert.AreEqual(0, area.FocusedZone, "a bogus zone never clears the focus");
       Assert.IsFalse(area.RegisterOutsideClick(10.0f), "one click never cancels");
       Assert.IsTrue(area.IsFocused, "still focused after a single click");
       Assert.IsFalse(area.RegisterOutsideClick(11.0f), "a late second click is a new first click");
@@ -183,13 +177,13 @@ public class CT_P50_GardenZoneFlow {
         "panel carries a GraphicRaycaster (dead buttons were a real bug in LanguageDialog)");
       Button[] buttons = panelGo.GetComponentsInChildren<Button>(true);
       Assert.GreaterOrEqual(buttons.Length, 2, "two pressable boxes");
-      panel.ShowFor(GardenZoneSpot.NameOf(2), true);
+      panel.ShowFor(GardenZoneSpot.NameOf(0), true);
       Assert.IsTrue(panel.IsOpen, "focused play zone opens the panel");
       Assert.IsTrue(panel.PlayVisible, "staged plot offers Play");
-      Assert.AreEqual(GardenZoneSpot.NameOf(2), panel.TitleText, "title names the zone");
+      Assert.AreEqual(GardenZoneSpot.NameOf(0), panel.TitleText, "title names the zone");
       panel.ShowFor(GardenZoneSpot.NameOf(1), false);
-      Assert.IsFalse(panel.PlayVisible, "skeleton plot has no Play door (user order)");
-      Assert.IsTrue(panel.IsOpen, "skeleton plot still offers the way back");
+      Assert.IsFalse(panel.PlayVisible, "a look-only plot has no Play door");
+      Assert.IsTrue(panel.IsOpen, "a look-only plot still offers the way back");
       panel.Hide();
       Assert.IsFalse(panel.IsOpen, "back hides the panel");
     } finally { TearDown(panelGo); }
@@ -205,11 +199,11 @@ public class CT_P50_GardenZoneFlow {
     Assert.IsTrue(t.EnterAsync(ops, math, "MathScene").GetAwaiter().GetResult(), "subject loads");
     Assert.IsTrue(t.EnterMicroAsync(ops, CountingGardenBuilder.SceneName).GetAwaiter().GetResult(),
       "garden micro loads");
-    Assert.IsFalse(t.EnterMicroAsync(ops, CountingPlayBuilder.SceneName).GetAwaiter().GetResult(),
+    Assert.IsFalse(t.EnterMicroAsync(ops, RabbitPlayBuilder.SceneName).GetAwaiter().GetResult(),
       "the arena cannot stack onto the garden (one micro slot)");
-    Assert.IsFalse(ops.Loaded.Contains(CountingPlayBuilder.SceneName), "no partial play load");
+    Assert.IsFalse(ops.Loaded.Contains(RabbitPlayBuilder.SceneName), "no partial play load");
     Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "garden unload is the swap's first half");
-    Assert.IsTrue(t.EnterMicroAsync(ops, CountingPlayBuilder.SceneName).GetAwaiter().GetResult(),
+    Assert.IsTrue(t.EnterMicroAsync(ops, RabbitPlayBuilder.SceneName).GetAwaiter().GetResult(),
       "arena loads into the freed slot");
     Assert.IsTrue(ops.Loaded.Contains("MathScene"), "the subject world stays loaded underneath");
     Assert.IsFalse(t.ReturnAsync(ops, "MathScene").GetAwaiter().GetResult(),
@@ -219,117 +213,38 @@ public class CT_P50_GardenZoneFlow {
       "the garden reloads on the way back");
     ops.FailLoads = true;
     Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "garden unload");
-    Assert.IsFalse(t.EnterMicroAsync(ops, CountingPlayBuilder.SceneName).GetAwaiter().GetResult(),
+    Assert.IsFalse(t.EnterMicroAsync(ops, RabbitPlayBuilder.SceneName).GetAwaiter().GetResult(),
       "a failed arena load reports false (area then reloads the garden)");
     Assert.IsNull(t.MicroScene, "the slot stays free after the failure (retry possible)");
   }
 
-  // F. S3-P2Z3 (user order): the play arena is the GAME field ONLY — separate
-  // island, its own exit door back to the garden, empty of the NPC demo (the
-  // Number-2 lesson lives in the garden miniature now), anchors staged for the
-  // child's future game design.
-  [Test] public void P50F_PlayArenaScene() {
-    GameObject arena = new GameObject("P50PlayWorld");
-    try {
-      CountingPlayBuilder builder = arena.AddComponent<CountingPlayBuilder>();
-      builder.BuildContent(arena.transform);
-      Assert.Greater(Vector3.Distance(CountingPlayBuilder.WorldOffset, CountingGardenBuilder.WorldOffset), 40f,
-        "the arena is a separate island (no overlap with the garden)");
-      Assert.Greater(Vector3.Distance(CountingPlayBuilder.WorldOffset, MathWorldBuilder.WorldOffset), 40f,
-        "the arena is a separate island (no overlap with Math)");
-      Assert.IsNotNull(builder.ExitPortal, "the arena has its way home");
-      Assert.IsTrue(builder.ExitPortal.ExitMode, "it is an exit portal");
-      Assert.IsTrue(builder.ExitPortal.PlayExit, "it returns to the GARDEN (not the Math hub)");
-      Assert.AreEqual(CountingGardenArea.AreaId, builder.ExitPortal.areaId, "it targets the garden area");
-      MicroWorldPortal[] portals = arena.GetComponentsInChildren<MicroWorldPortal>(true);
-      Assert.AreEqual(1, portals.Length, "one door only");
-      float spawnClear = Vector2.Distance(
-        new Vector2(builder.EntryPoint.localPosition.x, builder.EntryPoint.localPosition.z),
-        new Vector2(builder.ExitPortal.transform.localPosition.x, builder.ExitPortal.transform.localPosition.z));
-      Assert.GreaterOrEqual(spawnClear, builder.ExitPortal.fireRadius + builder.ExitPortal.rearmMargin,
-        "entry spawn clears the exit re-arm radius (J4 lesson)");
-      // S3-P2Z4: the arena now stages the REFERENCE GAMEPLAY (board + natural
-      // ball cluster + basket/count/result). NPCs are runtime components, so
-      // the built scene stays free of controllers. Full pins: CT-P51A.
-      Assert.IsNotNull(builder.Activity, "reference activity refs exposed");
-      Assert.AreEqual(5, builder.Activity.Balls.Count, "five balls staged");
-      Assert.IsNotNull(FindDeep(arena.transform, "CPNumber2"), "board 2 staged");
-      Assert.IsNotNull(FindDeep(arena.transform, "CPBasket"), "basket staged");
-      Assert.IsNotNull(FindDeep(arena.transform, "CPCountDisplay"), "count display staged");
-      Assert.IsNull(arena.GetComponentInChildren<CountingDemo>(true), "no demo controller in the built scene");
-      Assert.IsNull(arena.GetComponentInChildren<CountingGame>(true), "no game controller in the built scene");
-      // Infrastructure + anchors survive.
-      Assert.IsNotNull(builder.EntryPoint, "entry marker");
-      Assert.IsNotNull(FindDeep(arena.transform, "CPGround"), "arena ground");
-      Assert.IsNotNull(FindDeep(arena.transform, "CPPathStage"), "arena path");
-      ActivityAnchors a = builder.Anchors;
-      Assert.IsNotNull(a, "anchor registry");
-      foreach (Transform slot in new[] { a.Entry, a.GameplayFocus, a.Npc, a.Camera, a.CameraLook,
-          a.Prompt, a.Feedback, a.Reward, a.Exit }) {
-        Assert.IsNotNull(slot, "anchor slot present");
-      }
-      Assert.Less(Dist2D(a.GameplayFocus.localPosition, builder.Activity.Center), 0.1f,
-        "focus = the activity field centre");
-      Assert.Greater(Dist2D(a.GameplayFocus.localPosition, builder.EntryPoint.localPosition), 4f,
-        "the activity sits away from the spawn");
-      Assert.Less(Dist2D(a.Exit.localPosition, CountingPlayBuilder.ExitLocal), 0.1f, "exit = the door");
-      Assert.Less(a.Camera.localPosition.y, 8f, "arrival camera stays readable");
-      Assert.Less(a.Camera.localPosition.z, a.Entry.localPosition.z, "arrival camera sits behind the spawn");
-    } finally { TearDown(arena); }
-  }
-
-  // H. S3-P2Y redesign pins: every plot has a boundary + a moving vignette,
-  // the demo runs as a pivot-compensated MINIATURE (always alive), and the
-  // panel appears only after one full try-run of the lesson completes.
+  // H. Two-plot redesign pins: every plot has a boundary + a moving vignette,
+  // the stair plot's garden miniature drives the "panel after the try-run"
+  // gate, and a plot without a demo opens its panel at once.
   [Test] public void P50H_MiniDemoAndPanelAfterTryRun() {
     GameObject garden;
     CountingGardenBuilder builder;
     List<GardenZoneSpot> spots = BuildSpots(out garden, out builder);
     GameObject areaGo = new GameObject("P50AreaGate");
     GameObject panelGo = new GameObject("P50PanelGate");
+    GameObject demoGo = new GameObject("P50StairDemo");
     try {
-      // Boundaries: borders on every plot, fence ring on the demo plot.
+      // Boundaries: a border on each plot.
       for (int z = 0; z < CountingGardenBuilder.ZoneCount; z++) {
-        string border = (z == 2) ? "CGZone2Border" : "CGZone" + z + "Border";
-        Assert.IsNotNull(FindDeep(garden.transform, border), "plot boundary " + z);
+        Assert.IsNotNull(FindDeep(garden.transform, "CGZone" + z + "Border"),
+          "plot boundary " + z);
       }
-      for (int i = 2; i < 9; i++) {
-        Assert.IsNotNull(FindDeep(garden.transform, "CGZone2Fence" + i),
-          "demo plot fence piece " + i);
-      }
-      // Moving vignettes on the four counted beds (beads + crops).
-      int[] cropCounts = { 3, 4, 5, 2 };
-      int[] bedIndices = { 0, 1, 3, 4 };
-      for (int i = 0; i < bedIndices.Length; i++) {
-        Transform vigT = FindDeep(garden.transform, "CGZone" + bedIndices[i] + "Vignette");
-        Assert.IsNotNull(vigT, "bed vignette " + bedIndices[i]);
-        GardenZoneVignette vig = vigT.GetComponent<GardenZoneVignette>();
-        Assert.IsNotNull(vig, "vignette component " + bedIndices[i]);
-        Assert.AreEqual(bedIndices[i] + 1, vig.BeadCount, "beads = bed number");
-        Assert.AreEqual(cropCounts[i], vig.CropCount, "crops bound to the vignette");
-      }
-      // The miniature keeps the authored stage centre (pivot compensation) and
-      // the actors/fx parent INSIDE it (so the whole lesson scales as one toy).
-      Assert.IsNotNull(builder.DemoMiniRoot, "mini root built");
-      Assert.Less(builder.DemoMiniRoot.localScale.x, 1f, "the garden stage is smaller than the arena");
-      Vector3 stageWorld = builder.DemoMiniRoot.TransformPoint(builder.DemoStageCenter);
-      Assert.Less(Dist2D(stageWorld, builder.DemoStageCenter), 0.01f,
-        "pivot compensation keeps the stage centre in place");
-      Assert.Less(Dist2D(builder.DemoCam.position, builder.DemoStageCenter), 3.0f,
-        "shot A marker lives inside the miniature");
-      // Demo + audience gate (S3-P2L2): the lesson acts only for a child at the
-      // viewing spot, one pass per visit; camera beats off (zone focus owns it).
-      CountingDemo demo = garden.AddComponent<CountingDemo>();
-      demo.CameraBeatsEnabled = false;
-      GameObject viewer = new GameObject("P50HViewer");
-      viewer.transform.SetParent(garden.transform, true);
-      viewer.transform.position = CountingGardenBuilder.WorldOffset + builder.DemoMouth;
-      demo.Build(builder, viewer.transform, null, null);
-      Assert.IsNotNull(demo.transform, "demo built");
-      DemoPhase startPhase = demo.Phase;
-      for (int i = 0; i < 30; i++) demo.Step(0.1f);
-      Assert.AreNotEqual(startPhase, demo.Phase,
-        "with the child at the viewing spot the lesson starts (audience gate)");
+      // Moving vignette on the carrot bed (beads = 1, three counted carrots).
+      Transform vigT = FindDeep(garden.transform, "CGZone0Vignette");
+      Assert.IsNotNull(vigT, "carrot bed vignette");
+      GardenZoneVignette vig = vigT.GetComponent<GardenZoneVignette>();
+      Assert.IsNotNull(vig, "vignette component");
+      Assert.AreEqual(1, vig.BeadCount, "carrot bed carries one bead");
+      Assert.AreEqual(3, vig.CropCount, "carrots bound to the vignette");
+      // The stair hill previews through its own garden miniature.
+      demoGo.transform.SetParent(garden.transform, false);
+      StairLessonDemo demo = demoGo.AddComponent<StairLessonDemo>();
+      demo.Build(builder, null, null);
       CountingGardenArea area = areaGo.AddComponent<CountingGardenArea>();
       GardenZonePanel panel = panelGo.AddComponent<GardenZonePanel>();
       panel.Build();
@@ -337,11 +252,12 @@ public class CT_P50_GardenZoneFlow {
       area.BindPanel(panel);
       area.SetGarden(CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal,
         builder.Anchors, spots);
-      area.BindDemo(demo);
+      area.BindDemo(CountingGardenBuilder.StairZoneIndex, demo);
       Assert.IsTrue(area.TryEnterForTests(), "enter the garden");
-      area.FocusZone(2);
-      Assert.IsTrue(area.AwaitingDemo, "staged zone waits for the try-run first");
+      area.FocusZone(CountingGardenBuilder.StairZoneIndex);
+      Assert.IsTrue(area.AwaitingDemo, "the stair plot waits for the try-run first");
       Assert.IsFalse(panel.IsOpen, "panel NOT shown before the try-run (user order)");
+      demo.StartFocusedLesson();
       int guard = 0;
       while (demo.LoopCount < 1 && guard < 4000) { demo.Step(0.1f); guard++; }
       Assert.GreaterOrEqual(demo.LoopCount, 1, "the try-run completes");
@@ -349,13 +265,14 @@ public class CT_P50_GardenZoneFlow {
       Assert.IsFalse(area.AwaitingDemo, "gate consumed");
       Assert.IsTrue(panel.IsOpen, "panel appears after the demo finished");
       Assert.IsTrue(panel.PlayVisible, "the staged zone offers Play");
-      // Skeleton zone: immediate panel, no play door (unchanged).
+      // A plot without a bound demo (carrot here): immediate panel, play door.
       area.CancelFocus();
-      area.FocusZone(1);
-      Assert.IsFalse(area.AwaitingDemo, "skeleton plots need no try-run");
-      Assert.IsTrue(panel.IsOpen, "skeleton panel opens at once");
-      Assert.IsFalse(panel.PlayVisible, "skeleton has no Play door");
+      area.FocusZone(CountingGardenBuilder.RabbitZoneIndex);
+      Assert.IsFalse(area.AwaitingDemo, "a plot without a demo needs no try-run");
+      Assert.IsTrue(panel.IsOpen, "the carrot panel opens at once");
+      Assert.IsTrue(panel.PlayVisible, "the carrot patch offers Play");
     } finally {
+      TearDown(demoGo);
       TearDown(panelGo);
       TearDown(areaGo);
       TearDown(garden);
@@ -377,15 +294,14 @@ public class CT_P50_GardenZoneFlow {
       Assert.IsFalse(area.TryEnterPlayForTests(), "cannot play from outside the garden");
       Assert.IsTrue(area.TryEnterForTests(), "enter the garden");
       Assert.IsFalse(area.TryEnterPlayForTests(), "cannot play without a focused zone");
-      area.FocusZone(1);
-      Assert.IsFalse(area.TryEnterPlayForTests(), "a skeleton plot never opens play");
-      // Gameplay #3: the carrot patch is staged and opens its panel at once
-      // (no garden try-run — the full lesson runs inside the rabbit arena).
-      area.FocusZone(0);
-      Assert.IsFalse(area.AwaitingDemo, "the rabbit plot needs no garden try-run");
+      area.FocusZone(99);
+      Assert.IsFalse(area.TryEnterPlayForTests(), "a bogus zone never opens play");
+      // The carrot patch opens its play door (no demo bound: panel at once).
+      area.FocusZone(CountingGardenBuilder.RabbitZoneIndex);
+      Assert.IsFalse(area.AwaitingDemo, "no garden try-run bound for the carrot patch");
       Assert.IsTrue(area.TryEnterPlayForTests(), "the carrot patch opens play");
       Assert.IsTrue(area.TryExitPlayForTests(), "back to the garden before the next focus");
-      area.FocusZone(2);
+      area.FocusZone(CountingGardenBuilder.StairZoneIndex);
       Assert.IsTrue(area.CanExit, "exit door available before play");
       Assert.IsTrue(area.TryEnterPlayForTests(), "staged plot opens play");
       Assert.IsFalse(area.CanExit, "the garden exit is unavailable while in the arena");

@@ -52,16 +52,16 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
   string _preObjective;
 
   readonly List<GardenZoneSpot> _spots = new List<GardenZoneSpot>();
-  int _playedZone = 2;        // remembered across the play round-trip
+  int _playedZone = 0;        // remembered across the play round-trip
   Vector3 _playEntry;
   ActivityAnchors _playAnchors;
   // S3-P2Z12: each play scene pushes its own island bounds / follow framing /
   // objective when it loads (the area owns ONE micro slot, so one live set of
   // values at a time — the garden reload restores its own).
   Vector3 _playCenter;
-  float _playBoundX = CountingPlayBuilder.BoundX;
-  float _playBoundZ = CountingPlayBuilder.BoundZ;
-  Vector3 _playFollow = CountingPlayBuilder.FollowOffset;
+  float _playBoundX = CountingGardenBuilder.BoundX;
+  float _playBoundZ = CountingGardenBuilder.BoundZ;
+  Vector3 _playFollow = CountingGardenBuilder.FollowOffset;
   string _playObjective;
   bool _proximityArmed = true;
   float _focusRefreshT;
@@ -135,9 +135,7 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
   }
 
   // Garden ambient demos (miniatures): drive the "panel after the try-run" gate.
-  // Legacy single-arg form = the demo theatre's ball lesson (zone 2), kept for
-  // the existing call sites/tests; the two-arg form routes any zone's demo.
-  public void BindDemo(CountingDemo demo) { BindDemo(2, demo); }
+  // The two-arg form routes any zone's demo.
   public void BindDemo(int zoneIndex, IGardenZoneDemo demo) {
     if (demo == null) _demos.Remove(zoneIndex);
     else _demos[zoneIndex] = demo;
@@ -147,14 +145,6 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
     return _demos.TryGetValue(zoneIndex, out demo) ? demo : null;
   }
   public bool AwaitingDemo { get { return _awaitDemo; } }
-
-  // S3-P2Z4 reference gameplay: the activity lifecycle lives HERE (MathScene)
-  // so it survives the arena's lazy unload — re-entry adopts the completed
-  // visual instead of replaying the intro. In-memory only (save untouched).
-  public ActivityLifecycle GameLifecycle { get; private set; } =
-    new ActivityLifecycle("counting_game", "CountingGardenArea");
-  public CountingGame Game { get; private set; }
-  public void BindGame(CountingGame game) { Game = game; }
 
   // S3-P2Z12 gameplay #2 ("Bậc thang con số"): the same lifecycle pattern for
   // the stair hill — owned here, survives the lazy unload of StairPlayScene.
@@ -237,6 +227,9 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
   public const int RabbitDefaultTarget = 3;
   public const string RabbitTargetFlag = "-rabbit-target";
   public static readonly int[] RabbitProgression = { 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+  // S3-P2Z20 user: random number questions in live play (installer turns it on;
+  // tests keep the deterministic ladder).
+  public bool RandomRabbitTargets;
   public int RabbitTarget { get; private set; } = RabbitDefaultTarget;
   int _rabbitLifeTarget = RabbitDefaultTarget;
 
@@ -271,7 +264,14 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
     if (RabbitLifecycle == null) return;
     if (RabbitLifecycle.State != ActivityState.Completed) return;
     if (_rabbitLifeTarget != RabbitTarget) return;
-    int next = NextRabbitTarget(RabbitTarget);
+    int next;
+    if (RandomRabbitTargets) {
+      next = RabbitTarget;
+      for (int guard = 0; guard < 32 && next == RabbitTarget; guard++)
+        next = UnityEngine.Random.Range(1, RabbitPlayBuilder.MaxTarget + 1);
+    } else {
+      next = NextRabbitTarget(RabbitTarget);
+    }
     RabbitTarget = next;
     RabbitLifecycle = new ActivityLifecycle("rabbit_feed", "CountingGardenArea");
     _rabbitLifeTarget = next;
@@ -363,6 +363,11 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
       }
       if (!loaded) {
         // Honest failure: stay in the hub, restore the HUD, no fake progress.
+        try {
+          UnityEngine.Debug.LogWarning("[CountingGardenArea] micro load refused: "
+            + (_transition != null ? _transition.LastError : "no transition")
+            + " state=" + (_transition != null ? _transition.State.ToString() : "-"), this);
+        } catch (Exception) { }
         RestoreObjective();
         IsBusy = false;
         StopTunnelSoon();
@@ -429,6 +434,10 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
     _proximityArmed = false; // re-arm only after walking clear of the plots
     _focusRefreshT = 0f;
     _doubleClickT = -1f;
+    // S3-P2Z22 (user: "khi xem demo thì bỏ cái cửa này đi"): the gate would sit
+    // between the focus camera and the diorama (the carrot camera is outside the
+    // mouth) — hide it for the focused plot, restore on release.
+    if (spot.GateRoot != null) spot.GateRoot.SetActive(false);
     FrameFocus(spot);
     // Staged zone: run the demo FIRST (the child watches the lesson), then the
     // panel offers play. Skeleton zones: focus + name, panel offers the way back.
@@ -461,6 +470,9 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
 
   void ClearFocus(bool restoreCamera) {
     if (_panel != null) _panel.Hide();
+    // S3-P2Z22: restore the gate we hid for this plot's demo.
+    GardenZoneSpot focused = FindSpot(FocusedZone);
+    if (focused != null && focused.GateRoot != null) focused.GateRoot.SetActive(true);
     FocusedZone = -1;
     _doubleClickT = -1f;
     _awaitDemo = false;
@@ -527,9 +539,10 @@ public class CountingGardenArea : MonoBehaviour, IMicroWorldArea {
   }
 
   // Which lazy scene this plot's door opens (S3-P2Z12: gameplay #2 has its own).
+  // A plot without an authored play scene has no arena at all.
   public static string PlaySceneFor(GardenZoneSpot spot) {
     if (spot != null && !string.IsNullOrEmpty(spot.playSceneName)) return spot.playSceneName;
-    return CountingPlayBuilder.SceneName;
+    return "";
   }
 
   string PlayObjective() {

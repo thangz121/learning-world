@@ -144,10 +144,6 @@ public class GameInstaller : MonoBehaviour {
       BuildCountingGardenScene(scene);
       return;
     }
-    if (scene.name == CountingPlayBuilder.SceneName) {
-      BuildCountingPlayScene(scene);
-      return;
-    }
     if (scene.name == StairHillBuilder.SceneName) {
       BuildStairPlayScene(scene);
       return;
@@ -162,6 +158,10 @@ public class GameInstaller : MonoBehaviour {
     }
     if (scene.name == DeliveryBuilder.SceneName) {
       BuildDeliveryScene(scene);
+      return;
+    }
+    if (scene.name == MatchMeadowBuilder.SceneName) {
+      BuildMatchMeadowScene(scene);
       return;
     }
     if (scene.name != "MathScene") return;
@@ -245,21 +245,8 @@ public class GameInstaller : MonoBehaviour {
         area.SetGarden(entry, builder.Anchors, builder.ZoneSpots);
         if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
       }
-      // S3-P2Y (user order: "player chưa chọn chơi thì demo vẫn phải chạy"):
-      // the garden hosts an AMBIENT MINIATURE of the lesson — it loops for
-      // everyone and its card camera stays off (the zone focus frames it), plus
-      // it drives the "panel after the try-run" gate through the area module.
       Transform playerT2 = _activeBuilder != null && _activeBuilder.Player != null
         ? _activeBuilder.Player.transform : null;
-      try {
-        CountingDemo mini = root.AddComponent<CountingDemo>();
-        mini.CameraBeatsEnabled = false;
-        mini.Build(builder, playerT2,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio);
-        if (area != null) area.BindDemo(mini);
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] garden mini demo wiring failed (garden stays quiet): " + e.Message, this);
-      }
       // S3-P2Z12b (user report "NPC dạy trẻ chơi ở đâu?"): the stair hill plot
       // gets its OWN garden miniature — the two-NPC number lesson — so the plot
       // never looks empty; it drives the same panel-after-one-pass gate.
@@ -270,91 +257,25 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] stair garden mini demo wiring failed (plot stays scenery): " + e.Message, this);
       }
+      // S3-P2Z19 (user: "vườn củ cà rốt ở ngoài chưa có demo ở sân chọn game"):
+      // the carrot patch gets its OWN miniature — the teacher asks the number,
+      // the student answers and demonstrates the pick/feed — and it drives the
+      // same panel-after-one-pass gate. The arena no longer replays any demo.
+      try {
+        GameObject rabbitGo = new GameObject("RabbitLessonDemo");
+        rabbitGo.transform.SetParent(root.transform, false);
+        RabbitLessonDemo rabbitDemo = rabbitGo.AddComponent<RabbitLessonDemo>();
+        rabbitDemo.Build(builder, playerT2, Audio);
+        if (area != null) area.BindDemo(CountingGardenBuilder.RabbitZoneIndex, rabbitDemo);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] rabbit garden mini demo wiring failed: " + e.Message, this);
+      }
       try {
         Debug.Log("[GameInstaller] Counting Garden scene built (lazy) entry=" + (CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal).ToString("F1")
           + " zones=" + builder.ZoneSpots.Count);
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] CountingGardenScene build failed: " + e.Message, this);
-    }
-  }
-
-  // S3 P2X PLAY ARENA (user order §47B): the zone-2 "Vào chơi" destination is
-  // its OWN lazy scene, loaded into the shared micro slot by CountingGardenArea
-  // (garden unload -> play load). Exactly the garden pattern: code-build here,
-  // then push the entry/anchors into the area so the travel beat can warp the
-  // child in. The demo lesson is wired HERE (its live home now) with the same
-  // best-effort discipline: a demo failure degrades to a quiet arena, never a
-  // stranded player.
-  void BuildCountingPlayScene(Scene scene) {
-    try {
-      GameObject root = null;
-      if (scene.IsValid()) {
-        foreach (GameObject go in scene.GetRootGameObjects()) {
-          if (go != null && go.name == "CountingPlayWorld") { root = go; break; }
-        }
-      }
-      if (root == null) {
-        Debug.LogError("[GameInstaller] CountingPlayScene has no CountingPlayWorld root.", this);
-        return;
-      }
-      root.transform.position = CountingPlayBuilder.WorldOffset;
-      CountingPlayBuilder builder = root.GetComponent<CountingPlayBuilder>();
-      if (builder == null) builder = root.AddComponent<CountingPlayBuilder>();
-      builder.Build();
-      CountingGardenArea area = _gardenArea;
-      if (area == null) {
-        try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
-      }
-      if (area != null) {
-        Vector3 entry = CountingPlayBuilder.WorldOffset + CountingPlayBuilder.EntryLocal;
-        area.SetPlay(entry, builder.Anchors, CountingPlayBuilder.WorldOffset,
-          CountingPlayBuilder.BoundX, CountingPlayBuilder.BoundZ, CountingPlayBuilder.FollowOffset,
-          null); // null objective = the area's default "Counting Playground"
-        if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
-      }
-      // S3-P2Z4 REFERENCE GAMEPLAY (user design): the arena runs the Number-2
-      // lesson ONCE as the intro (teacher teaches, student demonstrates), then
-      // the child plays "put the right number in the basket". The game owns the
-      // activity lifecycle (in-memory, handed over from the Math-side area so
-      // re-entry adopts the completed visual).
-      try {
-        CountingDemo intro = root.AddComponent<CountingDemo>();
-        intro.LoopForever = false;
-        // S3-P2Z9 (user order): the arena is the PLAY space — no demo replay;
-        // the teacher reads the assignment once the child reaches the field.
-        intro.NoIntroMode = true;
-        intro.CameraBeatsEnabled = false;
-        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
-          ? _activeBuilder.Player.transform : null;
-        intro.Build(builder, playerT,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio);
-        CountingGame game = root.AddComponent<CountingGame>();
-        // S3-P2Z10: the carried ball rides the child's ANIMATED fist (the same
-        // bone the apple/ball presenters use), not the static root anchor — so
-        // the pickup bend and the place reach actually move the ball with the
-        // hand. Falls back to the root anchor when the rig is unavailable.
-        Transform hand = null;
-        try {
-          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
-              && _activeBuilder.PlayerViz.HandBone != null) {
-            hand = _activeBuilder.PlayerViz.HandBone;
-          } else if (_activeBuilder != null) {
-            hand = _activeBuilder.PlayerHand;
-          }
-        } catch (System.Exception) { }
-        game.Build(intro, builder, playerT, hand,
-          _gardenArea != null ? _gardenArea.GameLifecycle : null, Audio);
-        if (_gardenArea != null) _gardenArea.BindGame(game);
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Counting game wiring failed (arena stays quiet): " + e.Message, this);
-      }
-      try {
-        Debug.Log("[GameInstaller] Counting Play arena built (reference gameplay) entry="
-          + (CountingPlayBuilder.WorldOffset + CountingPlayBuilder.EntryLocal).ToString("F1"));
-      } catch (System.Exception) { }
-    } catch (System.Exception e) {
-      Debug.LogError("[GameInstaller] CountingPlayScene build failed: " + e.Message, this);
     }
   }
 
@@ -398,6 +319,9 @@ public class GameInstaller : MonoBehaviour {
       // staircase, many targets — brief §34).
       try {
         NumberStairs game = root.AddComponent<NumberStairs>();
+        // S3-P2Z32: live play mixes random plain numbers with +/- (the body is
+        // the number line: climb up = add, walk down = subtract).
+        game.ArithmeticEnabled = true;
         Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
           ? _activeBuilder.Player.transform : null;
         game.Build(builder, playerT,
@@ -456,6 +380,8 @@ public class GameInstaller : MonoBehaviour {
       // patch, many targets — the same ladder discipline as gameplay #2).
       try {
         RabbitFeed game = root.AddComponent<RabbitFeed>();
+        // S3-P2Z26: live play mixes random plain numbers with +/- within 10.
+        game.ArithmeticEnabled = true;
         Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
           ? _activeBuilder.Player.transform : null;
         Transform hand = null;
@@ -470,7 +396,10 @@ public class GameInstaller : MonoBehaviour {
         if (hand == null) hand = playerT;
         game.Build(builder, playerT,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
-          _gardenArea != null ? _gardenArea.RabbitLifecycle : null, rabbitTarget);
+          _gardenArea != null ? _gardenArea.RabbitLifecycle : null, rabbitTarget, hand);
+        // S3-P2Z26: drag a fed carrot off the bowl back to the garden.
+        RabbitBowlDrag drag = root.AddComponent<RabbitBowlDrag>();
+        if (drag != null) drag.Bind(game);
         if (_gardenArea != null) _gardenArea.BindRabbitGame(game);
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Rabbit feed wiring failed (patch stays empty): " + e.Message, this);
@@ -481,6 +410,70 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] RabbitPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  // GAMEPLAY #6 ("Ghép đúng cặp"): the Math Hub's match_meadow gate opens its
+  // OWN lazy scene (MatchMeadowScene) through the same micro slot — built on
+  // demand, never at boot, never stacked.
+  void BuildMatchMeadowScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "MatchMeadowWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] MatchMeadowScene has no MatchMeadowWorld root.", this);
+        return;
+      }
+      root.transform.position = MatchMeadowBuilder.WorldOffset;
+      MatchMeadowBuilder builder = root.GetComponent<MatchMeadowBuilder>();
+      if (builder == null) builder = root.AddComponent<MatchMeadowBuilder>();
+      // The round's pair count comes from the area's ladder (progression/CLI);
+      // the board stages that digit so the world always shows the mission.
+      int matchPairs = _matchArea != null ? _matchArea.Pairs : MatchMeadowBuilder.DefaultPairs;
+      builder.BoardPairs = Mathf.Clamp(matchPairs, 1, MatchMeadowBuilder.MaxPairs);
+      builder.Build();
+      MatchArea area = _matchArea;
+      if (area == null) {
+        try { area = FindObjectOfType<MatchArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        Vector3 entry = MatchMeadowBuilder.WorldOffset + MatchMeadowBuilder.EntryLocal;
+        area.SetWorld(entry, builder.Anchors,
+          DialogueLang.T(MatchMeadowBuilder.ObjectiveEn, MatchMeadowBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.MatchArea = area;
+      }
+      try {
+        MatchGame game = root.AddComponent<MatchGame>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        Transform hand = null;
+        try {
+          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
+              && _activeBuilder.PlayerViz.HandBone != null) {
+            hand = _activeBuilder.PlayerViz.HandBone;
+          } else if (_activeBuilder != null) {
+            hand = _activeBuilder.PlayerHand;
+          }
+        } catch (System.Exception) { }
+        if (hand == null) hand = playerT;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
+          _matchArea != null ? _matchArea.Lifecycle : null, matchPairs,
+          _matchArea != null ? (System.Action<int>)_matchArea.NotifyCompleted : null, hand);
+        if (_matchArea != null) _matchArea.BindGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Match wiring failed (meadow stays empty): " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Match Meadow scene built (gameplay #6) entry="
+          + (MatchMeadowBuilder.WorldOffset + MatchMeadowBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] MatchMeadowScene build failed: " + e.Message, this);
     }
   }
 
@@ -615,7 +608,7 @@ public class GameInstaller : MonoBehaviour {
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
           _deliveryArea != null ? _deliveryArea.Lifecycle : null, deliverTarget,
           _deliveryArea != null ? (System.Action<int>)_deliveryArea.NotifyCompleted : null,
-          miaVoice);
+          miaVoice, hand);
         if (_deliveryArea != null) _deliveryArea.BindGame(game);
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Delivery wiring failed (village stays empty): " + e.Message, this);
@@ -700,6 +693,7 @@ public class GameInstaller : MonoBehaviour {
           area = areaGo.AddComponent<CountingGardenArea>();
         }
         _gardenArea = area;
+        area.RandomRabbitTargets = true; // S3-P2Z20: live play asks random number questions
         area.Bind(
           WorldTransitions,
           SceneOps,
@@ -740,6 +734,7 @@ public class GameInstaller : MonoBehaviour {
           buildArea = buildGo.AddComponent<BuildTowerArea>();
         }
         _buildArea = buildArea;
+        buildArea.RandomTargets = true; // S3-P2Z20: live play asks random number questions
         buildArea.Bind(
           WorldTransitions,
           SceneOps,
@@ -768,6 +763,7 @@ public class GameInstaller : MonoBehaviour {
           deliveryArea = deliveryGo.AddComponent<DeliveryArea>();
         }
         _deliveryArea = deliveryArea;
+        deliveryArea.RandomTargets = true; // S3-P2Z20: live play asks random number questions
         deliveryArea.Bind(
           WorldTransitions,
           SceneOps,
@@ -782,6 +778,32 @@ public class GameInstaller : MonoBehaviour {
         catch (System.Exception) { }
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Delivery area wiring failed: " + e.Message, this);
+      }
+      // S3-P2Z17 GAMEPLAY #6: the Match Meadow's own area module (living in
+      // MathScene like the others) drives gate -> micro-world travel.
+      try {
+        MatchArea matchArea = root.GetComponent<MatchArea>();
+        if (matchArea == null) {
+          GameObject matchGo = new GameObject("MatchArea");
+          matchGo.transform.SetParent(root.transform, true);
+          matchArea = matchGo.AddComponent<MatchArea>();
+        }
+        _matchArea = matchArea;
+        matchArea.RandomPairs = true; // S3-P2Z20: live play asks random pair counts
+        matchArea.Bind(
+          WorldTransitions,
+          SceneOps,
+          _activeBuilder != null ? _activeBuilder.Player : null,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
+          _activeBuilder != null ? _activeBuilder.Hud : null,
+          MathWorldBuilder.WorldOffset + MathWorldBuilder.MatchHubReturnLocal);
+        matchArea.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
+        if (builder.MatchPortal != null) builder.MatchPortal.MatchArea = matchArea;
+        try { Debug.Log("[GameInstaller] Match Meadow area wired (portal="
+          + (builder.MatchPortal != null) + ").", this); }
+        catch (System.Exception) { }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Match Meadow area wiring failed: " + e.Message, this);
       }
     } catch (System.Exception e) {
       Debug.LogWarning("[GameInstaller] Math content wiring failed (world stays enterable): " + e.Message, this);
@@ -798,6 +820,7 @@ public class GameInstaller : MonoBehaviour {
   CountingGardenArea _gardenArea;
   BuildTowerArea _buildArea;
   DeliveryArea _deliveryArea;
+  MatchArea _matchArea;
 
   public PlayerGender CurrentGender {
     get {

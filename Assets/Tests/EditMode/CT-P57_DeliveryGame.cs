@@ -100,7 +100,15 @@ public class CT_P57_DeliveryGame {
     return arena.transform.TransformPoint(DeliveryBuilder.MiaStart);
   }
 
-  static void AdvanceToDelivering(DeliveryGame game, float maxSeconds = 420f) {
+  // S3-P2Z19 user round: after entering the arena the child walks to the marked
+  // play spot; the question is read only there, then control passes over.
+  static Vector3 PlaySpotWorld(GameObject arena) {
+    return arena.transform.TransformPoint(DeliveryBuilder.PlaySpotLocal);
+  }
+
+  static void AdvanceToDelivering(DeliveryGame game, GameObject arena, GameObject player,
+      float maxSeconds = 420f) {
+    player.transform.position = PlaySpotWorld(arena);
     for (float t = 0f; t < maxSeconds && game.Current != DeliveryGame.Phase.Delivering; t += 0.1f)
       game.Tick(0.1f);
   }
@@ -268,11 +276,10 @@ public class CT_P57_DeliveryGame {
       int completed = -1;
       DeliveryGame game = BuildGame(builder, arena, player, audio, life, 4,
         delegate (int n) { completed = n; });
-      AdvanceToDelivering(game);
+      AdvanceToDelivering(game, arena, player);
       Assert.AreEqual(DeliveryGame.Phase.Delivering, game.Current, "the child holds control");
-      Assert.AreEqual(4, game.DemoApplesDelivered, "the demo delivered exactly 4");
       Assert.AreEqual(ActivityState.Active, life.State, "lifecycle active at handoff");
-      // The demo crate tidied home: every apple is pickable again.
+      // No demo ran: every apple is pickable from the start.
       for (int i = 0; i < game.ItemCountTotal; i++)
         Assert.AreEqual(DeliveryItem.ItemState.Available, game.ItemAt(i).State,
           "apple " + i + " reset for the round");
@@ -303,9 +310,9 @@ public class CT_P57_DeliveryGame {
     }
   }
 
-  // E. Undershoot: 2 of 5 delivered and settled earns a gentle "how many more"
-  // — never a fail, never a completion.
-  [Test] public void P57E_UndershootNudge() {
+  // E. Undershoot: 2 of 5 delivered and settled — S3-P2Z22 (user: "để trẻ tự suy
+  // nghĩ") there is NO "how many more" hint any more.
+  [Test] public void P57E_UndershootNoHint() {
     GameObject arena;
     DeliveryBuilder builder = BuildArena(out arena, 5);
     GameObject player = BuildPlayer(DeliveryBuilder.EntryLocal);
@@ -313,16 +320,16 @@ public class CT_P57_DeliveryGame {
       FakeAudio audio = new FakeAudio();
       DeliveryGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("deliver_apples", "test"), 5);
-      AdvanceToDelivering(game);
+      AdvanceToDelivering(game, arena, player);
       DeliverOne(game, arena, player, 0);
       DeliverOne(game, arena, player, 1);
       Assert.AreEqual(DeliveryGame.Phase.Delivering, game.Current, "short of the order: still delivering");
       player.transform.position = ReceiverWorld(arena) + new Vector3(0f, 0f, -1.1f);
-      for (int i = 0; i < 140; i++) game.Tick(0.1f); // settle: the nudge fires
-      Assert.GreaterOrEqual(game.UndershootNudges, 1, "a gentle nudge names the remainder");
+      for (int i = 0; i < 140; i++) game.Tick(0.1f); // settle: no hint fires
+      Assert.AreEqual(0, game.UndershootNudges, "no 'how many more' hint (child thinks)");
       Assert.AreEqual(DeliveryGame.Phase.Delivering, game.Current, "no completion while short");
-      Assert.IsTrue(audio.Lines.Contains(
-        DialogueLang.T("Three more apples!", "Còn ba quả nữa nhé!")), "the nudge counts the rest");
+      Assert.IsFalse(audio.Lines.Contains(
+        DialogueLang.T("Three more apples!", "Còn ba quả nữa nhé!")), "no remainder hint spoken");
     } finally {
       Object.DestroyImmediate(player);
       Object.DestroyImmediate(arena);
@@ -339,7 +346,7 @@ public class CT_P57_DeliveryGame {
       FakeAudio audio = new FakeAudio();
       ActivityLifecycle life = new ActivityLifecycle("deliver_apples", "test");
       DeliveryGame game = BuildGame(builder, arena, player, audio, life, 4);
-      AdvanceToDelivering(game);
+      AdvanceToDelivering(game, arena, player);
       DeliverOne(game, arena, player, 0);
       DeliverOne(game, arena, player, 1);
       DeliverOne(game, arena, player, 2);
@@ -383,7 +390,7 @@ public class CT_P57_DeliveryGame {
       FakeAudio audio = new FakeAudio();
       DeliveryGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("deliver_apples", "test"), 4);
-      AdvanceToDelivering(game);
+      AdvanceToDelivering(game, arena, player);
       DeliveryItem item = game.ItemAt(0);
       player.transform.position = item.transform.position + new Vector3(0f, 0f, -0.5f);
       game.TryPick(item);
@@ -422,7 +429,7 @@ public class CT_P57_DeliveryGame {
       FakeAudio audio = new FakeAudio();
       DeliveryGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("deliver_apples", "test"), 4);
-      AdvanceToDelivering(game);
+      AdvanceToDelivering(game, arena, player);
       DeliveryItem b = game.ItemAt(6);
       Assert.AreEqual(DeliveryItem.ItemState.Available, b.State, "starts available");
       player.transform.position = b.transform.position + new Vector3(0f, 0f, -0.5f);
@@ -468,7 +475,7 @@ public class CT_P57_DeliveryGame {
       FakeAudio audio = new FakeAudio();
       ActivityLifecycle life = new ActivityLifecycle("deliver_apples", "test");
       DeliveryGame first = BuildGame(builder, arena, player, audio, life, 4);
-      AdvanceToDelivering(first);
+      AdvanceToDelivering(first, arena, player);
       DeliverOne(first, arena, player, 0);
       DeliverOne(first, arena, player, 1);
       DeliverOne(first, arena, player, 2);
@@ -570,23 +577,23 @@ public class CT_P57_DeliveryGame {
       FakeAudio audio = new FakeAudio();
       DeliveryGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("deliver_apples", "test"), 9);
-      AdvanceToDelivering(game, 600f);
+      AdvanceToDelivering(game, arena, player, 600f);
       Assert.AreEqual(DeliveryGame.Phase.Delivering, game.Current, "target 9 reaches the child");
-      Assert.AreEqual(9, game.DemoApplesDelivered, "the demo delivered all nine");
       for (int i = 0; i < 9; i++) DeliverOne(game, arena, player, i);
       for (int i = 0; i < 30 && game.Current != DeliveryGame.Phase.Success; i++) game.Tick(0.1f);
       Assert.AreEqual(DeliveryGame.Phase.Success, game.Current, "target 9 completes");
       Assert.AreEqual(9, game.CrateCount, "a real nine-apple crate stands");
       for (int i = 0; i < 260; i++) game.Tick(0.1f); // recap drains
-      Assert.Greater(audio.Lines.Count, 30, "a full round speaks plenty");
+      Assert.Greater(audio.Lines.Count, 15, "a full round speaks plenty");
       foreach (string line in audio.Lines) {
         bool ok = SafetyFilter.ValidateLine(line, false, out string why);
         Assert.IsTrue(ok, "line passes the NPC cap: '" + line + "' (" + why + ")");
       }
       Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Nine apples.", "Chín quả táo.")),
         "nine counted");
+      // S3-P2Z23: the intro does NOT name the order count — the board shows it.
       Assert.IsTrue(audio.Lines.Contains(
-        DialogueLang.T("Mia needs nine apples!", "Mia cần chín quả táo!")), "the order named");
+        DialogueLang.T("Deliver to Mia!", "Giao cho Mia nhé!")), "job named, number left to the child");
     } finally {
       Object.DestroyImmediate(player);
       Object.DestroyImmediate(arena);
@@ -603,7 +610,7 @@ public class CT_P57_DeliveryGame {
       FakeAudio audio = new FakeAudio();
       DeliveryGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("deliver_apples", "test"), 4);
-      AdvanceToDelivering(game);
+      AdvanceToDelivering(game, arena, player);
       DeliveryItem b = game.ItemAt(2);
       player.transform.position = b.transform.position + new Vector3(0f, 0f, -0.5f);
       game.TryPick(b);
@@ -644,7 +651,7 @@ public class CT_P57_DeliveryGame {
       FakeAudio audio = new FakeAudio();
       DeliveryGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("deliver_apples", "test"), 4);
-      AdvanceToDelivering(game);
+      AdvanceToDelivering(game, arena, player);
       for (int i = 0; i < 4; i++) DeliverOne(game, arena, player, i);
       for (int i = 0; i < 20 && game.Current != DeliveryGame.Phase.Success; i++) game.Tick(0.1f);
       Assert.AreEqual(DeliveryGame.Phase.Success, game.Current, "the order completes");
@@ -659,5 +666,75 @@ public class CT_P57_DeliveryGame {
       Object.DestroyImmediate(player);
       Object.DestroyImmediate(arena);
     }
+  }
+
+  static void CompleteLife(ActivityLifecycle life) {
+    life.MarkAvailable("test");
+    life.BeginEnter("test");
+    life.MarkReady("test");
+    life.Begin("test");
+    life.MarkCompleted("test");
+  }
+
+  // O. The carried apple rides the child's REAL fist (same lesson as #4): with
+  // a hand handed in, the apple follows it across the village — never glued to
+  // the root — and the installer passes PlayerVisual.HandBone down.
+  [Test] public void P57O_CarryFollowsTheHand() {
+    GameObject arena;
+    DeliveryBuilder builder = BuildArena(out arena);
+    GameObject player = BuildPlayer(DeliveryBuilder.EntryLocal);
+    GameObject hand = new GameObject("P57Hand");
+    hand.transform.position = DeliveryBuilder.EntryLocal + new Vector3(0f, 1.1f, 0f);
+    try {
+      FakeAudio audio = new FakeAudio();
+      DeliveryGame game = arena.AddComponent<DeliveryGame>();
+      game.Build(builder, player.transform, null, audio,
+        new ActivityLifecycle("deliver_apples", "test"), 4, null, null, hand.transform);
+      AdvanceToDelivering(game, arena, player);
+      DeliveryItem b = game.ItemAt(0);
+      player.transform.position = b.transform.position + new Vector3(0f, 0f, -0.5f);
+      game.TryPick(b);
+      for (int i = 0; i < 40 && b.State != DeliveryItem.ItemState.Carried; i++) game.Tick(0.1f);
+      Assert.AreEqual(DeliveryItem.ItemState.Carried, b.State, "apple carried");
+      Vector3 acrossTheVillage = DeliveryBuilder.EntryLocal + new Vector3(2.4f, 1.3f, 0f);
+      hand.transform.position = acrossTheVillage;
+      for (int i = 0; i < 30; i++) game.Tick(0.05f);
+      Assert.Less(Vector3.Distance(b.transform.position, acrossTheVillage), 0.25f,
+        "the apple rides the fist");
+      Assert.Greater(Vector3.Distance(b.transform.position, player.transform.position), 2.0f,
+        "a root-glued apple would sit at the child's feet — impossible here");
+      string installer = File.ReadAllText(System.IO.Path.Combine(Application.dataPath,
+        "_Bootstrap", "GameInstaller.cs")).Replace("\r\n", "\n");
+      Assert.IsTrue(installer.Contains("miaVoice, hand);"),
+        "GameInstaller passes the resolved hand into DeliveryGame.Build");
+    } finally {
+      Object.DestroyImmediate(hand);
+      Object.DestroyImmediate(player);
+      Object.DestroyImmediate(arena);
+    }
+  }
+
+  // P. Ladder timing (same discipline as #4): a finished order KEEPS its target
+  // while the child is still inside (a spare apple runs the correction lesson);
+  // leaving advances exactly one rung with a fresh lifecycle, and an unfinished
+  // order never advances.
+  [Test] public void P57P_LadderAdvancesOnLeave() {
+    GameObject go = new GameObject("P57AreaLeave");
+    try {
+      DeliveryArea area = go.AddComponent<DeliveryArea>();
+      area.Bind(null, null, null, null, null, Vector3.zero);
+      area.SetTargetForTests(4);
+      Assert.IsTrue(area.TryEnterForTests(), "enter");
+      CompleteLife(area.Lifecycle);
+      Assert.AreEqual(4, area.Target, "a completed order keeps its target while inside");
+      Assert.IsTrue(area.TryExitForTests(), "leave after completing");
+      Assert.AreEqual(5, area.Target, "leaving advances exactly one rung");
+      Assert.AreEqual(ActivityState.Unavailable, area.Lifecycle.State, "fresh life for the next order");
+      Assert.IsFalse(area.TryExitForTests(), "double leave is refused");
+      Assert.AreEqual(5, area.Target, "no double advance");
+      Assert.IsTrue(area.TryEnterForTests(), "back in for the next order");
+      Assert.IsTrue(area.TryExitForTests(), "leave mid-order");
+      Assert.AreEqual(5, area.Target, "an unfinished order never advances");
+    } finally { Object.DestroyImmediate(go); }
   }
 }
