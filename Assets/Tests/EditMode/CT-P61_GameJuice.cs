@@ -159,4 +159,28 @@ public class CT_P61_GameJuice {
     ActivityFeedback.Clear();
     Assert.IsFalse(f.ObjectiveVisibleForTests, "clear hides the objective");
   }
+
+  // ---- P5: comfort / accessibility -------------------------------------------
+
+  [Test] public void P61L_ComfortFlagsParse() {
+    ComfortSettings.ParseInto(new[] { "x", "-reduce-motion" }, out bool r, out bool b);
+    Assert.IsTrue(r, "-reduce-motion parsed");
+    Assert.IsFalse(b, "big text not set");
+
+    ComfortSettings.ParseInto(new[] { "-big-text" }, out r, out b);
+    Assert.IsFalse(r, "motion not set");
+    Assert.IsTrue(b, "-big-text parsed");
+
+    ComfortSettings.ParseInto(null, out r, out b);
+    Assert.IsFalse(r, "null args, no change");
+    Assert.IsFalse(b, "null args, no change");
+  }
+
+  [Test] public void P61M_ComfortApplyDrivesMotion() {
+    ComfortSettings.Apply(true, true);
+    Assert.IsTrue(GameJuice.ReduceMotion, "apply drives reduce-motion");
+    Assert.IsTrue(ComfortSettings.BigText, "apply drives big text");
+    ComfortSettings.Apply(false, false);
+    Assert.IsFalse(GameJuice.ReduceMotion, "apply can turn it off");
+  }
 }

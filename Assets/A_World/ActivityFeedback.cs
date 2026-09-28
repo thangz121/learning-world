@@ -21,6 +21,8 @@ public class ActivityFeedback : MonoBehaviour {
   static readonly Color InfoTint = new Color(0.55f, 0.82f, 0.98f);
 
   static ActivityFeedback _instance;
+  static bool _bigTextWanted;
+  static int _retryStreak;
 
   RectTransform _progressRow;
   Text _banner;
@@ -51,11 +53,25 @@ public class ActivityFeedback : MonoBehaviour {
   // ---- public verbs ----------------------------------------------------------
 
   public static void Correct(string text = null) {
+    _retryStreak = 0;
     Banner(text != null ? text : DialogueLang.T("GOOD!", "GIỎI!"), Kind.Correct, 1.3f);
   }
 
   public static void Retry(string text = null) {
+    _retryStreak++;
+    // S3-P2Z37 light adaptive: after three misses in a row, escalate the hint
+    // from "try again" to the core instruction (never a scold).
+    if (text == null && _retryStreak >= 3) {
+      Banner(DialogueLang.T("LOOK AT THE BOARD!", "NHÌN LÊN BẢNG NHÉ!"), Kind.Info, 2.0f);
+      return;
+    }
     Banner(text != null ? text : DialogueLang.T("TRY AGAIN", "LÀM LẠI NHÉ"), Kind.Retry, 1.5f);
+  }
+
+  // Accessibility: larger banner + objective type.
+  public static void SetBigText(bool big) {
+    _bigTextWanted = big;
+    if (_instance != null) _instance.ApplyBigText(big);
   }
 
   public static void Banner(string text, Kind kind, float seconds) {
@@ -80,6 +96,7 @@ public class ActivityFeedback : MonoBehaviour {
 
   public static void Clear() {
     if (_instance == null) return;
+    _retryStreak = 0;
     _instance.ShowProgress(0, 0);
     _instance._bannerT = 0f;
     _instance._bannerDur = 0f;
@@ -163,6 +180,12 @@ public class ActivityFeedback : MonoBehaviour {
     _bannerOutline.effectColor = new Color(0.10f, 0.12f, 0.16f, 0.9f);
     _bannerOutline.effectDistance = new Vector2(3f, -3f);
     SetBannerAlpha(_banner, 0f);
+    ApplyBigText(_bigTextWanted);
+  }
+
+  void ApplyBigText(bool big) {
+    if (_banner != null) _banner.fontSize = big ? 120 : 96;
+    if (_objective != null) _objective.fontSize = big ? 50 : 38;
   }
 
   static void SetBannerAlpha(Text t, float a) {
