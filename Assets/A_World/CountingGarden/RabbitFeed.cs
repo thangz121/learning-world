@@ -1119,6 +1119,7 @@ public class RabbitFeed : MonoBehaviour {
     // S3-P2Z33: layered win feedback + board pop.
     GameJuice.CorrectFx(_fx, RabbitWorld(), false);
     ActivityFeedback.Correct();
+    ActivityGuide.Clear();
     if (_board != null) GameJuice.Pop(_board.transform, 0.10f, 0.3f);
     if (Kind == RoundKind.Plain) {
       Say(Cap(N(Target)) + " " + Carrots(Target) + "! Well done!",
@@ -1174,6 +1175,8 @@ public class RabbitFeed : MonoBehaviour {
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
     FaceRabbitTo(PlayerWorld(), dt);
+    // S3-P2Z35: show where to bring the carried carrot.
+    if (Carried != null) ActivityGuide.PointAt(BowlWorld()); else ActivityGuide.Clear();
   }
 
   // "Stop, then feed" (same discipline as gameplay #1): walking PAST the bowl
@@ -1740,4 +1743,6 @@ public class RabbitFeed : MonoBehaviour {
         _life.Begin("test active");
     } catch (Exception) { }
   }
+
+  void OnDestroy() { ActivityGuide.Clear(); }
 }

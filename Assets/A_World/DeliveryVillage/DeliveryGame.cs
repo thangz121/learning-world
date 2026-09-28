@@ -840,6 +840,7 @@ public class DeliveryGame : MonoBehaviour {
     // S3-P2Z33: layered win feedback.
     GameJuice.CorrectFx(_fx, ReceiverWorld() + new Vector3(0f, 1.0f, 0f), false);
     ActivityFeedback.Correct();
+    ActivityGuide.Clear();
     Say(Cap(N(Target)) + " " + Apples(Target) + "! Well done!",
       Cap(Nvi(Target)) + " quả táo! Giỏi!");
     // The recap 1..Target waits its turn in the pacer's single slot (same
@@ -887,6 +888,7 @@ public class DeliveryGame : MonoBehaviour {
     _lastPos = _player != null ? _player.position : Vector3.zero;
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
+    if (Carried != null) ActivityGuide.PointAt(ReceiverWorld()); else ActivityGuide.Clear();
   }
 
   // "Stop, then hand over" (same discipline as #1-#4): walking PAST the booth
@@ -1352,4 +1354,6 @@ public class DeliveryGame : MonoBehaviour {
         _life.Begin("test active");
     } catch (Exception) { }
   }
+
+  void OnDestroy() { ActivityGuide.Clear(); }
 }

@@ -740,6 +740,7 @@ public class MatchGame : MonoBehaviour {
     // S3-P2Z33: layered win feedback (big cut — the whole meadow is won).
     GameJuice.CorrectFx(_fx, PadWorld() + new Vector3(0f, 0.8f, 0f), true);
     ActivityFeedback.Correct();
+    ActivityGuide.Clear();
     Say("You found all the pairs!", "Con ghép đúng hết rồi!");
     Point(_teacher, PadWorld(), 2.2f);
     CelebrateBoth();
@@ -770,6 +771,7 @@ public class MatchGame : MonoBehaviour {
     _lastPos = _player != null ? _player.position : Vector3.zero;
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
+    if (Carried != null) ActivityGuide.PointAt(PadWorld()); else ActivityGuide.Clear();
   }
 
   void TickSuccess(float dt) {
@@ -1084,4 +1086,6 @@ public class MatchGame : MonoBehaviour {
         _life.Begin("test active");
     } catch (Exception) { }
   }
+
+  void OnDestroy() { ActivityGuide.Clear(); }
 }

@@ -789,6 +789,7 @@ public class BuildTowerGame : MonoBehaviour {
     // S3-P2Z33: layered win feedback.
     GameJuice.CorrectFx(_fx, PadWorld() + new Vector3(0f, BuildTowerBuilder.TowerTopY(Target) + 0.2f, 0f), false);
     ActivityFeedback.Correct();
+    ActivityGuide.Clear();
     Say(Cap(N(Target)) + " " + Blocks(Target) + "! Well done!",
       Cap(Nvi(Target)) + " khối! Giỏi!");
     // The recap 1..Target waits its turn in the pacer's single slot (same
@@ -831,6 +832,7 @@ public class BuildTowerGame : MonoBehaviour {
     _lastPos = _player != null ? _player.position : Vector3.zero;
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
+    if (Carried != null) ActivityGuide.PointAt(PadWorld()); else ActivityGuide.Clear();
   }
 
   // "Stop, then place" (same discipline as #1/#3): walking PAST the pad must
@@ -1241,4 +1243,6 @@ public class BuildTowerGame : MonoBehaviour {
         _life.Begin("test active");
     } catch (Exception) { }
   }
+
+  void OnDestroy() { ActivityGuide.Clear(); }
 }

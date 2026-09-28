@@ -647,6 +647,8 @@ public class NumberStairs : MonoBehaviour {
     // The teacher keeps watching the child.
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
+    // S3-P2Z35: the guide ring marks the step to reach.
+    ActivityGuide.PointAt(StepWorld(Target));
   }
 
   void CommitStep(int step) {
@@ -730,6 +732,7 @@ public class NumberStairs : MonoBehaviour {
     if (_builder != null) GameJuice.Pop(_builder.NumberBoard != null ? _builder.NumberBoard.transform : null, 0.10f, 0.3f);
     if (last) {
       _finalized = true;
+      ActivityGuide.Clear();
       Follow(); // the round camera stays with the child until the celebration
       // Confirm with the target itself, then RECOUNT 1..Target (brief §28:
       // "Hai... ba... bốn... năm!") — the recap lines wait their turn in the
@@ -1134,4 +1137,6 @@ public class NumberStairs : MonoBehaviour {
         _life.Begin("test active");
     } catch (Exception) { }
   }
+
+  void OnDestroy() { ActivityGuide.Clear(); }
 }

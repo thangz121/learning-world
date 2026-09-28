@@ -134,4 +134,18 @@ public class CT_P61_GameJuice {
     Assert.IsFalse(f.ProgressVisibleForTests, "clear hides progress");
     Assert.Less(f.BannerAlphaForTests, 0.05f, "clear hides the banner");
   }
+
+  // ---- P3: in-world ActivityGuide --------------------------------------------
+
+  [TearDown] public void TearDownGuide() { ActivityGuide.ResetForTests(); }
+
+  [Test] public void P61J_GuidePointsThenClears() {
+    ActivityGuide.PointAt(new Vector3(3f, 0f, 4f));
+    ActivityGuide g = ActivityGuide.Ensure();
+    Assert.IsTrue(g.ActiveForTests, "guide is active after PointAt");
+    Assert.AreEqual(3f, g.TargetForTests.x, 0.001f, "guide targets the point (x)");
+    Assert.AreEqual(4f, g.TargetForTests.z, 0.001f, "guide targets the point (z)");
+    ActivityGuide.Clear();
+    Assert.IsFalse(g.ActiveForTests, "guide clears");
+  }
 }
