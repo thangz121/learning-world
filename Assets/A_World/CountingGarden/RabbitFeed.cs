@@ -1036,6 +1036,7 @@ public class RabbitFeed : MonoBehaviour {
     FaceTowards(_teacher, PlayerLocal(), 0.2f, 5f);
     // S3-P2Z33: a warm, non-punishing "not yet" — board wobble + soft sparkle.
     GameJuice.WrongFx(_board != null ? _board.transform : null, _fx, BoardWorld());
+    ActivityFeedback.Retry();
     Say(Count < Target ? "Not enough. Count again!" : "Too many. Count again!",
       Count < Target ? "Chưa đủ rồi. Đếm lại nhé!" : "Thừa rồi. Đếm lại nhé!");
     Point(_teacher, RabbitWorld(), 2.2f);
@@ -1117,6 +1118,7 @@ public class RabbitFeed : MonoBehaviour {
     Sparkle(RabbitWorld() + new Vector3(0f, 0.7f, 0f), 14, _sparkleSeed++, 0.8f);
     // S3-P2Z33: layered win feedback + board pop.
     GameJuice.CorrectFx(_fx, RabbitWorld(), false);
+    ActivityFeedback.Correct();
     if (_board != null) GameJuice.Pop(_board.transform, 0.10f, 0.3f);
     if (Kind == RoundKind.Plain) {
       Say(Cap(N(Target)) + " " + Carrots(Target) + "! Well done!",
@@ -1724,6 +1726,9 @@ public class RabbitFeed : MonoBehaviour {
   // S3-P2Z19: state only — the pip board is gone (the bowl is the counter).
   void SetPip(int n) {
     PipCount = n;
+    // S3-P2Z34: live bowl progress ("4/7 on the bowl") while the child feeds.
+    if (Current == Phase.Feeding || Current == Phase.Wrong || Current == Phase.Success)
+      ActivityFeedback.Progress(n, Target);
   }
 
   // Test seams (no live scene needed).

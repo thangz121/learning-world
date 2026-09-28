@@ -693,6 +693,7 @@ public class MatchGame : MonoBehaviour {
       WrongMatches++;
       PlaySfx("pickup");
       GameJuice.WrongFx(_board != null ? _board.transform : null, _fx, PadWorld());
+      ActivityFeedback.Retry();
       Say("Not that one. Find the same!", "Chưa đúng rồi. Tìm lại nhé!");
       Point(_teacher, RefWorld(0), 2.2f);
       item.SetHand(_playerHand);
@@ -708,6 +709,8 @@ public class MatchGame : MonoBehaviour {
     PlaySfx("give");
     PulseRef(slot);
     Sparkle(RefWorld(slot) + new Vector3(0f, 0.4f, 0f), 8, _sparkleSeed++, 0.4f);
+    // S3-P2Z34: pair progress ("2/3 pairs found").
+    ActivityFeedback.Progress(MatchedPairs, Pairs);
     Say(ConfirmEn(slot), ConfirmVi(slot));
     Point(_teacher, RefWorld(slot), 1.8f);
     if (MatchedPairs >= Pairs) SuccessBeats();
@@ -736,6 +739,7 @@ public class MatchGame : MonoBehaviour {
     Sparkle(PadWorld() + new Vector3(0f, 0.8f, 0f), 16, _sparkleSeed++, 0.9f);
     // S3-P2Z33: layered win feedback (big cut — the whole meadow is won).
     GameJuice.CorrectFx(_fx, PadWorld() + new Vector3(0f, 0.8f, 0f), true);
+    ActivityFeedback.Correct();
     Say("You found all the pairs!", "Con ghép đúng hết rồi!");
     Point(_teacher, PadWorld(), 2.2f);
     CelebrateBoth();

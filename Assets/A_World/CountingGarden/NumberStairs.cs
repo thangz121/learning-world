@@ -725,6 +725,8 @@ public class NumberStairs : MonoBehaviour {
       last = !ChainOnSuccess || _ladderStart < 0 || next == _ladderStart;
     }
     GameJuice.CorrectFx(_fx, StepWorld(Target), last);
+    ActivityFeedback.Correct();
+    if (ArithmeticEnabled) ActivityFeedback.Progress(_roundsPlayed, ArithmeticRounds);
     if (_builder != null) GameJuice.Pop(_builder.NumberBoard != null ? _builder.NumberBoard.transform : null, 0.10f, 0.3f);
     if (last) {
       _finalized = true;

@@ -101,4 +101,37 @@ public class CT_P61_GameJuice {
       Assert.IsTrue(cam.PunchActive, "punch arms the camera shake");
     } finally { Object.DestroyImmediate(camGo); }
   }
+
+  // ---- P2: ActivityFeedback overlay ------------------------------------------
+
+  [TearDown] public void TearDownFeedback() { ActivityFeedback.ResetForTests(); }
+
+  [Test] public void P61G_ProgressRowShowsDots() {
+    ActivityFeedback.Progress(2, 5);
+    ActivityFeedback f = ActivityFeedback.Ensure();
+    Assert.IsTrue(f.ProgressVisibleForTests, "progress row is visible");
+    Assert.AreEqual(5, f.DotCountForTests, "one dot per round");
+    Assert.Greater(f.DotColorForTests(0).g, f.DotColorForTests(0).r, "done dot is green");
+    Assert.Less(f.DotColorForTests(4).a, 0.6f, "pending dot is faded");
+    ActivityFeedback.Progress(0, 0);
+    Assert.IsFalse(f.ProgressVisibleForTests, "total 0 hides the row");
+  }
+
+  [Test] public void P61H_BannerShowsThenFades() {
+    ActivityFeedback.Banner("GOOD!", ActivityFeedback.Kind.Correct, 1f);
+    ActivityFeedback f = ActivityFeedback.Ensure();
+    Assert.AreEqual("GOOD!", f.BannerTextForTests, "banner text set");
+    Assert.Greater(f.BannerAlphaForTests, 0.9f, "banner starts opaque");
+    f.Tick(1.5f);
+    Assert.Less(f.BannerAlphaForTests, 0.05f, "banner fades out when done");
+  }
+
+  [Test] public void P61I_ClearResetsOverlay() {
+    ActivityFeedback.Progress(3, 4);
+    ActivityFeedback.Banner("HI", ActivityFeedback.Kind.Info, 2f);
+    ActivityFeedback f = ActivityFeedback.Ensure();
+    ActivityFeedback.Clear();
+    Assert.IsFalse(f.ProgressVisibleForTests, "clear hides progress");
+    Assert.Less(f.BannerAlphaForTests, 0.05f, "clear hides the banner");
+  }
 }

@@ -760,6 +760,7 @@ public class DeliveryGame : MonoBehaviour {
         WrongItemRefusals++;
         // S3-P2Z33: warm "not that one" feedback.
         GameJuice.WrongFx(null, _fx, ReceiverWorld());
+        ActivityFeedback.Retry();
         Say("Not an apple!", "Không phải táo!");
         Log("wrong item refused (kind=" + item.Kind + ")");
       }
@@ -790,6 +791,7 @@ public class DeliveryGame : MonoBehaviour {
       _correctStep = 0;
       _correctT = 0f;
       Overshoots++;
+      ActivityFeedback.Retry();
     }
   }
 
@@ -799,6 +801,7 @@ public class DeliveryGame : MonoBehaviour {
     PlaySfx("give");
     SayReceiver();
     Sparkle(ReceiverWorld() + new Vector3(0f, 0.9f, 0f), 10, _sparkleSeed++, 0.5f);
+    ActivityFeedback.Progress(Mathf.Min(Count, Target), Target);
     if (_landBeats == 1) {
       _landBeats = 0;
       int k = Mathf.Min(Count, Target);
@@ -836,6 +839,7 @@ public class DeliveryGame : MonoBehaviour {
     Sparkle(ReceiverWorld() + new Vector3(0f, 1.0f, 0f), 14, _sparkleSeed++, 0.8f);
     // S3-P2Z33: layered win feedback.
     GameJuice.CorrectFx(_fx, ReceiverWorld() + new Vector3(0f, 1.0f, 0f), false);
+    ActivityFeedback.Correct();
     Say(Cap(N(Target)) + " " + Apples(Target) + "! Well done!",
       Cap(Nvi(Target)) + " quả táo! Giỏi!");
     // The recap 1..Target waits its turn in the pacer's single slot (same

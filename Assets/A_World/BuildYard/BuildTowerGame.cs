@@ -740,6 +740,7 @@ public class BuildTowerGame : MonoBehaviour {
       _correctStep = 0;
       _correctT = 0f;
       Overshoots++;
+      ActivityFeedback.Retry();
     }
   }
 
@@ -747,6 +748,7 @@ public class BuildTowerGame : MonoBehaviour {
     PlaySfx("block");
     Sparkle(PadWorld() + new Vector3(0f, BuildTowerBuilder.TowerTopY(Count) + 0.1f, 0f), 10, _sparkleSeed++, 0.5f);
     PulseLastPlaced();
+    ActivityFeedback.Progress(Count, Target);
     if (_landBeats == 1) {
       _landBeats = 0;
       FeedFeedback(Count);
@@ -786,6 +788,7 @@ public class BuildTowerGame : MonoBehaviour {
       14, _sparkleSeed++, 0.8f);
     // S3-P2Z33: layered win feedback.
     GameJuice.CorrectFx(_fx, PadWorld() + new Vector3(0f, BuildTowerBuilder.TowerTopY(Target) + 0.2f, 0f), false);
+    ActivityFeedback.Correct();
     Say(Cap(N(Target)) + " " + Blocks(Target) + "! Well done!",
       Cap(Nvi(Target)) + " khối! Giỏi!");
     // The recap 1..Target waits its turn in the pacer's single slot (same

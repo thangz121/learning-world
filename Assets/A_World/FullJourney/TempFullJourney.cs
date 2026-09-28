@@ -62,6 +62,11 @@ public class TempFullJourney : MonoBehaviour {
     "hub.tower", "hub.delivery", "hub.match", "return.main",
   };
 
+  // Deterministic stair rounds after the area's opening plain round (kind, B;
+  // A = the step the child already stands on). Mid-range targets only.
+  static readonly int[] StairPlanKind = { 1, 2, 1, 2 }; // Add, Sub, Add, Sub
+  static readonly int[] StairPlanB = { 2, 2, 3, 2 };
+
   string _shotDir = "E:/LWW/fullj-shots";
   int _shots;
   int _clicks;
@@ -1211,6 +1216,13 @@ public class TempFullJourney : MonoBehaviour {
       while (!game.ResultShown && game.Current == NumberStairs.Phase.Success && dwell < 16f) {
         yield return new WaitForSeconds(PollSeconds);
         dwell += PollSeconds;
+      }
+      // Deterministic verification: pin the next round to a SAFE mid-range
+      // target (the live random generator can pick 8/9, where an agent overshoot
+      // lands on the top landing and the child never returns — a harness
+      // fragility, not a gameplay rule). Round 1 stays the area's plain target.
+      if (guard - 1 < StairPlanKind.Length) {
+        game.ForceNextRoundForTests(StairPlanKind[guard - 1], target, StairPlanB[guard - 1]);
       }
     }
     yield return WaitFor(delegate { return game.ResultShown; }, 60f, "stair ladder finalized");
