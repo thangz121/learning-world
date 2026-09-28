@@ -16,9 +16,11 @@
   `C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe`.
 - **CHƯA COMMIT** toàn bộ (vòng §80-§89 + P2Z32). Quy ước bất di bất dịch:
   **KHÔNG commit/push khi chưa có lệnh user.**
-- Baseline verify cuối: EditMode **698/693/0/5** (`E:\LWW\z10.xml`); build
+- Baseline verify cuối: EditMode **705/700/0/5** (`E:\LWW\z15.xml`); build
   production + journey **Succeeded errors=0**; FULL JOURNEY **6/6 PASS,
-  errors=0 severe=0**, game **tự đóng** (`E:\LWW\z-journey8.log` + `z-jshots8`).
+  errors=0 severe=0**, game **tự đóng** (`E:\LWW\z-journey14.log` + `z-jshots14`).
+- **P1→P5 đã xong + push** (`origin/asus-merge-check`): P1 `f46242c`, P2 `4942a46`,
+  P3 `11e5323`, P4 `19b5eff`, P5 `c4798c2`. Cây làm việc sạch.
 
 ## 1. VIỆC NHỊP NÀY ĐÃ XONG (§89 trong HANDOFF)
 
@@ -64,7 +66,7 @@ Unity.exe là GUI app → trong PowerShell luôn dùng `Start-Process -Wait`.
 
 1. **Suite**: `-batchmode -projectPath E:\LWW\learning-world -runTests
    -testPlatform EditMode -testResults E:\LWW\x.xml -logFile E:\LWW\x.log`
-   (KHÔNG `-quit`) → kỳ vọng **698/693/0/5**.
+   (KHÔNG `-quit`) → kỳ vọng **705/700/0/5**.
 2. **Build**: `-executeMethod TempBuildP56.Build` / `.BuildJourney` (+`-quit`).
 3. **Journey full**: `E:\LWW\P56JBuild\LWE.exe -screen-width 1920
    -screen-height 1080 -screen-fullscreen 0 -logFile <log> -journeyfull -lang en

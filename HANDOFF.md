@@ -3084,3 +3084,22 @@ Bằng chứng các vòng: `E:\LWW\fullj-shots\` (run1: `stuck_run1.log` +
   errors=0 severe=0**, tự đóng (420s, `E:\LWW\z-journey8.log`).
 - CÒN P1: wire GameJuice vào tower/delivery/match. Rồi P2-P5.
 - Vẫn CHƯA commit.
+
+## 93. S3-P2Z33→37 — P1→P5 UX/UI + GAMEPLAY, MỖI PHASE VERIFY + PUSH (2026-09-28, maynode)
+
+- Lệnh user: backup trước (xem §90), làm tuần tự P1→P5, **mỗi P push nếu không lỗi**.
+- Đã push vào `origin/asus-merge-check`:
+  * **P1** `f46242c` — lớp `GameJuice` (Pop/Squash/Wobble/Ring/Flash/CameraPunch,
+    presets) + `SmartCamera.Punch`; wire 5 game; kèm backlog P2Z32 (bậc thang +/−,
+    fix journey match pad/rabbit/auto-close).
+  * **P2** `4942a46` — `ActivityFeedback` overlay: dots tiến độ + banner đúng/sai;
+    wire 5 game; journey bậc thang deterministic.
+  * **P3** `11e5323` — `ActivityGuide` (marker mục tiêu kế tiếp trong scene).
+  * **P4** `19b5eff` — dòng objective bền (task line) trong overlay.
+  * **P5** `c4798c2` — `ComfortSettings` (ReduceMotion/BigText, phím M/B, cờ CLI)
+    + adaptive nhẹ (Retry escalate sau 3 lần trượt).
+- Baseline cuối: EditMode **705/700/0/5** (`E:\LWW\z15.xml`); production + journey
+  build **Succeeded errors=0**; FULL JOURNEY **6/6 PASS, errors=0 severe=0**, tự
+  đóng (`E:\LWW\z-journey14.log` + `z-jshots14`).
+- Backup bất biến: `E:\LWW\learning-world-BACKUP-2026-09-28-P2Z32` (xem §90).
+- Cây làm việc SẠCH (mọi thứ đã push). Chờ lệnh user vòng tiếp theo.
