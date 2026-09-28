@@ -424,6 +424,9 @@ public class NumberStairs : MonoBehaviour {
     _board = _builder.NumberBoard;
     _builder.SetRail(CurrentStep, Target);
     _boardPulseT = 0f;
+    // S3-P2Z36: the persistent task line ("Đi tới bậc năm.").
+    ActivityFeedback.Objective(DialogueLang.T(
+      "Go to step " + N(Target) + ".", "Đi tới bậc " + Nvi(Target) + "."));
   }
 
   // Test seam: pin a specific round (deterministic; live generates randomly).
@@ -1138,5 +1141,5 @@ public class NumberStairs : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  void OnDestroy() { ActivityGuide.Clear(); }
+  void OnDestroy() { ActivityGuide.Clear(); ActivityFeedback.Clear(); }
 }

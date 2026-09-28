@@ -148,4 +148,15 @@ public class CT_P61_GameJuice {
     ActivityGuide.Clear();
     Assert.IsFalse(g.ActiveForTests, "guide clears");
   }
+
+  // ---- P4: objective line ----------------------------------------------------
+
+  [Test] public void P61K_ObjectiveShowsAndClears() {
+    ActivityFeedback.Objective("Feed 7 carrots.");
+    ActivityFeedback f = ActivityFeedback.Ensure();
+    Assert.IsTrue(f.ObjectiveVisibleForTests, "objective is visible");
+    Assert.AreEqual("Feed 7 carrots.", f.ObjectiveTextForTests, "objective text set");
+    ActivityFeedback.Clear();
+    Assert.IsFalse(f.ObjectiveVisibleForTests, "clear hides the objective");
+  }
 }

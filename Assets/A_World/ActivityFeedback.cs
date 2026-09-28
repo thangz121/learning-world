@@ -24,6 +24,7 @@ public class ActivityFeedback : MonoBehaviour {
 
   RectTransform _progressRow;
   Text _banner;
+  Text _objective;
   Outline _bannerOutline;
   readonly List<Image> _dots = new List<Image>();
 
@@ -69,12 +70,21 @@ public class ActivityFeedback : MonoBehaviour {
     f.ShowProgress(done, total);
   }
 
+  // The persistent task line ("Feed 7 carrots." / "Đi tới bậc năm."), shown
+  // under the dots so the child always knows what to do.
+  public static void Objective(string text) {
+    if (string.IsNullOrWhiteSpace(text)) return;
+    ActivityFeedback f = Ensure();
+    f.ShowObjective(text);
+  }
+
   public static void Clear() {
     if (_instance == null) return;
     _instance.ShowProgress(0, 0);
     _instance._bannerT = 0f;
     _instance._bannerDur = 0f;
     if (_instance._banner != null) SetBannerAlpha(_instance._banner, 0f);
+    if (_instance._objective != null) _instance._objective.gameObject.SetActive(false);
   }
 
   public static bool VisibleForTests { get { return _instance != null; } }
@@ -111,6 +121,27 @@ public class ActivityFeedback : MonoBehaviour {
     layout.childForceExpandWidth = false;
     layout.childForceExpandHeight = false;
     _progressRow.gameObject.SetActive(false);
+
+    // Objective line (persistent task, under the dots).
+    GameObject objGo = new GameObject("Objective");
+    objGo.transform.SetParent(canvasGo.transform, false);
+    RectTransform or = objGo.AddComponent<RectTransform>();
+    or.anchorMin = new Vector2(0.5f, 1f);
+    or.anchorMax = new Vector2(0.5f, 1f);
+    or.pivot = new Vector2(0.5f, 1f);
+    or.anchoredPosition = new Vector2(0f, -92f);
+    or.sizeDelta = new Vector2(940f, 60f);
+    _objective = objGo.AddComponent<Text>();
+    _objective.font = font;
+    _objective.fontSize = 38;
+    _objective.fontStyle = FontStyle.Bold;
+    _objective.alignment = TextAnchor.MiddleCenter;
+    _objective.raycastTarget = false;
+    _objective.color = new Color(1f, 1f, 1f, 0.96f);
+    Outline oo = objGo.AddComponent<Outline>();
+    oo.effectColor = new Color(0.10f, 0.12f, 0.16f, 0.9f);
+    oo.effectDistance = new Vector2(2f, -2f);
+    objGo.SetActive(false);
 
     // Banner (centre, a little above the middle so it never covers the child).
     GameObject bannerGo = new GameObject("Banner");
@@ -152,13 +183,18 @@ public class ActivityFeedback : MonoBehaviour {
     _banner.transform.localScale = GameJuice.ReduceMotion ? Vector3.one : Vector3.one * 0.7f;
     SetBannerAlpha(_banner, 1f);
   }
-
   static Color TintFor(Kind kind) {
     switch (kind) {
       case Kind.Correct: return CorrectTint;
       case Kind.Retry: return RetryTint;
       default: return InfoTint;
     }
+  }
+
+  void ShowObjective(string text) {
+    if (_objective == null) return;
+    _objective.text = text;
+    _objective.gameObject.SetActive(true);
   }
 
   void ShowProgress(int done, int total) {
@@ -203,6 +239,8 @@ public class ActivityFeedback : MonoBehaviour {
 
   public int DotCountForTests { get { return _dots.Count; } }
   public Color DotColorForTests(int i) { return (i >= 0 && i < _dots.Count) ? _dots[i].color : Color.clear; }
+  public string ObjectiveTextForTests { get { return _objective != null ? _objective.text : ""; } }
+  public bool ObjectiveVisibleForTests { get { return _objective != null && _objective.gameObject.activeSelf; } }
   public bool ProgressVisibleForTests { get { return _progressRow != null && _progressRow.gameObject.activeSelf; } }
   public string BannerTextForTests { get { return _banner != null ? _banner.text : ""; } }
   public float BannerAlphaForTests { get { return _banner != null ? _banner.color.a : 0f; } }

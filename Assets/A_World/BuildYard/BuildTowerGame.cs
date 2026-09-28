@@ -442,6 +442,9 @@ public class BuildTowerGame : MonoBehaviour {
     _result = _builder.Result;
     _ghost = _builder.Ghost;
     _padAnchor = _builder.PadAnchor;
+    // S3-P2Z36: the persistent task line.
+    ActivityFeedback.Objective(DialogueLang.T(
+      "Build " + Target + " blocks.", "Xếp " + Target + " khối."));
     _camTeaching = _builder.CamTeaching;
     _lookTeaching = _builder.LookTeaching;
     _camDemo = _builder.CamDemo;
@@ -1244,5 +1247,5 @@ public class BuildTowerGame : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  void OnDestroy() { ActivityGuide.Clear(); }
+  void OnDestroy() { ActivityGuide.Clear(); ActivityFeedback.Clear(); }
 }

@@ -777,6 +777,17 @@ public class RabbitFeed : MonoBehaviour {
     _board = _builder.SpawnQuestion((int)Kind, OpA, OpB);
     _builder.SpawnResultDigit(Target);
     _boardPulseT = 0f;
+    // S3-P2Z36: the persistent task line.
+    if (Kind == RoundKind.Plain) {
+      ActivityFeedback.Objective(DialogueLang.T(
+        "Feed " + N(Target) + " carrots.", "Cho thỏ ăn " + Nvi(Target) + " củ."));
+    } else if (Kind == RoundKind.Add) {
+      ActivityFeedback.Objective(DialogueLang.T(
+        "Add " + N(OpB) + " more.", "Thêm " + Nvi(OpB) + " củ nữa."));
+    } else {
+      ActivityFeedback.Objective(DialogueLang.T(
+        "Take " + N(OpB) + " away.", "Bỏ " + Nvi(OpB) + " củ về vườn."));
+    }
   }
 
   // Test seam: pin a specific round (deterministic; live generates randomly).
@@ -1744,5 +1755,5 @@ public class RabbitFeed : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  void OnDestroy() { ActivityGuide.Clear(); }
+  void OnDestroy() { ActivityGuide.Clear(); ActivityFeedback.Clear(); }
 }

@@ -407,6 +407,9 @@ public class MatchGame : MonoBehaviour {
       zone.Bind(this);
     }
     ConfigureRound();
+    // S3-P2Z36: the persistent task line.
+    ActivityFeedback.Objective(DialogueLang.T(
+      "Find " + N(Pairs) + " pairs.", "Tìm " + Nvi(Pairs) + " cặp."));
 
     // Re-entry policy FIRST: a completed round adopts the matched pairs.
     if (_life != null && _life.State == ActivityState.Completed) {
@@ -1087,5 +1090,5 @@ public class MatchGame : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  void OnDestroy() { ActivityGuide.Clear(); }
+  void OnDestroy() { ActivityGuide.Clear(); ActivityFeedback.Clear(); }
 }

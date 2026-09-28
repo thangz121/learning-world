@@ -475,6 +475,9 @@ public class DeliveryGame : MonoBehaviour {
     _root = _builder.transform;
     _board = _builder.NumberBoard;
     _result = _builder.Result;
+    // S3-P2Z36: the persistent task line.
+    ActivityFeedback.Objective(DialogueLang.T(
+      "Deliver " + Target + " apples.", "Giao " + Target + " quả táo."));
     _exitCue = _builder.ExitCue;
     _deliveryAnchor = _builder.DeliveryAnchor;
     _camTeaching = _builder.CamTeaching;
@@ -1355,5 +1358,5 @@ public class DeliveryGame : MonoBehaviour {
     } catch (Exception) { }
   }
 
-  void OnDestroy() { ActivityGuide.Clear(); }
+  void OnDestroy() { ActivityGuide.Clear(); ActivityFeedback.Clear(); }
 }
