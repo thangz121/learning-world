@@ -132,4 +132,31 @@ public class CT_S12_SelectionYardBuilder {
       Assert.AreEqual("exploration_daily_life", b.GateTargetIds[3], "daily life last");
     } finally { Object.DestroyImmediate(root); }
   }
+
+  // E. PHASE 4 label fix: the island root sits at +540 — labels MUST be staged
+  // in WORLD space through the root (the old local offsets stranded every
+  // name at the map origin, edge-on to the camera = invisible in the yard).
+  [Test] public void S12E_LabelsAreWorldStagedAtTheIsland() {
+    GameObject root = new GameObject("S12Island");
+    try {
+      root.transform.position = SelectionYardBuilder.WorldOffset;
+      SelectionYardBuilder b = root.AddComponent<SelectionYardBuilder>();
+      b.Level = "skill";
+      b.SubjectId = "math";
+      b.SkillId = "";
+      b.BuildContent(root.transform);
+      Transform title = FindDeep(root.transform, "SYTitleLabel");
+      Assert.IsNotNull(title, "title label staged");
+      Assert.Greater(title.position.x, 500f, "title rides the island, never the map origin");
+      Transform door = FindDeep(root.transform, "Label");
+      Assert.IsNotNull(door, "door label staged");
+      Assert.Greater(door.position.x, 500f, "door labels ride the island too");
+      Assert.Greater(door.position.z, -10f, "door label above its gate, not at the back");
+      Vector3 viewer = SelectionYardBuilder.WorldOffset + SelectionYardBuilder.EntryLocal;
+      Vector3 away = door.position - viewer;
+      away.y = 0f;
+      Assert.Greater(Vector3.Dot(door.transform.forward, away.normalized), 0.95f,
+        "legible face points at the child entering the yard");
+    } finally { Object.DestroyImmediate(root); }
+  }
 }

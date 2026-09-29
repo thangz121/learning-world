@@ -85,6 +85,21 @@ public class SelectionYardBuilder : MonoBehaviour {
     EntryPoint = entry.transform;
   }
 
+  // ---- labels ---------------------------------------------------------------------
+  // PHASE 4 FIX (foreground evidence: no door/sign names anywhere in the yard):
+  // WorldNameLabel.SetupLocked takes WORLD coordinates, but every call below
+  // used LOCAL offsets — the labels were stranded at the map origin, edge-on
+  // to the camera (and leaked ghost text into the hub). StageLabel transforms
+  // the offsets through the island root and points the readable face at the
+  // yard entry.
+  static void StageLabel(Transform parent, string name, string text, Vector3 localPos) {
+    GameObject labelGo = new GameObject(name);
+    labelGo.transform.SetParent(parent, false);
+    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
+    label.SetupLocked(text, parent.TransformPoint(localPos), parent.TransformPoint(EntryLocal));
+    label.Show();
+  }
+
   // ---- ground / entry / back ----------------------------------------------------
 
   void BuildGround(Transform parent) {
@@ -132,11 +147,7 @@ public class SelectionYardBuilder : MonoBehaviour {
     back.transform.localPosition = BackLocal;
     BackGate = back.AddComponent<SelectionGate>();
     BackGate.Kind = SelectionGate.GateKind.Back;
-    GameObject backLabel = new GameObject("SYBackLabel");
-    backLabel.transform.SetParent(parent, false);
-    WorldNameLabel label = backLabel.AddComponent<WorldNameLabel>();
-    label.SetupLocked("Về", BackLocal + new Vector3(0f, 2.2f, 0f), EntryLocal);
-    label.Show();
+    StageLabel(parent, "SYBackLabel", "Về", BackLocal + new Vector3(0f, 2.2f, 0f));
   }
 
   // ---- orientation sign: the yard's single title ---------------------------------
@@ -152,11 +163,7 @@ public class SelectionYardBuilder : MonoBehaviour {
     SetMat(panel, Emissive(Cream, 0.2f));
     Ignore(panel);
     TitleBoard = panel;
-    GameObject labelGo = new GameObject("SYTitleLabel");
-    labelGo.transform.SetParent(parent, false);
-    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.SetupLocked(title, pos + new Vector3(0f, 2.02f, -0.2f), EntryLocal);
-    label.Show();
+    StageLabel(parent, "SYTitleLabel", title, pos + new Vector3(0f, 2.02f, -0.2f));
   }
 
   // ---- the gates -----------------------------------------------------------------
@@ -199,11 +206,8 @@ public class SelectionYardBuilder : MonoBehaviour {
     Ignore(panel);
     Box(parent, "SYPlaceholderHint", pos + new Vector3(0f, 2.5f, -0.1f), new Vector3(0.6f, 0.6f, 0.1f), Blue);
     PlaceholderBoard = panel;
-    GameObject labelGo = new GameObject("SYPlaceholderLabel");
-    labelGo.transform.SetParent(parent, false);
-    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.SetupLocked(LearningMap.EmptyYardText, pos + new Vector3(0f, 2.05f, -0.22f), EntryLocal);
-    label.Show();
+    StageLabel(parent, "SYPlaceholderLabel", LearningMap.EmptyYardText,
+      pos + new Vector3(0f, 2.05f, -0.22f));
     // A quiet bench so the yard never reads as a bug.
     Box(parent, "SYPlaceholderBench", pos + new Vector3(0f, 0.25f, -1.4f), new Vector3(1.8f, 0.12f, 0.5f), Wood);
     Box(parent, "SYPlaceholderBenchLegL", pos + new Vector3(-0.7f, 0.12f, -1.4f), new Vector3(0.14f, 0.24f, 0.44f), Wood);
@@ -234,12 +238,9 @@ public class SelectionYardBuilder : MonoBehaviour {
     Ignore(ring);
     Ball(gate.transform, "CapL", new Vector3(-1.1f, 2.16f, 0f), 0.36f, live ? Gold : Cream);
     Ball(gate.transform, "CapR", new Vector3(1.1f, 2.16f, 0f), 0.36f, live ? Gold : Cream);
-    // Floating label over the gate.
-    GameObject labelGo = new GameObject("Label");
-    labelGo.transform.SetParent(parent, false);
-    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.SetupLocked(display, new Vector3(x, 2.75f, z), EntryLocal);
-    label.Show();
+    // Floating label over the gate (world-staged: the island root sits at
+    // +540, local offsets MUST be transformed — PHASE 4 label fix).
+    StageLabel(parent, "Label", display, new Vector3(x, 2.75f, z));
     // The walk-in door (7cm/mouth toward the entry) + approach glow for live
     // gates only (an empty skill/game never pretends to be an activity).
     GameObject door = new GameObject("Door");

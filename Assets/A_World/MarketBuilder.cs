@@ -933,8 +933,21 @@ public class MarketBuilder : MonoBehaviour {
       Vector3 face = -toGate;
       Vector3 a = SubjectCatalog.HubCenter + toGate * 2.0f;
       Vector3 b = def.GatePos + face * 0.6f;
-      WalkwaySegs.Add(new Vector3[] { a, b });
-      BuildBrickWalkway(a, b, rng);
+      // PHASE 4 (user report): the Vietnamese/English gates stood ON the outer
+      // gates' walkways (the straight fan swept within ~2m of their plazas).
+      // The OUTER walkways now bend via a south-lawn waypoint that clears
+      // every mid gate by >= 3.7m; the inner/center walkways stay straight.
+      bool outer = Mathf.Abs(def.GatePos.x) >= 10f;
+      if (outer) {
+        Vector3 via = new Vector3(def.GatePos.x * 0.61f, 0f, -1.6f);
+        WalkwaySegs.Add(new Vector3[] { a, via });
+        BuildBrickWalkway(a, via, rng);
+        WalkwaySegs.Add(new Vector3[] { via, b });
+        BuildBrickWalkway(via, b, rng);
+      } else {
+        WalkwaySegs.Add(new Vector3[] { a, b });
+        BuildBrickWalkway(a, b, rng);
+      }
     }
     if (HubSelectionOnly) BuildHubPlaza();
   }

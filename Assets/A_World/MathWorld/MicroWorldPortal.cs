@@ -12,6 +12,10 @@ public class MicroWorldPortal : MonoBehaviour {
   public CountingGardenArea Area;
   // Gameplay #7 (S3-P2Z18): the Discovery Garden's own area module.
   public DiscoveryArea DiscoveryArea;
+  // FULL ARCHITECTURE RESET PHASE 4: an arena opened from the Selection Yard
+  // routes its exit back to the GAME YARD through this reference (the legacy
+  // garden routing stays for the old garden path until PHASE 5 removes it).
+  public SelectionYardArea YardArea;
   public bool ExitMode;
   // S3 P2X play arena: this exit unloads the play scene and brings the child
   // back to the Counting Garden (the exit portal of the GARDEN keeps
@@ -30,7 +34,9 @@ public class MicroWorldPortal : MonoBehaviour {
   // The one dispatch seam (S3-P2Z15): every LIVE area implements
   // IMicroWorldArea. (Build Yard / Delivery / Match gameplay was removed in
   // the Counting Garden cleanup; their gates remain hub landmarks only.)
+  // PHASE 4: the Selection Yard takes precedence when bound (arena exits).
   public IMicroWorldArea TargetArea() {
+    if (YardArea != null) return YardArea;
     if (Area != null) return Area;
     return DiscoveryArea;
   }
@@ -47,6 +53,8 @@ public class MicroWorldPortal : MonoBehaviour {
     if (!_wasInside && d2 <= fireRadius * fireRadius) {
       _wasInside = true;
       if (PlayExit) {
+        // PHASE 4: the yard path wins when bound; legacy garden otherwise.
+        if (YardArea != null) { YardArea.ExitGameToYard(); return; }
         CountingGardenArea garden = target as CountingGardenArea;
         if (garden != null) garden.ExitPlayToGarden();
       } else if (ExitMode) {

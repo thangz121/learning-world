@@ -297,26 +297,38 @@ public class GameInstaller : MonoBehaviour {
       root.transform.position = StairHillBuilder.WorldOffset;
       StairHillBuilder builder = root.GetComponent<StairHillBuilder>();
       if (builder == null) builder = root.AddComponent<StairHillBuilder>();
-      // The round's mission comes from the area's ladder (progression/CLI);
-      // the boards stage that digit so the world always shows the mission.
-      int stairTarget = _gardenArea != null
-        ? _gardenArea.StairTarget : StairHillBuilder.Target;
+      // The round's mission comes from the ACTIVE area's ladder (PHASE 4: the
+      // Selection Yard owns it; the obsolete garden stays as fallback until
+      // PHASE 5 removes it); the boards stage that digit so the world always
+      // shows the mission.
+      int stairTarget = _yardArea != null ? _yardArea.StairTarget
+        : (_gardenArea != null ? _gardenArea.StairTarget : StairHillBuilder.Target);
       builder.BoardTarget = StairHillBuilder.ClampTarget(stairTarget);
       builder.Build();
-      CountingGardenArea area = _gardenArea;
-      if (area == null) {
-        try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
-      }
-      if (area != null) {
+      if (_yardArea != null) {
+        // PHASE 4: the arena binds to the Selection Yard (entry/exit + the
+        // re-homed lifecycle); the yard wins over the legacy garden.
         Vector3 entry = StairHillBuilder.WorldOffset + StairHillBuilder.EntryLocal;
-        area.SetPlay(entry, builder.Anchors, StairHillBuilder.WorldOffset,
+        _yardArea.SetPlay(entry, builder.Anchors, StairHillBuilder.WorldOffset,
           StairHillBuilder.BoundX, StairHillBuilder.BoundZ, StairHillBuilder.FollowOffset,
           DialogueLang.T(StairHillBuilder.ObjectiveEn, StairHillBuilder.ObjectiveVi));
-        if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      } else {
+        CountingGardenArea area = _gardenArea;
+        if (area == null) {
+          try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
+        }
+        if (area != null) {
+          Vector3 entry = StairHillBuilder.WorldOffset + StairHillBuilder.EntryLocal;
+          area.SetPlay(entry, builder.Anchors, StairHillBuilder.WorldOffset,
+            StairHillBuilder.BoundX, StairHillBuilder.BoundZ, StairHillBuilder.FollowOffset,
+            DialogueLang.T(StairHillBuilder.ObjectiveEn, StairHillBuilder.ObjectiveVi));
+          if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
+        }
       }
       // The activity (teacher + student + the child's climb). Lifecycle is the
-      // Math-side area's; the game plays the area's current target (one
-      // staircase, many targets — brief §34).
+      // active area's; the game plays its current target (one staircase, many
+      // targets — brief §34).
       try {
         NumberStairs game = root.AddComponent<NumberStairs>();
         // S3-P2Z32: live play mixes random plain numbers with +/- (the body is
@@ -324,10 +336,13 @@ public class GameInstaller : MonoBehaviour {
         game.ArithmeticEnabled = true;
         Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
           ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle stairLife = _yardArea != null ? _yardArea.StairLifecycle
+          : (_gardenArea != null ? _gardenArea.StairLifecycle : null);
         game.Build(builder, playerT,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
-          _gardenArea != null ? _gardenArea.StairLifecycle : null, stairTarget);
-        if (_gardenArea != null) _gardenArea.BindStairGame(game);
+          stairLife, stairTarget);
+        if (_yardArea != null) _yardArea.BindStairGame(game);
+        else if (_gardenArea != null) _gardenArea.BindStairGame(game);
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Number stairs wiring failed (hill stays empty): " + e.Message, this);
       }
@@ -358,26 +373,38 @@ public class GameInstaller : MonoBehaviour {
       root.transform.position = RabbitPlayBuilder.WorldOffset;
       RabbitPlayBuilder builder = root.GetComponent<RabbitPlayBuilder>();
       if (builder == null) builder = root.AddComponent<RabbitPlayBuilder>();
-      // The round's mission comes from the area's ladder (progression/CLI);
-      // the boards stage that digit so the world always shows the mission.
-      int rabbitTarget = _gardenArea != null
-        ? _gardenArea.RabbitTarget : RabbitPlayBuilder.Target;
+      // The round's mission comes from the ACTIVE area's ladder (PHASE 4: the
+      // Selection Yard owns it; the obsolete garden stays as fallback until
+      // PHASE 5 removes it); the boards stage that digit so the world always
+      // shows the mission.
+      int rabbitTarget = _yardArea != null ? _yardArea.RabbitTarget
+        : (_gardenArea != null ? _gardenArea.RabbitTarget : RabbitPlayBuilder.Target);
       builder.BoardTarget = RabbitPlayBuilder.ClampTarget(rabbitTarget);
       builder.Build();
-      CountingGardenArea area = _gardenArea;
-      if (area == null) {
-        try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
-      }
-      if (area != null) {
+      if (_yardArea != null) {
+        // PHASE 4: bind the arena to the Selection Yard (entry/exit + the
+        // re-homed rabbit lifecycle).
         Vector3 entry = RabbitPlayBuilder.WorldOffset + RabbitPlayBuilder.EntryLocal;
-        area.SetPlay(entry, builder.Anchors, RabbitPlayBuilder.WorldOffset,
+        _yardArea.SetPlay(entry, builder.Anchors, RabbitPlayBuilder.WorldOffset,
           RabbitPlayBuilder.BoundX, RabbitPlayBuilder.BoundZ, RabbitPlayBuilder.FollowOffset,
           DialogueLang.T(RabbitPlayBuilder.ObjectiveEn, RabbitPlayBuilder.ObjectiveVi));
-        if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      } else {
+        CountingGardenArea area = _gardenArea;
+        if (area == null) {
+          try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
+        }
+        if (area != null) {
+          Vector3 entry = RabbitPlayBuilder.WorldOffset + RabbitPlayBuilder.EntryLocal;
+          area.SetPlay(entry, builder.Anchors, RabbitPlayBuilder.WorldOffset,
+            RabbitPlayBuilder.BoundX, RabbitPlayBuilder.BoundZ, RabbitPlayBuilder.FollowOffset,
+            DialogueLang.T(RabbitPlayBuilder.ObjectiveEn, RabbitPlayBuilder.ObjectiveVi));
+          if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
+        }
       }
       // The activity (teacher + student + the child's feeding). Lifecycle is
-      // the Math-side area's; the game plays the area's current target (one
-      // patch, many targets — the same ladder discipline as gameplay #2).
+      // the active area's; the game plays its current target (one patch, many
+      // targets — the same ladder discipline as gameplay #2).
       try {
         RabbitFeed game = root.AddComponent<RabbitFeed>();
         // S3-P2Z26: live play mixes random plain numbers with +/- within 10.
@@ -394,13 +421,16 @@ public class GameInstaller : MonoBehaviour {
           }
         } catch (System.Exception) { }
         if (hand == null) hand = playerT;
+        ActivityLifecycle rabbitLife = _yardArea != null ? _yardArea.RabbitLifecycle
+          : (_gardenArea != null ? _gardenArea.RabbitLifecycle : null);
         game.Build(builder, playerT,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
-          _gardenArea != null ? _gardenArea.RabbitLifecycle : null, rabbitTarget, hand);
+          rabbitLife, rabbitTarget, hand);
         // S3-P2Z26: drag a fed carrot off the bowl back to the garden.
         RabbitBowlDrag drag = root.AddComponent<RabbitBowlDrag>();
         if (drag != null) drag.Bind(game);
-        if (_gardenArea != null) _gardenArea.BindRabbitGame(game);
+        if (_yardArea != null) _yardArea.BindRabbitGame(game);
+        else if (_gardenArea != null) _gardenArea.BindRabbitGame(game);
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Rabbit feed wiring failed (patch stays empty): " + e.Message, this);
       }
@@ -769,6 +799,8 @@ public class GameInstaller : MonoBehaviour {
         builder.Hud,
         SubjectCatalog.HubCenter);
       yard.BindRouter(builder.Router);
+      // S3-P2Z20 (re-homed): live play asks random number questions.
+      yard.RandomRabbitTargets = true;
       builder.SetSelectionYard(yard); // PHASE 2: subject gates open skill yards
       try { Debug.Log("[GameInstaller] Selection Yard area wired (phase 1 skeleton).", this); }
       catch (System.Exception) { }

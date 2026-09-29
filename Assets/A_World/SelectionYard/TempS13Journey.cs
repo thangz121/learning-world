@@ -249,6 +249,26 @@ public class TempS13Journey : MonoBehaviour {
     Record("C content: counting 2 accepted games", CheckCountingGameYard(), "");
     if (!StepGuard()) yield break;
 
+    // ---- STEP: C -> GAME (rabbit) -> C (PHASE 4 round trip) ------------------
+    yield return EnterDoorStep("rabbit_feeding", "Cho thỏ ăn",
+      delegate { return SceneLoaded(RabbitPlayBuilder.SceneName); }, 150f);
+    Record("C -> rabbit arena loads", _stepOk, "");
+    if (!StepGuard()) yield break;
+    yield return new WaitForSeconds(3f);
+    Shot("03b_rabbit_arena");
+    Expect("rabbit arena: RabbitFeed present", FindObjectOfType<RabbitFeed>() != null, "");
+    Expect("rabbit arena: game yard unloaded", !YardLoaded(), "");
+    Record("rabbit arena content", FindObjectOfType<RabbitFeed>() != null && !YardLoaded(), "");
+    if (!StepGuard()) yield break;
+
+    yield return ExitArenaStep("math_counting", "rabbit arena exit");
+    Record("GAME -> C back (rabbit)", _stepOk, "");
+    if (!StepGuard()) yield break;
+    yield return new WaitForSeconds(2.5f);
+    Shot("03c_back_in_game_yard");
+    Record("C re-entry after rabbit: 2 doors intact", CheckCountingGameYard(), "");
+    if (!StepGuard()) yield break;
+
     // ---- STEP: C -> B -> A back ---------------------------------------------
     yield return BackStep(delegate { return YardSkill("math") != null; }, 120f, "back to math skill yard");
     Record("C -> B back (math)", _stepOk, "");
@@ -385,6 +405,26 @@ public class TempS13Journey : MonoBehaviour {
   // A -> subject gate: DIRECT closed-loop walk (the loop wall-follows around
   // the district boundary carves and empirically corrects any projection
   // weirdness — see WalkStep). Aborts if the WRONG yard opens.
+  IEnumerator ExitArenaStep(string expectSkill, string label) {
+    _stepOk = false;
+    MicroWorldPortal exit = null;
+    yield return WaitStep(delegate {
+      MicroWorldPortal[] ps = FindObjectsOfType<MicroWorldPortal>();
+      foreach (MicroWorldPortal p in ps) {
+        if (p != null && p.PlayExit) { exit = p; return true; }
+      }
+      return false;
+    }, 30f, label + " portal found");
+    if (!_stepOk || exit == null) yield break;
+    Vector3 ep = exit.transform.position;
+    Vector3 staging = new Vector3(ep.x, 0f, ep.z + 2.8f);
+    yield return WalkStep(delegate { return PlayerNear(staging, 2.2f); }, staging, 2.2f, 60f,
+      label + " staging", null, null);
+    if (!_stepOk) yield break;
+    yield return WalkStep(delegate { return YardGame(expectSkill) != null; }, ep, 1.3f, 150f,
+      label + " walk-in", null, null);
+  }
+
   IEnumerator WalkIntoSubjectGateStep(SubjectId subject, string yardSubject, string label) {
     _stepOk = false;
     SubjectGate gate = null;

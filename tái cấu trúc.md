@@ -419,3 +419,40 @@ choose the smallest safe correction, continue.
   be launched in the console session via `schtasks ... /IT` (the SSH session
   has no DXGI context: D3D12 error 887a0022). Details:
   `E:/LWW/incoming/asus-20260929-1804-node-results.txt`.
+- 2026-09-29: PHASE 4 complete — C -> GAME -> C for the TWO approved games +
+  the two user-reported hub/yard defects (manual play session on maynode with
+  the committed `-playlog` logger, evidence `D:/Vscode/play-node/`).
+  USER-REPORTED FIXES:
+  - Yard name labels were invisible: `SelectionYardBuilder` passed LOCAL
+    offsets into `WorldNameLabel.SetupLocked` (which takes WORLD space) — every
+    yard label was stranded at the map origin, edge-on to the camera (and
+    leaked ghost text into the hub). All labels are now staged through the
+    island root (`StageLabel`) and the face points at the yard entry.
+  - Long names clipped ("Bậc thang con số" -> "Bậc thang"): `WorldNameLabel`
+    now best-fits inside the pill (resizeTextForBestFit 28..112) — full names
+    shown.
+  - Vietnamese/English gates stood ON the outer gates' walkways: the two OUTER
+    walkways (Toán/Tư duy) now bend via a south-lawn waypoint (>= 3.7m
+    clearance from every mid gate) instead of sweeping across their plazas
+    (`MarketBuilder.BuildHubWalkways`).
+  APPROVED-GAME PIPELINE (lifecycles re-homed to `SelectionYardArea`):
+  - `SelectionYardArea.PlayGame` now launches the real arenas through the
+    shared micro slot (guards: right game yard + playable game only) and
+    `ExitGameToYard` swaps back to the SAME game yard with the skill context;
+    stair/rabbit lifecycles + target ladders + CLI flags (`-stair-target`,
+    `-rabbit-target`) + random rabbit targets moved here (owner string
+    "SelectionYardArea"); a completed life advances the next visit's target.
+  - `MicroWorldPortal` gained `YardArea` (preferred on PlayExit; legacy garden
+    routing untouched as fallback).
+  - `GameInstaller` arena builders (BuildStairPlayScene/BuildRabbitPlayScene)
+    bind SetPlay + lifecycle + target + exit portal to the YARD when present,
+    the obsolete garden only as fallback (deleted in PHASE 5). Arenas were NOT
+    modified — demo/gameplay/feedback stay game-owned.
+  EVIDENCE: suite 694:689/0/5 (+S12E label staging + CT-S14 lifecycles/guards/
+  portal); build Succeeded errors=0; windowed `-journeys3` (extended with the
+  C -> rabbit arena -> C round trip): exit 0, 20/20 steps, 0 errors, 90s,
+  auto-closed — arena built (`Rabbit Play scene built`), entered, RabbitFeed
+  present with its live lesson ("Take two away."), exit portal returned to the
+  C yard with both doors intact. Visual QA still open for HUMAN review (label
+  sizes, gate clearance feel, gameplay feel in the arenas). No visual
+  self-acceptance.

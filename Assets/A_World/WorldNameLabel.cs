@@ -132,6 +132,13 @@ public class WorldNameLabel : MonoBehaviour {
     _text = textGo.AddComponent<Text>();
     _text.font = font;
     _text.fontSize = 112;
+    // PHASE 4 fit fix (foreground evidence: "Bậc thang con số" clipped to
+    // "Bậc thang", "Đếm — Chọn trò chơi" to "Đếm — Chọn"): best-fit shrinks
+    // long names INSIDE the fixed pill instead of cutting them — the manual
+    // size steps stay as the base for short names.
+    _text.resizeTextForBestFit = true;
+    _text.resizeTextMinSize = 28;
+    _text.resizeTextMaxSize = 112;
     _text.color = Color.white;
     _text.alignment = TextAnchor.MiddleCenter;
     Shadow shadow = textGo.AddComponent<Shadow>();
