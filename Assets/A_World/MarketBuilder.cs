@@ -262,6 +262,33 @@ public class MarketBuilder : MonoBehaviour {
     }
   }
 
+  // FULL ARCHITECTURE RESET (PHASE 2): production subject gates open the
+  // subject's SKILL yard (A -> B) through the persistent SelectionYardArea.
+  // Entry gates get the yard binding; the legacy district return triggers are
+  // unbound (the districts are dead scenery until PHASE 5 deletes them — Back
+  // is the yard's own portal). Called by GameInstaller AFTER SetWorldNav, so
+  // the yard wins wherever it is bound.
+  public void SetSelectionYard(SelectionYardArea yard) {
+    _yardArea = yard;
+    if (yard == null || _worldResult == null || Player == null) return;
+    for (int i = 0; i < SubjectCatalog.All.Length && i < _worldResult.EntryGates.Count; i++) {
+      SubjectGate g = _worldResult.EntryGates[i];
+      if (g != null) g.BindYard(yard);
+    }
+    for (int i = 0; i < _worldResult.ReturnGates.Count; i++) {
+      SubjectGate g = _worldResult.ReturnGates[i];
+      if (g == null) continue;
+      SubjectId target = i < SubjectCatalog.All.Length ? SubjectCatalog.All[i].Id : SubjectIds.Main;
+      g.Bind(null, target, true, null); // legacy return trigger goes inert
+    }
+  }
+
+  SelectionYardArea _yardArea;
+
+  public SelectionYardArea SelectionYard {
+    get { return _yardArea; }
+  }
+
   // ---- environment: sky, light, ground, path --------------------------------
 
   void BuildEnvironment() {
@@ -463,15 +490,15 @@ public class MarketBuilder : MonoBehaviour {
     Color leafA = new Color(0.28f, 0.60f, 0.30f);
     Color leafB = new Color(0.22f, 0.52f, 0.28f);
     // Deterministic alternation (never Random: every build is identical).
-    // Phase 3.0: gaps where the 4 subject roads cross (|x|<1.65 on N/E/W,
-    // Vietnamese S road runs at x=3.5 so the spawn camera axis stays clear).
-    // Hub-arc round: the 2 middle gate walkways cross the north hedge at
-    // x≈±4.3 — gaps there too (outer walkways thread the open hedge corners,
-    // no gap needed).
+    // Phase 3.0: gaps where the subject roads cross (|x|<1.65 on N/E/W).
+    // PHASE 2 ARC (2026-09-29): 5-gate arc, 7m spacing — the north hedge keeps
+    // the center gap (Khám phá walkway at x=0) plus windows at x=±7 where the
+    // English/Vietnamese roads leave; the south gap follows the Vietnamese
+    // road (now x=+7). Outer walkways still thread the open hedge corners.
     int n = 0;
     for (float x = -8f; x <= 8.01f; x += 1.6f) {
-      bool gapN = Mathf.Abs(x) < 1.65f || Mathf.Abs(Mathf.Abs(x) - 4.3f) < 1.5f;
-      bool gapS = Mathf.Abs(x - 3.5f) < 1.65f;
+      bool gapN = Mathf.Abs(x) < 1.65f || Mathf.Abs(Mathf.Abs(x) - 7f) < 1.8f;
+      bool gapS = Mathf.Abs(x - 7f) < 2.0f;
       if (!gapN) AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, -6f), n);
       if (!gapS) AddHedgeBush(hedge.transform, new Vector3(x, 0.28f, 6f), n + 1);
       // (Hub beauty round: hedge flower tufts removed — spiky stems read as

@@ -347,3 +347,24 @@ choose the smallest safe correction, continue.
 
 - 2026-09-29: PHASE 0 complete — this plan (audit at 149537a; suite 667:662/0/5;
   build Succeeded errors=0; 7 scenes).
+- 2026-09-29: PHASE 1 complete — commit `5744d1e` (skeleton, additive):
+  LearningMap taxonomy (5 subjects / 21 skills / exactly 2 HUMAN_ACCEPTED
+  games), generic `SelectionYardScene` (SelectionGate kinds Skill/Game/Play/
+  Back; SelectionYardBuilder renders B+C levels data-driven, empty skill =
+  `CHƯA CÓ TRÒ CHƠI` board only; SelectionYardArea owns travel beats + launch
+  request seam), GameInstaller dispatch + wiring, MicroGateHint.BuildForSelection,
+  Build Settings +SelectionYardScene (8 during transition), tests CT-S10/S11/S12.
+  Verify: suite 681:676/0/5, build Succeeded errors=0 warnings=75. No game opened.
+- 2026-09-29: PHASE 2 complete — the Main world is now the Subject Yard with
+  FIVE gates: KHÁM PHÁ added (`SubjectIds.Exploration`, `SubjectCatalog.Exploration`,
+  new `Compass` landmark gate = pebble pillars + globe/magnifier crown, teal
+  palette). Arc re-spaced to exact 7m neighbours at x = ±14/±7/0, z = -7/-5.5/-5
+  (outer slots pushed deeper so pillar-click snap never reaches the legacy
+  district return discs — smallest safe correction found by the suite: CT-P39B/C).
+  Entry gates now call `SelectionYardArea.EnterSkill(subject)` (`SubjectGate.BindYard`,
+  yard wins over legacy nav); legacy district return triggers are unbound
+  (`MarketBuilder.SetSelectionYard`). Math no longer travels to MathScene via
+  gates (legacy nav path + MathScene data stay for the phase suite until PHASE 5).
+  Verify: suite 686:681/0/5 (new CT-S13 + CT-P31/CT-P43 migrated to 5 subjects),
+  build Succeeded errors=0 warnings=75, 8 scenes. Boot/journey on maynode:
+  PENDING (node offline, no windowed boot on ASUS by order).

@@ -29,16 +29,19 @@ public readonly struct SubjectId : IEquatable<SubjectId> {
   public static implicit operator string(SubjectId id) => id.Value;
 }
 
-// Canonical Phase 3.0 subjects. "main" is the Main World (hub), not a subject.
+// Canonical subjects. "main" is the Main World (hub), not a subject.
+// FULL ARCHITECTURE RESET (2026-09-29): KHÁM PHÁ (exploration) joins as the
+// 5th subject of the Subject Yard (PHASE 2).
 public static class SubjectIds {
   public static readonly SubjectId Main = new SubjectId("main");
   public static readonly SubjectId Math = new SubjectId("math");
   public static readonly SubjectId Thinking = new SubjectId("thinking");
   public static readonly SubjectId English = new SubjectId("english");
   public static readonly SubjectId Vietnamese = new SubjectId("vietnamese");
+  public static readonly SubjectId Exploration = new SubjectId("exploration");
 
   public static readonly SubjectId[] Subjects =
-    { Math, Thinking, English, Vietnamese };
+    { Math, Thinking, English, Vietnamese, Exploration };
 }
 
 // Published exactly once per world change (enter subject / return to main).

@@ -8,6 +8,13 @@
 // no Rigidbody is added to the player, no trigger colliders, zero change to
 // the frozen player/NPC physics. No Update allocation, no events published
 // here (the service owns WorldChangedEvent). C# 9.0 only.
+//
+// FULL ARCHITECTURE RESET (PHASE 2): an entry gate may be bound to the
+// Selection Yard instead of the world-nav service. Then walking in opens the
+// subject's SKILL yard (A -> B) and the legacy nav path is bypassed entirely.
+// BindYard never touches the nav service, so legacy tests and any unwired
+// scene keep the old behaviour; the production wiring swaps one Bind for the
+// other (MarketBuilder.SetSelectionYard).
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -19,6 +26,7 @@ public class SubjectGate : MonoBehaviour {
   public float cooldownSec = 1.0f;
 
   IWorldNavService _nav;
+  SelectionYardArea _yard;
   SubjectId _target = SubjectIds.Main;
   bool _isReturnGate;
   Transform _playerT;
@@ -50,6 +58,13 @@ public class SubjectGate : MonoBehaviour {
   // Bind. Null = legacy behaviour (fires regardless of transition state).
   public void BindGate(InteractionGate gate) { _gate = gate; }
 
+  // PHASE 2 additive seam: bind the gate to the selection yard. An ENTRY gate
+  // with a yard opens the subject's skill yard and never touches world-nav;
+  // return gates ignore the yard (Back is the yard's own portal).
+  public void BindYard(SelectionYardArea yard) { _yard = yard; }
+
+  public bool HasYard { get { return _yard != null; } }
+
   // Explicit re-arm request (travel code calls this after a warp): the next
   // Update re-derives armed state from distance, so a warp landing inside the
   // fire radius starts disarmed and re-arms only after walking clear.
@@ -67,7 +82,8 @@ public class SubjectGate : MonoBehaviour {
   }
 
   void Update() {
-    if (_nav == null || _playerT == null) return;
+    if (_playerT == null) return;
+    if (_nav == null && _yard == null) return;
     if (_gate != null && !_gate.CanRouteWorld) {
       // Transition/activity beat in flight: freeze edge detection (never fire
       // on a stale sample) but keep tracking presence so the edge is clean.
@@ -86,13 +102,19 @@ public class SubjectGate : MonoBehaviour {
     bool entered = inside && !_wasInside;
     _wasInside = inside;
     if (!entered) return;
-    if (_isReturnGate) {
+    if (_isReturnGate && _nav != null) {
       // Return arch: only meaningful while inside its own subject.
       if (_nav.Current == _target) {
         _nav.ReturnToMain();
         _cooldownUntil = Time.time + cooldownSec;
         _armed = false; // walk clear before the next fire
       }
+    } else if (_yard != null) {
+      // PHASE 2 entry: open the subject's SKILL yard (A -> B). The area owns
+      // the travel beats; re-entering the same yard is an idempotent no-op.
+      _yard.EnterSkill(_target.Value);
+      _cooldownUntil = Time.time + cooldownSec;
+      _armed = false; // walk clear before the next fire
     } else {
       // Entry gate: fires whenever the player is NOT already in this subject
       // (from Main, or walking over from another subject). Entering the
@@ -125,15 +147,22 @@ public class SubjectGate : MonoBehaviour {
       else return false; // still inside: must walk clear first (J4 re-entry case)
     }
     if (!_isReturnGate) {
-      if (currentWorld == _target) return false; // already inside: no-op
       float dx = playerPos.x - transform.position.x;
       float dz = playerPos.z - transform.position.z;
       if (dx * dx + dz * dz > fireRadius * fireRadius) return false;
+      if (_yard != null) {
+        // PHASE 2: the yard path — open the subject's skill yard. The area is
+        // idempotent on re-entry, and its own latches guard double-fires.
+        _yard.EnterSkill(_target.Value);
+        _armed = false;
+        return true;
+      }
+      if (currentWorld == _target) return false; // already inside: no-op
       if (_nav != null) _nav.Enter(_target);
       _armed = false;
       return true;
     } else {
-      if (currentWorld != _target) return false;
+      if (_nav == null || currentWorld != _target) return false;
       float dx = playerPos.x - transform.position.x;
       float dz = playerPos.z - transform.position.z;
       if (dx * dx + dz * dz > fireRadius * fireRadius) return false;

@@ -769,6 +769,7 @@ public class GameInstaller : MonoBehaviour {
         builder.Hud,
         SubjectCatalog.HubCenter);
       yard.BindRouter(builder.Router);
+      builder.SetSelectionYard(yard); // PHASE 2: subject gates open skill yards
       try { Debug.Log("[GameInstaller] Selection Yard area wired (phase 1 skeleton).", this); }
       catch (System.Exception) { }
     } catch (System.Exception e) {

@@ -108,12 +108,13 @@ public static class SubjectWorldBuilder {
     Vector3 gate = def.GatePos;
     Vector3 center = def.PlaygroundCenter;
     if (def.Id == SubjectIds.Math) {
-      // East: from inside Main (x 5.6) through the gate to the playground.
-      Box(parent, "MathRoad", new Vector3(8.9f, 0.015f, gate.z),
-        new Vector3(6.6f, 0.03f, 1.6f), RoadTan, true);
+      // East: from inside Main (x 5.6) through the gate to the playground
+      // (PHASE 2 arc: the gate moved to x=14, the strip follows it).
+      Box(parent, "MathRoad", new Vector3(10.1f, 0.015f, gate.z),
+        new Vector3(9.0f, 0.03f, 1.6f), RoadTan, true);
     } else if (def.Id == SubjectIds.Thinking) {
-      Box(parent, "ThinkingRoad", new Vector3(-8.9f, 0.015f, gate.z),
-        new Vector3(6.6f, 0.03f, 1.6f), RoadTan, true);
+      Box(parent, "ThinkingRoad", new Vector3(-10.1f, 0.015f, gate.z),
+        new Vector3(9.0f, 0.03f, 1.6f), RoadTan, true);
     } else {
       // North/South along the gate's own x (Vietnamese runs at x=3.5 so the
       // spawn camera axis x=0 stays clear): from inside Main to the playground.
@@ -153,6 +154,7 @@ public static class SubjectWorldBuilder {
       case SubjectLandmarkKind.Gears: BuildGearsGate(parent, def, pillarA, pillarB, lat); break;
       case SubjectLandmarkKind.Books: BuildBooksGate(parent, def, pillarA, pillarB, lat); break;
       case SubjectLandmarkKind.Scrolls: BuildScrollsGate(parent, def, pillarA, pillarB, lat); break;
+      case SubjectLandmarkKind.Compass: BuildCompassGate(parent, def, pillarA, pillarB, lat); break;
     }
 
     // Tinted medallion under the gate (walkable ground treatment).
@@ -167,7 +169,10 @@ public static class SubjectWorldBuilder {
     // ring under every gate and a blossom crown on Blocks/Gears/Books lintels
     // (Vietnamese keeps its festival hat). Collider-free dressing.
     WorldBeauty.GateRing(parent, name + "Gate", def.GatePos, def.Primary, 3.0f);
-    if (def.Landmark != SubjectLandmarkKind.Scrolls) {
+    // PHASE 2: the Compass gate carries its own magnifier crown — no blossom
+    // stacking (same reason Vietnamese skips it).
+    if (def.Landmark != SubjectLandmarkKind.Scrolls &&
+        def.Landmark != SubjectLandmarkKind.Compass) {
       WorldBeauty.BlossomCrown(parent, name + "GateCrown",
         def.GatePos + new Vector3(0f, 2.95f, 0f), 0.9f);
     }
@@ -340,6 +345,69 @@ public static class SubjectWorldBuilder {
     }
     Ball(parent, gearName + "Hub", basePos + new Vector3(0f, 1.35f, 0f), 0.32f,
       new Color(0.96f, 0.95f, 0.90f), false).transform.SetParent(parent);
+  }
+
+  // Exploration (KHÁM PHÁ, FULL ARCHITECTURE RESET PHASE 2): pebble-stack
+  // pillars + cylinder lintel + a magnifier-ring crown with a globe hub —
+  // the "look closer at the world" motif. Distinct silhouette from Blocks
+  // (cubes), Gears (wheels), Books (slabs), Scrolls (banners).
+  static void BuildCompassGate(Transform parent, SubjectDefinition def, Vector3 a, Vector3 b, Vector3 lat) {
+    BuildPebblePillar(parent, "ExplorePillarA", a, def.Primary);
+    BuildPebblePillar(parent, "ExplorePillarB", b, def.Primary);
+    Vector3 mid = (a + b) * 0.5f;
+    Vector3 face = FaceOf(def);
+    GameObject lintel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    lintel.name = "ExploreLintel";
+    lintel.transform.SetParent(parent);
+    lintel.transform.position = mid + new Vector3(0f, 2.42f, 0f);
+    lintel.transform.localScale = new Vector3(0.34f, 2.4f, 0.34f);
+    lintel.transform.localRotation = Quaternion.FromToRotation(Vector3.up, lat);
+    lintel.GetComponent<Renderer>().sharedMaterial = Lit(def.Secondary);
+    // Headroom rule (same as every gate): beams are visual-only — no collider
+    // + ignoreFromBuild — so the bake never severs the road into islands.
+    StripCollider(lintel);
+    IgnoreFromBuild(lintel);
+    // Magnifier ring crowning the gate, disc facing the child on approach.
+    GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    ring.name = "ExploreMagnifierRing";
+    ring.transform.SetParent(parent);
+    ring.transform.position = mid + new Vector3(0f, 3.06f, 0f);
+    ring.transform.localScale = new Vector3(0.92f, 0.05f, 0.92f);
+    ring.transform.localRotation = Quaternion.FromToRotation(Vector3.up, face);
+    ring.GetComponent<Renderer>().sharedMaterial = Lit(def.Primary);
+    StripCollider(ring);
+    IgnoreFromBuild(ring);
+    Ball(parent, "ExploreGlobe", mid + new Vector3(0f, 3.06f, 0f), 0.52f, def.Secondary, false);
+    Box(parent, "ExploreNeedleV", mid + new Vector3(0f, 3.06f, 0f),
+      new Vector3(0.06f, 1.05f, 0.06f), def.Primary, false);
+    Box(parent, "ExploreNeedleH", mid + new Vector3(0f, 3.06f, 0f),
+      new Vector3(1.05f, 0.06f, 0.06f), def.Primary, false);
+    Ball(parent, "ExploreStarA", a + new Vector3(0f, 2.34f, 0f), 0.34f, def.Secondary, false);
+    Ball(parent, "ExploreStarB", b + new Vector3(0f, 2.34f, 0f), 0.34f, def.Secondary, false);
+  }
+
+  static void BuildPebblePillar(Transform parent, string pillarName, Vector3 basePos, Color color) {
+    GameObject foot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    foot.name = pillarName + "Foot";
+    foot.transform.SetParent(parent);
+    foot.transform.position = basePos + new Vector3(0f, 0.2f, 0f);
+    foot.transform.localScale = new Vector3(0.9f, 0.2f, 0.9f);
+    foot.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.72f, 0.70f, 0.64f));
+    Pebble(parent, pillarName + "Pebble0", basePos + new Vector3(0f, 0.66f, 0f), 0.98f, color);
+    Pebble(parent, pillarName + "Pebble1", basePos + new Vector3(0f, 1.44f, 0f), 0.82f,
+      new Color(0.78f, 0.76f, 0.70f));
+    Pebble(parent, pillarName + "Pebble2", basePos + new Vector3(0f, 2.08f, 0f), 0.62f, color);
+  }
+
+  static void Pebble(Transform parent, string name, Vector3 pos, float diameter, Color color) {
+    GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    go.name = name;
+    go.transform.SetParent(parent);
+    go.transform.position = pos;
+    go.transform.localScale = new Vector3(diameter, diameter * 0.72f, diameter);
+    go.GetComponent<Renderer>().sharedMaterial = Lit(color);
+    StripCollider(go);
+    IgnoreFromBuild(go);
   }
 
   // English: open-book pillars (two tilted slabs) + slab lintel + ascending

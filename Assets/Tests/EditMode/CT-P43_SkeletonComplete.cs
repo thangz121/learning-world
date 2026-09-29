@@ -174,10 +174,10 @@ public class CT_P43_SkeletonComplete {
     try {
       SubjectWorldBuilder.BuildResult result = SubjectWorldBuilder.BuildShell(parent.transform);
       Assert.IsNotNull(result, "shell builds headlessly");
-      Assert.AreEqual(4, result.ReturnGates.Count, "4 catalog-aligned return slots");
+      Assert.AreEqual(5, result.ReturnGates.Count, "5 catalog-aligned return slots");
       int liveReturns = 0;
       foreach (SubjectGate g in result.ReturnGates) if (g != null) liveReturns++;
-      Assert.AreEqual(3, liveReturns, "3 spatial return triggers (Math owns MathScene)");
+      Assert.AreEqual(3, liveReturns, "3 spatial return triggers (Math + Khám phá are additive)");
       var discs = new List<GameObject>();
       CollectBySuffix(parent.transform, "ReturnDisc", discs);
       Assert.AreEqual(3, discs.Count, "3 return discs (one per spatial subject)");
@@ -339,6 +339,7 @@ public class CT_P43_SkeletonComplete {
       foreach (string name in new[] {
         "ThinkingGearAWheel", "EnglishBookAPageL", "VietnameseTabletABody",
         "ThinkingLintelL", "EnglishLintel", "VietnameseBanner",
+        "ExploreMagnifierRing", // PHASE 2: KHÁM PHÁ gate landmark
       }) Assert.IsNotNull(FindDeep(parent.transform, name), name + " built");
       Transform engLintel = FindDeep(parent.transform, "EnglishLintel");
       Assert.GreaterOrEqual(engLintel.localPosition.y, 2.0f, "English lintel above head");

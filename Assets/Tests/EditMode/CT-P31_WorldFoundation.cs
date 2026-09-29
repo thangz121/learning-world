@@ -1,8 +1,8 @@
 // CT-P31: Phase 3.0 WORLD FOUNDATION contracts. Owner: Lead/A. Must stay GREEN.
-// Covers: SubjectId identity, SubjectCatalog (4 subjects, distinct visual
-// identity + geometry, NO learning fields), WorldNavService (idempotent
-// enter/return, full multi-subject loop, stress), SubjectGate one-way firing,
-// WorldChangedEvent value semantics. C# 9.0 only.
+// Covers: SubjectId identity, SubjectCatalog (5 subjects since PHASE 2,
+// distinct visual identity + geometry, NO learning fields), WorldNavService
+// (idempotent enter/return, full multi-subject loop, stress), SubjectGate
+// one-way firing, WorldChangedEvent value semantics. C# 9.0 only.
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
@@ -23,11 +23,13 @@ public class CT_P31_WorldFoundation {
     Assert.IsTrue(SubjectIds.Main == new SubjectId("main"));
   }
 
-  [Test] public void CT_P31C_FourDistinctSubjects() {
+  [Test] public void CT_P31C_FiveDistinctSubjects() {
+    // PHASE 2 (2026-09-29): KHÁM PHÁ joins as the 5th subject.
     var seen = new HashSet<string>();
     foreach (SubjectId s in SubjectIds.Subjects) seen.Add(s.Value);
-    Assert.AreEqual(4, seen.Count, "math/thinking/english/vietnamese must be distinct");
+    Assert.AreEqual(5, seen.Count, "math/thinking/english/vietnamese/exploration must be distinct");
     Assert.IsFalse(seen.Contains(SubjectIds.Main.Value), "Main is the hub, not a subject");
+    Assert.IsTrue(seen.Contains("exploration"), "KHÁM PHÁ is a subject of the Subject Yard");
   }
 
   // ---- Catalog: identity + geometry ------------------------------------------
@@ -50,7 +52,7 @@ public class CT_P31_WorldFoundation {
       primaries.Add(def.Primary);
       centers.Add(def.PlaygroundCenter);
     }
-    Assert.AreEqual(4, kinds.Count, "shape language must differ per subject (not just color)");
+    Assert.AreEqual(5, kinds.Count, "shape language must differ per subject (not just color)");
     for (int i = 0; i < primaries.Count; i++)
       for (int j = i + 1; j < primaries.Count; j++) {
         Color d = primaries[i] - primaries[j];
@@ -64,11 +66,11 @@ public class CT_P31_WorldFoundation {
   }
 
   [Test] public void CT_P31F_GateEntryReturnGeometry() {
-    // HUB-ARC contract (user round): the 4 entry gates stand TOGETHER hugging
-    // the yard (~7m apart) so neighbours never occlude each other — all in
-    // front of the spawn camera (never behind it). Entry sits just past its
-    // gate toward the district; return sits inside its playground, away from
-    // the entry gate.
+    // HUB-ARC contract (PHASE 2: 5 gates, 7m spacing — the old 4-gate round
+    // generalized): the entry gates stand TOGETHER hugging the yard so
+    // neighbours never occlude each other — all in front of the spawn camera
+    // (never behind it). Entry sits just past its gate toward the district;
+    // return sits inside its playground, away from the entry gate.
     for (int i = 0; i < SubjectCatalog.All.Length; i++) {
       SubjectDefinition def = SubjectCatalog.All[i];
       Assert.LessOrEqual(Math.Abs(def.GatePos.x), 16f, def.DisplayName + " gate inside the outer bounds (x)");
@@ -174,7 +176,7 @@ public class CT_P31_WorldFoundation {
         nav.ReturnToMain();
       }
     }
-    Assert.AreEqual(40, events, "5 rounds x 4 subjects x (enter+return)");
+    Assert.AreEqual(50, events, "5 rounds x 5 subjects x (enter+return)");
     Assert.AreEqual(SubjectIds.Main, nav.Current);
   }
 
