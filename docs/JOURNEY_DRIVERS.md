@@ -13,6 +13,7 @@ normal player run never touches it and two drivers can never run at once
 | #3 rabbit "Cho thỏ ăn" | `Assets/A_World/CountingGarden/TempP55Journey.cs` | `-journey55` | `Assets/Editor/TempBuildP55.cs` | `TempBuildP55.BuildJourney` |
 | #4 tower "Xây tháp theo số" | `Assets/A_World/BuildYard/TempP56Journey.cs` | `-journey56` | `Assets/Editor/TempBuildP56.cs` | `TempBuildP56.BuildJourney` → `E:/LWW/P56JBuild` |
 | #5 delivery "Giao hàng đúng số" | `Assets/A_World/DeliveryVillage/TempP57Journey.cs` | `-journey57` | `Assets/Editor/TempBuildP57.cs` | `TempBuildP57.BuildJourney` |
+| #7 discovery "Vườn Khám Phá" | `Assets/A_World/DiscoveryGarden/TempP62Journey.cs` | `-journey62` | `Assets/Editor/TempBuildP62.cs` | `TempBuildP62.BuildJourney` |
 | FULL #1..#5 (S3-P2Z16) | `Assets/A_World/FullJourney/TempFullJourney.cs` | `-journeyfull` | reuse `TempBuildP56.BuildJourney` | `E:/LWW/P56JBuild` |
 
 The full-journey driver walks ONE real-click pass over every created part
@@ -47,9 +48,9 @@ game/zone) is marked **SEVERE**:
 2. Run windowed foreground:
    `LWE.exe -screen-width 1920 -screen-height 1080 -screen-fullscreen 0 -logFile <log> -journeyfull -lang en -shot-dir E:/LWW/fullj-shots`
    (per-game flags: `-journey55` rabbit, `-journey56` tower, `-journey57`
-   delivery; resume after a severe stage: `-journey-from <stage>` — implies the
-   full driver; `-lang en` skips the language-card dependency; `-shot-dir`
-   splits evidence per run).
+   delivery, `-journey62` discovery; resume after a severe stage:
+   `-journey-from <stage>` — implies the full driver; `-lang en` skips the
+   language-card dependency; `-shot-dir` splits evidence per run).
 3. Expect `[FULLJ]` trace ending in `FULLJOURNEY_END ... errors=0` (or
    `severe=N` with the skipped stages listed in `journey_summary.txt`); shots go
    to the `-shot-dir` folder.
