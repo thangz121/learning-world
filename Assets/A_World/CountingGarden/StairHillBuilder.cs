@@ -11,6 +11,7 @@
 // landing with the goal arch. All code-built (primitives + shared materials),
 // NavMesh baked at runtime on THIS root only (CollectObjects.Children — J8).
 // No bus/quest/save here: presentation + the door. C# 9.0 only.
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,7 +26,10 @@ public class StairHillBuilder : MonoBehaviour {
   // Arrival spawn clears the exit portal fire radius (J4 lesson: the portal
   // only arms after the child walks clear once).
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -3f);
-  public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -11.5f);
+  // User round "cổng trở về quá xa sân chơi": the exit used to sit at z=-11.5
+  // (past the decorative entry arch, ~16m from the stair foot). It now stands
+  // at the plaza path's end, ~10m from the stairs and BEFORE the arch.
+  public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -5.6f);
   // Follow camera: south of the child, looking north INTO the hill (the stairs
   // rise away from the arrival, so the child always sees the next step).
   public static readonly Vector3 FollowOffset = new Vector3(0f, 4.2f, -5.6f);
@@ -42,8 +46,10 @@ public class StairHillBuilder : MonoBehaviour {
   public const int StepCount = 9;
   public const int Target = 3;          // default/fallback target (reference round)
   public const float Rise = 0.16f;      // each tread is 16cm — a 4yo stair
-  public const float Tread = 0.66f;     // deep enough to stand on comfortably
-  public const float StairWidth = 3.4f;
+  public const float Tread = 0.88f;     // user round: 0.66 read "too short" — the
+                                        // child's whole foot filled the tread and
+                                        // the next riser touched their heel
+  public const float StairWidth = 3.8f;
   public const float BaseZ = 4.6f;      // first riser (front edge) local z
   public const float CenterX = 0f;
   public const float LandingDepth = 3.4f;
@@ -76,13 +82,13 @@ public class StairHillBuilder : MonoBehaviour {
   // Demo shot: ONE setup must cover the FULL 9-step run for any target demo
   // (brief §12/§22) — the whole staircase + the climbing student + the board
   // edge in one frame, re-issued while the demo runs.
-  static readonly Vector3 CamDemoPos = new Vector3(6.0f, 3.4f, 0.2f);
-  static readonly Vector3 CamDemoLook = new Vector3(-0.6f, 1.0f, 7.0f);
+  static readonly Vector3 CamDemoPos = new Vector3(6.3f, 3.5f, -0.2f);
+  static readonly Vector3 CamDemoLook = new Vector3(-0.7f, 1.0f, 7.9f);
   // Success shot (brief §22): Player on the TARGET step + Teacher + board +
   // result board in one frame, from the east side pulled back/up so the whole
   // run (z 2..11) reads; verified per target in the journey shots.
-  static readonly Vector3 CamSuccessPos = new Vector3(7.0f, 3.4f, -0.8f);
-  static readonly Vector3 CamSuccessLook = new Vector3(-0.9f, 1.1f, 4.6f);
+  static readonly Vector3 CamSuccessPos = new Vector3(7.3f, 3.5f, -0.4f);
+  static readonly Vector3 CamSuccessLook = new Vector3(-0.9f, 1.1f, 5.4f);
 
   static readonly Color Lawn = new Color(0.38f, 0.64f, 0.36f);
   static readonly Color Meadow = new Color(0.46f, 0.71f, 0.42f);
@@ -105,6 +111,18 @@ public class StairHillBuilder : MonoBehaviour {
   public GameObject NumberBoard { get; private set; }   // target digit (pulses)
   public GameObject Result { get; private set; }        // target + tick (hidden)
   public GameObject[] StepCues { get; private set; }    // bead row per step
+  // User round: the marked play spot in front of the stair foot. The teacher
+  // reads the question only once the child stands here (the ball arena's listen
+  // circle pattern); the ring pulses until it is read.
+  public static readonly Vector3 ListenLocal = new Vector3(0f, 0f, 3.4f);
+  public GameObject ListenPad { get; private set; }
+  public GameObject ListenRing { get; private set; }
+  Transform _boardGroup;
+  Transform _resultGroup;
+  GameObject _boardDigit;
+  GameObject _resultDigit;
+  Renderer[] _stepTops;                                 // torched while selected
+  Material _stepGlowMat;
   public Transform CamTeaching { get; private set; }
   public Transform LookTeaching { get; private set; }
   public Transform CamDemo { get; private set; }
@@ -118,13 +136,67 @@ public class StairHillBuilder : MonoBehaviour {
     BuildNavMesh(transform);
   }
 
+  // User round "chọn bậc nào thì sáng bậc đó": the selected/hovered tread top
+  // swaps to an emissive gold material (0 clears). Called only on change, so no
+  // per-frame material churn.
+  public void GlowStep(int step) {
+    if (_stepTops == null) return;
+    Material glow = (step >= 1 && step <= StepCount) ? GlowMat() : null;
+    Material plain = Lit(StepCap);
+    for (int i = 0; i < _stepTops.Length; i++) {
+      if (_stepTops[i] == null) continue;
+      _stepTops[i].sharedMaterial = (glow != null && i == step - 1) ? glow : plain;
+    }
+  }
+
+  Material GlowMat() {
+    if (_stepGlowMat == null) _stepGlowMat = LitEmissive(Gold, 0.85f);
+    return _stepGlowMat;
+  }
+
+  // The listen ring settles to calm mint once the question was told.
+  Material _listenSettledMat;
+  public Material ListenSettledMaterial() {
+    if (_listenSettledMat == null)
+      _listenSettledMat = LitEmissive(new Color(0.55f, 0.85f, 0.60f), 0.25f);
+    return _listenSettledMat;
+  }
+
+  // User round (chained questions): the next question swaps the board's digit
+  // in place — no scene reload, no walk back to the start.
+  public void SetTarget(int n) {
+    BoardTarget = ClampTarget(n);
+    RebuildDigit(ref _boardDigit, _boardGroup, "SHNumberDigit",
+      new Vector3(0f, 1.5f, -0.18f), 1.15f, 0.9f, 0.5f);
+    RebuildDigit(ref _resultDigit, _resultGroup, "SHResultDigit",
+      new Vector3(0f, 1.2f, -0.18f), 0.6f, 0.45f, 0.45f);
+    NumberBoard = _boardDigit;
+  }
+
+  void RebuildDigit(ref GameObject digit, Transform group, string name,
+      Vector3 pos, float w, float h, float emission) {
+    if (group == null) return;
+    if (digit != null) {
+      try { CharacterPresentation.DestroyNow(digit); } catch (Exception) { }
+    }
+    digit = CountingGardenBuilder.Digit(group, name, pos, w, h, Gold, 90f, BoardTarget);
+    SetMaterial(digit, LitEmissive(Gold, emission));
+    NoShadows(digit);
+  }
+
   // Runtime NavMesh bake for THIS scene only (CollectObjects.Children on the
   // hill root — a scene-wide bake would collect Market/Math meshes).
+  // HEIGHT MESH (user round "chân bị lún xuống bậc"): the plain render bake
+  // approximated the staircase as a ramp, so the agent — and the child's feet —
+  // rode up to 8cm BELOW each tread top. buildHeightMesh keeps the agent on the
+  // actual tread surfaces while leaving the navigation shape exactly as it was
+  // (a collider bake produced a navmesh hole by the exit door in the journey).
   void BuildNavMesh(Transform parent) {
     Unity.AI.Navigation.NavMeshSurface surface =
       parent.gameObject.GetComponent<Unity.AI.Navigation.NavMeshSurface>();
     if (surface == null) surface = parent.gameObject.AddComponent<Unity.AI.Navigation.NavMeshSurface>();
     surface.collectObjects = Unity.AI.Navigation.CollectObjects.Children;
+    surface.buildHeightMesh = true;
     surface.BuildNavMesh();
   }
 
@@ -198,7 +270,8 @@ public class StairHillBuilder : MonoBehaviour {
       WorldBeauty.BlossomPink);
     Pad(parent, "SHThresholdL", new Vector3(-1.5f, 0.005f, -3.6f), 1.0f, StoneGrey);
     Pad(parent, "SHThresholdR", new Vector3(1.5f, 0.005f, -3.6f), 1.0f, StoneGrey);
-    Pad(parent, "SHExitDisc", new Vector3(0f, 0.01f, -11.1f), 3.2f, WorldBeauty.Petal);
+    float exitZ = ExitLocal.z;
+    Pad(parent, "SHExitDisc", new Vector3(0f, 0.01f, exitZ + 0.4f), 3.2f, WorldBeauty.Petal);
     GameObject exitGo = new GameObject("SHExitPortal");
     exitGo.transform.SetParent(parent, false);
     exitGo.transform.localPosition = ExitLocal;
@@ -208,12 +281,12 @@ public class StairHillBuilder : MonoBehaviour {
     exit.fireRadius = 1.35f;
     exit.areaId = CountingGardenArea.AreaId;
     ExitPortal = exit;
-    Box(parent, "SHExitPostL", new Vector3(-1.6f, 0.9f, -11.5f),
+    Box(parent, "SHExitPostL", new Vector3(-1.6f, 0.9f, exitZ),
       new Vector3(0.16f, 1.8f, 0.16f), MintLeaf);
-    Box(parent, "SHExitPostR", new Vector3(1.6f, 0.9f, -11.5f),
+    Box(parent, "SHExitPostR", new Vector3(1.6f, 0.9f, exitZ),
       new Vector3(0.16f, 1.8f, 0.16f), MintLeaf);
-    Sphere(parent, "SHExitCapL", new Vector3(-1.6f, 1.9f, -11.5f), 0.4f, MintLeaf, true);
-    Sphere(parent, "SHExitCapR", new Vector3(1.6f, 1.9f, -11.5f), 0.4f, MintLeaf, true);
+    Sphere(parent, "SHExitCapL", new Vector3(-1.6f, 1.9f, exitZ), 0.4f, MintLeaf, true);
+    Sphere(parent, "SHExitCapR", new Vector3(1.6f, 1.9f, exitZ), 0.4f, MintLeaf, true);
   }
 
   void BuildPaths(Transform parent) {
@@ -245,17 +318,21 @@ public class StairHillBuilder : MonoBehaviour {
     run.landingHalfWidth = LandingWidth * 0.5f;
     Stairs = run;
     StepCues = new GameObject[StepCount];
+    _stepTops = new Renderer[StepCount];
     for (int i = 1; i <= StepCount; i++) {
       float top = i * Rise;
       float zc = BaseZ + (i - 0.5f) * Tread;
       // Solid (collider KEPT): the treads are the CLICK PATH up the hill — a
       // stripped step lets clicks fall through to the ground behind it (the
-      // child would walk past the stairs instead of up them). The bake uses
-      // render meshes, so colliders change nothing about the NavMesh.
-      BoxSolid(parent, "SHStep" + i, new Vector3(CenterX, top * 0.5f, zc),
+      // child would walk past the stairs instead of up them). The collider
+      // top is ALSO the walkable surface the NavMesh bakes from (feet on board).
+      GameObject tread = BoxSolid(parent, "SHStep" + i, new Vector3(CenterX, top * 0.5f, zc),
         new Vector3(StairWidth, top, Tread), CountingGardenBuilder.StepWood);
-      Box(parent, "SHStepTop" + i, new Vector3(CenterX, top + 0.0045f, zc),
+      StairTread treadId = tread.AddComponent<StairTread>();
+      treadId.Bind(run, i);
+      GameObject cap = Box(parent, "SHStepTop" + i, new Vector3(CenterX, top + 0.0045f, zc),
         new Vector3(StairWidth - 0.06f, 0.008f, Tread - 0.05f), StepCap);
+      _stepTops[i - 1] = cap.GetComponent<Renderer>();
       // Bead row on the LEFT edge of the tread (reads 1..N like the plots).
       GameObject cue = new GameObject("SHStepCue" + i);
       cue.transform.SetParent(parent, false);
@@ -302,8 +379,8 @@ public class StairHillBuilder : MonoBehaviour {
     GameObject mound = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     mound.name = "SHHillMound";
     mound.transform.SetParent(parent, false);
-    mound.transform.localPosition = new Vector3(0f, 0.9f, 16.4f);
-    mound.transform.localScale = new Vector3(9f, 2.6f, 2.8f);
+    mound.transform.localPosition = new Vector3(0f, 0.9f, 17.9f);
+    mound.transform.localScale = new Vector3(9.5f, 2.6f, 3.2f);
     mound.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.42f, 0.60f, 0.34f));
     StripCollider(mound);
     WorldBeauty.BlossomTree(parent, "SHHillTree0", new Vector3(-5.5f, 0f, 15.0f), 0.55f);
@@ -312,10 +389,10 @@ public class StairHillBuilder : MonoBehaviour {
     Flag(parent, "SHFlagL", new Vector3(-2.35f, 0f, 4.3f), 0.0f);
     Flag(parent, "SHFlagR", new Vector3(2.35f, 0f, 4.3f), 0.0f);
     // Side bushes: flanking walls that keep the climb the only way up.
-    for (int i = 0; i < 6; i++) {
-      float z = 4.9f + i * 1.05f;
-      SideBush(parent, "SHStairBushL" + i, new Vector3(-2.75f, 0f, z), 1.35f);
-      SideBush(parent, "SHStairBushR" + i, new Vector3(2.75f, 0f, z), 1.35f);
+    for (int i = 0; i < 8; i++) {
+      float z = 4.9f + i * 1.06f;
+      SideBush(parent, "SHStairBushL" + i, new Vector3(-2.95f, 0f, z), 1.35f);
+      SideBush(parent, "SHStairBushR" + i, new Vector3(2.95f, 0f, z), 1.35f);
     }
     BuildStringers(parent);
   }
@@ -388,6 +465,8 @@ public class StairHillBuilder : MonoBehaviour {
     SetMaterial(digit, LitEmissive(Gold, 0.5f));
     NoShadows(digit);
     NumberBoard = digit;
+    _boardGroup = board.transform;
+    _boardDigit = digit;
 
     GameObject result = new GameObject("SHResult");
     result.transform.SetParent(parent, false);
@@ -406,6 +485,8 @@ public class StairHillBuilder : MonoBehaviour {
       new Vector3(0f, 1.82f, -0.18f), 0.3f, MintLeaf);
     result.SetActive(false);
     Result = result;
+    _resultGroup = result.transform;
+    _resultDigit = resultDigit;
 
     // Camera markers (scene-authored transforms, no second camera system).
     CamTeaching = Marker(parent, "SHCamTeaching", CamTeachingPos);
@@ -416,6 +497,31 @@ public class StairHillBuilder : MonoBehaviour {
     LookSuccess = Marker(parent, "SHLookSuccess", CamSuccessLook);
     // A soft stage pool at the stair foot ("this is the stage").
     DemoJuice.AttachSpotlight(parent, "SHStageLight", new Vector3(0f, 0.018f, 3.4f), 5.6f);
+    BuildListenCircle(parent);
+  }
+
+  // The marked play spot (S3-P2Z13 user round "hiện hướng dẫn đến chỗ đứng
+  // chơi, đến nơi mới đọc câu hỏi"): same construction as the ball arena's
+  // listen circle — gold ring + sky pad + corner studs + a calling bell post.
+  // Drawn ON TOP of the soft stage pool so it always reads.
+  void BuildListenCircle(Transform parent) {
+    ListenRing = Pad(parent, "SHListenRing", ListenLocal + new Vector3(0f, 0.024f, 0f),
+      3.1f, Gold);
+    Pad(parent, "SHListenEdge", ListenLocal + new Vector3(0f, 0.021f, 0f),
+      3.5f, new Color(0.80f, 0.42f, 0.20f));
+    ListenPad = Pad(parent, "SHListenPad", ListenLocal + new Vector3(0f, 0.032f, 0f),
+      2.3f, new Color(0.62f, 0.85f, 0.97f));
+    SetMaterial(ListenPad, LitEmissive(new Color(0.62f, 0.85f, 0.97f), 0.14f));
+    for (int i = 0; i < 4; i++) {
+      float a = (i / 4f) * Mathf.PI * 2f + Mathf.PI * 0.25f;
+      Sphere(parent, "SHListenStud" + i,
+        ListenLocal + new Vector3(Mathf.Cos(a) * 1.02f, 0.06f, Mathf.Sin(a) * 1.02f),
+        0.16f, Gold, true);
+    }
+    Box(parent, "SHListenPost", ListenLocal + new Vector3(1.45f, 0.5f, 0.15f),
+      new Vector3(0.12f, 1.0f, 0.12f), BasketBrown);
+    Sphere(parent, "SHListenBell", ListenLocal + new Vector3(1.45f, 1.08f, 0.15f),
+      0.34f, Gold, true);
   }
 
   static Transform Marker(Transform parent, string name, Vector3 pos) {
@@ -450,11 +556,11 @@ public class StairHillBuilder : MonoBehaviour {
     WorldBeauty.Butterfly(parent, "SHButterfly1", new Vector3(-3.4f, 0f, 1.6f), 2.2f, 0.6f,
       WorldBeauty.Lilac, WorldBeauty.BlossomPink);
     // Step-side flower beds (outside the stair width, inside the bush line).
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 7; i++) {
       PlaceProp(parent, "flower_yellowA", "SHStairFlowerL" + i,
-        new Vector3(-2.05f, 0f, 5.4f + i * 1.1f), 0f, 0.85f);
+        new Vector3(-2.35f, 0f, 5.4f + i * 1.1f), 0f, 0.85f);
       PlaceProp(parent, "flower_yellowA", "SHStairFlowerR" + i,
-        new Vector3(2.05f, 0f, 5.4f + i * 1.1f), 0f, 0.85f);
+        new Vector3(2.35f, 0f, 5.4f + i * 1.1f), 0f, 0.85f);
     }
   }
 
@@ -500,7 +606,7 @@ public class StairHillBuilder : MonoBehaviour {
     return go;
   }
 
-  static void Pad(Transform parent, string name, Vector3 pos, float diameter, Color color) {
+  static GameObject Pad(Transform parent, string name, Vector3 pos, float diameter, Color color) {
     GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     pad.name = name;
     pad.transform.SetParent(parent, false);
@@ -508,6 +614,7 @@ public class StairHillBuilder : MonoBehaviour {
     pad.transform.localScale = new Vector3(diameter, 0.01f, diameter);
     pad.GetComponent<Renderer>().sharedMaterial = Lit(color);
     StripCollider(pad);
+    return pad;
   }
 
   static GameObject Cylinder(Transform parent, string name, Vector3 pos,
@@ -614,6 +721,16 @@ public class StairHillBuilder : MonoBehaviour {
     _mats[key] = mat;
     return mat;
   }
+}
+
+// Which tread a ray hit (hover highlight + click identity): carried by the
+// tread colliders only, so a click/hover on a step face reads the step number
+// without any position math.
+[DisallowMultipleComponent]
+public class StairTread : MonoBehaviour {
+  public StairRun run;
+  public int step;
+  public void Bind(StairRun stairRun, int stepIndex) { run = stairRun; step = stepIndex; }
 }
 
 // The stair geometry contract: ONE place decides which step a world position

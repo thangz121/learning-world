@@ -114,11 +114,28 @@ public class ClickToMove : MonoBehaviour {
     Camera cam = Camera.main;
     if (cam == null) return;
     Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
-    if (Physics.Raycast(ray, out RaycastHit hit, clickMaxDistance, clickMask)) {
+    if (ClickRay(ray, out RaycastHit hit)) {
       // Plain click-move carries no typed target, so arrival publishes nothing.
       // A new click redirects the player and cancels any pending target arrival.
       MoveTo(hit.point);
     }
+  }
+
+  // The child's own capsule sits between the camera and whatever they tap: a
+  // step click aimed just ahead lands on their body, and MoveTo(self) is a
+  // no-op — the child "won't move" (journey log: every step-5/6 click hit the
+  // player and the climb stalled). Pick the nearest hit that is NOT this body.
+  bool ClickRay(Ray ray, out RaycastHit hit) {
+    hit = default(RaycastHit);
+    RaycastHit[] hits = Physics.RaycastAll(ray, clickMaxDistance, clickMask);
+    float best = float.MaxValue;
+    bool found = false;
+    for (int i = 0; i < hits.Length; i++) {
+      Transform t = hits[i].collider != null ? hits[i].collider.transform : null;
+      if (t != null && (t == transform || t.IsChildOf(transform))) continue;
+      if (hits[i].distance < best) { best = hits[i].distance; hit = hits[i]; found = true; }
+    }
+    return found;
   }
 
   bool TrySetDestination(Vector3 destination) {

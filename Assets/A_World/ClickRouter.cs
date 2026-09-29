@@ -112,7 +112,7 @@ public class ClickRouter : MonoBehaviour {
     Mouse mouse = Mouse.current;
     if (mouse == null) return;
     Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
-    if (!Physics.Raycast(ray, out RaycastHit hit, clickMaxDistance, clickMask)) return;
+    if (!ClickRay(ray, out RaycastHit hit)) return; // the child's own body never routes
     if (Mathf.Abs(hit.point.x - boundCenter.x) > boundX || Mathf.Abs(hit.point.z - boundCenter.z) > boundZ) return; // (d) ignore
 
     Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
@@ -139,6 +139,24 @@ public class ClickRouter : MonoBehaviour {
     else if (TrySnapGateOnRay(ray, hit.point, out mouth)) dest = mouth; // through-opening clicks enter
     _player.MoveTo(dest);
     ClearPending();
+  }
+
+  // The child's own capsule stands between the camera and the world: a step
+  // click aimed just ahead lands on their body and the walk never starts
+  // (journey log: step-5/6 clicks at screen centre all hit the player and the
+  // climb stalled). Pick the nearest hit that is NOT the player.
+  bool ClickRay(Ray ray, out RaycastHit hit) {
+    hit = default(RaycastHit);
+    RaycastHit[] hits = Physics.RaycastAll(ray, clickMaxDistance, clickMask);
+    float best = float.MaxValue;
+    bool found = false;
+    Transform body = _player != null ? _player.transform : null;
+    for (int i = 0; i < hits.Length; i++) {
+      Transform t = hits[i].collider != null ? hits[i].collider.transform : null;
+      if (t != null && body != null && (t == body || t.IsChildOf(body))) continue;
+      if (hits[i].distance < best) { best = hits[i].distance; hit = hits[i]; found = true; }
+    }
+    return found;
   }
 
   // Gate-click snapping (user round: clicking the arch/pillars never entered —

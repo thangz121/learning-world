@@ -2083,3 +2083,119 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
   `C:\Users\Admin\snap_lwe.out`; SSH không thấy window handle). Máy nhà offline
   giữa lúc làm → hẹn round sau hoàn tất snap + mắt user.
 - Chưa commit (chờ lệnh).
+
+## 66. S3-P2Z12b-FIX — JOURNEY THẬT + 5 LỖI GAMEPLAY BẬC THANG (2026-09-24, maynode)
+
+- Lệnh user: chơi thật từ đầu đến hết game bậc thang, chụp ảnh, theo dõi cả SFX
+  bước lên bậc; sửa: chân lún bậc, bậc ngắn, click bậc khó, chọn bậc phải sáng,
+  có delay đứng đúng bậc mới chấm; journey lại xong thì push.
+- Driver journey cũ đã bị xoá khỏi source (chỉ còn trong build P53JBuild): khôi
+  phục bằng cách decompile `Assembly-CSharp.dll` (dnSpy.Console netfx chạy qua
+  mono của Unity + `--show-all`) rồi viết lại bản async/await sạch ở
+  `Assets/TempP53/` (đã xoá sau khi xong; không commit).
+- JOURNEY THẬT (full-HD, real click, `-stair-target 3`, 2 vòng liên tiếp):
+  log `E:\LWW\P53JBuild\p53j-final5-t3.log` + ảnh `p53j-shots/` — **0
+  exception, 0 TIMEOUT**. Vòng 3: leo 1-2-3 (overshoot 4 settled) → success →
+  `exit=True arena-unloaded=True` → reentry fresh target 5 → xem bài học
+  reentry (camera handoff 26.5s) → `exit2=True` → vòng 5 đầy đủ (1..5,
+  overshoot 6, success) → exit → reentry target 7 → JOURNEY_END. SFX 'step'
+  trigger 12 lần, khớp từng dòng `[NumberStairs] step N (count follows the
+  feet)`.
+- LỖI THẬT (xác nhận bằng log/ảnh journey, không đoán code):
+  (1) click bậc 5/6 bị capsule của CHÍNH bé nuốt (click screen=(960,641) đúng
+      tâm màn hình = thân bé) → `MoveTo` điểm trên người → bé kẹt bậc 4.
+      Fix: `ClickToMove` + `ClickRouter` dùng `RaycastAll`, bỏ qua hit thuộc
+      chính player (ClickRay).
+  (2) chân lún nửa giày dưới mặt bậc (ảnh crop `t5_14_midclimb`) do bake
+      render-mesh = dốc. Fix: `NavMeshSurface.buildHeightMesh = true` (giữ
+      nguyên shape navigation; thử bake theo PhysicsColliders làm THỦNG navmesh
+      ở cửa thoát — `SamplePosition(exit)=False`, bé không ra được — đã revert).
+  (3) bậc 0.66m quá ngắn (gót chạm bậc kế): Tread 0.66→0.88, StairWidth
+      3.4→3.8; dọn lại bushes/flower beds/mound + camera demo/success theo run
+      dài hơn.
+  (4) chưa có highlight: `StairTread` (component trên từng bậc) +
+      `StairHillBuilder.GlowStep` (material phát sáng) + `NumberStairs` quét
+      hover/destination trong Climb/Success → bậc chọn/hover sáng vàng.
+  (5) chưa có delay trước khi chấm: StepSettle 0.15→0.28s (đứng mới tính bước),
+      OvershootDwell 0.5s (đi ngang qua bậc cao KHÔNG tính — phải đứng),
+      SuccessDwell 0.9→1.1s.
+- Tests: SettleTo/StepTo 8 tick (settle + stand-above), landing dùng hằng số
+  StairHillBuilder, mẫu "dưới bậc" theo BaseZ+2.5*Tread (bậc sâu hơn làm mẫu cũ
+  rơi đúng ranh giới yTolerance). Suite cuối (cây sạch, không temp)
+  **630/625/0/5**.
+- Build production (driver-free; driver + build script temp đã xoá):
+  **Succeeded errors=0 warnings=2** size=110.241.044 tại `E:\LWW\P53JBuild`
+  (mirror sang `E:\LWW\P53Build` — chỗ `run_p53prod.ps1` trỏ tới).
+- Bài học driver (đã xử lý trong driver tạm, ghi lại để round sau dùng lại):
+  sau reentry camera còn ở khung dạy học (CamTeaching nhìn bắc) → không thể
+  click ra cửa nam nếu chưa chờ handoff; về vườn bé đứng ngay trong bán kính
+  plot (proximity chưa re-arm) → phải đi ra xa rồi quay lại mới focus được.
+  Đây là hành vi đúng của game, driver phải biết.
+- ĐÃ COMMIT + PUSH: `b074b56` → `origin/main` (SSH từ maynode chạy được —
+  hết nợ "thử push một lần" của §63; `core.sshCommand` + key ACL đã đúng).
+
+## 68. S3-P2Z13 — USER ROUND: VÒNG NGHE + CÂU HỎI CHUỖI + DEMO VƯỜN (2026-09-25, maynode)
+
+- Lệnh user (8 việc, 3 ảnh): (A1) camera xem demo khu stair bị cổng chắn;
+  (A2) player cao hơn cổng ngoài sân; (A3) đứng vào xem phải delay 1-2s mới
+  chạy demo; (A4) vào vườn đếm demo tự chạy — click/đi vào khu nào thì demo
+  reset + chạy focus; (B2) vào arena hiện dẫn tới chỗ đứng chơi, đến nơi mới
+  đọc câu hỏi; (B3) trong arena KHÔNG chạy demo nữa (chỉ 1 lần ngoài vườn);
+  (B1) trả lời xong đi tiếp câu sau TỪ BẬC ĐANG ĐỨNG (không về chỗ xuất phát);
+  (B4/B5) cổng hồng chặn đường ra cổng trở về + cổng về quá xa sân chơi.
+- A1 (`CountingGardenBuilder.BuildZoneSpots`, z=StairZoneIndex): camera focus
+  dời vào TRONG plot (mouth + outDir*0.55, y1.85) nhìn chéo qua diorama — cổng
+  không còn giữa máy và mini lesson (ảnh `04_garden_demo_a` trong
+  `E:\LWW\P53JBuild\p53j-shots-z13b\`).
+- A2 (`BuildBedGate`): cổng bed cao thêm ~0.5m (beam 1.52→1.98, trụ trái
+  1.7→2.2, trụ phải 1.4→1.8, bóng 1.78→2.24/2.14, beads từ 2.32) — trẻ 1.6m
+  không còn đội cổng.
+- A3: `StairLessonDemo` + `CountingDemo` (bản vườn) chờ 1.5s khi pass bắt đầu
+  (trẻ ổn định rồi mới nói).
+- A4 (`CountingGardenArea.FocusZone`): bỏ nhánh "đã xem lượt này" — click HOẶC
+  đi vào khu nào cũng RESET + chạy lại miniature (StartFocusedLesson đã reset).
+- B2/B3/B1 — luồng arena gameplay #2 đổi hẳn:
+  * `StairHillBuilder` thêm VÒNG NGHE: `ListenLocal (0,0,3.4)` + `ListenPad`/
+    `ListenRing` + studs + chuông (cùng construction arena bóng), vẽ trên
+    stage pool.
+  * `NumberStairs`: enum `Wait/Intro/Climb/Success`; `Wait` = cô chờ, vòng
+    pulse, gọi 1 lần "Stand on the circle!"; bé vào bán kính 1.45m mới đọc câu
+    hỏi (`QuestionTold`) → `Intro` 3 câu board→number→climb (KHÔNG demo) →
+    `Climb` (camera follow).
+  * `ChainOnSuccess` (mặc định true): thắng 1 câu → `Target =
+    NextStairTarget(Target)`, board đổi số TẠI CHỖ (`StairHillBuilder.SetTarget`
+    rebuild digit), câu kế đọc tiếp, bé KHÔNG dịch chuyển; thắng giữa chừng
+    không result/lifecycle; khi bậc thang quấn về target đầu (3→5→7→9→1→(3))
+    mới finalize (result board + lifecycle completed + camera success + recap).
+  * Bỏ hẳn nhánh demo/handoff trong arena (TickDemo/TickHandoff, camera shot
+    demo, DemoStepsClimbed…).
+- B4 — nguyên nhân cổng hồng chặn đường: bóng hoa trang trí treo trên beam bị
+  NavMesh bake (render-mesh) coi là vật cản vì thấp hơn agent height → ERODE
+  sàn dưới cổng (log journey cũ: `SamplePosition(exit)=False`). Fix hệ thống:
+  `WorldBeauty.Ball()` tự `IgnoreFromBuild` (mọi bóng hoa trang trí) — hết lỗ
+  navmesh dưới cổng vào arena + cổng demo vườn.
+- B5: cổng trở về dời `ExitLocal z=-11.5 → -5.6` (cuối đường plaza, TRƯỚC cổng
+  trang trí) — gần sân chơi hơn ~6m; disc/posts/caps theo ExitLocal.
+- Verify: suite cuối (cây sạch, không temp) **631/626/0/5** — thêm P54L (chuỗi
+  câu hỏi: 3→5→7→9→1 giữ nguyên vị trí, finalize khi quấn vòng); sửa theo luồng
+  mới: P53D/E/G/H + P54C/D/K (AdvanceToClimb phải đưa bé vào vòng nghe trước,
+  bỏ assert demo, ChainOnSuccess=false cho test cơ chế đơn câu).
+- Build production driver-free: **Succeeded errors=0 warnings=2**
+  size=110.242.068 → `E:\LWW\P53JBuild` (mirror sang `E:\LWW\P53Build`).
+- Journey thật (driver temp đã xoá; build driver tạm bị build production ghi
+  đè — chỉ còn log/ảnh): `p53j-z13b.log` + `p53j-shots-z13b/` — 0 exception;
+  chuỗi câu hỏi chạy đủ 3→5→7→9→1 từ bậc đang đứng ("SUCCESS (visit settled)",
+  result=True), `exit=True`, demo vườn REPLAY khi click lại plot (panel mở lần
+  2). Ảnh: `07_arena_wait` (vòng nghe dẫn bé), `08_arena_question`,
+  `09..13` (từng câu từ bậc đang đứng), `04_garden_demo_a` (camera không bị
+  cổng chắn), `16_garden_demo_replay`.
+- NỢ driver journey (không phải lỗi game — suite pin): đi bậc bằng pixel còn
+  flaky (trượt 1-2 bậc, đôi lần kẹt); lượt sau nếu cần chạy lại journey thì
+  nên chạy trên ASUS (ổn định hơn) hoặc viết driver hop + Stop + verify chặt
+  hơn. Re-entry adopt trong game chưa chụp được ảnh (P53G + P54L pin).
+- Kỹ thuật khôi phục driver journey (dùng lại khi cần): decompile
+  `LWE_Data\Managed\Assembly-CSharp.dll` của build driver cũ bằng
+  `dnSpy.Console.exe` (netfx) chạy qua `mono` của Unity kèm `--show-all`
+  (xem §66/§67 cách làm); driver temp nằm ngoài commit, xoá sau khi xong.
+- maynode: đã push round này lên `origin/main`; game production chạy cho user
+  xem; toàn bộ log/ảnh nằm trong `E:\LWW\P53JBuild\` (không commit).
