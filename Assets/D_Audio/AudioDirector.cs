@@ -282,34 +282,64 @@ public class AudioDirector : IAudioDirector {
     _music.spatialBlend = 0f;
   }
 
-  // A cheerful, slow 16-step loop in C major (melody + soft bass), ~9.6s.
-  // Deterministic: every boot sounds the same. Seamless: each note's envelope
-  // starts and ends at zero inside its slot.
+  // USER ROUND 2026-09-29 (round 2): BAROQUE study music for concentration —
+  // a Pachelbel-style progression in D (D A Bm F#m G D G A), steady 100 BPM,
+  // harpsichord-like plucked tone (fast decay + upper partials), gentle bass
+  // and a slow cantabile melody. Deterministic, seamless, asset-free, ~19.2s.
   static AudioClip ThemeClip() {
     const int rate = 44100;
-    const float step = 0.6f; // seconds per step
-    float[] melody = { 523.25f, 659.25f, 783.99f, 659.25f,   // C5 E5 G5 E5
-                       698.46f, 880.00f, 1046.50f, 880.00f,  // F5 A5 C6 A5
-                       783.99f, 659.25f, 523.25f, 659.25f,   // G5 E5 C5 E5
-                       587.33f, 783.99f, 987.77f, 783.99f }; // D5 G5 B5 G5
-    float[] bass = { 130.81f, 174.61f, 196.00f, 146.83f };  // C3 F3 G3 D3 (4 steps each)
-    int n = Mathf.CeilToInt(rate * step * melody.Length);
+    const float bar = 2.4f;              // 4 beats @ 100 BPM
+    const float eighth = bar / 8f;       // arpeggio eighths
+    // D3 A2 B2 F#2 G2 D3 G2 A2 roots (Hz) + chord tones (third/fifth).
+    float[] bass = { 146.83f, 110.00f, 123.47f, 92.50f, 98.00f, 146.83f, 98.00f, 110.00f };
+    float[][] tones = {
+      new float[] { 587.33f, 440.00f, 293.66f, 369.99f, 440.00f }, // D:  D5 A4 D4 F#4 A4
+      new float[] { 554.37f, 440.00f, 329.63f, 415.30f, 440.00f }, // A:  C#5 A4 E4 G#4 A4
+      new float[] { 587.33f, 493.88f, 369.99f, 440.00f, 493.88f }, // Bm: D5 B4 F#4 A4 B4
+      new float[] { 554.37f, 440.00f, 369.99f, 466.16f, 440.00f }, // F#m:C#5 A4 F#4 A#4 A4
+      new float[] { 587.33f, 493.88f, 392.00f, 493.88f, 587.33f }, // G:  D5 B4 G4 B4 D5
+      new float[] { 587.33f, 440.00f, 293.66f, 369.99f, 440.00f }, // D:  D5 A4 D4 F#4 A4
+      new float[] { 587.33f, 493.88f, 392.00f, 493.88f, 587.33f }, // G:  D5 B4 G4 B4 D5
+      new float[] { 554.37f, 440.00f, 329.63f, 415.30f, 440.00f }, // A:  C#5 A4 E4 G#4 A4
+    };
+    // Cantabile melody (one note per bar, halves feel): rises then resolves.
+    float[] melody = { 587.33f, 659.25f, 739.99f, 659.25f, 587.33f, 587.33f, 493.88f, 554.37f };
+    int n = Mathf.CeilToInt(rate * bar * bass.Length);
     float[] data = new float[n];
     for (int i = 0; i < n; i++) {
       float t = i / (float)rate;
-      int stepIdx = Mathf.Min(melody.Length - 1, (int)(t / step));
-      float local = t - stepIdx * step;
-      float env = Mathf.Min(1f, local * 60f) * Mathf.Exp(-2.6f * local);
-      double mp = 2.0 * Math.PI * melody[stepIdx] * t;
-      float m = (float)System.Math.Sin(mp) * env * 0.20f;
-      int bassIdx = (stepIdx / 4) % bass.Length;
-      float bLocal = t - (stepIdx / 4) * (step * 4f);
-      float bEnv = Mathf.Min(1f, bLocal * 30f) * Mathf.Exp(-1.4f * bLocal);
-      double bp = 2.0 * Math.PI * bass[bassIdx] * t;
-      float b = (float)System.Math.Sin(bp) * bEnv * 0.13f;
-      data[i] = Mathf.Clamp(m + b, -1f, 1f);
+      int barIdx = Mathf.Min(bass.Length - 1, (int)(t / bar));
+      float barLocal = t - barIdx * bar;
+      float v = 0f;
+      // Bass: root on beats 1 and 3 (plucked).
+      for (int punch = 0; punch < 2; punch++) {
+        float lt = barLocal - punch * (bar * 0.5f);
+        if (lt >= 0f) {
+          float env = Mathf.Min(1f, lt * 90f) * Mathf.Exp(-3.2f * lt);
+          float ph = (float)(2.0 * Math.PI * bass[barIdx] * (t - lt));
+          v += ((float)System.Math.Sin(ph) + 0.35f * (float)System.Math.Sin(2.0 * ph)) * env * 0.11f;
+        }
+      }
+      // Arpeggio eighths (harpsichord-like partials).
+      int arpStep = (int)(barLocal / eighth);
+      float aLocal = barLocal - arpStep * eighth;
+      float[] ch = tones[barIdx];
+      float af = ch[arpStep % ch.Length];
+      float aEnv = Mathf.Min(1f, aLocal * 140f) * Mathf.Exp(-7.5f * aLocal);
+      double ap = 2.0 * Math.PI * af * t;
+      float av = ((float)System.Math.Sin(ap) + 0.45f * (float)System.Math.Sin(2.0 * ap)
+        + 0.22f * (float)System.Math.Sin(3.0 * ap)) * aEnv * 0.085f;
+      v += av;
+      // Melody: long note entering on beat 2 of each bar, soft and singing.
+      float mLocal = barLocal - bar * 0.5f;
+      if (mLocal >= 0f) {
+        float mEnv = Mathf.Min(1f, mLocal * 25f) * Mathf.Exp(-1.1f * mLocal);
+        float mph = (float)(2.0 * Math.PI * melody[barIdx] * (t - mLocal));
+        v += ((float)System.Math.Sin(mph) + 0.25f * (float)System.Math.Sin(2.0 * mph)) * mEnv * 0.075f;
+      }
+      data[i] = Mathf.Clamp(v, -1f, 1f);
     }
-    AudioClip clip = AudioClip.Create("theme_main", n, 1, rate, false);
+    AudioClip clip = AudioClip.Create("theme_baroque", n, 1, rate, false);
     clip.SetData(data, 0);
     return clip;
   }

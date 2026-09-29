@@ -491,3 +491,31 @@ choose the smallest safe correction, continue.
   errors=0, `-journeys3` 28/28 (0 errors, auto-closed) — logs show
   "theme loop ON", "demo start (kind=Plain/Add...)" and "demo done; child
   control next" for BOTH arenas. Human review pending (demos/music feel).
+- 2026-09-29: PHASE 4d (user round 3: gates decor + full-action demo + baroque
+  music + a new answer-board game type in the rabbit arena):
+  - GATE DECOR: every skill door carries a shaped medallion (math = counting
+    cubes, thinking = gear, vietnamese = lotus, english = open book,
+    exploration = leaf + magnifier) + game doors get a gold banner over the
+    diorama (`SelectionYardBuilder.DecorateDoor`).
+  - DEMO = THE FULL PLAYER LOOP, no skipped steps: the student WALKS to the
+    carrot (subtraction: to the bowl), picks it into his hand, CARRIES it to
+    the other side and places it — one carrot at a time; subtraction uses a
+    new `RabbitCarrot.BeginDemoCarry` seam (the child drags a bowl carrot
+    out; the NPC shows the same action as a carry). Answer-board rounds demo
+    the student walking to the CORRECT board and tapping it. Stairs demo
+    walks from the listen circle to the foot then climbs/down step by step
+    with the same stand-and-settle beat (no teleports).
+  - BAROQUE THEME: the loop is now a Pachelbel-style D progression at
+    100 BPM (harpsichord-like plucks + gentle bass + slow cantabile melody,
+    ~19.2s, deterministic/asset-free) — calm study music.
+  - NEW GAME TYPE (rabbit only): answer-board rounds — 3 picture boards with
+    carrot counts appear; the audio asks "Which board has N?"; the child taps
+    the board matching the big board's count (same click system). Pacing: the
+    first two plain rounds stay physical, every 3rd after that is a board
+    round (`RabbitFeed.IsQuizTurn`); wrong taps re-read kindly; correct taps
+    run the same reward chain. Tiles built by `RabbitPlayBuilder.BuildQuizTiles`
+    (100%/collider kept on the tap face), bound via `BindQuizTiles`.
+  Verify: suite 701:696/0/5 (+CT-S16 pacing/counts/wiring pins), build
+  Succeeded errors=0, `-journeys3` 28/28 (0 errors, auto-closed; both demos
+  complete with the new choreography; theme loop ON at boot; the "Nhạc: bật"
+  chip shows under the language chip in the shots). Human review pending.

@@ -443,6 +443,9 @@ public class GameInstaller : MonoBehaviour {
         if (drag != null) drag.Bind(game);
         if (_yardArea != null) _yardArea.BindRabbitGame(game);
         else if (_gardenArea != null) _gardenArea.BindRabbitGame(game);
+        // USER ROUND 2026-09-29 (round 2): the picture-answer boards of the
+        // rabbit arena's new question type.
+        try { game.BindQuizTiles(builder.QuizTiles); } catch (System.Exception) { }
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Rabbit feed wiring failed (patch stays empty): " + e.Message, this);
       }

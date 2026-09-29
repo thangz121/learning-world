@@ -274,6 +274,8 @@ public class TempS13Journey : MonoBehaviour {
       }, spot.position, 1.2f, 90f, "onto the play spot", null, null);
       Record("rabbit arena: question starts on the spot", _stepOk, "");
       if (!StepGuard()) yield break;
+      yield return new WaitForSeconds(3.5f);
+      Shot("03b1_demo_running");
       yield return WaitStep(delegate {
         RabbitFeed f = FindObjectOfType<RabbitFeed>();
         return f != null && (f.Current == RabbitFeed.Phase.Feeding
@@ -312,6 +314,8 @@ public class TempS13Journey : MonoBehaviour {
       }, listen.position, 1.2f, 90f, "onto the listen circle", null, null);
       Record("stairs arena: question starts on the circle", _stepOk, "");
       if (!StepGuard()) yield break;
+      yield return new WaitForSeconds(3.5f);
+      Shot("03d1_stairs_demo_running");
       yield return WaitStep(delegate {
         NumberStairs g = FindObjectOfType<NumberStairs>();
         return g != null && (g.Current == NumberStairs.Phase.Climb

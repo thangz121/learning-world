@@ -258,9 +258,71 @@ public class SelectionYardBuilder : MonoBehaviour {
     GateRoots.Add(gate.transform);
     GatePortals.Add(portal);
     GateTargetIds.Add(id);
+    // USER ROUND 2026-09-29 (round 2): every door reads its identity by SHAPE.
+    DecorateDoor(parent, kind, id, x, z);
     // PHASE 4b (user order: a pre-reader must CHOOSE BY PICTURE): each game
     // door carries a small wordless diorama of its game right in front.
     if (kind == SelectionGate.GateKind.Play) BuildGamePreview(parent, id, x, z);
+  }
+
+  // A themed medallion over the beam, drawn from the door's own id: math =
+  // counting cubes, thinking = a gear, vietnamese = a lotus, english = an open
+  // book, exploration = a leaf + magnifier. Game doors get a gold "play here"
+  // banner (their diorama carries the identity).
+  void DecorateDoor(Transform parent, SelectionGate.GateKind kind, string id, float x, float z) {
+    Vector3 top = new Vector3(x, 2.34f, z);
+    if (kind == SelectionGate.GateKind.Game) {
+      Box(parent, "SYBanner_" + id, new Vector3(x, 2.2f, z),
+        new Vector3(1.9f, 0.15f, 0.09f), Gold);
+      return;
+    }
+    if (id.StartsWith("math_")) {
+      Box(parent, "SYMarkA_" + id, top, new Vector3(0.26f, 0.26f, 0.26f), Blue);
+      Box(parent, "SYMarkB_" + id, top + new Vector3(0.19f, 0.17f, 0f),
+        new Vector3(0.20f, 0.20f, 0.20f), Gold);
+      Box(parent, "SYMarkC_" + id, top + new Vector3(-0.19f, 0.17f, 0f),
+        new Vector3(0.20f, 0.20f, 0.20f), Coral);
+    } else if (id.StartsWith("thinking_")) {
+      GameObject gear = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      gear.name = "SYMarkGear_" + id;
+      gear.transform.SetParent(parent, false);
+      gear.transform.localPosition = top;
+      gear.transform.localScale = new Vector3(0.34f, 0.05f, 0.34f);
+      gear.GetComponent<Renderer>().sharedMaterial = Lit(Leaf);
+      Strip(gear);
+      Ignore(gear);
+      for (int k = 0; k < 4; k++) {
+        float rad = (k * 90f + 45f) * Mathf.Deg2Rad;
+        Box(parent, "SYTooth_" + id + k,
+          top + new Vector3(Mathf.Cos(rad) * 0.21f, 0f, Mathf.Sin(rad) * 0.21f),
+          new Vector3(0.09f, 0.09f, 0.09f), Wood);
+      }
+    } else if (id.StartsWith("vietnamese_")) {
+      Ball(parent, "SYMarkLotus_" + id, top, 0.26f, Plum);
+      Ball(parent, "SYMarkPetalA_" + id, top + new Vector3(0.17f, -0.05f, 0f), 0.15f, Coral);
+      Ball(parent, "SYMarkPetalB_" + id, top + new Vector3(-0.17f, -0.05f, 0f), 0.15f, Coral);
+    } else if (id.StartsWith("english_")) {
+      GameObject pageL = Box(parent, "SYMarkBookL_" + id, top + new Vector3(-0.11f, 0f, 0f),
+        new Vector3(0.30f, 0.34f, 0.08f), Cream);
+      pageL.transform.localRotation = Quaternion.Euler(0f, 0f, 12f);
+      GameObject pageR = Box(parent, "SYMarkBookR_" + id, top + new Vector3(0.11f, 0f, 0f),
+        new Vector3(0.30f, 0.34f, 0.08f), Coral);
+      pageR.transform.localRotation = Quaternion.Euler(0f, 0f, -12f);
+    } else if (id.StartsWith("exploration_")) {
+      Ball(parent, "SYMarkLeaf_" + id, top + new Vector3(-0.05f, 0f, 0f), 0.30f, Leaf);
+      GameObject lens = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      lens.name = "SYMarkLens_" + id;
+      lens.transform.SetParent(parent, false);
+      lens.transform.localPosition = top + new Vector3(0.14f, 0.02f, -0.02f);
+      lens.transform.localScale = new Vector3(0.22f, 0.03f, 0.22f);
+      lens.GetComponent<Renderer>().sharedMaterial = Lit(Gold);
+      Strip(lens);
+      Ignore(lens);
+      Box(parent, "SYMarkHandle_" + id, top + new Vector3(0.30f, -0.14f, 0f),
+        new Vector3(0.07f, 0.20f, 0.07f), Wood);
+    } else {
+      Box(parent, "SYMark_" + id, top, new Vector3(0.24f, 0.24f, 0.24f), Mint);
+    }
   }
 
   // Wordless game previews (primitives only, same visual language as the

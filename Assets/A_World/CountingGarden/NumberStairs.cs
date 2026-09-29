@@ -549,11 +549,11 @@ public enum Phase {
     }
     if (t >= 5.9f) {
       // USER ROUND 2026-09-29: ONCE for the first plain "find the number"
-      // round of the visit the student demonstrates a short 3-step climb.
+      // round of the visit the student demonstrates the full loop (circle ->
+      // stairs foot -> 3 counted steps, settling on each).
       if (ArithmeticEnabled && !_plainDemoShown && _student != null) {
-        int from = Mathf.Clamp(CurrentStep, 1, StairHillBuilder.StepCount);
-        int to = Mathf.Min(StairHillBuilder.StepCount, from + 3);
-        BeginDemo(true, from, to, Mathf.Max(1, to - from));
+        int to = Mathf.Min(StairHillBuilder.StepCount, 4);
+        BeginDemo(true, 1, to, Mathf.Max(1, to - 1), true);
         return;
       }
       StartClimb();
@@ -576,7 +576,7 @@ public enum Phase {
     if (t >= 3.0f && AskSpoken()) {
       // USER ROUND 2026-09-29: EVERY + / - round is demonstrated first.
       if (ArithmeticEnabled && _student != null) {
-        BeginDemo(Kind == RoundKind.Add, OpA, Target, Mathf.Max(1, OpB));
+        BeginDemo(Kind == RoundKind.Add, OpA, Target, Mathf.Max(1, OpB), false);
         return;
       }
       StartClimb();
@@ -596,27 +596,37 @@ public enum Phase {
   int _demoFrom;
   int _demoStep;
   int _demoK;
-  bool _demoWalking;
-  bool _demoBack;
+  int _demoStage;       // 0 walk-to-anchor, 1 next-beat, 2 walk+settle, 3 walk-back, 4 handover
+  float _demoSettleT;
+  Vector3 _demoAnchor;
   bool _demoHandoverSaid;
   float _demoHandoverT;
 
-  void BeginDemo(bool add, int from, int to, int count) {
+  void BeginDemo(bool add, int from, int to, int count, bool fromCircle) {
     _plainDemoShown = true;
     _demoAdd = add;
     _demoFrom = Mathf.Clamp(from, 1, StairHillBuilder.StepCount);
     _demoStep = _demoFrom;
     _demoCount = Mathf.Clamp(count, 1, StairHillBuilder.StepCount - 1);
     _demoK = 0;
+    _demoStage = 0;
+    _demoSettleT = 0f;
     _demoIntroSaid = false;
-    _demoWalking = false;
-    _demoBack = false;
     _demoHandoverSaid = false;
     _demoHandoverT = 0f;
+    // USER ROUND (round 2): NO teleport — the student WALKS to the same start
+    // the child used. Pure climb showcase: the listen circle; a +/- round: the
+    // child's own step (the body on the number line).
+    _demoAnchor = StepLocal(_demoFrom);
+    try {
+      if (fromCircle && _builder != null && _builder.ListenRing != null)
+        _demoAnchor = _builder.ListenRing.transform.localPosition;
+    } catch (Exception) { }
     ClearAsk();
     To(Phase.Demo);
     SetShot(0);
-    Log("demo start: " + (add ? "add " : "sub ") + _demoCount + " from step " + _demoFrom);
+    Log("demo start: " + (add ? "add " : "sub ") + _demoCount + " from step " + _demoFrom
+      + (fromCircle ? " (circle)" : ""));
   }
 
   void TickDemo(float dt) {
@@ -630,47 +640,76 @@ public enum Phase {
       Wave(_teacher);
       Say(_demoAdd ? "Watch me climb!" : "Watch me go down!",
         _demoAdd ? "Con xem cô lên bậc nhé!" : "Con xem cô xuống bậc nhé!");
-      if (_student != null && _student.Root != null) {
-        _student.Root.transform.localPosition = StepLocal(_demoFrom);
-        FaceSnap(_student, StairsLocal());
+    }
+    if (!_demoIntroSaid) return;
+    // Stage 0: walk to the start anchor (the circle for the showcase, the
+    // child's own step for a +/- round) — the same first step the child does.
+    if (_demoStage == 0) {
+      if (DemoWalkTo(_demoAnchor, dt, 1.6f)) _demoStage = 1;
+      return;
+    }
+    // Stage 1/2: each step is WALKED and briefly SETTLED (stand-then-judge,
+    // exactly like the child's climb) while the teacher counts it. The walk
+    // AFTER a beat keeps running even when the beat count is exhausted.
+    if (_demoK < _demoCount || _demoStage == 2) {
+      if (_demoStage == 1) {
+        _demoK++;
+        _demoStep = Mathf.Clamp(_demoFrom + (_demoAdd ? _demoK : -_demoK),
+          1, StairHillBuilder.StepCount);
+        Say(_demoAdd ? ("Up " + N(_demoK) + "!") : ("Down " + N(_demoK) + "!"),
+          _demoAdd ? ("Lên " + Nvi(_demoK) + " bậc!") : ("Xuống " + Nvi(_demoK) + " bậc!"));
+        Point(_teacher, StepWorld(_demoStep), 1.2f);
+        if (_student != null) LessonMotion.Hop(_student);
+        _demoSettleT = 0f;
+        _demoStage = 2;
+      } else {
+        if (DemoWalkTo(StepLocal(_demoStep), dt, 1.5f)) {
+          _demoSettleT += dt;
+          if (_demoSettleT >= 0.35f) _demoStage = 1;
+        } else {
+          _demoSettleT = 0f;
+        }
       }
+      return;
     }
-    float beatStart = 1.2f;
-    float cadence = 0.95f;
-    int wantK = Mathf.Clamp(Mathf.FloorToInt((t - beatStart) / cadence) + 1, 0, _demoCount);
-    while (_demoK < wantK) {
-      _demoK++;
-      _demoStep = Mathf.Clamp(_demoFrom + (_demoAdd ? _demoK : -_demoK),
-        1, StairHillBuilder.StepCount);
-      Say(_demoAdd ? ("Up " + N(_demoK) + "!") : ("Down " + N(_demoK) + "!"),
-        _demoAdd ? ("Lên " + Nvi(_demoK) + " bậc!") : ("Xuống " + Nvi(_demoK) + " bậc!"));
-      Point(_teacher, StepWorld(_demoStep), 1.2f);
-      if (_student != null) LessonMotion.Hop(_student);
-      _demoWalking = true;
-    }
-    if (_demoWalking && !_demoBack && _student != null && _student.Root != null) {
-      if (LessonMotion.WalkTo(_student, StepLocal(_demoStep), dt, 1.7f)) _demoWalking = false;
-    }
-    if (_demoK >= _demoCount && !_demoWalking && !_demoBack
-        && t >= beatStart + _demoCount * cadence + 0.4f) {
-      _demoBack = true;
-      Say("Come back!", "Cô quay lại nhé!");
-    }
-    if (_demoBack && _student != null && _student.Root != null && !_demoHandoverSaid) {
-      if (LessonMotion.WalkTo(_student, StepLocal(_demoFrom), dt, 1.9f)) {
-        _demoHandoverSaid = true;
-        _demoHandoverT = t;
+    // Stage 3: walk back to the anchor, then hand over. (The last step's beat
+    // leaves the stage at 1 — snap it to 3 so the demo can never stall here.)
+    if (_demoStage == 1) _demoStage = 3;
+    if (_demoStage == 3) {
+      if (DemoWalkTo(_demoAnchor, dt, 1.7f)) {
+        _demoStage = 4;
+        _demoHandoverT = 0f;
         Say("Your turn!", "Đến lượt con!");
       }
+      return;
     }
-    if (_demoHandoverSaid && t >= _demoHandoverT + 2.0f) {
-      if (_student != null && _student.Root != null) {
-        _student.Root.transform.localPosition = StairHillBuilder.StudentReturn;
-        FaceSnap(_student, StairsLocal());
+    if (_demoStage == 4) {
+      _demoHandoverT += dt;
+      if (_demoHandoverT >= 1.0f) {
+        if (_student != null && _student.Root != null) {
+          _student.Root.transform.localPosition = StairHillBuilder.StudentReturn;
+          FaceSnap(_student, StairsLocal());
+        }
+        Log("demo done; child climbs next.");
+        StartClimb();
       }
-      Log("demo done; child climbs next.");
-      StartClimb();
     }
+  }
+
+  // Walk the student toward a local point, stopping 0.5m short (standing
+  // beside the prop, like the child does).
+  bool DemoWalkTo(Vector3 targetLocal, float dt, float speed) {
+    if (_student == null || _student.Root == null) return true;
+    Vector3 p = _student.Root.transform.localPosition;
+    Vector3 flat = new Vector3(targetLocal.x - p.x, 0f, targetLocal.z - p.z);
+    float dist = flat.magnitude;
+    Vector3 approach = targetLocal;
+    if (dist > 0.5f) {
+      Vector3 dir = flat / dist;
+      approach = new Vector3(targetLocal.x - dir.x * 0.5f, targetLocal.y,
+        targetLocal.z - dir.z * 0.5f);
+    }
+    return LessonMotion.WalkTo(_student, approach, dt, speed);
   }
 
   void StartClimb() {

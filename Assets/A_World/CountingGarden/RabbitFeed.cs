@@ -167,6 +167,26 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget, IDragTarget {
     _flying = true;
   }
 
+  // USER ROUND 2026-09-29 (round 2): the NPC demo carries a carrot from ANY
+  // state (the child's subtraction flow drags a bowl carrot out; the demo
+  // student shows the SAME action as a visible carry to the hand).
+  public void BeginDemoCarry(Transform hand) {
+    _hand = hand;
+    State = CarrotState.Carried;
+    _picking = false;
+    _feeding = false;
+    _feedActive = false;
+    _returning = false;
+    _flying = true;
+    _flyFrom = transform.localPosition;
+    _flyTo = hand != null && transform.parent != null
+      ? transform.parent.InverseTransformPoint(hand.position)
+      : HomeLocal;
+    _flyT = 0f;
+    _flyDur = 0.35f;
+    _flyLift = 0.5f;
+  }
+
   public void ParkInBowl(Vector3 slotLocal) {
     State = CarrotState.Consumed;
     _flying = false;
@@ -382,6 +402,48 @@ public class RabbitSubmitZone : MonoBehaviour, IClickTarget {
   }
 }
 
+// USER ROUND 2026-09-29 (round 2): one answer board of the carrot arena's
+// picture-answer rounds — a count of carrot icons the child taps (the same
+// click system as the carrots). The builder stages 9 icon slots per board.
+[DisallowMultipleComponent]
+public class RabbitAnswerTile : MonoBehaviour, IClickTarget {
+  public int Count { get; private set; } = 1;
+  public RabbitFeed Game;
+  Transform _icons;
+  float _popT;
+
+  public void Bind(RabbitFeed game) { Game = game; }
+  public void BindIcons(Transform icons) { _icons = icons; }
+
+  public void SetCount(int n) {
+    Count = Mathf.Clamp(n, 1, 9);
+    if (_icons == null) return;
+    for (int i = 0; i < _icons.childCount; i++) {
+      _icons.GetChild(i).gameObject.SetActive(i < Count);
+    }
+  }
+
+  public void OnClicked() {
+    if (Game != null) Game.TryAnswer(this);
+  }
+
+  // Demo beat: the board pops when the model student taps it.
+  public void PopForDemo() {
+    transform.localScale = Vector3.one * 1.12f;
+    _popT = 0.25f;
+  }
+
+  void Update() {
+    if (_popT <= 0f) return;
+    _popT -= Time.deltaTime;
+    if (_popT <= 0f) transform.localScale = Vector3.one;
+    else {
+      float k = 1f + 0.12f * (_popT / 0.25f);
+      transform.localScale = new Vector3(k, k, k);
+    }
+  }
+}
+
 [DisallowMultipleComponent]
 public class RabbitFeed : MonoBehaviour {
   public enum Phase {
@@ -392,6 +454,8 @@ public class RabbitFeed : MonoBehaviour {
     Success, // exact count: celebrated, then bowl clears -> walk back -> next number
     Demo,    // USER ROUND 2026-09-29: the working student shows the operation
              // BEFORE every + / - round (and once for the first plain round)
+    Quiz,    // USER ROUND (round 2): answer-board rounds — 3 picture boards,
+             // the audio asks, the child clicks the board with the right count
   }
 
   // S3-P2Z26 (user: random numbers + +/- within 10): each round is a plain
@@ -504,16 +568,54 @@ public class RabbitFeed : MonoBehaviour {
 
   bool _saidBoard, _saidTask;
   bool _waitCalled;      // the walk-in guidance was spoken
-  // USER ROUND 2026-09-29: the operation demo state (see Phase.Demo).
+  // USER ROUND 2026-09-29 (round 2): the NPC demo runs the FULL player loop —
+  // walk to the carrot, pick it, carry it to the bowl, place it (add), or take
+  // it from the bowl back to the patch (sub). One stage machine, no skipped
+  // steps. Quiz rounds demo the student WALKING TO THE CORRECT BOARD and
+  // tapping it.
   bool _plainDemoShown;
   bool _demoIntroSaid;
   bool _demoAdd;
   bool _demoIsPlain;
+  bool _demoIsQuiz;
   int _demoCount;
   int _demoK;
-  RabbitCarrot _demoPending;
+  int _demoStage;          // 0 go-to-source, 1 pick, 2 go-to-dest, 3 place, 4 back
+  RabbitCarrot _demoCarrot;
+  Vector3 _demoHome;
   bool _demoHandoverSaid;
   float _demoHandoverT;
+  // Quiz round state (reading/answer boards).
+  public bool IsQuizRound { get; private set; }
+  public int PlainRoundsDone { get; private set; }
+  RabbitAnswerTile[] _tiles;
+  int _demoTileIndex = -1;
+
+  // USER ROUND 2026-09-29 (round 2): pacing of the answer-board rounds — the
+  // first two plain rounds stay physical; every 3rd plain round after that is
+  // a picture-answer round. Pure mapping for tests.
+  public static bool IsQuizTurn(int plainRoundsDone) {
+    return plainRoundsDone >= 2 && ((plainRoundsDone - 2) % 3 == 0);
+  }
+
+  // The 3 answer counts for a quiz round: the target + two distinct
+  // distractors within 1..9. Pure + deterministic per roll for tests.
+  public static int[] QuizCounts(int target, int roll) {
+    target = Mathf.Clamp(target, 1, 9);
+    int a = target > 1 ? target - 1 : target + 1;
+    int b = target < 9 ? target + 1 : target - 1;
+    if (b == a) b = Mathf.Clamp(target + 2, 1, 9);
+    if (b == target || b == a) b = Mathf.Clamp(target - 2, 1, 9);
+    if (b == target || b == a) b = 5;
+    int[] c = { target, a, b };
+    // Deterministic shuffle (roll chooses which slot the correct one lands in).
+    int slot = Mathf.Clamp(roll, 0, 998) % 3;
+    int tmp = c[0]; c[0] = c[slot]; c[slot] = tmp;
+    return c;
+  }
+
+  public void BindQuizTiles(RabbitAnswerTile[] tiles) { _tiles = tiles; }
+  public bool HasQuizTiles { get { return _tiles != null && _tiles.Length == 3; } }
   float _ringPulseT;
   float _victoryT = -1f;
   float _resultPopT = 1f;
@@ -536,6 +638,9 @@ public class RabbitFeed : MonoBehaviour {
   int _prefillWant;
   // Wrong-submit beat (timed, deterministic; no coroutines so tests can tick).
   float _wrongT;
+  // USER ROUND (round 2): a wrong ANSWER-BOARD tap re-reads instead of
+  // resetting the bowl (there is no bowl state to reset in a quiz round).
+  bool _wrongQuiz;
 
   // Rabbit life: nibble bursts + ear twitches + breathing (procedural, small).
   float _nibbleT;
@@ -717,6 +822,7 @@ public class RabbitFeed : MonoBehaviour {
       case Phase.Success: TickSuccess(dt); break;
       case Phase.Wrong: TickWrong(dt); break;
       case Phase.Demo: TickDemo(dt); break;
+      case Phase.Quiz: TickQuiz(dt); break;
       }
       TickActing(dt);
       TickCamera(dt);
@@ -927,40 +1033,56 @@ public class RabbitFeed : MonoBehaviour {
     _quickIntro = false;
     _saidBoard = false;
     _saidTask = false;
+    // USER ROUND 2026-09-29 (round 2): answer-board rounds — the first two
+    // plain rounds stay physical; every 3rd after that is a picture-answer
+    // round (tiles bound by the installer; without tiles it stays a feed).
+    IsQuizRound = Kind == RoundKind.Plain && HasQuizTiles && IsQuizTurn(PlainRoundsDone);
     // USER ROUND 2026-09-29: a THOROUGH demo before EVERY + / - round (the
-    // child follows it), and exactly ONCE for the first plain "find the
-    // number" round of the visit (shows how to play). Plain rounds after that
-    // teach nothing (same as before).
+    // child follows it), once for the first plain "find the number" round of
+    // the visit, and before EVERY answer-board round.
     bool arith = Kind != RoundKind.Plain;
-    bool firstPlain = Kind == RoundKind.Plain && !_plainDemoShown;
-    if (ArithmeticEnabled && (arith || firstPlain) && _student != null) {
+    bool firstPlain = Kind == RoundKind.Plain && !_plainDemoShown && !IsQuizRound;
+    if (ArithmeticEnabled && (arith || firstPlain || IsQuizRound) && _student != null) {
       _plainDemoShown = true;
       _demoIsPlain = !arith;
+      _demoIsQuiz = IsQuizRound;
       _demoAdd = arith ? Kind == RoundKind.Add : true;
       _demoCount = arith ? Mathf.Max(1, OpB) : 1;
       _demoK = 0;
-      _demoPending = null;
+      _demoStage = 0;
+      _demoCarrot = null;
+      _demoTileIndex = -1;
       _demoIntroSaid = false;
       _demoHandoverSaid = false;
       _demoHandoverT = 0f;
       if (arith) PrefillBowl(OpA); // start state: bowl already holds A
+      if (IsQuizRound) SetupQuizBoards();
       To(Phase.Demo);
-      Log("demo start (kind=" + Kind + " count=" + _demoCount + " plain=" + _demoIsPlain + ")");
+      Log("demo start (kind=" + Kind + " count=" + _demoCount + " plain=" + _demoIsPlain
+        + " quiz=" + _demoIsQuiz + ")");
       return;
     }
+    if (IsQuizRound) SetupQuizBoards();
     To(Phase.Intro);
     SetShot(0);
     // S3-P2Z26: for a+b / a-b the bowl starts with the FIRST operand (user:
     // "4-2 thì bục có sẵn 4 củ, trẻ bỏ bớt 2"; "3+2 thì có sẵn 3, trẻ thêm 2").
     if (Kind != RoundKind.Plain) PrefillBowl(OpA);
     Log("question read (child on the play spot): kind=" + Kind + " a=" + OpA
-      + " b=" + OpB + " target=" + Target);
+      + " b=" + OpB + " target=" + Target + (IsQuizRound ? " QUIZ" : ""));
   }
 
-  // ---- operation demo (USER ROUND 2026-09-29) -----------------------------------
-  // The working student performs the operation while the teacher counts every
-  // move; the start state is restored and the child repeats it. Cadence is
-  // calm (one move per beat) and the bowl visibly changes each move.
+  // Which control phase a finished demo/intro hands to.
+  void BeginRoundControl() {
+    if (IsQuizRound) BeginQuiz();
+    else StartFeeding();
+  }
+
+  // ---- full-action NPC demo (USER ROUND 2026-09-29 round 2) ---------------------
+  // EVERY step the child will do, no shortcuts: the student WALKS to the
+  // carrot (subtraction: to the bowl), picks it up visibly into his hand,
+  // CARRIES it to the other side, places it, then goes for the next one.
+  // Answer-board rounds: the student walks to the CORRECT board and taps it.
   void TickDemo(float dt) {
     _phaseT += dt;
     float t = _phaseT;
@@ -970,88 +1092,193 @@ public class RabbitFeed : MonoBehaviour {
     if (!_demoIntroSaid && t >= 0.3f) {
       _demoIntroSaid = true;
       if (_cam != null && _camDemo != null && _lookDemo != null)
-        try { _cam.FrameAnchor(_camDemo, _lookDemo, 14f); } catch (Exception) { }
+        try { _cam.FrameAnchor(_camDemo, _lookDemo, 16f); } catch (Exception) { }
       Wave(_teacher);
-      Say(_demoIsPlain ? "Watch me first!" : "Watch me do it!",
-        _demoIsPlain ? "Con xem cô làm trước nhé!" : "Con xem cô làm mẫu nhé!");
+      if (_demoIsQuiz) {
+        AskQuizQuestion();
+      } else {
+        Say(_demoIsPlain ? "Watch me first!" : "Watch me do it!",
+          _demoIsPlain ? "Con xem cô làm trước nhé!" : "Con xem cô làm mẫu nhé!");
+      }
     }
-    // The moves: one per 1.15s beat starting at 1.4s (the intro line is short).
-    float moveStart = 1.4f;
-    float cadence = 1.15f;
-    int wantK = Mathf.Clamp(Mathf.FloorToInt((t - moveStart) / cadence) + 1, 0, _demoCount);
-    while (_demoK < wantK) {
-      _demoK++;
-      DemoMove(_demoK);
-    }
-    // The LAST pickup must land too (its carry beat ends after the final move).
-    if (_demoK >= _demoCount && _demoPending != null && t >= moveStart + _demoCount * cadence) {
-      ParkPending();
-    }
-    if (_demoK >= _demoCount && _demoPending == null && !_demoHandoverSaid
-        && t >= moveStart + _demoCount * cadence) {
-      _demoHandoverSaid = true;
-      _demoHandoverT = t;
-      Say("Your turn!", "Đến lượt con!");
-      // The question is read once, right before handover (the board already
-      // shows the operation).
-      if (!_demoIsPlain) AskOperationQuestion();
-    }
-    if (_demoHandoverSaid && t >= _demoHandoverT + (_demoIsPlain ? 1.6f : 3.4f)) {
-      FinishDemo();
+    if (!_demoIntroSaid) return;
+    if (_demoIsQuiz) { TickQuizDemo(dt); return; }
+    if (_demoK >= _demoCount) { DemoHandover(dt); return; }
+    switch (_demoStage) {
+      case 0:
+        if (_demoCarrot == null) {
+          _demoCarrot = _demoAdd ? FirstAvailableCarrot() : LastFedCarrot();
+          if (_demoCarrot == null) { _demoK = _demoCount; return; }
+          _demoHome = _demoCarrot.transform.localPosition;
+        }
+        if (DemoWalk(_demoAdd ? _demoHome : BowlLocal(), dt, 1.5f)) _demoStage = 1;
+        break;
+      case 1:
+        Say(_demoAdd ? "Pick one up!" : "Take one out!",
+          _demoAdd ? "Nhặt một củ nhé!" : "Lấy một củ ra nhé!");
+        _demoCarrot.SetHand(StudentHand());
+        if (_demoAdd) _demoCarrot.BeginCarry(0.3f);
+        else _demoCarrot.BeginDemoCarry(StudentHand());
+        if (_student != null) LessonMotion.Hop(_student);
+        _demoStage = 2;
+        break;
+      case 2:
+        if (DemoWalk(_demoAdd ? BowlLocal() : _demoHome, dt, 1.5f)) _demoStage = 3;
+        break;
+      default:
+        if (_demoAdd) {
+          _demoCarrot.ParkInBowl(BowlSlotFor(_demoCarrot, _fed.Count));
+          _fed.Add(_demoCarrot);
+          Count = _fed.Count;
+          SetPip(Count);
+          Sparkle(BowlWorld(), 4, _sparkleSeed++, 0.35f);
+        } else {
+          _demoCarrot.BeginReturnHome();
+          Sparkle(_demoCarrot.transform.position, 4, _sparkleSeed++, 0.3f);
+        }
+        _demoK++;
+        Say(_demoAdd ? ("Add " + N(_demoK) + "!") : ("Take " + N(_demoK) + " away!"),
+          _demoAdd ? ("Thêm " + Nvi(_demoK) + "!") : ("Bớt " + Nvi(_demoK) + "!"));
+        _demoCarrot = null;
+        _demoStage = 0;
+        break;
     }
   }
 
-  void DemoMove(int k) {
-    // Park the previous pickup (its carry beat completes), then act.
-    ParkPending();
-    if (_demoAdd) {
-      Say("Add " + N(k) + " more!", "Thêm " + Nvi(k) + " củ nữa!");
-      RabbitCarrot c = FirstAvailableCarrot();
-      if (c != null) {
-        c.SetHand(_student != null && _student.CarryAnchor != null ? _student.CarryAnchor : _playerHand);
-        c.BeginCarry(0.2f);
-        _demoPending = c;
-      }
-    } else {
-      Say("Take " + N(k) + " away!", "Bớt " + Nvi(k) + " củ đi!");
-      if (_fed.Count > 0) {
-        RabbitCarrot c = _fed[_fed.Count - 1];
-        _fed.RemoveAt(_fed.Count - 1);
-        c.BeginReturnHome();
-        Count = _fed.Count;
-        SetPip(Count);
-        Sparkle(c.transform.position, 4, _sparkleSeed++, 0.3f);
-      }
+  // After the last carrot: the student walks back to his spot, then hands over.
+  void DemoHandover(float dt) {
+    if (!_demoHandoverSaid) {
+      _demoHandoverSaid = true;
+      _demoHandoverT = 0f;
+      Say("Your turn!", "Đến lượt con!");
+      if (!_demoIsPlain) AskOperationQuestion();
     }
-    if (_student != null) LessonMotion.Hop(_student);
+    _demoHandoverT += dt;
+    bool home = DemoWalk(RabbitPlayBuilder.StudentReturn, dt, 1.7f);
+    if (home && _demoHandoverT >= (_demoIsPlain ? 1.4f : 2.8f)) FinishDemo();
+  }
+
+  // The answer-board demo: walk to the correct board, tap it, come back.
+  void TickQuizDemo(float dt) {
+    if (_demoStage == 0) {
+      if (_tiles == null || _demoTileIndex < 0 || _tiles[_demoTileIndex] == null) {
+        _demoStage = 3;
+        return;
+      }
+      if (DemoWalk(_tiles[_demoTileIndex].transform.localPosition, dt, 1.6f)) _demoStage = 1;
+      return;
+    }
+    if (_demoStage == 1) {
+      Say("This board has " + N(Target) + "!", "Bảng này có " + Nvi(Target) + " củ!");
+      if (_tiles != null && _demoTileIndex >= 0 && _tiles[_demoTileIndex] != null)
+        _tiles[_demoTileIndex].PopForDemo();
+      if (_student != null) LessonMotion.Hop(_student);
+      _demoStage = 2;
+      _demoHandoverT = 0f;
+      return;
+    }
+    _demoHandoverT += dt;
+    if (_demoStage == 2 && _demoHandoverT >= 1.3f) {
+      _demoStage = 3;
+      Say("Your turn!", "Đến lượt con!");
+    }
+    if (_demoStage == 3 && DemoWalk(RabbitPlayBuilder.StudentReturn, dt, 1.7f)) FinishDemo();
+  }
+
+  // Walk the student toward a local point, stopping 0.55m short (standing
+  // beside the prop, like the child does).
+  bool DemoWalk(Vector3 targetLocal, float dt, float speed) {
+    if (_student == null || _student.Root == null) return true;
+    Vector3 p = _student.Root.transform.localPosition;
+    Vector3 flat = new Vector3(targetLocal.x - p.x, 0f, targetLocal.z - p.z);
+    float dist = flat.magnitude;
+    Vector3 approach = targetLocal;
+    if (dist > 0.55f) {
+      Vector3 dir = flat / dist;
+      approach = new Vector3(targetLocal.x - dir.x * 0.55f, targetLocal.y,
+        targetLocal.z - dir.z * 0.55f);
+    }
+    return LessonMotion.WalkTo(_student, approach, dt, speed);
+  }
+
+  Vector3 BowlLocal() {
+    return _root != null ? _root.InverseTransformPoint(BowlWorld()) : Vector3.zero;
+  }
+
+  RabbitCarrot LastFedCarrot() {
+    return _fed.Count > 0 ? _fed[_fed.Count - 1] : null;
   }
 
   void FinishDemo() {
-    ParkPending();
     ResetBowlToStart();
     Log("demo done; child control next (kind=" + Kind + ").");
-    if (_demoIsPlain) {
+    if (_demoIsPlain && !_demoIsQuiz) {
       // Plain: hand to the normal intro (the board line is read next).
       _saidBoard = false;
       _saidTask = false;
       To(Phase.Intro);
       SetShot(0);
     } else {
-      StartFeeding();
+      BeginRoundControl();
     }
   }
 
-  // The pending pickup lands in the bowl (shared by every demo move + the
-  // demo end; the previous bug was a pending carrot that never landed, so the
-  // handover gate never opened).
-  void ParkPending() {
-    if (_demoPending == null) return;
-    _demoPending.ParkInBowl(BowlSlotFor(_demoPending, _fed.Count));
-    _fed.Add(_demoPending);
-    _demoPending = null;
-    Count = _fed.Count;
-    SetPip(Count);
-    Sparkle(BowlWorld(), 4, _sparkleSeed++, 0.35f);
+  // ---- answer-board rounds (USER ROUND round 2) ----------------------------------
+  void AskQuizQuestion() {
+    Ask("Which board has " + N(Target) + "?", "Bảng nào có " + Nvi(Target) + " củ?");
+    Ask("Count them and tap!", "Con đếm rồi bấm vào nhé!");
+  }
+
+  void SetupQuizBoards() {
+    if (!HasQuizTiles) return;
+    int[] counts = QuizCounts(Target, UnityEngine.Random.Range(0, 999));
+    _demoTileIndex = 0;
+    for (int i = 0; i < _tiles.Length; i++) {
+      _tiles[i].Bind(this);
+      _tiles[i].SetCount(counts[i]);
+      _tiles[i].gameObject.SetActive(true);
+      if (counts[i] == Target) _demoTileIndex = i;
+    }
+    Log("quiz boards: [" + counts[0] + "," + counts[1] + "," + counts[2]
+      + "] correct=" + _demoTileIndex);
+  }
+
+  void HideQuizBoards() {
+    if (_tiles == null) return;
+    for (int i = 0; i < _tiles.Length; i++) {
+      if (_tiles[i] != null) _tiles[i].gameObject.SetActive(false);
+    }
+  }
+
+  void BeginQuiz() {
+    To(Phase.Quiz);
+    Follow();
+    _followHanded = true;
+    if (_life != null) { try { _life.Begin("quiz read"); } catch (Exception) { } }
+    Say("Tap the right board!", "Con bấm vào bảng đúng nhé!");
+    Log("quiz phase: waiting for the child's tap.");
+  }
+
+  void TickQuiz(float dt) {
+    _phaseT += dt;
+    FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
+    FaceTowards(_student, PlayerLocal(), dt, 2.2f);
+    FaceRabbitTo(PlayerWorld(), dt);
+  }
+
+  // Called by the answer boards (IClickTarget).
+  public void TryAnswer(RabbitAnswerTile tile) {
+    if (tile == null || Current != Phase.Quiz) return;
+    if (tile.Count == Target) {
+      HideQuizBoards();
+      SuccessBeats();
+      Log("quiz correct: board with " + tile.Count);
+    } else {
+      Say("Count again!", "Con đếm lại nhé!");
+      _wrongQuiz = true;
+      To(Phase.Wrong);
+      Log("quiz wrong: board with " + tile.Count + " (target " + Target + ")");
+    }
   }
 
   // Every carrot back home, then the round's start state (A in the bowl for
@@ -1108,16 +1335,18 @@ public class RabbitFeed : MonoBehaviour {
       // S3-P2Z23 (user: "không nói đây là số mấy, trẻ tự nhận biết"): a PLAIN
       // number is NOT spoken — the board shows it; the teacher only names the
       // job. S3-P2Z29 (user): an operation is read as a "have / want / how many"
-      // question (board still shows "8+1").
+      // question (board still shows "8+1"). USER ROUND (round 2): an
+      // answer-board round asks WHICH BOARD has the number instead.
       if (Kind == RoundKind.Plain) {
-        Say("Feed the bunny!", "Cho thỏ ăn nhé!");
+        if (IsQuizRound) AskQuizQuestion();
+        else Say("Feed the bunny!", "Cho thỏ ăn nhé!");
       } else {
         AskOperationQuestion();
       }
       Point(_teacher, RabbitWorld(), 2.8f);
       PulseBoard(1.4f);
     }
-    if (t >= endAt) StartFeeding();
+    if (t >= endAt) BeginRoundControl();
   }
 
   void StartFeeding() {
@@ -1220,6 +1449,16 @@ public class RabbitFeed : MonoBehaviour {
     FaceTowards(_teacher, PlayerLocal(), dt, 2.5f);
     FaceTowards(_student, PlayerLocal(), dt, 2.5f);
     if (_phaseT < WrongHoldSeconds) return;
+    // USER ROUND (round 2): a wrong answer-board tap re-reads the question and
+    // hands the SAME boards back — no bowl state involved.
+    if (_wrongQuiz) {
+      _wrongQuiz = false;
+      To(Phase.Quiz);
+      Ask("Count the boards again!", "Con đếm lại các bảng nhé!");
+      Ask("Tap the right board!", "Bấm vào bảng đúng nhé!");
+      Log("wrong beat done — quiz continues.");
+      return;
+    }
     for (int i = 0; i < _fed.Count; i++) {
       RabbitCarrot c = _fed[i];
       if (c != null && c.State != RabbitCarrot.CarrotState.Available) {
@@ -1272,6 +1511,9 @@ public class RabbitFeed : MonoBehaviour {
 
   void SuccessBeats() {
     To(Phase.Success);
+    // USER ROUND (round 2): the answer-board pacing counts COMPLETED plain
+    // rounds (physical or board) — every 3rd one becomes a board round.
+    if (Kind == RoundKind.Plain) PlainRoundsDone++;
     // Reset the correct-submit transition (runs again every round).
     _cleared = false;
     _advance = false;
@@ -1410,6 +1652,7 @@ public class RabbitFeed : MonoBehaviour {
   void ClearBowlAndWalkBack() {
     _cleared = true;
     _returnT = 0f;
+    HideQuizBoards(); // USER ROUND (round 2): the answer boards leave with the round
     for (int i = 0; i < _fed.Count; i++) {
       RabbitCarrot c = _fed[i];
       if (c != null && c.State != RabbitCarrot.CarrotState.Available) {

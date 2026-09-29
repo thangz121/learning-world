@@ -136,12 +136,75 @@ public class RabbitPlayBuilder : MonoBehaviour {
   // Scene entry (GameInstaller calls this after the lazy load).
   public void Build() {
     BuildContent(transform);
+    BuildQuizTiles(transform);
     // S3-P2Z17 journey bug: low decor render meshes bake into the NavMesh and
     // carved the plaza into islands (the child stood at (0, 0.9) and no click
     // could move them). The walkable surface here is the flat ground only, so
     // every decor renderer is excluded from the bake.
     IgnoreAllDecorExceptGround(transform, "RPGround");
     BuildNavMesh(transform);
+  }
+
+  // USER ROUND 2026-09-29 (round 2): THREE answer boards for the picture-
+  // answer rounds — the child taps the board whose carrot count matches the
+  // number on the big board. Hidden until a quiz round stages them. The pick
+  // face keeps a real collider (the SAME click system as the carrots).
+  public RabbitAnswerTile[] QuizTiles { get; private set; }
+
+  void BuildQuizTiles(Transform parent) {
+    QuizTiles = new RabbitAnswerTile[3];
+    for (int i = 0; i < 3; i++) {
+      Vector3 p = new Vector3(-2.6f + i * 2.6f, 0f, PlaySpotLocal.z + 2.4f);
+      GameObject root = new GameObject("RPAnswerTile" + i);
+      root.transform.SetParent(parent, false);
+      root.transform.localPosition = p;
+      Pad(root.transform, "RPAnswerPad" + i, new Vector3(0f, 0.02f, 0f), 2.1f,
+        i == 1 ? MintLeaf : BoardCream);
+      Box(root.transform, "RPAnswerPostL" + i, new Vector3(-0.72f, 0.62f, 0f),
+        new Vector3(0.12f, 1.24f, 0.12f), FenceWood);
+      Box(root.transform, "RPAnswerPostR" + i, new Vector3(0.72f, 0.62f, 0f),
+        new Vector3(0.12f, 1.24f, 0.12f), FenceWood);
+      GameObject board = Box(root.transform, "RPAnswerBoard" + i, new Vector3(0f, 1.32f, 0f),
+        new Vector3(1.5f, 1.0f, 0.12f), BoardCream);
+      SetMaterial(board, LitEmissive(BoardCream, 0.18f));
+      GameObject icons = new GameObject("RPAnswerIcons" + i);
+      icons.transform.SetParent(root.transform, false);
+      icons.transform.localPosition = new Vector3(0f, 1.32f, -0.10f);
+      for (int k = 0; k < 9; k++) {
+        int col = k % 3, row = k / 3;
+        GameObject slot = new GameObject("Icon" + k);
+        slot.transform.SetParent(icons.transform, false);
+        slot.transform.localPosition = new Vector3((col - 1) * 0.34f, (1 - row) * 0.26f, 0f);
+        GameObject carrotRoot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        carrotRoot.name = "CarrotRoot";
+        carrotRoot.transform.SetParent(slot.transform, false);
+        carrotRoot.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+        carrotRoot.transform.localScale = new Vector3(0.10f, 0.09f, 0.10f);
+        carrotRoot.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.95f, 0.52f, 0.16f));
+        StripCollider(carrotRoot);
+        GameObject leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        leaf.name = "CarrotLeaf";
+        leaf.transform.SetParent(slot.transform, false);
+        leaf.transform.localPosition = new Vector3(0f, 0.06f, 0f);
+        leaf.transform.localScale = new Vector3(0.10f, 0.07f, 0.10f);
+        leaf.GetComponent<Renderer>().sharedMaterial = Lit(MintLeaf);
+        StripCollider(leaf);
+      }
+      // The tap face: a proud pick board with a REAL collider (Box strips
+      // colliders, so this one is built raw); the bake never sees it.
+      GameObject pick = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      pick.name = "RPAnswerPick" + i;
+      pick.transform.SetParent(root.transform, false);
+      pick.transform.localPosition = new Vector3(0f, 1.32f, -0.17f);
+      pick.transform.localScale = new Vector3(1.62f, 1.12f, 0.06f);
+      pick.GetComponent<Renderer>().sharedMaterial = Lit(new Color(1f, 0.98f, 0.92f));
+      IgnoreFromBuild(pick);
+      RabbitAnswerTile tile = root.AddComponent<RabbitAnswerTile>();
+      tile.BindIcons(icons.transform);
+      tile.SetCount(1);
+      root.SetActive(false);
+      QuizTiles[i] = tile;
+    }
   }
 
   static void IgnoreAllDecorExceptGround(Transform root, string groundName) {
