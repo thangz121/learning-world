@@ -36,6 +36,9 @@ public class MarketHUD : BusBehaviour {
   // S3-P2L system dialogue language toggle (English <-> Tiếng Việt).
   Button _langButton;
   Text _langLabel;
+  // USER ROUND 2026-09-29: boot theme tune on/off chip (same corner).
+  Button _musicButton;
+  Text _musicLabel;
   CanvasGroup _fade; // adaptive hierarchy: the chip yields to emotional beats
   float _targetAlpha = 1f;
   // S3A transition cover (SceneBridge pattern ADAPTED: fade-to-black covers
@@ -349,6 +352,27 @@ public class MarketHUD : BusBehaviour {
       ? "Tiếng Việt" : "English";
   }
 
+  // USER ROUND 2026-09-29: theme music on/off (same pattern as the language
+  // chip; persists via MusicSettings).
+  void HandleMusicButton() {
+    try { MusicSettings.Toggle(); } catch (Exception) { }
+    RefreshMusicLabel();
+  }
+
+  public void RefreshMusicLabel() {
+    if (_musicLabel == null) return;
+    _musicLabel.text = MusicSettings.On
+      ? DialogueLang.T("Music on", "Nhạc: bật")
+      : DialogueLang.T("Music off", "Nhạc: tắt");
+    _musicLabel.color = MusicSettings.On
+      ? new Color(0.16f, 0.45f, 0.20f)
+      : new Color(0.58f, 0.48f, 0.38f);
+  }
+
+  // Test seam: the music chip exists and shows the current state.
+  public bool HasMusicButton { get { return _musicButton != null; } }
+  public string MusicLabelText { get { return _musicLabel != null ? _musicLabel.text : ""; } }
+
   // Test seam: the button object exists and cycles the system language.
   public bool HasLanguageButton { get { return _langButton != null; } }
   public string LanguageLabelText { get { return _langLabel != null ? _langLabel.text : ""; } }
@@ -475,6 +499,36 @@ public class MarketHUD : BusBehaviour {
     langLabelRt.offsetMin = new Vector2(8f, 4f);
     langLabelRt.offsetMax = new Vector2(-8f, -4f);
     RefreshLanguageLabel();
+
+    // USER ROUND 2026-09-29: the theme's on/off chip — same pill as the
+    // language chip, parked right under it in the top-right corner.
+    GameObject musGo = new GameObject("MusicButton");
+    musGo.transform.SetParent(canvasGo.transform);
+    Image musImage = musGo.AddComponent<Image>();
+    musImage.sprite = MakeRoundedSprite(64, 18, new Color(1f, 0.96f, 0.87f));
+    musImage.type = Image.Type.Sliced;
+    _musicButton = musGo.AddComponent<Button>();
+    _musicButton.targetGraphic = musImage;
+    _musicButton.onClick.AddListener(HandleMusicButton);
+    RectTransform musRt = musGo.GetComponent<RectTransform>();
+    musRt.anchorMin = new Vector2(1f, 1f);
+    musRt.anchorMax = new Vector2(1f, 1f);
+    musRt.pivot = new Vector2(1f, 1f);
+    musRt.anchoredPosition = new Vector2(-20f, -76f);
+    musRt.sizeDelta = new Vector2(170f, 48f);
+    GameObject musLabelGo = new GameObject("MusicLabel");
+    musLabelGo.transform.SetParent(musGo.transform);
+    _musicLabel = musLabelGo.AddComponent<Text>();
+    _musicLabel.font = font;
+    _musicLabel.fontSize = 22;
+    _musicLabel.color = new Color(0.35f, 0.22f, 0.12f);
+    _musicLabel.alignment = TextAnchor.MiddleCenter;
+    RectTransform musLabelRt = musLabelGo.GetComponent<RectTransform>();
+    musLabelRt.anchorMin = Vector2.zero;
+    musLabelRt.anchorMax = Vector2.one;
+    musLabelRt.offsetMin = new Vector2(8f, 4f);
+    musLabelRt.offsetMax = new Vector2(-8f, -4f);
+    RefreshMusicLabel();
 
     // S3A transition cover: fullscreen black, LAST sibling (topmost), starts
     // disabled. Taps pass through (raycastTarget=false) so a mid-transition

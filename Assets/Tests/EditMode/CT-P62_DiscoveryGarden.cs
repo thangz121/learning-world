@@ -42,6 +42,7 @@ public class CT_P62_DiscoveryGarden {
     }
     public void PlaySfx(SfxId id) { Sfx.Add(id.Value); }
     public void PlayMusic(MusicId id) { }
+    public void SetMusicEnabled(bool on) { }
     public void SetAudioFocus(AudioFocusMode mode) { }
   }
 

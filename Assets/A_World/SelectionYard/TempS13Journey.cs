@@ -261,12 +261,72 @@ public class TempS13Journey : MonoBehaviour {
     Record("rabbit arena content", FindObjectOfType<RabbitFeed>() != null && !YardLoaded(), "");
     if (!StepGuard()) yield break;
 
+    // USER ROUND 2026-09-29: walk onto the play spot — the question runs and
+    // (first visit) the DEMO plays before the child gets control. The journey
+    // proves the demo path end-to-end in the real build.
+    RabbitFeed feed = FindObjectOfType<RabbitFeed>();
+    Transform spot = feed != null ? FindDeep(feed.transform, "RPPlaySpot") : null;
+    Expect("rabbit arena: play spot staged", spot != null, "");
+    if (spot != null) {
+      yield return WalkStep(delegate {
+        RabbitFeed f = FindObjectOfType<RabbitFeed>();
+        return f != null && f.Current != RabbitFeed.Phase.Wait;
+      }, spot.position, 1.2f, 90f, "onto the play spot", null, null);
+      Record("rabbit arena: question starts on the spot", _stepOk, "");
+      if (!StepGuard()) yield break;
+      yield return WaitStep(delegate {
+        RabbitFeed f = FindObjectOfType<RabbitFeed>();
+        return f != null && (f.Current == RabbitFeed.Phase.Feeding
+          || f.Current == RabbitFeed.Phase.Success);
+      }, 60f, "demo done -> child control");
+      Record("rabbit arena: demo ran, child got control", _stepOk, "");
+      if (!StepGuard()) yield break;
+      Shot("03b2_after_demo");
+    }
+
     yield return ExitArenaStep("math_counting", "rabbit arena exit");
     Record("GAME -> C back (rabbit)", _stepOk, "");
     if (!StepGuard()) yield break;
     yield return new WaitForSeconds(2.5f);
     Shot("03c_back_in_game_yard");
     Record("C re-entry after rabbit: 2 doors intact", CheckCountingGameYard(), "");
+    if (!StepGuard()) yield break;
+
+    // ---- STEP: C -> GAME (stairs) -> C (USER ROUND: same discipline) --------
+    yield return EnterDoorStep("number_stairs", "Bac thang",
+      delegate { return SceneLoaded(StairHillBuilder.SceneName); }, 150f);
+    Record("C -> stairs arena loads", _stepOk, "");
+    if (!StepGuard()) yield break;
+    yield return new WaitForSeconds(3f);
+    Shot("03d_stairs_arena");
+    Expect("stairs arena: NumberStairs present", FindObjectOfType<NumberStairs>() != null, "");
+    Record("stairs arena content", FindObjectOfType<NumberStairs>() != null, "");
+    if (!StepGuard()) yield break;
+    NumberStairs stairs = FindObjectOfType<NumberStairs>();
+    Transform listen = stairs != null ? FindDeep(stairs.transform, "SHListenRing") : null;
+    Expect("stairs arena: listen circle staged", listen != null, "");
+    if (listen != null) {
+      yield return WalkStep(delegate {
+        NumberStairs g = FindObjectOfType<NumberStairs>();
+        return g != null && g.Current != NumberStairs.Phase.Wait;
+      }, listen.position, 1.2f, 90f, "onto the listen circle", null, null);
+      Record("stairs arena: question starts on the circle", _stepOk, "");
+      if (!StepGuard()) yield break;
+      yield return WaitStep(delegate {
+        NumberStairs g = FindObjectOfType<NumberStairs>();
+        return g != null && (g.Current == NumberStairs.Phase.Climb
+          || g.Current == NumberStairs.Phase.Success);
+      }, 60f, "stairs demo done -> child control");
+      Record("stairs arena: demo ran, child got control", _stepOk, "");
+      if (!StepGuard()) yield break;
+      Shot("03d2_after_stairs_demo");
+    }
+    yield return ExitArenaStep("math_counting", "stairs arena exit");
+    Record("GAME -> C back (stairs)", _stepOk, "");
+    if (!StepGuard()) yield break;
+    yield return new WaitForSeconds(2.5f);
+    Shot("03e_back_in_game_yard_2");
+    Record("C re-entry after stairs: 2 doors intact", CheckCountingGameYard(), "");
     if (!StepGuard()) yield break;
 
     // ---- STEP: C -> B -> A back ---------------------------------------------

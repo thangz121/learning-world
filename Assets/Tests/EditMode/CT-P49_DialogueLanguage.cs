@@ -20,6 +20,7 @@ public class CT_P49_DialogueLanguage {
     public Task SpeakAsync(DialogueRequest request) { Lines.Add(request); return Task.CompletedTask; }
     public void PlaySfx(SfxId id) { }
     public void PlayMusic(MusicId id) { }
+    public void SetMusicEnabled(bool on) { }
     public void SetAudioFocus(AudioFocusMode mode) { }
   }
 

@@ -27,12 +27,14 @@ public class NumberStairs : MonoBehaviour {
   // miniature does that once, outside) — the child walks to the marked circle,
   // the teacher asks the question there, and after every win the NEXT question
   // continues from the step the child is already standing on.
-  public enum Phase {
-    Wait,     // the child walks to the marked circle; nothing is taught yet
-    Intro,    // the teacher asks the question (board -> number -> climb N)
-    Climb,    // the child climbs; step identity drives feedback + success
-    Success,  // a round is won (chained) or the whole visit is settled
-  }
+public enum Phase {
+  Wait,     // the child walks to the marked circle; nothing is taught yet
+  Intro,    // the teacher asks the question (board -> number -> climb N)
+  Climb,    // the child climbs; step identity drives feedback + success
+  Success,  // a round is won (chained) or the whole visit is settled
+  Demo,     // USER ROUND 2026-09-29: the working student shows the climb
+            // BEFORE every + / - round (and once for the first plain round)
+}
 
   // Beat timings (one place; deterministic for Step(dt) tests).
   const float SuccessDwell = 1.1f;      // "stand still on the target step" window
@@ -277,10 +279,11 @@ public class NumberStairs : MonoBehaviour {
       TickVoice(dt);
       TickAsk();
       switch (Current) {
-        case Phase.Wait: TickWait(dt); break;
-        case Phase.Intro: TickIntro(dt); break;
-        case Phase.Climb: TickClimb(dt); break;
-        case Phase.Success: TickSuccess(dt); break;
+      case Phase.Wait: TickWait(dt); break;
+      case Phase.Intro: TickIntro(dt); break;
+      case Phase.Climb: TickClimb(dt); break;
+      case Phase.Success: TickSuccess(dt); break;
+      case Phase.Demo: TickDemo(dt); break;
       }
       TickListen(dt);
       TickActing(dt);
@@ -390,26 +393,33 @@ public class NumberStairs : MonoBehaviour {
   // stair body IS the first operand — the carrot arena's "prefill"). Add and
   // Sub are only offered when the ladder can hold them; plain is always
   // possible. Never the same result twice in a row.
+  // USER ROUND 2026-09-29: arithmetic is HARD for this age — keep it rare:
+  // 80% plain / 12% add / 8% sub (subtraction rarest). Pure mapping for tests.
+  public static RoundKind KindForRoll(int roll) {
+    if (roll < 80) return RoundKind.Plain;
+    if (roll < 92) return RoundKind.Add;
+    return RoundKind.Sub;
+  }
+
   void SetRoundRandomFromCurrent() {
     int from = Mathf.Clamp(CurrentStep, 1, StairHillBuilder.StepCount);
     int prev = Target;
     bool canAdd = from < StairHillBuilder.StepCount;
     bool canSub = from > 1;
     for (int guard = 0; guard < 40; guard++) {
-      int roll = UnityEngine.Random.Range(0, 3);
-      if (roll == 0 || (!canAdd && !canSub)) {
+      RoundKind want = KindForRoll(UnityEngine.Random.Range(0, 100));
+      if (want == RoundKind.Add && !canAdd) want = RoundKind.Plain;
+      if (want == RoundKind.Sub && !canSub) want = RoundKind.Plain;
+      if (want == RoundKind.Plain) {
         int t = UnityEngine.Random.Range(1, StairHillBuilder.StepCount + 1);
         if (t == from) t = from < StairHillBuilder.StepCount ? from + 1 : from - 1;
         SetRound(RoundKind.Plain, t, 0);
-      } else if (roll == 1 && canAdd) {
+      } else if (want == RoundKind.Add) {
         int b = UnityEngine.Random.Range(1, StairHillBuilder.StepCount - from + 1);
         SetRound(RoundKind.Add, from, b);
-      } else if (canSub) {
+      } else {
         int b = UnityEngine.Random.Range(1, from);
         SetRound(RoundKind.Sub, from, b);
-      } else {
-        int b = UnityEngine.Random.Range(1, StairHillBuilder.StepCount - from + 1);
-        SetRound(RoundKind.Add, from, b);
       }
       if (Target != prev || guard >= 39) break;
     }
@@ -537,7 +547,17 @@ public class NumberStairs : MonoBehaviour {
       }
       Point(_teacher, StairsWorld(), 2.8f);
     }
-    if (t >= 5.9f) StartClimb();
+    if (t >= 5.9f) {
+      // USER ROUND 2026-09-29: ONCE for the first plain "find the number"
+      // round of the visit the student demonstrates a short 3-step climb.
+      if (ArithmeticEnabled && !_plainDemoShown && _student != null) {
+        int from = Mathf.Clamp(CurrentStep, 1, StairHillBuilder.StepCount);
+        int to = Mathf.Min(StairHillBuilder.StepCount, from + 3);
+        BeginDemo(true, from, to, Mathf.Max(1, to - from));
+        return;
+      }
+      StartClimb();
+    }
   }
 
   void TickIntroOperation(float dt, float t) {
@@ -553,8 +573,104 @@ public class NumberStairs : MonoBehaviour {
       PulseBoard(1.2f);
     }
     // Hand over only once the whole question has been read (or a hard timeout).
-    if (t >= 3.0f && AskSpoken()) { StartClimb(); return; }
+    if (t >= 3.0f && AskSpoken()) {
+      // USER ROUND 2026-09-29: EVERY + / - round is demonstrated first.
+      if (ArithmeticEnabled && _student != null) {
+        BeginDemo(Kind == RoundKind.Add, OpA, Target, Mathf.Max(1, OpB));
+        return;
+      }
+      StartClimb();
+      return;
+    }
     if (t >= 14f) StartClimb();
+  }
+
+  // ---- operation demo (USER ROUND 2026-09-29) -----------------------------------
+  // The working student starts on the A-step, climbs (add) or steps down
+  // (subtract) B steps while the teacher counts each move, walks back, and the
+  // child repeats it. Runs before EVERY + / - round.
+  bool _plainDemoShown;
+  bool _demoIntroSaid;
+  bool _demoAdd;
+  int _demoCount;
+  int _demoFrom;
+  int _demoStep;
+  int _demoK;
+  bool _demoWalking;
+  bool _demoBack;
+  bool _demoHandoverSaid;
+  float _demoHandoverT;
+
+  void BeginDemo(bool add, int from, int to, int count) {
+    _plainDemoShown = true;
+    _demoAdd = add;
+    _demoFrom = Mathf.Clamp(from, 1, StairHillBuilder.StepCount);
+    _demoStep = _demoFrom;
+    _demoCount = Mathf.Clamp(count, 1, StairHillBuilder.StepCount - 1);
+    _demoK = 0;
+    _demoIntroSaid = false;
+    _demoWalking = false;
+    _demoBack = false;
+    _demoHandoverSaid = false;
+    _demoHandoverT = 0f;
+    ClearAsk();
+    To(Phase.Demo);
+    SetShot(0);
+    Log("demo start: " + (add ? "add " : "sub ") + _demoCount + " from step " + _demoFrom);
+  }
+
+  void TickDemo(float dt) {
+    _phaseT += dt;
+    float t = _phaseT;
+    FaceTowards(_teacher, PlayerLocal(), dt, 3.5f);
+    if (!_demoIntroSaid && t >= 0.3f) {
+      _demoIntroSaid = true;
+      if (_cam != null && _builder != null && _builder.CamDemo != null && _builder.LookDemo != null)
+        try { _cam.FrameAnchor(_builder.CamDemo, _builder.LookDemo, 18f); } catch (Exception) { }
+      Wave(_teacher);
+      Say(_demoAdd ? "Watch me climb!" : "Watch me go down!",
+        _demoAdd ? "Con xem cô lên bậc nhé!" : "Con xem cô xuống bậc nhé!");
+      if (_student != null && _student.Root != null) {
+        _student.Root.transform.localPosition = StepLocal(_demoFrom);
+        FaceSnap(_student, StairsLocal());
+      }
+    }
+    float beatStart = 1.2f;
+    float cadence = 0.95f;
+    int wantK = Mathf.Clamp(Mathf.FloorToInt((t - beatStart) / cadence) + 1, 0, _demoCount);
+    while (_demoK < wantK) {
+      _demoK++;
+      _demoStep = Mathf.Clamp(_demoFrom + (_demoAdd ? _demoK : -_demoK),
+        1, StairHillBuilder.StepCount);
+      Say(_demoAdd ? ("Up " + N(_demoK) + "!") : ("Down " + N(_demoK) + "!"),
+        _demoAdd ? ("Lên " + Nvi(_demoK) + " bậc!") : ("Xuống " + Nvi(_demoK) + " bậc!"));
+      Point(_teacher, StepWorld(_demoStep), 1.2f);
+      if (_student != null) LessonMotion.Hop(_student);
+      _demoWalking = true;
+    }
+    if (_demoWalking && !_demoBack && _student != null && _student.Root != null) {
+      if (LessonMotion.WalkTo(_student, StepLocal(_demoStep), dt, 1.7f)) _demoWalking = false;
+    }
+    if (_demoK >= _demoCount && !_demoWalking && !_demoBack
+        && t >= beatStart + _demoCount * cadence + 0.4f) {
+      _demoBack = true;
+      Say("Come back!", "Cô quay lại nhé!");
+    }
+    if (_demoBack && _student != null && _student.Root != null && !_demoHandoverSaid) {
+      if (LessonMotion.WalkTo(_student, StepLocal(_demoFrom), dt, 1.9f)) {
+        _demoHandoverSaid = true;
+        _demoHandoverT = t;
+        Say("Your turn!", "Đến lượt con!");
+      }
+    }
+    if (_demoHandoverSaid && t >= _demoHandoverT + 2.0f) {
+      if (_student != null && _student.Root != null) {
+        _student.Root.transform.localPosition = StairHillBuilder.StudentReturn;
+        FaceSnap(_student, StairsLocal());
+      }
+      Log("demo done; child climbs next.");
+      StartClimb();
+    }
   }
 
   void StartClimb() {

@@ -23,6 +23,7 @@ public class CT_P54_StairTargets {
     }
     public void PlaySfx(SfxId id) { Sfx.Add(id.Value); }
     public void PlayMusic(MusicId id) { }
+    public void SetMusicEnabled(bool on) { }
     public void SetAudioFocus(AudioFocusMode mode) { }
   }
 

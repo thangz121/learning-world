@@ -390,6 +390,8 @@ public class RabbitFeed : MonoBehaviour {
     Feeding, // the child picks, carries and feeds; the teacher counts along
     Wrong,   // the child submitted a wrong count: gentle line, bowl empties, retry
     Success, // exact count: celebrated, then bowl clears -> walk back -> next number
+    Demo,    // USER ROUND 2026-09-29: the working student shows the operation
+             // BEFORE every + / - round (and once for the first plain round)
   }
 
   // S3-P2Z26 (user: random numbers + +/- within 10): each round is a plain
@@ -502,6 +504,16 @@ public class RabbitFeed : MonoBehaviour {
 
   bool _saidBoard, _saidTask;
   bool _waitCalled;      // the walk-in guidance was spoken
+  // USER ROUND 2026-09-29: the operation demo state (see Phase.Demo).
+  bool _plainDemoShown;
+  bool _demoIntroSaid;
+  bool _demoAdd;
+  bool _demoIsPlain;
+  int _demoCount;
+  int _demoK;
+  RabbitCarrot _demoPending;
+  bool _demoHandoverSaid;
+  float _demoHandoverT;
   float _ringPulseT;
   float _victoryT = -1f;
   float _resultPopT = 1f;
@@ -699,11 +711,12 @@ public class RabbitFeed : MonoBehaviour {
         if (_carrots[i] != null) _carrots[i].TickForTests(dt);
       }
       switch (Current) {
-        case Phase.Wait: TickWait(dt); break;
-        case Phase.Intro: TickIntro(dt); break;
-        case Phase.Feeding: TickFeeding(dt); break;
-        case Phase.Success: TickSuccess(dt); break;
-        case Phase.Wrong: TickWrong(dt); break;
+      case Phase.Wait: TickWait(dt); break;
+      case Phase.Intro: TickIntro(dt); break;
+      case Phase.Feeding: TickFeeding(dt); break;
+      case Phase.Success: TickSuccess(dt); break;
+      case Phase.Wrong: TickWrong(dt); break;
+      case Phase.Demo: TickDemo(dt); break;
       }
       TickActing(dt);
       TickCamera(dt);
@@ -745,23 +758,28 @@ public class RabbitFeed : MonoBehaviour {
 
   // Random round for the next question: plain / addition (sum <= 9) /
   // subtraction (result >= 1), never the same result twice in a row.
+  // USER ROUND 2026-09-29: arithmetic is HARD for this age — keep it rare:
+  // 80% plain / 12% add / 8% sub (subtraction rarest). Pure mapping for tests.
+  public static RoundKind KindForRoll(int roll) {
+    if (roll < 80) return RoundKind.Plain;
+    if (roll < 92) return RoundKind.Add;
+    return RoundKind.Sub;
+  }
+
   void SetRoundRandom() {
     int prev = Target;
     RoundKind kind = RoundKind.Plain;
     int a = prev, b = 0, result = prev;
     for (int guard = 0; guard < 40; guard++) {
-      int roll = UnityEngine.Random.Range(0, 3);
-      if (roll == 0) {
-        kind = RoundKind.Plain;
+      kind = KindForRoll(UnityEngine.Random.Range(0, 100));
+      if (kind == RoundKind.Plain) {
         a = UnityEngine.Random.Range(1, RabbitPlayBuilder.MaxTarget + 1);
         b = 0; result = a;
-      } else if (roll == 1) {
-        kind = RoundKind.Add;
+      } else if (kind == RoundKind.Add) {
         a = UnityEngine.Random.Range(1, RabbitPlayBuilder.MaxTarget);
         b = UnityEngine.Random.Range(1, RabbitPlayBuilder.MaxTarget + 1 - a);
         result = a + b;
       } else {
-        kind = RoundKind.Sub;
         a = UnityEngine.Random.Range(2, RabbitPlayBuilder.MaxTarget + 1);
         b = UnityEngine.Random.Range(1, a);
         result = a - b;
@@ -909,6 +927,27 @@ public class RabbitFeed : MonoBehaviour {
     _quickIntro = false;
     _saidBoard = false;
     _saidTask = false;
+    // USER ROUND 2026-09-29: a THOROUGH demo before EVERY + / - round (the
+    // child follows it), and exactly ONCE for the first plain "find the
+    // number" round of the visit (shows how to play). Plain rounds after that
+    // teach nothing (same as before).
+    bool arith = Kind != RoundKind.Plain;
+    bool firstPlain = Kind == RoundKind.Plain && !_plainDemoShown;
+    if (ArithmeticEnabled && (arith || firstPlain) && _student != null) {
+      _plainDemoShown = true;
+      _demoIsPlain = !arith;
+      _demoAdd = arith ? Kind == RoundKind.Add : true;
+      _demoCount = arith ? Mathf.Max(1, OpB) : 1;
+      _demoK = 0;
+      _demoPending = null;
+      _demoIntroSaid = false;
+      _demoHandoverSaid = false;
+      _demoHandoverT = 0f;
+      if (arith) PrefillBowl(OpA); // start state: bowl already holds A
+      To(Phase.Demo);
+      Log("demo start (kind=" + Kind + " count=" + _demoCount + " plain=" + _demoIsPlain + ")");
+      return;
+    }
     To(Phase.Intro);
     SetShot(0);
     // S3-P2Z26: for a+b / a-b the bowl starts with the FIRST operand (user:
@@ -916,6 +955,122 @@ public class RabbitFeed : MonoBehaviour {
     if (Kind != RoundKind.Plain) PrefillBowl(OpA);
     Log("question read (child on the play spot): kind=" + Kind + " a=" + OpA
       + " b=" + OpB + " target=" + Target);
+  }
+
+  // ---- operation demo (USER ROUND 2026-09-29) -----------------------------------
+  // The working student performs the operation while the teacher counts every
+  // move; the start state is restored and the child repeats it. Cadence is
+  // calm (one move per beat) and the bowl visibly changes each move.
+  void TickDemo(float dt) {
+    _phaseT += dt;
+    float t = _phaseT;
+    FaceTowards(_teacher, PlayerLocal(), dt, 4f);
+    if (_student != null && _student.Root != null)
+      FaceTowards(_student, PlayerLocal(), dt, 3f);
+    if (!_demoIntroSaid && t >= 0.3f) {
+      _demoIntroSaid = true;
+      if (_cam != null && _camDemo != null && _lookDemo != null)
+        try { _cam.FrameAnchor(_camDemo, _lookDemo, 14f); } catch (Exception) { }
+      Wave(_teacher);
+      Say(_demoIsPlain ? "Watch me first!" : "Watch me do it!",
+        _demoIsPlain ? "Con xem cô làm trước nhé!" : "Con xem cô làm mẫu nhé!");
+    }
+    // The moves: one per 1.15s beat starting at 1.4s (the intro line is short).
+    float moveStart = 1.4f;
+    float cadence = 1.15f;
+    int wantK = Mathf.Clamp(Mathf.FloorToInt((t - moveStart) / cadence) + 1, 0, _demoCount);
+    while (_demoK < wantK) {
+      _demoK++;
+      DemoMove(_demoK);
+    }
+    // The LAST pickup must land too (its carry beat ends after the final move).
+    if (_demoK >= _demoCount && _demoPending != null && t >= moveStart + _demoCount * cadence) {
+      ParkPending();
+    }
+    if (_demoK >= _demoCount && _demoPending == null && !_demoHandoverSaid
+        && t >= moveStart + _demoCount * cadence) {
+      _demoHandoverSaid = true;
+      _demoHandoverT = t;
+      Say("Your turn!", "Đến lượt con!");
+      // The question is read once, right before handover (the board already
+      // shows the operation).
+      if (!_demoIsPlain) AskOperationQuestion();
+    }
+    if (_demoHandoverSaid && t >= _demoHandoverT + (_demoIsPlain ? 1.6f : 3.4f)) {
+      FinishDemo();
+    }
+  }
+
+  void DemoMove(int k) {
+    // Park the previous pickup (its carry beat completes), then act.
+    ParkPending();
+    if (_demoAdd) {
+      Say("Add " + N(k) + " more!", "Thêm " + Nvi(k) + " củ nữa!");
+      RabbitCarrot c = FirstAvailableCarrot();
+      if (c != null) {
+        c.SetHand(_student != null && _student.CarryAnchor != null ? _student.CarryAnchor : _playerHand);
+        c.BeginCarry(0.2f);
+        _demoPending = c;
+      }
+    } else {
+      Say("Take " + N(k) + " away!", "Bớt " + Nvi(k) + " củ đi!");
+      if (_fed.Count > 0) {
+        RabbitCarrot c = _fed[_fed.Count - 1];
+        _fed.RemoveAt(_fed.Count - 1);
+        c.BeginReturnHome();
+        Count = _fed.Count;
+        SetPip(Count);
+        Sparkle(c.transform.position, 4, _sparkleSeed++, 0.3f);
+      }
+    }
+    if (_student != null) LessonMotion.Hop(_student);
+  }
+
+  void FinishDemo() {
+    ParkPending();
+    ResetBowlToStart();
+    Log("demo done; child control next (kind=" + Kind + ").");
+    if (_demoIsPlain) {
+      // Plain: hand to the normal intro (the board line is read next).
+      _saidBoard = false;
+      _saidTask = false;
+      To(Phase.Intro);
+      SetShot(0);
+    } else {
+      StartFeeding();
+    }
+  }
+
+  // The pending pickup lands in the bowl (shared by every demo move + the
+  // demo end; the previous bug was a pending carrot that never landed, so the
+  // handover gate never opened).
+  void ParkPending() {
+    if (_demoPending == null) return;
+    _demoPending.ParkInBowl(BowlSlotFor(_demoPending, _fed.Count));
+    _fed.Add(_demoPending);
+    _demoPending = null;
+    Count = _fed.Count;
+    SetPip(Count);
+    Sparkle(BowlWorld(), 4, _sparkleSeed++, 0.35f);
+  }
+
+  // Every carrot back home, then the round's start state (A in the bowl for
+  // +/-; empty for plain).
+  void ResetBowlToStart() {
+    for (int i = _fed.Count - 1; i >= 0; i--) {
+      if (_fed[i] != null) _fed[i].ResetHome();
+    }
+    _fed.Clear();
+    Count = 0;
+    SetPip(0);
+    if (Kind != RoundKind.Plain) PrefillBowl(OpA);
+  }
+
+  RabbitCarrot FirstAvailableCarrot() {
+    for (int i = 0; i < _carrots.Count; i++) {
+      if (_carrots[i] != null && _carrots[i].IsAvailable) return _carrots[i];
+    }
+    return null;
   }
 
   void PulsePlayRing(float dt) {

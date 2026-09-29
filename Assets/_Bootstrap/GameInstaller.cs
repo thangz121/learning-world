@@ -80,7 +80,13 @@ public class GameInstaller : MonoBehaviour {
     WorldTransitions = new WorldTransition(SubjectIds.Main); // Phase 3.0.x S1b: subject transition machine
     SceneOps = new UnitySceneOps();                          // Phase 3.0.x S1b: production scene adapter
     Tts = new CloudflareTranslateTtsProvider();          // Application, endpoint/config ngoài repo (Translate source)
-    Audio = new AudioDirector(EventBus, Tts);         // Application, cache L1/L2 + Mixer + Focus
+      Audio = new AudioDirector(EventBus, Tts);         // Application, cache L1/L2 + Mixer + Focus
+      // USER ROUND 2026-09-29: the theme tune starts at boot; the top-right
+      // chip toggles it and the choice persists in the save.
+      try {
+        MusicSettings.Init(Save != null ? Save.Load() : null);
+        MusicSettings.Bind(Audio);
+      } catch (System.Exception) { }
     Voices = new NpcVoiceProfileSelector(Save);       // Application, save.npcVoices + worldSeed
     // E2E hook (mic-less PC simulation): launch flag "-e2e-nomic" emulates a
     // machine with no microphone so the phone-mic offer/QR flow is reachable

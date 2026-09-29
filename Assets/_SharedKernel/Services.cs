@@ -35,6 +35,9 @@ public class PlayerProgress {
   // S3-P2L: system dialogue language (English default = old behavior for every
   // existing save; additive field, no format break).
   public DialogueLanguage Language = DialogueLanguage.English;
+  // User round 2026-09-29: the boot theme tune (top-right toggle). Additive
+  // field; old saves default to ON (music starts on the next boot).
+  public bool MusicOn = true;
 }
 public interface ILearningService {
   void ReportSeen(WordId id, LearnSource src);
@@ -158,6 +161,8 @@ public interface IAudioDirector {
   void PlaySfx(SfxId id);
   void PlayMusic(MusicId id);
   void SetAudioFocus(AudioFocusMode mode);
+  // User round 2026-09-29: the boot theme tune + the top-right on/off toggle.
+  void SetMusicEnabled(bool on);
 }
 public interface ISpeechSynthesisProvider {
   Task<TtsAudioResult> SynthesizeAsync(TtsRequest request, CancellationToken ct);

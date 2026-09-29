@@ -471,3 +471,23 @@ choose the smallest safe correction, continue.
   Verify: suite 695:690/0/5, build Succeeded errors=0, `-journeys3` 20/20
   (0 errors); shots show the dioramas and a text-free rabbit arena. Human
   review pending (no self-acceptance).
+- 2026-09-29: PHASE 4c (user round: arithmetic pacing + demos + theme music):
+  - ARITHMETIC RATIO 80/12/8 in BOTH approved games (plain/add/sub) via the
+    pure `KindForRoll` mapping (subtrahend rounds rarest — the hardest).
+  - THOROUGH DEMO BEFORE EVERY + / - ROUND in both arenas, and ONCE per visit
+    for the first plain "find the number" round: rabbit = the working student
+    performs the operation beat-by-beat while the teacher counts (carrot arcs
+    into/out of the bowl through the same primitives as live play; the start
+    state is restored, then the child repeats); stairs = the student starts on
+    the A-step, climbs/down B steps counting, walks back, handover. Demo
+    camera beats (CamDemo/LookDemo) + Hop/Point/Wave actor beats.
+  - THEME MUSIC at boot: procedural ~9.6s C-major loop in AudioDirector
+    (real `PlayMusic`/`SetMusicEnabled`, ducked under speech), persisted in
+    PlayerProgress.MusicOn via MusicSettings, and a parent-facing
+    "Nhạc bật/tắt" chip in the top-right corner next to the language chip.
+  - Journey extended: rabbit play-spot -> demo -> child control wait; FULL
+    stairs arena round trip (enter, listen circle, demo, exit back to C).
+  Verify: suite 698:693/0/5 (+CT-S15 ratio/demo/music pins), build Succeeded
+  errors=0, `-journeys3` 28/28 (0 errors, auto-closed) — logs show
+  "theme loop ON", "demo start (kind=Plain/Add...)" and "demo done; child
+  control next" for BOTH arenas. Human review pending (demos/music feel).

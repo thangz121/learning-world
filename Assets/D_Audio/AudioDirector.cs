@@ -57,6 +57,13 @@ public class AudioDirector : IAudioDirector {
   // plays through its own source so it never touches the voice channel.
   AudioSource _sfx;
   readonly Dictionary<string, AudioClip> _sfxClips = new Dictionary<string, AudioClip>();
+  // User round 2026-09-29: a looping THEME tune (procedurally synthesized,
+  // asset-free) with a persisted on/off toggle (MusicSettings); ducked under
+  // speech exactly like the design's music bus.
+  AudioSource _music;
+  AudioClip _themeClip;
+  bool _musicEnabled = true;
+  const float MusicBaseVolume = 0.30f;
 
   public float MusicDuckRatio { get; private set; }
   public float AmbientDuckRatio { get; private set; }
@@ -234,7 +241,77 @@ public class AudioDirector : IAudioDirector {
 
   public void PlayMusic(MusicId id) {
     CurrentMusicId = id.Value;
-    Debug.Log("[AudioDirector] Music play (W0 stub, crossfade in W1): " + id.Value);
+    // User round 2026-09-29: real looping theme (was a W0 stub). The boot
+    // goes through SetMusicEnabled so the persisted toggle decides.
+    if (_musicEnabled) StartThemeLoop();
+  }
+
+  // User round 2026-09-29: the top-right music toggle + the boot start.
+  public void SetMusicEnabled(bool on) {
+    _musicEnabled = on;
+    if (!on) {
+      try { if (_music != null) _music.Stop(); } catch (Exception) { }
+      Debug.Log("[AudioDirector] theme OFF (top-right toggle).");
+      return;
+    }
+    StartThemeLoop();
+  }
+
+  void StartThemeLoop() {
+    try {
+      EnsureMusicSource();
+      if (_music == null) return;
+      if (_themeClip == null) _themeClip = ThemeClip();
+      if (_themeClip == null) return;
+      _music.clip = _themeClip;
+      _music.loop = true;
+      _music.volume = MusicBaseVolume * (1f - MusicDuckRatio);
+      if (!_music.isPlaying) _music.Play();
+      Debug.Log("[AudioDirector] theme loop ON (volume " + _music.volume.ToString("F2") + ").");
+    } catch (Exception e) {
+      Debug.LogWarning("[AudioDirector] theme unavailable: " + e.Message);
+    }
+  }
+
+  void EnsureMusicSource() {
+    if (_music != null) return;
+    EnsureVoiceSource();
+    if (_voiceRoot == null) return;
+    _music = _voiceRoot.AddComponent<AudioSource>();
+    _music.playOnAwake = false;
+    _music.spatialBlend = 0f;
+  }
+
+  // A cheerful, slow 16-step loop in C major (melody + soft bass), ~9.6s.
+  // Deterministic: every boot sounds the same. Seamless: each note's envelope
+  // starts and ends at zero inside its slot.
+  static AudioClip ThemeClip() {
+    const int rate = 44100;
+    const float step = 0.6f; // seconds per step
+    float[] melody = { 523.25f, 659.25f, 783.99f, 659.25f,   // C5 E5 G5 E5
+                       698.46f, 880.00f, 1046.50f, 880.00f,  // F5 A5 C6 A5
+                       783.99f, 659.25f, 523.25f, 659.25f,   // G5 E5 C5 E5
+                       587.33f, 783.99f, 987.77f, 783.99f }; // D5 G5 B5 G5
+    float[] bass = { 130.81f, 174.61f, 196.00f, 146.83f };  // C3 F3 G3 D3 (4 steps each)
+    int n = Mathf.CeilToInt(rate * step * melody.Length);
+    float[] data = new float[n];
+    for (int i = 0; i < n; i++) {
+      float t = i / (float)rate;
+      int stepIdx = Mathf.Min(melody.Length - 1, (int)(t / step));
+      float local = t - stepIdx * step;
+      float env = Mathf.Min(1f, local * 60f) * Mathf.Exp(-2.6f * local);
+      double mp = 2.0 * Math.PI * melody[stepIdx] * t;
+      float m = (float)System.Math.Sin(mp) * env * 0.20f;
+      int bassIdx = (stepIdx / 4) % bass.Length;
+      float bLocal = t - (stepIdx / 4) * (step * 4f);
+      float bEnv = Mathf.Min(1f, bLocal * 30f) * Mathf.Exp(-1.4f * bLocal);
+      double bp = 2.0 * Math.PI * bass[bassIdx] * t;
+      float b = (float)System.Math.Sin(bp) * bEnv * 0.13f;
+      data[i] = Mathf.Clamp(m + b, -1f, 1f);
+    }
+    AudioClip clip = AudioClip.Create("theme_main", n, 1, rate, false);
+    clip.SetData(data, 0);
+    return clip;
   }
 
   public void SetAudioFocus(AudioFocusMode mode) {
@@ -531,17 +608,26 @@ public class AudioDirector : IAudioDirector {
     if (priority <= AudioPriority.P4_Feedback) {
       MusicDuckRatio = MusicDuckRatioP1;
       AmbientDuckRatio = AmbientDuckRatioP1;
+      UpdateMusicVolume();
       Debug.Log("[AudioDirector] Duck on: music -20%, ambient -40% during " + priority
         + " (single voice, others paused).");
     } else {
       MusicDuckRatio = 0f;
       AmbientDuckRatio = 0f;
+      UpdateMusicVolume();
     }
   }
 
   public void ClearDucking() {
     MusicDuckRatio = 0f;
     AmbientDuckRatio = 0f;
+    UpdateMusicVolume();
+  }
+
+  // The theme follows the duck ratios (music -20% under speech).
+  void UpdateMusicVolume() {
+    try { if (_music != null) _music.volume = MusicBaseVolume * (1f - MusicDuckRatio); }
+    catch (Exception) { }
   }
 
   void EnsureVoiceSource() {
