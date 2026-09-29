@@ -19,8 +19,10 @@ public static class TempP55JourneyBoot {
   static void Boot() {
     string[] args = Environment.GetCommandLineArgs();
     bool want = false;
+    // Driver-specific flag: both journey drivers are committed, so a plain
+    // "-journey" must never boot TWO drivers at once (they fight over clicks).
     foreach (string a in args) {
-      if (string.Equals(a, "-journey", StringComparison.OrdinalIgnoreCase)) { want = true; break; }
+      if (string.Equals(a, "-journey55", StringComparison.OrdinalIgnoreCase)) { want = true; break; }
     }
     if (!want) return;
     GameObject go = new GameObject("TempP55Journey");
@@ -30,7 +32,7 @@ public static class TempP55JourneyBoot {
 }
 
 public class TempP55Journey : MonoBehaviour {
-  const string ShotDir = "D:/Vscode/p55j-shots";
+  const string ShotDir = "E:/LWW/p55j-shots";
   int _shots;
   int _clicks;
   int _fed;
@@ -141,49 +143,61 @@ public class TempP55Journey : MonoBehaviour {
     Shot("05_arena_arrival");
     int target = game.Target;
     Log("target=" + target + " (area ladder)");
-    // 5. Intro + demo + handoff (poll the REAL phases).
-    yield return new WaitForSeconds(9f);
+    // 5. S3-P2Z19: no demo in the arena — walk to the marked play spot; the
+    // question is read there and the child gets control.
+    yield return WalkToWorld(RabbitPlayBuilder.WorldOffset + RabbitPlayBuilder.PlaySpotLocal,
+      1.4f, 90f, "play spot");
+    yield return WaitFor(delegate { return game.Current == RabbitFeed.Phase.Feeding; }, 90f, "question read");
     Shot("06_intro_board");
-    yield return WaitFor(delegate { return game.Current == RabbitFeed.Phase.Demo; }, 60f, "demo started");
-    yield return new WaitForSeconds(12f);
-    Shot("07_demo_feed");
-    yield return WaitFor(delegate { return game.DemoCarrotsFed >= target; }, 300f, "demo fed " + target);
-    Shot("08_demo_done");
-    yield return WaitFor(delegate { return game.Current == RabbitFeed.Phase.Feeding; }, 60f, "child control");
-    Shot("09_handoff");
-    // 6. The child's round: pick -> carry -> feed, one carrot at a time.
-    for (int i = 0; i < target; i++) {
+    // S3-P2Z23: the submit bell (the child turns the bowl's count in).
+    RabbitPlayBuilder bellB = FindObjectOfType<RabbitPlayBuilder>();
+    Vector3 bell = bellB != null && bellB.SubmitAnchor != null
+      ? bellB.SubmitAnchor.position
+      : RabbitPlayBuilder.WorldOffset + RabbitPlayBuilder.SubmitLocal;
+
+    // 6. PROVE a wrong submit: feed target+1, ring the bell, the bowl empties.
+    for (int i = 0; i <= target; i++) {
       RabbitCarrot c = FirstAvailable(game);
       if (c == null) { Log("WARN: no available carrot at " + i); _errors++; break; }
       yield return WalkToWorld(c.transform.position, 1.2f, 60f, "carrot " + i);
       yield return WaitForCarrot(c, RabbitCarrot.CarrotState.Carried, 25f, "carry " + i);
       if (i == 0) Shot("10_player_carry");
-      RabbitPlayBuilder builder = FindObjectOfType<RabbitPlayBuilder>();
-      Vector3 bowl = builder != null && builder.FeedAnchor != null
-        ? builder.FeedAnchor.position : c.transform.position;
+      RabbitPlayBuilder b = FindObjectOfType<RabbitPlayBuilder>();
+      Vector3 bowl = b != null && b.FeedAnchor != null ? b.FeedAnchor.position : c.transform.position;
       yield return WalkToWorld(bowl, 1.4f, 60f, "bowl " + i);
       yield return WaitForCarrot(c, RabbitCarrot.CarrotState.Consumed, 25f, "fed " + i);
       _fed++;
+    }
+    yield return WalkToWorld(bell, 1.3f, 60f, "bell (wrong)");
+    yield return WaitFor(delegate {
+      if (game.Current == RabbitFeed.Phase.Feeding) ClickWorld(bell);
+      return game.Submits >= 1; }, 40f, "wrong submit");
+    Shot("13_wrong_submit");
+    yield return WaitFor(delegate { return game.Current == RabbitFeed.Phase.Feeding && game.Count == 0; },
+      60f, "bowl reset");
+
+    // 7. Correct leg: feed exactly the target, ring the bell -> success.
+    for (int i = 0; i < target; i++) {
+      RabbitCarrot c = FirstAvailable(game);
+      if (c == null) { Log("WARN: no available carrot at retry " + i); _errors++; break; }
+      yield return WalkToWorld(c.transform.position, 1.2f, 60f, "retry carrot " + i);
+      yield return WaitForCarrot(c, RabbitCarrot.CarrotState.Carried, 25f, "retry carry " + i);
+      RabbitPlayBuilder b = FindObjectOfType<RabbitPlayBuilder>();
+      Vector3 bowl = b != null && b.FeedAnchor != null ? b.FeedAnchor.position : c.transform.position;
+      yield return WalkToWorld(bowl, 1.4f, 60f, "retry bowl " + i);
+      yield return WaitForCarrot(c, RabbitCarrot.CarrotState.Consumed, 25f, "retry fed " + i);
+      _fed++;
       Shot("11_fed_" + _fed);
     }
-    yield return WaitFor(delegate { return game.Current == RabbitFeed.Phase.Success; }, 40f, "success");
+    yield return WalkToWorld(bell, 1.3f, 60f, "bell (right)");
+    yield return WaitFor(delegate {
+      if (game.Current == RabbitFeed.Phase.Success) return true;
+      if (game.Current == RabbitFeed.Phase.Feeding) ClickWorld(bell);
+      return false; }, 60f, "success");
     yield return new WaitForSeconds(3f);
     Shot("12_success");
-    Log("SUCCESS count=" + game.Count + " life=" + LifeState(area) + " result=" + game.ResultShown);
-    // 7. Overshoot: one spare carrot -> correction -> success again.
-    RabbitCarrot spare = FirstAvailable(game);
-    if (spare != null) {
-      yield return WalkToWorld(spare.transform.position, 1.2f, 60f, "spare carrot");
-      yield return WaitForCarrot(spare, RabbitCarrot.CarrotState.Carried, 25f, "spare carry");
-      RabbitPlayBuilder b2 = FindObjectOfType<RabbitPlayBuilder>();
-      Vector3 bowl2 = b2 != null && b2.FeedAnchor != null ? b2.FeedAnchor.position : spare.transform.position;
-      yield return WalkToWorld(bowl2, 1.4f, 60f, "spare bowl");
-      yield return WaitFor(delegate { return game.Current == RabbitFeed.Phase.Correct; }, 30f, "correction");
-      Shot("13_overshoot_correct");
-      yield return WaitFor(delegate { return game.Current == RabbitFeed.Phase.Success; }, 120f, "corrected");
-      Shot("14_corrected");
-      Log("CORRECTED count=" + game.Count + " overshoots=" + game.Overshoots);
-    } else Log("WARN: no spare carrot for the overshoot leg");
+    Log("SUCCESS count=" + game.Count + " submits=" + game.Submits + " life=" + LifeState(area)
+      + " result=" + game.ResultShown);
     // 8. Exit through the real door -> garden.
     MicroWorldPortal exit = null;
     foreach (MicroWorldPortal p in FindObjectsOfType<MicroWorldPortal>()) {

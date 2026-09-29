@@ -119,10 +119,13 @@ public class StairHillBuilder : MonoBehaviour {
   public GameObject ListenRing { get; private set; }
   Transform _boardGroup;
   Transform _resultGroup;
-  GameObject _boardDigit;
   GameObject _resultDigit;
   Renderer[] _stepTops;                                 // torched while selected
   Material _stepGlowMat;
+  // S3-P2Z32 ("dải trục số"): the side number line. One orb per step lights as
+  // the child climbs; the round's target orb pulses a distinct sky colour.
+  Renderer[] _railOrbs;
+  Material _railDimMat, _railLitMat, _railGoalMat;
   public Transform CamTeaching { get; private set; }
   public Transform LookTeaching { get; private set; }
   public Transform CamDemo { get; private set; }
@@ -154,6 +157,35 @@ public class StairHillBuilder : MonoBehaviour {
     return _stepGlowMat;
   }
 
+  Material RailDim() {
+    if (_railDimMat == null) _railDimMat = LitEmissive(new Color(0.56f, 0.58f, 0.62f), 0.02f);
+    return _railDimMat;
+  }
+  Material RailLit() {
+    if (_railLitMat == null) _railLitMat = LitEmissive(Gold, 0.55f);
+    return _railLitMat;
+  }
+  Material RailGoal() {
+    if (_railGoalMat == null) _railGoalMat = LitEmissive(new Color(0.35f, 0.85f, 0.95f), 0.7f);
+    return _railGoalMat;
+  }
+
+  // "Dải trục số" state: orbs 1..current glow (the distance travelled), the
+  // round's target orb takes the sky colour (where the child is heading), the
+  // rest stay dim. current/goal are clamped; 0 = none.
+  public void SetRail(int current, int goal) {
+    if (_railOrbs == null) return;
+    for (int i = 0; i < _railOrbs.Length; i++) {
+      if (_railOrbs[i] == null) continue;
+      int step = i + 1;
+      Material m;
+      if (goal >= 1 && step == Mathf.Clamp(goal, 1, StepCount)) m = RailGoal();
+      else if (step <= current) m = RailLit();
+      else m = RailDim();
+      _railOrbs[i].sharedMaterial = m;
+    }
+  }
+
   // The listen ring settles to calm mint once the question was told.
   Material _listenSettledMat;
   public Material ListenSettledMaterial() {
@@ -162,26 +194,99 @@ public class StairHillBuilder : MonoBehaviour {
     return _listenSettledMat;
   }
 
-  // User round (chained questions): the next question swaps the board's digit
-  // in place — no scene reload, no walk back to the start.
+  // User round (chained questions): the next question swaps the board's board
+  // in place — no scene reload, no walk back to the start. Plain = a single
+  // digit; +/- = the round EXPRESSION "a + b" (S3-P2Z32, mirroring the carrot
+  // arena's question principles).
+  public int QuestionKind;
+  public int QuestionA = Target;
+  public int QuestionB;
+  int _resultValue = Target;
+
   public void SetTarget(int n) {
     BoardTarget = ClampTarget(n);
-    RebuildDigit(ref _boardDigit, _boardGroup, "SHNumberDigit",
-      new Vector3(0f, 1.5f, -0.18f), 1.15f, 0.9f, 0.5f);
-    RebuildDigit(ref _resultDigit, _resultGroup, "SHResultDigit",
-      new Vector3(0f, 1.2f, -0.18f), 0.6f, 0.45f, 0.45f);
-    NumberBoard = _boardDigit;
+    SetQuestion(0, BoardTarget, 0, -1);
+    SetResult(BoardTarget);
   }
 
-  void RebuildDigit(ref GameObject digit, Transform group, string name,
-      Vector3 pos, float w, float h, float emission) {
-    if (group == null) return;
-    if (digit != null) {
-      try { CharacterPresentation.DestroyNow(digit); } catch (Exception) { }
+  // Rebuild the board question for the current round. kind: 0 = plain number,
+  // 1 = a+b, 2 = a-b. result >= 0 renders the SOLVED equation (a op b = result).
+  public void SetQuestion(int kind, int a, int b, int result = -1) {
+    QuestionKind = kind;
+    QuestionA = ClampTarget(a);
+    QuestionB = ClampTarget(b);
+    if (_boardGroup == null) return;
+    Transform old = _boardGroup.Find("SHQuestion");
+    if (old != null) {
+      try { CharacterPresentation.DestroyNow(old.gameObject); } catch (Exception) { }
     }
-    digit = CountingGardenBuilder.Digit(group, name, pos, w, h, Gold, 90f, BoardTarget);
-    SetMaterial(digit, LitEmissive(Gold, emission));
-    NoShadows(digit);
+    GameObject group = new GameObject("SHQuestion");
+    group.transform.SetParent(_boardGroup, false);
+    group.transform.localPosition = new Vector3(0f, 1.42f, -0.18f);
+    PopulateQuestion(group.transform, kind, a, b, result);
+    NumberBoard = group;
+  }
+
+  void PopulateQuestion(Transform group, int kind, int a, int b, int result) {
+    a = ClampTarget(a);
+    b = ClampTarget(b);
+    if (kind == 0) {
+      GameObject d = CountingGardenBuilder.Digit(group, "SHNumberDigit",
+        Vector3.zero, 1.15f, 0.9f, Gold, 90f, a);
+      SetMaterial(d, LitEmissive(Gold, 0.5f));
+      NoShadows(d);
+      return;
+    }
+    bool solved = result >= 0;
+    if (!solved) {
+      const float dh = 1.05f;
+      const float dw = 0.68f;
+      DigitAt(group, "SHNumberDigitA", -0.72f, dh, dw, a);
+      DigitAt(group, "SHNumberDigitB", 0.72f, dh, dw, b);
+      Operator(group, kind, 0f, dh * 0.5f, 0.5f);
+      return;
+    }
+    // Solved: a op b = r, five evenly spaced glyphs (same layout as the carrot).
+    const float sh = 0.8f;
+    const float sw = 0.36f;
+    float oy = sh * 0.5f;
+    DigitAt(group, "SHNumberDigitA", -1.0f, sh, sw, a);
+    Operator(group, kind, -0.5f, oy, 0.36f);
+    DigitAt(group, "SHNumberDigitB", 0f, sh, sw, b);
+    Equals(group, 0.5f, oy, 0.36f);
+    DigitAt(group, "SHNumberDigitR", 1.0f, sh, sw, result);
+  }
+
+  void DigitAt(Transform group, string name, float x, float h, float w, int n) {
+    GameObject d = CountingGardenBuilder.Digit(group, name, new Vector3(x, 0f, 0f),
+      h, w, Gold, 90f, ClampTarget(n));
+    SetMaterial(d, LitEmissive(Gold, 0.5f));
+    NoShadows(d);
+  }
+
+  static void Operator(Transform group, int kind, float x, float y, float len) {
+    Box(group, "SHQuestionOpH", new Vector3(x, y, 0f), new Vector3(len, 0.12f, 0.12f), Gold);
+    if (kind == 1) {
+      Box(group, "SHQuestionOpV", new Vector3(x, y, 0f), new Vector3(0.12f, len, 0.12f), Gold);
+    }
+  }
+
+  static void Equals(Transform group, float x, float y, float len) {
+    Box(group, "SHQuestionEq0", new Vector3(x, y - 0.1f, 0f), new Vector3(len, 0.12f, 0.12f), Gold);
+    Box(group, "SHQuestionEq1", new Vector3(x, y + 0.1f, 0f), new Vector3(len, 0.12f, 0.12f), Gold);
+  }
+
+  // The result board's digit, rebuilt when the round advances.
+  public void SetResult(int n) {
+    if (_resultGroup == null) return;
+    if (_resultDigit != null) {
+      try { CharacterPresentation.DestroyNow(_resultDigit); } catch (Exception) { }
+    }
+    _resultValue = ClampTarget(n);
+    _resultDigit = CountingGardenBuilder.Digit(_resultGroup, "SHResultDigit",
+      new Vector3(0f, 1.2f, -0.18f), 0.6f, 0.45f, Gold, 90f, _resultValue);
+    SetMaterial(_resultDigit, LitEmissive(Gold, 0.45f));
+    NoShadows(_resultDigit);
   }
 
   // Runtime NavMesh bake for THIS scene only (CollectObjects.Children on the
@@ -205,6 +310,7 @@ public class StairHillBuilder : MonoBehaviour {
     BuildEntryAndExit(root);
     BuildPaths(root);
     BuildStairs(root);
+    BuildNumberRail(root);
     BuildTeachingArea(root);
     BuildDressing(root);
     BuildAnchors(root);
@@ -418,6 +524,36 @@ public class StairHillBuilder : MonoBehaviour {
     }
   }
 
+  // ---- the number-line rail ("dải trục số", S3-P2Z32) ---------------------------
+  // A slim slanted board beside the climb carrying ONE orb per step. The orbs
+  // light in sequence as the child climbs (the run reads as a number line) and
+  // the round's target orb takes a distinct sky colour. Pure visual: collider
+  // free + bake-ignored (inside the bush line, outside the walkable band).
+  void BuildNumberRail(Transform parent) {
+    GameObject rail = new GameObject("SHNumberRail");
+    rail.transform.SetParent(parent, false);
+    float x = CenterX + StairWidth * 0.5f + 0.26f;
+    float run = StepCount * Tread;
+    float height = StepCount * Rise;
+    float len = Mathf.Sqrt(run * run + height * height) + 0.3f;
+    float pitch = -Mathf.Atan2(height, run) * Mathf.Rad2Deg;
+    float zc = BaseZ + run * 0.5f;
+    float yc = height * 0.5f + 0.04f;
+    GameObject board = Box(rail.transform, "SHNumberRailBoard", new Vector3(x, yc, zc),
+      new Vector3(0.11f, 0.22f, len), StoneGrey);
+    if (board != null) {
+      board.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+      IgnoreFromBuild(board);
+    }
+    _railOrbs = new Renderer[StepCount];
+    for (int i = 1; i <= StepCount; i++) {
+      GameObject orb = Sphere(rail.transform, "SHNumberRailOrb" + i,
+        new Vector3(x, i * Rise + 0.14f, BaseZ + (i - 0.5f) * Tread), 0.17f, Gold, true);
+      if (orb != null) _railOrbs[i - 1] = orb.GetComponent<Renderer>();
+    }
+    SetRail(0, 0);
+  }
+
   void Flag(Transform parent, string name, Vector3 pos, float yaw) {
     Cylinder(parent, name + "Post", pos + new Vector3(0f, 0.75f, 0f), 0.07f, 1.5f, BasketBrown);
     GameObject cloth = Box(parent, name, pos + new Vector3(0.17f, 1.28f, 0f),
@@ -459,14 +595,10 @@ public class StairHillBuilder : MonoBehaviour {
     NoShadows(panel);
     // The digit rides 18cm OUT of the panel mass (journey shot: at 9cm the bars
     // intersected the panel and the seam read as z-fighting teeth), and takes
-    // no shadows (the glyph is the one thing a child must read).
-    GameObject digit = CountingGardenBuilder.Digit(board.transform, "SHNumberDigit",
-      new Vector3(0f, 1.5f, -0.18f), 1.15f, 0.9f, Gold, 90f, n);
-    SetMaterial(digit, LitEmissive(Gold, 0.5f));
-    NoShadows(digit);
-    NumberBoard = digit;
+    // no shadows (the glyph is the one thing a child must read). S3-P2Z32: the
+    // glyph is staged by SetTarget/SetQuestion, so the same slot can hold a
+    // single digit OR the round's "+/-" expression.
     _boardGroup = board.transform;
-    _boardDigit = digit;
 
     GameObject result = new GameObject("SHResult");
     result.transform.SetParent(parent, false);
@@ -477,16 +609,13 @@ public class StairHillBuilder : MonoBehaviour {
       new Vector3(1.2f, 1.05f, 0.12f), BoardCream);
     SetMaterial(resultFrame, LitEmissive(BoardCream, 0.18f));
     NoShadows(resultFrame);
-    GameObject resultDigit = CountingGardenBuilder.Digit(result.transform, "SHResultDigit",
-      new Vector3(0f, 1.2f, -0.18f), 0.6f, 0.45f, Gold, 90f, n);
-    SetMaterial(resultDigit, LitEmissive(Gold, 0.45f));
-    NoShadows(resultDigit);
     CountingGardenBuilder.CheckMark(result.transform, "SHResultCheck",
       new Vector3(0f, 1.82f, -0.18f), 0.3f, MintLeaf);
     result.SetActive(false);
     Result = result;
     _resultGroup = result.transform;
-    _resultDigit = resultDigit;
+    // Stage the round's question (plain digit by default) + its result digit.
+    SetTarget(n);
 
     // Camera markers (scene-authored transforms, no second camera system).
     CamTeaching = Marker(parent, "SHCamTeaching", CamTeachingPos);

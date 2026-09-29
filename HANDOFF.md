@@ -1,5 +1,9 @@
 # HANDOFF — PHASE 3.0 WORLD FOUNDATION (single source of truth từ đây)
 
+> **ĐỌC `SESSION_BRIEF.md` TRƯỚC** (bản tóm tắt phiên mới nhất — trạng thái git,
+> việc đang làm, fix đã chốt, lệnh verify; đọc xong file đó là đủ vào việc,
+> không cần đọc hết file này).
+
 Ngày bắt đầu: 2026-09-19. Project: `E:\LWW\learning-world` (Unity 6000.6.0f1, URP).
 
 > QUY ƯỚC (lệnh user 2026-09-19): handover các phase trước đã xóa. Chỉ ghi từ
@@ -2199,3 +2203,903 @@ Flow user chốt: sân chọn môn -> sân chọn loại trò chơi (Math Hub) -
   (xem §66/§67 cách làm); driver temp nằm ngoài commit, xoá sau khi xong.
 - maynode: đã push round này lên `origin/main`; game production chạy cho user
   xem; toàn bộ log/ảnh nằm trong `E:\LWW\P53JBuild\` (không commit).
+
+## 69. S3-P2Z14B — GAME #4 BUILD ROUND TRÊN MAYNODE (2026-09-25)
+
+- Lệnh user: "build cái tôi prompt trước" (brief 33 mục XÂY THÁP THEO SỐ) —
+  chưa chạy journey; sẽ đợi ASUS gửi 1 bundle CUỐI, gộp tất cả rồi journey
+  đầu-cuối. **KHÔNG push** cho tới khi user lệnh. Tôi đã chạy journey sớm 1 lần
+  khi chưa xong → user nhắc; dừng journey từ đây.
+- Cây hiện tại: nhánh `asus-merge-check` = main (stair round 2) + game#3
+  (79e9d60) + game#4 bundle 1504 (1679fbc + driver 8a2f7f8) + round này. Merge
+  1504 sạch, không conflict.
+- AUDIT + FIX 2 BUG THẬT của slice ASUS:
+  1. Carry bám ROOT player, không phải bàn tay (installer tính `hand` nhưng
+     không truyền): block lê dưới chân. Fix: `BuildTowerGame.Build(..., hand)`
+     + resolve `PlayerVisual.HandBone`; installer truyền hand. Pin P56O.
+  2. Ladder auto-advance NGAY khi Success → overshoot correction không bao giờ
+     chạy live (block dư tính sang rung kế với bảng cũ) + re-entry lệch rung.
+     Fix: advance CHỈ khi rời yard (`ExitToHub`/`TryExitForTests`) — đúng gate
+     IsInPlay của #2/#3; round xong giữ target (block dư = correction), rời
+     yard mới lên rung kế với lifecycle mới. Pin P56P.
+- ADD theo brief: `BuildYardGateHint` (glow vàng thở ở đệm cổng khi vào bán
+  kính 5m — presentation-only, portal vẫn giữ trigger + cold-start debounce;
+  P56Q) + next-block cue (đúng 1 block available nhấp nhô khi còn nợ khối, ẩn
+  khi đang cầm; P56R — học từ UnityTutorialSystem NextEventSelector).
+- TEST: +P56O/P/Q/R/S (flow target 1 + 7) /T (entry clear exit) → CT-P56 = 20
+  test. Suite **664/659/0/5** (baseline 660/655, 0 regression).
+- BUILD production `TempBuildP56.Build` (8 scenes): **Succeeded errors=0
+  warnings=42**, `LWE.World.dll` tươi (15:59). Boot smoke 1280x720 (không
+  `-journey`): `[Boot] hud='Chọn một cổng nhé!'`, FACE_OK, **0 exception**,
+  không dòng `[P56J]` (driver inert).
+- DRIVER (tooling, trong repo theo standing order): P55 đổi flag
+  `-journey` → `-journey55` (2 driver từng cùng boot → tranh click, khui ở
+  journey sớm); P56 thêm `-shot-dir` + `-lang en` path + tự ẩn Mic/PhoneCamera
+  HUD trước mỗi shot; leg re-entry nay kiểm tra "rung kế fresh lesson" (thay
+  vì chờ adopt cũ — live ladder không bao giờ adopt sau khi rời yard); build
+  driver P56 xuất `E:/LWW/P56Build` + `E:/LWW/P56JBuild`. Docs:
+  `docs/JOURNEY_DRIVERS.md` cập nhật. Blueprint/Report §14/§8 ghi research
+  độc lập + quyết định.
+- Journey sớm (trước khi user nhắc) khui đúng 2 lỗi tooling trên + card Mic
+  phủ màn hình suốt run — đã sửa, chưa chạy lại.
+- CHỜ: ASUS bundle cuối → merge → full standalone journey (t3/t5/t9 + evidence
+  §29) → human visual review. Chưa commit/push gì.
+
+## 70. S3-P2Z16 — GAMEPLAY #6/#7: HAI KHU CUỐI CỦA VƯỜN ĐẾM (2026-09-25)
+
+- Lệnh user: điền 2 game còn lại vào khu 1 (dâu) + khu 3 (ngô); khu 4 (bí) giữ
+  skeleton; MỌI khu có game phải có demo; demo dùng gameplay giản lược làm
+  hướng dẫn, NPC phải HỎI như game thật. Chưa chạy journey (chờ duyệt).
+- Gameplay: **#6 "Hái đúng số dâu"** (PICK→CARRY→BASKET) + **#7 "Bẻ đúng số
+  ngô lên xe"** (PICK→CARRY→CART); chung kit `HarvestArena` (item/state/game),
+  builder riêng từng loại cây/vật chứa; 1 arena target 1..9; ladder
+  {3,5,7,9,1} + CLI `-strawberry-target`/`-corn-target`; under/overshoot như
+  #2-#5; advance-on-leave; adopt re-entry.
+- Demo vườn `HarvestLessonDemo` (khu 1 + 3): cô hỏi số → trò đáp → trò diễn
+  lại gameplay thu nhỏ (3 cây bay tay → rổ/xe) → "Now it's your turn!" →
+  panel sau 1 lượt xem (audience gate + focused run như khu 2/5).
+- File mới: HarvestArena/HarvestPlayBuilder/StrawberryPlayBuilder/
+  CornPlayBuilder/HarvestLessonDemo (+meta tự cấp), 2 scene shell
+  StrawberryPlayScene/CornPlayScene (+meta GUID + Build Settings). Sửa:
+  CountingGardenBuilder (zone index/staged/scene/demoGate/camera), Area
+  (lifecycle+target 2 khu + parse CLI + advance), GameInstaller (dispatch + 2
+  build method + 2 demo wiring), CT-P50 (pin staged 3→5, skeleton dùng khu 4).
+- Test mới CT-P58 ×14 (plots/arenas/targets/flow dâu@3/ngô@5/undershoot/
+  overshoot/spam+hint/adopt/lazy+ladder/line-safety@9/carry-tay/demo Q&A).
+  Suite **694/689/0/5** (baseline 680/675 + 14; 0 regression).
+  Build production + journey **Succeeded errors=0** (11 scene).
+- Journey tổng đã mở rộng: thêm zone1/zone3 (game + demo shot) trước khi về
+  Math; sẵn sàng chạy khi user duyệt (full-HD, click thật).
+- Chưa commit/push gì (chờ lệnh).
+
+## 71. S3-P2Z17 — GAME #6 MATCH + JOURNEY: ĐỔI CƠ CHẾ SKIP LỖI NẶNG (2026-09-25)
+
+> LỆNH USER (nguyên văn — phiên sau làm đúng, lưu tại đây):
+> "Dừng lại. Ghi lại handoff để bắt đầu phiên sau. Hiện cả 3 phiên đều dừng lại
+> ở một chỗ lỗi. Tôi cần bạn thay đổi cơ chế. Nếu chỗ nào không đi được hoặc
+> lỗi nặng tương đương thì chụp lại lỗi chỗ đó và nhảy qua trò chơi tiếp theo
+> để journey tiếp và đánh dấu chỗ đó lỗi nặng cần đặc biệt quan tâm để sửa.
+> Chụp nhiều ảnh ở nhiều góc chỗ lỗi đó và bật sang trò khác hoặc nếu k được
+> thì fall back load lại. Lưu lại chỉ dẫn này vào handoff để tôi mở phiên khác."
+
+### A. TRẠNG THÁI HIỆN TẠI (tất cả CHƯA COMMIT — 50 file thay đổi/mới)
+
+- Git: nhánh `asus-merge-check`; game #5 (delivery) đã merge + commit trước đó
+  (`810e67e`). Game #6 Match + 2 khu harvest + driver journey + các fix dưới
+  đây nằm trong WORKTREE CHƯA COMMIT. **KHÔNG push (chờ lệnh user).**
+- Game #6 "GHÉP ĐÚNG CẶP" (Math Hub gate `match_meadow`, game cuối chuỗi):
+  - `Assets/A_World/MatchMeadow/MatchArea.cs` (contract + pair ladder 1→2→3,
+    advance-on-leave, `-match-pairs`), `MatchMeadowBuilder.cs` (REFERENCE
+    pedestals + PAIR slots + SEARCH field 6 spot + pool 3 họ × 4 màu ×
+    ref+cand + reward arch), `MatchGame.cs` (MatchItem/MatchPadZone/game:
+    Intro→Demo→Handoff→Playing→Success; demo thật; sai nhắc nhẹ + vật tự về;
+    thắng khi MỌI cặp khớp; line ≤6 token), `MatchMeadowScene.unity` (+meta,
+    Build Settings). Gate portal + `MicroGateHint` (rename từ
+    BuildYardGateHint) + `MatchHubReturnLocal (8.2,0,7.6)`; `MicroWorldPortal`
+    thêm `MatchArea` dispatch; `GameInstaller` dispatch + build + WireMathContent.
+  - Tests `CT-P59_MatchGame.cs` ×12 (gate/hint, arena, round composition theo
+    pairs, flow 1 cặp, flow 3 cặp, sai-match nhẹ, spam, adopt, lazy, ladder+CLI,
+    line-safety@3, carry-theo-tay). Suite đã xanh 706/701/0/5.
+- Game #6/#7 nội bộ (2 khu vườn 1 dâu / 3 ngô): `HarvestArena.cs`,
+  `HarvestPlayBuilder.cs`, `Strawberry/CornPlayBuilder.cs`,
+  `HarvestLessonDemo.cs` (demo vườn NPC HỎI – trò ĐÁP), 2 scene shell + Build
+  Settings; zone flags + demo camera; Area lifecycle/ladder `-strawberry-target`
+  / `-corn-target`; `CT-P58_HarvestGames.cs` ×14. Khu 4 (bí) giữ skeleton.
+- Docs: `COUNTING_GAME6_7_BLUEPRINT.md`, `COUNTING_GAME6_MATCH_BLUEPRINT.md`
+  (gameplay #6), `JOURNEY_DRIVERS.md` cập nhật. **CÒN THIẾU:
+  `COUNTING_GARDEN_REFERENCE_REVIEW.md`** (report tổng #1-#6 theo brief §36 —
+  chưa viết; làm sau khi journey có kết quả).
+- Build: production + journey **Succeeded errors=0** (12 scene, gồm 2 harvest +
+  MatchMeadow); boot chưa chạy lại sau các fix NavMesh cuối.
+- Journey driver: `Assets/A_World/FullJourney/TempFullJourney.cs` (flag
+  `-journeyfull`, full-HD, click thật, census/anomaly). Diag tạm:
+  `Assets/A_World/FullJourney/TempDiagGarden.cs` (flag `-diag`) — **XÓA sau
+  khi xong** (temp tooling).
+
+### B. BUG THẬT ĐÃ FIX TRONG PHIÊN NÀY (source thật, không ảnh giả)
+
+1. **PORTAL MICRO-WORLD ĐẶT SAI PHÍA (cả 4 cổng hub)** — root cause: MathWorld
+   root được GameInstaller dời tới WorldOffset TRƯỚC khi BuildContent chạy,
+   nhưng portal tính `hub(0,0,0) - gate.transform.position(world)` → toHub chỉ
+   ngược ra ngoài hub; portal nằm 0.7m phía thân cổng; EntryAnchor (miệng phía
+   hub) cách portal 2.4m > fireRadius 1.8 → trẻ đứng ở miệng cổng KHÔNG BAO
+   GIỜ kích hoạt. Fix: tính LOCAL (`hub - gate.transform.localPosition`, set
+   `localPosition`) cho cả 4 (counting/build/delivery/match). Diag xác nhận:
+   portal counting giờ ở (49.68,0,-2.82), vào vườn ở t=5s (`diag2.log`).
+2. **NAVMESH ISLAND DO DECOR BAKE** — sân thỏ: player kẹt ở local (-0.3,0.2,0.9)
+   không click nào đi được (render mesh thấp bake thành đảo/carve). Fix hệ
+   thống: `IgnoreAllDecorExceptGround` — mọi renderer decor được
+   `NavMeshModifier.ignoreFromBuild`, chỉ chừa ground plane; áp cho
+   RabbitPlayBuilder (RPGround), CountingGardenBuilder (CGGround),
+   CountingPlayBuilder (CPGround), HarvestPlayBuilder (HVGround),
+   MatchMeadowBuilder (MMGround), BuildTowerBuilder (BTGround),
+   DeliveryBuilder (DVGround). `IgnoreFromBuild` nay idempotent (không thêm
+   modifier trùng). **CHƯA verify bằng journey sau fix này.**
+3. Log trung thực khi cổng không mở: `WorldTransition.EnterMicroAsync` log lý
+   do từ chối (state/busy/micro); 4 area log `micro load refused + LastError`.
+4. Driver fixes (đã compile, chưa journey-verify trọn):
+   - `WaitForCarry`: nhặt theo vật THẬT SỰ được cầm (`game.Carried`) thay vì
+     chờ đúng index (click có thể trúng vật bên cạnh) + xoay offset click.
+   - Stair: `ClimbTo` đi tới ĐÚNG bậc (ladder quấn 9→1 trước đây đứng ở 9 vì
+     điều kiện `>= step`).
+   - Bóng: chờ sửa-thừa kết thúc ở `FreePlay` HOẶC `Success` (trước chỉ chờ
+     Success → timeout dù game đã xong).
+   - Thoát arena 2 chặng (điểm sạch rồi tới cửa) cho rabbit/harvest/match.
+   - Watchdog: khi leg đang cần di chuyển mà đứng yên >10s → chụp
+     `STUCK_n_<leg>`, thử re-click + side-step; bất khả kháng → copy log
+     `stuck_runN.log` + tự khởi động lại game (tối đa 3 run, mỗi run 1
+     shot-dir riêng, cờ `-journey-run N`).
+
+### C. CÁC ĐIỂM LỖI NẶNG ĐÃ GẶP (3 vòng journey — cần journey verify lại)
+
+1. Sân thỏ (game #3): kẹt cứng ở plaza/carrot patch (NavMesh island) — đã fix
+   blanket-ignore, CHƯA chạy lại. Nghiêm trọng nhất.
+2. Vườn Đếm focus zone 2/5: có lúc đứng yên >10s (watchdog cứu được) — cùng
+   họ lỗi bake; blanket-ignore kỳ vọng hết.
+3. Nhặt bóng/cà rốt hụt click (watchdog/WaitForCarry cứu) — đã siết driver.
+4. Bậc thang target 1 sau 9 — đã fix driver (chưa verify lại).
+5. Bóng sửa-thừa settle — đã fix driver.
+
+Bằng chứng các vòng: `E:\LWW\fullj-shots\` (run1: `stuck_run1.log` +
+`STUCK_*.png`; `run2/run3/*.png` đủ chặng tới bậc thang),
+`E:\LWW\fullj2.log`, `fullj3.log`, `fullj4.log`, `diag2.log` (portal fix).
+
+### D. VIỆC PHIÊN SAU (theo thứ tự, đúng lệnh user)
+
+1. **Đổi cơ chế driver** (lệnh §71 đầu mục): thêm bảng stage
+   (`garden.balls`, `garden.stairs`, `garden.rabbit`, `garden.strawberry`,
+   `garden.corn`, `hub.tower`, `hub.delivery`, `hub.match`, `return.main`) +
+   cờ `-journey-from <stage>`.
+   Khi một stage lỗi nặng/không đi được:
+   a. **Chụp nhiều ảnh nhiều góc** tại chỗ lỗi: orbit camera thật bằng chuột
+      phải kéo (SmartCamera đã hỗ trợ orbit S4) ≥4 góc + 1 ảnh zoom-out;
+      lưu `ERR_<stage>_<n>.png`.
+   b. Ghi marker `severe_errors.txt` (stage, thời điểm, vị trí, lý do) +
+      log `[FULLJ] SEVERE ...`.
+   c. **Nhảy sang trò kế tiếp**: nếu rời arena được (cửa mở) thì đi ra rồi
+      tiếp tục stage sau trong cùng run; nếu không rời được thì **fall back
+      reload** (`-journey-from <stage kế>`) để run mới bắt đầu từ stage kế,
+      KHÔNG chạy lại stage lỗi.
+   d. Stage bị skip được đánh dấu SEVERE (đặc biệt quan tâm sửa sau).
+2. Chạy lại EditMode đầy đủ (kỳ vọng 706/701/0/5) + build production/journey.
+3. Chạy FULL STANDALONE JOURNEY (full-HD, click thật) với cơ chế skip; thu
+   ảnh theo brief §29/§30 của game #6 + ảnh lỗi nhiều góc; ghi rõ stage nào
+   PASS/SKIP/SEVERE.
+4. Sửa các điểm SEVERE (nguồn thật), verify lại từng điểm (EditMode + journey
+   nhỏ), rồi chạy journey sạch cuối.
+5. Viết `docs/COUNTING_GARDEN_REFERENCE_REVIEW.md` (report tổng #1-#6 theo
+   brief §36: mechanic/world/gate/demo/gameplay/camera/audio/NPC/completion/
+   exit/persistence/tests + capability đã chứng minh; ghi rõ TECHNICAL PASS /
+   VISUAL REVIEW REQUIRED; KHÔNG tạo rulebook mới).
+6. Xóa tooling tạm (`TempDiagGarden.cs`; giữ driver committed theo standing
+   order), cập nhật HANDOFF §72, **KHÔNG commit/push khi chưa có lệnh**.
+   Điểm dừng cuối chuỗi: BUILD → FULL JOURNEY → EVIDENCE → STOP chờ human
+   visual review.
+
+### E. LỆNH CHẠY NHANH (máy maynode, Unity 6000.6.0f1)
+
+- Suite: `Unity.exe -batchmode -projectPath E:\LWW\learning-world -runTests
+  -testPlatform EditMode -testResults E:\LWW\x.xml -logFile E:\LWW\x.log`
+  (không `-quit`; poll XML).
+- Build journey: `-batchmode -projectPath ... -executeMethod
+  TempBuildP56.BuildJourney -logFile ... -quit` → `E:\LWW\P56JBuild`.
+- Journey: `LWE.exe -screen-width 1920 -screen-height 1080
+  -screen-fullscreen 0 -logFile <log> -journeyfull -lang en
+  -shot-dir E:/LWW/fullj-shots` (kèm `-journey-from <stage>` sau khi làm
+  cơ chế skip).
+- Quy ước: mọi thứ batch/standalone trên máy này; user tự nhìn mắt cuối
+  (UltraViewer nếu cần); không push.
+
+## 72. S3-P2Z17 — DRIVER THÔNG MINH + FULL JOURNEY + 4 BUG GAME THẬT (2026-09-25, maynode, USER PAUSE)
+
+> Trạng thái: user lệnh "tạm dừng". Game đã kill sạch (không còn LWE/Unity).
+> Tất cả CHƯA COMMIT. Dừng giữa journey6 (đang ở hub.tower) — xem kết quả bên dưới.
+
+### A. DRIVER STAGE ENGINE (đã làm, compile + build verified)
+
+- `TempFullJourney.cs` rewrite thành stage engine: bảng stage
+  `garden.balls|stairs|rabbit|strawberry|corn`, `hub.tower|delivery|match`,
+  `return.main`; cờ `-journey-from <stage>` (resume, cũng bật driver), `-journey-run N`.
+- SEVERE: timeout/stall/thiếu game bị đánh dấu; chụp 6 ảnh nhiều góc
+  (`ERR_<stage>_0..4` + `_zoom`, orbit thật + lăn zoom);
+  ghi `<shot-dir>/severe_errors.txt` (giờ, stage, vị trí, lý do, run) +
+  `[FULLJ] SEVERE ...`; `journey_summary.txt` liệt kê PASS/SEVERE từng stage.
+- Skip: cửa arena mở được → thoát và chạy stage kế trong CÙNG run; không thoát
+  được → fallback reload `-journey-from <stage kế>` (cap 4 run, run-dir không
+  lồng nhau, copy log run cũ thành `severe_runN.log`).
+- Driver harden: click item lấy TÂM COLLIDER (`PickPoint` — ray log chứng minh
+  click root bay qua đầu cây, trúng đất sau lưng); approach ring trước khi nhặt;
+  click rổ (IClickTarget door) cho ball; `Completed` được nhận ở wait bóng;
+  guard NRE sau severe; watchdog 14s; return.main tìm `IsReturnGate`
+  (marker bind `SubjectIds.Math`, không phải `SubjectIds.Main`).
+- Docs: `docs/JOURNEY_DRIVERS.md` cập nhật stage engine.
+
+### B. 4 BUG GAME THẬT ĐÃ FIX (suite 706/701/0/5 sau mỗi lần sửa)
+
+1. `HarvestPlayBuilder.BuildEntryAndExit`: thiếu `exit.PlayExit = true` →
+   cổng về dâu/ngô rơi vào nhánh `ExitToHub()` (sai đích) ⇒ thêm bit.
+2. Camera kẹt Interaction sau đường sửa-lỗi-thừa: 5 game
+   (`RabbitFeed`, `HarvestArena`, `BuildTowerGame`, `DeliveryGame`, `MatchGame`)
+   `TickCamera` guard cũ `if (_followHanded && Current != Success) return;`
+   khiến Success re-issue mãi sau correction (`FinishCorrect` set `_followHanded`
+   nhưng không `_cameraDone`) ⇒ đổi thành `if (_followHanded) return;`
+   (handoff sạch giữ nguyên vì TickSuccess set cả `_cameraDone`).
+3. `MatchMeadowBuilder.BuildFamilyItem`: item game #6 KHÔNG có collider nào
+   (visual bị StripCollider, root không thêm) ⇒ trẻ không thể click nhặt
+   (game click-dead) ⇒ thêm `BoxCollider` trên root (bake-ignored; carry tự
+   tắt/bật collider).
+4. (driver) `return.main` không tồn tại gate `SubjectIds.Main` trong MathScene.
+
+### C. KẾT QUẢ JOURNEY (5 run trong phiên; evidence `E:\LWW\fullj-z17{,c,d,e,f,g}`)
+
+- **PASS (đã chứng minh bằng real-click journey)**: garden.stairs (×5),
+  garden.rabbit, garden.strawberry, garden.corn (PickPoint fix xác nhận chạy
+  journey6: rabbit/strawberry/corn PASS liên tiếp), hub.tower (×4),
+  hub.delivery (×4), hub.match (diag + journey5, sau fix collider),
+  return.main (×3, sau fix gate).
+- **garden.balls**: core loop (2 bóng + sửa-thừa + adopt) chạy đúng ở run1
+  nhưng driver cũ chờ `FreePlay|Success` trong khi game settle `Completed`
+  (đã sửa); các run sau chết ở bước trước: **Play click của zone panel bị nuốt
+  cho zone đầu tiên sau khi vào vườn** (log game không có `enter-play`; các zone
+  sau click ăn ngay). Đã thêm retry re-focus nhưng retry tự bấm lại spot mỗi 2s
+  → reset mini-demo liên tục nên cũng fail.
+- **Remote còn nợ (next session, 2 edit nhỏ trong `TempFullJourney.cs`)**:
+  (a) gọi `DismissSystemDialogs()` ngay trước mỗi lần `ClickPanelPlay` trong
+  FocusAndPlay (nghi dialog dev hiện lại nuốt click đầu);
+  (b) retry re-focus chỉ click spot MỘT lần rồi poll panel (không re-click 2s).
+  Sau đó chạy lại journey đầy đủ; carry flake đã hết nhờ PickPoint.
+
+### D. VERIFY ĐÃ CHẠY
+
+- EditMode: **706/701/0/5** (hai lần: sau Harvest+camera+match fix và sau đó).
+- Build production `E:\LWW\P56Build` + journey `E:\LWW\P56JBuild`:
+  **Succeeded errors=0** (DLL tươi 22:15:54); production build lần cuối 21:07.
+- `TempDiagGarden.cs` (+meta) đã xóa; driver ở lại theo standing order.
+- Chưa commit/push (chờ lệnh user).
+
+## 73. RESULT BOARD PAYOFF FRAMING (user: "các bảng result board cạnh camera bị che") (2026-09-26, maynode, TẠM DỪNG)
+
+- Điều tra bằng ảnh journey THẬT: board "N+tick" bị cắt mép phải/góc dưới-phải
+  ở strawberry/rabbit success (`E:\LWW\fullj-z17g\52_strawberry_success.png`,
+  `38_36_rabbit_success.png`); #1 ball + #2 stair hiện đủ. Nguyên nhân số: 6
+  arena đặt result right-front (3.2..3.6, 0, -0.6) = NGAY CẠNH camera success
+  (2.8..2.9, 2.0, -0.6..-0.8) → lệch 58–90° > nửa FOV ngang 45.7°.
+- FIX đã áp dụng (7 edit + comment lý do tại chỗ): CountingPlay (2.3,0,3.6),
+  Rabbit (0.9,0,3.3), Harvest dâu/ngô (4.0,0,3.0), BuildTower (4.0,0,3.0),
+  Delivery (4.6,0,2.9), Match (3.2,0,5.6); Corn dời cờ reward sang trái
+  (BinPos-1.25) vì cờ che board mới; Stair giữ nguyên. Góc sau dời 12–31°.
+- Pin mới `CT-P60_ResultBoardFraming.cs` (8 test: trước camera, <35°, <9m, mặt
+  board hướng camera; tower check target 1+9 theo công thức IssueShot).
+  Targeted run: **8/8 passed / 0 failed** (`E:\LWW\p60a.xml` + `p60a.log`).
+- VERIFY ĐẦY ĐỦ (2026-09-26): suite **714/709/0/5** (`p60full.xml`); build
+  production `E:\LWW\P56Build` + journey `E:\LWW\P56JBuild` **Succeeded**
+  (World.dll tươi 18:12/18:13); boot smoke **FACE_OK 0 exception**
+  (`p60-boot.log`).
+- Journey run 1 `-journey-from garden.rabbit` (real click, full-HD): **7/7
+  STAGE_PASS** (rabbit/strawberry/corn/tower/delivery/match/return.main),
+  severe=0 errors=0, 99 shots `E:\LWW\p60-shots` — payoff shots mở mắt xác
+  nhận bảng "N+tick" hiện TRỌN trong khung (17/31/45/60/79/92_*).
+- Journey run 2 `-journey-from garden.balls`: `garden.balls` **SEVERE** đúng nợ
+  §72 (stall `zone2 refocus` — mini lesson chạy mà panel play không mở cho khu
+  đầu sau khi vào vườn); driver tự chụp 6 ảnh `ERR_garden.balls_*` +
+  `severe_errors.txt` rồi skip `garden.stairs` (cơ chế skip chạy đúng).
+  Evidence `E:\LWW\p60b-shots` + `p60b-journey.log`; game đã kill.
+- Tất cả CHƯA commit.
+- Phiên sau: đọc **`SESSION_BRIEF.md`** trước (đã gắn pointer đầu file này) —
+  không cần đọc lại hết HANDOFF.
+
+## 74. S3-P2Z18 — FIX SEVERE garden.balls + FULL JOURNEY SẠCH + REPORT TỔNG (2026-09-26, maynode)
+
+- User lệnh "làm tất cả các thứ còn lại" (§72D/§73): fix SEVERE garden.balls →
+  suite + build → full journey → report tổng → STOP chờ mắt user. Không commit.
+- ROOT CAUSE SEVERE (từ evidence thật `E:\LWW\p60b-shots` + `p60b-journey.log`,
+  không đoán): watchdog journey giữ arm suốt `FocusAndPlay`; demo zone 2 dài
+  ~28s > ngưỡng stall 14s nên "trẻ đứng xem demo" bị coi là kẹt → rescue
+  **re-click đúng spot** → `GardenZoneSpot.OnClicked` → `FocusZone` → ẩn panel
+  + restart demo (log 296/319/351 ngay sau panel mở 294/350) → driver tự đóng
+  panel trước khi tap Play → "panel closed without loading" → chết vòng lặp.
+- Fix (2 file, tối thiểu):
+  (a) `TempFullJourney.FocusAndPlay`: disarm watchdog ngay khi zone focused
+      (chờ demo = stand-still by-design; watchdog chỉ giữ pha travel/click) —
+      cả vòng focus lẫn nhánh re-focus.
+  (b) `CountingDemo.StartFocusedLesson`: lesson AMBIENT đang chạy (trẻ đi vào)
+      được ADOPT thành focused khi trẻ click plot — zone sở hữu nên distance
+      không còn abort giữa run (trái contract cũ).
+  Pin mới `P50E_ClickAdoptsAmbientPass` (CT-P50 ×5) — targeted 5/5 PASS.
+- Verify: EditMode **715/710/0/5** (baseline 714/709 + P50E, 0 regression;
+  `E:\LWW\p61-full.xml`). Build production `E:\LWW\P56Build` + journey
+  `E:\LWW\P56JBuild` **Succeeded errors=0** (World.dll 19:08:01/19:08:25; UTP
+  success trong log journey). Boot smoke production 1280x720: **FACE_OK,
+  0 exception**, HUD `'Chọn một cổng nhé!'` (`p61-boot.log`).
+- FULL JOURNEY từ '(start)' (real click, full-HD, một run, không relaunch):
+  **9/9 STAGE_PASS** — balls 83s / stairs 99s / rabbit 115s / strawberry 71s /
+  corn 98s / tower 178s / delivery 234s / match 108s / return.main 6s;
+  **severe=0 errors=0**, 118 shots `E:\LWW\p61-shots` + `journey_summary.txt`;
+  STUCK #1-4 (carrot/apple/match pad/match exit) đều được rescue, không severe.
+  Đã mở mắt: `05_zone2_panel` (panel mở đúng, hết bị driver đóng),
+  `11_14_ball_success` (board "2" trọn khung), `39_36_rabbit_success` (board
+  payoff trọn khung — không regression từ fix).
+- `docs/COUNTING_GARDEN_REFERENCE_REVIEW.md` ĐÃ VIẾT (report tổng #1-#6 theo
+  §72D: mechanic/world/gate/demo/gameplay/camera/audio/NPC/completion/exit/
+  persistence/tests + capability đã chứng minh; TECHNICAL PASS / VISUAL REVIEW
+  REQUIRED; không tạo rulebook mới).
+- Trạng thái: 58 file thay đổi/mới CHƯA commit (52 cũ + CountingDemo/CT-P50/
+  TempFullJourney/Review doc). Không commit/push (chờ lệnh user).
+- STOP theo §72D: chờ user nhìn evidence (p61-shots + các vòng trước) và chốt
+  visual review; khu 4 "Vườn bí" vẫn chờ design/gameplay từ user.
+
+## 75. S3-P2Z19 — VÒNG RABBIT: DEMO VƯỜN CHO KHU CÀ RỐT + ARENA KHÔNG DIỄN LẠI (2026-09-27, maynode, sau mất điện)
+
+- BỐI CẢNH GIÁN ĐOẠN: phiên trước (23:07–23:19 ngày 2026-09-26) đang làm dở vòng
+  "vườn củ cà rốt ở ngoài chưa có demo ở sân chọn game" thì MẤT ĐIỆN giữa lúc
+  EditMode — `p62-p55.log` dừng ở "Scripts have compiler errors": 10 lỗi compile
+  (`RabbitLessonDemo.cs`: `To` chưa định nghĩa + `Lerp` thiếu tham số;
+  `RabbitFeed.cs`: `Phase.Demo` đã xóa, `WalkSpeed` đã xóa theo in-arena demo).
+  HANDOFF/SESSION_BRIEF chưa kịp ghi → nhịp này đọc lại cây, hoàn tất dở dang.
+- SỬA COMPILE (đúng thiết kế dở dang, không đổi hành vi): thêm helper
+  `void To(int next) { _beat = next; _beatT = 0f; }` trong RabbitLessonDemo;
+  `Vector3.Lerp(mid, BowlPos, t)`; bỏ `Current != Phase.Demo` khỏi guard
+  `RabbitFeed.TickCamera`; xóa `WalkTo` chết trong RabbitFeed (không caller).
+- NỘI DUNG VÒNG (theo code + comment tại chỗ):
+  * VƯỜN: `RabbitLessonDemo` (mới) — diorama mini 0.62 tại plot cà rốt (zone 0):
+    bảng "3" + cô Tess hỏi số, trò Milo đáp + diễn lại gameplay rút gọn
+    (pick→carry→feed lên bát trên mái hutch); audience gate 1 lượt + focused
+    run (StartFocusedLesson/StopFocusedLesson); nối `spot.demoGate` — panel
+    "Vào chơi" chỉ mở sau 1 lượt xem, y hệt khu 2/5/dâu/ngô.
+  * ARENA (`RabbitFeed`): bỏ HẲN demo + handoff trong arena. Thêm phase `Wait`
+    + VỊ TRÍ CHƠI (đĩa vàng + ring pulse + biển "Come here!"): cô gọi bé vào,
+    bé bước vào bán kính mới đọc câu hỏi (board→số→cho ăn N củ). Bát trên MÁI
+    HUTCH là BỘ ĐẾM — cà rốt cho ăn NẰM LẠI trong bát (bảng pip 3x3 bỏ). Bunny
+    + bát lên nóc hutch (RoofTopY 1.34). Cà rốt thật Kenney (bỏ trứng cam
+    primitive — user: "quá xấu"). Cà rốt cầm theo XƯƠNG TAY player (HandBone,
+    fix bug installer resolve nhưng không truyền). Nudge undershoot cap
+    MaxUnderNudges=2/lượt + không lặp cùng Count (user: "spam audio").
+  * CAMERA KHU 0 (thêm trong nhịp này): focus khu cà rốt vào nhánh
+    "trong-khu" như stair/dâu/ngô (shot 27/28 cũ cho thấy mini bị cổng che +
+    quá nhỏ so với chuẩn các khu).
+- Test: CT-P55 viết lại theo luồng mới (AdvanceToFeeding đưa bé vào play spot;
+  playground ring/bowl-counter/roof-bunny; không còn DemoCarrotsFed/Phase.Demo).
+- VERIFY (chuỗi đầy đủ, batch + journey thật): EditMode **715/710/0/5** (2 lần:
+  `p62-rabbit.xml` + `p62-rabbit2.xml` sau camera fix, 0 regression) → build
+  production + journey **Succeeded errors=0** (World.dll 00:36:14/00:36:49) →
+  boot smoke production **FACE_OK, 0 exception** (`p62-boot.log`) → full journey
+  real-click **9/9 STAGE_PASS, severe=0 errors=0** cả 2 vòng: `E:\LWW\p62-j-shots`
+  (114 shots, trước camera fix) + `E:\LWW\p62b-j-shots` (114 shots, 494 clicks,
+  chốt sau camera fix) + `journey_summary.txt` + không có `severe_errors.txt`.
+  Shot trọng tâm: `27_zone0_demo`, `28_zone0_panel` (mini lesson khung mới),
+  `30_31_rabbit_question`, `31_34_rabbit_carry`, `35_36_rabbit_success`.
+- CHỜ USER: (1) mắt visual vòng rabbit (p62b-j-shots); (2) trả lời câu hỏi mở:
+  comment trong RabbitFeed trích lời user "TẤT CẢ các game sau khi vào arena thì
+  không phát lại demo nữa, chỉ chờ tới đúng vị trí chơi mới đọc câu hỏi" — nhịp
+  này CHỈ áp dụng cho rabbit; tower/delivery/match vẫn diễn demo trong arena.
+  Có đổi 3 arena kia theo cùng luật không?
+- Trạng thái: 62 file thay đổi/mới CHƯA commit. Không commit/push (chờ lệnh).
+
+## 76. S3-P2Z20 — ÁP DỤNG LUẬT "VÀO ARENA KHÔNG DIỄN LẠI DEMO" CHO 3 ARENA CÒN LẠI (2026-09-27, maynode)
+
+- Lệnh user: "làm tiếp những cái tôi đã nói" = trả lời câu hỏi mở §75:
+  "TẤT CẢ các game sau khi vào arena thì không phát lại demo nữa, chỉ chờ tới
+  đúng vị trí chơi mới đọc câu hỏi" — nhịp trước chỉ đổi rabbit; nhịp này áp
+  cho cả 3 arena còn diễn demo: **tower (#4), delivery (#5), match (#6)**.
+  (stairs/harvest/rabbit đã theo luật từ trước.)
+- THAY ĐỔI (đúng pattern rabbit — Wait + play spot):
+  * `BuildTowerGame` / `DeliveryGame` / `MatchGame`: bỏ hẳn phase `Demo` +
+    `Handoff` + toàn bộ demo/tidy/reset/student-walk; thêm phase `Wait` (đầu
+    tiên) + TickWait + `StartQuestion` + PulsePlayRing; câu hỏi đọc khi trẻ
+    đứng trên play spot; xong intro → vào thẳng Building/Delivering/Playing.
+  * Builders `BuildTowerBuilder` / `DeliveryBuilder` / `MatchMeadowBuilder`:
+    thêm `PlaySpotLocal`/`PlaySpotRadius` + dựng spot (edge pad + gold ring +
+    biển "Come here!") qua `BuildPlaySpot`.
+  * Xoá API chết: `DemoBlocksPlaced`, `DemoApplesDelivered`, `IntroDone` nay
+    `!= Wait && != Intro`.
+  * Driver: `TempP56Journey`, `TempP57Journey`, `TempFullJourney` (3 arena
+    legs + 2 temp drivers) — thay chờ Demo bằng đi tới play spot rồi chờ
+    `Building/Delivering/Playing`.
+- TEST: CT-P56/57/59 cập nhật helper `AdvanceToBuilding/Delivering/Playing`
+  (đặt player lên play spot) + bỏ assert demo + hạ ngưỡng đếm line (demo không
+  còn sinh line). Suite **715/710/0/5** (`E:\LWW\p64.xml`, 0 regression).
+- BUILD production `E:\LWW\P56Build` + journey `E:\LWW\P56JBuild`
+  **Succeeded errors=0** (World.dll 10:32:46 / 10:33:36,
+  `p64-build.log`/`p64-jbuild.log`).
+- JOURNEY real-click `-journey-from hub.tower` (`E:\LWW\p63b-shots`,
+  `p63b-journey.log`): **hub.tower PASS (72s) / hub.delivery PASS (76s) /
+  hub.match PASS (88s) / return.main PASS (6s)**; shots=40 clicks=200
+  **errors=0 severe=0**. Log xác nhận flow mới: `[BuildTower]/[Delivery]/
+  [MatchGame] say 'Step into the play spot!'` → `question read (child on the
+  play spot)` → `child control ...`. Không còn demo trong arena.
+- Cập nhật `docs/COUNTING_GARDEN_REFERENCE_REVIEW.md` §2.4 (demo) theo luật mới.
+- Trạng thái: vẫn CHƯA commit. STOP chờ mắt user (shots `p63b-shots`) + lệnh
+  commit/push.
+
+## 77. S3-P2Z21 — USER PLAYTEST ROUND: 6 FIX TỪ ẢNH THẬT (2026-09-27, maynode)
+
+- User bắt lỗi khi tự chơi (ảnh thật) + yêu cầu đổi audio/đề bài. Đã sửa:
+  1. **Demo cà rốt 3 củ dồn 1 chỗ** (`RabbitLessonDemo`): thêm `BowlSlot(i)` —
+     3 khe so le trong bát, mỗi củ 1 vị trí (trước đây cùng `BowlPos`).
+  2. **Camera demo khu cà rốt quá gần** (`CountingGardenBuilder.BuildZoneSpots`):
+     zone 0 có nhánh riêng — lùi camera về phía plaza (`mouth - outDir*1.9`,
+     cao 2.9) nhìn vào cả diorama (patch tây + hutch đông).
+  3. **Biển "Vào đây!" che khung** (cả 4 arena): builder lộ `PlaySign`; game
+     `TickWait` ẩn biển khi player ≤5.5m (đúng lúc bé bước vào chỗ chơi).
+  4. **Cà rốt arena không thấy trên bát** (`RabbitFeed.BowlSlot` + builder):
+     slot nâng lên +0.13 (đứng trên miệng bát thay vì chìm trong), bát nông hơn.
+  5. **Audio arena quá dài/tận răng**: intro rút còn 2-3 câu (board + đề bài);
+     bỏ "This is number…" (tower/delivery), bỏ "N carrots for bunny" (rabbit).
+  6. **Random đề bài**: `BuildTowerArea.RandomTargets` / `DeliveryArea.RandomTargets`
+     / `MatchArea.RandomPairs` / `CountingGardenArea.RandomRabbitTargets` — live
+     play rút số ngẫu nhiên mỗi vòng (không lặp liền kề); **installer bật**;
+     test/tool vẫn dùng ladder tất định (test xanh 715/710/0/5, `p65.xml`).
+- Driver `TempFullJourney`: đọc `area.Target/Pairs` thật khi check re-entry
+  (không dự đoán ladder) để journey sạch với random.
+- Verify: suite **715/710/0/5**; build production + journey **Succeeded
+  errors=0**; journey `-journey-from garden.rabbit` 7/7 STAGE_PASS severe=0
+  (`p65-shots`, ảnh xác nhận camera rộng + cà rốt trên bát + biển ẩn khi tới chỗ).
+- Game production đã mở lại cho user chơi tiếp (PID đổi). Vẫn CHƯA commit.
+
+## 78. S3-P2Z22 — PLAYTEST ROUND 2: CỔNG DEMO + CÀ RỐT NGƯỢC + BỎ GỢI Ý (2026-09-27)
+
+- User bắt tiếp 3 lỗi (ảnh thật) + "không cần journey, tự xem mắt":
+  1. **Cổng khu che demo** (`CountingGardenBuilder.BuildBedGate` +
+     `GardenZoneSpot.GateRoot` + `CountingGardenArea.FocusZone/ClearFocus`):
+     cả cổng (2 cột + beam + bi + chùm) gom dưới 1 root; ẩn khi plot được focus
+     (nền camera demo nằm ngoài mouth nên trước đây nhìn xuyên cổng), hiện lại
+     khi rời focus.
+  2. **Cà rốt vẫn bị ngược** (`RabbitCarrot`): sau khi bay vào bát, củ giữ
+     rotation của bàn tay → reset `localRotation = identity` khi hạ cánh +
+     trong `ParkInBowl` (adopt). Củ đứng thẳng trong bát.
+  3. **Bỏ gợi ý "còn N nữa nhé"** (user: "để trẻ tự suy nghĩ"): xoá undershoot
+     nudge khỏi `RabbitFeed`, `BuildTowerGame`, `DeliveryGame`, `HarvestArena`,
+     `NumberStairs`. Test đổi thành assert KHÔNG có hint
+     (P55F/P56E/P57E/P58F/P54E = `*_UndershootNoHint`).
+- Suite **715/710/0/5** (`p67.xml`); build production **Succeeded errors=0**
+  (`p67-build.log`); KHÔNG chạy journey (theo yêu cầu user). Game production
+  mở lại (PID 16432). Vẫn CHƯA commit.
+
+## 79. S3-P2Z23 — PLAYTEST ROUND 3: CAMERA + KHÔNG ĐỌC SỐ + CÀ RỐT + CƠ CHẾ NỘP BÀI (2026-09-27)
+
+- User (ảnh thật): "cao quá"; "không cần nói đây là số mấy, trẻ tự nhận biết";
+  "củ cà rốt phải để từ trên xuống, dứt điểm"; và "phải có cơ chế nộp bài, có
+  thể thừa/thiếu nên mới đúng/sai được" (user chọn: **chỉ sân cà rốt trước**;
+  nộp bằng **chuông ở khu làm việc**, sai thì cô nhắc nhẹ + đồ về chỗ, bé làm lại).
+- SỬA:
+  1. `RabbitPlayBuilder.FollowOffset` 4.1 -> 3.1 (bớt nhìn từ trên xuống).
+  2. **Không đọc số**: intro arena rút còn "Look at the board!" + câu việc
+     ("Feed the bunny!" / "Build the tower!" / "Deliver to Mia!" / "Find the
+     same!") — KHÔNG nêu số/đếm; bảng cho trẻ tự đọc. (rabbit/tower/delivery/match)
+  3. **Cà rốt dứt điểm**: `RabbitCarrot.SitOffset` đo đáy thật của prop (bounds)
+     để đặt đúng mặt bát (không chìm/ngược); `BeginFeed` nâng `_feedLift` 0.22
+     -> 0.55 (rơi từ trên xuống); reset `localRotation` khi hạ cánh + adopt.
+  4. **CƠ CHẾ NỘP BÀI (rabbit)**: builder thêm chuông "Nộp bài" (`SubmitAnchor`
+     + `RabbitSubmitZone` click). `RabbitFeed`: bỏ auto-success/auto-correct +
+     phase Correct; cho ăn tự do (0..10, có thể thừa/thiếu); `TrySubmit` — đúng
+     thì thắng, sai thì phase `Wrong` (câu nhắc nhẹ "Chưa đủ/Thừa rồi. Đếm lại
+     nhé!") rồi trả hết cà rốt về chỗ, `Count=0`, bé làm lại.
+- TEST: CT-P55 viết lại (P55D nộp đúng; P55E sai thiếu + sai thừa rồi nộp lại;
+  P55L nộp sau khi đủ 9; intro không đọc số). Driver `TempP55Journey` +
+  `TempFullJourney` (rabbit leg) thêm bước nộp (gồm 1 lượt nộp sai). CT-P56/P57
+  đổi assert intro không nêu số. Suite **715/710/0/5** (`p70.xml`).
+- Build production + journey **Succeeded errors=0** (`p71-build.log`/`p71-jbuild.log`);
+  game production mở lại (PID 8544). KHÔNG chạy journey (user tự xem mắt).
+  Vẫn CHƯA commit.
+
+## 80. S3-P2Z24 — PLAYTEST ROUND 4: 5 LỖI KHU CÀ RỐT TỪ ẢNH THẬT (2026-09-28, maynode)
+
+- User (ảnh thật, khu cà rốt): (1) "2 bảng tranh nhau chỗ đứng"; (2) audio sau
+  khi báo kết quả "giỏi quá" vẫn đếm lại số cà rốt trên bục; (3) bé cúi đầu
+  xuống như bỏ vào rổ trong khi bục cao hơn đầu; (4) cà rốt bay xuyên bục từ
+  dưới lên, không rơi từ trên xuống; (5) "chỗ nộp bài khó nhìn".
+- SỬA:
+  1. **Tách chỗ nộp bài**: `RabbitPlayBuilder.SubmitLocal` (1.5, 2.95) ->
+     **(-2.6, 0.6)** — chỗ cũ đè đúng bảng kết quả (result frame x 0.3..1.5,
+     z 2.75..3.85). Vị trí mới ở plaza Tây, cách bảng kết quả 4.4m, cách
+     play spot 3.1m, và **ngoài khung cả 3 camera** (CamA/B/C ở góc trước-phải
+     z -2.4..-1.0, x 0.4..2.6) nên không hắt vào shot thắng.
+  2. **Làm nổi trạm nộp**: thêm pad vàng `RPSubmitRing` (2.0) + `RPSubmitPad`
+     (1.5) mint; cột gỗ cao hơn, chuông to hơn và emissive; bảng `RPSubmitSign`
+     to hơn + emissive; label nâng lên y=2.45.
+  3. **Bỏ đếm lại sau thắng**: xoá recap queue trong `RabbitFeed`
+     (`_recapEn/_recapVi`, enqueue trong `SuccessBeats`, `TickRecap` + call).
+     Cô đếm mỗi củ lúc cho ăn (`OnCarrotMunched`); câu thắng nói số 1 lần rồi
+     dừng — không đếm lại sau "Giỏi!".
+  4. **Bỏ cúi đầu khi cho ăn**: `TryFeed` không còn gọi `PlayerVisual.PlayPickup`
+     (bend) — bục cao hơn đầu nên bé đứng thẳng, mặt hướng bát. (Pick cà rốt ở
+     luống vẫn cúi — đúng.)
+  5. **Cà rốt rơi từ trên xuống**: `RabbitCarrot.BeginFeed`/`TickFeed` đổi từ 1
+     cung bay lên xuyên bục thành **2 nhịp**: nâng từ tay lên điểm cao hơn bát
+     0.7m (`_feedLiftDur` 0.34s) rồi **rơi thẳng xuống** slot (`_feedDropDur`
+     0.22s, gia tốc). Luôn hạ cánh từ trên, không xuyên bục.
+- TEST: CT-P55 thêm P55N (cà rốt nâng cao rồi rơi: đỉnh > đáy + 0.35m),
+  P55O (không đếm lại sau thắng: "Ba củ cà rốt." chỉ 1 lần), P55P (trạm nộp
+  cách bảng kết quả >2.5m + clear play spot + có `RPSubmitRing`). P55L hạ
+  ngưỡng "nói nhiều" 15 -> 10 (hết recap). Suite **718/713/0/5** (`E:\LWW\x24.xml`,
+  baseline 715 + 3 test mới, 0 fail).
+- BUILD production `E:\LWW\P56Build` + journey `E:\LWW\P56JBuild` **Succeeded
+  errors=0** (World.dll 07:55:35 / 07:56:20; `x24-build.log`/`x24-jbuild.log`).
+  KHÔNG chạy journey (user tự xem mắt); game production mở lại (PID 8812,
+  full-HD, `p79c-boot.log` FACE_OK 0 exception).
+- Vẫn CHƯA commit (chờ lệnh user).
+
+## 81. S3-P2Z25 — LUỒNG SAU KHI NỘP BÀI + SANG SỐ TIẾP THEO (2026-09-28, maynode)
+
+- User: "SAU KHI nộp bài thì dù đúng dù sai sẽ delay 1 chút xong sẽ xóa số lượng
+  cà rốt trên bục đi. Nếu sai thì đọc lại câu hỏi: 'Con hãy nhìn số trên bảng và
+  lấy số lượng cà rốt đúng theo số trên bảng và đặt lên bục nhé'. Nếu đúng thì
+  sang bài khác luôn." Làm rõ: **đúng** -> bé tự quay về ô tròn play spot -> hiện
+  **số tiếp theo** để chơi tiếp; **trước khi hiện số mới** loa đọc "câu hỏi tiếp
+  theo"; có **animation số cũ biến mất, số mới hiện lên**.
+- SỬA (`RabbitFeed.cs` + `RabbitPlayBuilder.cs`):
+  1. **Sau mọi lần nộp**: giữ payoff `SuccessHoldSeconds` 1.7s rồi `ClearBowl`
+     — trả hết cà rốt về chỗ, `Count=0`, ẩn bảng kết quả.
+  2. **Đúng** (`TickSuccess` non-adopt): sau xóa bục -> `_mover.MoveTo(play spot)`
+     (chờ `PlayerOnSpot()` hoặc timeout 4.5s) -> `BeginNextNumber`: `Target =
+     CountingGardenArea.NextRabbitTarget(Target)` (3->4->...->9->1->2),
+     spawn số mới (`SpawnNumberDigit`), ép camera shot 0 (bảng), đọc "Next
+     question!"/"Câu hỏi tiếp theo!"; animation `TickNumberChange` (số cũ scale
+     về 0 0.30s -> tắt; số mới pop-in ease-out-back 0.50s) -> quay lại `Feeding`
+     + `Follow()`. Bảng kết quả cũng rebuild số mới (`SpawnResultDigit`).
+  3. **Sai** (`TickWrong`): giữ nhắc nhẹ 2.6s -> xóa bục -> `AskQuestionAgain`:
+     câu hỏi dài bị SafetyFilter cap 6 token/line nên **tách 3 dòng ngắn** đọc
+     nối tiếp qua `TickAsk`/`_askEn`,`_askVi`: "Nhìn số trên bảng nhé!" / "Lấy
+     đúng số cà rốt nhé!" / "Đặt lên bục nhé!" (= look at the number / take the
+     right amount / put them on the bowl).
+  4. **Adopt (re-entry)**: giữ nguyên ảnh "đã xong" đóng băng (`_adopted`), không
+     chạy transition (bảo toàn contract no-replay + CT-P55I).
+- TEST: CT-P55 thêm P55Q (nộp đúng -> bục xóa, target tiến, 1 digit sống, nghe
+  "Next question!") + P55R (nộp sai -> xóa bục + đọc lại 3 dòng). Suite
+  **720/715/0/5** (`E:\LWW\x25.xml`, 0 fail).
+- BUILD production + journey **Succeeded errors=0** (World.dll 08:55:08/08:55:49;
+  `x25-build.log`/`x25-jbuild.log`); boot **FACE_OK 0 exception** (`p79d-boot.log`);
+  game production mở lại (PID 17056, full-HD). KHÔNG chạy journey (user tự xem mắt).
+- Vẫn CHƯA commit (chờ lệnh user).
+
+## 82. S3-P2Z26 — SỐ NGẪU NHIÊN + PHÉP CỘNG/TRỪ TRONG PHẠM VI 10 (2026-09-28, maynode)
+
+- User: "Giờ sẽ ngẫu nhiên các số (3 đến 6 đến 5 đến 2 đến 8...). Và thêm các
+  phép cộng trừ trong phạm vi 10. Ví dụ: bảng hiện 4-2 thì audio nói 'bỏ bớt 2 củ
+  trên bục về lại vườn'. Làm đúng thì audio: 'Đúng rồi, đây là phép trừ, có 4 củ
+  cà rốt trừ đi 2 củ còn hai củ trên bục'. Tương tự với phép cộng."
+- CHỐT (user trả lời câu hỏi): trộn **số thường + cộng + trừ**; phép trừ bục có
+  sẵn số đầu (4-2 -> có sẵn 4, trẻ bỏ bớt 2); phép cộng bục có sẵn số đầu
+  (3+2 -> có sẵn 3, trẻ thêm 2); bỏ bớt bằng **kéo củ cà rốt từ bục về vườn**.
+- THAY ĐỔI:
+  1. **Mô hình đề** (`RabbitFeed.RoundKind` Plain/Add/Sub; `OpA/OpB/Target`).
+     `SetRoundRandom()` chọn ngẫu nhiên: Plain 1..9; Add a 1..8, b 1..(9-a),
+     result=a+b; Sub a 2..9, b 1..(a-1), result=a-b (kết quả 1..9, tránh trùng
+     result liền kề). `ArithmeticEnabled` do GameInstaller bật (test giữ ladder
+     xác định). Vòng đầu vẫn là số thường theo target của area (area đã random
+     theo lượt vào); các vòng sau (sau nộp đúng) mới trộn phép tính.
+  2. **Bảng hiện biểu thức** (`RabbitPlayBuilder`): nhóm `RPQuestion`; số thường =
+     `RPNumberDigit`; cộng/trừ = `RPNumberDigitA` + dấu (`RPQuestionOpH/V`) +
+     `RPNumberDigitB`. `SpawnQuestion(kind,a,b)` dựng runtime cho animation đổi
+     số; `SpawnResultDigit(Target)` cập nhật bảng kết quả.
+  3. **Prefill bục** (`PrefillBowl`): vào play spot đọc câu hỏi -> đặt sẵn OpA củ
+     lên bục cho +/- (số thường bục trống như cũ).
+  4. **Câu hỏi mở đầu**: +/- đọc số hạng thứ hai — "Add two more!"/"Thêm hai củ
+     nữa!", "Take two away!"/"Bỏ bớt hai củ về vườn!". Số thường vẫn KHÔNG đọc số
+     (trẻ tự đọc bảng).
+  5. **Nộp đúng**: +/- queue 3 dòng giải thích (SafetyFilter 6 từ/dòng): "Đúng
+     rồi! Đây là phép trừ." / "Bốn củ trừ hai củ." / "Còn hai củ trên bục." (tương
+     tự cộng). Số thường giữ câu win cũ.
+  6. **Kéo bỏ bớt**: interface mới `_SharedKernel/IDragTarget.cs`; `ClickRouter`
+     bỏ qua cú nhấn lên vật đang kéo (không walk). `RabbitCarrot` implements
+     `IDragTarget` (CanDragNow = Consumed + Feeding). `RabbitBowlDrag` (mới, gắn ở
+     GameInstaller) kéo củ theo con trỏ (Pointer.current, chuột + cảm ứng); thả
+     trong bán kính 3m quanh luống -> `ReturnFromBowl` (bay về vườn, Count--,
+     RepackBowl); thả chỗ khác -> `SnapCarrotToBowl`.
+- GIỚI HẠN (đã chọn để giữ bảng 1 chữ số + câu đếm 1..9): cộng có tổng <= 9, trừ
+  có kết quả 1..9 (không có 0/10). Nếu user muốn tới 10 phải mở rộng digit 2 chữ
+  số + word array.
+- TEST: CT-P55 thêm P55S (trừ 4-2: prefill 4, gỡ 2, nộp 2, nghe 3 câu giải thích +
+  câu mở đầu) + P55T (cộng 3+2: prefill 3, cho ăn 2, nộp 5, nghe giải thích).
+  Suite **722/717/0/5** (`E:\LWW\x26.xml`, 0 fail).
+- BUILD production + journey **Succeeded errors=0** (World.dll 09:19:12/09:19:54;
+  `x26-build.log`/`x26-jbuild.log`); boot **FACE_OK 0 exception** (`p79e-boot.log`);
+  game production mở lại (PID 21320, full-HD). KHÔNG chạy journey (user tự xem mắt).
+- Vẫn CHƯA commit (chờ lệnh user).
+
+## 83. S3-P2Z27 — ĐỀ CỘNG/TRỪ: NGHIỆM ĐÚNG HIỆN "4-2=2" + SAI HƯỚNG DẪN CHI TIẾT (2026-09-28, maynode)
+
+- User: "Với câu hỏi cộng/trừ (khó) cần hướng dẫn bằng lời thật chi tiết. Để sẵn
+  ví dụ: 4-2 thì để sẵn 4 củ trên bục và bảo lấy bớt 2 củ về vườn. Sau đó nộp
+  bài: nếu ĐÚNG thì trên bảng hiện **4-2=2**; nếu SAI thì hướng dẫn làm lại bài
+  đó chi tiết hơn."
+- SỬA:
+  1. **Bảng giải phương trình** (`RabbitPlayBuilder`): `PopulateQuestion`/
+     `SpawnQuestion` nhận thêm `result`; khi `result >= 0` dựng layout 5 glyph
+     `a op b = r` (`RPNumberDigitA` / `RPQuestionOpH,V` / `RPNumberDigitB` /
+     `RPNumberDigitEq0,1` / `RPNumberDigitR`). `SuccessBeats` (add/sub) gọi
+     `SpawnQuestion(kind, OpA, OpB, Target)` nên bảng hiện "4-2=2"/"3+2=5" trong
+     payoff; lúc đổi câu hỏi kế tiếp thì nhóm giải bị animation thay đi.
+  2. **Sai -> làm lại cùng bài + hướng dẫn chi tiết**: `TickWrong` sau khi xóa bục
+     **prefill lại OpA** cho +/- (để bé cộng/trừ lại), rồi `AskQuestionAgain`:
+     - Cộng: "Nhìn lên bảng nhé!" / "Bục có ba củ cà rốt." / "Thêm hai củ nữa." /
+       "Đếm tất cả nhé!".
+     - Trừ: "Nhìn lên bảng nhé!" / "Bục có bốn củ cà rốt." / "Bỏ bớt hai củ về
+       vườn." / "Đếm xem còn mấy củ.".
+     - Số thường giữ 3 dòng generic cũ (nhìn số / lấy đúng số / đặt lên bục).
+     Mỗi dòng <= 6 token (SafetyFilter).
+- TEST: P55S thêm assert bảng hiện `RPQuestionEq0` + `RPNumberDigitR` khi thắng;
+  P55T assert `RPNumberDigitR`. Suite **722/717/0/5** (`E:\LWW\x28.xml`, 0 fail).
+- BUILD production + journey **Succeeded errors=0** (World.dll 09:29:5x qua
+  `x28-build.log`/`x28-jbuild.log`); boot **FACE_OK 0 exception** (`p79f-boot.log`);
+  game production mở lại (PID 15148, full-HD). KHÔNG chạy journey.
+- Vẫn CHƯA commit (chờ lệnh user).
+
+## 84. S3-P2Z28 — FIX: CÂU CỘNG/TRỪ KẾ TIẾP THIẾU PREFILL + THIẾU HƯỚNG DẪN (2026-09-28, maynode)
+
+- User (ảnh thật + log): câu "6-5" hiện trên bảng nhưng **bục trống** (đáng lẽ
+  có sẵn 6 củ) và **không có audio hướng dẫn**. Yêu cầu chắc chắn: không kết quả
+  âm, tổng cộng không vượt phạm vi 10.
+- ROOT CAUSE (từ log game đang chạy `p79f-boot.log`):
+  `next question staged: kind=Sub a=6 b=5 target=1` — nhưng `BeginNextNumber`
+  chuyển thẳng `To(Feeding)` sau animation, **không gọi `StartQuestion`** nên
+  (a) không `PrefillBowl(OpA)` cho câu +/- mới -> bục trống; (b) không đọc
+  hướng dẫn tác vụ -> chỉ nghe "Câu hỏi tiếp theo!".
+- FIX (`RabbitFeed.cs`):
+  1. `BeginNextNumber` gọi `PrefillBowl(OpA)` ngay sau khi chọn câu mới cho +/-.
+  2. Cuối `TickNumberChange` -> `_quickIntro = true` + `_saidBoard = true` +
+     `_saidTask = false` + `To(Phase.Intro)` (thay vì `Feeding`). `TickIntro` có
+     nhánh nhanh: bỏ câu "Look at the board!", đọc câu tác vụ ở 0.6s, vào
+     `StartFeeding` ở 2.0s -> câu mới có hướng dẫn bằng lời.
+  3. `StartQuestion` reset `_quickIntro/_saidBoard/_saidTask` cho câu đầu.
+  4. Test seam `ForceNextRoundForTests(kind,a,b)` để pin câu kế (test xác định).
+  5. Ràng buộc sinh đề (đã đúng từ §82, khẳng định lại): Plain 1..9; Add a1..8,
+     b1..(9-a) -> tổng 2..9 (<=10); Sub a2..9, b1..(a-1) -> kết quả 1..8 (không âm).
+- TEST: CT-P55 thêm P55U (nộp đúng số thường -> ép câu kế 6-5 -> bục có sẵn 6 củ
+  + nghe "Bỏ bớt năm củ về vườn!"). Suite **723/718/0/5** (`E:\LWW\x30.xml`).
+- BUILD production + journey **Succeeded errors=0** (`x30-build.log`/`x30-jbuild.log`);
+  boot **FACE_OK 0 exception** (`p79g-boot.log`); game production mở lại
+  (PID 12652, full-HD). KHÔNG chạy journey.
+- Còn chờ user chốt: giữ phạm vi 1..9 (tổng tối đa 9) hay mở tới đúng 10 (cần
+  bảng 2 chữ số cho "10"). Hiện tại đảm bảo <=10 và không âm.
+- Vẫn CHƯA commit (chờ lệnh user).
+
+## 85. S3-P2Z29 — AUDIO "ĐANG CÓ → MUỐN CÓ" + BỎ SỐ 3 CỐ ĐỊNH + ĐỦ 10 SLOT BỤC (2026-09-28, maynode)
+
+- User: (1) audio cộng/trừ phải đọc kiểu "thỏ đang có 8 củ cà rốt, thỏ muốn có 9
+  củ, cần lấy thêm mấy củ để thỏ có 9 củ?"; (2) "không để lúc nào vào cũng là số
+  3"; (3) "lấy thêm 1 củ nhưng tổng vẫn là 8".
+- CHỐT (user trả lời): bảng vẫn hiện "8+1" (không đổi sang "8→9"/"8+?=9"); câu SỐ
+  THƯỜNG giữ "Cho thỏ ăn N củ".
+- SỬA:
+  1. **Audio +/-** (`AskOperationQuestion`, dùng ở intro và khi sai): 4 dòng ngắn
+     (<=6 token) — "Thỏ có tám củ cà rốt." / "Thỏ muốn có chín củ." (trừ: "muốn
+     còn") / "Lấy thêm mấy củ?" (trừ: "Bỏ bớt mấy củ?") / "Để có chín củ." (trừ:
+     "Để còn"). Bảng vẫn "8+1"/"8-1".
+  2. **Câu đầu random** (`RabbitFeed.Build`): khi `ArithmeticEnabled` và KHÔNG
+     adopt (lifecycle chưa Completed) -> `SetRoundRandom()` thay vì dùng target 3
+     của area. Adopt giữ nguyên (plain theo target).
+  3. **Đủ 10 slot bục** (`BowlOffsets`): thay list cũ (slot 8 trùng giữa -> củ thứ
+     9 bị che) bằng layout 6 vòng ngoài (r=0.30) + 4 vòng trong (r=0.12) — 10 củ
+     đọc được rõ.
+- TEST: cập nhật P55S/P55T/P55U sang câu hỏi mới ("Thỏ có bốn củ cà rốt." +
+  "Bỏ bớt mấy củ?" / "Thỏ có ba củ cà rốt." + "Lấy thêm mấy củ?" / "Thỏ có sáu củ
+  cà rốt."). Suite **723/718/0/5** (`E:\LWW\x31.xml`, 0 fail).
+- BUILD production + journey **Succeeded errors=0** (`x31-build.log`/`x31-jbuild.log`);
+  boot **FACE_OK 0 exception** (`p79h-boot.log`); game production mở lại
+  (PID 6604, full-HD). KHÔNG chạy journey.
+- Vẫn CHƯA commit (chờ lệnh user).
+
+## 86. S3-P2Z30 — CHỜ ĐỌC HẾT GIẢI THÍCH + BẤM CỦ RỒI BẤM VƯỜN (2026-09-28, maynode)
+
+- User: (1) "Phần đọc giải thích cần đọc trước khi câu hỏi kế tiếp được đưa ra";
+  (2) "ngoài drag củ về vườn thì còn có thể bấm vào củ cà rốt trên bục và sau đó
+  bấm vào vườn".
+- SỬA:
+  1. **Gate giải thích** (`TickSuccess` + `ExplanationSpoken`): sau khi nộp đúng,
+     payoff chỉ xóa bục/đi tiếp khi queue đọc giải thích đã cạn VÀ `PacedVoice`
+     đã Idle (không còn câu đang đọc). Trước đây clear ở mốc 1.7s cứng nên câu kế
+     tiếp có thể hiện khi giải thích chưa đọc xong.
+  2. **Bấm-củ-rồi-bấm-vườn** (`RabbitBowlDrag` viết lại): press trên củ -> nếu kéo
+     quá ngưỡng 14px thì DRAG (như cũ); nếu chỉ bấm (tap) -> CHỌN củ (nổi 1.24x,
+     `RabbitCarrot.Selected`), bấm lại để bỏ chọn. Khi đang có củ chọn, bấm vào
+     vườn (ground trong 3m quanh luống) -> `ReturnFromBowl` (bay về vườn, Count--).
+     Bỏ qua tap trên UI (`EventSystem`). Drag vẫn giữ nguyên.
+  3. `RabbitCarrot`: thêm `Selected`; xóa chọn khi ParkInBowl/ResetHome/
+     MarkRemoved/BeginCarry/ReturnFromBowl; `TickBounceAndPulse` cho củ đang chọn
+     nổi lên.
+- TEST: CT-P55 thêm P55V (gate: ngay sau thắng `ExplanationSpokenForTests()` false;
+  sau khi drain true + nghe câu giải thích; chọn củ rồi `ReturnFromBowl` -> mất
+  chọn + Count giảm). Suite **724/719/0/5** (`E:\LWW\x32.xml`, 0 fail).
+- BUILD production + journey **Succeeded errors=0** (`x32-build.log`/`x32-jbuild.log`);
+  boot **FACE_OK 0 exception** (`p79i-boot.log`); game production mở lại
+  (PID 3424, full-HD). KHÔNG chạy journey.
+- Vẫn CHƯA commit (chờ lệnh user).
+
+## 87. S3-P2Z31 — FIX PREFILL + GỌN VƯỜN ĐẾM CÒN 2 Ô (carrot + bậc thang) (2026-09-28, maynode)
+
+- User (1) báo: nghe "thỏ có 8 củ, lấy thêm 1 củ ... vẫn chưa đủ" -> điều tra realtime;
+  (2) "Trong Vườn Đếm chỉ cần game carrot và game bậc thang. Còn lại xóa hết và
+  sắp xếp lại khu vườn" -> chốt **xóa hẳn code/arena** + **còn 2 ô, sắp xếp lại**.
+- FIX PREFILL (root cause từ log journey): `prefill want=8 placed=2 availBefore=2`
+  — `BeginNextNumber` prefill ngay khi cà rốt vòng trước còn đang bay về nên chỉ
+  đặt được 2. Sửa: `PrefillBowl` thành **pending** (`_prefillWant` + `TickPrefill`
+  mỗi frame) — tự đặt đủ khi cà rốt hạ cánh. Verify realtime: log "prefill waiting:
+  need 2 more" -> "prefill done bowl=6", mọi vòng `bowl == target`.
+- XÓA HẲN 3 GAME:
+  * Code: `CountingPlayBuilder/CountingGame/CountingDemo`, `HarvestPlayBuilder/
+    HarvestArena/HarvestLessonDemo`, `StrawberryPlayBuilder/CornPlayBuilder`.
+  * Scene: `CountingPlayScene/StrawberryPlayScene/CornPlayScene` (+meta) + gỡ khỏi
+    EditorBuildSettings.
+  * Test: `CT-P48/CT-P50_DemoAudienceGate/CT-P51/CT-P58` (+meta).
+  * Driver: bỏ stage `garden.balls/strawberry/corn` + helper Ball/Harvest.
+- VƯỜN ĐẾM 2 Ô: `CountingGardenBuilder.ZoneCount=2`, `ZoneAngles={-50,50}`,
+  `RabbitZoneIndex=0`, `StairZoneIndex=1`; `BuildCrescent` chỉ dựng bed carrot +
+  stair hill + spots; gỡ toàn bộ demo theatre (CountingDemo) và các bed dâu/ngô/bí.
+  `BuildPaths` còn cung -60..+60 + 2 spur. `CountingGardenArea` gỡ ball/harvest
+  lifecycles/CLI, giữ rabbit+stair; `_playBound` mặc định lấy từ CountingGardenBuilder.
+  `GameInstaller` gỡ 3 scene build + dispatch + demo wiring (giữ stair/rabbit).
+- TEST: suite **686/681/0/5** (`E:\LWW\g1.xml`; 38 test bị xóa cùng game, 0 fail).
+- BUILD production + journey **Succeeded errors=0** (`g1-build.log`/`g1-jbuild.log`).
+- JOURNEY realtime: `garden.stairs` **STAGE_PASS 115s** (`g2-journey.log`,
+  `g2-shots`); `garden.rabbit` **STAGE_PASS 152s** (`g1-journey.log`, `g1-shots`) —
+  3 vòng đề đều khớp target. Ảnh `g2-shots/03_03_garden.png` xác nhận 2 ô.
+- Boot production **FACE_OK 0 exception** (`p83-boot.log`); game mở lại (PID 15164).
+- Vẫn CHƯA commit (chờ lệnh user).
+
+## 88. RESTART MÁY (2026-09-28, maynode)
+
+- User yêu cầu ghi handoff để **restart máy**. Đã ghi §87 vào đây + cập nhật
+  `SESSION_BRIEF.md` (đọc file đó là đủ vào việc).
+- Game production **đã kill sạch** (0 tiến trình LWE) trước khi restart.
+- Trạng thái: 69 mục worktree CHƯA commit; baseline EditMode **686/681/0/5**
+  (`E:\LWW\g1.xml`); build production + journey **Succeeded errors=0**.
+- Phiên sau: (1) đọc `SESSION_BRIEF.md`; (2) mở lại game production nếu cần
+  `E:\LWW\P56Build\LWE.exe`; (3) chờ user: commit/push? phạm vi đề 1..9 hay 10?
+  tinh chỉnh bố cục Vườn Đếm 2 ô?
+
+## 89. S3-P2Z32 — BẬC THANG HỌC +/− (mirror carrot) + FIX JOURNEY FULL 6/6 (2026-09-28, maynode)
+
+- BỐI CẢNH: tiếp sau mất điện (phiên P2Z32 dở dang: mới có khung ở NumberStairs/
+  StairHillBuilder). Nguồn ý định khôi phục từ opencode.db + log: user chọn
+  "Từ bậc đang đứng", "Đứng đúng bậc + dừng 1.1s", và các bổ sung "Demo vườn dạy
+  +/−, Dải trục số dưới chân, Nhắc lại nhẹ khi đứng sai bậc" + "2 game phải khác
+  core hành động".
+
+### Bậc thang học +/− (S3-P2Z32)
+- `NumberStairs`: 3 loại câu `Plain/Add/Sub`; câu sau RANDOM từ **bậc đang đứng**
+  (thân thể = toán hạng đầu; cộng = leo lên, trừ = đi xuống), guard không âm/<=9.
+  Win = đứng đúng bậc + dừng 1.1s (ý user). Audio have/want/how-many (4 câu
+  <=6 token). Đúng -> board giải `A op B = C` + đọc lời giải (gate: đọc HẾT mới
+  sang câu kế). Sai -> prefill lại A (chưa dùng ở bậc thang) và **nhắc lại nhẹ**
+  khi đứng sai bậc (`ReaskDwell 6s`). Visit live = **5 câu** rồi chốt (giữ
+  lifecycle + journey). `ArithmeticEnabled=false` giữ toàn bộ test/ladder cũ
+  (P53/P54 xanh).
+- `StairHillBuilder`: board biểu thức `A+B`/`A−B`/`A+B=C` (`SetQuestion`), result
+  digit (`SetResult`), **dải trục số** `SHNumberRailOrb1..9` (`SetRail`).
+- `StairLessonDemo`: demo vườn xoay vòng plain "3" -> `2+1` -> `3−1` (loop 1 giữ
+  nguyên pins P53J).
+- `GameInstaller`: `game.ArithmeticEnabled = true` cho bậc thang live.
+- Test mới: P53L (demo demo +/−), P54M/N/O/P (round model, solved board + gate,
+  re-ask, rail). Suite **691/686/0/5**.
+
+### Fix `hub.match` (stall "match pad 0")
+- ROOT CAUSE (ClickDiag trên journey): `MatchPadZone` dùng BoxCollider CAO
+  `2.2x0.9x2.2` -> tia click trúng MẶT GẦN tại z=3.3 (chỉ ~0.5m từ bé) <
+  stoppingDistance của agent -> bé KHÔNG nhích, harness đòi 1.5m nên kẹt 14s.
+- Fix: collider **dẹt sát đất** `2.4x0.05x2.4` center y=0.025 -> click route
+  xuống tâm pad, bé đi hẳn lên pad. Idempotent (không chồng collider khi re-entry).
+
+### Fix `garden.rabbit` (stall "carry carrot 5")
+- ROOT CAUSE: củ trên bục có `CanDragNow=true` từ MỌI khoảng cách -> ClickRouter
+  nuốt cú click định đi tới bục (bé đứng im) + tap-select vô tình; VÀ trạm nộp
+  (-2.6,0.6) nằm GIỮA camera và luống cà rốt -> tia click củ trúng
+  `RPSubmitAnchor` (wrong submit liên tục).
+- Fix: `CanDragNow` gate theo khoảng cách (`Game.PlayerAtBowl`, 2.4m) — click xa
+  giờ ĐI BỘ tới bục; `RabbitBowlDrag` bỏ qua "tap vườn" nếu tia trúng BẤT KỲ củ
+  nào (nhặt củ không còn tính là tap vườn); dời trạm nộp sang `(-4.8,0,-0.6)`
+  (ngoài sightline luống cà rốt); harness chờ feed bằng proximity (không click
+  bục).
+
+### Journey tự đóng game
+- `TempFullJourney.Main`: sau `FULLJOURNEY_END` chờ 1.5s -> log
+  `FULLJOURNEY_QUIT (auto-close)` -> `Application.Quit()` (+ editor guard).
+
+### Verify (maynode)
+- EditMode **691/686/0/5** (`E:\LWW\z6.xml`).
+- Production build + Journey build **Succeeded errors=0** (`E:\LWW\z-jbuild6.log`).
+- FULL JOURNEY '(start)' 1 run: **6/6 STAGE_PASS** — stairs 120s / rabbit 123s /
+  tower 66s / delivery 69s / match 40s / return.main 6s; **errors=0 severe=0**;
+  process auto-exit (wall 435s, `FULLJOURNEY_QUIT`). Shots `E:\LWW\z-jshots5`.
+- Vẫn CHƯA commit (chờ lệnh user).
+- TIẾP: user đã cho toàn quyền nghiên cứu OSS + nâng UX/UI ở mức cao nhất cho
+  các trò chơi — xem `SESSION_BRIEF.md`.
+
+## 90. BACKUP BẤT BIẾN (2026-09-28, maynode) — LẤY BẢN SAO Ở ĐÂU
+
+- **Vị trí backup (KHÔNG SỬA DƯỚI MỌI TRƯỜNG HỢP):**
+  `E:\LWW\learning-world-BACKUP-2026-09-28-P2Z32`
+- Nội dung: **toàn bộ source code working tree tại thời điểm 2026-09-28**, gồm cả
+  **71 mục CHƯA COMMIT** (vòng §80-§89 + S3-P2Z32). Gồm `Assets/`,
+  `ProjectSettings/`, `Packages/`, `Content/`, `docs/`, `tools/`, `.git/`,
+  `.github/`, `.gitignore`, `HANDOFF.md`, `SESSION_BRIEF.md`.
+  Loại trừ `Library/`, `Temp/`, `Logs/`, `obj/`, `.vs/`, `Builds/` (thư mục sinh).
+- Git lúc backup: branch `asus-merge-check`, HEAD
+  `810e67ed5b95828261a3b7f3c5e279608ac2e012`.
+- Baseline đã kiểm chứng tại snapshot: EditMode **691/686/0/5** (`E:\LWW\z6.xml`);
+  build production + journey **Succeeded errors=0**; full journey **6/6 PASS,
+  errors=0 severe=0**, tự đóng.
+- Đã **gắn tag bất biến**: file `DO_NOT_MODIFY.md` ở gốc backup + **toàn bộ 1087
+  file set READ-ONLY**. Không sửa/xoá/di chuyển/dựng Unity trên thư mục này.
+- **Cách lấy lại / khôi phục**: copy nội dung thư mục backup đè lên
+  `E:\LWW\learning-world` (hoặc clone ra chỗ mới), xoá `Library/`+`Temp/` ở bản
+  đích, mở Unity 6000.6.0f1 để import lại; `git status` sẽ ra đúng 71 mục.
+- Mọi phát triển tiếp tục CHỈ ở `E:\LWW\learning-world`.
+
+## 91. KẾ HOẠCH NÂNG UX/UI P1-P5 (lệnh user, toàn quyền) — BẮT ĐẦU
+
+- User: nghiên cứu OSS, nâng UX/UI "mức cao nhất", toàn quyền đổi core, không
+  giới hạn thời gian/code. Làm tuần tự **P1 → P5**, mỗi bước verify
+  suite + build + journey full (giữ 6/6) + ghi handoff.
+- P1 Lớp feedback dùng chung (mở rộng `DemoJuice`: Pop/Squash, Ring, Flash,
+  Wobble, CameraPunch, cờ ReduceMotion; deterministic, 0 dep) + wire 5 game.
+- P2 HUD tiến độ round + objective + banner đúng/sai lớn.
+- P3 Onboarding-lite trong scene (làm nổi mục tiêu kế tiếp).
+- P4 Board & readability (highlight toán hạng đang nhắm, animation nhẹ).
+- P5 Adaptive nhẹ + accessibility (reduce-motion, nới hit-area).
+
+## 92. S3-P2Z33 — P1 LỚP FEEDBACK DÙNG CHUNG (2026-09-28, maynode)
+
+- User: backup trước (xem §90), rồi làm tuần tự P1→P5.
+- MỚI `Assets/A_World/GameJuice.cs`: kit feedback dùng chung, 0-dep,
+  deterministic, Update-driven, chạy ở mọi parent scale. Có cờ
+  `GameJuice.ReduceMotion` (accessibility). Primitives: `Pop`, `Squash`,
+  `Wobble`, `Ring`, `Flash`, `CameraPunch` (rotation-only, không drift);
+  presets `PickFx`, `PlaceFx`, `CorrectFx`, `WrongFx` (nhiều lớp: motion +
+  hạt + ring + camera punch). Components tự huỷ edit-safe
+  (`CharacterPresentation.DestroyNow`).
+- `SmartCamera.Punch(deg, seconds)` + `PunchActive` (rotation-only, áp sau
+  mọi mode; không đụng state SmoothDamp).
+- Đã wire: `NumberStairs.Success` (CorrectFx + board pop), `RabbitFeed`
+  (SuccessBeats CorrectFx + board pop; TrySubmit-sai WrongFx wobble).
+- FIX bug gameplay thật (lộ qua journey): bậc thang phép TRỪ trước đây coi
+  đứng ở OpA (trên kết quả) là "overshoot" -> mắng sai. Giờ direction-aware:
+  trừ thì "quá xa" là DƯỚI kết quả; câu "come back up".
+- HARDEN (UX): củ đang chọn trên bục tự bỏ chọn khi bé rời bục
+  (`RabbitBowlDrag` + `PlayerAtBowl`) — rời bục = huỷ ý định; journey stair
+  tự sửa khi agent vượt bậc (ClimbTo target).
+- TEST: `CT-P61_GameJuice.cs` (6) + `P54Q` (trừ direction-aware). Suite
+  **698/693/0/5** (`E:\LWW\z10.xml`).
+- BUILD production + journey **Succeeded errors=0**; FULL JOURNEY **6/6 PASS,
+  errors=0 severe=0**, tự đóng (420s, `E:\LWW\z-journey8.log`).
+- CÒN P1: wire GameJuice vào tower/delivery/match. Rồi P2-P5.
+- Vẫn CHƯA commit.
+
+## 93. S3-P2Z33→37 — P1→P5 UX/UI + GAMEPLAY, MỖI PHASE VERIFY + PUSH (2026-09-28, maynode)
+
+- Lệnh user: backup trước (xem §90), làm tuần tự P1→P5, **mỗi P push nếu không lỗi**.
+- Đã push vào `origin/asus-merge-check`:
+  * **P1** `f46242c` — lớp `GameJuice` (Pop/Squash/Wobble/Ring/Flash/CameraPunch,
+    presets) + `SmartCamera.Punch`; wire 5 game; kèm backlog P2Z32 (bậc thang +/−,
+    fix journey match pad/rabbit/auto-close).
+  * **P2** `4942a46` — `ActivityFeedback` overlay: dots tiến độ + banner đúng/sai;
+    wire 5 game; journey bậc thang deterministic.
+  * **P3** `11e5323` — `ActivityGuide` (marker mục tiêu kế tiếp trong scene).
+  * **P4** `19b5eff` — dòng objective bền (task line) trong overlay.
+  * **P5** `c4798c2` — `ComfortSettings` (ReduceMotion/BigText, phím M/B, cờ CLI)
+    + adaptive nhẹ (Retry escalate sau 3 lần trượt).
+- Baseline cuối: EditMode **705/700/0/5** (`E:\LWW\z15.xml`); production + journey
+  build **Succeeded errors=0**; FULL JOURNEY **6/6 PASS, errors=0 severe=0**, tự
+  đóng (`E:\LWW\z-journey14.log` + `z-jshots14`).
+- Backup bất biến: `E:\LWW\learning-world-BACKUP-2026-09-28-P2Z32` (xem §90).
+- Cây làm việc SẠCH (mọi thứ đã push). Chờ lệnh user vòng tiếp theo.

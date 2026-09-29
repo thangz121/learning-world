@@ -68,6 +68,20 @@ public class SmartCamera : MonoBehaviour {
 
   public CameraMode Mode { get; private set; } = CameraMode.Follow;
 
+  // S3-P2Z33 (GameJuice): a short ROTATION-ONLY camera punch for impact beats.
+  // Rotation (not position) is intentional: LookTowards recomputes the rotation
+  // from the base pose every frame, so the shake can never feed back into the
+  // SmoothDamp position state (no drift). Purely additive; idle when unused.
+  float _punchT, _punchSeconds, _punchDeg;
+
+  public void Punch(float degrees = 1.5f, float seconds = 0.22f) {
+    _punchDeg = Mathf.Max(0f, degrees);
+    _punchSeconds = Mathf.Max(0.01f, seconds);
+    _punchT = _punchSeconds;
+  }
+
+  public bool PunchActive { get { return _punchT > 0f; } }
+
   Transform _followTarget;
   Vector3 _followOffset;
   bool _hasFollowTarget;
@@ -251,6 +265,14 @@ public class SmartCamera : MonoBehaviour {
       case CameraMode.Cinematic:
         if (_cinPlaying) TickCinematic();
         break;
+    }
+    if (_punchT > 0f) {
+      _punchT -= Time.deltaTime;
+      float k = _punchSeconds > 0f ? Mathf.Clamp01(_punchT / _punchSeconds) : 0f;
+      float a = _punchDeg * k * k;
+      float t = Time.time;
+      transform.rotation = transform.rotation * Quaternion.Euler(
+        Mathf.Sin(t * 71f) * a, Mathf.Cos(t * 63f) * a, Mathf.Sin(t * 83f) * a);
     }
   }
 

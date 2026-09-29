@@ -1,32 +1,28 @@
-// A_World/CountingGarden/CountingGardenBuilder.cs — S3 P2V VISUAL RECOMPOSITION.
+// A_World/CountingGarden/CountingGardenBuilder.cs — TWO-PLOT GARDEN.
 // The Counting Garden is its OWN additive scene (lazy-loaded from the Math Hub
 // counting gate). This builder code-builds ALL content (one root GO, plain
 // primitives + shared Lit materials + the existing PropKit, deterministic).
 //
-// S3-P2V layout (recomposed after the real-camera visual audit — the old
-// 5 circular fenced plots OVERLAPPED each other into a fence snake, the zones
-// hid behind blossom trees, the demo board faced edge-on and the number sat
-// off-frame; see the phase report):
+// Layout (two playable plots on a r9.5 crescent around ArcCenter):
 //
 //                 EXIT (0,-10.4)   ENTRY (0,-8)      <- warp in/out, north
 //                        \            /
 //                         entry walk (x=0)
 //                              |
 //                  PLAZA (0,1.5) d7.6 + number stones 1..5
-//                    /          |          \
-//          bed0   bed1     DEMO THEATRE     bed3   bed4     <- crescent r9.5
-//        (-70°)  (-35°)   (0°) facing N    (+35°)  (+70°)
+//                    /                    \
+//              carrot bed             number-stair hill     <- crescent r9.5
+//              (-50°)                  (+50°)
 //                              |
 //                    reward pocket (west of plaza)
 //
-// The demo theatre is a PURPOSE-BUILT stage facing the plaza (the child's
-// viewing floor): number board -> apples -> basket -> result board read left
-// to right from the stage camera. Beds are future activity gardens (soil +
-// counted crops + numbered mouth posts), NOT empty enclosures.
-//
-// Everything is STATIC presentation (no Interactable, no presenter, no quest/
-// collect/scoring): Phase 3 owns behaviour. Nav discipline unchanged: solids
-// bake off-corridor, overhead dressing is bake-ignored, pads stay thin.
+// Only two activities remain: the carrot patch (rabbit) at zone 0 and the
+// number-stair hill at zone 1. Each keeps the bed contract (border + pad +
+// fence ring + numbered gate/anchor + vignette); the mini lessons are runtime
+// components (RabbitLessonDemo / StairLessonDemo). Everything is STATIC
+// presentation (no Interactable, no presenter, no quest/collect/scoring).
+// Nav discipline unchanged: solids bake off-corridor, overhead dressing is
+// bake-ignored, pads stay thin.
 // C# 9.0 only.
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,14 +30,13 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class CountingGardenBuilder : MonoBehaviour {
   public const string SceneName = "CountingGardenScene";
-  // S3-P2Z12 (Gameplay #2): the crescent grew a sixth plot — the number-stair
-  // hill ("Đồi Bậc Thang") at the east end of the fan. The five original plots
-  // (4 crop beds + demo theatre) keep their indices/angles, so every authored
-  // coordinate of gameplay #1 is untouched.
-  public const int ZoneCount = 6;
-  public const int StairZoneIndex = 5;
-  // Gameplay #3 ("Cho thỏ ăn đúng số"): the carrot patch (zone 0) opens the
-  // rabbit arena. The bed keeps its dressing; the door gains a play scene.
+  // The garden keeps exactly two playable plots: the carrot patch (rabbit,
+  // zone 0, west) and the number-stair hill ("Đồi Bậc Thang", zone 1, east of
+  // the plaza).
+  public const int ZoneCount = 2;
+  // Gameplay #2: the number-stair hill opens its own lazy play scene.
+  public const int StairZoneIndex = 1;
+  // Gameplay #3 ("Cho thỏ ăn đúng số"): the carrot patch opens the rabbit arena.
   public const int RabbitZoneIndex = 0;
 
   // Separate island far from MarketScene (0) and MathScene (+60x).
@@ -54,7 +49,7 @@ public class CountingGardenBuilder : MonoBehaviour {
   // Entry spawn sits CLEAR of the exit portal radius (journey J4 lesson).
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -8f);
   public static readonly Vector3 HubReturn = new Vector3(0f, 0f, 0f); // filled by the hub side
-  // Plaza heart (orientation + viewing floor for the demo theatre).
+  // Plaza heart (orientation + viewing floor for the two plots).
   public static readonly Vector3 ArcCenter = new Vector3(0f, 0f, 1.5f);
   // Follow camera for THIS world. Two fixes over the inherited Math offset:
   // closer/lower (the world read like a map from 0,6,8.3) AND flipped to the
@@ -62,72 +57,10 @@ public class CountingGardenBuilder : MonoBehaviour {
   // look INTO the garden (the old +z offset stared at the entry arch with the
   // whole world behind the child; S3-P2V round-2 capture).
   public static readonly Vector3 FollowOffset = new Vector3(0f, 3.8f, -5.0f);
-  // Crescent: 6 plots at r9.5, fan -70..+105 deg from south (+z), index 2 = demo.
-  // The stair hill takes the open east end (+105), so the crescent walk gains
-  // two segments and nothing else moves.
+  // Crescent: TWO plots at r9.5 around the plaza: the carrot patch (west,
+  // -50°) and the number-stair hill (east of the plaza, +50°).
   public const float CrescentRadius = 9.5f;
-  static readonly float[] ZoneAngles = { -70f, -35f, 0f, 35f, 70f, 105f };
-
-  // Demo theatre (stage centre = ZoneCenters[2] = (0,11)); the viewing spot is
-  // the theatre's own DOOR at the plot edge.
-  // S3-P2Z11 (user: "cổng các khu trò chơi cho lùi về các khu trò chơi... hiện
-  // đang để giữa sân, sau này thêm trò khác sẽ rất chật"): the door used to sit
-  // at (0,2.6) on the plaza rim — 8.4m out. It now hugs the plot border (7.4),
-  // so the yard centre stays free for future games and every zone keeps its own
-  // threshold. The focus camera is a 3/4 from the east side, so the child at
-  // the door never stands between the camera and the mini stage.
-  public static readonly Vector3 DemoMouthLocal = new Vector3(0f, 0f, 7.4f);
-  public const float DemoViewRadius = 5.0f;
-  // Lesson staging (2-NPC mini lesson, user script S3-P2W): depth order from
-  // the child's view (camera north of the stage, looking south) =
-  //   BOARD (back) -> TEACHER -> STUDENT -> 5-BALL FIELD -> BASKET (front).
-  // Teacher stands BESIDE the board's left edge and the student a step to the
-  // right-front: side by side in shot A (round-4 capture: centered staging
-  // made the two actors stack/occlude each other, and the teacher's head hid
-  // the number "2").
-  // Authored demo-stage ORIGIN: ZoneCenters[2] = ArcCenter + r9.5 south. The
-  // lesson layout constants below are LOCAL to the garden root, which is why
-  // the S2 play arena reuses the same authored stage 1:1 (BuildDemoStageInto
-  // translates them by the caller's origin) — one lesson, two stages.
-  public static readonly Vector3 DemoStageOrigin = new Vector3(0f, 0f, 11f);
-  public static readonly Vector3 DemoNpcStart = new Vector3(-1.35f, 0f, 11.6f);
-  public static readonly Vector3 DemoStudentStart = new Vector3(0.75f, 0f, 10.1f);
-  public static readonly Vector3 DemoBallStand = new Vector3(-0.2f, 0f, 9.6f);
-  public static readonly Vector3 DemoBall2Stand = new Vector3(0.5f, 0f, 9.6f);
-  public static readonly Vector3 DemoBasketStand = new Vector3(2.1f, 0f, 9.6f);
-  static readonly Vector3 DemoBoardPos = new Vector3(0f, 0f, 12.4f);
-  public static readonly Vector3 DemoBallFieldPos = new Vector3(0f, 0f, 9.6f);
-  static readonly Vector3 DemoBasketPos = new Vector3(2.4f, 0f, 9.0f);
-  public static readonly Vector3 DemoResultPos = new Vector3(2.9f, 0f, 9.3f);
-  // Shot A (lesson): board + teacher + student + ball field + basket in one
-  // frame. Shot B (action): student + 2 balls + basket + result, tighter and
-  // lower. The sequence reframes between them (user: camera must switch).
-  // Shot A (lesson): the whole stage, board fully in frame (a clipped number
-  // board reads as a WRONG number — user report).
-  static readonly Vector3 DemoCamPos = new Vector3(0.3f, 2.5f, 6.6f);
-  static readonly Vector3 DemoLookPos = new Vector3(0.7f, 1.5f, 11.6f);
-  // Shot B (action): closer push-in on the student + balls + basket, raised
-  // board and result board still fully inside the frame.
-  static readonly Vector3 DemoActionCamPos = new Vector3(0.9f, 2.3f, 4.8f);
-  static readonly Vector3 DemoActionLookPos = new Vector3(0.85f, 1.05f, 10.3f);
-  // Shot C (result, S3-P2Y): right side of the stage at child height — the
-  // "2 + tick" board and the basket fill the frame while the teacher confirms
-  // (user round: the lesson needs a real camera change on the payoff shot).
-  static readonly Vector3 DemoResultCamPos = new Vector3(2.3f, 1.8f, 6.3f);
-  static readonly Vector3 DemoResultLookPos = new Vector3(1.9f, 1.15f, 9.7f);
-  // S3-P2Y miniature: before the child chooses, the zone-2 lesson runs as a
-  // small diorama INSIDE its plot (user: "thu bé khu chơi lại trước khi player
-  // chọn"); picking "Vào chơi" opens the full-size arena as before. Scale is
-  // applied to a pivot-compensated root, so every authored local coordinate
-  // still lands on its designed world spot (the demo controller sells the
-  // motion in local space and does not care).
-  public const float DemoMiniScale = 0.62f;
-  // The five balls of the field (the student must take exactly TWO of them).
-  public static readonly Vector3[] DemoBallHomes = {
-    new Vector3(-1.6f, 0.17f, 9.6f), new Vector3(-0.9f, 0.17f, 9.6f),
-    new Vector3(-0.2f, 0.17f, 9.6f), new Vector3(0.5f, 0.17f, 9.6f),
-    new Vector3(1.2f, 0.17f, 9.6f),
-  };
+  static readonly float[] ZoneAngles = { -50f, 50f };
 
   static readonly Color Lawn = new Color(0.38f, 0.64f, 0.36f);
   static readonly Color Meadow = new Color(0.46f, 0.71f, 0.42f);
@@ -136,9 +69,7 @@ public class CountingGardenBuilder : MonoBehaviour {
   static readonly Color CourtyardSand = new Color(0.86f, 0.78f, 0.62f);
   static readonly Color Soil = new Color(0.42f, 0.30f, 0.20f);
   static readonly Color Gold = new Color(0.98f, 0.78f, 0.25f);
-  static readonly Color AppleRed = new Color(0.85f, 0.25f, 0.25f);
   static readonly Color BasketBrown = new Color(0.55f, 0.38f, 0.22f);
-  static readonly Color BasketRim = new Color(0.72f, 0.54f, 0.32f);
   static readonly Color MintLeaf = new Color(0.70f, 0.90f, 0.72f);
   static readonly Color StoneGrey = new Color(0.68f, 0.68f, 0.66f);
   static readonly Color BoardCream = new Color(0.99f, 0.95f, 0.85f);
@@ -148,66 +79,29 @@ public class CountingGardenBuilder : MonoBehaviour {
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
   public readonly List<Vector3> ZoneCenters = new List<Vector3>();
-  // S3 P2X zone picker: one click/proximity spot per crescent plot (index 2 =
-  // the demo theatre carries the play door). Pushed into CountingGardenArea on
-  // each lazy load (SetGarden) so focus/panel always points at live scene nodes.
+  // One click/proximity spot per crescent plot, pushed into CountingGardenArea
+  // on each lazy load (SetGarden) so focus/panel always points at live nodes.
   public readonly List<GardenZoneSpot> ZoneSpots = new List<GardenZoneSpot>();
+  // Per-zone gate root (hidden while that plot's demo plays).
+  public readonly List<GameObject> BedGates = new List<GameObject>();
   public MicroWorldPortal ExitPortal { get; private set; }
-  // Demo stage refs (scene-authored; CountingDemo reads these).
-  public GameObject DemoNumber { get; private set; }
-  public Transform DemoBasket { get; private set; }
-  public readonly List<GameObject> DemoBalls = new List<GameObject>();
-  public GameObject DemoResult { get; private set; }
-  public Transform DemoCam { get; private set; }
-  public Transform DemoLook { get; private set; }
-  public Transform DemoActionCam { get; private set; }
-  public Transform DemoActionLook { get; private set; }
-  public Transform DemoResultCam { get; private set; }
-  public Transform DemoResultLook { get; private set; }
-  // Miniature root (S3-P2Y): the demo stage + actors live under this scaled
-  // node in the garden; the play arena builds the same layout at full scale.
-  public Transform DemoMiniRoot { get; private set; }
-  public Vector3 DemoStageCenter { get; private set; }
-  public Vector3 DemoMouth { get; private set; }
-
-  // Stage references handed to CountingDemo (and to any scene that reuses the
-  // authored lesson layout via BuildDemoStageInto).
-  public sealed class DemoRefs {
-    public GameObject Number;
-    public Transform Basket;
-    public readonly List<GameObject> Balls = new List<GameObject>();
-    public GameObject Result;
-    public Transform CamA;
-    public Transform LookA;
-    public Transform CamB;
-    public Transform LookB;
-    public Transform CamC;
-    public Transform LookC;
-    public Vector3 Mouth;
-    public Vector3 Center;
-    // Parent the actors/FX must use (miniature in the garden, root in the arena).
-    public Transform StageParent;
-    // S3-P2Z4: the ACTING layout is data now (user: the reference gameplay must
-    // not be nailed to the garden's straight test row). Builders fill these
-    // points; CountingDemo reads them instead of the old constants.
-    public Vector3 NpcStart = new Vector3(-1.35f, 0f, 11.6f);
-    public Vector3 StudentStart = new Vector3(0.75f, 0f, 10.1f);
-    public Vector3 BallStand = new Vector3(-0.2f, 0f, 9.6f);
-    public Vector3 BallStand2 = new Vector3(0.5f, 0f, 9.6f);
-    public Vector3 BasketStand = new Vector3(2.1f, 0f, 9.6f);
-    public Vector3 BoardPoint = new Vector3(0f, 1.4f, 12.25f);
-    public Vector3 BallFieldPoint = new Vector3(0f, 0.4f, 9.6f);
-    public Vector3[] BallHomes = {
-      new Vector3(-1.6f, 0.17f, 9.6f), new Vector3(-0.9f, 0.17f, 9.6f),
-      new Vector3(-0.2f, 0.17f, 9.6f), new Vector3(0.5f, 0.17f, 9.6f),
-      new Vector3(1.2f, 0.17f, 9.6f),
-    };
-  }
 
   // Scene entry (GameInstaller calls this after the lazy load).
   public void Build() {
     BuildContent(transform);
+    // Flat-ground discipline (rabbit/journey lesson): every decor renderer is
+    // excluded from the bake so no low mesh can carve the walk surface.
+    IgnoreAllDecorExceptGround(transform, "CGGround");
     BuildNavMesh(transform);
+  }
+
+  static void IgnoreAllDecorExceptGround(Transform root, string groundName) {
+    if (root == null) return;
+    foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true)) {
+      if (r == null || r.gameObject == null) continue;
+      if (r.gameObject.name == groundName) continue;
+      IgnoreFromBuild(r.gameObject);
+    }
   }
 
   // Runtime NavMesh bake for THIS scene only (CollectObjects.Children on the
@@ -323,7 +217,7 @@ public class CountingGardenBuilder : MonoBehaviour {
     Sphere(parent, "CGExitCapR", new Vector3(1.6f, 1.9f, -10.4f), 0.4f, MintLeaf, true);
   }
 
-  // ---- the crescent: 4 garden beds + the demo theatre (index 2) -----------------
+  // ---- the crescent: the carrot bed (zone 0) + the number-stair hill (zone 1) ----
 
   void BuildCrescent(Transform parent) {
     ZoneCenters.Clear();
@@ -333,16 +227,7 @@ public class CountingGardenBuilder : MonoBehaviour {
         Mathf.Cos(a) * CrescentRadius);
       ZoneCenters.Add(center);
     }
-    DemoStageCenter = ZoneCenters[2];
-    DemoMouth = DemoMouthLocal;
     BuildBed(parent, 0, 3, "carrot");
-    BuildBed(parent, 1, 4, "strawberry");
-    BuildDemoStage(parent);
-    BuildDemoPlotBorder(parent);
-    BuildDemoPlotAnchor(parent);
-    BuildDemoDoorGate(parent);
-    BuildBed(parent, 3, 5, "corn");
-    BuildBed(parent, 4, 2, "pumpkin");
     BuildStairHillPlot(parent, StairZoneIndex);
     BuildZoneSpots(parent);
   }
@@ -351,7 +236,7 @@ public class CountingGardenBuilder : MonoBehaviour {
   // The garden-side MINIATURE of the "Bậc thang con số" arena: the same shaped
   // hill (6 steps, target "3" board, goal flag) built at toy scale inside the
   // plot, so the child sees what the door opens. The plot keeps the bed
-  // contract (CGZone5Pad/Border/Fence/Anchor + gate + vignette) so the picker
+  // contract (CGZone1Pad/Border/Fence/Anchor + gate + vignette) so the picker
   // and the layout tests read one shape for every plot.
   // The diorama numbers live with StairLessonDemo (it builds the mini lesson);
   // the plot keeps only the arena's target for its gate beads.
@@ -416,115 +301,48 @@ public class CountingGardenBuilder : MonoBehaviour {
     vig.Bind(beads, new List<Transform>());
   }
 
-  // S3-P2Z6 (user: "demo ở sân không có cổng, đến giữa sân là nó tự chọn"):
-  // the stage's DOOR now exists as a real threshold arch at the viewing spot.
-  // The lesson's audience gate (2.2m) arms exactly here, so the demo starts
-  // when the child reaches the door — never from the middle of the yard.
-  // Overhead beam is bake-ignored + collider-free (headroom rule).
-  void BuildDemoDoorGate(Transform parent) {
-    Vector3 m = DemoMouthLocal;
-    Box(parent, "CGDemoDoorPostL", new Vector3(m.x - 1.7f, 1.05f, m.z),
-      new Vector3(0.18f, 2.1f, 0.18f), BasketBrown);
-    Box(parent, "CGDemoDoorPostR", new Vector3(m.x + 1.7f, 1.05f, m.z),
-      new Vector3(0.18f, 2.1f, 0.18f), BasketBrown);
-    GameObject beam = Box(parent, "CGDemoDoorBeam", new Vector3(m.x, 2.16f, m.z),
-      new Vector3(3.8f, 0.16f, 0.16f), WorldBeauty.BlossomPink);
-    IgnoreFromBuild(beam);
-    Sphere(parent, "CGDemoDoorCapL", new Vector3(m.x - 1.7f, 2.3f, m.z), 0.42f, Gold, true);
-    Sphere(parent, "CGDemoDoorCapR", new Vector3(m.x + 1.7f, 2.3f, m.z), 0.42f, Gold, true);
-    WorldBeauty.Ball(parent, "CGDemoDoorBlossom0", new Vector3(m.x, 2.42f, m.z), 0.7f,
-      WorldBeauty.BlossomPink);
-    WorldBeauty.Ball(parent, "CGDemoDoorBlossomL", new Vector3(m.x - 0.6f, 2.32f, m.z), 0.5f,
-      WorldBeauty.BlossomCream);
-    WorldBeauty.Ball(parent, "CGDemoDoorBlossomR", new Vector3(m.x + 0.6f, 2.34f, m.z), 0.55f,
-      WorldBeauty.BlossomDeep);
-  }
-
-  // S3-P2Y boundary for the demo plot (same language as the beds): a flat
-  // contrast ring under the stage (the crescent walk covers it where they
-  // cross, so the path stays clean) + back/side fence pieces placed OUTSIDE
-  // the walk band (r>8.8 from the arc centre) — the north side stays open as
-  // the theatre mouth facing the plaza.
-  void BuildDemoPlotBorder(Transform parent) {
-    GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    ring.name = "CGZone2Border";
-    ring.transform.SetParent(parent, false);
-    ring.transform.localPosition = new Vector3(DemoStageCenter.x, 0.004f, DemoStageCenter.z);
-    ring.transform.localScale = new Vector3(7.2f, 0.006f, 7.2f);
-    ring.GetComponent<Renderer>().sharedMaterial = Lit(BorderWood);
-    StripCollider(ring);
-    Vector3 c = DemoStageCenter;
-    for (int i = 0; i < 3; i++) {
-      PlaceProp(parent, "fence_simpleLow", "CGZone2Fence" + (2 + i),
-        new Vector3(c.x + (i - 1) * 1.4f, 0f, c.z + 3.0f), -90f, 1.0f);
-    }
-    for (int s = 0; s < 2; s++) {
-      float sign = (s == 0) ? -1f : 1f;
-      for (int i = 0; i < 2; i++) {
-        PlaceProp(parent, "fence_simpleLow", "CGZone2Fence" + (5 + s * 2 + i),
-          new Vector3(c.x + sign * 2.7f, 0f, c.z + 1.2f + i * 1.0f), 0f, 1.0f);
-      }
-    }
-  }
-
-  // S3 P2X (user order §47B): every plot gets a GardenZoneSpot — a thin click
-  // pad at the mouth (collider KEPT for ClickRouter, bake-ignored so the pad
-  // never textures the NavMesh) plus its own camera/look pair for the focus
-  // beat. Zones 2 (demo theatre), 5 (stair hill) and 0 (carrot patch / rabbit)
-  // are staged with play; the 3 remaining beds stay look-only. All positions
-  // derive from the same crescent math as the beds (no magic numbers duplicated).
+  // Every plot gets a GardenZoneSpot — a thin click pad at the mouth (collider
+  // KEPT for ClickRouter, bake-ignored so the pad never textures the NavMesh)
+  // plus its own camera/look pair for the focus beat. Both plots are staged
+  // with play (rabbit at zone 0, stairs at zone 1). All positions derive from
+  // the same crescent math as the beds (no magic numbers duplicated).
   void BuildZoneSpots(Transform parent) {
     ZoneSpots.Clear();
     for (int z = 0; z < ZoneCount; z++) {
       Vector3 center = ZoneCenters[z];
       Vector3 outDir = (center - ArcCenter).normalized;
-      Vector3 mouth = (z == 2) ? DemoMouthLocal : center - outDir * 1.35f;
+      Vector3 mouth = center - outDir * 1.35f;
       GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
       pad.name = "CGZone" + z + "Spot";
       pad.transform.SetParent(parent, false);
       pad.transform.localPosition = new Vector3(mouth.x, 0.04f, mouth.z);
       pad.transform.localScale = new Vector3(2.0f, 0.03f, 2.0f);
-      bool staged = (z == 2 || z == StairZoneIndex || z == RabbitZoneIndex);
-      pad.GetComponent<Renderer>().sharedMaterial = Lit(staged ? Gold : WorldBeauty.Petal);
+      pad.GetComponent<Renderer>().sharedMaterial = Lit(Gold);
       pad.AddComponent<GardenZoneSpot>(); // collider stays: this is the click door
       IgnoreFromBuild(pad);
       GardenZoneSpot spot = pad.GetComponent<GardenZoneSpot>();
       spot.zoneIndex = z;
-      spot.playEnabled = staged;
-      // Which LAZY play scene the door opens (empty = the reference arena).
-      // Gameplay #2 gets its own scene, gameplay #3 (the carrot patch) its
-      // own rabbit scene; nothing loads until the door is used.
+      spot.playEnabled = true;
+      // Which LAZY play scene the door opens (empty = no arena at all).
+      // S3-P2Z22: the plot's gate root (the area hides it during the demo so the
+      // focus camera never looks through the doorway frame).
+      spot.GateRoot = (z < BedGates.Count) ? BedGates[z] : null;
       spot.playSceneName = (z == StairZoneIndex) ? StairHillBuilder.SceneName
-        : (z == RabbitZoneIndex) ? RabbitPlayBuilder.SceneName
-        : (z == 2 ? CountingPlayBuilder.SceneName : "");
-      // The ball theatre + the stair hill preview through a garden miniature
-      // and wait for one try-run before the play door opens. The rabbit plot
-      // opens the panel at once: its full teacher/student lesson runs INSIDE
-      // the arena (brief: the demo must be visible with patch + bunny together).
-      spot.demoGate = (z == 2 || z == StairZoneIndex);
-      // Focus framing: 3.6m back toward the plaza at child-comfort height,
-      // looking at the plot's centre. Zone 2 is the MINIATURE stage (S3-P2Y),
-      // so its focus camera sits much closer — the diorama fills the frame.
+        : (z == RabbitZoneIndex) ? RabbitPlayBuilder.SceneName : "";
+      // Both plots preview their lesson through a garden miniature and wait for
+      // one try-run before the play door opens.
+      spot.demoGate = true;
+      // Focus framing: the carrot diorama is the WIDEST (patch west + hutch
+      // east), so its camera pulls back toward the plaza; the stair camera sits
+      // INSIDE the plot, past the mouth, looking across the diorama (no gate
+      // between camera and stage).
       Vector3 camPos, lookPos;
-      if (z == 2) {
-        // S3-P2Z11b (user ảnh: "camera đang chiếu vào cái cột"): the focus
-        // camera used to sit BEHIND the theatre door, so a door post filled
-        // the left edge. It now sits INSIDE the plot (past the door), almost
-        // on the centre line: faces of the actors, board centred, basket at
-        // the right edge — no post, no avatar between camera and stage.
-        camPos = new Vector3(1.4f, 1.85f, 7.9f);
-        lookPos = new Vector3(0.15f, 0.8f, 11.0f);
-      } else if (z == StairZoneIndex) {
-        // Gameplay #2 + user round ảnh "bị dính cái cổng nên không nhìn hết":
-        // the focus camera used to sit OUTSIDE the gate (mouth - 3.1m), so the
-        // gate post + blossom filled the near edge of the frame. Like zone 2's
-        // fix, it now sits INSIDE the plot, past the mouth, and looks across
-        // the diorama — no gate between camera and miniature.
+      if (z == RabbitZoneIndex) {
+        camPos = mouth - outDir * 1.9f + new Vector3(0f, 2.9f, 0f);
+        lookPos = center + new Vector3(0f, 0.5f, 0f);
+      } else {
         camPos = mouth + outDir * 0.55f + new Vector3(0f, 1.85f, 0f);
         lookPos = center + outDir * 1.55f + new Vector3(0f, 0.65f, 0f);
-      } else {
-        camPos = mouth - outDir * 3.6f + new Vector3(0f, 2.4f, 0f);
-        lookPos = center + new Vector3(0f, 0.9f, 0f);
       }
       // ROOT-CAUSE FIX (user report "camera đang fail"): these anchors were
       // parented to the PAD, which is a cylinder scaled (2, 0.03, 2) — the
@@ -625,28 +443,36 @@ public class CountingGardenBuilder : MonoBehaviour {
   List<Transform> BuildBedGate(Transform parent, int index, string tag, Vector3 mouth,
       Vector3 lat, Color accent, int beadCount = -1) {
     List<Transform> beads = new List<Transform>();
+    // S3-P2Z22 (user: "khi xem demo thì bỏ cái cửa này đi"): the whole gate lives
+    // under ONE root so the area can hide it while the plot's demo plays (the
+    // carrot focus camera sits outside the mouth and used to look through it).
+    GameObject gateRoot = new GameObject(tag + "GateRoot");
+    gateRoot.transform.SetParent(parent, false);
+    while (BedGates.Count <= index) BedGates.Add(null);
+    BedGates[index] = gateRoot;
+    Transform gp = gateRoot.transform;
     Vector3 postL = mouth + lat * 1.1f;
     Vector3 postR = mouth - lat * 1.1f;
-    Cylinder(parent, tag + "Post", postL + new Vector3(0f, 1.1f, 0f),
+    Cylinder(gp, tag + "Post", postL + new Vector3(0f, 1.1f, 0f),
       0.17f, 2.2f, BasketBrown);
     int beadsOnPost = beadCount >= 0 ? beadCount : index + 1;
     for (int i = 0; i < beadsOnPost; i++) {
-      GameObject bead = Sphere(parent, tag + "PostBead" + i,
+      GameObject bead = Sphere(gp, tag + "PostBead" + i,
         postL + new Vector3(0f, 2.32f + i * 0.18f, 0f), 0.17f, Gold, false);
       if (bead != null) beads.Add(bead.transform);
     }
-    Cylinder(parent, tag + "GatePostR", postR + new Vector3(0f, 0.9f, 0f),
+    Cylinder(gp, tag + "GatePostR", postR + new Vector3(0f, 0.9f, 0f),
       0.15f, 1.8f, BasketBrown);
-    GameObject beam = Box(parent, tag + "GateBeam", mouth + new Vector3(0f, 1.98f, 0f),
+    GameObject beam = Box(gp, tag + "GateBeam", mouth + new Vector3(0f, 1.98f, 0f),
       new Vector3(0.13f, 0.13f, 2.5f), accent);
     if (beam != null) {
       beam.transform.localRotation = Quaternion.LookRotation(new Vector3(lat.x, 0f, lat.z));
       IgnoreFromBuild(beam);
     }
-    Sphere(parent, tag + "GateBall0", mouth + new Vector3(0f, 2.24f, 0f), 0.42f, accent, true);
-    Sphere(parent, tag + "GateBall1", mouth + lat * 0.55f + new Vector3(0f, 2.14f, 0f),
+    Sphere(gp, tag + "GateBall0", mouth + new Vector3(0f, 2.24f, 0f), 0.42f, accent, true);
+    Sphere(gp, tag + "GateBall1", mouth + lat * 0.55f + new Vector3(0f, 2.14f, 0f),
       0.26f, Gold, true);
-    Sphere(parent, tag + "GateBall2", mouth - lat * 0.55f + new Vector3(0f, 2.14f, 0f),
+    Sphere(gp, tag + "GateBall2", mouth - lat * 0.55f + new Vector3(0f, 2.14f, 0f),
       0.26f, Gold, true);
     return beads;
   }
@@ -654,181 +480,10 @@ public class CountingGardenBuilder : MonoBehaviour {
   static Color AccentFor(int index) {
     switch (index) {
       case 0: return new Color(0.95f, 0.55f, 0.20f); // carrot
-      case 1: return new Color(0.90f, 0.30f, 0.42f); // strawberry
-      case 3: return new Color(0.98f, 0.80f, 0.28f); // corn
-      case 4: return new Color(0.90f, 0.45f, 0.15f); // pumpkin
       default: return Gold;
     }
   }
 
-  // The demo theatre is a plot too: give it the same Zone2 anchor name the
-  // crescent contract uses (its floor pad is CG DemoStagePad — see P46D).
-  void BuildDemoPlotAnchor(Transform parent) {
-    GameObject anchor = new GameObject("CGZone2Anchor");
-    anchor.transform.SetParent(parent, false);
-    anchor.transform.localPosition = DemoMouthLocal;
-  }
-
-  // The demo theatre: a purpose-built stage facing the plaza. Camera-first
-  // layout (child at the plaza looking south): number board (screen-left) ->
-  // balls -> basket -> result board (screen-right); NPC works the back row.
-  // BuildDemoStageInto is SCENE-AGNOSTIC (origin-translated): the garden uses
-  // it for its zone-2 stage and the S2 play arena reuses the exact authored
-  // lesson 1:1 (one layout, no drifting copies).
-  void BuildDemoStage(Transform parent) {
-    // Pivot compensation: world = P + s*local must keep the stage centre at
-    // DemoStageCenter, so P = C*(1-s). Every authored coordinate (balls, NPC
-    // starts, camera markers) stays valid in the mini root's local space.
-    float s = DemoMiniScale;
-    GameObject mini = new GameObject("CGDemoMiniRoot");
-    mini.transform.SetParent(parent, false);
-    mini.transform.localPosition = DemoStageCenter * (1f - s);
-    mini.transform.localScale = new Vector3(s, s, s);
-    DemoMiniRoot = mini.transform;
-    DemoRefs r = BuildDemoStageInto(mini.transform, DemoStageOrigin);
-    DemoNumber = r.Number;
-    DemoBasket = r.Basket;
-    DemoBalls.Clear();
-    DemoBalls.AddRange(r.Balls);
-    DemoResult = r.Result;
-    DemoCam = r.CamA;
-    DemoLook = r.LookA;
-    DemoActionCam = r.CamB;
-    DemoActionLook = r.LookB;
-    DemoResultCam = r.CamC;
-    DemoResultLook = r.LookC;
-  }
-
-  public static DemoRefs BuildDemoStageInto(Transform parent, Vector3 origin) {
-    DemoRefs r = new DemoRefs();
-    r.Center = origin;
-    r.StageParent = parent;
-    Vector3 off = origin - DemoStageOrigin;
-    // Stage floor + low hedge backdrop (frames the stage, never the action).
-    GameObject stagePad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    stagePad.name = "CGDemoStagePad";
-    stagePad.transform.SetParent(parent, false);
-    stagePad.transform.localPosition = new Vector3(origin.x, 0.006f, origin.z);
-    stagePad.transform.localScale = new Vector3(5.8f, 0.012f, 5.8f);
-    stagePad.GetComponent<Renderer>().sharedMaterial = Lit(CourtyardSand);
-    StripCollider(stagePad);
-    // Stage wings: low fences framing the theatre's flanks (keeps the open
-    // side toward the plaza) — also the plot's fence contract (P46D).
-    PlaceProp(parent, "fence_simpleLow", "CGZone2Fence0",
-      origin + new Vector3(-3.0f, 0f, -0.6f), 90f, 0.92f);
-    PlaceProp(parent, "fence_simpleLow", "CGZone2Fence1",
-      origin + new Vector3(3.0f, 0f, -0.6f), 90f, 0.92f);
-    // Backdrop bushes sit BEHIND the board (a≈0 keeps them at z>stage, out of
-    // the basket/result side — user report: the right-side bush covered the
-    // result board).
-    for (int i = 0; i < 3; i++) {
-      float a = (-35f + i * 35f) * Mathf.Deg2Rad;
-      GameObject bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      bush.name = "CGDemoBackdrop" + i;
-      bush.transform.SetParent(parent, false);
-      bush.transform.localPosition = new Vector3(origin.x + Mathf.Sin(a) * 4.1f, 0.5f,
-        origin.z + Mathf.Cos(a) * 4.1f);
-      bush.transform.localScale = new Vector3(2.4f, 1.7f, 2.4f);
-      bush.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.28f, 0.58f, 0.32f));
-      StripCollider(bush);
-    }
-    // NUMBER BOARD (back): cream panel with a big gold "2" + 2 dots, facing
-    // the child (north). The teacher stands IN FRONT of it so one frame holds
-    // "teacher + number two" while she explains (user camera rule).
-    // The board rides HIGH above the teacher's hat (round-1 capture: a chest
-    // height board hid its own "2" behind the teacher's head).
-    Box(parent, "CGDemoBoardL", DemoBoardPos + off + new Vector3(-1.1f, 0.8f, 0f),
-      new Vector3(0.14f, 1.6f, 0.14f), BasketBrown);
-    Box(parent, "CGDemoBoardR", DemoBoardPos + off + new Vector3(1.1f, 0.8f, 0f),
-      new Vector3(0.14f, 1.6f, 0.14f), BasketBrown);
-    Box(parent, "CGDemoBoardPanel", DemoBoardPos + off + new Vector3(0f, 2.3f, 0f),
-      new Vector3(2.3f, 1.5f, 0.12f), BoardCream);
-    r.Number = Digit2(parent, "CGDemoNumber2", DemoBoardPos + off + new Vector3(0f, 1.78f, -0.08f),
-      1.05f, 0.8f, Gold, 90f);
-    // BALL FIELD (front): five balls in a row — the student must take TWO.
-    Pad(parent, "CGDemoBallField", DemoBallFieldPos + off + new Vector3(0f, -0.006f, 0f), 3.4f,
-      new Color(0.93f, 0.90f, 0.78f));
-    Color[] ballColors = { AppleRed, new Color(0.30f, 0.55f, 0.95f), Gold,
-      new Color(0.35f, 0.75f, 0.40f), WorldBeauty.BlossomDeep };
-    for (int i = 0; i < DemoBallHomes.Length; i++) {
-      GameObject ball = Sphere(parent, "CGDemoBall" + i, DemoBallHomes[i] + off, 0.34f,
-        ballColors[i % ballColors.Length], false);
-      if (ball != null) r.Balls.Add(ball);
-    }
-    // BASKET (front-right): big enough to read from the viewing spot.
-    GameObject basketGo = Cylinder(parent, "CGDemoBasket",
-      DemoBasketPos + off + new Vector3(0f, 0.27f, 0f), 1.05f, 0.55f, BasketBrown);
-    r.Basket = basketGo != null ? basketGo.transform : null;
-    Cylinder(parent, "CGDemoBasketRim", DemoBasketPos + off + new Vector3(0f, 0.55f, 0f),
-      1.15f, 0.1f, BasketRim);
-    // RESULT BOARD (front-right of the basket): appears ONLY after both balls
-    // are in, so the last shot reads "2 balls -> basket -> 2 tick".
-    GameObject result = new GameObject("CGDemoResult");
-    result.transform.SetParent(parent, false);
-    result.transform.localPosition = DemoResultPos + off;
-    // Raised on its own post: the celebrating student's body can no longer
-    // cover the "2 tick" (round-3 capture).
-    Box(result.transform, "CGDemoResultPost", new Vector3(0f, 0.65f, 0f),
-      new Vector3(0.13f, 1.3f, 0.13f), BasketBrown);
-    Box(result.transform, "CGDemoResultFrame", new Vector3(0f, 1.6f, 0f),
-      new Vector3(1.1f, 1.0f, 0.12f), BoardCream);
-    Digit2(result.transform, "CGDemoResultTwo", new Vector3(0f, 1.2f, -0.08f),
-      0.55f, 0.4f, Gold, 90f);
-    CheckMark(result.transform, "CGDemoResultCheck", new Vector3(0f, 1.86f, -0.08f),
-      0.3f, MintLeaf);
-    result.SetActive(false);
-    r.Result = result;
-    // Camera markers (scene-authored transforms, no second system): shot A =
-    // lesson frame, shot B = action frame.
-    GameObject cam = new GameObject("CGDemoCam");
-    cam.transform.SetParent(parent, false);
-    cam.transform.localPosition = DemoCamPos + off;
-    r.CamA = cam.transform;
-    GameObject look = new GameObject("CGDemoLook");
-    look.transform.SetParent(parent, false);
-    look.transform.localPosition = DemoLookPos + off;
-    r.LookA = look.transform;
-    GameObject camB = new GameObject("CGDemoCamAction");
-    camB.transform.SetParent(parent, false);
-    camB.transform.localPosition = DemoActionCamPos + off;
-    r.CamB = camB.transform;
-    GameObject lookB = new GameObject("CGDemoLookAction");
-    lookB.transform.SetParent(parent, false);
-    lookB.transform.localPosition = DemoActionLookPos + off;
-    r.LookB = lookB.transform;
-    // Shot C (result): the payoff frame for the "2 + tick" board + basket.
-    GameObject camC = new GameObject("CGDemoCamResult");
-    camC.transform.SetParent(parent, false);
-    camC.transform.localPosition = DemoResultCamPos + off;
-    r.CamC = camC.transform;
-    GameObject lookC = new GameObject("CGDemoLookResult");
-    lookC.transform.SetParent(parent, false);
-    lookC.transform.localPosition = DemoResultLookPos + off;
-    r.LookC = lookC.transform;
-    r.Mouth = DemoMouthLocal + off;
-    // Acting layout (garden defaults; the arena builder overrides its own).
-    r.NpcStart = DemoNpcStart + off;
-    r.StudentStart = DemoStudentStart + off;
-    r.BallStand = DemoBallStand + off;
-    r.BallStand2 = DemoBall2Stand + off;
-    r.BasketStand = DemoBasketStand + off;
-    r.BoardPoint = new Vector3(0f, 1.4f, 12.25f) + off;
-    r.BallFieldPoint = DemoBallFieldPos + off + new Vector3(0f, 0.4f, 0f);
-    Vector3[] homes = new Vector3[DemoBallHomes.Length];
-    for (int i = 0; i < homes.Length; i++) homes[i] = DemoBallHomes[i] + off;
-    r.BallHomes = homes;
-    // A soft pulsing pool under the stage ("it's a show", readable from afar).
-    DemoJuice.AttachSpotlight(parent, "CGDemoSpotlight",
-      new Vector3(origin.x, 0.018f, origin.z), 4.6f);
-    return r;
-  }
-
-  // CONNECTED seven-segment "2" (A/B/G/E/D) in the ZY plane, thin in X, yaw 90
-  // faces the plaza (north). Segments overlap at the joints (length + t) so the
-  // glyph is one solid connected number — the user rejected the earlier floating
-  // bars ("chưa có số hoàn chỉnh"). Local +z maps to world -x at yaw 90 and the
-  // north viewer reads screen-right = local +z, so B (upper vertical) sits at
-  // +z and E (lower vertical) at -z, exactly like a real "2".
   // CONNECTED seven-segment digits 0-9 — one table drives every number board.
   // Same plane/thickness discipline as the original Digit2: segments overlap at
   // the joints (length + t) so the glyph is one solid connected number, and
@@ -924,20 +579,20 @@ public class CountingGardenBuilder : MonoBehaviour {
     // Plaza (orientation heart) + entry walk.
     Pad(parent, "CGPlazaPad", new Vector3(ArcCenter.x, 0.004f, ArcCenter.z), 7.6f, CourtyardSand);
     Seg(parent, "CGPathEntry", new Vector3(0f, 0f, -11f), new Vector3(0f, 0f, -1.0f), 1.7f);
-    // Crescent walk: an arc band joining every plot mouth (10 segments — the
-    // two extra carry the walk east to the stair hill at +105).
+    // Crescent walk: an arc band joining the two plot mouths (-50..+50).
     const float walkR = 8.0f;
-    for (int i = 0; i < 10; i++) {
-      float a0 = -70f + i * 17.5f - 1.2f;
-      float a1 = a0 + 17.5f + 2.4f;
+    for (int i = 0; i < 6; i++) {
+      float a0 = -60f + i * 20f - 2f;
+      float a1 = a0 + 20f + 4f;
       Vector3 p0 = ArcCenter + new Vector3(Mathf.Sin(a0 * Mathf.Deg2Rad) * walkR, 0f,
         Mathf.Cos(a0 * Mathf.Deg2Rad) * walkR);
       Vector3 p1 = ArcCenter + new Vector3(Mathf.Sin(a1 * Mathf.Deg2Rad) * walkR, 0f,
         Mathf.Cos(a1 * Mathf.Deg2Rad) * walkR);
       Seg(parent, "CGPathCrescent" + i, p0, p1, 1.6f);
     }
-    // Demo approach spur (plaza -> crescent walk on the centre line).
-    Seg(parent, "CGPathDemoSpur", new Vector3(0f, 0f, 4.6f), new Vector3(0f, 0f, 8.4f), 1.7f);
+    // Two approach spurs: plaza -> carrot mouth (west) and plaza -> stair mouth.
+    Seg(parent, "CGPathCarrotSpur", new Vector3(-2.0f, 0f, 3.2f), new Vector3(-6.2f, 0f, 6.7f), 1.5f);
+    Seg(parent, "CGPathStairSpur", new Vector3(2.0f, 0f, 3.2f), new Vector3(6.2f, 0f, 6.7f), 1.5f);
     // Reward spur (plaza -> celebration pocket, west).
     Seg(parent, "CGPathReward", new Vector3(-3.0f, 0f, 1.9f), new Vector3(-5.0f, 0f, 2.2f), 1.4f);
   }
@@ -1030,11 +685,9 @@ public class CountingGardenBuilder : MonoBehaviour {
     Anchors = a;
     if (a == null) return;
     a.Entry = a.EnsureSlot("EntryAnchor", EntryLocal);
-    a.GameplayFocus = a.EnsureSlot("GameplayFocusAnchor", DemoStageCenter);
-    a.Npc = a.EnsureSlot("NpcAnchor", DemoNpcStart);
+    a.GameplayFocus = a.EnsureSlot("GameplayFocusAnchor", ArcCenter);
+    a.Npc = a.EnsureSlot("NpcAnchor", new Vector3(2.8f, 0f, 0.8f));
     // Arrival reveal: over the entry arch, across the plaza to the crescent.
-    // (The DEMO card uses its own CG DemoCam/CGDemoLook markers — the two
-    // framings must never fight.)
     // (higher + further back: the old framing let the entry-arch blossom
     // cluster cover the plaza/crescent in the first frame)
     a.Camera = a.EnsureSlot("CameraAnchor", new Vector3(0f, 9.5f, -17.5f));
@@ -1134,7 +787,8 @@ public class CountingGardenBuilder : MonoBehaviour {
   }
 
   static void NavMeshModifierRef(GameObject go) {
-    Unity.AI.Navigation.NavMeshModifier mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+    Unity.AI.Navigation.NavMeshModifier mod = go.GetComponent<Unity.AI.Navigation.NavMeshModifier>();
+    if (mod == null) mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
     mod.ignoreFromBuild = true;
   }
 

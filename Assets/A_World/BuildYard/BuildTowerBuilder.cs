@@ -93,6 +93,10 @@ public class BuildTowerBuilder : MonoBehaviour {
   public static readonly Vector3 YardStand = new Vector3(-1.9f, 0f, 1.4f);
   public static readonly Vector3 PadPos = new Vector3(2.3f, 0f, 3.1f);
   public static readonly Vector3 PadStand = new Vector3(1.5f, 0f, 2.0f);
+  // S3-P2Z19 user round: after entering the arena the child walks to the marked
+  // play spot; the question is read ONLY on arrival (no in-arena demo).
+  public static readonly Vector3 PlaySpotLocal = new Vector3(0f, 0f, 1.7f);
+  public const float PlaySpotRadius = 1.7f;
 
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
@@ -103,6 +107,11 @@ public class BuildTowerBuilder : MonoBehaviour {
   public Vector3[] BlockHomes { get; private set; }
   public Transform PadAnchor { get; private set; } // the click/proximity door
   public GameObject Ghost { get; private set; }    // next-slot placement hint
+  // S3-P2Z19: the marked play spot (the question is read only on arrival).
+  public GameObject PlaySpot { get; private set; }
+  public GameObject PlayRing { get; private set; }
+  // S3-P2Z20: the "Come here!" sign (hidden as the child arrives).
+  public GameObject PlaySign { get; private set; }
   public Transform CamTeaching { get; private set; }
   public Transform LookTeaching { get; private set; }
   public Transform CamDemo { get; private set; }
@@ -113,7 +122,19 @@ public class BuildTowerBuilder : MonoBehaviour {
   // Scene entry (GameInstaller calls this after the lazy load).
   public void Build() {
     BuildContent(transform);
+    // Flat-ground discipline (rabbit/journey lesson): every decor renderer is
+    // excluded from the bake so no low mesh can carve the play surface.
+    IgnoreAllDecorExceptGround(transform, "BTGround");
     BuildNavMesh(transform);
+  }
+
+  static void IgnoreAllDecorExceptGround(Transform root, string groundName) {
+    if (root == null) return;
+    foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true)) {
+      if (r == null || r.gameObject == null) continue;
+      if (r.gameObject.name == groundName) continue;
+      IgnoreFromBuild(r.gameObject);
+    }
   }
 
   // Runtime NavMesh bake for THIS scene only (CollectObjects.Children on the
@@ -130,6 +151,7 @@ public class BuildTowerBuilder : MonoBehaviour {
     BuildGround(root);
     BuildEntryAndExit(root);
     BuildPaths(root);
+    BuildPlaySpot(root);
     BuildDressing(root);
     BuildBoard(root);
     BuildYard(root);
@@ -220,6 +242,26 @@ public class BuildTowerBuilder : MonoBehaviour {
     // Spurs to the block yard (west) and the build pad (east) — the work loop.
     Seg(parent, "BTPathYard", new Vector3(0f, 0f, 1.7f), new Vector3(-1.6f, 0f, 1.7f), 1.4f);
     Seg(parent, "BTPathPad", new Vector3(0f, 0f, 2.0f), new Vector3(1.5f, 0f, 2.0f), 1.4f);
+  }
+
+  // The marked play spot (S3-P2Z19 user round): the child walks here; the
+  // question is read on arrival (same contract as the earlier arenas). Gold
+  // ring + cream pad + a floating "Come here!" sign.
+  void BuildPlaySpot(Transform parent) {
+    GameObject spot = new GameObject("BTPlaySpot");
+    spot.transform.SetParent(parent, false);
+    spot.transform.localPosition = PlaySpotLocal;
+    PlaySpot = spot;
+    Pad(parent, "BTPlayEdge", PlaySpotLocal + new Vector3(0f, 0.020f, 0f), 3.1f, BoardCream);
+    PlayRing = Pad(parent, "BTPlayRing", PlaySpotLocal + new Vector3(0f, 0.026f, 0f), 2.5f, Gold);
+    Pad(parent, "BTPlayPad", PlaySpotLocal + new Vector3(0f, 0.032f, 0f), 2.1f,
+      new Color(0.99f, 0.93f, 0.72f));
+    GameObject signGo = new GameObject("BTPlaySign");
+    signGo.transform.SetParent(parent, false);
+    signGo.transform.localPosition = PlaySpotLocal + new Vector3(0f, 1.5f, 0f);
+    WorldNameLabel sign = signGo.AddComponent<WorldNameLabel>();
+    sign.Setup(DialogueLang.T("Come here!", "Vào đây!"), null, 0f);
+    PlaySign = signGo;
   }
 
   void BuildDressing(Transform parent) {
@@ -360,12 +402,14 @@ public class BuildTowerBuilder : MonoBehaviour {
   }
 
   void BuildCountAndResult(Transform parent) {
-    // Result board ("N + tick"): right-front of the pad, OFF the spawn
-    // sightline (same lesson as the earlier arenas).
+    // Result board ("N + tick"): RIGHT of the pad on the payoff axis. S3-P2Z18
+    // user round: the old right-front spot sat beside the success camera and
+    // the payoff shot cropped it; beside the pad the frame reads tower -> board
+    // (the dynamic success camera's angle stays < 30° for every target 1..9).
     int n = ClampTarget(BoardTarget);
     GameObject result = new GameObject("BTResult");
     result.transform.SetParent(parent, false);
-    result.transform.localPosition = new Vector3(3.4f, 0f, -0.6f);
+    result.transform.localPosition = new Vector3(4.0f, 0f, 3.0f);
     Box(result.transform, "BTResultPost", new Vector3(0f, 0.65f, 0f),
       new Vector3(0.13f, 1.3f, 0.13f), FenceWood);
     GameObject resultFrame = Box(result.transform, "BTResultFrame", new Vector3(0f, 1.6f, 0f),
@@ -489,7 +533,8 @@ public class BuildTowerBuilder : MonoBehaviour {
   static void IgnoreFromBuild(GameObject go) {
     if (go == null) return;
     try {
-      Unity.AI.Navigation.NavMeshModifier mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+      Unity.AI.Navigation.NavMeshModifier mod = go.GetComponent<Unity.AI.Navigation.NavMeshModifier>();
+      if (mod == null) mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
       mod.ignoreFromBuild = true;
     } catch (System.Exception) { }
   }

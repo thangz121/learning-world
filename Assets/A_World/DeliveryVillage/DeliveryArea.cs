@@ -58,6 +58,9 @@ public class DeliveryArea : MonoBehaviour, IMicroWorldArea {
   public const int DefaultTarget = 4;
   public const string TargetFlag = "-deliver-target";
   public static readonly int[] Progression = { 4, 5, 7, 9, 1, 3 };
+  // S3-P2Z20 user: random number questions in live play (installer turns it on;
+  // tests keep the deterministic ladder).
+  public bool RandomTargets;
   public int Target { get; private set; } = DefaultTarget;
   int _lifeTarget = DefaultTarget;
   // Last completed order (report/tests only; the hub gate needs no landmark).
@@ -82,11 +85,23 @@ public class DeliveryArea : MonoBehaviour, IMicroWorldArea {
     return fallback;
   }
 
+  // The ladder advances ONLY when the child has LEFT the village (mirror of
+  // the tower/garden gate): a completed order keeps its target while the child
+  // is still inside — placing a spare apple runs the gentle correction lesson
+  // instead of silently counting toward the next order. The next entry then
+  // stages a FRESH life for the next target.
   void MaybeAdvanceTarget() {
     if (Lifecycle == null) return;
     if (Lifecycle.State != ActivityState.Completed) return;
     if (_lifeTarget != Target) return;
-    int next = NextTarget(Target);
+    int next;
+    if (RandomTargets) {
+      next = Target;
+      for (int guard = 0; guard < 32 && next == Target; guard++)
+        next = UnityEngine.Random.Range(1, DeliveryBuilder.MaxTarget + 1);
+    } else {
+      next = NextTarget(Target);
+    }
     Target = next;
     Lifecycle = new ActivityLifecycle("deliver_apples", "DeliveryArea");
     _lifeTarget = next;
@@ -164,6 +179,11 @@ public class DeliveryArea : MonoBehaviour, IMicroWorldArea {
       }
       if (!loaded) {
         // Honest failure: stay in the hub, restore the HUD, no fake progress.
+        try {
+          UnityEngine.Debug.LogWarning("[DeliveryArea] micro load refused: "
+            + (_transition != null ? _transition.LastError : "no transition")
+            + " state=" + (_transition != null ? _transition.State.ToString() : "-"), this);
+        } catch (Exception) { }
         RestoreObjective();
         IsBusy = false;
         StopTunnelSoon();
@@ -198,6 +218,8 @@ public class DeliveryArea : MonoBehaviour, IMicroWorldArea {
       RestoreObjective();
       try { await _transition.ExitMicroAsync(_sceneOps); } catch (Exception) { }
       IsInside = false;
+      // Rank up only after the child really left the village (order is over).
+      MaybeAdvanceTarget();
       try { Debug.Log("[DeliveryArea] exited (warp " + HubReturnPos.ToString("F1") + ").", this); }
       catch (Exception) { }
     } catch (Exception e) {
@@ -218,6 +240,8 @@ public class DeliveryArea : MonoBehaviour, IMicroWorldArea {
   public bool TryExitForTests() {
     if (!CanExit) return false;
     IsInside = false;
+    // The live leave path advances the ladder here (never mid-order).
+    MaybeAdvanceTarget();
     return true;
   }
 
@@ -237,8 +261,8 @@ public class DeliveryArea : MonoBehaviour, IMicroWorldArea {
         try { if (_hud != null) _hud.StopTunnel(); } catch (Exception) { }
       }
     }
-    if (!IsInside || IsBusy) return;
-    MaybeAdvanceTarget();
+    // No ladder tick here on purpose: the target advances on LEAVE
+    // (ExitToHub / TryExitForTests), same discipline as #4 and the garden.
   }
 
   void StopTunnelSoon() { _tunnelT = TunnelSeconds; }

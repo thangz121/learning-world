@@ -61,6 +61,11 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
   public const int DefaultTarget = 3;
   public const string TargetFlag = "-build-target";
   public static readonly int[] Progression = { 3, 5, 7, 9, 1 };
+  // S3-P2Z20 user: "tạo cơ chế random câu hỏi các con số" — live play draws a
+  // RANDOM target each round (never the same twice in a row); the installer
+  // turns this on. Tests leave it off, so the deterministic ladder + CLI stay
+  // pinned exactly as before.
+  public bool RandomTargets;
   public int Target { get; private set; } = DefaultTarget;
   int _lifeTarget = DefaultTarget;
   // Last completed height pushed to the hub landmark (survives the scene swap
@@ -86,11 +91,23 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
     return fallback;
   }
 
+  // The ladder advances ONLY when the child has LEFT the yard (mirror of the
+  // garden's IsInPlay gate for #2/#3): a completed round keeps its target while
+  // the child is still inside — so placing a spare block after success runs the
+  // gentle correction lesson instead of silently counting toward the next rung.
+  // The next entry then stages a FRESH life for the next target.
   void MaybeAdvanceTarget() {
     if (Lifecycle == null) return;
     if (Lifecycle.State != ActivityState.Completed) return;
     if (_lifeTarget != Target) return;
-    int next = NextTarget(Target);
+    int next;
+    if (RandomTargets) {
+      next = Target;
+      for (int guard = 0; guard < 32 && next == Target; guard++)
+        next = UnityEngine.Random.Range(1, BuildTowerBuilder.MaxTarget + 1);
+    } else {
+      next = NextTarget(Target);
+    }
     Target = next;
     Lifecycle = new ActivityLifecycle("build_tower", "BuildTowerArea");
     _lifeTarget = next;
@@ -174,6 +191,11 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
       }
       if (!loaded) {
         // Honest failure: stay in the hub, restore the HUD, no fake progress.
+        try {
+          UnityEngine.Debug.LogWarning("[BuildTowerArea] micro load refused: "
+            + (_transition != null ? _transition.LastError : "no transition")
+            + " state=" + (_transition != null ? _transition.State.ToString() : "-"), this);
+        } catch (Exception) { }
         RestoreObjective();
         IsBusy = false;
         StopTunnelSoon();
@@ -208,6 +230,8 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
       RestoreObjective();
       try { await _transition.ExitMicroAsync(_sceneOps); } catch (Exception) { }
       IsInside = false;
+      // Rank up only after the child really left the yard (round is over).
+      MaybeAdvanceTarget();
       try { Debug.Log("[BuildTowerArea] exited (warp " + HubReturnPos.ToString("F1") + ").", this); }
       catch (Exception) { }
     } catch (Exception e) {
@@ -228,6 +252,9 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
   public bool TryExitForTests() {
     if (!CanExit) return false;
     IsInside = false;
+    // The live leave path advances the ladder here (never mid-round): a fresh
+    // lesson for the next rung is staged by the NEXT entry.
+    MaybeAdvanceTarget();
     return true;
   }
 
@@ -247,8 +274,8 @@ public class BuildTowerArea : MonoBehaviour, IMicroWorldArea {
         try { if (_hud != null) _hud.StopTunnel(); } catch (Exception) { }
       }
     }
-    if (!IsInside || IsBusy) return;
-    MaybeAdvanceTarget();
+    // No ladder tick here on purpose: the target advances on LEAVE (ExitToHub /
+      // TryExitForTests), exactly like the garden's IsInPlay gate in #2/#3.
   }
 
   void StopTunnelSoon() { _tunnelT = TunnelSeconds; }

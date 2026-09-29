@@ -20,7 +20,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class RabbitCarrot : MonoBehaviour, IClickTarget {
+public class RabbitCarrot : MonoBehaviour, IClickTarget, IDragTarget {
   public enum CarrotState { Available, Picked, Carried, Delivered, Consumed, Removed }
 
   public CarrotState State { get; private set; } = CarrotState.Available;
@@ -46,19 +46,39 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
   bool _picking;
   float _pickT, _pickDelay, _pickDur;
   Vector3 _pickFrom;
-  bool _feeding, _feedActive;
-  float _feedT, _feedDelay, _feedDur;
+  bool _feeding, _feedActive, _feedHovered;
+  float _feedT, _feedDelay, _feedLiftDur, _feedDropDur;
   Vector3 _feedFrom, _feedTo;
   float _feedLift;
 
   public bool IsAvailable { get { return State == CarrotState.Available; } }
   public bool IsFlying { get { return _flying; } }
 
+  // S3-P2Z23 (user: "củ cà rốt phải để từ trên xuống, dứt điểm"): the Kenney
+  // carrot's pivot is NOT its base, so placing the root at the bowl height sank
+  // the body under the rim. Measure the prop's real bottom and rest it ON the
+  // surface.
+  public float SitOffset { get; private set; }
+
   public void Bind(RabbitFeed game, Transform hand) {
     Game = game;
     _hand = hand;
     _baseScale = transform.localScale;
     _collider = GetComponent<Collider>();
+    SitOffset = ComputeSitOffset(transform);
+  }
+
+  static float ComputeSitOffset(Transform root) {
+    if (root == null) return 0f;
+    Renderer[] rs = root.GetComponentsInChildren<Renderer>(true);
+    float min = float.MaxValue;
+    for (int i = 0; i < rs.Length; i++) {
+      if (rs[i] == null) continue;
+      float y = rs[i].bounds.min.y;
+      if (y < min) min = y;
+    }
+    if (min == float.MaxValue) return 0f;
+    return root.position.y - min;
   }
 
   public void SetHand(Transform hand) { _hand = hand; }
@@ -68,11 +88,37 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
     Game.TryPick(this);
   }
 
+  // S3-P2Z26 (user: "kéo lại carrot từ trên bục về lại vườn"): a fed carrot on
+  // the bowl is draggable while the child is in control. The scene's
+  // RabbitBowlDrag moves it; ClickRouter only asks CanDragNow so the press is
+  // never ALSO routed as a walk/click.
+  public bool CanDragNow {
+    get {
+      return State == CarrotState.Consumed && Game != null
+        && Game.Current == RabbitFeed.Phase.Feeding && Game.PlayerAtBowl;
+    }
+  }
+  public bool Dragging { get; private set; }
+
+  // S3-P2Z30: the two-tap removal — tap a bowl carrot (selected, pops) then tap
+  // the garden to send it home. Cleared on any state change.
+  public bool Selected { get; set; }
+
+  public void DragBegin() { Dragging = true; }
+
+  public void DragMoveTo(Vector3 world) {
+    if (!Dragging) return;
+    transform.position = world;
+  }
+
+  public void DragEnd() { Dragging = false; }
+
   // Pickup: the child bends (player PickUp clip); once the hand is down, the
   // carrot arcs up into it and rides the fist. No ground->hand snap.
   public void BeginCarry(float delay = 0f) {
     if (State != CarrotState.Available) return;
     State = CarrotState.Picked;
+    Selected = false;
     if (_collider != null) _collider.enabled = false;
     _flying = false;
     _returning = false;
@@ -86,17 +132,23 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
   }
 
   // Feed: the carrot keeps riding the fist while the child reaches toward the
-  // rabbit, then flies the last stretch to the mouth with a small lift.
+  // rabbit, then LIFTS clear of the bowl and DROPS straight down onto the slot.
+  // S3-P2Z24 (user: "carot bay xuyên qua bục từ dưới lên"): the old single arc
+  // rose from the hand through the bowl geometry. Two beats now: rise to a
+  // point ABOVE the bowl (0.7m clear), then a vertical drop — it always lands
+  // from above, never tunnels up through the pedestal.
   public void BeginFeed(Vector3 mouthLocal, float delay = 0f) {
     if (State != CarrotState.Carried) return;
     State = CarrotState.Delivered;
     _picking = false;
     _feeding = true;
     _feedActive = false;
+    _feedHovered = false;
     _feedT = 0f;
     _feedDelay = Mathf.Max(0f, delay);
-    _feedDur = 0.38f;
-    _feedLift = 0.22f;
+    _feedLiftDur = 0.34f; // hand -> hover point above the bowl
+    _feedDropDur = 0.22f; // hover -> straight down onto the slot
+    _feedLift = 0.7f;
     _feedTo = mouthLocal;
   }
 
@@ -121,12 +173,15 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
     _picking = false;
     _feeding = false;
     _feedActive = false;
+    Selected = false;
     transform.localPosition = slotLocal;
+    transform.localRotation = Quaternion.identity; // stand upright in the bowl
     gameObject.SetActive(true);
   }
 
   public void MarkRemoved() {
     State = CarrotState.Removed;
+    Selected = false;
     if (_collider != null) _collider.enabled = false;
   }
 
@@ -137,6 +192,7 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
     _feeding = false;
     _feedActive = false;
     _returning = false;
+    Selected = false;
     transform.localPosition = HomeLocal;
     gameObject.SetActive(true);
     if (_collider != null) _collider.enabled = true;
@@ -182,18 +238,48 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
     if (!_feedActive) {
       _feedActive = true;
       _feedFrom = transform.localPosition;
-      _flyFrom = _feedFrom;
-      _flyTo = _feedTo;
-      _flyT = 0f;
-      _flyDur = _feedDur;
-      _flyLift = _feedLift;
-      _flying = true;
+      _feedT = 0f;
     }
-    TickFlight(dt);
+    Vector3 hover = _feedTo + new Vector3(0f, _feedLift, 0f);
+    if (!_feedHovered) {
+      // Beat 1: rise from the fist to a point clearly ABOVE the bowl.
+      float t = Mathf.Clamp01(_feedT / _feedLiftDur);
+      Vector3 mid = (_feedFrom + hover) * 0.5f + new Vector3(0f, 0.18f, 0f);
+      transform.localPosition = Vector3.Lerp(
+        Vector3.Lerp(_feedFrom, mid, t), Vector3.Lerp(mid, hover, t), t);
+      if (t < 1f) return;
+      _feedHovered = true;
+      _feedT = 0f;
+    }
+    // Beat 2: fall straight down onto the slot (accelerating), never through it.
+    float d = Mathf.Clamp01(_feedT / _feedDropDur);
+    transform.localPosition = Vector3.Lerp(hover, _feedTo, d * d);
+    if (d < 1f) return;
+    _feeding = false;
+    _feedActive = false;
+    _bounceT = 0f;
+    // S3-P2Z19 (user: "không nhìn thấy số lượng đã lấy"): the fed carrot STAYS
+    // in the bowl — the bowl is the visible counter. The munch beat fires on
+    // arrival, after the drop settles.
+    State = CarrotState.Consumed;
+    transform.localPosition = _feedTo;
+    // S3-P2Z22 (user: "vẫn bị ngược carrot"): the carrot rode the animated
+    // hand, so its rotation was the fist's — snap it upright on landing.
+    transform.localRotation = Quaternion.identity;
+    gameObject.SetActive(true);
+    if (OnMunched != null) {
+      try { OnMunched(); } catch (Exception) { }
+    }
   }
 
   void FollowHand(float dt) {
-    Vector3 want = _hand.position + Vector3.up * 0.02f;
+    // S3-P2Z19 (user: "carrot ở dưới háng"): hold it in FRONT of the fist and
+    // a bit up. The old bare-fist position read at crotch height from behind
+    // (the model faces -root.forward — same convention as the NPC carry).
+    Vector3 fwd = _hand.root != null ? -_hand.root.forward : Vector3.forward;
+    fwd.y = 0f;
+    if (fwd.sqrMagnitude < 0.001f) fwd = Vector3.forward;
+    Vector3 want = _hand.position + fwd.normalized * 0.18f + Vector3.up * 0.14f;
     transform.position = Vector3.Lerp(transform.position, want,
       1f - Mathf.Exp(-16f * dt));
     transform.rotation = Quaternion.Slerp(transform.rotation, _hand.rotation,
@@ -207,6 +293,8 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
       : _hand.position;
   }
 
+  // Generic flight, used ONLY by the correction trip home now (the feed has its
+  // own lift-then-drop path in TickFeed — S3-P2Z24).
   void TickFlight(float dt) {
     _flyT += dt;
     float t = Mathf.Clamp01(_flyT / _flyDur);
@@ -216,20 +304,10 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
     if (t < 1f) return;
     _flying = false;
     _bounceT = 0f;
-    bool munched = _feedActive;
-    _feedActive = false;
-    _feeding = false;
     if (_returning) {
       _returning = false;
       State = CarrotState.Available;
       if (_collider != null) _collider.enabled = true;
-    }
-    if (munched) {
-      State = CarrotState.Consumed;
-      gameObject.SetActive(false);
-      if (OnMunched != null) {
-        try { OnMunched(); } catch (Exception) { }
-      }
     }
   }
 
@@ -238,11 +316,23 @@ public class RabbitCarrot : MonoBehaviour, IClickTarget {
       _bounceT = Mathf.Min(1f, _bounceT + dt / 0.3f);
       float s = 1f + 0.16f * Mathf.Sin(Mathf.PI * _bounceT);
       transform.localScale = _baseScale * s;
+      return;
+    }
+    if (State == CarrotState.Consumed) {
+      // S3-P2Z30: a selected bowl carrot pops so the child sees which one will
+      // go back to the garden on the next garden tap.
+      if (Selected) {
+        float s = 1.24f + 0.08f * Mathf.Sin(Time.time * 6f);
+        transform.localScale = _baseScale * s;
+      } else {
+        transform.localScale = _baseScale;
+      }
+      return;
     }
     if (State == CarrotState.Available && Game != null && Game.PlayerNear(transform.position, 2.4f)) {
       float s = 1f + 0.06f * Mathf.Sin(Time.time * 4f);
       transform.localScale = _baseScale * s;
-    } else if (State == CarrotState.Available && _bounceT >= 1f) {
+    } else {
       transform.localScale = _baseScale;
     }
   }
@@ -272,24 +362,56 @@ public class FeedZone : MonoBehaviour, IClickTarget {
   }
 }
 
+// S3-P2Z23: the submit bell's click hook — ringing it turns the bowl's count in
+// (right or wrong). The game owns the state; this is the door only.
+[DisallowMultipleComponent]
+public class RabbitSubmitZone : MonoBehaviour, IClickTarget {
+  public RabbitFeed Game;
+
+  public void Bind(RabbitFeed game) {
+    Game = game;
+    BoxCollider box = gameObject.AddComponent<BoxCollider>();
+    // A slim ground-to-bell post: big enough to click from afar (routes the
+    // child over) but never a wall across the patch sightline.
+    box.size = new Vector3(0.8f, 1.2f, 0.8f);
+    box.center = new Vector3(0f, 0.6f, 0f);
+  }
+
+  public void OnClicked() {
+    if (Game != null) Game.TrySubmit();
+  }
+}
+
 [DisallowMultipleComponent]
 public class RabbitFeed : MonoBehaviour {
   public enum Phase {
-    Intro,   // teacher links the board's number to carrots for the bunny
-    Demo,    // the student fetches N carrots one by one and feeds the bunny
-    Handoff, // "Now it's your turn!" + camera returns to the child
+    Wait,    // the child walks to the marked play spot; nothing is taught yet
+    Intro,   // the teacher names the job there (the board shows the number)
     Feeding, // the child picks, carries and feeds; the teacher counts along
-    Success, // the target count is fed — celebrated, field stays open
-    Correct, // one too many: a gentle counting correction, then Success again
+    Wrong,   // the child submitted a wrong count: gentle line, bowl empties, retry
+    Success, // exact count: celebrated, then bowl clears -> walk back -> next number
   }
 
+  // S3-P2Z26 (user: random numbers + +/- within 10): each round is a plain
+  // number, an addition (a+b) or a subtraction (a-b). The board stages the
+  // expression; the bowl starts prefilled with the first operand for +/-.
+  public enum RoundKind { Plain = 0, Add = 1, Sub = 2 }
+
   // Beat timings (one place; deterministic for Tick tests).
-  const float DemoHold = 0.7f;            // teacher count beat per demo carrot
-  const float OvershootNagCooldown = 5f;
-  const float UnderNudgeCooldown = 8f;
-  const float UnderDwell = 2.0f;         // settled-below-target before a nudge
-  const float UnderNearXZ = 4.5f;        // nudge only near the patch/bunny
-  const float WalkSpeed = 0.85f;         // student legs
+  // S3-P2Z23: how long the "wrong, count again" beat holds before the bowl
+  // empties and the child retries.
+  const float WrongHoldSeconds = 2.6f;
+  // S3-P2Z25 (user): after ANY submit, hold a beat then clear the bowl. On a
+  // correct submit the child then walks back to the play spot, the "next
+  // question" line plays and the board number swaps to the next target.
+  const float SuccessHoldSeconds = 1.7f;
+  const float NextQuestionWalkTimeout = 4.5f;
+  const float DigitOutSeconds = 0.30f;
+  const float DigitInSeconds = 0.50f;
+  // S3-P2Z19 (user: "khi vào arena ... đọc hướng dẫn 'Hãy bước vào vị trí chơi
+  // nhé'"): the guidance waits for the area's arrival reveal (2.2s), then asks
+  // the child onto the marked spot; the question is read ONLY on arrival.
+  const float WaitCallSeconds = 2.4f;
   public static readonly Vector3 FollowOffset = RabbitPlayBuilder.FollowOffset;
 
   // Number words: Vietnamese first; English prepared alongside. Every composed
@@ -301,11 +423,11 @@ public class RabbitFeed : MonoBehaviour {
   static readonly string[] CountEn = {
     "One carrot.", "Two carrots.", "Three carrots.", "Four carrots.",
     "Five carrots.", "Six carrots.", "Seven carrots.", "Eight carrots.",
-    "Nine carrots." };
+    "Nine carrots.", "Ten carrots." };
   static readonly string[] CountVi = {
     "Một củ cà rốt.", "Hai củ cà rốt.", "Ba củ cà rốt.", "Bốn củ cà rốt.",
     "Năm củ cà rốt.", "Sáu củ cà rốt.", "Bảy củ cà rốt.", "Tám củ cà rốt.",
-    "Chín củ cà rốt." };
+    "Chín củ cà rốt.", "Mười củ cà rốt." };
 
   static int ClampN(int i) { return Mathf.Clamp(i, 1, RabbitPlayBuilder.MaxTarget); }
   static string N(int i) { return NumEn[ClampN(i) - 1]; }
@@ -315,14 +437,24 @@ public class RabbitFeed : MonoBehaviour {
     return string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
   }
 
-  public Phase Current { get; private set; } = Phase.Intro;
+  public Phase Current { get; private set; } = Phase.Wait;
   public int Target { get; private set; } = RabbitPlayBuilder.Target;
+  // S3-P2Z26: the round expression. Kind Plain -> Target=OpA (B ignored);
+  // Add -> Target=OpA+OpB; Sub -> Target=OpA-OpB. ArithmeticEnabled is turned on
+  // by GameInstaller in live play (tests keep the deterministic plain ladder).
+  public RoundKind Kind { get; private set; } = RoundKind.Plain;
+  public int OpA { get; private set; } = RabbitPlayBuilder.Target;
+  public int OpB { get; private set; }
+  public bool ArithmeticEnabled;
   public int Count { get; private set; }
   public RabbitCarrot Carried { get; private set; }
+  // Kept for the recorded telemetry/tests: with the submit mechanic there is no
+  // auto-overshoot correction, so this stays 0 (a wrong count is a wrong submit).
   public int Overshoots { get; private set; }
   public int UndershootNudges { get; private set; }
-  public int DemoCarrotsFed { get { return _demoFed; } }
-  public bool IntroDone { get { return Current != Phase.Intro; } }
+  // S3-P2Z23: how many times the child rang the bell.
+  public int Submits { get; private set; }
+  public bool IntroDone { get { return Current != Phase.Wait && Current != Phase.Intro; } }
   public bool ResultShown { get { return _result != null && _result.activeSelf; } }
   public int CarrotCount { get { return _carrots.Count; } }
   public RabbitCarrot CarrotAt(int i) { return i >= 0 && i < _carrots.Count ? _carrots[i] : null; }
@@ -368,28 +500,30 @@ public class RabbitFeed : MonoBehaviour {
   bool _followHanded;
   int _shot;
 
-  bool _saidBoard, _saidNumber, _saidCountWord, _saidToday, _saidFeed;
-  int _demoStage; // 0 walk to patch, 1 picking, 2 walk to bunny, 3 feeding, 4 hold, 5 confirm
-  int _demoFed;
-  float _demoHoldT;
-  bool _saidWatch, _saidYes;
-  bool _saidTurn, _saidTask;
-  bool _studentReturned;
+  bool _saidBoard, _saidTask;
+  bool _waitCalled;      // the walk-in guidance was spoken
+  float _ringPulseT;
   float _victoryT = -1f;
   float _resultPopT = 1f;
   float _boardPulseT;
   Vector3 _lastPos;
-  readonly Queue<string> _recapEn = new Queue<string>();
-  readonly Queue<string> _recapVi = new Queue<string>();
 
-  // Correction beats (timed, deterministic; no coroutines so tests can tick).
-  int _correctStep = -1;
-  float _correctT;
-  RabbitCarrot _extra;
-  int _landBeats; // what the NEXT munch means (count line vs success)
-  float _overshootNagT;
-  float _underCooldownT;
-  float _underT;
+  // S3-P2Z25: correct-submit transition + the re-ask line queue.
+  bool _adopted;
+  bool _cleared;
+  bool _advance;
+  bool _quickIntro;
+  float _returnT;
+  int _digitPhase;   // 0 idle, 1 old number out, 2 new number in
+  float _digitT;
+  GameObject _boardOld;
+  GameObject _boardNew;
+  readonly Queue<string> _askEn = new Queue<string>();
+  readonly Queue<string> _askVi = new Queue<string>();
+  // Pending bowl prefill (fills as the previous round's carrots land).
+  int _prefillWant;
+  // Wrong-submit beat (timed, deterministic; no coroutines so tests can tick).
+  float _wrongT;
 
   // Rabbit life: nibble bursts + ear twitches + breathing (procedural, small).
   float _nibbleT;
@@ -397,22 +531,30 @@ public class RabbitFeed : MonoBehaviour {
   float _twitchT;
   float _breatheT;
   int _sparkleSeed = 900;
-  readonly float[] _pipPopT = { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f };
-  int _lastPip = -1;
 
   public int PipCount { get; private set; }
 
   public void Build(RabbitPlayBuilder builder, Transform player, SmartCamera cam,
-      IAudioDirector audio, ActivityLifecycle life, int target = 0) {
+      IAudioDirector audio, ActivityLifecycle life, int target = 0, Transform hand = null) {
     _builder = builder;
     _player = player;
     _cam = cam;
     _audio = audio;
     _life = life;
-    Target = RabbitPlayBuilder.ClampTarget(target <= 0 ? RabbitPlayBuilder.Target : target);
+    // S3-P2Z29 (user: "lúc nào vào cũng là số 3"): live play opens on a RANDOM
+    // question (plain/add/sub) instead of the area's cold-start 3. Re-entry on a
+    // completed lifecycle still adopts the finished picture for its target.
+    bool adopting = false;
+    try { adopting = _life != null && _life.State == ActivityState.Completed; }
+    catch (Exception) { }
+    if (!adopting && ArithmeticEnabled) SetRoundRandom();
+    else SetRound(RoundKind.Plain, target <= 0 ? RabbitPlayBuilder.Target : target, 0);
     _viz = player != null ? player.GetComponent<PlayerVisual>() : null;
     _mover = player != null ? player.GetComponent<ClickToMove>() : null;
-    _playerHand = player;
+    // S3-P2Z19 bug: GameInstaller resolved the player's HandBone but never
+    // passed it, so the carried carrot rode the ROOT (crotch height). The hand
+    // bone now comes in; the root stays the fallback.
+    _playerHand = hand != null ? hand : player;
     if (_builder == null) {
       Debug.LogWarning("[RabbitFeed] no builder; activity parked.", this);
       return;
@@ -435,6 +577,8 @@ public class RabbitFeed : MonoBehaviour {
     _lookDemo = _builder.LookDemo;
     _camSuccess = _builder.CamSuccess;
     _lookSuccess = _builder.LookSuccess;
+    // Render the first question (plain target built by the builder).
+    RefreshQuestionBoard();
 
     BuildActors();
     GameObject fx = new GameObject("RPFx");
@@ -451,8 +595,8 @@ public class RabbitFeed : MonoBehaviour {
       // UNCONDITIONAL (same lesson as gameplay #1: StripCollider uses deferred
       // Destroy at runtime, so a null-check here would leave carrots click-less).
       SphereCollider sc = go.AddComponent<SphereCollider>();
-      sc.radius = 0.55f;
-      sc.center = new Vector3(0f, 0.15f, 0f);
+      sc.radius = 0.5f;
+      sc.center = new Vector3(0f, 0.2f, 0f);
       RabbitCarrot carrot = go.GetComponent<RabbitCarrot>();
       if (carrot == null) carrot = go.AddComponent<RabbitCarrot>();
       carrot.HomeLocal = _builder.CarrotHomes != null && i < _builder.CarrotHomes.Length
@@ -464,6 +608,12 @@ public class RabbitFeed : MonoBehaviour {
       FeedZone zone = _builder.FeedAnchor.gameObject.GetComponent<FeedZone>();
       if (zone == null) zone = _builder.FeedAnchor.gameObject.AddComponent<FeedZone>();
       zone.Bind(this);
+    }
+    // The submit bell's click door (S3-P2Z23).
+    if (_builder.SubmitAnchor != null) {
+      RabbitSubmitZone sub = _builder.SubmitAnchor.gameObject.GetComponent<RabbitSubmitZone>();
+      if (sub == null) sub = _builder.SubmitAnchor.gameObject.AddComponent<RabbitSubmitZone>();
+      sub.Bind(this);
     }
 
     // Re-entry policy FIRST (same lesson as #1/#2): a completed activity
@@ -481,7 +631,7 @@ public class RabbitFeed : MonoBehaviour {
       } catch (Exception) { }
     }
     _lastPos = _player != null ? _player.position : Vector3.zero;
-    try { Debug.Log("[RabbitFeed] activity staged (intro will play).", this); } catch (Exception) { }
+    try { Debug.Log("[RabbitFeed] activity staged (waiting on the play spot).", this); } catch (Exception) { }
   }
 
   void BuildActors() {
@@ -501,9 +651,12 @@ public class RabbitFeed : MonoBehaviour {
 
   void ApplyCompletedState(string reason) {
     Current = Phase.Success;
+    // Re-entry shows the finished picture and stays there; the live correct
+    // transition (walk back -> next number) only runs inside a play session.
+    _adopted = true;
+    _cleared = true;
     _followHanded = true;
     _cameraDone = true;
-    _landBeats = 0;
     _victoryT = -1f;
     if (_teacher != null && _teacher.Root != null) {
       _teacher.Root.transform.localPosition = RabbitPlayBuilder.TeacherStart;
@@ -520,7 +673,7 @@ public class RabbitFeed : MonoBehaviour {
       RabbitCarrot c = _carrots[i];
       if (c == null) continue;
       c.SetHand(_playerHand);
-      if (i < Target) { c.ParkInBowl(BowlSlot(i)); _fed.Add(c); }
+      if (i < Target) { c.ParkInBowl(BowlSlotFor(c, i)); _fed.Add(c); }
       else c.MarkRemoved();
     }
     Count = Target;
@@ -540,16 +693,17 @@ public class RabbitFeed : MonoBehaviour {
     if (dt <= 0f || _builder == null) return;
     try {
       TickVoice(dt);
+      TickAsk();
+      TickPrefill();
       for (int i = 0; i < _carrots.Count; i++) {
         if (_carrots[i] != null) _carrots[i].TickForTests(dt);
       }
       switch (Current) {
+        case Phase.Wait: TickWait(dt); break;
         case Phase.Intro: TickIntro(dt); break;
-        case Phase.Demo: TickDemo(dt); break;
-        case Phase.Handoff: TickHandoff(dt); break;
         case Phase.Feeding: TickFeeding(dt); break;
         case Phase.Success: TickSuccess(dt); break;
-        case Phase.Correct: TickCorrect(dt); break;
+        case Phase.Wrong: TickWrong(dt); break;
       }
       TickActing(dt);
       TickCamera(dt);
@@ -561,177 +715,267 @@ public class RabbitFeed : MonoBehaviour {
   void TickVoice(float dt) { if (_voice != null) _voice.Tick(dt); }
   void To(Phase next) { Current = next; _phaseT = 0f; }
 
-  // ---- teacher intro ----------------------------------------------------------
+  // Paced multi-line speech (the SafetyFilter caps each NPC line at 6 words, so
+  // a longer question is queued as short lines and spoken one at a time — same
+  // discipline as the stair recap).
+  void Ask(string en, string vi) {
+    _askEn.Enqueue(en);
+    _askVi.Enqueue(vi);
+  }
+
+  void TickAsk() {
+    if (_askEn.Count <= 0 || _voice == null || !_voice.Idle || _voice.HasLine) return;
+    Say(_askEn.Dequeue(), _askVi.Dequeue());
+  }
+
+  // ---- round expression + bowl prefill (S3-P2Z26) -------------------------------
+
+  void SetRound(RoundKind kind, int a, int b) {
+    Kind = kind;
+    OpA = RabbitPlayBuilder.ClampTarget(a);
+    if (kind == RoundKind.Plain) { OpB = 0; Target = OpA; return; }
+    OpB = RabbitPlayBuilder.ClampTarget(b);
+    if (kind == RoundKind.Sub) {
+      if (OpB >= OpA) OpB = Mathf.Max(1, OpA - 1);
+      Target = RabbitPlayBuilder.ClampTarget(OpA - OpB);
+    } else {
+      Target = RabbitPlayBuilder.ClampTarget(OpA + OpB);
+    }
+  }
+
+  // Random round for the next question: plain / addition (sum <= 9) /
+  // subtraction (result >= 1), never the same result twice in a row.
+  void SetRoundRandom() {
+    int prev = Target;
+    RoundKind kind = RoundKind.Plain;
+    int a = prev, b = 0, result = prev;
+    for (int guard = 0; guard < 40; guard++) {
+      int roll = UnityEngine.Random.Range(0, 3);
+      if (roll == 0) {
+        kind = RoundKind.Plain;
+        a = UnityEngine.Random.Range(1, RabbitPlayBuilder.MaxTarget + 1);
+        b = 0; result = a;
+      } else if (roll == 1) {
+        kind = RoundKind.Add;
+        a = UnityEngine.Random.Range(1, RabbitPlayBuilder.MaxTarget);
+        b = UnityEngine.Random.Range(1, RabbitPlayBuilder.MaxTarget + 1 - a);
+        result = a + b;
+      } else {
+        kind = RoundKind.Sub;
+        a = UnityEngine.Random.Range(2, RabbitPlayBuilder.MaxTarget + 1);
+        b = UnityEngine.Random.Range(1, a);
+        result = a - b;
+      }
+      if (result != prev || guard >= 39) break;
+    }
+    SetRound(kind, a, b);
+  }
+
+  // Rebuild the board question + result digit for the current round.
+  void RefreshQuestionBoard() {
+    if (_builder == null) return;
+    _board = _builder.SpawnQuestion((int)Kind, OpA, OpB);
+    _builder.SpawnResultDigit(Target);
+    _boardPulseT = 0f;
+    // S3-P2Z36: the persistent task line.
+    if (Kind == RoundKind.Plain) {
+      ActivityFeedback.Objective(DialogueLang.T(
+        "Feed " + N(Target) + " carrots.", "Cho thỏ ăn " + Nvi(Target) + " củ."));
+    } else if (Kind == RoundKind.Add) {
+      ActivityFeedback.Objective(DialogueLang.T(
+        "Add " + N(OpB) + " more.", "Thêm " + Nvi(OpB) + " củ nữa."));
+    } else {
+      ActivityFeedback.Objective(DialogueLang.T(
+        "Take " + N(OpB) + " away.", "Bỏ " + Nvi(OpB) + " củ về vườn."));
+    }
+  }
+
+  // Test seam: pin a specific round (deterministic; live generates randomly).
+  public void SetRoundForTests(int kind, int a, int b) {
+    SetRound((RoundKind)Mathf.Clamp(kind, 0, 2), a, b);
+    RefreshQuestionBoard();
+  }
+
+  // Test seam: force the NEXT round picked by the correct-submit transition
+  // (kind < 0 = the normal live/test path).
+  public void ForceNextRoundForTests(int kind, int a, int b) {
+    ForcedNextKind = kind;
+    ForcedNextA = a;
+    ForcedNextB = b;
+  }
+  int ForcedNextKind = -1;
+  int ForcedNextA, ForcedNextB;
+
+  // Place the first operand in the bowl for a+b / a-b. S3-P2Z31 (journey
+  // evidence: "prefill want=8 placed=2 availBefore=2"): the previous round's
+  // carrots may still be FLYING home, so the prefill is a PENDING target that
+  // keeps filling as they land (TickPrefill every frame) instead of placing a
+  // short count once.
+  void PrefillBowl(int n) {
+    _prefillWant = Mathf.Max(0, n);
+    TickPrefill();
+  }
+
+  void TickPrefill() {
+    if (_prefillWant <= 0) return;
+    for (int i = 0; i < _carrots.Count && _prefillWant > 0; i++) {
+      RabbitCarrot c = _carrots[i];
+      if (c == null || c.State != RabbitCarrot.CarrotState.Available) continue;
+      c.SetHand(_playerHand);
+      c.ParkInBowl(BowlSlotFor(c, _fed.Count));
+      _fed.Add(c);
+      _prefillWant--;
+    }
+    Count = _fed.Count;
+    SetPip(Count);
+    if (_prefillWant <= 0) Log("prefill done bowl=" + Count);
+    else Log("prefill waiting: need " + _prefillWant + " more (bowl=" + Count + ")");
+  }
+
+  // The drag drop: a fed carrot dragged back to the garden leaves the bowl and
+  // flies home (Available again) so the count drops.
+  public void ReturnFromBowl(RabbitCarrot c) {
+    if (c == null || Current != Phase.Feeding) return;
+    if (c.State != RabbitCarrot.CarrotState.Consumed) return;
+    if (!_fed.Remove(c)) return;
+    Count = Mathf.Max(0, Count - 1);
+    SetPip(Count);
+    c.Selected = false;
+    c.SetHand(_playerHand);
+    c.BeginReturnHome();
+    RepackBowl();
+    PlaySfx("pickup");
+    Log("carrot back to the garden; bowl count=" + Count);
+  }
+
+  // A drag released outside the garden: the carrot returns to its bowl slot.
+  public void SnapCarrotToBowl(RabbitCarrot c) { RepackBowl(); }
+
+  void RepackBowl() {
+    for (int i = 0; i < _fed.Count; i++) {
+      RabbitCarrot c = _fed[i];
+      if (c == null) continue;
+      c.ParkInBowl(BowlSlotFor(c, i));
+    }
+  }
+
+  // The garden drop zone the drag tests against (the carrot patch).
+  public bool IsOverGarden(Vector3 world) {
+    Vector3 p = PatchWorld();
+    float dx = world.x - p.x, dz = world.z - p.z;
+    return dx * dx + dz * dz <= 3.0f * 3.0f;
+  }
+
+  // ---- wait on the marked play spot (S3-P2Z19 user round) -----------------------
+  // "Tất cả các game sau khi đã vào arena thì không phát lại demo nữa mà chỉ
+  // chờ player bước đến đúng vị trí chơi thì bắt đầu đọc câu hỏi." The teacher
+  // idles, the spot pulses, the guidance line asks the child over; the question
+  // is read ONLY when the child actually stands on the spot.
+
+  Vector3 PlaySpotWorld() {
+    if (_builder != null && _builder.PlaySpot != null)
+      return _builder.PlaySpot.transform.position;
+    return _root != null ? _root.TransformPoint(RabbitPlayBuilder.PlaySpotLocal) : Vector3.zero;
+  }
+
+  bool PlayerOnSpot() {
+    if (_player == null) return false;
+    Vector3 p = _player.position;
+    Vector3 q = PlaySpotWorld();
+    float dx = p.x - q.x, dz = p.z - q.z;
+    return dx * dx + dz * dz <= RabbitPlayBuilder.PlaySpotRadius * RabbitPlayBuilder.PlaySpotRadius;
+  }
+
+  void TickWait(float dt) {
+    _phaseT += dt;
+    FaceTowards(_teacher, PlayerLocal(), dt, 3f);
+    FaceTowards(_student, PlayerLocal(), dt, 2.5f);
+    PulsePlayRing(dt);
+    // The "Come here!" sign hides once the child is close — never blocks the frame.
+    if (_builder != null && _builder.PlaySign != null) {
+      bool near = PlayerNear(PlaySpotWorld(), 5.5f);
+      if (_builder.PlaySign.activeSelf == near) _builder.PlaySign.SetActive(!near);
+    }
+    if (!_waitCalled && _phaseT >= WaitCallSeconds) {
+      _waitCalled = true;
+      Wave(_teacher);
+      Say("Step into the play spot!", "Hãy bước vào vị trí chơi nhé!");
+      Point(_teacher, PlaySpotWorld(), 2.4f);
+    }
+    if (PlayerOnSpot()) StartQuestion();
+  }
+
+  void StartQuestion() {
+    _quickIntro = false;
+    _saidBoard = false;
+    _saidTask = false;
+    To(Phase.Intro);
+    SetShot(0);
+    // S3-P2Z26: for a+b / a-b the bowl starts with the FIRST operand (user:
+    // "4-2 thì bục có sẵn 4 củ, trẻ bỏ bớt 2"; "3+2 thì có sẵn 3, trẻ thêm 2").
+    if (Kind != RoundKind.Plain) PrefillBowl(OpA);
+    Log("question read (child on the play spot): kind=" + Kind + " a=" + OpA
+      + " b=" + OpB + " target=" + Target);
+  }
+
+  void PulsePlayRing(float dt) {
+    if (_builder == null || _builder.PlayRing == null) return;
+    _ringPulseT += dt;
+    float s = 1f + 0.07f * Mathf.Sin(_ringPulseT * 3.4f);
+    try { _builder.PlayRing.transform.localScale = new Vector3(2.5f * s, 0.01f, 2.5f * s); }
+    catch (Exception) { }
+  }
+
+  // ---- teacher question (no demo in the arena — the garden teaches once) --------
   // The board holds the round's target: every line below is composed from it,
-  // so the SAME script teaches 1..9 without a second lesson.
+  // so the SAME script asks 1..9 without a second lesson.
 
   void TickIntro(float dt) {
     _phaseT += dt;
     float t = _phaseT;
+    // S3-P2Z28 (user: "chưa thấy audio hướng dẫn"): a NEXT-round question runs the
+    // same intro, just shorter — the board line is skipped (already said) and the
+    // job/operation guidance is read before control returns.
+    float boardAt = _quickIntro ? 999f : 0.5f;
+    float taskAt = _quickIntro ? 0.6f : 2.2f;
+    float endAt = _quickIntro ? 2.0f : 3.6f;
     FaceTowards(_teacher, BoardLocal(), dt, 4f);
     FaceTowards(_student, TeacherLocal(), dt, 3f);
-    if (!_saidBoard && t >= 1.2f) {
+    if (!_saidBoard && t >= boardAt) {
       _saidBoard = true;
       Wave(_teacher);
       Say("Look at the board!", "Nhìn lên bảng nhé!");
       Point(_teacher, BoardWorld(), 2.4f);
     }
-    if (!_saidNumber && t >= 3.4f) {
-      _saidNumber = true;
-      Say("This is number " + N(Target) + ".", "Đây là số " + Nvi(Target) + ".");
-    }
-    if (!_saidCountWord && t >= 5.6f) {
-      _saidCountWord = true;
-      Say(CountEn[Target - 1], CountVi[Target - 1]);
+    if (!_saidTask && t >= taskAt) {
+      _saidTask = true;
+      FaceTowards(_teacher, RabbitLocal(), dt, 4f);
+      // S3-P2Z23 (user: "không nói đây là số mấy, trẻ tự nhận biết"): a PLAIN
+      // number is NOT spoken — the board shows it; the teacher only names the
+      // job. S3-P2Z29 (user): an operation is read as a "have / want / how many"
+      // question (board still shows "8+1").
+      if (Kind == RoundKind.Plain) {
+        Say("Feed the bunny!", "Cho thỏ ăn nhé!");
+      } else {
+        AskOperationQuestion();
+      }
+      Point(_teacher, RabbitWorld(), 2.8f);
       PulseBoard(1.4f);
     }
-    if (!_saidToday && t >= 7.2f) {
-      _saidToday = true;
-      FaceTowards(_teacher, RabbitLocal(), dt, 4f);
-      Say(Cap(N(Target)) + " " + Carrots(Target) + " for bunny!",
-        Cap(Nvi(Target)) + " củ cà rốt cho thỏ!");
-      Point(_teacher, RabbitWorld(), 2.8f);
-    }
-    if (!_saidFeed && t >= 10.2f) {
-      _saidFeed = true;
-      Wave(_teacher);
-      Say("Let's feed!", "Cùng cho ăn nhé!");
-    }
-    if (t >= 11.4f) {
-      To(Phase.Demo);
-      SetShot(1);
-      FaceTowards(_student, PatchLocal(), dt, 4f);
-    }
+    if (t >= endAt) StartFeeding();
   }
 
-  // ---- student demonstration ---------------------------------------------------
-  // One carrot at a time, for real: walk to the patch -> pick (arc to the
-  // student's fist) -> walk to the bunny -> feed (arc to the mouth, nibble,
-  // teacher counts) -> next. No teleport, no snaps.
-  void TickDemo(float dt) {
-    _phaseT += dt;
-    if (!_saidWatch) {
-      _saidWatch = true;
-      Say("Watch your friend!", "Xem bạn làm nhé!");
-      Point(_teacher, PatchWorld(), 2.4f);
-    }
-    RabbitCarrot carrot = _demoFed < _carrots.Count ? _carrots[_demoFed] : null;
-    switch (_demoStage) {
-      case 0:
-        FaceTowards(_student, PatchLocal(), dt, 5f);
-        if (_phaseT >= 1.2f && WalkTo(_student, RabbitPlayBuilder.PatchStand, dt)) {
-          _demoStage = 1;
-          if (carrot != null) {
-            carrot.SetHand(StudentHand());
-            FaceTowards(_student, PatchLocal(), dt, 5f);
-            carrot.BeginCarry(0.3f);
-          }
-        }
-        break;
-      case 1:
-        if (carrot == null || carrot.State == RabbitCarrot.CarrotState.Carried) {
-          _demoStage = 2;
-        }
-        break;
-      case 2:
-        FaceTowards(_student, RabbitLocal(), dt, 5f);
-        if (WalkTo(_student, RabbitPlayBuilder.FeedStand, dt)) {
-          _demoStage = 3;
-          if (carrot != null) {
-            carrot.OnMunched = OnDemoMunched;
-            carrot.BeginFeed(MouthLocal(), 0.3f);
-          }
-        }
-        break;
-      case 3:
-        if (carrot == null || carrot.State == RabbitCarrot.CarrotState.Consumed) {
-          _demoStage = 4;
-          _demoHoldT = DemoHold;
-        }
-        break;
-      case 4:
-        _demoHoldT -= dt;
-        if (_demoHoldT <= 0f) {
-          _demoFed++;
-          if (_demoFed < Target) { _demoStage = 0; }
-          else { _demoStage = 5; _demoHoldT = 1.6f; }
-        }
-        break;
-      default:
-        FaceTowards(_student, PlayerLocal(), dt, 3f);
-        _demoHoldT -= dt;
-        if (!_saidYes && _demoHoldT <= 1.0f) {
-          _saidYes = true;
-          Say("Yes! " + Cap(N(Target)) + " " + Carrots(Target) + "!",
-            "Đúng rồi! " + Cap(Nvi(Target)) + " củ cà rốt!");
-          Point(_teacher, RabbitWorld(), 2.2f);
-          CelebrateActor(_student, soft: true);
-          HopRabbit();
-          Sparkle(RabbitWorld() + new Vector3(0f, 0.5f, 0f), 8, 91, 0.4f);
-        }
-        if (_demoHoldT <= 0f) {
-          ResetPatch();
-          To(Phase.Handoff);
-        }
-        break;
-    }
+  void StartFeeding() {
+    To(Phase.Feeding);
+    Follow();
+    _followHanded = true;
+    if (_life != null) { try { _life.Begin("question read"); } catch (Exception) { } }
+    _lastPos = _player != null ? _player.position : Vector3.zero;
+    Log("child control (feeding phase).");
   }
 
-  void OnDemoMunched() {
-    Nibble();
-    PlaySfx("munch");
-    int k = Mathf.Min(_demoFed + 1, Target);
-    Say(CountEn[k - 1], CountVi[k - 1]);
-    Point(_teacher, RabbitWorld(), 1.6f);
-  }
-
-  // The demo ate real carrots: grow them back for the child's round and hand
-  // every carrot to the player's hand.
-  void ResetPatch() {
-    for (int i = 0; i < _carrots.Count; i++) {
-      RabbitCarrot c = _carrots[i];
-      if (c == null) continue;
-      c.SetHand(_playerHand);
-      c.OnMunched = null;
-      if (c.State == RabbitCarrot.CarrotState.Consumed) c.ResetHome();
-    }
-  }
-
-  // ---- handoff ------------------------------------------------------------------
-
-  void TickHandoff(float dt) {
-    _phaseT += dt;
-    float t = _phaseT;
-    if (!_saidTurn && t >= 0.4f) {
-      _saidTurn = true;
-      FaceTowards(_teacher, PlayerLocal(), dt, 5f);
-      Say("Now it's your turn!", "Giờ đến lượt con!");
-    }
-    if (!_saidTask && t >= 2.4f) {
-      _saidTask = true;
-      Say("Feed " + N(Target) + " " + Carrots(Target) + "!",
-        "Cho thỏ " + Nvi(Target) + " củ nhé!");
-      Point(_teacher, RabbitWorld(), 2.6f);
-    }
-    // The student walks back beside the teacher so he never blocks the feed
-    // stand (same lesson as gameplay #2).
-    if (!_studentReturned) {
-      if (WalkTo(_student, RabbitPlayBuilder.StudentReturn, dt)) _studentReturned = true;
-      if (t >= 8.0f) _studentReturned = true; // safety: the lesson never stalls
-    } else {
-      FaceTowards(_student, RabbitLocal(), dt, 2.5f);
-    }
-    if (!_followHanded && t >= 4.2f) {
-      _followHanded = true;
-      Follow();
-      if (_life != null) { try { _life.Begin("handoff done"); } catch (Exception) { } }
-    }
-    if (_followHanded && Current == Phase.Handoff && (_studentReturned || t >= 8.0f)) {
-      To(Phase.Feeding);
-      _lastPos = _player != null ? _player.position : Vector3.zero;
-      try { Debug.Log("[RabbitFeed] child control (feeding phase).", this); } catch (Exception) { }
-    }
-  }
+  // (S3-P2Z19: the in-arena student demo + handoff beats are GONE — the garden
+  // miniature teaches once; the arena reads the question on the play spot.)
 
   // ---- the child's feeding --------------------------------------------------------
   // Real actions in the world: click a carrot (walk -> bend -> carry in the
@@ -740,7 +984,7 @@ public class RabbitFeed : MonoBehaviour {
 
   public void TryPick(RabbitCarrot carrot) {
     if (carrot == null || !carrot.IsAvailable) return;
-    if (Current != Phase.Feeding && Current != Phase.Success) return;
+    if (Current != Phase.Feeding) return;
     if (Carried != null) return; // one carrot at a time
     Carried = carrot;
     carrot.SetHand(_playerHand);
@@ -753,66 +997,166 @@ public class RabbitFeed : MonoBehaviour {
     carrot.BeginCarry(PickDelay);
   }
 
+  // S3-P2Z23 (user: "phải có cơ chế nộp bài, có thể thừa hoặc thiếu"): feeding
+  // just adds to the bowl — up to ALL the carrots. NEVER auto-succeeds and never
+  // auto-corrects; the child decides when the count is right and rings the bell.
   public void TryFeed() {
     if (Carried == null) return;
-    if (Current != Phase.Feeding && Current != Phase.Success) return;
+    if (Current != Phase.Feeding) return;
     RabbitCarrot carrot = Carried;
     Carried = null;
     Count++;
     _fed.Add(carrot);
     if (_viz != null) {
       _viz.FaceTowards(RabbitWorld(), true);
-      _viz.PlayPickup();
+      // S3-P2Z24 (user: "bé cúi đầu như bỏ vào rổ trong khi bục cao hơn đầu"):
+      // the old PickUp bend read as dropping the carrot into a ground basket.
+      // The bowl sits on the hutch roof, so the child now STANDS and faces it
+      // while the carrot lifts and drops onto the bowl (see RabbitCarrot feed).
     }
     carrot.OnMunched = OnCarrotMunched;
-    if (Count <= Target) {
-      carrot.BeginFeed(MouthLocal(), FeedDelay);
-      SetPip(Count);
-      if (Count == Target) _landBeats = 2; // the success moment waits to land
-      else _landBeats = 1;                 // a plain count line waits to land
-    } else {
-      // CORRECTION path: one too many — a counting lesson, never a punishment.
-      // The extra carrot visibly reaches the mouth first, then goes home after
-      // the teacher explains.
-      _extra = carrot;
-      carrot.BeginFeed(MouthLocal(), FeedDelay);
-      To(Phase.Correct);
-      _correctStep = 0;
-      _correctT = 0f;
-      Overshoots++;
-    }
+    // S3-P2Z19: the carrot flies into the BOWL (on the hutch roof) and STAYS
+    // visible there — the bowl is the counter the child can read.
+    carrot.BeginFeed(BowlSlotFor(carrot, Count - 1), FeedDelay);
+    SetPip(Count);
+    Log("feed -> bowl=" + Count + " kind=" + Kind + " a=" + OpA + " b=" + OpB + " target=" + Target);
   }
 
   void OnCarrotMunched() {
     Nibble();
     PlaySfx("munch");
     Sparkle(RabbitWorld() + new Vector3(0f, 0.6f, 0f), 10, _sparkleSeed++, 0.5f);
-    if (_landBeats == 1) {
-      _landBeats = 0;
-      int k = Mathf.Min(Count, Target);
-      Say(CountEn[k - 1], CountVi[k - 1]);
-      Point(_teacher, RabbitWorld(), 1.6f);
-    } else if (_landBeats == 2) {
-      _landBeats = 0;
-      if (Current != Phase.Feeding) return;
-      SuccessBeats();
+    // The teacher counts the bowl aloud one item at a time (it can pass the
+    // target — that is the child's choice until they submit).
+    if (Current != Phase.Feeding) return;
+    int k = Mathf.Clamp(Count, 1, CountEn.Length);
+    Say(CountEn[k - 1], CountVi[k - 1]);
+    Point(_teacher, RabbitWorld(), 1.6f);
+  }
+
+  // The bell: turn the bowl's count in. EXACT is the win; too few or too many is
+  // a gentle "count again" and the bowl empties so the child retries — the child
+  // really can be wrong (user round).
+  public void TrySubmit() {
+    if (Current != Phase.Feeding) return;
+    Submits++;
+    PlaySfx("pickup");
+    if (Count == Target) { SuccessBeats(); return; }
+    To(Phase.Wrong);
+    _wrongT = 0f;
+    FaceTowards(_teacher, PlayerLocal(), 0.2f, 5f);
+    // S3-P2Z33: a warm, non-punishing "not yet" — board wobble + soft sparkle.
+    GameJuice.WrongFx(_board != null ? _board.transform : null, _fx, BoardWorld());
+    ActivityFeedback.Retry();
+    Say(Count < Target ? "Not enough. Count again!" : "Too many. Count again!",
+      Count < Target ? "Chưa đủ rồi. Đếm lại nhé!" : "Thừa rồi. Đếm lại nhé!");
+    Point(_teacher, RabbitWorld(), 2.2f);
+    Log("wrong submit: count=" + Count + " target=" + Target);
+  }
+
+  // The wrong beat: hold the line, then every fed carrot walks home and the
+  // child gets the bowl back empty to try again (never a fail screen).
+  // S3-P2Z25 (user): after clearing the bowl the teacher RE-READS the question
+  // ("look at the board, take the right number of carrots, put them on the
+  // bowl"). SafetyFilter caps an NPC line at 6 words, so the question is queued
+  // as three short lines and paced out one at a time.
+  void TickWrong(float dt) {
+    _phaseT += dt;
+    FaceTowards(_teacher, PlayerLocal(), dt, 2.5f);
+    FaceTowards(_student, PlayerLocal(), dt, 2.5f);
+    if (_phaseT < WrongHoldSeconds) return;
+    for (int i = 0; i < _fed.Count; i++) {
+      RabbitCarrot c = _fed[i];
+      if (c != null && c.State != RabbitCarrot.CarrotState.Available) {
+        c.SetHand(_playerHand);
+        c.BeginReturnHome();
+      }
     }
+    _fed.Clear();
+    Count = 0;
+    SetPip(0);
+    // S3-P2Z27 (user: "sai thì hướng dẫn làm lại bài đó chi tiết"): a wrong +/- 
+    // round is REDONE — the first operand goes back on the bowl so the child can
+    // add/remove again.
+    if (Kind != RoundKind.Plain) PrefillBowl(OpA);
+    To(Phase.Feeding);
+    _lastPos = _player != null ? _player.position : Vector3.zero;
+    AskQuestionAgain();
+    Log("wrong beat done — bowl reset, question re-read.");
+  }
+
+  // S3-P2Z25/27/29: re-read the task. A plain number gets the generic lines; an
+  // operation re-poses the "have / want / how many" question. Each line stays
+  // inside the SafetyFilter NPC cap (<= 6 tokens).
+  void AskQuestionAgain() {
+    if (Kind == RoundKind.Plain) {
+      Ask("Look at the number!", "Nhìn số trên bảng nhé!");
+      Ask("Take the right amount.", "Lấy đúng số cà rốt nhé!");
+      Ask("Put them on the bowl!", "Đặt lên bục nhé!");
+    } else {
+      Ask("Look at the board!", "Nhìn lên bảng nhé!");
+      AskOperationQuestion();
+      Ask("Try again!", "Làm lại nhé!");
+    }
+    Point(_teacher, BoardWorld(), 2.4f);
+  }
+
+  // S3-P2Z29 (user: "thỏ đang có 8 củ, thỏ muốn có 9 củ, cần lấy thêm mấy củ"):
+  // the operation question read aloud, one short line at a time.
+  void AskOperationQuestion() {
+    bool add = Kind == RoundKind.Add;
+    int want = Target;
+    Ask("The bunny has " + N(OpA) + " carrots.", "Thỏ có " + Nvi(OpA) + " củ cà rốt.");
+    Ask(add ? ("The bunny wants " + N(want) + ".") : ("The bunny wants " + N(want) + "."),
+      add ? ("Thỏ muốn có " + Nvi(want) + " củ.") : ("Thỏ muốn còn " + Nvi(want) + " củ."));
+    Ask(add ? "How many more?" : "How many to take?",
+      add ? "Lấy thêm mấy củ?" : "Bỏ bớt mấy củ?");
+    Ask(add ? ("To have " + N(want) + ".") : ("To leave " + N(want) + "."),
+      add ? ("Để có " + Nvi(want) + " củ.") : ("Để còn " + Nvi(want) + " củ."));
   }
 
   void SuccessBeats() {
     To(Phase.Success);
+    // Reset the correct-submit transition (runs again every round).
+    _cleared = false;
+    _advance = false;
+    _digitPhase = 0;
+    _digitT = 0f;
+    _returnT = 0f;
+    _boardOld = null;
+    _boardNew = null;
     PlaySfx("success");
     Sparkle(RabbitWorld() + new Vector3(0f, 0.7f, 0f), 14, _sparkleSeed++, 0.8f);
-    Say(Cap(N(Target)) + " " + Carrots(Target) + "! Well done!",
-      Cap(Nvi(Target)) + " củ cà rốt! Giỏi!");
-    // The recap 1..Target waits its turn in the pacer's single slot (same
-    // discipline as gameplay #2): one line in flight, the rest wait.
-    _recapEn.Clear();
-    _recapVi.Clear();
-    for (int i = 1; i <= Target; i++) {
-      _recapEn.Enqueue(CountEn[i - 1]);
-      _recapVi.Enqueue(CountVi[i - 1]);
+    // S3-P2Z33: layered win feedback + board pop.
+    GameJuice.CorrectFx(_fx, RabbitWorld(), false);
+    ActivityFeedback.Correct();
+    ActivityGuide.Clear();
+    if (_board != null) GameJuice.Pop(_board.transform, 0.10f, 0.3f);
+    if (Kind == RoundKind.Plain) {
+      Say(Cap(N(Target)) + " " + Carrots(Target) + "! Well done!",
+        Cap(Nvi(Target)) + " củ cà rốt! Giỏi!");
+    } else {
+      // S3-P2Z27 (user: "nếu đúng thì trên bảng hiện 4-2=2"): the board resolves
+      // the equation for the payoff. S3-P2Z26: the explanation is queued as short
+      // paced lines (SafetyFilter caps an NPC line at 6 words).
+      if (_builder != null) {
+        _board = _builder.SpawnQuestion((int)Kind, OpA, OpB, Target);
+        _boardPulseT = 0f;
+      }
+      bool add = Kind == RoundKind.Add;
+      Ask(add ? "That's right! This is addition." : "That's right! This is subtraction.",
+        add ? "Đúng rồi! Đây là phép cộng." : "Đúng rồi! Đây là phép trừ.");
+      Ask(Cap(N(OpA)) + " " + Carrots(OpA) + (add ? " plus " : " minus ") + N(OpB) + ".",
+        Cap(Nvi(OpA)) + " củ " + (add ? "cộng " : "trừ ") + Nvi(OpB) + " củ.");
+      Ask(add ? (Cap(N(Target)) + " carrots on the bowl.")
+              : (Cap(N(Target)) + " carrots are left."),
+        add ? ("Được " + Nvi(Target) + " củ trên bục.")
+            : ("Còn " + Nvi(Target) + " củ trên bục."));
     }
+    // S3-P2Z24 (user: "sau khi báo kết quả 'giỏi quá' thì vẫn lại đếm số lượng
+    // carot trên bục"): the post-success recap is GONE. The teacher counts each
+    // carrot as it is fed (OnCarrotMunched); the win line names the finished
+    // count once and stops — no second count-up after the praise.
     Point(_teacher, RabbitWorld(), 2.0f);
     CelebrateBoth();
     HopRabbit();
@@ -835,32 +1179,15 @@ public class RabbitFeed : MonoBehaviour {
 
   void TickFeeding(float dt) {
     _phaseT += dt;
-    if (_overshootNagT > 0f) _overshootNagT -= dt;
-    if (_underCooldownT > 0f) _underCooldownT -= dt;
     TickFeedProximity();
-    // Undershoot nudge: settled BELOW the target earns a gentle "how many
-    // more" — near the patch or the bunny only, never across the arena, never
-    // spam.
-    bool moving = IsPlayerMoving();
-    if (Count < Target && !moving && NearWork()) {
-      _underT += dt;
-      if (_underT >= UnderDwell && _underCooldownT <= 0f) {
-        _underCooldownT = UnderNudgeCooldown;
-        _underT = 0f;
-        UndershootNudges++;
-        int remain = Target - Count;
-        Say(Cap(N(remain)) + " more " + Carrots(remain) + "!",
-          "Còn " + Nvi(remain) + " củ nữa nhé!");
-        Point(_teacher, remain == Target ? PatchWorld() : RabbitWorld(), 2.0f);
-        Log("undershoot at " + Count + " (" + remain + " more)");
-      }
-    } else {
-      _underT = 0f;
-    }
+    // S3-P2Z22/23: no undershoot hint, no auto-success — the child counts and
+    // rings the bell when they think the bowl is right.
     _lastPos = _player != null ? _player.position : Vector3.zero;
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
     FaceRabbitTo(PlayerWorld(), dt);
+    // S3-P2Z35: show where to bring the carried carrot.
+    if (Carried != null) ActivityGuide.PointAt(BowlWorld()); else ActivityGuide.Clear();
   }
 
   // "Stop, then feed" (same discipline as gameplay #1): walking PAST the bowl
@@ -868,11 +1195,9 @@ public class RabbitFeed : MonoBehaviour {
   void TickFeedProximity() {
     if (Carried == null || _player == null) return;
     if (_mover != null && _mover.IsMoving) return;
-    if (PlayerNear(RabbitWorld(), 1.5f)) TryFeed();
-  }
-
-  bool NearWork() {
-    return PlayerNear(PatchWorld(), UnderNearXZ) || PlayerNear(RabbitWorld(), UnderNearXZ);
+    // S3-P2Z19: the bowl is the feed target (on the hutch roof), so proximity
+    // is measured to the BOWL — standing beside the hutch reaches it.
+    if (PlayerNear(BowlWorld(), 1.6f)) TryFeed();
   }
 
   bool IsPlayerMoving() {
@@ -883,93 +1208,150 @@ public class RabbitFeed : MonoBehaviour {
     return d.sqrMagnitude > 0.0004f;
   }
 
+  // S3-P2Z25 (user): on a correct submit the payoff holds a beat, the bowl is
+  // cleared, the child walks back to the play spot, then the board number swaps
+  // to the next target ("câu hỏi tiếp theo") and play resumes. Re-entry (adopt)
+  // keeps the frozen finished picture.
   void TickSuccess(float dt) {
     _phaseT += dt;
-    TickRecap();
     FaceTowards(_teacher, PlayerLocal(), dt, 2f);
     FaceTowards(_student, PlayerLocal(), dt, 2f);
     FaceRabbitTo(PlayerWorld(), dt);
-    TickFeedProximity(); // the field stays open: a spare carrot feeds the lesson
-    if (_phaseT >= 4.6f && !_followHanded) {
-      _followHanded = true;
-      _cameraDone = true;
-      Follow();
-    }
-  }
-
-  void TickRecap() {
-    if (_recapEn.Count <= 0 || _voice == null || !_voice.Idle || _voice.HasLine) return;
-    Say(_recapEn.Dequeue(), _recapVi.Dequeue());
-  }
-
-  // ---- correction beats (deterministic timer) ---------------------------------------
-  // The extra carrot reached the mouth; the teacher counts the bowl 1..N,
-  // points at the board ("the board says N"), names the limit ("N is enough"),
-  // and the carrot hops home. Then Success again — gently, like a clean run.
-
-  void TickCorrect(float dt) {
-    _correctT += dt;
-    if (_correctStep < 0) return;
-    if (_correctStep == 0 && _correctT >= 0.4f) {
-      _correctStep = 1;
-      Say("Let's count again!", "Cùng đếm lại nhé!");
-      Point(_teacher, RabbitWorld(), 2.2f);
-      return;
-    }
-    // Counts 1..Target, one beat each (1.7s apart so the pacer breathes).
-    if (_correctStep >= 1 && _correctStep <= Target) {
-      float at = 0.4f + _correctStep * 1.7f;
-      if (_correctT >= at) {
-        int k = _correctStep;
-        _correctStep++;
-        Say(CountEn[k - 1], CountVi[k - 1]);
-        if (k == Target) Point(_teacher, BoardWorld(), 2.4f);
+    if (_adopted) {
+      if (_phaseT >= 4.6f && !_followHanded) {
+        _followHanded = true;
+        _cameraDone = true;
+        Follow();
       }
       return;
     }
-    float afterCounts = 0.4f + (Target + 1) * 1.7f;
-    if (_correctStep == Target + 1 && _correctT >= afterCounts) {
-      _correctStep = Target + 2;
-      Say("The board says " + N(Target) + ".", "Bảng ghi số " + Nvi(Target) + ".");
+    if (_advance) { TickNumberChange(dt); return; }
+    if (!_cleared) {
+      // S3-P2Z30 (user: "phần đọc giải thích cần đọc trước khi câu hỏi kế tiếp
+      // được đưa ra"): hold the payoff until every explanation line has been
+      // spoken, THEN clear the bowl and move on.
+      if (_phaseT >= SuccessHoldSeconds && ExplanationSpoken()) ClearBowlAndWalkBack();
       return;
     }
-    if (_correctStep == Target + 2 && _correctT >= afterCounts + 1.8f) {
-      _correctStep = Target + 3;
-      Say(Cap(N(Target)) + " is enough.", "Đủ " + Nvi(Target) + " củ rồi.");
-      if (_extra != null) _extra.BeginReturnHome();
+    // Bowl is empty: wait until the child is back on the marked spot (or a
+    // timeout) before the next number appears.
+    _returnT += dt;
+    if (PlayerOnSpot() || _returnT >= NextQuestionWalkTimeout) BeginNextNumber();
+  }
+
+  // True once the queued explanation has fully drained and the last line has
+  // finished playing.
+  bool ExplanationSpoken() {
+    if (_askEn.Count > 0) return false;
+    if (_voice == null) return true;
+    return _voice.Idle && !_voice.HasLine;
+  }
+
+  // Test seam for the explanation gate.
+  public bool ExplanationSpokenForTests() { return ExplanationSpoken(); }
+
+  // Clear the bowl (every fed carrot walks home) and send the child back to the
+  // play spot for the next round.
+  void ClearBowlAndWalkBack() {
+    _cleared = true;
+    _returnT = 0f;
+    for (int i = 0; i < _fed.Count; i++) {
+      RabbitCarrot c = _fed[i];
+      if (c != null && c.State != RabbitCarrot.CarrotState.Available) {
+        c.SetHand(_playerHand);
+        c.BeginReturnHome();
+      }
+    }
+    _fed.Clear();
+    Count = 0;
+    SetPip(0);
+    if (_result != null) _result.SetActive(false);
+    _followHanded = true;
+    _cameraDone = true;
+    if (_mover != null) {
+      try { _mover.MoveTo(PlaySpotWorld()); } catch (Exception) { }
+    }
+    Follow();
+    Log("bowl cleared — child walks back to the play spot.");
+  }
+
+  // Swap the board digit to the next target: say "next question", shrink the old
+  // number out, pop the new one in (TickNumberChange drives the animation).
+  void BeginNextNumber() {
+    _advance = true;
+    _digitPhase = 1;
+    _digitT = 0f;
+    _boardPulseT = 0f;
+    // S3-P2Z26: live plays a random round (plain / add / sub); tests keep the
+    // deterministic ladder (ArithmeticEnabled stays false there).
+    if (ForcedNextKind >= 0) {
+      SetRound((RoundKind)Mathf.Clamp(ForcedNextKind, 0, 2), ForcedNextA, ForcedNextB);
+      ForcedNextKind = -1;
+    } else if (ArithmeticEnabled) SetRoundRandom();
+    else SetRound(RoundKind.Plain, CountingGardenArea.NextRabbitTarget(Target), 0);
+    // S3-P2Z28: the new +/- question must show its first operand on the bowl
+    // (the old bug: the next question was staged with an empty bowl).
+    if (Kind != RoundKind.Plain) PrefillBowl(OpA);
+    if (_builder != null) {
+      _boardOld = _board;
+      _boardNew = _builder.SpawnQuestion((int)Kind, OpA, OpB);
+      if (_boardNew != null) _boardNew.transform.localScale = Vector3.zero;
+      _builder.SpawnResultDigit(Target);
+      _board = _boardNew;
+    }
+    SetShot(0); // frame the board (child on the spot in shot)
+    Say("Next question!", "Câu hỏi tiếp theo!");
+    Point(_teacher, BoardWorld(), 2.4f);
+    Log("next question staged: kind=" + Kind + " a=" + OpA + " b=" + OpB + " target=" + Target);
+  }
+
+  void TickNumberChange(float dt) {
+    if (_digitPhase == 1) {
+      _digitT += dt;
+      float t = Mathf.Clamp01(_digitT / DigitOutSeconds);
+      if (_boardOld != null) {
+        try { _boardOld.transform.localScale = Vector3.one * (1f - t); } catch (Exception) { }
+      }
+      if (t < 1f) return;
+      if (_boardOld != null) {
+        try { _boardOld.SetActive(false); } catch (Exception) { }
+      }
+      _digitPhase = 2;
+      _digitT = 0f;
       return;
     }
-    if (_correctStep == Target + 3 && _correctT >= afterCounts + 3.6f) {
-      FinishCorrect();
+    if (_digitPhase == 2) {
+      _digitT += dt;
+      float t = Mathf.Clamp01(_digitT / DigitInSeconds);
+      float s = EaseOutBack(t);
+      if (_boardNew != null) {
+        try { _boardNew.transform.localScale = Vector3.one * s; } catch (Exception) { }
+      }
+      if (t < 1f) return;
+      if (_boardNew != null) {
+        try { _boardNew.transform.localScale = Vector3.one; } catch (Exception) { }
+      }
+      _digitPhase = 0;
+      // S3-P2Z28: read the new question's guidance (quick intro) before feeding.
+      _quickIntro = true;
+      _saidBoard = true;   // "Look at the board!" was already said
+      _saidTask = false;
+      To(Phase.Intro);
+      Log("next question ready: kind=" + Kind + " a=" + OpA + " b=" + OpB
+        + " target=" + Target);
     }
   }
 
-  void FinishCorrect() {
-    _extra = null;
-    _landBeats = 0;
-    // Every carrot fed BEYOND the target goes home, so the bowl ends with
-    // exactly the board's number — whatever the child picked.
-    for (int i = Target; i < _fed.Count; i++) {
-      RabbitCarrot c = _fed[i];
-      if (c != null && c.State != RabbitCarrot.CarrotState.Available) c.BeginReturnHome();
-    }
-    while (_fed.Count > Target) _fed.RemoveAt(_fed.Count - 1);
-    Count = Target;
-    SetPip(Target);
-    if (_result != null) {
-      _result.SetActive(true);
-      _result.transform.localScale = Vector3.one * 0.65f;
-      _resultPopT = 0f;
-    }
-    Say(Cap(N(Target)) + " " + Carrots(Target) + "! Well done!",
-      Cap(Nvi(Target)) + " củ cà rốt! Giỏi!");
-    CelebrateBoth();
-    HopRabbit();
-    MarkLifeCompleted();
-    To(Phase.Success);
-    _phaseT = 0f;
-    _followHanded = true; // the celebration frame already played; stay with follow
+  static float EaseOutBack(float t) {
+    const float c1 = 1.70158f;
+    const float c3 = c1 + 1f;
+    float u = t - 1f;
+    return 1f + c3 * u * u * u + c1 * u * u;
   }
+
+  // (S3-P2Z23: the old auto-overshoot correction is GONE — a wrong count is a
+  // wrong SUBMIT now: TickWrong holds the line, empties the bowl, and the child
+  // retries. See TrySubmit/TickWrong.)
 
   // ---- camera -------------------------------------------------------------------------
 
@@ -993,14 +1375,18 @@ public class RabbitFeed : MonoBehaviour {
 
   void TickCamera(float dt) {
     if (_cameraDone) return;
-    if (_followHanded && Current != Phase.Success) return;
+    // The correction path sets _followHanded (FinishCorrect): the camera must
+    // STOP re-issuing the success shot then. The old guard let Success re-issue
+    // forever after a correction, leaving the camera in Interaction and the
+    // exit walk unroutable (S3-P2Z17 journey finding).
+    if (_followHanded) return;
     if (!_shotIssued) {
       // Let the area's arrival reveal (2.2s) play first, then hold the
       // teaching frame while the teacher introduces the board.
       if (Current == Phase.Intro && _phaseT >= 2.0f) IssueShot();
       return;
     }
-    if (Current != Phase.Intro && Current != Phase.Demo && Current != Phase.Success) return;
+    if (Current != Phase.Intro && Current != Phase.Success) return;
     _shotT -= dt;
     if (_shotT <= 0f) IssueShot();
   }
@@ -1108,19 +1494,6 @@ public class RabbitFeed : MonoBehaviour {
     if (_student.HandBone != null) return _student.HandBone;
     if (_student.CarryAnchor != null) return _student.CarryAnchor;
     return _playerHand;
-  }
-
-  bool WalkTo(LessonActor a, Vector3 targetLocal, float dt) {
-    if (a == null || a.Root == null) return true;
-    Vector3 p = a.Root.transform.localPosition;
-    Vector3 flat = new Vector3(targetLocal.x - p.x, 0f, targetLocal.z - p.z);
-    float dist = flat.magnitude;
-    if (dist <= 0.12f) return true;
-    FaceTowards(a, targetLocal, dt, 6f);
-    float step = Mathf.Min(WalkSpeed * dt, dist);
-    Vector3 dir = dist > 0.0001f ? flat / dist : Vector3.zero;
-    a.Root.transform.localPosition = new Vector3(p.x + dir.x * step, p.y, p.z + dir.z * step);
-    return false;
   }
 
   void FaceTowards(LessonActor a, Vector3 targetLocal, float dt, float rate) {
@@ -1241,15 +1614,6 @@ public class RabbitFeed : MonoBehaviour {
       }
       if (_boardPulseT <= 0f && _board != null) _board.transform.localScale = Vector3.one;
     }
-    if (_builder == null || _builder.CountPips == null) return;
-    for (int i = 0; i < _builder.CountPips.Length && i < _pipPopT.Length; i++) {
-      if (_pipPopT[i] >= 1f) continue;
-      _pipPopT[i] = Mathf.Min(1f, _pipPopT[i] + dt / 0.28f);
-      GameObject pip = _builder.CountPips[i];
-      if (pip == null) continue;
-      float s = 1f + 0.5f * Mathf.Sin(Mathf.PI * _pipPopT[i]);
-      pip.transform.localScale = new Vector3(0.3f * s, 0.01f, 0.3f * s);
-    }
   }
 
   void PulseBoard(float seconds) { _boardPulseT = Mathf.Max(_boardPulseT, seconds); }
@@ -1282,6 +1646,15 @@ public class RabbitFeed : MonoBehaviour {
     float dx = p.x - world.x, dz = p.z - world.z;
     return dx * dx + dz * dz <= radius * radius;
   }
+
+  // S3-P2Z32 (UX): bowl manipulation (drag / tap-select) is live only while the
+  // child STANDS AT THE BOWL. From across the arena a click on a fed carrot must
+  // WALK the child over (ClickRouter routes it) — never silently select a carrot
+  // and leave the child standing (journey finding: clicks meant to walk to the
+  // bowl were swallowed by the drag target, and a later garden tap returned the
+  // carrot, dropping the count).
+  public const float BowlReach = 2.4f;
+  public bool PlayerAtBowl { get { return PlayerNear(BowlWorld(), BowlReach); } }
 
   Vector3 LocalPoint(Vector3 world) {
     return _root != null ? _root.InverseTransformPoint(world) : world;
@@ -1334,12 +1707,15 @@ public class RabbitFeed : MonoBehaviour {
       ? _builder.FeedAnchor.position : RabbitWorld();
   }
 
-  // Fed carrots rest IN the bowl (only their tops show) — each gets its own
-  // slot so the count reads from the gameplay camera, never a pile.
+  // Fed carrots rest IN the bowl — each gets its own slot so the count reads
+  // from the gameplay camera, never a pile. S3-P2Z29 (user: "lấy thêm 1 củ mà
+  // tổng vẫn 8"): the old list hid the 9th carrot under the middle ones; a
+  // 6-outer + 4-inner ring keeps all TEN countable.
   static readonly Vector2[] BowlOffsets = {
-    new Vector2(-0.18f, 0.12f), new Vector2(0.0f, 0.14f), new Vector2(0.18f, 0.12f),
-    new Vector2(-0.18f, -0.08f), new Vector2(0.0f, -0.06f), new Vector2(0.18f, -0.08f),
-    new Vector2(-0.1f, -0.22f), new Vector2(0.12f, -0.22f), new Vector2(0.0f, 0.0f),
+    new Vector2(0.30f, 0.00f), new Vector2(0.15f, 0.26f), new Vector2(-0.15f, 0.26f),
+    new Vector2(-0.30f, 0.00f), new Vector2(-0.15f, -0.26f), new Vector2(0.15f, -0.26f),
+    new Vector2(0.12f, 0.07f), new Vector2(-0.07f, 0.12f), new Vector2(-0.12f, -0.07f),
+    new Vector2(0.07f, -0.12f),
   };
 
   Vector3 BowlSlot(int i) {
@@ -1348,41 +1724,25 @@ public class RabbitFeed : MonoBehaviour {
     if (i < 0) i = 0;
     if (i >= BowlOffsets.Length) i = BowlOffsets.Length - 1;
     Vector2 o = BowlOffsets[i];
-    // Builder-local == game-local (both hang under the arena root).
-    return new Vector3(b.x + o.x, 0.18f, b.z + o.y);
+    // Builder-local == game-local (both hang under the arena root). The slot is
+    // the bowl RIM surface; the carrot's measured SitOffset is added on top so
+    // its real bottom rests here (S3-P2Z23).
+    return new Vector3(b.x + o.x, b.y + 0.06f, b.z + o.y);
   }
 
-  // Empty slots stay visible (grey) and turn gold as the bunny is fed.
-  Material _pipGold;
-  Material _pipEmpty;
+  // The bowl slot tuned to a specific carrot's measured bottom (S3-P2Z23).
+  Vector3 BowlSlotFor(RabbitCarrot c, int i) {
+    Vector3 s = BowlSlot(i);
+    if (c != null) s.y += c.SitOffset;
+    return s;
+  }
 
+  // S3-P2Z19: state only — the pip board is gone (the bowl is the counter).
   void SetPip(int n) {
     PipCount = n;
-    if (_builder == null || _builder.CountPips == null) return;
-    if (_pipGold == null) _pipGold = PipMaterial(new Color(0.98f, 0.78f, 0.25f), 0.45f);
-    if (_pipEmpty == null) _pipEmpty = PipMaterial(new Color(0.68f, 0.68f, 0.66f), 0f);
-    for (int i = 0; i < _builder.CountPips.Length; i++) {
-      GameObject pip = _builder.CountPips[i];
-      if (pip == null) continue;
-      pip.SetActive(true);
-      Renderer rend = pip.GetComponent<Renderer>();
-      if (rend != null) rend.sharedMaterial = (i < n) ? _pipGold : _pipEmpty;
-      if (i < n && i > _lastPip && i < _pipPopT.Length) _pipPopT[i] = 0f;
-    }
-    _lastPip = n - 1;
-  }
-
-  static Material PipMaterial(Color color, float emission) {
-    Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-    mat.SetColor("_BaseColor", color);
-    if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0f);
-    if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
-    if (emission > 0f && mat.HasProperty("_EmissionColor")) {
-      mat.EnableKeyword("_EMISSION");
-      mat.SetColor("_EmissionColor", color * emission);
-    }
-    mat.enableInstancing = true;
-    return mat;
+    // S3-P2Z34: live bowl progress ("4/7 on the bowl") while the child feeds.
+    if (Current == Phase.Feeding || Current == Phase.Wrong || Current == Phase.Success)
+      ActivityFeedback.Progress(n, Target);
   }
 
   // Test seams (no live scene needed).
@@ -1394,4 +1754,6 @@ public class RabbitFeed : MonoBehaviour {
         _life.Begin("test active");
     } catch (Exception) { }
   }
+
+  void OnDestroy() { ActivityGuide.Clear(); ActivityFeedback.Clear(); }
 }

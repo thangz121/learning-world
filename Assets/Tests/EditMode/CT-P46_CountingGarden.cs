@@ -127,16 +127,16 @@ public class CT_P46_CountingGarden {
       "retry succeeds after the failure clears");
   }
 
-  // D. Garden scene content: SIX fenced zones in an arc + entry/exit + anchors
-  // (v2 scope: enclosures only — activities live in lazy play scenes).
-  // S3-P2Z12 re-pin: the sixth plot is the number-stair hill (gameplay #2).
+  // D. Garden scene content: TWO fenced plots in an arc + entry/exit + anchors
+  // (activities live in lazy play scenes). The plots are the carrot patch
+  // (rabbit, zone 0) and the number-stair hill (zone 1).
   [Test] public void P46D_GardenZonesAndAnchors() {
     GameObject garden = new GameObject("P46GardenWorld");
     try {
       CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
       builder.BuildContent(garden.transform);
-      Assert.AreEqual(6, CountingGardenBuilder.ZoneCount, "six zones");
-      Assert.AreEqual(6, builder.ZoneCenters.Count, "six zone centres exposed");
+      Assert.AreEqual(2, CountingGardenBuilder.ZoneCount, "two zones");
+      Assert.AreEqual(2, builder.ZoneCenters.Count, "two zone centres exposed");
       Assert.Greater(CountingGardenBuilder.WorldOffset.magnitude, 60f,
         "separate island (no overlap with Main/Math)");
       Vector3 c = CountingGardenBuilder.ArcCenter;
@@ -149,9 +149,7 @@ public class CT_P46_CountingGarden {
         if (ang < minAng) minAng = ang;
         if (ang > maxAng) maxAng = ang;
         int zi = builder.ZoneCenters.IndexOf(z);
-        // S3-P2V: zone 2 is the demo theatre (its floor is CG DemoStagePad).
         Transform zonePad = FindDeep(garden.transform, "CGZone" + zi + "Pad");
-        if (zonePad == null) zonePad = FindDeep(garden.transform, "CGDemoStagePad");
         Assert.IsNotNull(zonePad, "zone pad built");
       }
       Assert.Greater(maxAng - minAng, 60f, "zones fan out in an arc");

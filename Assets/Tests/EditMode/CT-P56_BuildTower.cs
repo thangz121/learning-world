@@ -99,7 +99,15 @@ public class CT_P56_BuildTower {
     return arena.transform.TransformPoint(BuildTowerBuilder.PadPos);
   }
 
-  static void AdvanceToBuilding(BuildTowerGame game, float maxSeconds = 220f) {
+  // S3-P2Z19 user round: after entering the arena the child walks to the marked
+  // play spot; the question is read only there, then control passes over.
+  static Vector3 PlaySpotWorld(GameObject arena) {
+    return arena.transform.TransformPoint(BuildTowerBuilder.PlaySpotLocal);
+  }
+
+  static void AdvanceToBuilding(BuildTowerGame game, GameObject arena, GameObject player,
+      float maxSeconds = 220f) {
+    player.transform.position = PlaySpotWorld(arena);
     for (float t = 0f; t < maxSeconds && game.Current != BuildTowerGame.Phase.Building; t += 0.1f)
       game.Tick(0.1f);
   }
@@ -255,11 +263,10 @@ public class CT_P56_BuildTower {
       int completed = -1;
       BuildTowerGame game = BuildGame(builder, arena, player, audio, life, 3,
         delegate (int n) { completed = n; });
-      AdvanceToBuilding(game);
+      AdvanceToBuilding(game, arena, player);
       Assert.AreEqual(BuildTowerGame.Phase.Building, game.Current, "the child holds control");
-      Assert.AreEqual(3, game.DemoBlocksPlaced, "the demo stacked exactly 3");
       Assert.AreEqual(ActivityState.Active, life.State, "lifecycle active at handoff");
-      // The demo tower tidied home: every block is pickable again.
+      // No demo ran: every block is pickable from the start.
       for (int i = 0; i < game.BlockCountTotal; i++)
         Assert.AreEqual(TowerBlock.BlockState.Available, game.BlockAt(i).State,
           "block " + i + " reset for the round");
@@ -278,6 +285,10 @@ public class CT_P56_BuildTower {
       Assert.AreEqual(3, completed, "the area is notified with the completed target");
       Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Three blocks! Well done!", "Ba khối! Giỏi!")),
         "the teacher confirms the target");
+      for (int i = 0; i < 40; i++) game.Tick(0.1f);
+      Assert.IsTrue(audio.Lines.Contains(
+        DialogueLang.T("You built a tower of three!", "Con xây được tháp ba khối!")),
+        "the teacher names the finished tower (brief §23)");
       Assert.IsTrue(audio.Sfx.Contains("block"), "each placement clacks");
       Assert.IsTrue(audio.Sfx.Contains("success"), "success chime plays");
     } finally {
@@ -286,9 +297,9 @@ public class CT_P56_BuildTower {
     }
   }
 
-  // E. Undershoot: 2 of 5 placed and settled earns a gentle "how many more" —
-  // never a fail, never a completion.
-  [Test] public void P56E_UndershootNudge() {
+  // E. Undershoot: 2 of 5 placed and settled — S3-P2Z22 (user: "để trẻ tự suy
+  // nghĩ") there is NO "how many more" hint any more.
+  [Test] public void P56E_UndershootNoHint() {
     GameObject arena;
     BuildTowerBuilder builder = BuildArena(out arena, 5);
     GameObject player = BuildPlayer(BuildTowerBuilder.EntryLocal);
@@ -296,16 +307,16 @@ public class CT_P56_BuildTower {
       FakeAudio audio = new FakeAudio();
       BuildTowerGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("build_tower", "test"), 5);
-      AdvanceToBuilding(game);
+      AdvanceToBuilding(game, arena, player);
       PlaceOne(game, arena, player, 0);
       PlaceOne(game, arena, player, 1);
       Assert.AreEqual(BuildTowerGame.Phase.Building, game.Current, "short of the target: still building");
       player.transform.position = PadWorld(arena) + new Vector3(0f, 0f, -1.0f);
-      for (int i = 0; i < 140; i++) game.Tick(0.1f); // settle: the nudge fires
-      Assert.GreaterOrEqual(game.UndershootNudges, 1, "a gentle nudge names the remainder");
+      for (int i = 0; i < 140; i++) game.Tick(0.1f); // settle: no hint fires
+      Assert.AreEqual(0, game.UndershootNudges, "no 'how many more' hint (child thinks)");
       Assert.AreEqual(BuildTowerGame.Phase.Building, game.Current, "no completion while short");
-      Assert.IsTrue(audio.Lines.Contains(
-        DialogueLang.T("Three more blocks!", "Còn ba khối nữa nhé!")), "the nudge counts the rest");
+      Assert.IsFalse(audio.Lines.Contains(
+        DialogueLang.T("Three more blocks!", "Còn ba khối nữa nhé!")), "no remainder hint spoken");
     } finally {
       Object.DestroyImmediate(player);
       Object.DestroyImmediate(arena);
@@ -322,7 +333,7 @@ public class CT_P56_BuildTower {
       FakeAudio audio = new FakeAudio();
       ActivityLifecycle life = new ActivityLifecycle("build_tower", "test");
       BuildTowerGame game = BuildGame(builder, arena, player, audio, life, 3);
-      AdvanceToBuilding(game);
+      AdvanceToBuilding(game, arena, player);
       PlaceOne(game, arena, player, 0);
       PlaceOne(game, arena, player, 1);
       PlaceOne(game, arena, player, 2);
@@ -364,7 +375,7 @@ public class CT_P56_BuildTower {
       FakeAudio audio = new FakeAudio();
       BuildTowerGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("build_tower", "test"), 3);
-      AdvanceToBuilding(game);
+      AdvanceToBuilding(game, arena, player);
       TowerBlock b0 = game.BlockAt(0);
       TowerBlock b1 = game.BlockAt(1);
       player.transform.position = b0.transform.position + new Vector3(0f, 0f, -0.5f);
@@ -397,7 +408,7 @@ public class CT_P56_BuildTower {
       FakeAudio audio = new FakeAudio();
       BuildTowerGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("build_tower", "test"), 3);
-      AdvanceToBuilding(game);
+      AdvanceToBuilding(game, arena, player);
       TowerBlock b = game.BlockAt(4);
       Assert.AreEqual(TowerBlock.BlockState.Available, b.State, "starts available");
       player.transform.position = b.transform.position + new Vector3(0f, 0f, -0.5f);
@@ -439,7 +450,7 @@ public class CT_P56_BuildTower {
       FakeAudio audio = new FakeAudio();
       ActivityLifecycle life = new ActivityLifecycle("build_tower", "test");
       BuildTowerGame first = BuildGame(builder, arena, player, audio, life, 3);
-      AdvanceToBuilding(first);
+      AdvanceToBuilding(first, arena, player);
       PlaceOne(first, arena, player, 0);
       PlaceOne(first, arena, player, 1);
       PlaceOne(first, arena, player, 2);
@@ -544,23 +555,26 @@ public class CT_P56_BuildTower {
       FakeAudio audio = new FakeAudio();
       BuildTowerGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("build_tower", "test"), 9);
-      AdvanceToBuilding(game, 420f);
+      AdvanceToBuilding(game, arena, player, 420f);
       Assert.AreEqual(BuildTowerGame.Phase.Building, game.Current, "target 9 reaches the child");
-      Assert.AreEqual(9, game.DemoBlocksPlaced, "the demo stacked all nine");
       for (int i = 0; i < 9; i++) PlaceOne(game, arena, player, i);
       for (int i = 0; i < 30 && game.Current != BuildTowerGame.Phase.Success; i++) game.Tick(0.1f);
       Assert.AreEqual(BuildTowerGame.Phase.Success, game.Current, "target 9 completes");
       Assert.AreEqual(9, game.TowerHeight, "a real nine-block tower stands");
       for (int i = 0; i < 220; i++) game.Tick(0.1f); // recap drains
-      Assert.Greater(audio.Lines.Count, 25, "a full round speaks plenty");
+      Assert.Greater(audio.Lines.Count, 15, "a full round speaks plenty");
       foreach (string line in audio.Lines) {
         bool ok = SafetyFilter.ValidateLine(line, false, out string why);
         Assert.IsTrue(ok, "line passes the NPC cap: '" + line + "' (" + why + ")");
       }
       Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Nine blocks.", "Chín khối.")),
         "nine counted");
+      // S3-P2Z23: the intro does NOT name the number — the board shows it.
       Assert.IsTrue(audio.Lines.Contains(
-        DialogueLang.T("Build a tower of nine!", "Xây tháp chín khối nhé!")), "target named");
+        DialogueLang.T("Build the tower!", "Xây tháp nhé!")), "job named, number left to the child");
+      Assert.IsTrue(audio.Lines.Contains(
+        DialogueLang.T("You built a tower of nine!", "Con xây được tháp chín khối!")),
+        "the closer names the finished tower (brief §23)");
     } finally {
       Object.DestroyImmediate(player);
       Object.DestroyImmediate(arena);
@@ -577,7 +591,7 @@ public class CT_P56_BuildTower {
       FakeAudio audio = new FakeAudio();
       BuildTowerGame game = BuildGame(builder, arena, player, audio,
         new ActivityLifecycle("build_tower", "test"), 3);
-      AdvanceToBuilding(game);
+      AdvanceToBuilding(game, arena, player);
       TowerBlock b = game.BlockAt(2);
       player.transform.position = b.transform.position + new Vector3(0f, 0f, -0.5f);
       game.TryPick(b);
@@ -629,5 +643,181 @@ public class CT_P56_BuildTower {
     Assert.Greater(look.y + halfFrame, top9, "the tower top stays inside the frame");
     Assert.Less(look.y - halfFrame, BuildTowerBuilder.PadTopY + 0.6f,
       "the pad stays inside the frame");
+  }
+
+  static void CompleteLife(ActivityLifecycle life) {
+    life.MarkAvailable("test");
+    life.BeginEnter("test");
+    life.MarkReady("test");
+    life.Begin("test");
+    life.MarkCompleted("test");
+  }
+
+  // O. The carried block rides the child's REAL fist (brief §13): with a hand
+  // handed in, the block follows it across the arena — never glued to the root
+  // — and the installer passes PlayerVisual.HandBone down to the activity.
+  [Test] public void P56O_CarryFollowsTheHand() {
+    GameObject arena;
+    BuildTowerBuilder builder = BuildArena(out arena);
+    GameObject player = BuildPlayer(BuildTowerBuilder.EntryLocal);
+    GameObject hand = new GameObject("P56Hand");
+    hand.transform.position = BuildTowerBuilder.EntryLocal + new Vector3(0f, 1.1f, 0f);
+    try {
+      FakeAudio audio = new FakeAudio();
+      BuildTowerGame game = arena.AddComponent<BuildTowerGame>();
+      game.Build(builder, player.transform, null, audio,
+        new ActivityLifecycle("build_tower", "test"), 3, null, hand.transform);
+      AdvanceToBuilding(game, arena, player);
+      TowerBlock b = game.BlockAt(0);
+      player.transform.position = b.transform.position + new Vector3(0f, 0f, -0.5f);
+      game.TryPick(b);
+      for (int i = 0; i < 40 && b.State != TowerBlock.BlockState.Carried; i++) game.Tick(0.1f);
+      Assert.AreEqual(TowerBlock.BlockState.Carried, b.State, "block carried");
+      Vector3 acrossTheArena = BuildTowerBuilder.EntryLocal + new Vector3(2.4f, 1.3f, 0f);
+      hand.transform.position = acrossTheArena;
+      for (int i = 0; i < 30; i++) game.Tick(0.05f);
+      Assert.Less(Vector3.Distance(b.transform.position, acrossTheArena), 0.25f,
+        "the block rides the fist");
+      Assert.Greater(Vector3.Distance(b.transform.position, player.transform.position), 2.0f,
+        "a root-glued block would sit at the child's feet — impossible here");
+      // Source pin: the installer resolves the hand bone and passes it through.
+      string installer = File.ReadAllText(Path.Combine(Application.dataPath,
+        "_Bootstrap", "GameInstaller.cs")).Replace("\r\n", "\n");
+      Assert.IsTrue(installer.Contains("_buildArea.NotifyCompleted : null,\n          hand);"),
+        "GameInstaller passes the resolved hand into BuildTowerGame.Build");
+    } finally {
+      Object.DestroyImmediate(hand);
+      Object.DestroyImmediate(player);
+      Object.DestroyImmediate(arena);
+    }
+  }
+
+  // P. Ladder timing: a finished round KEEPS its target while the child is
+  // still inside (a spare block runs the correction lesson, never a silent
+  // next rung); leaving the yard advances exactly one rung with a fresh
+  // lifecycle, and an unfinished round never advances.
+  [Test] public void P56P_LadderAdvancesOnLeave() {
+    GameObject go = new GameObject("P56AreaLeave");
+    try {
+      BuildTowerArea area = go.AddComponent<BuildTowerArea>();
+      area.Bind(null, null, null, null, null, Vector3.zero);
+      area.SetTargetForTests(3);
+      Assert.IsTrue(area.TryEnterForTests(), "enter");
+      CompleteLife(area.Lifecycle);
+      Assert.AreEqual(3, area.Target, "a completed round keeps its target while inside");
+      Assert.IsTrue(area.TryExitForTests(), "leave after completing");
+      Assert.AreEqual(5, area.Target, "leaving advances exactly one rung");
+      ActivityLifecycle next = area.Lifecycle;
+      Assert.IsNotNull(next, "the next rung gets a fresh lifecycle");
+      Assert.AreEqual(ActivityState.Unavailable, next.State, "the fresh life starts clean");
+      Assert.IsFalse(area.TryExitForTests(), "double leave is refused");
+      Assert.AreEqual(5, area.Target, "no double advance");
+      Assert.IsTrue(area.TryEnterForTests(), "back in for the next rung");
+      Assert.IsTrue(area.TryExitForTests(), "leave mid-lesson");
+      Assert.AreEqual(5, area.Target, "an unfinished round never advances");
+      Assert.AreEqual(ActivityState.Unavailable, area.Lifecycle.State, "still the same clean life");
+    } finally { Object.DestroyImmediate(go); }
+  }
+
+  // Q. Gate interaction cue (brief §2): a presentation-only approach glow at
+  // the build gate that reads near/far without touching the portal's own
+  // walk-in trigger + cold-start debounce.
+  [Test] public void P56Q_GateApproachCue() {
+    GameObject root = new GameObject("P56MathWorldQ");
+    try {
+      MathWorldBuilder builder = root.AddComponent<MathWorldBuilder>();
+      builder.BuildContent(root.transform);
+      MicroGateHint hint = builder.BuildYardHint;
+      Assert.IsNotNull(hint, "the build gate carries the approach cue");
+      Assert.AreSame(builder.BuildTowerPortal, hint.Portal, "the cue follows the gate portal");
+      Assert.IsNotNull(hint.Glow, "the glow disc exists");
+      Assert.IsFalse(hint.Glow.gameObject.activeSelf, "hidden until the child approaches");
+      Assert.IsTrue(IsIgnoredFromBuild(hint.Glow.gameObject), "the cue never bakes");
+      Assert.AreEqual(1f, hint.NearForTests(hint.transform.position + new Vector3(2f, 0f, 0f)),
+        0.001f, "inside the approach radius");
+      Assert.AreEqual(0f, hint.NearForTests(hint.transform.position + new Vector3(12f, 0f, 0f)),
+        0.001f, "far away stays silent");
+    } finally { Object.DestroyImmediate(root); }
+  }
+
+  // R. Silent next-step cue (brief §30): ONE available block breathes while the
+  // child still owes blocks; it clears while carrying and after completion.
+  [Test] public void P56R_NextBlockHint() {
+    GameObject arena;
+    BuildTowerBuilder builder = BuildArena(out arena);
+    GameObject player = BuildPlayer(BuildTowerBuilder.EntryLocal);
+    try {
+      FakeAudio audio = new FakeAudio();
+      BuildTowerGame game = BuildGame(builder, arena, player, audio,
+        new ActivityLifecycle("build_tower", "test"), 3);
+      AdvanceToBuilding(game, arena, player);
+      game.Tick(0.1f);
+      TowerBlock hint = game.HintForTests;
+      Assert.IsNotNull(hint, "one block carries the cue");
+      Assert.IsTrue(hint.IsAvailable, "the cue is an available block");
+      for (int i = 0; i < game.BlockCountTotal; i++) {
+        TowerBlock b = game.BlockAt(i);
+        if (b != hint) Assert.IsFalse(b.IsHint, "exactly one block carries the cue");
+      }
+      player.transform.position = hint.transform.position + new Vector3(0f, 0f, -0.5f);
+      game.TryPick(hint);
+      for (int i = 0; i < 40 && hint.State != TowerBlock.BlockState.Carried; i++) game.Tick(0.1f);
+      Assert.IsNull(game.HintForTests, "no cue while a block is in hand");
+      Assert.IsFalse(hint.IsHint, "the carried block stops breathing");
+      player.transform.position = PadWorld(arena) + new Vector3(0f, 0f, -1.0f);
+      game.TryPlace();
+      for (int i = 0; i < 40 && hint.State != TowerBlock.BlockState.Placed; i++) game.Tick(0.1f);
+      game.Tick(0.1f);
+      Assert.IsNotNull(game.HintForTests, "the next unplaced block takes the cue");
+      Assert.AreNotSame(hint, game.HintForTests, "a placed block never hints again");
+    } finally {
+      Object.DestroyImmediate(player);
+      Object.DestroyImmediate(arena);
+    }
+  }
+
+  // S. Full rounds at target 1 (the smallest lesson) and target 7 (mid ladder):
+  // the demo builds exactly N real blocks, the child rebuilds them, and the
+  // completion + reward beats fire for every target the brief lists.
+  [Test] public void P56S_FlowsAt1And7() {
+    int[] targets = { 1, 7 };
+    foreach (int target in targets) {
+      GameObject arena;
+      BuildTowerBuilder builder = BuildArena(out arena, target);
+      GameObject player = BuildPlayer(BuildTowerBuilder.EntryLocal);
+      try {
+        FakeAudio audio = new FakeAudio();
+        ActivityLifecycle life = new ActivityLifecycle("build_tower", "test");
+        int completed = -1;
+        BuildTowerGame game = BuildGame(builder, arena, player, audio, life, target,
+          delegate (int n) { completed = n; });
+        AdvanceToBuilding(game, arena, player, 420f);
+        Assert.AreEqual(BuildTowerGame.Phase.Building, game.Current,
+          "target " + target + " reaches the child");
+        for (int i = 0; i < target; i++) PlaceOne(game, arena, player, i);
+        for (int i = 0; i < 30 && game.Current != BuildTowerGame.Phase.Success; i++) game.Tick(0.1f);
+        Assert.AreEqual(BuildTowerGame.Phase.Success, game.Current, "target " + target + " completes");
+        Assert.AreEqual(target, game.TowerHeight, "tower height is " + target);
+        Assert.AreEqual(target, completed, "the reward path reports " + target);
+        Assert.AreEqual(ActivityState.Completed, life.State, "lifecycle completed at " + target);
+      } finally {
+        Object.DestroyImmediate(player);
+        Object.DestroyImmediate(arena);
+      }
+    }
+  }
+
+  // T. Entry discipline (J4): the arrival spawn sits clear of the yard's exit
+  // portal radius, so the child never instantly re-triggers the way home.
+  [Test] public void P56T_EntryClearsExit() {
+    GameObject arena;
+    BuildTowerBuilder builder = BuildArena(out arena);
+    try {
+      Assert.IsNotNull(builder.ExitPortal, "exit portal staged");
+      float d = Dist2D(builder.EntryPoint.position, builder.ExitPortal.transform.position);
+      Assert.Greater(d, builder.ExitPortal.fireRadius + builder.ExitPortal.rearmMargin,
+        "entry spawn clears the exit re-arm radius");
+      Assert.Less(d, 12f, "entry is not across the arena");
+    } finally { Object.DestroyImmediate(arena); }
   }
 }

@@ -65,8 +65,22 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
   LessonActor _teacher;
   LessonActor _student;
   GameObject _boardDigit;
+  GameObject _boardExprAdd;
+  GameObject _boardExprSub;
   GameObject[] _stepCues;
   Transform _fx;
+
+  // S3-P2Z32 ("demo vườn dạy +/−"): the miniature cycles the arena's question
+  // family — loop 1 plain "3", loop 2 "2 + 1", loop 3 "3 − 1", then repeats —
+  // so the child sees addition/subtraction counted on the steps before playing.
+  static readonly int[] RoundKind = { 0, 1, 2 };
+  static readonly int[] RoundA = { 3, 2, 3 };
+  static readonly int[] RoundB = { 0, 1, 1 };
+  static readonly int[] RoundTarget = { 3, 3, 2 };
+  int _roundIndex;
+  int _kind;        // 0 plain, 1 add, 2 sub
+  int _opA, _opB, _goalTarget;
+  int[] _path;      // the steps the student visits this round, in order
 
   int _beat = -1;
   float _beatT;
@@ -161,10 +175,37 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
       new Vector3(1.8f, 1.3f, 0.1f), BoardCream);
     _boardDigit = CountingGardenBuilder.Digit3(board.transform, "CGStairMiniBoard3",
       new Vector3(0f, 1.14f, -0.15f), 0.9f, 0.7f, Gold, 90f);
+    // The +/- variants coexist hidden; the round toggles which one reads.
+    _boardExprAdd = BuildQuestion(board.transform, 1, 2, 1);
+    _boardExprSub = BuildQuestion(board.transform, 2, 3, 1);
+    _boardExprAdd.SetActive(false);
+    _boardExprSub.SetActive(false);
     NoShadows(board); // the number is the one thing to read cleanly
     // Two little flags at the stair foot (identity: a place you climb).
     Flag(parent, "CGStairMiniFlagL", new Vector3(-1.6f, 0f, BaseZ - 0.15f));
     Flag(parent, "CGStairMiniFlagR", new Vector3(1.6f, 0f, BaseZ - 0.15f));
+  }
+
+  // A compact +/- expression for the board ("2 + 1" / "3 − 1"): A, an operator
+  // (horizontal bar = minus, crossed = plus), B — same shape language as the
+  // arena board, sized for the miniature.
+  GameObject BuildQuestion(Transform board, int kind, int a, int b) {
+    GameObject group = new GameObject("CGStairMiniExpr" + (kind == 1 ? "Add" : "Sub"));
+    group.transform.SetParent(board, false);
+    group.transform.localPosition = new Vector3(0f, 1.14f, -0.15f);
+    const float h = 0.72f;
+    const float w = 0.5f;
+    CountingGardenBuilder.Digit(group.transform, "CGStairMiniExprA",
+      new Vector3(-0.6f, 0f, 0f), h, w, Gold, 90f, a);
+    CountingGardenBuilder.Digit(group.transform, "CGStairMiniExprB",
+      new Vector3(0.6f, 0f, 0f), h, w, Gold, 90f, b);
+    Box(group.transform, "CGStairMiniExprOpH", new Vector3(0f, 0.2f, 0f),
+      new Vector3(0.34f, 0.09f, 0.09f), Gold);
+    if (kind == 1) {
+      Box(group.transform, "CGStairMiniExprOpV", new Vector3(0f, 0.2f, 0f),
+        new Vector3(0.09f, 0.34f, 0.09f), Gold);
+    }
+    return group;
   }
 
   void Flag(Transform parent, string name, Vector3 pos) {
@@ -215,12 +256,33 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
     _passDoneLatch = false;
     PassDone = false;
     StudentStep = 0;
+    int r = _roundIndex % RoundKind.Length;
+    _roundIndex++;
+    _kind = RoundKind[r];
+    _opA = RoundA[r];
+    _opB = RoundB[r];
+    _goalTarget = RoundTarget[r];
+    ApplyRound();
     ResetStage();
     _beat = 0;
     _beatT = 0f;
     Current = Phase.Beat;
     try { _audio.SetAudioFocus(AudioFocusMode.Learning); } catch (Exception) { }
-    Log("lesson start (" + reason + ")");
+    Log("lesson start (" + reason + " round=" + _kind + ")");
+  }
+
+  // Show the round's board (plain digit or the +/- expression) and lay out the
+  // step path the student will walk: plain 1..N, add A -> A+B, sub A -> A-B.
+  void ApplyRound() {
+    if (_boardDigit != null) _boardDigit.SetActive(_kind == 0);
+    if (_boardExprAdd != null) _boardExprAdd.SetActive(_kind == 1);
+    if (_boardExprSub != null) _boardExprSub.SetActive(_kind == 2);
+    if (_kind == 0) {
+      _path = new int[Mathf.Max(1, _goalTarget)];
+      for (int i = 0; i < _path.Length; i++) _path[i] = i + 1;
+    } else {
+      _path = new int[] { _opA, _goalTarget };
+    }
   }
 
   void Abort(string reason) {
@@ -280,24 +342,32 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
             Next();
           }
           break;
-        case 1: // "This is number three."
+        case 1: // the round's question (plain number or +/- expression).
           LessonMotion.FaceTowards(_teacher, BoardPoint, dt, 4f);
           PulseDigit();
           if (_beatT >= 1.9f) {
-            Say("This is number three.", "Đây là số ba.");
+            if (_kind == 0) Say("This is number three.", "Đây là số ba.");
+            else if (_kind == 1) Say("Two plus one.", "Hai cộng một.");
+            else Say("Three minus one.", "Ba trừ một.");
             LessonMotion.PointAt(_teacher, BoardPoint, 2.0f);
             Next();
           }
           break;
-        case 2: // "Three."
-          LessonMotion.FaceTowards(_teacher, BoardPoint, dt, 4f);
+        case 2: // plain reads the number back; +/- moves to the watch beat.
+          LessonMotion.FaceTowards(_teacher, _kind == 0 ? BoardPoint : StairsPoint, dt, 4f);
           if (_beatT >= 1.9f) {
-            Say("Three.", "Ba.");
+            if (_kind == 0) {
+              Say("Three.", "Ba.");
+            } else {
+              Say("Watch your friend!", "Xem bạn làm nhé!");
+              LessonMotion.PointAt(_teacher, StairsPoint, 2.0f);
+            }
             Next();
           }
           break;
-        case 3: // "Watch your friend!"
+        case 3: // "Watch your friend!" (plain); +/- already watched, skip.
           LessonMotion.FaceTowards(_teacher, StairsPoint, dt, 4f);
+          if (_kind != 0) { Next(); break; }
           if (_beatT >= 1.5f) {
             Say("Watch your friend!", "Xem bạn làm nhé!");
             LessonMotion.PointAt(_teacher, StairsPoint, 2.0f);
@@ -308,7 +378,7 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
           LessonMotion.FaceTowards(_teacher, StairsPoint, dt, 3f);
           if (LessonMotion.WalkTo(_student, StudentBase, dt, WalkSpeed)) Next();
           break;
-        default: // 5..: climb step (beat - 4)
+        default: // 5..: walk the round's step path
           TickClimb(dt);
           break;
       }
@@ -316,8 +386,9 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
   }
 
   void TickClimb(float dt) {
-    int step = _beat - 4; // 1..3 walk up, 4 = confirm, 5 = tidy, 6 = settle
-    if (step >= 1 && step <= DemoSteps) {
+    int idx = _beat - 5; // 0..: the path steps, then confirm, tidy, settle
+    if (idx >= 0 && idx < _path.Length) {
+      int step = _path[idx];
       LessonMotion.FaceTowards(_teacher, StairsPoint, dt, 3f);
       if (LessonMotion.WalkTo(_student, StepStand(step), dt, WalkSpeed)) {
         StudentStep = step;
@@ -327,19 +398,21 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
       }
       return;
     }
-    if (step == DemoSteps + 1) { // confirm
+    if (idx == _path.Length) { // confirm
       LessonMotion.FaceTowards(_student, PlayerLocal(), dt, 3f);
       if (_beatT >= 0.35f && !_saidYes) {
         _saidYes = true;
-        Say("Yes! Three steps!", "Đúng rồi! Ba bậc!");
-        LessonMotion.PointAt(_teacher, StepStand(DemoSteps) + new Vector3(0f, 0.25f, 0f), 2.0f);
+        if (_kind == 0) Say("Yes! Three steps!", "Đúng rồi! Ba bậc!");
+        else if (_kind == 1) Say("Two plus one is three!", "Hai cộng một bằng ba!");
+        else Say("Three minus one is two!", "Ba trừ một bằng hai!");
+        LessonMotion.PointAt(_teacher, StepStand(_goalTarget) + new Vector3(0f, 0.25f, 0f), 2.0f);
         LessonMotion.Hop(_student);
-        Sparkle(StepStand(DemoSteps) + new Vector3(0f, 0.2f, 0f), 8, 71, 0.35f);
+        Sparkle(StepStand(_goalTarget) + new Vector3(0f, 0.2f, 0f), 8, 71, 0.35f);
       }
       if (_beatT >= 1.4f) { _saidYes = false; Next(); }
       return;
     }
-    if (step == DemoSteps + 2) { // tidy: the student walks back
+    if (idx == _path.Length + 1) { // tidy: the student walks back
       if (LessonMotion.WalkTo(_student, StudentStart, dt, WalkSpeed)) Next();
       return;
     }
@@ -350,8 +423,8 @@ public class StairLessonDemo : MonoBehaviour, IGardenZoneDemo {
     LoopCount++;
     _engaged = false;
     Current = Phase.Observing;
-    StudentStep = DemoSteps;
-    Log("loop " + LoopCount + " done (panel gate opened)");
+    StudentStep = _goalTarget;
+    Log("loop " + LoopCount + " done (kind " + _kind + ", panel gate opened)");
   }
 
   bool _saidYes;
