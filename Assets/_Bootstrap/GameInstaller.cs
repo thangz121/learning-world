@@ -158,6 +158,12 @@ public class GameInstaller : MonoBehaviour {
       BuildDiscoveryScene(scene);
       return;
     }
+    // FULL ARCHITECTURE RESET (PHASE 1 skeleton): the generic selection yard
+    // (Skill Yard / Game Yard — one scene, data-driven by the area context).
+    if (scene.name == SelectionYardBuilder.SceneName) {
+      BuildSelectionYardScene(scene);
+      return;
+    }
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
@@ -410,6 +416,56 @@ public class GameInstaller : MonoBehaviour {
   // COUNTING GARDEN CLEANUP (product decision): the match_meadow gameplay
   // (scene build + wiring) was removed. Its hub gate remains a LANDMARK.
 
+  // FULL ARCHITECTURE RESET (PHASE 1 skeleton): the generic selection yard.
+  // ONE lazy scene renders either the subject's Skill Yard (B) or a skill's
+  // Game Yard (C) from LearningMap data; the pending context is pushed by
+  // SelectionYardArea before the load. Gameplay is NOT wired here yet
+  // (PHASE 4 migrates the two approved arenas into the C level).
+  void BuildSelectionYardScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "SelectionYardWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] SelectionYardScene has no SelectionYardWorld root.", this);
+        return;
+      }
+      root.transform.position = SelectionYardBuilder.WorldOffset;
+      SelectionYardBuilder builder = root.GetComponent<SelectionYardBuilder>();
+      if (builder == null) builder = root.AddComponent<SelectionYardBuilder>();
+      SelectionYardArea area = _yardArea;
+      if (area == null) {
+        try { area = FindObjectOfType<SelectionYardArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        builder.Level = area.PendingLevel == SelectionYardArea.YardLevel.Game ? "game" : "skill";
+        builder.SubjectId = area.PendingSubjectId;
+        builder.SkillId = area.PendingSkillId;
+      }
+      builder.Build();
+      if (area != null) {
+        Vector3 entry = SelectionYardBuilder.WorldOffset + SelectionYardBuilder.EntryLocal;
+        area.SetYard(entry, builder.Anchors);
+        for (int i = 0; i < builder.GatePortals.Count; i++) {
+          SelectionGate portal = builder.GatePortals[i];
+          if (portal != null) portal.Bind(area, portal.Kind, portal.TargetId);
+        }
+        if (builder.BackGate != null)
+          builder.BackGate.Bind(area, SelectionGate.GateKind.Back, "");
+      }
+      try {
+        Debug.Log("[GameInstaller] Selection Yard scene built (level=" + builder.Level
+          + " subject=" + builder.SubjectId + " skill=" + builder.SkillId
+          + " gates=" + builder.GatePortals.Count + ").", this);
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] SelectionYardScene build failed: " + e.Message, this);
+    }
+  }
+
   // GAMEPLAY #7 ("Vườn Khám Phá"): the Math Hub's discovery_garden gate opens
   // its OWN lazy scene (DiscoveryScene) through the same micro slot as the
   // other hub worlds — built on demand, never at boot, never stacked. Travel
@@ -620,6 +676,7 @@ public class GameInstaller : MonoBehaviour {
   MarketBuilder _activeBuilder;
   CountingGardenArea _gardenArea;
   DiscoveryArea _discoveryArea;
+  SelectionYardArea _yardArea;
 
   public PlayerGender CurrentGender {
     get {
@@ -691,6 +748,32 @@ public class GameInstaller : MonoBehaviour {
       MicGate, LocalMic, PhoneMic, SpeechMic,
       PhoneMicProtocol.LoopbackHost, PhoneMicProtocol.DefaultBridgePort),
       WorldTransitions, SceneOps); // Phase 3.0.x S2: shared loader for scene-backed gates
+    // FULL ARCHITECTURE RESET (2026-09-29, PHASE 1 SKELETON): the selection-yard
+    // area module lives here in MarketScene (which never unloads) and owns the
+    // A -> B -> C travel beats (Subject Yard = this world; Skill/Game yards =
+    // one generic lazy scene). Additive: nothing calls it until PHASE 2 wires
+    // the subject gates.
+    try {
+      SelectionYardArea yard = GetComponentInChildren<SelectionYardArea>(true);
+      if (yard == null) {
+        GameObject yardGo = new GameObject("SelectionYardArea");
+        yardGo.transform.SetParent(builder.transform, true);
+        yard = yardGo.AddComponent<SelectionYardArea>();
+      }
+      _yardArea = yard;
+      yard.Bind(
+        WorldTransitions,
+        SceneOps,
+        builder.Player,
+        builder.WorldCamera,
+        builder.Hud,
+        SubjectCatalog.HubCenter);
+      yard.BindRouter(builder.Router);
+      try { Debug.Log("[GameInstaller] Selection Yard area wired (phase 1 skeleton).", this); }
+      catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogWarning("[GameInstaller] Selection Yard wiring failed: " + e.Message, this);
+    }
   }
 
   void Update() {

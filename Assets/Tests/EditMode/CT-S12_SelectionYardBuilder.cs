@@ -1,0 +1,135 @@
+// CT-S12: FULL ARCHITECTURE RESET — the generic yard rendering. Pins that the
+// SAME scene renders the Skill Yard (B) and the Game Yard (C) from LearningMap
+// data: one door per entry, live gates only for accepted games, and the
+// [CHƯA CÓ TRÒ CHƠI] placeholder for EVERY empty skill (never a fake game).
+// C# 9.0 only.
+using NUnit.Framework;
+using UnityEngine;
+
+public class CT_S12_SelectionYardBuilder {
+  static SelectionYardBuilder BuildYard(string level, string subjectId, string skillId,
+      out GameObject root) {
+    root = new GameObject("S12Yard");
+    SelectionYardBuilder builder = root.AddComponent<SelectionYardBuilder>();
+    builder.Level = level;
+    builder.SubjectId = subjectId;
+    builder.SkillId = skillId;
+    builder.BuildContent(root.transform);
+    return builder;
+  }
+
+  static Transform FindDeep(Transform t, string name) {
+    if (t == null) return null;
+    if (t.name == name) return t;
+    for (int i = 0; i < t.childCount; i++) {
+      Transform f = FindDeep(t.GetChild(i), name);
+      if (f != null) return f;
+    }
+    return null;
+  }
+
+  // A. Skill Yard (B): one door per skill, in the approved order, each with a
+  // label; the live skill carries the approach glow, empty skills do not.
+  [Test] public void S12A_SkillYard() {
+    GameObject root;
+    SelectionYardBuilder builder = BuildYard("skill", "math", "", out root);
+    try {
+      Assert.IsTrue(builder.IsGameLevel == false, "skill level");
+      Assert.AreEqual(5, builder.GatePortals.Count, "five skill doors for math");
+      string[] want = { "math_counting", "math_geometry", "math_comparison",
+        "math_classification", "math_order" };
+      for (int i = 0; i < want.Length; i++) {
+        Assert.AreEqual(want[i], builder.GateTargetIds[i], "door " + i + " is " + want[i]);
+        Assert.IsNotNull(LearningMap.Skill(builder.GateTargetIds[i]), "B doors target skill ids");
+        SelectionGate gate = builder.GatePortals[i];
+        Assert.AreEqual(SelectionGate.GateKind.Game, gate.Kind, "B door opens a Game Yard");
+        Assert.IsNotNull(FindDeep(gate.transform.parent, "Label"), "gate label staged");
+      }
+      // Live skill (counting, has accepted games) = hint; empty skills = none.
+      Assert.IsNotNull(FindDeep(builder.GateRoots[0], "Beam"), "accepting gate structure");
+      int hints = 0;
+      Transform[] all = root.GetComponentsInChildren<Transform>(true);
+      for (int i = 0; i < all.Length; i++)
+        if (all[i].GetComponent<MicroGateHint>() != null) hints++;
+      Assert.AreEqual(1, hints, "only the live skill (counting) glows");
+      Assert.IsNotNull(builder.BackGate, "skill yard has the way back");
+      Assert.AreEqual(SelectionGate.GateKind.Back, builder.BackGate.Kind, "back gate kind");
+      Assert.IsNotNull(builder.TitleBoard, "orientation sign staged");
+      Assert.IsNull(builder.PlaceholderBoard, "no placeholder in a skill yard");
+      Assert.IsNotNull(builder.EntryPoint, "entry marker staged");
+      Assert.IsNotNull(builder.Anchors, "anchor registry staged");
+      // Every subject renders exactly its own skills.
+      for (int i = 0; i < LearningMap.Subjects.Length; i++) {
+        GameObject r2;
+        SelectionYardBuilder b2 = BuildYard("skill", LearningMap.Subjects[i].Id, "", out r2);
+        try {
+          Assert.AreEqual(LearningMap.Subjects[i].Skills.Length, b2.GatePortals.Count,
+            "doors = skills for " + LearningMap.Subjects[i].Id);
+        } finally { Object.DestroyImmediate(r2); }
+      }
+    } finally { Object.DestroyImmediate(root); }
+  }
+
+  // B. Game Yard (C) for counting: exactly the two accepted games, both live.
+  [Test] public void S12B_CountingGameYard() {
+    GameObject root;
+    SelectionYardBuilder builder = BuildYard("game", "", "math_counting", out root);
+    try {
+      Assert.IsTrue(builder.IsGameLevel, "game level");
+      Assert.AreEqual(2, builder.GatePortals.Count, "two game doors");
+      Assert.AreEqual("rabbit_feeding", builder.GateTargetIds[0], "rabbit door first");
+      Assert.AreEqual("number_stairs", builder.GateTargetIds[1], "stairs door second");
+      for (int i = 0; i < builder.GatePortals.Count; i++) {
+        Assert.AreEqual(SelectionGate.GateKind.Play, builder.GatePortals[i].Kind, "C door launches a game");
+        Assert.IsNotNull(LearningMap.Game(builder.GateTargetIds[i]), "C doors target game ids");
+        Assert.IsTrue(LearningMap.IsPlayable(builder.GateTargetIds[i]), "door only for accepted games");
+        Assert.IsNotNull(FindDeep(builder.GateRoots[i], "Threshold"), "gate threshold staged");
+      }
+      int hints = 0;
+      Transform[] all = root.GetComponentsInChildren<Transform>(true);
+      for (int i = 0; i < all.Length; i++)
+        if (all[i].GetComponent<MicroGateHint>() != null) hints++;
+      Assert.AreEqual(2, hints, "both accepted games glow");
+      Assert.IsNull(builder.PlaceholderBoard, "no placeholder when games exist");
+    } finally { Object.DestroyImmediate(root); }
+  }
+
+  // C. EMPTY skill: the Game Yard still exists but shows ONLY the placeholder —
+  // never a fake game door (product rule).
+  [Test] public void S12C_EmptySkillPlaceholder() {
+    GameObject root;
+    SelectionYardBuilder builder = BuildYard("game", "", "math_geometry", out root);
+    try {
+      Assert.AreEqual(0, builder.GatePortals.Count, "no game doors for an empty skill");
+      Assert.IsNotNull(builder.PlaceholderBoard, "placeholder board staged");
+      Assert.IsNotNull(FindDeep(root.transform, "SYPlaceholderLabel"), "placeholder label staged");
+      Assert.IsNotNull(builder.TitleBoard, "the empty skill still names itself");
+      Assert.IsNotNull(builder.BackGate, "and still has the way back");
+      // EVERY skill without games renders the placeholder and nothing else.
+      for (int i = 0; i < LearningMap.Subjects.Length; i++) {
+        SkillEntry[] skills = LearningMap.Subjects[i].Skills;
+        for (int s = 0; s < skills.Length; s++) {
+          if (LearningMap.GamesOf(skills[s].Id).Length > 0) continue;
+          GameObject r2;
+          SelectionYardBuilder b2 = BuildYard("game", "", skills[s].Id, out r2);
+          try {
+            Assert.AreEqual(0, b2.GatePortals.Count, "no doors for " + skills[s].Id);
+            Assert.IsNotNull(b2.PlaceholderBoard, "placeholder for " + skills[s].Id);
+          } finally { Object.DestroyImmediate(r2); }
+        }
+      }
+    } finally { Object.DestroyImmediate(root); }
+  }
+
+  // D. Data-driven doors: changing the subject changes the yard (no hardcode).
+  [Test] public void S12D_DataDriven() {
+    GameObject root;
+    BuildYard("skill", "exploration", "", out root);
+    try {
+      SelectionYardBuilder b = root.GetComponent<SelectionYardBuilder>();
+      Assert.AreEqual(4, b.GatePortals.Count, "exploration shows four skills");
+      Assert.AreEqual("exploration_nature", b.GateTargetIds[0], "nature first");
+      Assert.AreEqual("exploration_daily_life", b.GateTargetIds[3], "daily life last");
+    } finally { Object.DestroyImmediate(root); }
+  }
+}

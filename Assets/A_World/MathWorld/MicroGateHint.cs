@@ -1,29 +1,42 @@
 // A_World/MathWorld/MicroGateHint.cs — S3-P2Z14/P2Z17 (moved here in the
-// Counting Garden cleanup: it is shared micro-world infrastructure, not
-// build/match-specific).
-// A micro-world gate's gentle interaction cue (brief §2): when the child walks
-// into the approach radius, a soft breathing glow appears over the threshold
-// pad. It is presentation only — the MicroWorldPortal owns the walk-in trigger
-// and its cold-start debounce; this component never moves, never takes input,
-// never shows UI, and every piece is collider-free + bake-ignored so the hub's
-// reviewed walk surface is untouched. Currently used by the Discovery Garden
-// gate (#7). C# 9.0 only.
+// Counting Garden cleanup: it is shared micro-world infrastructure).
+// A gate's gentle interaction cue: when the child walks into the approach
+// radius, a soft breathing glow appears over the threshold pad. It is
+// presentation only — the portal/gate owns the walk-in trigger and its
+// cold-start debounce; this component never moves, never takes input, never
+// shows UI, and every piece is collider-free + bake-ignored so the walk
+// surface is untouched. Shared by the micro-world portals and (since the
+// architecture reset) the generic selection-yard gates. C# 9.0 only.
 using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public class MicroGateHint : MonoBehaviour {
   public MicroWorldPortal Portal;
+  // Architecture reset: a selection-yard gate can own a hint too.
+  public SelectionGate Selection;
   public float ApproachRadius = 5.0f;
   public float GlowDiameter = 3.1f;
   public Transform Glow { get; private set; }
 
   float _near;
 
-  // Built by MathWorldBuilder at the portal spot; creates its own glow disc so
-  // the shared hub material cache stays untouched (no material edits).
+  // Built at the portal spot; creates its own glow disc so the shared material
+  // cache stays untouched (no material edits).
   public void Build(MicroWorldPortal portal) {
     Portal = portal;
+    Selection = null;
+    BuildGlow();
+  }
+
+  // The selection-yard flavour (same glow, player resolved from the gate).
+  public void BuildForSelection(SelectionGate gate) {
+    Selection = gate;
+    Portal = null;
+    BuildGlow();
+  }
+
+  void BuildGlow() {
     GameObject glow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     glow.name = name + "Glow";
     glow.transform.SetParent(transform, false);
@@ -67,6 +80,7 @@ public class MicroGateHint : MonoBehaviour {
   }
 
   ClickToMove ResolvePlayer() {
+    if (Selection != null && Selection.Area != null) return Selection.Area.Player;
     if (Portal == null) return null;
     if (Portal.Area != null) return Portal.Area.Player;
     if (Portal.DiscoveryArea != null) return Portal.DiscoveryArea.Player;
