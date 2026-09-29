@@ -17,6 +17,8 @@ public class MicroWorldPortal : MonoBehaviour {
   public DeliveryArea DeliveryArea;
   // Gameplay #6 (S3-P2Z17): the Match Meadow's own area module.
   public MatchArea MatchArea;
+  // Gameplay #7 (S3-P2Z18): the Discovery Garden's own area module.
+  public DiscoveryArea DiscoveryArea;
   public bool ExitMode;
   // S3 P2X play arena: this exit unloads the play scene and brings the child
   // back to the Counting Garden (the exit portal of the GARDEN keeps
@@ -37,7 +39,8 @@ public class MicroWorldPortal : MonoBehaviour {
     if (Area != null) return Area;
     if (BuildArea != null) return BuildArea;
     if (DeliveryArea != null) return DeliveryArea;
-    return MatchArea;
+    if (MatchArea != null) return MatchArea;
+    return DiscoveryArea;
   }
 
   void Update() {

@@ -183,6 +183,11 @@ public class AudioDirector : IAudioDirector {
       case "give":
         clip = Tone(id, 0.16f, 520f, 760f, 0.5f, 6.0f);
         break;
+      // Gameplay #7: a bright discovery chirp — "you found it!" (short, rising,
+      // unmistakable; the ONLY special sound in the garden).
+      case "found":
+        clip = Tone(id, 0.24f, 620f, 990f, 0.55f, 5.5f);
+        break;
       default:
         clip = Tone(id, 0.12f, 440f, 560f, 0.45f, 6f);
         break;

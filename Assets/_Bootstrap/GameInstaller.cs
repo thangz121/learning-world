@@ -164,6 +164,10 @@ public class GameInstaller : MonoBehaviour {
       BuildMatchMeadowScene(scene);
       return;
     }
+    if (scene.name == DiscoveryBuilder.SceneName) {
+      BuildDiscoveryScene(scene);
+      return;
+    }
     if (scene.name != "MathScene") return;
     MathWorldRoot = null;
     MathEntryPoint = null;
@@ -474,6 +478,68 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] MatchMeadowScene build failed: " + e.Message, this);
+    }
+  }
+
+  // GAMEPLAY #7 ("Vườn Khám Phá"): the Math Hub's discovery_garden gate opens
+  // its OWN lazy scene (DiscoveryScene) through the same micro slot as the
+  // other hub worlds — built on demand, never at boot, never stacked. Travel
+  // beats are owned by DiscoveryArea (MathScene); this method builds the world
+  // + wires the activity, same best-effort discipline as #4-#6.
+  void BuildDiscoveryScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "DiscoveryWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] DiscoveryScene has no DiscoveryWorld root.", this);
+        return;
+      }
+      root.transform.position = DiscoveryBuilder.WorldOffset;
+      DiscoveryBuilder builder = root.GetComponent<DiscoveryBuilder>();
+      if (builder == null) builder = root.AddComponent<DiscoveryBuilder>();
+      builder.Build();
+      DiscoveryArea area = _discoveryArea;
+      if (area == null) {
+        try { area = FindObjectOfType<DiscoveryArea>(); } catch (System.Exception) { }
+      }
+      if (area != null) {
+        Vector3 entry = DiscoveryBuilder.WorldOffset + DiscoveryBuilder.EntryLocal;
+        area.SetWorld(entry, builder.Anchors,
+          DialogueLang.T(DiscoveryBuilder.ObjectiveEn, DiscoveryBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.DiscoveryArea = area;
+      }
+      // The activity (teacher + student + the child's search). Lifecycle is the
+      // Math-side area's; the game plays the area's current round (one garden,
+      // two search tiers — the same ladder discipline as #2-#6).
+      try {
+        DiscoveryGame game = root.AddComponent<DiscoveryGame>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        int round = _discoveryArea != null ? _discoveryArea.Round : DiscoveryArea.DefaultRound;
+        string miloVoice = null;
+        try {
+          NpcDefinition milo = NpcRoster.Get("milo");
+          if (milo != null) miloVoice = milo.voice;
+        } catch (System.Exception) { }
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
+          _discoveryArea != null ? _discoveryArea.Lifecycle : null, round,
+          _discoveryArea != null ? (System.Action<int>)_discoveryArea.NotifyCompleted : null,
+          miloVoice);
+        if (_discoveryArea != null) _discoveryArea.BindGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Discovery wiring failed (garden stays still): " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Discovery scene built (gameplay #7) entry="
+          + (DiscoveryBuilder.WorldOffset + DiscoveryBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] DiscoveryScene build failed: " + e.Message, this);
     }
   }
 
@@ -805,6 +871,31 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Match Meadow area wiring failed: " + e.Message, this);
       }
+      // S3-P2Z18 GAMEPLAY #7: the Discovery Garden's own area module (living
+      // in MathScene like the others) drives gate -> micro-world travel.
+      try {
+        DiscoveryArea discoveryArea = root.GetComponent<DiscoveryArea>();
+        if (discoveryArea == null) {
+          GameObject discoveryGo = new GameObject("DiscoveryArea");
+          discoveryGo.transform.SetParent(root.transform, true);
+          discoveryArea = discoveryGo.AddComponent<DiscoveryArea>();
+        }
+        _discoveryArea = discoveryArea;
+        discoveryArea.Bind(
+          WorldTransitions,
+          SceneOps,
+          _activeBuilder != null ? _activeBuilder.Player : null,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
+          _activeBuilder != null ? _activeBuilder.Hud : null,
+          MathWorldBuilder.WorldOffset + MathWorldBuilder.DiscoveryHubReturnLocal);
+        discoveryArea.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
+        if (builder.DiscoveryPortal != null) builder.DiscoveryPortal.DiscoveryArea = discoveryArea;
+        try { Debug.Log("[GameInstaller] Discovery area wired (portal="
+          + (builder.DiscoveryPortal != null) + ").", this); }
+        catch (System.Exception) { }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Discovery area wiring failed: " + e.Message, this);
+      }
     } catch (System.Exception e) {
       Debug.LogWarning("[GameInstaller] Math content wiring failed (world stays enterable): " + e.Message, this);
     }
@@ -821,6 +912,7 @@ public class GameInstaller : MonoBehaviour {
   BuildTowerArea _buildArea;
   DeliveryArea _deliveryArea;
   MatchArea _matchArea;
+  DiscoveryArea _discoveryArea;
 
   public PlayerGender CurrentGender {
     get {

@@ -504,6 +504,31 @@ public class MathWorldBuilder : MonoBehaviour {
       DeliveryPortal = deliveryPortal;
       Pad(parent, "DeliveryPortalDisc", deliveryPortalGo.transform.localPosition, 3.0f, CourtyardSand);
     }
+    // S3-P2Z18 GAMEPLAY #7: the discovery_garden gate (magnifier identity)
+    // opens its OWN micro-world (DiscoveryScene) through the same shared slot
+    // — identical walk-in portal contract + approach glow.
+    MicroWorldGate discovery = FindMicroGate("discovery_garden");
+    if (discovery != null && discovery.EntryAnchor != null) {
+      Vector3 discToHub = hub - discovery.transform.localPosition;
+      discToHub.y = 0f;
+      if (discToHub.sqrMagnitude < 0.001f) discToHub = new Vector3(0f, 0f, 1f);
+      discToHub.Normalize();
+      GameObject discPortalGo = new GameObject("DiscoveryPortal");
+      discPortalGo.transform.SetParent(parent, false);
+      discPortalGo.transform.localPosition = discovery.transform.localPosition + discToHub * 0.7f;
+      MicroWorldPortal discPortal = discPortalGo.AddComponent<MicroWorldPortal>();
+      discPortal.ExitMode = false;
+      discPortal.fireRadius = 1.8f;
+      discPortal.areaId = DiscoveryArea.AreaId;
+      DiscoveryPortal = discPortal;
+      Pad(parent, "DiscoveryPortalDisc", discPortalGo.transform.localPosition, 3.0f, CourtyardSand);
+      GameObject discHintGo = new GameObject("DiscoveryGateHint");
+      discHintGo.transform.SetParent(parent);
+      discHintGo.transform.position = discPortalGo.transform.position;
+      MicroGateHint discHint = discHintGo.AddComponent<MicroGateHint>();
+      discHint.Build(discPortal);
+      DiscoveryHint = discHint;
+    }
   }
 
   // S1 ring: one circulation loop through every gate mouth (lighter sand than
@@ -1217,6 +1242,11 @@ public class MathWorldBuilder : MonoBehaviour {
   // landmark this round — the brief does not ask for one).
   public MicroWorldPortal DeliveryPortal { get; private set; }
   public static readonly Vector3 DeliveryHubReturnLocal = new Vector3(-7.6f, 0f, -7.6f);
+  // S3-P2Z18 gameplay #7: the discovery_garden gate's walk-in portal + its
+  // approach glow (the magnifier gate stays the reviewed visual).
+  public MicroWorldPortal DiscoveryPortal { get; private set; }
+  public MicroGateHint DiscoveryHint { get; private set; }
+  public static readonly Vector3 DiscoveryHubReturnLocal = new Vector3(-7.0f, 0f, 9.2f);
   // S3-P2Z17 gameplay #6: the match_meadow gate's walk-in portal + approach glow.
   public MicroWorldPortal MatchPortal { get; private set; }
   public MicroGateHint MatchHint { get; private set; }

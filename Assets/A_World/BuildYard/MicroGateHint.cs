@@ -70,6 +70,7 @@ public class MicroGateHint : MonoBehaviour {
     if (Portal.BuildArea != null) return Portal.BuildArea.Player;
     if (Portal.DeliveryArea != null) return Portal.DeliveryArea.Player;
     if (Portal.MatchArea != null) return Portal.MatchArea.Player;
+    if (Portal.DiscoveryArea != null) return Portal.DiscoveryArea.Player;
     return null;
   }
 
