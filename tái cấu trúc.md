@@ -407,3 +407,15 @@ choose the smallest safe correction, continue.
   foreground attempts: wrong-yard fire before the snap guard, permanent orbit
   after it). Khám phá proves the empty-yard rule instead; a corridor/snap fix
   belongs to a later phase.
+  MAYNODE RUN (2026-09-29, node back online): bundle asus-20260929-1804 applied
+  fast-forward 842203c -> 0a6fad7; batch build Succeeded errors=0 warnings=96;
+  `-journeys3` PASS on the node (exit 0, 16/16 steps, 0 errors, 77s,
+  auto-closed; evidence copied to ASUS `D:/Vscode/s3node-j/`). `-journeyfull`
+  (old approved-garden driver): 3/3 stages SEVERE at the first step
+  "into Math" — EXPECTED, not a game regression: the hub -> Math gate ->
+  MathScene route was replaced by the Skill Yard in PHASE 2 (Rabbit/Stairs
+  files untouched; production access returns with the PHASE 4 C doors; the
+  full driver is retargeted in PHASE 7). Node SSH note: a windowed player must
+  be launched in the console session via `schtasks ... /IT` (the SSH session
+  has no DXGI context: D3D12 error 887a0022). Details:
+  `E:/LWW/incoming/asus-20260929-1804-node-results.txt`.
