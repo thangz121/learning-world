@@ -576,8 +576,17 @@ public class RabbitPlayBuilder : MonoBehaviour {
     GameObject signGo = new GameObject("RPPlaySign");
     signGo.transform.SetParent(parent, false);
     signGo.transform.localPosition = PlaySpotLocal + new Vector3(0f, 1.5f, 0f);
-    WorldNameLabel sign = signGo.AddComponent<WorldNameLabel>();
-    sign.Setup(DialogueLang.T("Come here!", "Vào đây!"), null, 0f);
+    // PHASE 4b (user order: pre-readers cannot read): the old floating
+    // "Come here!/Vào đây!" label is a WORDLESS gold arrow pointing down at
+    // the pad (RabbitFeed still toggles PlaySign.activeSelf as before).
+    Box(signGo.transform, "RPPlaySignStem", new Vector3(0f, 0.2f, 0f),
+      new Vector3(0.11f, 0.34f, 0.11f), Gold);
+    GameObject headA = Box(signGo.transform, "RPPlaySignHeadA",
+      new Vector3(-0.12f, -0.06f, 0f), new Vector3(0.11f, 0.34f, 0.11f), Gold);
+    headA.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+    GameObject headB = Box(signGo.transform, "RPPlaySignHeadB",
+      new Vector3(0.12f, -0.06f, 0f), new Vector3(0.11f, 0.34f, 0.11f), Gold);
+    headB.transform.localRotation = Quaternion.Euler(0f, 0f, -45f);
     PlaySign = signGo;
 
     // Result board ("N + tick"): LEFT of the bowl, on the payoff axis. S3-P2Z18
@@ -633,11 +642,9 @@ public class RabbitPlayBuilder : MonoBehaviour {
       new Vector3(1.1f, 0.5f, 0.08f), BoardCream);
     SetMaterial(board, LitEmissive(BoardCream, 0.16f));
     IgnoreFromBuild(board);
-    GameObject labelGo = new GameObject("RPSubmitLabel");
-    labelGo.transform.SetParent(parent, false);
-    labelGo.transform.localPosition = new Vector3(p.x, 2.45f, p.z);
-    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.Setup(DialogueLang.T("Submit", "Nộp bài"), null, 0f);
+    // PHASE 4b (user order: no words for pre-readers): the old floating
+    // "Submit/Nộp bài" text label is gone — the golden bell + the pad are the
+    // wordless submit cue.
     GameObject anchor = new GameObject("RPSubmitAnchor");
     anchor.transform.SetParent(parent, false);
     anchor.transform.localPosition = p;

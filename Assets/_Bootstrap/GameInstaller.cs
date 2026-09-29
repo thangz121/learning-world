@@ -303,6 +303,9 @@ public class GameInstaller : MonoBehaviour {
       // shows the mission.
       int stairTarget = _yardArea != null ? _yardArea.StairTarget
         : (_gardenArea != null ? _gardenArea.StairTarget : StairHillBuilder.Target);
+      // PHASE 4b (user order: pre-readers cannot read): the stair arena runs
+      // voice-first — no task text, no praise banner (dots + voice carry it).
+      ActivityFeedback.TextHidden = true;
       builder.BoardTarget = StairHillBuilder.ClampTarget(stairTarget);
       builder.Build();
       if (_yardArea != null) {
@@ -379,6 +382,9 @@ public class GameInstaller : MonoBehaviour {
       // shows the mission.
       int rabbitTarget = _yardArea != null ? _yardArea.RabbitTarget
         : (_gardenArea != null ? _gardenArea.RabbitTarget : RabbitPlayBuilder.Target);
+      // PHASE 4b (user order: pre-readers cannot read): the rabbit arena runs
+      // voice-first — no task text, no praise banner (dots + voice carry it).
+      ActivityFeedback.TextHidden = true;
       builder.BoardTarget = RabbitPlayBuilder.ClampTarget(rabbitTarget);
       builder.Build();
       if (_yardArea != null) {

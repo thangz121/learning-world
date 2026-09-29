@@ -133,6 +133,40 @@ public class CT_S12_SelectionYardBuilder {
     } finally { Object.DestroyImmediate(root); }
   }
 
+  // E. PHASE 4b (user: a pre-reader must CHOOSE BY PICTURE): every game door
+  // carries a wordless diorama of its game, in front of the door (entry side);
+  // skill yards and empty yards never build one.
+  [Test] public void S12F_GamePreviewDioramas() {
+    GameObject root;
+    SelectionYardBuilder builder = BuildYard("game", "", "math_counting", out root);
+    try {
+      Transform rabbit = FindDeep(root.transform, "SYPreview_rabbit_feeding");
+      Transform stairs = FindDeep(root.transform, "SYPreview_number_stairs");
+      Assert.IsNotNull(rabbit, "rabbit feeding preview staged");
+      Assert.IsNotNull(stairs, "number stairs preview staged");
+      Assert.GreaterOrEqual(rabbit.childCount, 4, "bunny + carrots pieces");
+      Assert.GreaterOrEqual(stairs.childCount, 3, "mini stairs pieces");
+      // Entry side of their own door (doors sit at z-0.7 from the gate row).
+      for (int i = 0; i < builder.GatePortals.Count; i++) {
+        Transform preview = i == 0 ? rabbit : stairs;
+        Assert.Less(preview.localPosition.z, builder.GatePortals[i].transform.localPosition.z,
+          "preview stands BEFORE the door, on the child's approach");
+      }
+    } finally { Object.DestroyImmediate(root); }
+    GameObject skillRoot;
+    BuildYard("skill", "math", "", out skillRoot);
+    try {
+      Assert.IsNull(FindDeep(skillRoot.transform, "SYPreview_rabbit_feeding"),
+        "skill doors carry no game previews");
+    } finally { Object.DestroyImmediate(skillRoot); }
+    GameObject emptyRoot;
+    BuildYard("game", "", "math_geometry", out emptyRoot);
+    try {
+      Assert.IsNull(FindDeep(emptyRoot.transform, "SYPreview_number_stairs"),
+        "empty yard carries no previews");
+    } finally { Object.DestroyImmediate(emptyRoot); }
+  }
+
   // E. PHASE 4 label fix: the island root sits at +540 — labels MUST be staged
   // in WORLD space through the root (the old local offsets stranded every
   // name at the map origin, edge-on to the camera = invisible in the yard).

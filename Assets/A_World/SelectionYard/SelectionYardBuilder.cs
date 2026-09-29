@@ -258,6 +258,69 @@ public class SelectionYardBuilder : MonoBehaviour {
     GateRoots.Add(gate.transform);
     GatePortals.Add(portal);
     GateTargetIds.Add(id);
+    // PHASE 4b (user order: a pre-reader must CHOOSE BY PICTURE): each game
+    // door carries a small wordless diorama of its game right in front.
+    if (kind == SelectionGate.GateKind.Play) BuildGamePreview(parent, id, x, z);
+  }
+
+  // Wordless game previews (primitives only, same visual language as the
+  // arenas): rabbit feeding = bunny + carrots on a cream pad; number stairs =
+  // three mini steps + the gold orb. Sits between the child and the door so
+  // the choice is read before any text.
+  void BuildGamePreview(Transform parent, string gameId, float x, float z) {
+    // 2.3m in front of the door: outside the 1.6m trigger radius, so the
+    // child can study the picture WITHOUT entering (walk on = choose).
+    Vector3 p = new Vector3(x, 0f, z - 2.3f);
+    Pad(parent, "SYPreviewPad_" + gameId, p + new Vector3(0f, 0.012f, 0f), 1.6f, Cream);
+    if (gameId == "rabbit_feeding") {
+      GameObject bunny = new GameObject("SYPreview_rabbit_feeding");
+      bunny.transform.SetParent(parent, false);
+      bunny.transform.localPosition = p + new Vector3(-0.28f, 0f, 0f);
+      bunny.transform.localScale = Vector3.one * 1.4f;
+      Ignore(bunny);
+      Ball(bunny.transform, "Body", new Vector3(0f, 0.26f, 0f), 0.40f,
+        new Color(0.97f, 0.96f, 0.94f));
+      Ball(bunny.transform, "Head", new Vector3(0.02f, 0.52f, 0f), 0.30f,
+        new Color(0.97f, 0.96f, 0.94f));
+      GameObject earL = Ball(bunny.transform, "EarL", new Vector3(-0.06f, 0.72f, 0f), 0.11f,
+        new Color(0.97f, 0.96f, 0.94f));
+      earL.transform.localScale = new Vector3(0.09f, 0.24f, 0.09f);
+      GameObject earR = Ball(bunny.transform, "EarR", new Vector3(0.10f, 0.72f, 0f), 0.11f,
+        new Color(0.97f, 0.96f, 0.94f));
+      earR.transform.localScale = new Vector3(0.09f, 0.24f, 0.09f);
+      Ball(bunny.transform, "Nose", new Vector3(0.14f, 0.49f, 0.13f), 0.06f, Coral);
+      // Two carrots in front of the bunny (the feeding motif).
+      for (int i = 0; i < 2; i++) {
+        GameObject carrot = new GameObject("Carrot" + i);
+        carrot.transform.SetParent(parent, false);
+        carrot.transform.localPosition = p + new Vector3(0.32f + i * 0.16f, 0f, i == 0 ? 0.02f : -0.04f);
+        carrot.transform.localScale = Vector3.one * 1.4f;
+        Ignore(carrot);
+        GameObject root = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        root.name = "CarrotRoot";
+        root.transform.SetParent(carrot.transform, false);
+        root.transform.localPosition = new Vector3(0f, 0.22f, 0f);
+        root.transform.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 8f : -8f);
+        root.transform.localScale = new Vector3(0.11f, 0.22f, 0.11f);
+        root.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.95f, 0.52f, 0.16f));
+        Strip(root);
+        Ignore(root);
+        Ball(carrot.transform, "CarrotLeaf", new Vector3(0f, 0.47f, 0f), 0.12f, Leaf);
+      }
+    } else if (gameId == "number_stairs") {
+      GameObject stairs = new GameObject("SYPreview_number_stairs");
+      stairs.transform.SetParent(parent, false);
+      stairs.transform.localPosition = p + new Vector3(-0.3f, 0f, 0f);
+      stairs.transform.localScale = Vector3.one * 1.4f;
+      Ignore(stairs);
+      Box(stairs.transform, "Step1", new Vector3(0f, 0.07f, 0f), new Vector3(0.30f, 0.14f, 0.34f), Stone);
+      Box(stairs.transform, "Step2", new Vector3(0.24f, 0.14f, 0f), new Vector3(0.30f, 0.28f, 0.34f), Stone);
+      Box(stairs.transform, "Step3", new Vector3(0.48f, 0.21f, 0f), new Vector3(0.30f, 0.42f, 0.34f), Stone);
+      Ball(stairs.transform, "Orb", new Vector3(0.48f, 0.52f, 0f), 0.22f, Gold);
+      GameObject flag = Box(stairs.transform, "FlagPole", new Vector3(0.48f, 0.62f, -0.12f),
+        new Vector3(0.04f, 0.5f, 0.04f), Wood);
+      Box(flag.transform, "Flag", new Vector3(0.09f, 0.16f, 0f), new Vector3(0.18f, 0.12f, 0.03f), Coral);
+    }
   }
 
   static Color AccentFor(int index) {

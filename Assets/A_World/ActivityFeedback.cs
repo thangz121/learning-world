@@ -24,6 +24,13 @@ public class ActivityFeedback : MonoBehaviour {
   static bool _bigTextWanted;
   static int _retryStreak;
 
+  // PHASE 4b (user order 2026-09-29: "trẻ con có đọc được chữ đâu"): the
+  // approved arenas run VOICE-FIRST — the task line and the praise/retry
+  // banners show NO text at all (the voice + the progress dots carry every
+  // beat). Set by GameInstaller when it builds the arenas; the legacy flows
+  // and tests keep the default (text visible).
+  public static bool TextHidden;
+
   RectTransform _progressRow;
   Text _banner;
   Text _objective;
@@ -48,6 +55,7 @@ public class ActivityFeedback : MonoBehaviour {
       try { CharacterPresentation.DestroyNow(_instance.gameObject); } catch (System.Exception) { }
     }
     _instance = null;
+    TextHidden = false;
   }
 
   // ---- public verbs ----------------------------------------------------------
@@ -76,6 +84,7 @@ public class ActivityFeedback : MonoBehaviour {
 
   public static void Banner(string text, Kind kind, float seconds) {
     if (string.IsNullOrWhiteSpace(text)) return;
+    if (TextHidden) return; // voice-first arenas: never paint the banner text
     ActivityFeedback f = Ensure();
     f.ShowBanner(text, kind, seconds);
   }
@@ -90,6 +99,12 @@ public class ActivityFeedback : MonoBehaviour {
   // under the dots so the child always knows what to do.
   public static void Objective(string text) {
     if (string.IsNullOrWhiteSpace(text)) return;
+    if (TextHidden) {
+      // Voice-first arenas: keep the slot quiet (never a stale line).
+      if (_instance != null && _instance._objective != null)
+        _instance._objective.gameObject.SetActive(false);
+      return;
+    }
     ActivityFeedback f = Ensure();
     f.ShowObjective(text);
   }

@@ -456,3 +456,18 @@ choose the smallest safe correction, continue.
   C yard with both doors intact. Visual QA still open for HUMAN review (label
   sizes, gate clearance feel, gameplay feel in the arenas). No visual
   self-acceptance.
+- 2026-09-29: PHASE 4b (user round after playing: "trẻ con có đọc được chữ đâu"):
+  - Game doors in the C yard now carry WORDLESS DIORAMAS on the approach
+    (outside the 1.6m trigger): rabbit feeding = bunny + carrots; number
+    stairs = mini steps + gold orb + flag (`SelectionYardBuilder.BuildGamePreview`,
+    pinned by CT-S12F).
+  - The two approved arenas run VOICE-FIRST: `ActivityFeedback.TextHidden`
+    (set by GameInstaller when it builds the arenas) suppresses the task line
+    ("Take 2 away." etc.) and the praise/retry banners — voice + progress dots
+    + visuals carry every beat. Arena gameplay code untouched (flag seam).
+  - Rabbit arena words at the builder level: the floating "Come here!" label
+    is a wordless gold arrow; the "Submit/Nộp bài" text label is gone (bell +
+    pads are the cue). The stairs arena had no word labels; its numbers stay.
+  Verify: suite 695:690/0/5, build Succeeded errors=0, `-journeys3` 20/20
+  (0 errors); shots show the dioramas and a text-free rabbit arena. Human
+  review pending (no self-acceptance).
