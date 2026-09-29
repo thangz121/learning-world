@@ -6,6 +6,7 @@
 // (legacy world-nav is never touched by a yard-bound entry gate).
 // C# 9.0 only.
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -124,5 +125,36 @@ public class CT_S13_SubjectYard {
     }
     GameEntry[] counting = LearningMap.GamesOf("math_counting");
     Assert.AreEqual(2, counting.Length, "counting still owns exactly the two accepted games");
+  }
+
+  // G. PHASE 3 loader contract (foreground journey regression): the skill/game
+  // yard is a micro scene entered STRAIGHT FROM the Subject Yard (State Idle,
+  // no subject scene underneath) and unloads back to it. The legacy nesting
+  // (subject scene -> micro) must keep working for the old garden flow.
+  sealed class S13FakeOps : ISceneOps {
+    public readonly HashSet<string> Loaded = new HashSet<string>();
+    public bool IsLoaded(string s) { return Loaded.Contains(s); }
+    public Task LoadAdditiveAsync(string s) { Loaded.Add(s); return Task.CompletedTask; }
+    public Task UnloadAsync(string s) { Loaded.Remove(s); return Task.CompletedTask; }
+  }
+
+  [Test] public void S13G_YardMicroEntryFromSubjectYard() {
+    var t = new WorldTransition(SubjectIds.Main);
+    var ops = new S13FakeOps();
+    Assert.IsTrue(t.EnterMicroAsync(ops, SelectionYardBuilder.SceneName).GetAwaiter().GetResult(),
+      "the skill/game yard loads straight from the Main world");
+    Assert.AreEqual(SelectionYardBuilder.SceneName, t.MicroScene, "the micro slot owns the yard");
+    Assert.AreEqual(WorldTransitionState.Idle, t.State, "Main stays the active world");
+    Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "the yard unloads back to Main");
+    Assert.IsNull(t.MicroScene, "slot freed");
+    Assert.AreEqual(WorldTransitionState.Idle, t.State, "still back in the Subject Yard");
+    // Legacy nesting unchanged: subject scene base -> yard micro.
+    var t2 = new WorldTransition(SubjectIds.Main);
+    var ops2 = new S13FakeOps();
+    Assert.IsTrue(t2.EnterAsync(ops2, SubjectIds.Math, "MathScene").GetAwaiter().GetResult(),
+      "subject scene enters (legacy path)");
+    Assert.IsTrue(t2.EnterMicroAsync(ops2, SelectionYardBuilder.SceneName).GetAwaiter().GetResult(),
+      "micro works under a loaded subject too");
+    Assert.AreEqual(WorldTransitionState.InSubject, t2.State, "subject base stays InSubject");
   }
 }

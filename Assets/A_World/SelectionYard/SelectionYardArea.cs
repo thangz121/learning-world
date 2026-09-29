@@ -156,7 +156,10 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
     IsBusy = true;
     try {
       PlayTunnel();
-      CacheObjective();
+      // PHASE 3 hot-fix (foreground evidence: HUD showed "Đếm — Chọn trò chơi"
+      // back in the hub): only the FIRST entry (from the Subject Yard) caches
+      // the resting objective — yard-to-yard swaps must never clobber it.
+      if (!IsInside) CacheObjective();
       if (IsInside) {
         // Swapping one yard for another (game -> skill back-navigation).
         try { await _transition.ExitMicroAsync(_sceneOps); } catch (Exception) { }

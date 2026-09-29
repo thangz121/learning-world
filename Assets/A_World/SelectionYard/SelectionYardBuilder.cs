@@ -21,7 +21,11 @@ public class SelectionYardBuilder : MonoBehaviour {
   public const float BoundZ = 18f;
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -3f);
   public static readonly Vector3 BackLocal = new Vector3(0f, 0f, -11.5f);
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 4.2f, -5.4f);
+  // PHASE 3 foreground pass 2: FrameAnchor is only a transient beat (it
+  // resumes Follow), so the RESTING yard view is this follow offset. Raised
+  // (5.6) and pulled back (8.4) so the full gate row + name labels (y≈2.75
+  // across z 2.2..4.6) stay inside the frame at rest.
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 5.6f, -8.4f);
 
   // Context (set by SelectionYardArea before the scene load).
   public string Level = "skill";   // "skill" (B) | "game" (C)
@@ -268,8 +272,11 @@ public class SelectionYardBuilder : MonoBehaviour {
     if (a == null) return;
     a.Entry = a.EnsureSlot("EntryAnchor", EntryLocal);
     a.GameplayFocus = a.EnsureSlot("GameplayFocusAnchor", new Vector3(0f, 0f, 4.4f));
-    a.Camera = a.EnsureSlot("CameraAnchor", new Vector3(0f, 3.6f, -6.2f));
-    a.CameraLook = a.EnsureSlot("CameraLookAnchor", new Vector3(0f, 1.2f, 4.4f));
+    // PHASE 3 foreground pass: the first framing sat too low/close — gate
+    // beams and the name labels were cut at the top of the frame. Raised and
+    // pulled back (labels at y≈2.75-3.2 across z 2.2..4.6 stay in view).
+    a.Camera = a.EnsureSlot("CameraAnchor", new Vector3(0f, 5.2f, -7.2f));
+    a.CameraLook = a.EnsureSlot("CameraLookAnchor", new Vector3(0f, 2.1f, 3.4f));
     a.Prompt = a.EnsureSlot("PromptAnchor", new Vector3(0f, 1.7f, 4.4f));
     a.Feedback = a.EnsureSlot("FeedbackAnchor", new Vector3(0f, 1.2f, 4.4f));
     a.Reward = a.EnsureSlot("RewardAnchor", new Vector3(0f, 0f, 4.4f));

@@ -96,16 +96,24 @@ public sealed class WorldTransition {
   // LAZY by construction: the micro scene is only requested on EnterMicroAsync
   // (the gate walk), never at boot. The subject scene stays loaded underneath;
   // State stays InSubject (the subject world is still the active world).
+  //
+  // FULL ARCHITECTURE RESET (PHASE 3): the selection yards (A -> B -> C) are
+  // micro scenes entered STRAIGHT FROM the Main world (State Idle) — the old
+  // slot required InSubject because only the Math pilot had one. BOTH are
+  // valid bases now: InSubject keeps the legacy garden/arena nesting, Idle
+  // lets the Subject Yard open its Skill/Game yards with no subject scene
+  // involved (State stays Idle — Main remains the active world). Loading /
+  // Unloading still refuse honestly.
   public string MicroScene { get; private set; }
   public bool MicroBusy { get; private set; }
 
   public async Task<bool> EnterMicroAsync(ISceneOps ops, string sceneName) {
     if (ops == null || string.IsNullOrEmpty(sceneName)) return false;
-    if (State != WorldTransitionState.InSubject) {
+    if (State != WorldTransitionState.InSubject && State != WorldTransitionState.Idle) {
       // Dev-truthful refusal (silent by contract): a consumer polling IsInside
       // needs to know WHY the door did not open.
       UnityEngine.Debug.LogWarning("[WorldTransition] enter micro refused: state=" + State
-        + " (want InSubject) scene=" + sceneName);
+        + " (want InSubject or Idle) scene=" + sceneName);
       return false;
     }
     if (MicroBusy || !string.IsNullOrEmpty(MicroScene)) {

@@ -368,3 +368,42 @@ choose the smallest safe correction, continue.
   Verify: suite 686:681/0/5 (new CT-S13 + CT-P31/CT-P43 migrated to 5 subjects),
   build Succeeded errors=0 warnings=75, 8 scenes. Boot/journey on maynode:
   PENDING (node offline, no windowed boot on ASUS by order).
+- 2026-09-29: PHASE 3 complete (Skill Selection B, committed as its own phase).
+  IMPLEMENTATION:
+  - `Assets/_SharedKernel/WorldTransition.cs`: the micro slot accepts the
+  `Idle` base too (A -> B -> C yards enter straight from the Subject Yard; the
+  legacy subject-scene nesting keeps working; Loading/Unloading still refuse).
+    Found by the first foreground run: `enter micro refused: state=Idle`.
+  - `Assets/A_World/SelectionYard/SelectionYardArea.cs`: objective cache only
+  on the FIRST entry — yard-to-yard swaps no longer clobber the resting HUD
+  line (foreground evidence: "Đếm — Chọn trò chơi" showed back in the hub).
+  - `Assets/A_World/SelectionYard/SelectionYardBuilder.cs`: resting yard view
+  raised/pulled back (FollowOffset (0,5.6,-8.4) + camera anchors) after the
+  first foreground pass showed gate beams/labels cut at the top.
+  - `Assets/Tests/EditMode/CT-S13_SubjectYard.cs`: +S13G loader contract
+  (yard micro from Idle + legacy nesting) — suite 687:682/0/5.
+  - `Assets/A_World/SelectionYard/TempS13Journey.cs` (new, committed driver,
+  `-journeys3`): real InputSystem clicks, closed-loop movement validation,
+  stuck detection (expected standing during dialogs/transitions is not an
+  error), screenshot + skip on a failed step, CANCEL after 2 consecutive
+  failed steps, snap-safe taps (never inside a non-target gate's 2m click-snap
+  circle), ALWAYS auto-closes (normal/cancel/watchdog/exception).
+  FOREGROUND JOURNEY (windowed, on ASUS per this phase's order): exit=0,
+  16/16 steps, 0 errors, 80s, auto-closed. Evidence shots:
+  `D:/Vscode/s13j-shots/*.png`, log `D:/Vscode/s13j-player.log`.
+  Proven: A -> Toán -> B (5 doors, single builder/area) -> Đếm -> C (exactly
+  rabbit_feeding + number_stairs, kind Play) -> back C->B->A (hub restored,
+  MathScene/CountingGardenScene/DiscoveryScene never loaded); A -> Khám phá ->
+  B (4 doors) -> Tự nhiên -> C EMPTY (zero fake doors, placeholder only) ->
+  back to the hub; final rest state clean. Build Succeeded errors=0.
+  KNOWN LIMITATIONS / VISUAL QA ITEMS (human review; no self-acceptance):
+  (1) yard WorldNameLabel texts were not visible in the foreground shots
+  (gate name labels + the orientation sign read blank) although the objects
+  exist and hub labels render; (2) the HUD objective line clips long yard
+  titles ("Toán học — Chọn kỹ…", "Tự nhiên — Chọn trò…"); (3) PRODUCT
+  FINDING: the THINKING gate is unreachable by click-walking from the hub —
+  its only corridor squeezes between the Thinking district U-carve, the
+  English pillar carve and the English gate's 2m click-snap circle (three
+  foreground attempts: wrong-yard fire before the snap guard, permanent orbit
+  after it). Khám phá proves the empty-yard rule instead; a corridor/snap fix
+  belongs to a later phase.
