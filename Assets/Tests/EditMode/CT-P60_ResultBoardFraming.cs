@@ -60,56 +60,8 @@ public class CT_P60_ResultBoardFraming {
     } finally { Object.DestroyImmediate(arena); }
   }
 
-  // F. Game #4 "Build the tower" arena (BuildTowerScene). The payoff shot
-  // raises/pulls with the REAL tower height, so check the extremes 1 and 9.
-  [Test] public void P60F_TowerPayoffFramesTheResultEveryTarget() {
-    foreach (int target in new[] { 1, 9 }) {
-      GameObject arena = new GameObject("P60TowerWorld" + target);
-      BuildTowerBuilder builder = arena.AddComponent<BuildTowerBuilder>();
-      builder.BoardTarget = target;
-      builder.BuildContent(arena.transform);
-      try {
-        Transform cam = builder.CamSuccess;
-        Assert.IsNotNull(cam, "tower success camera staged");
-        Vector3 center = builder.Result.transform.position + new Vector3(0f, BoardCenterY, 0f);
-        // Mirror BuildTowerGame.IssueShot's success pose (the formula is the
-        // game's contract: camBase + (0, top*0.15, -top*0.20), look at pad).
-        float top = BuildTowerBuilder.TowerTopY(target);
-        Vector3 pos = cam.position + new Vector3(0f, top * 0.15f, -top * 0.20f);
-        Vector3 look = builder.PadAnchor.position
-          + new Vector3(0f, BuildTowerBuilder.PadTopY + top * 0.5f, 0f);
-        Vector3 toBoard = center - pos;
-        float angle = Vector3.Angle(look - pos, toBoard);
-        Assert.Less(angle, MaxAngleDeg,
-          "target " + target + ": result board inside the payoff frame (angle "
-          + angle.ToString("F1") + "°)");
-        Assert.Greater(Vector3.Dot(toBoard, (look - pos).normalized), 0f,
-          "target " + target + ": board in front of the payoff camera");
-      } finally { Object.DestroyImmediate(arena); }
-    }
-  }
-
-  // G. Game #5 "Deliver the apples" arena (DeliveryScene).
-  [Test] public void P60G_DeliveryPayoffFramesTheResult() {
-    GameObject arena = new GameObject("P60DeliveryWorld");
-    DeliveryBuilder builder = arena.AddComponent<DeliveryBuilder>();
-    builder.BoardTarget = 4;
-    builder.BuildContent(arena.transform);
-    try {
-      AssertPayoffFrames(builder.CamSuccess, builder.LookSuccess, builder.Result, "delivery");
-    } finally { Object.DestroyImmediate(arena); }
-  }
-
-  // H. Game #6 hub "Match the pairs" arena (MatchMeadowScene).
-  [Test] public void P60H_MatchPayoffFramesTheResult() {
-    GameObject arena = new GameObject("P60MatchWorld");
-    MatchMeadowBuilder builder = arena.AddComponent<MatchMeadowBuilder>();
-    builder.BoardPairs = 3;
-    builder.BuildContent(arena.transform);
-    try {
-      AssertPayoffFrames(builder.CamSuccess, builder.LookSuccess, builder.Result, "match");
-    } finally { Object.DestroyImmediate(arena); }
-  }
+  // COUNTING GARDEN CLEANUP: P60F/P60G/P60H (tower / delivery / match payoff
+  // frames) were removed with their rejected gameplay.
 
   static Transform FindDeep(Transform t, string name) {
     if (t == null) return null;

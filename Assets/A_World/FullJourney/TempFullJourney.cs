@@ -1,14 +1,15 @@
-// Assets/A_World/FullJourney/TempFullJourney.cs — FULL-JOURNEY driver
-// (S3-P2Z16, maynode). One end-to-end pass over EVERY created part:
+﻿// Assets/A_World/FullJourney/TempFullJourney.cs â€” FULL-JOURNEY driver
+// (S3-P2Z16, maynode). One end-to-end pass over every APPROVED part:
 //   Main hub -> Math hub -> Counting Garden ->
-//   gameplay #1 (balls in the basket, zone 2) -> #2 (number stairs, zone 5) ->
-//   #3 (feed the bunny, zone 0) -> back to Math hub ->
-//   #4 (build the tower, build_yard gate) -> #5 (deliver the apples,
-//   delivery_village gate) -> return to Main.
+//   gameplay #2 (number stairs, zone 1) -> #3 (feed the bunny, zone 0) ->
+//   return to Main.
+// COUNTING GARDEN CLEANUP (product decision 2026-09-29): the build / delivery
+// / match arena legs were removed with their rejected gameplay. The Math Hub
+// gates of those worlds remain LANDMARK SKELETONS with no playable path.
 // Boots ONLY with "-journeyfull" (committed drivers are inert otherwise).
 // Real InputSystem mouse injection only (queued press held 4 frames); walks by
 // projecting world targets to screen; NEVER teleports the player and never
-// pokes gameplay state — every step is a real click + real-state polling.
+// pokes gameplay state â€” every step is a real click + real-state polling.
 //
 // TIME DISCIPLINE (user order 2026-09-25): the moment a state settles, the
 // screenshot is taken; no fixed settle-sleeps; condition polls run at 0.2s and
@@ -55,11 +56,10 @@ public class TempFullJourney : MonoBehaviour {
   // Stage engine (S3-P2Z17, user order): the journey is a table of named
   // stages. A stage that cannot proceed is SEVERE: evidence shots from many
   // camera angles, a marker in severe_errors.txt, then skip to the next game
-  // in the same run when the arena door lets us out — otherwise fall back to a
+  // in the same run when the arena door lets us out â€” otherwise fall back to a
   // fresh run started at the next stage (never re-running the failed one).
   static readonly string[] StageOrder = {
-    "garden.stairs", "garden.rabbit",
-    "hub.tower", "hub.delivery", "hub.match", "return.main",
+    "garden.stairs", "garden.rabbit", "return.main",
   };
 
   // Deterministic stair rounds after the area's opening plain round (kind, B;
@@ -74,7 +74,7 @@ public class TempFullJourney : MonoBehaviour {
   Camera _cam;
   ClickToMove _player;
   // Stall watchdog (user order): while a leg EXPECTS movement, a child that
-  // stands still >10s is a stall — screenshot it, try to rescue it, and if the
+  // stands still >10s is a stall â€” screenshot it, try to rescue it, and if the
   // leg cannot come back, mark the stage SEVERE (the stage engine captures the
   // multi-angle evidence and skips/relaunches).
   bool _watchOn;
@@ -146,7 +146,7 @@ public class TempFullJourney : MonoBehaviour {
       }
       _watchStillT += 1f;
       // 14s (not 10): arena exit walks detour around props and can take ~12s
-      // to get going (S3-P2Z17 journey finding) — a real stall still escalates.
+      // to get going (S3-P2Z17 journey finding) â€” a real stall still escalates.
       if (_watchStillT < 14f) continue;
       _watchStillT = 0f;
       _stuckShots++;
@@ -263,9 +263,6 @@ public class TempFullJourney : MonoBehaviour {
     switch (stage) {
       case "garden.stairs": return StairHillBuilder.SceneName;
       case "garden.rabbit": return RabbitPlayBuilder.SceneName;
-      case "hub.tower": return BuildTowerBuilder.SceneName;
-      case "hub.delivery": return DeliveryBuilder.SceneName;
-      case "hub.match": return MatchMeadowBuilder.SceneName;
     }
     return null;
   }
@@ -275,9 +272,6 @@ public class TempFullJourney : MonoBehaviour {
       case "garden.stairs":
       case "garden.rabbit":
         return FindPortal(true, true, CountingGardenArea.AreaId);
-      case "hub.tower": return FindPortal(true, false, BuildTowerArea.AreaId);
-      case "hub.delivery": return FindPortal(true, false, DeliveryArea.AreaId);
-      case "hub.match": return FindPortal(true, false, MatchArea.AreaId);
     }
     return null;
   }
@@ -525,12 +519,9 @@ public class TempFullJourney : MonoBehaviour {
       Log("CENSUS " + tag
         + " scenes=" + SceneManager.sceneCount
         + " gardenArea=" + CountOf<CountingGardenArea>()
-        + " buildArea=" + CountOf<BuildTowerArea>()
-        + " deliveryArea=" + CountOf<DeliveryArea>()
+        + " discoveryArea=" + CountOf<DiscoveryArea>()
         + " stairs=" + CountOf<NumberStairs>()
         + " rabbit=" + CountOf<RabbitFeed>()
-        + " tower=" + CountOf<BuildTowerGame>()
-        + " deliveryGame=" + CountOf<DeliveryGame>()
         + " player=" + PlayerPos());
     } catch (Exception e) { Log("census failed: " + e.Message); }
   }
@@ -626,7 +617,7 @@ public class TempFullJourney : MonoBehaviour {
   }
 
   // Walk toward a world point while polling a REAL condition; stop the frame
-  // the world answers (travel fires by proximity — never chase an old target).
+  // the world answers (travel fires by proximity â€” never chase an old target).
   IEnumerator WalkUntil(Func<bool> cond, Vector3 toward, float arrive, float timeout, string label) {
     float t = 0f;
     float clickT = 0f;
@@ -646,54 +637,6 @@ public class TempFullJourney : MonoBehaviour {
     WatchOff();
     Log("WALK_TIMEOUT: " + label);
     MarkProblem("walk timeout: " + label);
-  }
-
-  // Leave a RE-ENTERED arena at once. The behind-camera fallback walks the
-  // child out while the arrival frame still faces the door; if the teaching
-  // frame blocks it, wait for the hand-off (camera follows again) and then
-  // walk out — bounded, never a stall.
-  IEnumerator LeaveReentry(MicroWorldPortal exit, string sceneName, Func<bool> handoff, string label) {
-    float t = 0f;
-    float clickT = 0f;
-    Watch(exit != null ? exit.transform.position : Vector3.zero, label);
-    while (t < 30f) {
-      if (_stageSevere) { WatchOff(); yield break; }
-      if (!SceneLoaded(sceneName)) { WatchOff(); Log("walk ok: " + label); yield break; }
-      clickT -= PollSeconds;
-      if (clickT <= 0f) {
-        if (exit != null) ClickWorld(exit.transform.position);
-        clickT = ClickSeconds;
-      }
-      yield return new WaitForSeconds(PollSeconds);
-      t += PollSeconds;
-    }
-    WatchOff();
-    if (_stageSevere) yield break;
-    Log("re-entry exit blocked by the lesson camera; waiting for hand-off");
-    yield return WaitFor(handoff, 480f, label + " handoff");
-    yield return WalkUntil(delegate { return !SceneLoaded(sceneName); },
-      exit != null ? exit.transform.position : Vector3.zero, 1.2f, 120f, label);
-  }
-
-  // Demo progress: screenshot the moment each demo delivery lands (no fixed
-  // waits), return as soon as the demo reached the target.
-  IEnumerator TrackDemo(Func<int> value, int target, string label, float timeout = 480f) {
-    int last = -1;
-    float t = 0f;
-    while (t < timeout) {
-      if (_stageSevere) yield break;
-      int now = 0;
-      try { now = value(); } catch (Exception) { }
-      if (now != last) {
-        last = now;
-        if (now >= 1) Shot(label + "_" + now);
-        if (now >= target) { Log("ok: " + label + " reached " + now); yield break; }
-      }
-      yield return new WaitForSeconds(PollSeconds);
-      t += PollSeconds;
-    }
-    Log("TIMEOUT: " + label + " (demo=" + last + "/" + target + ")");
-    MarkProblem("demo timeout: " + label);
   }
 
   void RefreshRefs() {
@@ -717,9 +660,9 @@ public class TempFullJourney : MonoBehaviour {
     if (sp.z < 0f) {
       // The target is BEHIND the camera (arena doors sit south of the follow
       // frame): route an on-screen waypoint toward it so the child still walks
-      // the right way. (An orbit-turn experiment here backfired in the match
-      // meadow — a turn during a camera transition flipped every later click;
-      // the game-side camera hand-back fix made the plain waypoint enough.)
+      // the right way. (An orbit-turn experiment here backfired during a
+      // camera transition — the game-side camera hand-back fix made the plain
+      // waypoint enough.)
       if (_player == null) return;
       Vector3 p = _player.transform.position;
       Vector3 d = world - p;
@@ -831,7 +774,7 @@ public class TempFullJourney : MonoBehaviour {
     WriteSummary();
     Log("FULLJOURNEY_END shots=" + _shots + " clicks=" + _clicks
       + " errors=" + _errors + " severe=" + _severeCount);
-    // User order: the journey CLOSES THE GAME itself when it finishes — never
+    // User order: the journey CLOSES THE GAME itself when it finishes â€” never
     // leave the window open for a manual close. Hold a beat so the log + shots
     // flush, then quit.
     yield return new WaitForSeconds(1.5f);
@@ -857,18 +800,6 @@ public class TempFullJourney : MonoBehaviour {
         yield return FocusAndPlay(CountingGardenBuilder.RabbitZoneIndex,
           RabbitPlayBuilder.SceneName, "zone0"); if (_stageSevere) yield break;
         yield return RabbitArena();
-        break;
-      case "hub.tower":
-        yield return EnsureInMathHub(); if (_stageSevere) yield break;
-        yield return TowerArena();
-        break;
-      case "hub.delivery":
-        yield return EnsureInMathHub(); if (_stageSevere) yield break;
-        yield return DeliveryArena();
-        break;
-      case "hub.match":
-        yield return EnsureInMathHub(); if (_stageSevere) yield break;
-        yield return MatchArena();
         break;
       case "return.main":
         yield return EnsureInMathHub(); if (_stageSevere) yield break;
@@ -896,8 +827,8 @@ public class TempFullJourney : MonoBehaviour {
       yield return new WaitForSeconds(1.2f);
       Shot("02_math_hub");
       Census("math hub");
-      Expect("math hub areas", CountOf<CountingGardenArea>() == 1 && CountOf<BuildTowerArea>() == 1
-        && CountOf<DeliveryArea>() == 1, "one area module per micro-world expected");
+      Expect("math hub areas", CountOf<CountingGardenArea>() == 1 && CountOf<DiscoveryArea>() == 1,
+        "garden + discovery area modules expected");
     }
     yield return WaitFor(delegate { area = FindObjectOfType<CountingGardenArea>(); return area != null; }, 30f, "garden area module");
     MicroWorldGate gardenGate = FindGate("counting_garden");
@@ -941,8 +872,8 @@ public class TempFullJourney : MonoBehaviour {
     yield return new WaitForSeconds(1.2f);
     Shot("02_math_hub");
     Census("math hub");
-    Expect("math hub areas", CountOf<CountingGardenArea>() == 1 && CountOf<BuildTowerArea>() == 1
-      && CountOf<DeliveryArea>() == 1, "one area module per micro-world expected");
+    Expect("math hub areas", CountOf<CountingGardenArea>() == 1 && CountOf<DiscoveryArea>() == 1,
+      "garden + discovery area modules expected");
   }
 
   IEnumerator ReturnToMain() {
@@ -958,8 +889,8 @@ public class TempFullJourney : MonoBehaviour {
     yield return new WaitForSeconds(1.0f);
     Shot("05_main_back");
     Census("main back");
-    Expect("subject unloaded clean", CountOf<CountingGardenArea>() == 0 && CountOf<BuildTowerArea>() == 0
-      && CountOf<DeliveryArea>() == 0, "Math-side modules must not survive the subject unload");
+    Expect("subject unloaded clean", CountOf<CountingGardenArea>() == 0 && CountOf<DiscoveryArea>() == 0,
+      "Math-side modules must not survive the subject unload");
   }
 
   // ---- garden zone flow -----------------------------------------------------------------
@@ -1024,7 +955,7 @@ public class TempFullJourney : MonoBehaviour {
       if (loaded || _stageSevere || attempt == 2) break;
       if (panel == null || !panel.IsOpen) {
         // Panel closed without loading: re-focus ONCE (a second click would
-        // restart the mini lesson), then WAIT for the fresh panel — never
+        // restart the mini lesson), then WAIT for the fresh panel â€” never
         // re-click the spot (that reset the demo forever, journey finding).
         Log(label + ": panel closed without loading; re-focusing once");
         Watch(spot.transform.position, label + " refocus");
@@ -1033,7 +964,7 @@ public class TempFullJourney : MonoBehaviour {
         while (t2 < 150f && !_stageSevere) {
           if (SceneLoaded(sceneName)) { loaded = true; break; }
           if (area.FocusedZone == zone && panel != null && panel.IsOpen && panel.PlayVisible) break;
-          // Same as above: once focused, the wait is the demo — no watchdog.
+          // Same as above: once focused, the wait is the demo â€” no watchdog.
           if (area.FocusedZone == zone) WatchOff();
           yield return new WaitForSeconds(2f);
           t2 += 2f;
@@ -1049,7 +980,7 @@ public class TempFullJourney : MonoBehaviour {
   }
 
   // Pick robustness: keep clicking the target (with small offsets) until the
-  // game reports ANY carried object — then the caller follows the REAL object,
+  // game reports ANY carried object â€” then the caller follows the REAL object,
   // so a click that lands on a neighbour never desyncs the leg.
   IEnumerator WaitForCarry(Func<bool> hasCarried, Vector3 clickPt, float timeout, string label) {
     float t = 0f;
@@ -1080,7 +1011,7 @@ public class TempFullJourney : MonoBehaviour {
   }
 
   // Diagnostic (dev-truth): what the driver's click ray actually hits at the
-  // pick target — the blocking collider shows up by name in the log.
+  // pick target â€” the blocking collider shows up by name in the log.
   void LogRayHit(Vector3 world, string label) {
     try {
       RefreshRefs();
@@ -1105,7 +1036,7 @@ public class TempFullJourney : MonoBehaviour {
 
   // Walk to a point just OUTSIDE the basket cage (S3-P2Z17 journey finding: a
   // click aimed at the basket centre lands on the zone collider, the agent
-  // pushes against it forever — IsMoving stays true and the stop-gated place
+  // pushes against it forever â€” IsMoving stays true and the stop-gated place
   // never fires). A real child stops beside the basket; so does this.
   Vector3 ApproachPt(Vector3 world) {
     RefreshRefs();
@@ -1219,7 +1150,7 @@ public class TempFullJourney : MonoBehaviour {
       }
       // Deterministic verification: pin the next round to a SAFE mid-range
       // target (the live random generator can pick 8/9, where an agent overshoot
-      // lands on the top landing and the child never returns — a harness
+      // lands on the top landing and the child never returns â€” a harness
       // fragility, not a gameplay rule). Round 1 stays the area's plain target.
       if (guard - 1 < StairPlanKind.Length) {
         game.ForceNextRoundForTests(StairPlanKind[guard - 1], target, StairPlanB[guard - 1]);
@@ -1286,7 +1217,7 @@ public class TempFullJourney : MonoBehaviour {
     yield return new WaitForSeconds(1.2f); // arrival reveal settles (shot only)
     if (game == null) { Severe("rabbit arena missing"); yield break; }
     Shot("30_rabbit_entry");
-    // S3-P2Z19 (user round): no demo replays in the arena — the child walks to
+    // S3-P2Z19 (user round): no demo replays in the arena â€” the child walks to
     // the marked play spot and the question is read there.
     yield return WalkToWorld(RabbitPlayBuilder.WorldOffset + RabbitPlayBuilder.PlaySpotLocal,
       1.4f, 90f, "rabbit play spot");
@@ -1382,422 +1313,7 @@ public class TempFullJourney : MonoBehaviour {
       return false; }, 60f, "rabbit submit");
   }
 
-  // ---- gameplay #6: match the pairs (Match Meadow) --------------------------------------------
-
-  MatchItem FirstTargetCandidate(MatchGame game) {
-    for (int i = 0; i < game.CandidateCount; i++) {
-      MatchItem it = game.CandidateAt(i);
-      if (it == null || !it.IsAvailable) continue;
-      if (it.ColorId == game.DistractorColor) continue;
-      return it;
-    }
-    return null;
-  }
-
-  IEnumerator WaitForMatchItem(MatchItem it, MatchItem.ItemState want, float timeout,
-      string label, Vector3 clickPt) {
-    float t = 0f;
-    float clickT = 0f;
-    int clickIdx = 0;
-    Watch(clickPt, label);
-    while (t < timeout) {
-      if (_stageSevere) { WatchOff(); yield break; }
-      if (it != null && it.State == want) { WatchOff(); Log("ok: " + label); yield break; }
-      if (t > 3f) {
-        clickT -= PollSeconds;
-        if (clickT <= 0f) {
-          ClickWorld(clickPt + ClickOffsets[clickIdx % ClickOffsets.Length]);
-          clickIdx++;
-          clickT = 1.0f;
-        }
-      }
-      yield return new WaitForSeconds(PollSeconds);
-      t += PollSeconds;
-      if (t % 5f < PollSeconds) RefreshRefs();
-    }
-    WatchOff();
-    Log("TIMEOUT: " + label + " (state=" + (it != null ? it.State.ToString() : "null") + ")");
-    MarkProblem("timeout: " + label + " (state=" + (it != null ? it.State.ToString() : "null") + ")");
-  }
-
-  Vector3 MatchPadWorld() {
-    MatchMeadowBuilder builder = FindObjectOfType<MatchMeadowBuilder>();
-    if (builder != null && builder.PadAnchor != null) return builder.PadAnchor.position;
-    return Vector3.zero;
-  }
-
-  IEnumerator MatchArena() {
-    Census("match entering");
-    MatchArea area = null;
-    yield return WaitFor(delegate { area = FindObjectOfType<MatchArea>(); return area != null; }, 30f, "match area module");
-    MicroWorldGate gate = FindGate("match_meadow");
-    Expect("match gate", gate != null && gate.EntryAnchor != null, "match_meadow gate + entry anchor");
-    if (gate != null) {
-      yield return WalkUntil(delegate { area = FindObjectOfType<MatchArea>(); return area != null && area.IsInside; },
-        gate.EntryAnchor.position, 1.4f, 150f, "into the match meadow");
-    }
-    yield return WaitFor(delegate { area = FindObjectOfType<MatchArea>(); return area != null && area.IsInside; }, 60f, "match meadow inside");
-    MatchGame game = null;
-    yield return WaitFor(delegate {
-      if (!SceneLoaded(MatchMeadowBuilder.SceneName)) return false;
-      game = FindObjectOfType<MatchGame>();
-      return game != null;
-    }, 150f, "match arena loaded");
-    yield return new WaitForSeconds(1.2f); // arrival reveal settles (shot only)
-    if (game == null) { Severe("match arena missing"); yield break; }
-    Shot("match_entry");
-    int pairs = game.Pairs;
-    Log("match pairs=" + pairs + " family=" + game.Family);
-    // S3-P2Z19 (user round): no demo replays in the arena — the child walks to
-    // the marked play spot and the question is read there.
-    yield return WalkToWorld(MatchMeadowBuilder.WorldOffset + MatchMeadowBuilder.PlaySpotLocal,
-      1.4f, 90f, "match play spot");
-    yield return WaitFor(delegate { return game.Current == MatchGame.Phase.Playing; }, 120f, "match question read");
-    Shot("match_handoff"); // the frame the child gets control
-    for (int i = 0; i < pairs; i++) {
-      MatchItem it = FirstTargetCandidate(game);
-      if (it == null) { Severe("no target candidate at pair " + i); break; }
-      Vector3 pick = PickPoint(it);
-      yield return WalkToWorld(pick, 1.2f, 90f, "match object " + i);
-      yield return WalkToWorld(ApproachPt(pick), 0.7f, 25f, "match object stand " + i);
-      yield return WaitForCarry(delegate { return game.Carried != null; },
-        pick, 30f, "match carry " + i);
-      MatchItem carried = game.Carried;
-      if (carried == null) { Severe("no match object carried at " + i); break; }
-      if (i == 0) Shot("match_carry");
-      Vector3 pad = MatchPadWorld();
-      yield return WalkToWorld(pad, 1.5f, 90f, "match pad " + i);
-      yield return WaitForMatchItem(carried, MatchItem.ItemState.Placed, 25f, "match pair " + i, pad);
-      Shot("match_pair_" + (i + 1));
-    }
-    yield return WaitFor(delegate { return game.Current == MatchGame.Phase.Success; }, 50f, "match success");
-    Shot("match_success");
-    Log("match success pairs=" + game.MatchedPairs + " wrong=" + game.WrongMatches);
-    yield return new WaitForSeconds(1.0f);
-    Shot("match_reward");
-    // Exit in two stages: the clear entry plaza first, then the door.
-    Vector3 matchClear = MatchMeadowBuilder.WorldOffset + MatchMeadowBuilder.EntryLocal;
-    yield return WalkToWorld(matchClear, 1.8f, 90f, "match clear");
-    MicroWorldPortal exit = FindPortal(true, false, MatchArea.AreaId);
-    Expect("match exit portal", exit != null, "meadow needs its way home");
-    Vector3 toward = exit != null ? exit.transform.position : gate.EntryAnchor.position;
-    yield return WalkUntil(delegate { return !SceneLoaded(MatchMeadowBuilder.SceneName); }, toward, 1.2f, 150f, "match exit");
-    yield return WaitFor(delegate { area = FindObjectOfType<MatchArea>(); return area != null && !area.IsInside; }, 90f, "math after match");
-    yield return new WaitForSeconds(1.0f);
-    Shot("math_after_match");
-    Census("after match");
-    Expect("match arena unloaded", !SceneLoaded(MatchMeadowBuilder.SceneName) && CountOf<MatchGame>() == 0,
-      "arena scene + game must be gone after the exit door");
-    if (_stageSevere) yield break; // never run the re-entry block on a failed exit
-
-    // Re-entry: the pair ladder advanced on leave -> fresh round for 2 pairs.
-    int expected = area != null ? area.Pairs : MatchArea.NextPairs(pairs);
-    yield return WalkUntil(delegate {
-      return SceneLoaded(MatchMeadowBuilder.SceneName) && FindObjectOfType<MatchGame>() != game;
-    }, gate.EntryAnchor.position, 1.4f, 150f, "match re-entry");
-    MatchGame game2 = null;
-    yield return WaitFor(delegate {
-      if (!SceneLoaded(MatchMeadowBuilder.SceneName)) return false;
-      MatchGame g = FindObjectOfType<MatchGame>();
-      if (g != null && g != game) { game2 = g; return true; }
-      return false;
-    }, 150f, "fresh match meadow");
-    yield return WaitFor(delegate { return game2 != null && game2.Current != MatchGame.Phase.Success; }, 90f, "fresh match round");
-    Shot("match_reentry_next");
-    if (game2 == null) { Severe("match re-entry game missing"); yield break; }
-    Log("MATCH REENTRY pairs=" + game2.Pairs + " expected=" + expected + " matched=" + game2.MatchedPairs
-      + " phase=" + game2.Current + " instances=" + CountOf<MatchGame>());
-    Expect("match re-entry pairs", game2.Pairs == expected, "ladder should advance on leave");
-    Expect("match re-entry clean", game2.MatchedPairs == 0 && CountOf<MatchGame>() == 1,
-      "no stale pairs, no duplicate game");
-    MicroWorldPortal exit2 = FindPortal(true, false, MatchArea.AreaId);
-    yield return LeaveReentry(exit2, MatchMeadowBuilder.SceneName,
-      delegate { return game2.Current == MatchGame.Phase.Playing; }, "match exit 2");
-    yield return WaitFor(delegate { area = FindObjectOfType<MatchArea>(); return area != null && !area.IsInside; }, 90f, "math after match reentry");
-    Shot("math_after_match_reentry");
-    Census("after match reentry");
-  }
-
-  // ---- gameplay #4: build the tower -----------------------------------------------------------
-
-  TowerBlock FirstAvailableTower(BuildTowerGame game) {
-    for (int i = 0; i < game.BlockCountTotal; i++) {
-      TowerBlock b = game.BlockAt(i);
-      if (b != null && b.IsAvailable) return b;
-    }
-    return null;
-  }
-
-  IEnumerator WaitForBlock(TowerBlock b, TowerBlock.BlockState want, float timeout,
-      string label, Vector3 clickPt) {
-    float t = 0f;
-    float clickT = 0f;
-    int clickIdx = 0;
-    Watch(clickPt, label);
-    while (t < timeout) {
-      if (_stageSevere) { WatchOff(); yield break; }
-      if (b != null && b.State == want) { WatchOff(); Log("ok: " + label); yield break; }
-      if (t > 3f) {
-        clickT -= PollSeconds;
-        if (clickT <= 0f) {
-          ClickWorld(clickPt + ClickOffsets[clickIdx % ClickOffsets.Length]);
-          clickIdx++;
-          clickT = 1.0f;
-        }
-      }
-      yield return new WaitForSeconds(PollSeconds);
-      t += PollSeconds;
-      if (t % 5f < PollSeconds) RefreshRefs();
-    }
-    WatchOff();
-    Log("TIMEOUT: " + label + " (state=" + (b != null ? b.State.ToString() : "null") + ")");
-    MarkProblem("timeout: " + label + " (state=" + (b != null ? b.State.ToString() : "null") + ")");
-  }
-
-  IEnumerator TowerArena() {
-    BuildTowerArea area = null;
-    yield return WaitFor(delegate { area = FindObjectOfType<BuildTowerArea>(); return area != null; }, 30f, "build area module");
-    MicroWorldGate gate = FindGate("build_yard");
-    Expect("build gate", gate != null && gate.EntryAnchor != null, "build_yard gate + entry anchor");
-    if (gate != null) {
-      yield return WalkUntil(delegate { area = FindObjectOfType<BuildTowerArea>(); return area != null && area.IsInside; },
-        gate.EntryAnchor.position, 1.4f, 150f, "into build yard");
-    }
-    yield return WaitFor(delegate { area = FindObjectOfType<BuildTowerArea>(); return area != null && area.IsInside; }, 60f, "build yard inside");
-    BuildTowerGame game = null;
-    yield return WaitFor(delegate {
-      if (!SceneLoaded(BuildTowerBuilder.SceneName)) return false;
-      game = FindObjectOfType<BuildTowerGame>();
-      return game != null;
-    }, 150f, "tower arena loaded");
-    yield return new WaitForSeconds(1.2f); // arrival reveal settles (shot only)
-    if (game == null) { Severe("tower arena missing"); yield break; }
-    Shot("50_tower_entry");
-    int target = game.Target;
-    Log("tower target=" + target);
-    // S3-P2Z19 (user round): no in-arena demo — walk to the marked play spot;
-    // the question is read on arrival.
-    yield return WalkToWorld(BuildTowerBuilder.WorldOffset + BuildTowerBuilder.PlaySpotLocal,
-      1.4f, 90f, "tower play spot");
-    yield return WaitFor(delegate { return game.Current == BuildTowerGame.Phase.Building; }, 90f, "tower question read");
-    Shot("53_tower_handoff");
-    for (int i = 0; i < target; i++) {
-      TowerBlock b = FirstAvailableTower(game);
-      if (b == null) { Severe("no available tower block at " + i); break; }
-      yield return WalkToWorld(b.transform.position, 1.2f, 90f, "tower block " + i);
-      yield return WaitForCarry(delegate { return game.Carried != null; },
-        b.transform.position, 30f, "tower carry " + i);
-      TowerBlock carried = game.Carried;
-      if (carried == null) { Severe("no tower block carried at " + i); break; }
-      if (i == 0) Shot("54_tower_carry");
-      BuildTowerBuilder tb = FindObjectOfType<BuildTowerBuilder>();
-      Vector3 pad = tb != null && tb.PadAnchor != null ? tb.PadAnchor.position : carried.transform.position;
-      yield return WalkToWorld(pad, 1.5f, 90f, "tower pad " + i);
-      yield return WaitForBlock(carried, TowerBlock.BlockState.Placed, 25f, "tower placed " + i, pad);
-      Shot("55_tower_" + (i + 1));
-    }
-    yield return WaitFor(delegate { return game.Current == BuildTowerGame.Phase.Success; }, 50f, "tower success");
-    Shot("56_tower_success");
-    Log("tower success count=" + game.Count + " height=" + game.TowerHeight + " life=" + area.Lifecycle.State);
-    TowerBlock spare = FirstAvailableTower(game);
-    if (spare != null) {
-      yield return WalkToWorld(spare.transform.position, 1.2f, 90f, "spare tower block");
-      yield return WaitForCarry(delegate { return game.Carried != null; },
-        spare.transform.position, 30f, "spare tower carry");
-      TowerBlock spareCarried = game.Carried;
-      if (spareCarried == null) { Anomaly("no spare tower block carried"); }
-      BuildTowerBuilder tb2 = FindObjectOfType<BuildTowerBuilder>();
-      Vector3 pad2 = tb2 != null && tb2.PadAnchor != null ? tb2.PadAnchor.position : spare.transform.position;
-      yield return WalkToWorld(pad2, 1.5f, 90f, "spare tower pad");
-      yield return WaitFor(delegate { return game.Current == BuildTowerGame.Phase.Correct; }, 40f, "tower overshoot correction");
-      Shot("57_tower_overshoot");
-      yield return WaitFor(delegate { return game.Current == BuildTowerGame.Phase.Success; }, 150f, "tower corrected");
-      Shot("58_tower_corrected");
-      Log("tower corrected count=" + game.Count + " overshoots=" + game.Overshoots);
-    } else {
-      Anomaly("no spare tower block");
-    }
-    MicroWorldPortal exit = FindPortal(true, false, BuildTowerArea.AreaId);
-    Expect("tower exit portal", exit != null, "yard needs its way home");
-    Vector3 toward = exit != null ? exit.transform.position : gate.EntryAnchor.position;
-    yield return WalkUntil(delegate { return !SceneLoaded(BuildTowerBuilder.SceneName); }, toward, 1.2f, 150f, "tower exit");
-    yield return WaitFor(delegate { area = FindObjectOfType<BuildTowerArea>(); return area != null && !area.IsInside; }, 90f, "math after tower");
-    yield return new WaitForSeconds(1.0f);
-    Shot("59_math_after_tower");
-    Census("after tower");
-    Expect("tower arena unloaded", !SceneLoaded(BuildTowerBuilder.SceneName) && CountOf<BuildTowerGame>() == 0,
-      "arena scene + game must be gone after the exit door");
-    if (_stageSevere) yield break; // never run the re-entry block on a failed exit
-
-    // Re-entry: the ladder advanced on leave -> fresh lesson for the next rung.
-    // Leave immediately afterwards (the behind-camera door is walked via the
-    // ClickWorld waypoint fallback — no waiting for the camera hand-off).
-    // S3-P2Z20: live play randomizes the next target — read it from the area
-    // (already advanced on leave) instead of predicting the fixed ladder.
-    int expected = area != null ? area.Target : BuildTowerArea.NextTarget(target);
-    yield return WalkUntil(delegate {
-      return SceneLoaded(BuildTowerBuilder.SceneName) && FindObjectOfType<BuildTowerGame>() != game;
-    }, gate.EntryAnchor.position, 1.4f, 150f, "tower re-entry");
-    BuildTowerGame game2 = null;
-    yield return WaitFor(delegate {
-      if (!SceneLoaded(BuildTowerBuilder.SceneName)) return false;
-      BuildTowerGame g = FindObjectOfType<BuildTowerGame>();
-      if (g != null && g != game) { game2 = g; return true; }
-      return false;
-    }, 150f, "fresh tower arena");
-    yield return WaitFor(delegate { return game2 != null && game2.Current != BuildTowerGame.Phase.Success; }, 90f, "fresh tower lesson");
-    Shot("60_tower_reentry_next");
-    if (game2 == null) { Severe("tower re-entry game missing"); yield break; }
-    Log("TOWER REENTRY target=" + game2.Target + " expected=" + expected + " count=" + game2.Count
-      + " phase=" + game2.Current + " instances=" + CountOf<BuildTowerGame>());
-    Expect("tower re-entry target", game2.Target == expected, "ladder should advance on leave");
-    Expect("tower re-entry clean", game2.Count == 0 && CountOf<BuildTowerGame>() == 1, "no stale tower, no duplicate game");
-    MicroWorldPortal exit2 = FindPortal(true, false, BuildTowerArea.AreaId);
-    yield return LeaveReentry(exit2, BuildTowerBuilder.SceneName,
-      delegate { return game2.Current == BuildTowerGame.Phase.Building; }, "tower exit 2");
-    yield return WaitFor(delegate { area = FindObjectOfType<BuildTowerArea>(); return area != null && !area.IsInside; }, 90f, "math after tower reentry");
-    Shot("61_math_after_tower_reentry");
-    Census("after tower reentry");
-  }
-
-  // ---- gameplay #5: deliver the apples ----------------------------------------------------------
-
-  DeliveryItem FirstAvailableItem(DeliveryGame game) {
-    for (int i = 0; i < game.ItemCountTotal; i++) {
-      DeliveryItem it = game.ItemAt(i);
-      if (it != null && it.State == DeliveryItem.ItemState.Available) return it;
-    }
-    return null;
-  }
-
-  IEnumerator WaitForItem(DeliveryItem it, DeliveryItem.ItemState want, float timeout,
-      string label, Vector3 clickPt) {
-    float t = 0f;
-    float clickT = 0f;
-    int clickIdx = 0;
-    Watch(clickPt, label);
-    while (t < timeout) {
-      if (_stageSevere) { WatchOff(); yield break; }
-      if (it != null && it.State == want) { WatchOff(); Log("ok: " + label); yield break; }
-      if (t > 3f) {
-        clickT -= PollSeconds;
-        if (clickT <= 0f) {
-          ClickWorld(clickPt + ClickOffsets[clickIdx % ClickOffsets.Length]);
-          clickIdx++;
-          clickT = 1.0f;
-        }
-      }
-      yield return new WaitForSeconds(PollSeconds);
-      t += PollSeconds;
-      if (t % 5f < PollSeconds) RefreshRefs();
-    }
-    WatchOff();
-    Log("TIMEOUT: " + label + " (state=" + (it != null ? it.State.ToString() : "null") + ")");
-    MarkProblem("timeout: " + label + " (state=" + (it != null ? it.State.ToString() : "null") + ")");
-  }
-
-  Vector3 ReceiverWorld() {
-    DeliveryBuilder builder = FindObjectOfType<DeliveryBuilder>();
-    if (builder != null && builder.DeliveryAnchor != null) return builder.DeliveryAnchor.position;
-    if (builder != null) return builder.transform.TransformPoint(DeliveryBuilder.MiaStart);
-    return Vector3.zero;
-  }
-
-  IEnumerator DeliveryArena() {
-    DeliveryArea area = null;
-    yield return WaitFor(delegate { area = FindObjectOfType<DeliveryArea>(); return area != null; }, 30f, "delivery area module");
-    MicroWorldGate gate = FindGate("delivery_village");
-    Expect("delivery gate", gate != null && gate.EntryAnchor != null, "delivery_village gate + entry anchor");
-    if (gate != null) {
-      yield return WalkUntil(delegate { area = FindObjectOfType<DeliveryArea>(); return area != null && area.IsInside; },
-        gate.EntryAnchor.position, 1.4f, 150f, "into delivery village");
-    }
-    yield return WaitFor(delegate { area = FindObjectOfType<DeliveryArea>(); return area != null && area.IsInside; }, 60f, "delivery inside");
-    DeliveryGame game = null;
-    yield return WaitFor(delegate {
-      if (!SceneLoaded(DeliveryBuilder.SceneName)) return false;
-      game = FindObjectOfType<DeliveryGame>();
-      return game != null;
-    }, 150f, "delivery arena loaded");
-    yield return new WaitForSeconds(1.2f); // arrival reveal settles (shot only)
-    if (game == null) { Severe("delivery arena missing"); yield break; }
-    Shot("70_delivery_entry");
-    int target = game.Target;
-    Log("delivery target=" + target);
-    // S3-P2Z19 (user round): no in-arena demo — walk to the marked play spot;
-    // the order is read on arrival.
-    yield return WalkToWorld(DeliveryBuilder.WorldOffset + DeliveryBuilder.PlaySpotLocal,
-      1.4f, 90f, "delivery play spot");
-    yield return WaitFor(delegate { return game.Current == DeliveryGame.Phase.Delivering; }, 90f, "delivery question read");
-    Shot("73_delivery_handoff");
-    for (int i = 0; i < target; i++) {
-      DeliveryItem it = FirstAvailableItem(game);
-      if (it == null) { Severe("no available apple at " + i); break; }
-      yield return WalkToWorld(it.transform.position, 1.2f, 90f, "apple " + i);
-      yield return WaitForCarry(delegate { return game.Carried != null; },
-        it.transform.position, 30f, "carry apple " + i);
-      DeliveryItem carried = game.Carried;
-      if (carried == null) { Severe("no apple carried at " + i); break; }
-      if (i == 0) Shot("74_delivery_carry");
-      yield return WalkToWorld(ReceiverWorld(), 1.5f, 90f, "receiver " + i);
-      yield return WaitForItem(carried, DeliveryItem.ItemState.Delivered, 25f, "handover " + i, ReceiverWorld());
-      Shot("75_delivery_crate_" + (i + 1));
-    }
-    yield return WaitFor(delegate { return game.Current == DeliveryGame.Phase.Success; }, 50f, "delivery success");
-    Shot("76_delivery_success");
-    Log("delivery success count=" + game.Count + " crate=" + game.CrateCount + " exitCue=" + game.ExitCueShown);
-    DeliveryItem spare = FirstAvailableItem(game);
-    if (spare != null) {
-      yield return WalkToWorld(spare.transform.position, 1.2f, 90f, "spare apple");
-      yield return WaitForCarry(delegate { return game.Carried != null; },
-        spare.transform.position, 30f, "spare carry");
-      DeliveryItem spareCarried = game.Carried;
-      if (spareCarried == null) { Anomaly("no spare apple carried"); }
-      yield return WalkToWorld(ReceiverWorld(), 1.5f, 90f, "spare receiver");
-      yield return WaitFor(delegate { return game.Current == DeliveryGame.Phase.Correct; }, 40f, "delivery overshoot correction");
-      Shot("77_delivery_overshoot");
-      yield return WaitFor(delegate { return game.Current == DeliveryGame.Phase.Success; }, 150f, "delivery corrected");
-      Shot("78_delivery_corrected");
-      Log("delivery corrected count=" + game.Count + " overshoots=" + game.Overshoots);
-    } else {
-      Anomaly("no spare apple for the overshoot leg");
-    }
-    MicroWorldPortal exit = FindPortal(true, false, DeliveryArea.AreaId);
-    Expect("delivery exit portal", exit != null, "village needs its way home");
-    Vector3 toward = exit != null ? exit.transform.position : gate.EntryAnchor.position;
-    yield return WalkUntil(delegate { return !SceneLoaded(DeliveryBuilder.SceneName); }, toward, 1.2f, 150f, "delivery exit");
-    yield return WaitFor(delegate { area = FindObjectOfType<DeliveryArea>(); return area != null && !area.IsInside; }, 90f, "math after delivery");
-    yield return new WaitForSeconds(1.0f);
-    Shot("79_math_after_delivery");
-    Census("after delivery");
-    Expect("delivery arena unloaded", !SceneLoaded(DeliveryBuilder.SceneName) && CountOf<DeliveryGame>() == 0,
-      "arena scene + game must be gone after the exit door");
-    if (_stageSevere) yield break; // never run the re-entry block on a failed exit
-
-    // Re-entry: fresh order for the next rung (advance-on-leave); leave at once.
-    int expected = area != null ? area.Target : DeliveryArea.NextTarget(target);
-    yield return WalkUntil(delegate {
-      return SceneLoaded(DeliveryBuilder.SceneName) && FindObjectOfType<DeliveryGame>() != game;
-    }, gate.EntryAnchor.position, 1.4f, 150f, "delivery re-entry");
-    DeliveryGame game2 = null;
-    yield return WaitFor(delegate {
-      if (!SceneLoaded(DeliveryBuilder.SceneName)) return false;
-      DeliveryGame g = FindObjectOfType<DeliveryGame>();
-      if (g != null && g != game) { game2 = g; return true; }
-      return false;
-    }, 150f, "fresh delivery village");
-    yield return WaitFor(delegate { return game2 != null && game2.Current != DeliveryGame.Phase.Success; }, 90f, "fresh delivery order");
-    Shot("80_delivery_reentry_next");
-    if (game2 == null) { Severe("delivery re-entry game missing"); yield break; }
-    Log("DELIVERY REENTRY target=" + game2.Target + " expected=" + expected + " count=" + game2.Count
-      + " phase=" + game2.Current + " instances=" + CountOf<DeliveryGame>());
-    Expect("delivery re-entry target", game2.Target == expected, "ladder should advance on leave");
-    Expect("delivery re-entry clean", game2.Count == 0 && CountOf<DeliveryGame>() == 1, "no stale crate, no duplicate game");
-    MicroWorldPortal exit2 = FindPortal(true, false, DeliveryArea.AreaId);
-    yield return LeaveReentry(exit2, DeliveryBuilder.SceneName,
-      delegate { return game2.Current == DeliveryGame.Phase.Delivering; }, "delivery exit 2");
-    yield return WaitFor(delegate { area = FindObjectOfType<DeliveryArea>(); return area != null && !area.IsInside; }, 90f, "math after delivery reentry");
-    Shot("81_math_after_delivery_reentry");
-    Census("after delivery reentry");
-  }
+  // COUNTING GARDEN CLEANUP (product decision): the match / tower / delivery
+  // arena legs and their helpers were removed with the rejected gameplay.
+  // The full journey covers garden.stairs + garden.rabbit + return.main.
 }

@@ -1,5 +1,11 @@
 # COUNTING GARDEN — GAMEPLAY #5: "GIAO HÀNG ĐÚNG SỐ" (DELIVER THE APPLES) — BLUEPRINT
 
+> **REJECTED (product decision 2026-09-29):** this gameplay was removed from the
+> product (scenes, areas, games, builders, drivers, tests, Build Settings, SFX
+> wiring). Counting Garden keeps only Rabbit Feeding (#3) + Number Stairs (#2);
+> the Math Hub gate of this world remains a LANDMARK SKELETON. Kept as a
+> historical round record only.
+
 Phase: S3-P2Z15 (2026-09-25). Full vertical slice: Math Hub delivery gate →
 transition → independent Micro-World → order → demo → player → completion →
 reward → exit → return hub → re-entry.

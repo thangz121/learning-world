@@ -478,11 +478,11 @@ public class CT_P62_DiscoveryGarden {
     Assert.IsTrue(t.EnterAsync(ops, math, "MathScene").GetAwaiter().GetResult(), "subject loads");
     Assert.IsFalse(ops.Loaded.Contains(DiscoveryBuilder.SceneName),
       "the discovery garden must NOT be loaded at subject entry (lazy)");
-    Assert.IsTrue(t.EnterMicroAsync(ops, MatchMeadowBuilder.SceneName).GetAwaiter().GetResult(),
-      "the match meadow loads first");
+    Assert.IsTrue(t.EnterMicroAsync(ops, RabbitPlayBuilder.SceneName).GetAwaiter().GetResult(),
+      "the rabbit arena loads first");
     Assert.IsFalse(t.EnterMicroAsync(ops, DiscoveryBuilder.SceneName).GetAwaiter().GetResult(),
       "the discovery garden cannot stack onto another micro scene");
-    Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "the meadow unloads");
+    Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "the arena unloads");
     Assert.IsTrue(t.EnterMicroAsync(ops, DiscoveryBuilder.SceneName).GetAwaiter().GetResult(),
       "the discovery garden loads into the freed slot");
     Assert.IsTrue(ops.Loaded.Contains(DiscoveryBuilder.SceneName), "it is now the live micro scene");

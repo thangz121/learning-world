@@ -1,11 +1,13 @@
-// A_World/BuildYard/MicroGateHint.cs — S3-P2Z14/P2Z17.
+// A_World/MathWorld/MicroGateHint.cs — S3-P2Z14/P2Z17 (moved here in the
+// Counting Garden cleanup: it is shared micro-world infrastructure, not
+// build/match-specific).
 // A micro-world gate's gentle interaction cue (brief §2): when the child walks
 // into the approach radius, a soft breathing glow appears over the threshold
 // pad. It is presentation only — the MicroWorldPortal owns the walk-in trigger
 // and its cold-start debounce; this component never moves, never takes input,
 // never shows UI, and every piece is collider-free + bake-ignored so the hub's
-// reviewed walk surface is untouched. Used by the Build Yard gate (#4) and the
-// Match Meadow gate (#6). C# 9.0 only.
+// reviewed walk surface is untouched. Currently used by the Discovery Garden
+// gate (#7). C# 9.0 only.
 using System;
 using UnityEngine;
 
@@ -67,9 +69,6 @@ public class MicroGateHint : MonoBehaviour {
   ClickToMove ResolvePlayer() {
     if (Portal == null) return null;
     if (Portal.Area != null) return Portal.Area.Player;
-    if (Portal.BuildArea != null) return Portal.BuildArea.Player;
-    if (Portal.DeliveryArea != null) return Portal.DeliveryArea.Player;
-    if (Portal.MatchArea != null) return Portal.MatchArea.Player;
     if (Portal.DiscoveryArea != null) return Portal.DiscoveryArea.Player;
     return null;
   }

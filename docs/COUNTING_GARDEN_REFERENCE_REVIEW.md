@@ -1,5 +1,16 @@
 # COUNTING GARDEN — REFERENCE REVIEW #1–#6 (closing report, S3-P2Z18)
 
+> **SUPERSEDED — COUNTING GARDEN CLEANUP (product decision 2026-09-29).**
+> Counting Garden keeps ONLY **Rabbit Feeding (#3)** and **Number Stairs (#2)**.
+> The gameplay of **Build Yard (#4)**, **Delivery Village (#5)** and
+> **Match Meadow (#6)** was REJECTED and fully removed (scenes, areas, games,
+> builders, drivers, tests, Build Settings entries, audio/SFX wiring). Their
+> Math Hub gates remain **LANDMARK SKELETONS** with no playable path (product
+> order: keep the reviewed hub composition; remove only the gameplay).
+> The harvest beds (#6a/#7) listed below never shipped in the committed line.
+> Rows/tests/journey legs mentioning #4/#5/#6 in this document are historical
+> records of the pre-cleanup state, not current product.
+
 Date: 2026-09-26. Machines: maynode (foreground: real-click journey, evidence) +
 ASUS (batch: suite/build in earlier rounds). This is the consolidated review of
 the six created gameplay activities of the Counting Garden chain, written after
@@ -21,9 +32,9 @@ Blueprint/report per game:
 | 3 | Cho thỏ ăn đúng số (rabbit) | garden zone 0 "Vườn cà rốt" | PICK → CARRY → FEED | `RabbitPlayScene` | ladder 3…9·1·2 | CT-P55 + P60C |
 | 6a | Hái đúng số dâu (strawberry) | garden zone 1 "Vườn dâu" | PICK → CARRY → FILL (basket) | `StrawberryPlayScene` | ladder 3·5·7·9·1 | CT-P58 + P60D |
 | 7 | Bẻ đúng số ngô (corn) | garden zone 3 "Vườn ngô" | PICK → CARRY → LOAD (cart) | `CornPlayScene` | ladder 3·5·7·9·1 | CT-P58 + P60E |
-| 4 | Xây tháp theo số (tower) | Math hub gate `build_yard` | PICK → CARRY → STACK | `BuildTowerScene` | ladder 3·5·7·9·1 | CT-P56 + P60F |
-| 5 | Giao hàng đúng số (delivery) | Math hub gate `delivery_village` | PICK → CARRY → HANDOVER | `DeliveryScene` | ladder 3·5·7·9·1 | CT-P57 + P60G |
-| 6 | Ghép đúng cặp (match) | Math hub gate `match_meadow` | LOOK → IDENTIFY → SEARCH → CARRY → PAIR | `MatchMeadowScene` | pair ladder 1→2→3 | CT-P59 + P60H |
+| 4 | Xây tháp theo số (tower) [REJECTED — gameplay removed 2026-09-29] | Math hub gate `build_yard` (landmark skeleton only) | PICK → CARRY → STACK | ~~`BuildTowerScene`~~ | ladder 3·5·7·9·1 | ~~CT-P56 + P60F~~ |
+| 5 | Giao hàng đúng số (delivery) [REJECTED — gameplay removed 2026-09-29] | Math hub gate `delivery_village` (landmark skeleton only) | PICK → CARRY → HANDOVER | ~~`DeliveryScene`~~ | ladder 3·5·7·9·1 | ~~CT-P57 + P60G~~ |
+| 6 | Ghép đúng cặp (match) [REJECTED — gameplay removed 2026-09-29] | Math hub gate `match_meadow` (landmark skeleton only) | LOOK → IDENTIFY → SEARCH → CARRY → PAIR | ~~`MatchMeadowScene`~~ | pair ladder 1→2→3 | ~~CT-P59 + P60H~~ |
 
 Zone 4 "Vườn bí" (pumpkin) stays a skeleton plot (no gameplay) — by scope, not
 a bug. Each arena is an INDEPENDENT lazy micro-scene loaded only through
@@ -56,22 +67,22 @@ entry only after the scene is verified loaded; any failure returns to the
 hub/garden truthfully (no void).
 
 ### 2.4 Demo (mini lesson = real tutorial)
-Garden miniatures (`CountingDemo` zone 2, `StairLessonDemo` zone 5,
-`HarvestLessonDemo` zones 1/3, `RabbitLessonDemo` zone 0) run two-NPC lessons at
-the plot; the panel opens ONLY after one full try-run (audience/focus gate).
-S3-P2Z20 user round: NO arena replays a demo — every arena (tower/delivery/
-match added here; balls/stairs/rabbit/harvest already did) opens on a marked
-play spot ("Come here!" + pulsing ring); the teacher only calls the child over
-and reads the question when the child actually stands there. Demo and player use
-the SAME components/calls (a wrong demo action could never complete). Fixed
+Garden miniatures (`StairLessonDemo` zone 5, `RabbitLessonDemo` zone 0) run
+two-NPC lessons at the plot; the panel opens ONLY after one full try-run
+(audience/focus gate). S3-P2Z20 user round: NO arena replays a demo — every
+remaining arena opens on a marked play spot ("Come here!" + pulsing ring); the
+teacher only calls the child over and reads the question when the child
+actually stands there. (The historical note about tower/delivery/match is void:
+that gameplay was removed in the 2026-09-29 cleanup.)
+Demo and player use the SAME components/calls for the remaining games. Fixed
 earlier: a lesson ADOPTED by a zone click (`StartFocusedLesson`) is owned by the
 zone, so distance never aborts it (pinned P50E).
 
 ### 2.5 Gameplay
-The child's loop is the demo's loop. Correction paths: #1 3rd ball recounted and
-returned; #2 overshoot/undershoot band guidance; #3/#6a/#7 spare item recounted
-+ returned; #4 spare block hops home; #5 wrong kind refused + extra apple
-recounted; #6 wrong object walks itself home. Completion is deterministic;
+The child's loop is the demo's loop. Correction paths in the REMAINING games:
+#2 overshoot/undershoot band guidance; #3 spare item recounted + returned.
+(The #4 spare-block / #5 refused-kind / #6 wrong-object paths lived in the
+rejected gameplay and were removed 2026-09-29.) Completion is deterministic;
 re-entry adopts the completed picture (`ActivityLifecycle` lives in the
 Math-side area, surviving arena unload), and the ladder advances only on LEAVE.
 
@@ -164,19 +175,21 @@ Earlier evidence per game: `E:\LWW\fullj-shots`, `fullj-z17{c,d,e,f,g}`,
 
 ## 5. Verdict
 
-**TECHNICAL PASS** for #1–#6 (and the harvest beds): suite green, builds
-succeeded, boot smoke clean, and a real-click full journey completed every
-stage with 0 exceptions and 0 severe.
+**HISTORICAL (pre-cleanup): TECHNICAL PASS** for #1–#6 (and the harvest beds)
+at this document's S3-P2Z18 revision: suite green, builds succeeded, boot smoke
+clean, and a real-click full journey completed every stage with 0 exceptions
+and 0 severe. Superseded by the 2026-09-29 cleanup: only **#2 Number Stairs**
+and **#3 Rabbit Feeding** remain (plus the independent #7 Discovery Garden,
+implemented, not human-accepted); Build Yard / Delivery Village / Match Meadow
+gameplay was rejected and removed, their hub gates kept as landmark skeletons.
 
-**VISUAL REVIEW REQUIRED** — the human eye still owns, per game: payoff
-framings (boards now in frame), carry/hand reads at gameplay distance, feet vs
-treads on #2, demo tidy-ups reading as "dọn dẹp", and the child-scale feel of
-each world. Evidence shots above; the journey shots are the intended review
-set.
+**VISUAL REVIEW REQUIRED (remaining games only)** — the human eye still owns,
+for #2/#3: payoff framings (boards now in frame), carry/hand reads at gameplay
+distance, feet vs treads on #2, and the child-scale feel of each world.
+Evidence shots above; the journey shots are the intended review set.
 
 ## 6. Known limitations (carried, not hidden)
 
-- #1 target is the reference 2 (no ladder); the other games own ladders 1–9.
 - Zone 4 pumpkin stays skeleton (no design/gameplay ordered yet).
 - Activity state is in-memory; a full restart resets ladders/rewards.
 - 5 EditMode skips are the known by-design skips (unchanged).

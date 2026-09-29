@@ -152,18 +152,8 @@ public class GameInstaller : MonoBehaviour {
       BuildRabbitPlayScene(scene);
       return;
     }
-    if (scene.name == BuildTowerBuilder.SceneName) {
-      BuildBuildTowerScene(scene);
-      return;
-    }
-    if (scene.name == DeliveryBuilder.SceneName) {
-      BuildDeliveryScene(scene);
-      return;
-    }
-    if (scene.name == MatchMeadowBuilder.SceneName) {
-      BuildMatchMeadowScene(scene);
-      return;
-    }
+    // COUNTING GARDEN CLEANUP (product decision): Build Yard / Delivery /
+    // Match gameplay scenes were removed; their hub gates stay landmarks.
     if (scene.name == DiscoveryBuilder.SceneName) {
       BuildDiscoveryScene(scene);
       return;
@@ -417,69 +407,8 @@ public class GameInstaller : MonoBehaviour {
     }
   }
 
-  // GAMEPLAY #6 ("Ghép đúng cặp"): the Math Hub's match_meadow gate opens its
-  // OWN lazy scene (MatchMeadowScene) through the same micro slot — built on
-  // demand, never at boot, never stacked.
-  void BuildMatchMeadowScene(Scene scene) {
-    try {
-      GameObject root = null;
-      if (scene.IsValid()) {
-        foreach (GameObject go in scene.GetRootGameObjects()) {
-          if (go != null && go.name == "MatchMeadowWorld") { root = go; break; }
-        }
-      }
-      if (root == null) {
-        Debug.LogError("[GameInstaller] MatchMeadowScene has no MatchMeadowWorld root.", this);
-        return;
-      }
-      root.transform.position = MatchMeadowBuilder.WorldOffset;
-      MatchMeadowBuilder builder = root.GetComponent<MatchMeadowBuilder>();
-      if (builder == null) builder = root.AddComponent<MatchMeadowBuilder>();
-      // The round's pair count comes from the area's ladder (progression/CLI);
-      // the board stages that digit so the world always shows the mission.
-      int matchPairs = _matchArea != null ? _matchArea.Pairs : MatchMeadowBuilder.DefaultPairs;
-      builder.BoardPairs = Mathf.Clamp(matchPairs, 1, MatchMeadowBuilder.MaxPairs);
-      builder.Build();
-      MatchArea area = _matchArea;
-      if (area == null) {
-        try { area = FindObjectOfType<MatchArea>(); } catch (System.Exception) { }
-      }
-      if (area != null) {
-        Vector3 entry = MatchMeadowBuilder.WorldOffset + MatchMeadowBuilder.EntryLocal;
-        area.SetWorld(entry, builder.Anchors,
-          DialogueLang.T(MatchMeadowBuilder.ObjectiveEn, MatchMeadowBuilder.ObjectiveVi));
-        if (builder.ExitPortal != null) builder.ExitPortal.MatchArea = area;
-      }
-      try {
-        MatchGame game = root.AddComponent<MatchGame>();
-        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
-          ? _activeBuilder.Player.transform : null;
-        Transform hand = null;
-        try {
-          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
-              && _activeBuilder.PlayerViz.HandBone != null) {
-            hand = _activeBuilder.PlayerViz.HandBone;
-          } else if (_activeBuilder != null) {
-            hand = _activeBuilder.PlayerHand;
-          }
-        } catch (System.Exception) { }
-        if (hand == null) hand = playerT;
-        game.Build(builder, playerT,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
-          _matchArea != null ? _matchArea.Lifecycle : null, matchPairs,
-          _matchArea != null ? (System.Action<int>)_matchArea.NotifyCompleted : null, hand);
-        if (_matchArea != null) _matchArea.BindGame(game);
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Match wiring failed (meadow stays empty): " + e.Message, this);
-      }
-      try {
-        Debug.Log("[GameInstaller] Match Meadow scene built (gameplay #6) entry="
-          + (MatchMeadowBuilder.WorldOffset + MatchMeadowBuilder.EntryLocal).ToString("F1"));
-      } catch (System.Exception) { }
-    } catch (System.Exception e) {
-      Debug.LogError("[GameInstaller] MatchMeadowScene build failed: " + e.Message, this);
-    }
-  }
+  // COUNTING GARDEN CLEANUP (product decision): the match_meadow gameplay
+  // (scene build + wiring) was removed. Its hub gate remains a LANDMARK.
 
   // GAMEPLAY #7 ("Vườn Khám Phá"): the Math Hub's discovery_garden gate opens
   // its OWN lazy scene (DiscoveryScene) through the same micro slot as the
@@ -543,150 +472,9 @@ public class GameInstaller : MonoBehaviour {
     }
   }
 
-  // GAMEPLAY #4 ("Xây tháp theo số"): the Math Hub's build_yard gate opens its
-  // OWN lazy scene (BuildTowerScene) through the same micro slot as the garden
-  // worlds — built here on demand, never at boot, never stacked. Travel beats
-  // are owned by BuildTowerArea (living in MathScene); this method only builds
-  // the world + wires the activity, same best-effort discipline as #1-#3.
-  void BuildBuildTowerScene(Scene scene) {
-    try {
-      GameObject root = null;
-      if (scene.IsValid()) {
-        foreach (GameObject go in scene.GetRootGameObjects()) {
-          if (go != null && go.name == "BuildTowerWorld") { root = go; break; }
-        }
-      }
-      if (root == null) {
-        Debug.LogError("[GameInstaller] BuildTowerScene has no BuildTowerWorld root.", this);
-        return;
-      }
-      root.transform.position = BuildTowerBuilder.WorldOffset;
-      BuildTowerBuilder builder = root.GetComponent<BuildTowerBuilder>();
-      if (builder == null) builder = root.AddComponent<BuildTowerBuilder>();
-      // The round's mission comes from the area's ladder (progression/CLI);
-      // the boards stage that digit so the world always shows the mission.
-      int buildTarget = _buildArea != null
-        ? _buildArea.Target : BuildTowerBuilder.Target;
-      builder.BoardTarget = BuildTowerBuilder.ClampTarget(buildTarget);
-      builder.Build();
-      BuildTowerArea area = _buildArea;
-      if (area == null) {
-        try { area = FindObjectOfType<BuildTowerArea>(); } catch (System.Exception) { }
-      }
-      if (area != null) {
-        Vector3 entry = BuildTowerBuilder.WorldOffset + BuildTowerBuilder.EntryLocal;
-        area.SetWorld(entry, builder.Anchors,
-          DialogueLang.T(BuildTowerBuilder.ObjectiveEn, BuildTowerBuilder.ObjectiveVi));
-        if (builder.ExitPortal != null) builder.ExitPortal.BuildArea = area;
-      }
-      // The activity (teacher + student + the child's build). Lifecycle is the
-      // Math-side area's; the game plays the area's current target (one yard,
-      // many targets — the same ladder discipline as #2/#3).
-      try {
-        BuildTowerGame game = root.AddComponent<BuildTowerGame>();
-        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
-          ? _activeBuilder.Player.transform : null;
-        Transform hand = null;
-        try {
-          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
-              && _activeBuilder.PlayerViz.HandBone != null) {
-            hand = _activeBuilder.PlayerViz.HandBone;
-          } else if (_activeBuilder != null) {
-            hand = _activeBuilder.PlayerHand;
-          }
-        } catch (System.Exception) { }
-        if (hand == null) hand = playerT;
-        game.Build(builder, playerT,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
-          _buildArea != null ? _buildArea.Lifecycle : null, buildTarget,
-          _buildArea != null ? (System.Action<int>)_buildArea.NotifyCompleted : null,
-          hand);
-        if (_buildArea != null) _buildArea.BindGame(game);
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Build tower wiring failed (yard stays empty): " + e.Message, this);
-      }
-      try {
-        Debug.Log("[GameInstaller] Build Tower scene built (gameplay #4) entry="
-          + (BuildTowerBuilder.WorldOffset + BuildTowerBuilder.EntryLocal).ToString("F1"));
-      } catch (System.Exception) { }
-    } catch (System.Exception e) {
-      Debug.LogError("[GameInstaller] BuildTowerScene build failed: " + e.Message, this);
-    }
-  }
-
-  // GAMEPLAY #5 ("Giao hàng đúng số"): the Math Hub's delivery_village gate
-  // opens its OWN lazy scene (DeliveryScene) through the same micro slot as
-  // the other hub worlds — built on demand, never at boot, never stacked.
-  void BuildDeliveryScene(Scene scene) {
-    try {
-      GameObject root = null;
-      if (scene.IsValid()) {
-        foreach (GameObject go in scene.GetRootGameObjects()) {
-          if (go != null && go.name == "DeliveryWorld") { root = go; break; }
-        }
-      }
-      if (root == null) {
-        Debug.LogError("[GameInstaller] DeliveryScene has no DeliveryWorld root.", this);
-        return;
-      }
-      root.transform.position = DeliveryBuilder.WorldOffset;
-      DeliveryBuilder builder = root.GetComponent<DeliveryBuilder>();
-      if (builder == null) builder = root.AddComponent<DeliveryBuilder>();
-      // The round's order comes from the area's ladder (progression/CLI); the
-      // boards stage that digit so the world always shows the order.
-      int deliverTarget = _deliveryArea != null
-        ? _deliveryArea.Target : DeliveryBuilder.Target;
-      builder.BoardTarget = DeliveryBuilder.ClampTarget(deliverTarget);
-      builder.Build();
-      DeliveryArea area = _deliveryArea;
-      if (area == null) {
-        try { area = FindObjectOfType<DeliveryArea>(); } catch (System.Exception) { }
-      }
-      if (area != null) {
-        Vector3 entry = DeliveryBuilder.WorldOffset + DeliveryBuilder.EntryLocal;
-        area.SetWorld(entry, builder.Anchors,
-          DialogueLang.T(DeliveryBuilder.ObjectiveEn, DeliveryBuilder.ObjectiveVi));
-        if (builder.ExitPortal != null) builder.ExitPortal.DeliveryArea = area;
-      }
-      // The activity (teacher + student + receiver). Lifecycle is the
-      // Math-side area's; the game plays the area's current target (one stall,
-      // many orders — the same ladder discipline as #2-#4).
-      try {
-        DeliveryGame game = root.AddComponent<DeliveryGame>();
-        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
-          ? _activeBuilder.Player.transform : null;
-        Transform hand = null;
-        try {
-          if (_activeBuilder != null && _activeBuilder.PlayerViz != null
-              && _activeBuilder.PlayerViz.HandBone != null) {
-            hand = _activeBuilder.PlayerViz.HandBone;
-          } else if (_activeBuilder != null) {
-            hand = _activeBuilder.PlayerHand;
-          }
-        } catch (System.Exception) { }
-        if (hand == null) hand = playerT;
-        string miaVoice = null;
-        try {
-          NpcDefinition mia = NpcRoster.Get("mia");
-          if (mia != null) miaVoice = mia.voice;
-        } catch (System.Exception) { }
-        game.Build(builder, playerT,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
-          _deliveryArea != null ? _deliveryArea.Lifecycle : null, deliverTarget,
-          _deliveryArea != null ? (System.Action<int>)_deliveryArea.NotifyCompleted : null,
-          miaVoice, hand);
-        if (_deliveryArea != null) _deliveryArea.BindGame(game);
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Delivery wiring failed (village stays empty): " + e.Message, this);
-      }
-      try {
-        Debug.Log("[GameInstaller] Delivery scene built (gameplay #5) entry="
-          + (DeliveryBuilder.WorldOffset + DeliveryBuilder.EntryLocal).ToString("F1"));
-      } catch (System.Exception) { }
-    } catch (System.Exception e) {
-      Debug.LogError("[GameInstaller] DeliveryScene build failed: " + e.Message, this);
-    }
-  }
+  // COUNTING GARDEN CLEANUP (product decision): the build_yard and
+  // delivery_village gameplay (scene builds + wiring) were removed. Their hub
+  // gates remain LANDMARK SKELETONS with no playable path.
 
   // Phase 3.0.x S3: Math playable-skeleton wiring (runs on the main thread
   // inside the sceneLoaded callback, before the loader task completes).
@@ -780,8 +568,8 @@ public class GameInstaller : MonoBehaviour {
         if (builder.CountingGardenPortal != null) builder.CountingGardenPortal.Area = area;
         MicroWorldPortal[] portals = root.GetComponentsInChildren<MicroWorldPortal>(true);
         foreach (MicroWorldPortal portal in portals) {
-          // S3-P2Z14: the build_yard portal belongs to its OWN area (gameplay
-          // #4) — never let the garden swallow it.
+          // Only portals whose areaId is the garden belong to the garden area;
+          // the discovery portal (and any future hub portal) is left alone.
           if (portal != null && portal.areaId == CountingGardenArea.AreaId) portal.Area = area;
         }
         try { Debug.Log("[GameInstaller] Counting Garden area wired (" + portals.Length + " hub portals).", this); }
@@ -789,88 +577,10 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Counting Garden wiring failed: " + e.Message, this);
       }
-      // S3-P2Z14 GAMEPLAY #4: the Build Yard's own area module (living in
-      // MathScene like the garden's) drives gate -> micro-world travel and
-      // receives the yard scene's entry + anchors on each load.
-      try {
-        BuildTowerArea buildArea = root.GetComponent<BuildTowerArea>();
-        if (buildArea == null) {
-          GameObject buildGo = new GameObject("BuildTowerArea");
-          buildGo.transform.SetParent(root.transform, true);
-          buildArea = buildGo.AddComponent<BuildTowerArea>();
-        }
-        _buildArea = buildArea;
-        buildArea.RandomTargets = true; // S3-P2Z20: live play asks random number questions
-        buildArea.Bind(
-          WorldTransitions,
-          SceneOps,
-          _activeBuilder != null ? _activeBuilder.Player : null,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
-          _activeBuilder != null ? _activeBuilder.Hud : null,
-          MathWorldBuilder.WorldOffset + MathWorldBuilder.BuildYardHubReturnLocal);
-        buildArea.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
-        buildArea.Landmark = builder.BuildTowerLandmark;
-        buildArea.PushLandmarkState();
-        if (builder.BuildTowerPortal != null) builder.BuildTowerPortal.BuildArea = buildArea;
-        try { Debug.Log("[GameInstaller] Build Yard area wired (portal="
-          + (builder.BuildTowerPortal != null) + " landmark="
-          + (builder.BuildTowerLandmark != null) + ").", this); }
-        catch (System.Exception) { }
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Build Yard area wiring failed: " + e.Message, this);
-      }
-      // S3-P2Z15 GAMEPLAY #5: the Delivery Village's own area module (living
-      // in MathScene like the others) drives gate -> micro-world travel.
-      try {
-        DeliveryArea deliveryArea = root.GetComponent<DeliveryArea>();
-        if (deliveryArea == null) {
-          GameObject deliveryGo = new GameObject("DeliveryArea");
-          deliveryGo.transform.SetParent(root.transform, true);
-          deliveryArea = deliveryGo.AddComponent<DeliveryArea>();
-        }
-        _deliveryArea = deliveryArea;
-        deliveryArea.RandomTargets = true; // S3-P2Z20: live play asks random number questions
-        deliveryArea.Bind(
-          WorldTransitions,
-          SceneOps,
-          _activeBuilder != null ? _activeBuilder.Player : null,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
-          _activeBuilder != null ? _activeBuilder.Hud : null,
-          MathWorldBuilder.WorldOffset + MathWorldBuilder.DeliveryHubReturnLocal);
-        deliveryArea.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
-        if (builder.DeliveryPortal != null) builder.DeliveryPortal.DeliveryArea = deliveryArea;
-        try { Debug.Log("[GameInstaller] Delivery area wired (portal="
-          + (builder.DeliveryPortal != null) + ").", this); }
-        catch (System.Exception) { }
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Delivery area wiring failed: " + e.Message, this);
-      }
-      // S3-P2Z17 GAMEPLAY #6: the Match Meadow's own area module (living in
-      // MathScene like the others) drives gate -> micro-world travel.
-      try {
-        MatchArea matchArea = root.GetComponent<MatchArea>();
-        if (matchArea == null) {
-          GameObject matchGo = new GameObject("MatchArea");
-          matchGo.transform.SetParent(root.transform, true);
-          matchArea = matchGo.AddComponent<MatchArea>();
-        }
-        _matchArea = matchArea;
-        matchArea.RandomPairs = true; // S3-P2Z20: live play asks random pair counts
-        matchArea.Bind(
-          WorldTransitions,
-          SceneOps,
-          _activeBuilder != null ? _activeBuilder.Player : null,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
-          _activeBuilder != null ? _activeBuilder.Hud : null,
-          MathWorldBuilder.WorldOffset + MathWorldBuilder.MatchHubReturnLocal);
-        matchArea.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
-        if (builder.MatchPortal != null) builder.MatchPortal.MatchArea = matchArea;
-        try { Debug.Log("[GameInstaller] Match Meadow area wired (portal="
-          + (builder.MatchPortal != null) + ").", this); }
-        catch (System.Exception) { }
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Match Meadow area wiring failed: " + e.Message, this);
-      }
+      // COUNTING GARDEN CLEANUP (product decision): the Build Yard, Delivery
+      // Village and Match Meadow area modules were removed together with their
+      // gameplay (scenes, drivers, tests). Their hub gates remain LANDMARK
+      // SKELETONS; no travel/area path exists for them anymore.
       // S3-P2Z18 GAMEPLAY #7: the Discovery Garden's own area module (living
       // in MathScene like the others) drives gate -> micro-world travel.
       try {
@@ -909,9 +619,6 @@ public class GameInstaller : MonoBehaviour {
   // intact, no save-format break).
   MarketBuilder _activeBuilder;
   CountingGardenArea _gardenArea;
-  BuildTowerArea _buildArea;
-  DeliveryArea _deliveryArea;
-  MatchArea _matchArea;
   DiscoveryArea _discoveryArea;
 
   public PlayerGender CurrentGender {

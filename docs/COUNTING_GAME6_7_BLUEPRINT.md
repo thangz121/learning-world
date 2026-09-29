@@ -1,5 +1,10 @@
 # COUNTING GARDEN — GAMEPLAY #6/#7: "HÁI ĐÚNG SỐ DÂU" (ZONE 1) + "BẺ ĐÚNG SỐ NGÔ LÊN XE" (ZONE 3) — BLUEPRINT
 
+> **REJECTED (product decision 2026-09-29):** the harvest-beds gameplay was
+> removed from the product direction (it never shipped in the committed line);
+> Counting Garden keeps only Rabbit Feeding (#3) + Number Stairs (#2). Kept as a
+> historical round record only.
+
 Phase: S3-P2Z16 (2026-09-25, maynode). Reference: gameplay #1-#5
 (`COUNTING_GAME*_BLUEPRINT.md` / `..._REPORT.md`) — reused as QUALITY/
 ARCHITECTURE/PRESENTATION reference, never copied as a gameplay.

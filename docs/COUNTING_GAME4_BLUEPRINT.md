@@ -1,5 +1,11 @@
 # COUNTING GARDEN — GAMEPLAY #4: "XÂY THÁP THEO SỐ" (BUILD THE TOWER) — BLUEPRINT
 
+> **REJECTED (product decision 2026-09-29):** this gameplay was removed from the
+> product (scenes, areas, games, builders, drivers, tests, Build Settings, SFX
+> wiring). Counting Garden keeps only Rabbit Feeding (#3) + Number Stairs (#2);
+> the Math Hub gate of this world remains a LANDMARK SKELETON. Kept as a
+> historical round record only.
+
 Phase: S3-P2Z14 (2026-09-25). Full vertical slice: Math Hub gate → transition →
 independent Micro-World → arena → demo → player gameplay → completion → reward →
 exit → return to Math Hub.

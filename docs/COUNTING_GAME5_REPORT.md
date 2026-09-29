@@ -1,5 +1,11 @@
 # COUNTING GARDEN — GAMEPLAY #5 "GIAO HÀNG ĐÚNG SỐ" (DELIVER THE APPLES) — REPORT (S3-P2Z15)
 
+> **REJECTED (product decision 2026-09-29):** this gameplay was removed from the
+> product (scenes, areas, games, builders, drivers, tests, Build Settings, SFX
+> wiring). Counting Garden keeps only Rabbit Feeding (#3) + Number Stairs (#2);
+> the Math Hub gate of this world remains a LANDMARK SKELETON. Kept as a
+> historical round record only.
+
 Date: 2026-09-25. Machine: ASUS (batch: tests + production build + boot smoke).
 Journey/evidence: **pending on maynode** (standing order: journey drivers are
 committed with the bundle, journeys run on maynode). Blueprint:

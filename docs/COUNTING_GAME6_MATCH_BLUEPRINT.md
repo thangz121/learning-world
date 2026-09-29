@@ -1,5 +1,11 @@
 # COUNTING GARDEN — GAMEPLAY #6: "GHÉP ĐÚNG CẶP" (MATCH THE PAIR) — BLUEPRINT
 
+> **REJECTED (product decision 2026-09-29):** this gameplay was removed from the
+> product (scenes, areas, games, builders, drivers, tests, Build Settings, SFX
+> wiring). Counting Garden keeps only Rabbit Feeding (#3) + Number Stairs (#2);
+> the Math Hub gate of this world remains a LANDMARK SKELETON. Kept as a
+> historical round record only.
+
 Phase: S3-P2Z17 (2026-09-25, maynode). The FINAL game of the Counting Garden
 chain. Reference: gameplay #1-#5 + the two harvest beds (#6/#7 internal) —
 reused as QUALITY/ARCHITECTURE/PRESENTATION reference, never copied as a

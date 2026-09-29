@@ -10,13 +10,6 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class MicroWorldPortal : MonoBehaviour {
   public CountingGardenArea Area;
-  // Gameplay #4 (S3-P2Z14): an independent micro-world (Build Yard) uses the
-  // same walk-in portal contract. Exactly ONE of the targets is set.
-  public BuildTowerArea BuildArea;
-  // Gameplay #5 (S3-P2Z15): the Delivery Village's own area module.
-  public DeliveryArea DeliveryArea;
-  // Gameplay #6 (S3-P2Z17): the Match Meadow's own area module.
-  public MatchArea MatchArea;
   // Gameplay #7 (S3-P2Z18): the Discovery Garden's own area module.
   public DiscoveryArea DiscoveryArea;
   public bool ExitMode;
@@ -34,12 +27,11 @@ public class MicroWorldPortal : MonoBehaviour {
   // arms after the player has walked clear of the radius at least once.
   bool _wasInside = true;
 
-  // The one dispatch seam (S3-P2Z15): every area implements IMicroWorldArea.
+  // The one dispatch seam (S3-P2Z15): every LIVE area implements
+  // IMicroWorldArea. (Build Yard / Delivery / Match gameplay was removed in
+  // the Counting Garden cleanup; their gates remain hub landmarks only.)
   public IMicroWorldArea TargetArea() {
     if (Area != null) return Area;
-    if (BuildArea != null) return BuildArea;
-    if (DeliveryArea != null) return DeliveryArea;
-    if (MatchArea != null) return MatchArea;
     return DiscoveryArea;
   }
 

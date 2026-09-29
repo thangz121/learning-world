@@ -173,16 +173,6 @@ public class AudioDirector : IAudioDirector {
       case "munch":
         clip = Tone(id, 0.18f, 420f, 180f, 0.6f, 7.0f);
         break;
-      // Gameplay #4: a wooden block clack — the tower audibly gains a piece
-      // (short, low, thumpy; never a sharp knock).
-      case "block":
-        clip = Tone(id, 0.15f, 210f, 120f, 0.65f, 8.0f);
-        break;
-      // Gameplay #5: a soft two-tone "give" — the handover to the receiver
-      // (warm, short; never a bell or a cash-register).
-      case "give":
-        clip = Tone(id, 0.16f, 520f, 760f, 0.5f, 6.0f);
-        break;
       // Gameplay #7: a bright discovery chirp — "you found it!" (short, rising,
       // unmistakable; the ONLY special sound in the garden).
       case "found":
