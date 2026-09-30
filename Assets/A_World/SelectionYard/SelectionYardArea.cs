@@ -261,6 +261,11 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   public ClassificationCity CityGame { get; private set; }
   public void BindCityGame(ClassificationCity game) { CityGame = game; }
 
+  public ActivityLifecycle StationLifecycle { get; private set; } =
+    new ActivityLifecycle("ordering_station", "SelectionYardArea");
+  public OrderingStation StationGame { get; private set; }
+  public void BindStationGame(OrderingStation game) { StationGame = game; }
+
   // ---- arena travel (single micro slot: yard out -> arena in, and back) ----------
   public void SetPlay(Vector3 entry, ActivityAnchors anchors, Vector3 center,
       float boundX, float boundZ, Vector3 followOffset, string objective = null) {

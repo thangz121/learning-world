@@ -51,7 +51,7 @@ public class CT_S12_SelectionYardBuilder {
       Transform[] all = root.GetComponentsInChildren<Transform>(true);
       for (int i = 0; i < all.Length; i++)
         if (all[i].GetComponent<MicroGateHint>() != null) hints++;
-      Assert.AreEqual(4, hints, "counting, geometry, comparison and classification glow");
+      Assert.AreEqual(5, hints, "all five math skills glow");
       Assert.IsNotNull(builder.BackGate, "skill yard has the way back");
       Assert.AreEqual(SelectionGate.GateKind.Back, builder.BackGate.Kind, "back gate kind");
       Assert.IsNotNull(builder.TitleBoard, "orientation sign staged");
@@ -98,7 +98,7 @@ public class CT_S12_SelectionYardBuilder {
   // never a fake game door (product rule).
   [Test] public void S12C_EmptySkillPlaceholder() {
     GameObject root;
-    SelectionYardBuilder builder = BuildYard("game", "", "math_order", out root);
+    SelectionYardBuilder builder = BuildYard("game", "", "thinking_pattern", out root);
     try {
       Assert.AreEqual(0, builder.GatePortals.Count, "no game doors for an empty skill");
       Assert.IsNotNull(builder.PlaceholderBoard, "placeholder board staged");
@@ -160,7 +160,7 @@ public class CT_S12_SelectionYardBuilder {
         "skill doors carry no game previews");
     } finally { Object.DestroyImmediate(skillRoot); }
     GameObject emptyRoot;
-    BuildYard("game", "", "math_order", out emptyRoot);
+    BuildYard("game", "", "thinking_pattern", out emptyRoot);
     try {
       Assert.IsNull(FindDeep(emptyRoot.transform, "SYPreview_number_stairs"),
         "empty yard carries no previews");
@@ -208,7 +208,7 @@ public class CT_S12_SelectionYardBuilder {
       Assert.AreEqual(0, cols.Length, "dressing never blocks the walk");
     } finally { Object.DestroyImmediate(root); }
     GameObject empty;
-    SelectionYardBuilder emptyYard = BuildYard("game", "", "math_order", out empty);
+    SelectionYardBuilder emptyYard = BuildYard("game", "", "thinking_pattern", out empty);
     try {
       Assert.AreEqual(0, emptyYard.GatePortals.Count, "empty yard still has no doors");
       Assert.IsNotNull(FindDeep(empty.transform, "SYPondWater"), "empty yard is a quiet garden");

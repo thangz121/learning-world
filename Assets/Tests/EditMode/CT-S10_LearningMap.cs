@@ -60,7 +60,7 @@ public class CT_S10_LearningMap {
 
   // C. Game registry + ABSOLUTE acceptance baseline.
   [Test] public void S10C_AcceptedGamesOnly() {
-    Assert.AreEqual(5, LearningMap.Games.Length, "two accepted + geometry + market + city");
+    Assert.AreEqual(6, LearningMap.Games.Length, "two accepted + geometry + market + city + station");
     var accepted = new List<string>();
     for (int i = 0; i < LearningMap.Games.Length; i++)
       if (LearningMap.Games[i].HumanAccepted) accepted.Add(LearningMap.Games[i].Id);
@@ -70,6 +70,7 @@ public class CT_S10_LearningMap {
     Assert.IsFalse(accepted.Contains("shape_builder"), "geometry is not accepted");
     Assert.IsFalse(accepted.Contains("comparison_market"), "market is not accepted");
     Assert.IsFalse(accepted.Contains("classification_city"), "city is not accepted");
+    Assert.IsFalse(accepted.Contains("ordering_station"), "station is not accepted");
     Assert.AreEqual("Cho thỏ ăn", LearningMap.GameDisplay("rabbit_feeding"), "rabbit display");
     Assert.AreEqual("Bậc thang con số", LearningMap.GameDisplay("number_stairs"), "stairs display");
     Assert.AreEqual("Lắp Hình Vui Nhộn", LearningMap.GameDisplay("shape_builder"), "geometry display");
@@ -101,11 +102,20 @@ public class CT_S10_LearningMap {
     Assert.AreEqual("math_classification", LearningMap.Game("classification_city").SkillId,
       "city lives under Math -> Phân loại");
     Assert.AreEqual(1, LearningMap.GamesOf("math_classification").Length, "classification owns 1 game");
+    Assert.AreEqual("Ga Thứ Tự", LearningMap.GameDisplay("ordering_station"), "station display");
+    Assert.AreEqual("OrderingStationPlayScene", LearningMap.Game("ordering_station").SceneName,
+      "station scene");
+    Assert.AreEqual(GameStatus.Implemented, LearningMap.Game("ordering_station").Status,
+      "station stays IMPLEMENTED");
+    Assert.AreEqual("math_order", LearningMap.Game("ordering_station").SkillId,
+      "station lives under Math -> Thứ tự");
+    Assert.AreEqual(1, LearningMap.GamesOf("math_order").Length, "order owns 1 game");
     for (int i = 0; i < LearningMap.Subjects.Length; i++) {
       SkillEntry[] skills = LearningMap.Subjects[i].Skills;
       for (int s = 0; s < skills.Length; s++) {
         if (skills[s].Id == "math_counting" || skills[s].Id == "math_geometry"
-            || skills[s].Id == "math_comparison" || skills[s].Id == "math_classification") continue;
+            || skills[s].Id == "math_comparison" || skills[s].Id == "math_classification"
+            || skills[s].Id == "math_order") continue;
         Assert.AreEqual(0, LearningMap.GamesOf(skills[s].Id).Length,
           "no fake games under " + skills[s].Id);
       }
@@ -118,6 +128,8 @@ public class CT_S10_LearningMap {
     Assert.IsTrue(LearningMap.CanLaunch("comparison_market"), "market arena may be entered");
     Assert.IsFalse(LearningMap.IsPlayable("classification_city"), "city is not HUMAN_ACCEPTED");
     Assert.IsTrue(LearningMap.CanLaunch("classification_city"), "city arena may be entered");
+    Assert.IsFalse(LearningMap.IsPlayable("ordering_station"), "station is not HUMAN_ACCEPTED");
+    Assert.IsTrue(LearningMap.CanLaunch("ordering_station"), "station arena may be entered");
     Assert.IsFalse(LearningMap.IsPlayable("anything_else"), "unknown is never playable");
   }
 

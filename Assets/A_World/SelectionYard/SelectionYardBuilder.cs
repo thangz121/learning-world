@@ -466,6 +466,20 @@ public class SelectionYardBuilder : MonoBehaviour {
       Box(kit.transform, "Garage", new Vector3(0.4f, 0.25f, 0f), new Vector3(0.5f, 0.5f, 0.4f), Gold);
       Ball(kit.transform, "Pet", new Vector3(-0.4f, 0.62f, 0f), 0.14f, Coral);
       Box(kit.transform, "Cartoy", new Vector3(0.4f, 0.55f, 0f), new Vector3(0.24f, 0.12f, 0.14f), Blue);
+    } else if (gameId == "ordering_station") {
+      GameObject kit = new GameObject("SYPreview_ordering_station");
+      kit.transform.SetParent(parent, false);
+      kit.transform.localPosition = p;
+      Ignore(kit);
+      // Three ascending steps: the ordering motif, no words.
+      Box(kit.transform, "Rail", new Vector3(0f, 0.03f, 0.15f), new Vector3(1.3f, 0.06f, 0.16f), Wood);
+      float[] hs = { 0.18f, 0.32f, 0.46f };
+      for (int i = 0; i < 3; i++) {
+        float sx = -0.4f + i * 0.4f;
+        Box(kit.transform, "Step" + i, new Vector3(sx, hs[i] * 0.5f, 0f),
+          new Vector3(0.26f, hs[i], 0.26f), AccentFor(i));
+        Ball(kit.transform, "Orb" + i, new Vector3(sx, hs[i] + 0.1f, 0f), 0.14f, Gold);
+      }
     }
   }
 

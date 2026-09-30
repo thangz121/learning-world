@@ -170,6 +170,10 @@ public class GameInstaller : MonoBehaviour {
       BuildClassificationCityPlayScene(scene);
       return;
     }
+    if (scene.name == OrderingStationBuilder.SceneName) {
+      BuildOrderingStationPlayScene(scene);
+      return;
+    }
     // COUNTING GARDEN CLEANUP (product decision): Build Yard / Delivery /
     // Match gameplay scenes were removed; their hub gates stay landmarks.
     if (scene.name == DiscoveryBuilder.SceneName) {
@@ -602,6 +606,51 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] ClassificationCityPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildOrderingStationPlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "OrderingStationWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] OrderingStationPlayScene has no OrderingStationWorld root.", this);
+        return;
+      }
+      root.transform.position = OrderingStationBuilder.WorldOffset;
+      OrderingStationBuilder builder = root.GetComponent<OrderingStationBuilder>();
+      if (builder == null) builder = root.AddComponent<OrderingStationBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = OrderingStationBuilder.WorldOffset + OrderingStationBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, OrderingStationBuilder.WorldOffset,
+          OrderingStationBuilder.BoundX, OrderingStationBuilder.BoundZ, OrderingStationBuilder.FollowOffset,
+          DialogueLang.T(OrderingStationBuilder.ObjectiveEn, OrderingStationBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        OrderingStation game = root.GetComponent<OrderingStation>();
+        if (game == null) game = root.AddComponent<OrderingStation>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle stationLife = _yardArea != null ? _yardArea.StationLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, stationLife);
+        if (_yardArea != null) _yardArea.BindStationGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Station play wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Station Play scene built entry="
+          + (OrderingStationBuilder.WorldOffset + OrderingStationBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] OrderingStationPlayScene build failed: " + e.Message, this);
     }
   }
 
