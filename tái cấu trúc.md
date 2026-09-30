@@ -53,6 +53,9 @@ Rule: no destructive step runs before this file exists; phases are committed sep
 - TOÁN HỌC → ĐẾM → **Cho thỏ ăn** (Rabbit Feeding) — HUMAN_ACCEPTED
 - TOÁN HỌC → ĐẾM → **Bậc thang con số** (Number Stairs) — HUMAN_ACCEPTED
 
+**IMPLEMENTED (not accepted):**
+- TOÁN HỌC → HÌNH HỌC → **Lắp Hình Vui Nhộn** (`shape_builder`, `GeometryPlayScene`) — IMPLEMENTED
+
 **NOT ACCEPTED — everything else.** Discovery Garden, Build Yard, Delivery Village,
 Match Meadow, Fruit Orchard, Sorting Park, Puzzle Workshop, Number Bridge, Memory
 Grove, market English quests, old Math hub, old Counting Garden plot layer, all other
@@ -90,7 +93,7 @@ LITTLE WORLD ENGLISH
 └── (A) SÂN CHỌN MÔN HỌC  [MainScene = subject yard, 5 gates]
     ├── TOÁN HỌC ──────────── (B) SÂN CHỌN KỸ NĂNG: ĐẾM | HÌNH HỌC | SO SÁNH | PHÂN LOẠI | THỨ TỰ
     │        └── ĐẾM ──────── (C) SÂN CHỌN TRÒ CHƠI: Cho thỏ ăn ✅ | Bậc thang con số ✅
-    │        └── HÌNH HỌC ─── (C) [CHƯA CÓ TRÒ CHƠI]
+    │        └── HÌNH HỌC ─── (C) Lắp Hình Vui Nhộn (shape_builder, IMPLEMENTED)
     │        └── SO SÁNH ──── (C) [CHƯA CÓ TRÒ CHƠI]
     │        └── PHÂN LOẠI ── (C) [CHƯA CÓ TRÒ CHƠI]
     │        └── THỨ TỰ ───── (C) [CHƯA CÓ TRÒ CHƠI]
@@ -111,6 +114,7 @@ Selection Yard (empty skills show `[CHƯA CÓ TRÒ CHƠI]`, no fake games).
 | `SelectionYardScene` (**NEW, one generic scene**) | (B) Skill Yard **and** (C) Game Yard | lazy, shared micro slot via `WorldTransition.EnterMicroAsync` | `SelectionYardArea` |
 | `RabbitPlayScene` | game: Cho thỏ ăn | lazy micro slot | arena `RabbitFeed` (unchanged) |
 | `StairPlayScene` | game: Bậc thang con số | lazy micro slot | arena `NumberStairs` (unchanged) |
+| `GeometryPlayScene` | game: Lắp Hình Vui Nhộn | lazy micro slot | arena `GeometryPlay` (IMPLEMENTED, not HUMAN_ACCEPTED) |
 
 - ONE generic yard scene serves both B and C (data-driven by subject/skill context);
   no 21 scene copies. A yard is rebuilt on each entry (level + context set before load).

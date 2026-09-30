@@ -32,8 +32,8 @@ public class SelectionYardBuilder : MonoBehaviour {
   public string SubjectId = "";    // skill level
   public string SkillId = "";      // game level
 
-  static readonly Color Lawn = new Color(0.38f, 0.64f, 0.36f);
-  static readonly Color Meadow = new Color(0.46f, 0.71f, 0.42f);
+  static readonly Color Lawn = new Color(0.44f, 0.70f, 0.42f);
+  static readonly Color Meadow = new Color(0.54f, 0.78f, 0.48f);
   static readonly Color PathTan = new Color(0.76f, 0.60f, 0.40f);
   static readonly Color Sand = new Color(0.86f, 0.78f, 0.62f);
   static readonly Color Stone = new Color(0.68f, 0.68f, 0.66f);
@@ -79,6 +79,7 @@ public class SelectionYardBuilder : MonoBehaviour {
     BuildOrientation(root);
     BuildGates(root);
     BuildAnchors(root);
+    BuildDressing(root);
     GameObject entry = new GameObject("EntryPoint");
     entry.transform.SetParent(root, false);
     entry.transform.localPosition = EntryLocal;
@@ -127,8 +128,10 @@ public class SelectionYardBuilder : MonoBehaviour {
       bush.transform.SetParent(parent, false);
       bush.transform.localPosition = new Vector3(Mathf.Sin(rad) * 15.5f, 0.55f, 3f + Mathf.Cos(rad) * 15.5f);
       bush.transform.localScale = (i % 2 == 0) ? new Vector3(3.4f, 2.2f, 3.4f) : new Vector3(2.8f, 1.9f, 2.8f);
-      bush.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.24f, 0.55f, 0.30f));
+      bush.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.28f, 0.58f, 0.34f));
       Strip(bush);
+      Ignore(bush);
+      WorldBeauty.HedgeBloom(parent, "SYHedgeBloom" + i, bush.transform.localPosition);
     }
   }
 
@@ -137,6 +140,7 @@ public class SelectionYardBuilder : MonoBehaviour {
     Box(parent, "SYEntryPostR", new Vector3(1.6f, 1.0f, -9.5f), new Vector3(0.22f, 2.0f, 0.22f), Gold);
     GameObject beam = Box(parent, "SYEntryBeam", new Vector3(0f, 2.06f, -9.5f), new Vector3(3.4f, 0.16f, 0.16f), Cream);
     Ignore(beam);
+    WorldBeauty.BlossomCrown(parent, "SYEntryCrown", new Vector3(0f, 2.72f, -9.5f), 0.62f);
     Pad(parent, "SYEntryDisc", new Vector3(0f, 0.008f, -3.6f), 2.4f, Stone);
     // BACK portal: up one level (game -> skill -> subject yard).
     Pad(parent, "SYBackDisc", new Vector3(0f, 0.01f, -11.1f), 3.2f, Mint);
@@ -148,6 +152,7 @@ public class SelectionYardBuilder : MonoBehaviour {
     BackGate = back.AddComponent<SelectionGate>();
     BackGate.Kind = SelectionGate.GateKind.Back;
     StageLabel(parent, "SYBackLabel", "Về", BackLocal + new Vector3(0f, 2.2f, 0f));
+    WorldBeauty.BlossomCrown(parent, "SYBackCrown", BackLocal + new Vector3(0f, 2.45f, 0f), 0.48f);
   }
 
   // ---- orientation sign: the yard's single title ---------------------------------
@@ -159,9 +164,15 @@ public class SelectionYardBuilder : MonoBehaviour {
     Vector3 pos = new Vector3(0f, 0f, 7.6f);
     Box(parent, "SYTitlePostL", pos + new Vector3(-1.6f, 0.9f, 0f), new Vector3(0.16f, 1.8f, 0.16f), Wood);
     Box(parent, "SYTitlePostR", pos + new Vector3(1.6f, 0.9f, 0f), new Vector3(0.16f, 1.8f, 0.16f), Wood);
-    GameObject panel = Box(parent, "SYTitlePanel", pos + new Vector3(0f, 2.0f, 0f), new Vector3(3.6f, 0.9f, 0.12f), Cream);
+    GameObject frame = Box(parent, "SYTitleFrame", pos + new Vector3(0f, 2.0f, 0.08f),
+      new Vector3(4.5f, 1.32f, 0.08f), Wood);
+    Ignore(frame);
+    GameObject panel = Box(parent, "SYTitlePanel", pos + new Vector3(0f, 2.0f, 0f), new Vector3(4.15f, 1.08f, 0.12f), Cream);
     SetMat(panel, Emissive(Cream, 0.2f));
     Ignore(panel);
+    GameObject stripe = Box(parent, "SYTitleStripe", pos + new Vector3(0f, 2.48f, -0.02f),
+      new Vector3(4.0f, 0.1f, 0.1f), Gold);
+    Ignore(stripe);
     TitleBoard = panel;
     StageLabel(parent, "SYTitleLabel", title, pos + new Vector3(0f, 2.02f, -0.2f));
   }
@@ -180,8 +191,10 @@ public class SelectionYardBuilder : MonoBehaviour {
         return;
       }
       for (int i = 0; i < games.Length; i++) {
+        bool live = LearningMap.CanLaunch(games[i].Id);
+        Color accent = games[i].HumanAccepted ? Gold : (live ? Blue : Cream);
         BuildGate(parent, i, games.Length, games[i].Id, games[i].DisplayName,
-          games[i].HumanAccepted ? Gold : Cream, games[i].HumanAccepted, SelectionGate.GateKind.Play);
+          accent, live, SelectionGate.GateKind.Play);
       }
       return;
     }
@@ -200,6 +213,9 @@ public class SelectionYardBuilder : MonoBehaviour {
     Vector3 pos = new Vector3(0f, 0f, 4.6f);
     Box(parent, "SYPlaceholderPostL", pos + new Vector3(-1.7f, 0.9f, 0f), new Vector3(0.18f, 1.9f, 0.18f), Wood);
     Box(parent, "SYPlaceholderPostR", pos + new Vector3(1.7f, 0.9f, 0f), new Vector3(0.18f, 1.9f, 0.18f), Wood);
+    GameObject frame = Box(parent, "SYPlaceholderFrame", pos + new Vector3(0f, 2.05f, 0.08f),
+      new Vector3(4.9f, 1.6f, 0.08f), Wood);
+    Ignore(frame);
     GameObject panel = Box(parent, "SYPlaceholderPanel", pos + new Vector3(0f, 2.05f, 0f),
       new Vector3(4.4f, 1.3f, 0.14f), Cream);
     SetMat(panel, Emissive(Cream, 0.18f));
@@ -241,6 +257,14 @@ public class SelectionYardBuilder : MonoBehaviour {
     // Floating label over the gate (world-staged: the island root sits at
     // +540, local offsets MUST be transformed — PHASE 4 label fix).
     StageLabel(parent, "Label", display, new Vector3(x, 2.75f, z));
+    // Cream plaque behind the pill so the name reads as a sign, not sky text.
+    // Sits above agent height and is bake-ignored (headroom rule).
+    GameObject plaqueFrame = Box(parent, "SYNameFrame_" + id, new Vector3(x, 2.72f, z + 0.16f),
+      new Vector3(1.95f, 0.62f, 0.06f), Wood);
+    Ignore(plaqueFrame);
+    GameObject plaque = Box(parent, "SYNamePlaque_" + id, new Vector3(x, 2.72f, z + 0.1f),
+      new Vector3(1.72f, 0.46f, 0.06f), Cream);
+    Ignore(plaque);
     // The walk-in door (7cm/mouth toward the entry) + approach glow for live
     // gates only (an empty skill/game never pretends to be an activity).
     GameObject door = new GameObject("Door");
@@ -351,6 +375,10 @@ public class SelectionYardBuilder : MonoBehaviour {
         new Color(0.97f, 0.96f, 0.94f));
       earR.transform.localScale = new Vector3(0.09f, 0.24f, 0.09f);
       Ball(bunny.transform, "Nose", new Vector3(0.14f, 0.49f, 0.13f), 0.06f, Coral);
+      Ball(bunny.transform, "EyeL", new Vector3(-0.04f, 0.56f, 0.12f), 0.045f, new Color(0.15f, 0.12f, 0.12f));
+      Ball(bunny.transform, "EyeR", new Vector3(0.08f, 0.56f, 0.12f), 0.045f, new Color(0.15f, 0.12f, 0.12f));
+      Ball(bunny.transform, "EarInL", new Vector3(-0.06f, 0.74f, 0.04f), 0.05f, WorldBeauty.BlossomDeep);
+      Ball(bunny.transform, "EarInR", new Vector3(0.10f, 0.74f, 0.04f), 0.05f, WorldBeauty.BlossomDeep);
       // Two carrots in front of the bunny (the feeding motif).
       for (int i = 0; i < 2; i++) {
         GameObject carrot = new GameObject("Carrot" + i);
@@ -375,19 +403,94 @@ public class SelectionYardBuilder : MonoBehaviour {
       stairs.transform.localPosition = p + new Vector3(-0.3f, 0f, 0f);
       stairs.transform.localScale = Vector3.one * 1.4f;
       Ignore(stairs);
-      Box(stairs.transform, "Step1", new Vector3(0f, 0.07f, 0f), new Vector3(0.30f, 0.14f, 0.34f), Stone);
-      Box(stairs.transform, "Step2", new Vector3(0.24f, 0.14f, 0f), new Vector3(0.30f, 0.28f, 0.34f), Stone);
-      Box(stairs.transform, "Step3", new Vector3(0.48f, 0.21f, 0f), new Vector3(0.30f, 0.42f, 0.34f), Stone);
+      Box(stairs.transform, "Step1", new Vector3(0f, 0.07f, 0f), new Vector3(0.30f, 0.14f, 0.34f),
+        new Color(0.95f, 0.78f, 0.52f));
+      Box(stairs.transform, "Step2", new Vector3(0.24f, 0.14f, 0f), new Vector3(0.30f, 0.28f, 0.34f),
+        new Color(0.86f, 0.62f, 0.38f));
+      Box(stairs.transform, "Step3", new Vector3(0.48f, 0.21f, 0f), new Vector3(0.30f, 0.42f, 0.34f),
+        new Color(0.72f, 0.50f, 0.30f));
       Ball(stairs.transform, "Orb", new Vector3(0.48f, 0.52f, 0f), 0.22f, Gold);
       GameObject flag = Box(stairs.transform, "FlagPole", new Vector3(0.48f, 0.62f, -0.12f),
         new Vector3(0.04f, 0.5f, 0.04f), Wood);
       Box(flag.transform, "Flag", new Vector3(0.09f, 0.16f, 0f), new Vector3(0.18f, 0.12f, 0.03f), Coral);
+    } else if (gameId == "shape_builder") {
+      GameObject kit = new GameObject("SYPreview_shape_builder");
+      kit.transform.SetParent(parent, false);
+      kit.transform.localPosition = p;
+      Ignore(kit);
+      GeometryPlayBuilder.BuildKindVisual(kit.transform, GeometryKind.Triangle,
+        GeometryShapes.ColorAt(0));
+      GameObject sq = new GameObject("Sq");
+      sq.transform.SetParent(kit.transform, false);
+      sq.transform.localPosition = new Vector3(0.38f, 0f, 0f);
+      sq.transform.localScale = Vector3.one * 0.55f;
+      GeometryPlayBuilder.BuildKindVisual(sq.transform, GeometryKind.Square,
+        GeometryShapes.ColorAt(1));
+      GameObject ci = new GameObject("Ci");
+      ci.transform.SetParent(kit.transform, false);
+      ci.transform.localPosition = new Vector3(-0.38f, 0f, 0.12f);
+      ci.transform.localScale = Vector3.one * 0.5f;
+      GeometryPlayBuilder.BuildKindVisual(ci.transform, GeometryKind.Circle,
+        GeometryShapes.ColorAt(2));
     }
   }
 
   static Color AccentFor(int index) {
     Color[] palette = { Gold, Blue, Coral, Leaf, Plum, Sky };
     return palette[Mathf.Abs(index) % palette.Length];
+  }
+
+  // Collider-free garden so a yard never reads as an empty lawn. Trees and
+  // lanterns sit off the entry spine and the gate mouths; Seal keeps every
+  // mesh out of the NavMesh bake (headroom rule).
+  void BuildDressing(Transform parent) {
+    GameObject dress = new GameObject("SYDressing");
+    dress.transform.SetParent(parent, false);
+    Transform d = dress.transform;
+    Vector3[] trees = {
+      new Vector3(-11.2f, 0f, 5.6f), new Vector3(11.2f, 0f, 5.6f),
+      new Vector3(-10.6f, 0f, -5.4f), new Vector3(10.6f, 0f, -5.4f),
+    };
+    float[] scales = { 0.85f, 0.78f, 0.72f, 0.8f };
+    for (int i = 0; i < trees.Length; i++) {
+      WorldBeauty.BlossomTree(d, "SYBlossomTree" + i, trees[i], scales[i]);
+      WorldBeauty.PetalCarpet(d, "SYPetalCarpet" + i, trees[i], 2.2f);
+    }
+    WorldBeauty.PetalCarpet(d, "SYPlazaPetal", new Vector3(0f, 0f, 1.2f), 10.5f);
+    Vector3[] drifts = {
+      new Vector3(-5.4f, 0f, 0.4f), new Vector3(5.4f, 0f, 0.4f),
+      new Vector3(-6.2f, 0f, 7.2f), new Vector3(6.2f, 0f, 7.2f),
+      new Vector3(-3.6f, 0f, -6.4f), new Vector3(3.6f, 0f, -6.4f),
+      new Vector3(-4.8f, 0f, 8.6f), new Vector3(4.8f, 0f, 8.6f),
+    };
+    for (int i = 0; i < drifts.Length; i++)
+      WorldBeauty.FlowerDrift(d, "SYFlowerDrift" + i, drifts[i], 1.15f + (i % 2) * 0.2f);
+    for (int i = 0; i < 8; i++)
+      WorldBeauty.PathStone(d, "SYPathStone" + i, new Vector3(0f, 0f, -8.4f + i * 1.15f), 1.55f);
+    WorldBeauty.Lantern(d, "SYLanternL0", new Vector3(-3.5f, 0f, -6.2f));
+    WorldBeauty.Lantern(d, "SYLanternR0", new Vector3(3.5f, 0f, -6.2f));
+    WorldBeauty.Lantern(d, "SYLanternL1", new Vector3(-3.5f, 0f, 0.6f));
+    WorldBeauty.Lantern(d, "SYLanternR1", new Vector3(3.5f, 0f, 0.6f));
+    WorldBeauty.Butterfly(d, "SYButterfly0", new Vector3(-4.2f, 0f, 2.2f), 1.6f, 0.2f,
+      WorldBeauty.BlossomDeep, WorldBeauty.BlossomCream);
+    WorldBeauty.Butterfly(d, "SYButterfly1", new Vector3(4.4f, 0f, 6.4f), 1.6f, 0.7f,
+      WorldBeauty.Lilac, WorldBeauty.BlossomPink);
+    WorldBeauty.PetalFall(d, "SYPetalFall", new Vector3(0f, 0f, 2f), 8f, 10, 43030);
+    for (int i = 0; i < GateRoots.Count; i++) {
+      Vector3 g = GateRoots[i].localPosition;
+      WorldBeauty.FlowerDrift(d, "SYGateFlowersL" + i, g + new Vector3(-1.35f, 0f, -0.15f), 0.7f);
+      WorldBeauty.FlowerDrift(d, "SYGateFlowersR" + i, g + new Vector3(1.35f, 0f, -0.15f), 0.7f);
+    }
+    if (PlaceholderBoard != null) {
+      WorldBeauty.Pond(d, "SYPond", new Vector3(4.6f, 0f, 1.1f), 2.6f);
+      WorldBeauty.BlossomTree(d, "SYQuietTree", new Vector3(-5.4f, 0f, 2.0f), 0.9f);
+      WorldBeauty.PetalCarpet(d, "SYQuietCarpet", new Vector3(-5.4f, 0f, 2.0f), 2.4f);
+      WorldBeauty.FlowerDrift(d, "SYQuietFlowersL", new Vector3(-2.3f, 0f, 3.1f), 1.1f);
+      WorldBeauty.FlowerDrift(d, "SYQuietFlowersR", new Vector3(2.3f, 0f, 3.1f), 1.1f);
+      WorldBeauty.Butterfly(d, "SYQuietButterfly", new Vector3(3.2f, 0f, 2.4f), 1.4f, 0.4f,
+        WorldBeauty.Peach, WorldBeauty.BlossomPink);
+    }
+    WorldBeauty.Seal(dress);
   }
 
   // ---- anchors / camera -----------------------------------------------------------

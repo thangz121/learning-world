@@ -129,7 +129,7 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
     GameEntry game = LearningMap.Game(gameId);
     bool ok = game != null && CurrentLevel == YardLevel.Game
       && string.Equals(game.SkillId, CurrentSkillId, StringComparison.OrdinalIgnoreCase)
-      && LearningMap.IsPlayable(gameId);
+      && LearningMap.CanLaunch(gameId);
     if (!ok) {
       Log("refused: '" + gameId + "' is not a playable game of this yard");
       return;
@@ -245,6 +245,11 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
     _rabbitLifeTarget = RabbitTarget;
   }
   public void TickRabbitProgressionForTests() { MaybeAdvanceRabbitTarget(); }
+
+  public ActivityLifecycle GeometryLifecycle { get; private set; } =
+    new ActivityLifecycle("shape_builder", "SelectionYardArea");
+  public GeometryPlay GeometryGame { get; private set; }
+  public void BindGeometryGame(GeometryPlay game) { GeometryGame = game; }
 
   // ---- arena travel (single micro slot: yard out -> arena in, and back) ----------
   public void SetPlay(Vector3 entry, ActivityAnchors anchors, Vector3 center,

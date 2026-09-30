@@ -91,9 +91,10 @@ public static class LearningMap {
   public const string ExplorationWorld = "exploration_world";
   public const string ExplorationDailyLife = "exploration_daily_life";
 
-  // Game ids (the ONLY two accepted games today).
+  // Game ids. HUMAN_ACCEPTED stays exactly the two counting games.
   public const string RabbitFeedingGame = "rabbit_feeding";
   public const string NumberStairsGame = "number_stairs";
+  public const string ShapeBuilderGame = "shape_builder";
 
   public static readonly SkillEntry[] MathSkills = {
     new SkillEntry(MathCounting, MathId, "Đếm"),
@@ -139,13 +140,16 @@ public static class LearningMap {
   // Scene names kept EXACTLY (approved arenas; gameplay frozen).
   public const string RabbitFeedingScene = "RabbitPlayScene";
   public const string NumberStairsScene = "StairPlayScene";
+  public const string ShapeBuilderScene = "GeometryPlayScene";
 
-  // The game registry: ONLY these two exist; both HUMAN_ACCEPTED.
+  // Counting games stay HUMAN_ACCEPTED. Geometry is IMPLEMENTED only.
   public static readonly GameEntry[] Games = {
     new GameEntry(RabbitFeedingGame, MathCounting, "Cho thỏ ăn",
       RabbitFeedingScene, GameStatus.HumanAccepted),
     new GameEntry(NumberStairsGame, MathCounting, "Bậc thang con số",
       NumberStairsScene, GameStatus.HumanAccepted),
+    new GameEntry(ShapeBuilderGame, MathGeometry, "Lắp Hình Vui Nhộn",
+      ShapeBuilderScene, GameStatus.Implemented),
   };
 
   // ---- lookups ------------------------------------------------------------------
@@ -221,6 +225,15 @@ public static class LearningMap {
   public static bool IsPlayable(string gameId) {
     GameEntry game = Game(gameId);
     return game != null && game.HumanAccepted && game.HasArena;
+  }
+
+  // IMPLEMENTED games with an arena may be entered for play (never claimed accepted).
+  public static bool CanLaunch(string gameId) {
+    GameEntry game = Game(gameId);
+    if (game == null || !game.HasArena) return false;
+    return game.Status == GameStatus.HumanAccepted
+      || game.Status == GameStatus.Implemented
+      || game.Status == GameStatus.EngineeringVerified;
   }
 
   static bool Same(string a, string b) {

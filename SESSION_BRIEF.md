@@ -1,7 +1,7 @@
-# SESSION BRIEF — FULL ARCHITECTURE RESET A→B→C→GAME, PHASE 1→4d XONG (2026-09-30, ASUS)
+# SESSION BRIEF — BEAUTY PASS SÂN + ARENA (2026-09-30, ASUS)
 
-> Phiên sau đọc DUY NHẤT file này để vào việc; chi tiết đầy đủ ở **HANDOFF §94**
-> và plan authoritative **`tái cấu trúc.md`** (session log cập nhật tới PHASE 4d).
+> Phiên sau đọc DUY NHẤT file này để vào việc. Luật + việc đang mở ở `HANDOFF.md`
+> (đã rút ngắn). Plan: `tái cấu trúc.md`.
 
 ## ⛔ LUẬT ĐANG HIỆU LỰC (bắt buộc)
 - **TUYỆT ĐỐI KHÔNG mở game / journey trên ASUS** (kể cả windowed). Trên ASUS chỉ:
@@ -17,7 +17,7 @@
   Unity 6000.6.0f1 `C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe`.
 - **HEAD = `43e86e2`**, cây sạch (commit handoff nối tiếp là docs-only).
 - `origin/main = 54a9126`; dòng reset `54a9126..43e86e2` gồm 21 commit
-  (xem HANDOFF §94.2). Node đã ở `43e86e2` (bundle 2237) + build + journey 28/28.
+  Node đã ở `43e86e2` (bundle 2237) + build + journey 28/28.
 - **Bundle verify cuối đã để sẵn: `D:\asus-20260930-0804.bundle`**
   (verify OK, HEAD 43e86e2, requires 54a9126 + bbfed86) + `-diff.patch`.
 
@@ -32,8 +32,16 @@
   leo từng bậc có settle); tỉ lệ bài **80/12/8**; **nhạc baroque** Pachelbel-D +
   nút "Nhạc: bật/tắt" dưới nút ngôn ngữ; **game bảng đáp án 3 ô** (thỏ, cứ 3
   lượt tìm số 1 lượt — CT-S16).
-- **Verify batch cuối (ASUS): suite `701/696/0/5`, build `Succeeded errors=0`.**
-  Journey cuối trên NODE: `-journeys3` **28/28, 0 lỗi, tự đóng** (2 demo + theme).
+- **Verify batch cuối (ASUS): suite `709/704/0/5`** (`Temp/s17-suite.xml`) + build errors=0.
+  Journey cuối trên NODE vẫn là bản cũ: `-journeys3` **28/28** (chưa có beauty pass).
+
+## 1b. Beauty pass (2026-09-30, chưa human review)
+- Sân B/C không còn thảm cỏ trống: cây anh đào, đường đá, đèn, hoa, bướm,
+  hàng rào nở hoa, biển tên gỗ sau nhãn, cổng vào có vương miện hoa.
+- Sân trống (chưa có trò) có ao + cây, không còn mỗi cái biển.
+- Thỏ: tai dài hơn, má + nơ. Hàng rào arena thỏ/thang nở hoa.
+- Dressing collider-free + `ignoreFromBuild` (CT-S12G). Không đụng cổng/click/NavMesh lối đi.
+- KHÔNG tự chốt visual pass. Không mở game trên ASUS.
 
 ## 2. Chờ HUMAN REVIEW (không tự chốt)
 - Cỡ nhãn trong yard + HUD cắt chữ dài (đã best-fit — xem lại).
@@ -54,7 +62,7 @@
 Unity.exe là GUI app → PowerShell luôn dùng `Start-Process -Wait`.
 1. **Suite**: `-batchmode -projectPath D:\Vscode\little-world-english -runTests
    -testPlatform EditMode -testResults <xml> -logFile <log>` → kỳ vọng
-   **701/696/0/5**.
+    **709/704/0/5**.
 2. **Build**: `-batchmode -quit -executeMethod TempBuildP62.Build -logFile <log>`
    → kỳ vọng **Succeeded errors=0**.
 3. ⛔ KHÔNG chạy: `LWE.exe -journeys3` / `-journeyfull` / `-playlog` trên ASUS.

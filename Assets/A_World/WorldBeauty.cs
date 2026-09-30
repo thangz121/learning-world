@@ -245,6 +245,71 @@ public static class WorldBeauty {
       0.9f * scale, BlossomCream);
   }
 
+  // ---- yard dressing (collider-free, bake-ignored) ----------------------------
+  // Selection yards were a flat lawn + green spheres. These pieces give them
+  // the same dreamy language as the hub without ever becoming a click target
+  // or a NavMesh obstacle (Seal marks a whole dressing root).
+
+  public static void HedgeBloom(Transform parent, string name, Vector3 bushPos) {
+    Ball(parent, name + "A", bushPos + new Vector3(0.18f, 1.15f, 0.08f), 0.55f, BlossomPink);
+    Ball(parent, name + "B", bushPos + new Vector3(-0.28f, 0.95f, -0.08f), 0.42f, BlossomDeep);
+    Ball(parent, name + "C", bushPos + new Vector3(0.04f, 1.35f, -0.1f), 0.34f, BlossomCream);
+  }
+
+  public static void Lantern(Transform parent, string name, Vector3 pos) {
+    PrettyPost(parent, name, pos, 1.35f, 0.09f,
+      new Color(0.55f, 0.38f, 0.22f), CreamGold);
+  }
+
+  public static void PathStone(Transform parent, string name, Vector3 pos, float diameter) {
+    GameObject stone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    stone.name = name;
+    stone.transform.SetParent(parent);
+    stone.transform.localPosition = pos + new Vector3(0f, 0.012f, 0f);
+    stone.transform.localScale = new Vector3(diameter, 0.008f, diameter * 0.72f);
+    stone.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.82f, 0.68f, 0.48f));
+    StripCollider(stone);
+    IgnoreFromBuild(stone);
+  }
+
+  public static void Pond(Transform parent, string name, Vector3 pos, float diameter) {
+    GameObject rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    rim.name = name + "Rim";
+    rim.transform.SetParent(parent);
+    rim.transform.localPosition = pos + new Vector3(0f, 0.016f, 0f);
+    rim.transform.localScale = new Vector3(diameter * 1.18f, 0.01f, diameter * 1.18f);
+    rim.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.62f, 0.72f, 0.62f));
+    StripCollider(rim);
+    IgnoreFromBuild(rim);
+    GameObject water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    water.name = name + "Water";
+    water.transform.SetParent(parent);
+    water.transform.localPosition = pos + new Vector3(0f, 0.028f, 0f);
+    water.transform.localScale = new Vector3(diameter, 0.01f, diameter);
+    water.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.55f, 0.78f, 0.95f));
+    StripCollider(water);
+    IgnoreFromBuild(water);
+    GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    pad.name = name + "Lily";
+    pad.transform.SetParent(parent);
+    pad.transform.localPosition = pos + new Vector3(0.28f, 0.04f, 0.12f);
+    pad.transform.localScale = new Vector3(0.55f, 0.008f, 0.55f);
+    pad.GetComponent<Renderer>().sharedMaterial = Lit(Mint);
+    StripCollider(pad);
+    IgnoreFromBuild(pad);
+    Ball(parent, name + "LilyBloom", pos + new Vector3(0.28f, 0.1f, 0.12f), 0.22f, BlossomDeep);
+  }
+
+  // Strip colliders and keep every mesh out of the NavMesh bake. Idempotent.
+  public static void Seal(GameObject root) {
+    if (root == null) return;
+    Transform[] all = root.GetComponentsInChildren<Transform>(true);
+    for (int i = 0; i < all.Length; i++) {
+      StripCollider(all[i].gameObject);
+      IgnoreFromBuild(all[i].gameObject);
+    }
+  }
+
   // ---- per-world atmosphere (fog + ambient) -----------------------------------
   // MarketBootstrap applies these on travel/return so each world keeps its
   // own air: Main stays the crisp 18-45m haze, the Math island gets a soft
@@ -315,7 +380,8 @@ public static class WorldBeauty {
   static void IgnoreFromBuild(GameObject go) {
     if (go == null) return;
     try {
-      Unity.AI.Navigation.NavMeshModifier mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+      Unity.AI.Navigation.NavMeshModifier mod = go.GetComponent<Unity.AI.Navigation.NavMeshModifier>();
+      if (mod == null) mod = go.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
       mod.ignoreFromBuild = true;
     } catch (System.Exception) { }
   }

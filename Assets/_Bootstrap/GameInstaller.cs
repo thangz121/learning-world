@@ -158,6 +158,10 @@ public class GameInstaller : MonoBehaviour {
       BuildRabbitPlayScene(scene);
       return;
     }
+    if (scene.name == GeometryPlayBuilder.SceneName) {
+      BuildGeometryPlayScene(scene);
+      return;
+    }
     // COUNTING GARDEN CLEANUP (product decision): Build Yard / Delivery /
     // Match gameplay scenes were removed; their hub gates stay landmarks.
     if (scene.name == DiscoveryBuilder.SceneName) {
@@ -455,6 +459,51 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] RabbitPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildGeometryPlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "GeometryPlayWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] GeometryPlayScene has no GeometryPlayWorld root.", this);
+        return;
+      }
+      root.transform.position = GeometryPlayBuilder.WorldOffset;
+      GeometryPlayBuilder builder = root.GetComponent<GeometryPlayBuilder>();
+      if (builder == null) builder = root.AddComponent<GeometryPlayBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = GeometryPlayBuilder.WorldOffset + GeometryPlayBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, GeometryPlayBuilder.WorldOffset,
+          GeometryPlayBuilder.BoundX, GeometryPlayBuilder.BoundZ, GeometryPlayBuilder.FollowOffset,
+          DialogueLang.T(GeometryPlayBuilder.ObjectiveEn, GeometryPlayBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        GeometryPlay game = root.GetComponent<GeometryPlay>();
+        if (game == null) game = root.AddComponent<GeometryPlay>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle geoLife = _yardArea != null ? _yardArea.GeometryLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, geoLife);
+        if (_yardArea != null) _yardArea.BindGeometryGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Geometry play wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Geometry Play scene built entry="
+          + (GeometryPlayBuilder.WorldOffset + GeometryPlayBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] GeometryPlayScene build failed: " + e.Message, this);
     }
   }
 

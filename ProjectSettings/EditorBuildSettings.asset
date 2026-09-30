@@ -29,4 +29,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/A_World/SelectionYard/SelectionYardScene.unity
     guid: 26bff161175d4465a580ffa2c80bb042
+  - enabled: 1
+    path: Assets/A_World/GeometryPlay/GeometryPlayScene.unity
+    guid: 7c4e9a12b6d84f3a8e1c5b90d2f47a18
   m_configObjects: {}

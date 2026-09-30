@@ -51,7 +51,7 @@ public class CT_S12_SelectionYardBuilder {
       Transform[] all = root.GetComponentsInChildren<Transform>(true);
       for (int i = 0; i < all.Length; i++)
         if (all[i].GetComponent<MicroGateHint>() != null) hints++;
-      Assert.AreEqual(1, hints, "only the live skill (counting) glows");
+      Assert.AreEqual(2, hints, "counting and geometry glow");
       Assert.IsNotNull(builder.BackGate, "skill yard has the way back");
       Assert.AreEqual(SelectionGate.GateKind.Back, builder.BackGate.Kind, "back gate kind");
       Assert.IsNotNull(builder.TitleBoard, "orientation sign staged");
@@ -98,7 +98,7 @@ public class CT_S12_SelectionYardBuilder {
   // never a fake game door (product rule).
   [Test] public void S12C_EmptySkillPlaceholder() {
     GameObject root;
-    SelectionYardBuilder builder = BuildYard("game", "", "math_geometry", out root);
+    SelectionYardBuilder builder = BuildYard("game", "", "math_comparison", out root);
     try {
       Assert.AreEqual(0, builder.GatePortals.Count, "no game doors for an empty skill");
       Assert.IsNotNull(builder.PlaceholderBoard, "placeholder board staged");
@@ -160,7 +160,7 @@ public class CT_S12_SelectionYardBuilder {
         "skill doors carry no game previews");
     } finally { Object.DestroyImmediate(skillRoot); }
     GameObject emptyRoot;
-    BuildYard("game", "", "math_geometry", out emptyRoot);
+    BuildYard("game", "", "math_comparison", out emptyRoot);
     try {
       Assert.IsNull(FindDeep(emptyRoot.transform, "SYPreview_number_stairs"),
         "empty yard carries no previews");
@@ -192,5 +192,26 @@ public class CT_S12_SelectionYardBuilder {
       Assert.Greater(Vector3.Dot(door.transform.forward, away.normalized), 0.95f,
         "legible face points at the child entering the yard");
     } finally { Object.DestroyImmediate(root); }
+  }
+
+  // F. Beauty pass: dressing is staged and never a collider (NavMesh/click
+  // stay on the ground and the doors). Empty yards get a pond, not a bare lawn.
+  [Test] public void S12G_DressingIsColliderFree() {
+    GameObject root;
+    BuildYard("skill", "math", "", out root);
+    try {
+      Transform dress = FindDeep(root.transform, "SYDressing");
+      Assert.IsNotNull(dress, "yard dressing staged");
+      Assert.IsNotNull(FindDeep(root.transform, "SYBlossomTree0Trunk"), "blossom tree staged");
+      Assert.IsNotNull(FindDeep(root.transform, "SYNamePlaque_math_counting"), "name sits on a plaque");
+      Collider[] cols = dress.GetComponentsInChildren<Collider>(true);
+      Assert.AreEqual(0, cols.Length, "dressing never blocks the walk");
+    } finally { Object.DestroyImmediate(root); }
+    GameObject empty;
+    SelectionYardBuilder emptyYard = BuildYard("game", "", "math_comparison", out empty);
+    try {
+      Assert.AreEqual(0, emptyYard.GatePortals.Count, "empty yard still has no doors");
+      Assert.IsNotNull(FindDeep(empty.transform, "SYPondWater"), "empty yard is a quiet garden");
+    } finally { Object.DestroyImmediate(empty); }
   }
 }
