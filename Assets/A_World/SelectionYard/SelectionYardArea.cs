@@ -256,6 +256,11 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   public ComparisonMarket MarketGame { get; private set; }
   public void BindMarketGame(ComparisonMarket game) { MarketGame = game; }
 
+  public ActivityLifecycle CityLifecycle { get; private set; } =
+    new ActivityLifecycle("classification_city", "SelectionYardArea");
+  public ClassificationCity CityGame { get; private set; }
+  public void BindCityGame(ClassificationCity game) { CityGame = game; }
+
   // ---- arena travel (single micro slot: yard out -> arena in, and back) ----------
   public void SetPlay(Vector3 entry, ActivityAnchors anchors, Vector3 center,
       float boundX, float boundZ, Vector3 followOffset, string objective = null) {

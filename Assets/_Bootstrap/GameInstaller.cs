@@ -166,6 +166,10 @@ public class GameInstaller : MonoBehaviour {
       BuildComparisonMarketPlayScene(scene);
       return;
     }
+    if (scene.name == ClassificationCityBuilder.SceneName) {
+      BuildClassificationCityPlayScene(scene);
+      return;
+    }
     // COUNTING GARDEN CLEANUP (product decision): Build Yard / Delivery /
     // Match gameplay scenes were removed; their hub gates stay landmarks.
     if (scene.name == DiscoveryBuilder.SceneName) {
@@ -553,6 +557,51 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] ComparisonMarketPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildClassificationCityPlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "ClassificationCityWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] ClassificationCityPlayScene has no ClassificationCityWorld root.", this);
+        return;
+      }
+      root.transform.position = ClassificationCityBuilder.WorldOffset;
+      ClassificationCityBuilder builder = root.GetComponent<ClassificationCityBuilder>();
+      if (builder == null) builder = root.AddComponent<ClassificationCityBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = ClassificationCityBuilder.WorldOffset + ClassificationCityBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, ClassificationCityBuilder.WorldOffset,
+          ClassificationCityBuilder.BoundX, ClassificationCityBuilder.BoundZ, ClassificationCityBuilder.FollowOffset,
+          DialogueLang.T(ClassificationCityBuilder.ObjectiveEn, ClassificationCityBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        ClassificationCity game = root.GetComponent<ClassificationCity>();
+        if (game == null) game = root.AddComponent<ClassificationCity>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle cityLife = _yardArea != null ? _yardArea.CityLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, cityLife);
+        if (_yardArea != null) _yardArea.BindCityGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] City play wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] City Play scene built entry="
+          + (ClassificationCityBuilder.WorldOffset + ClassificationCityBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] ClassificationCityPlayScene build failed: " + e.Message, this);
     }
   }
 

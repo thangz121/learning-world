@@ -96,6 +96,7 @@ public static class LearningMap {
   public const string NumberStairsGame = "number_stairs";
   public const string ShapeBuilderGame = "shape_builder";
   public const string ComparisonMarketGame = "comparison_market";
+  public const string ClassificationCityGame = "classification_city";
 
   public static readonly SkillEntry[] MathSkills = {
     new SkillEntry(MathCounting, MathId, "Đếm"),
@@ -143,6 +144,7 @@ public static class LearningMap {
   public const string NumberStairsScene = "StairPlayScene";
   public const string ShapeBuilderScene = "GeometryPlayScene";
   public const string ComparisonMarketScene = "ComparisonMarketPlayScene";
+  public const string ClassificationCityScene = "ClassificationCityPlayScene";
 
   // Counting games stay HUMAN_ACCEPTED. Geometry is IMPLEMENTED only.
   public static readonly GameEntry[] Games = {
@@ -154,6 +156,8 @@ public static class LearningMap {
       ShapeBuilderScene, GameStatus.Implemented),
     new GameEntry(ComparisonMarketGame, MathComparison, "Khu Chợ Của Bé",
       ComparisonMarketScene, GameStatus.Implemented),
+    new GameEntry(ClassificationCityGame, MathClassification, "Thành Phố Phân Loại",
+      ClassificationCityScene, GameStatus.Implemented),
   };
 
   // ---- lookups ------------------------------------------------------------------

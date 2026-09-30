@@ -29,6 +29,9 @@ Plan làm tiếp: `tái cấu trúc.md` (PHASE 5→8).
 - So sánh: `comparison_market` / Khu Chợ Của Bé / `ComparisonMarketPlayScene` —
   IMPLEMENTED (không HUMAN_ACCEPTED). LV3→LV10 trong một chợ: nhiều/ít, bất biến
   sắp xếp, tương ứng 1-1, bằng nhau, lớn/nhỏ, dài/ngắn, tay ba, giao hàng lên xe.
+- Phân loại: `classification_city` / Thành Phố Phân Loại / `ClassificationCityPlayScene` —
+  IMPLEMENTED (không HUMAN_ACCEPTED). LV3→LV10 trong một thành phố: 2 nhóm, cỡ,
+  thuộc tính, 3 nhóm, đổi luật (loại→cỡ→màu), chức năng, lẻ nhóm, đoán luật.
 - Hub = sân chọn môn (5 cổng). B và C = một `SelectionYardScene` data-driven.
 - Cà rốt: nhặt–bưng–đặt–bấm chuông. Lệch 1 củ thì giữ bát ("Thêm một củ" /
   "Bỏ một củ về"); lệch ≥2 thì xóa bát. Bát đủ số: thỏ nhảy + "Bấm chuông nhé!".
@@ -37,8 +40,8 @@ Plan làm tiếp: `tái cấu trúc.md` (PHASE 5→8).
 - Demo NPC đủ bước. Cứ 3 lượt tìm số, 1 lượt bảng 3 ô (thỏ, CT-S16).
 - Nhạc baroque + nút bật/tắt. Sân B/C có cây/hoa/đèn/biển gỗ; sân trống có ao.
   Dressing không collider, `ignoreFromBuild` (CT-S12G).
-- Suite hiện tại: **716/711/0/5**. Journey node cuối (bản `43e86e2`, chưa có
-  beauty/age-4/geometry/market): `-journeys3` 28/28.
+- Suite hiện tại: **723/718/0/5**. Journey node cuối (bản `43e86e2`, chưa có
+  beauty/age-4/geometry/market/city): `-journeys3` 28/28.
 
 ## Còn mở
 
@@ -60,5 +63,5 @@ Plan làm tiếp: `tái cấu trúc.md` (PHASE 5→8).
 
 Unity.exe là GUI app → `Start-Process -Wait`. Không kèm `-quit` khi `-runTests`.
 
-- Suite: `-batchmode -projectPath D:\Vscode\little-world-english -runTests -testPlatform EditMode -testResults <xml> -logFile <log>` → **716/711/0/5**
+- Suite: `-batchmode -projectPath D:\Vscode\little-world-english -runTests -testPlatform EditMode -testResults <xml> -logFile <log>` → **723/718/0/5**
 - Build: `-batchmode -quit -projectPath D:\Vscode\little-world-english -executeMethod TempBuildP62.Build -logFile <log>` → **Succeeded errors=0**

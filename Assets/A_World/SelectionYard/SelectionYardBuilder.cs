@@ -455,6 +455,17 @@ public class SelectionYardBuilder : MonoBehaviour {
             0.14f, new Color(0.92f, 0.32f, 0.34f));
         }
       }
+    } else if (gameId == "classification_city") {
+      GameObject kit = new GameObject("SYPreview_classification_city");
+      kit.transform.SetParent(parent, false);
+      kit.transform.localPosition = p;
+      Ignore(kit);
+      // Little house + garage: the sorting-town motif, no words.
+      Box(kit.transform, "House", new Vector3(-0.4f, 0.25f, 0f), new Vector3(0.5f, 0.5f, 0.4f), Cream);
+      Box(kit.transform, "HouseRoof", new Vector3(-0.4f, 0.55f, 0f), new Vector3(0.6f, 0.1f, 0.5f), Leaf);
+      Box(kit.transform, "Garage", new Vector3(0.4f, 0.25f, 0f), new Vector3(0.5f, 0.5f, 0.4f), Gold);
+      Ball(kit.transform, "Pet", new Vector3(-0.4f, 0.62f, 0f), 0.14f, Coral);
+      Box(kit.transform, "Cartoy", new Vector3(0.4f, 0.55f, 0f), new Vector3(0.24f, 0.12f, 0.14f), Blue);
     }
   }
 

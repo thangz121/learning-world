@@ -56,6 +56,7 @@ Rule: no destructive step runs before this file exists; phases are committed sep
 **IMPLEMENTED (not accepted):**
 - TOÁN HỌC → HÌNH HỌC → **Lắp Hình Vui Nhộn** (`shape_builder`, `GeometryPlayScene`) — IMPLEMENTED
 - TOÁN HỌC → SO SÁNH → **Khu Chợ Của Bé** (`comparison_market`, `ComparisonMarketPlayScene`) — IMPLEMENTED
+- TOÁN HỌC → PHÂN LOẠI → **Thành Phố Phân Loại** (`classification_city`, `ClassificationCityPlayScene`) — IMPLEMENTED
 
 **NOT ACCEPTED — everything else.** Discovery Garden, Build Yard, Delivery Village,
 Match Meadow, Fruit Orchard, Sorting Park, Puzzle Workshop, Number Bridge, Memory
@@ -96,6 +97,7 @@ LITTLE WORLD ENGLISH
     │        └── ĐẾM ──────── (C) SÂN CHỌN TRÒ CHƠI: Cho thỏ ăn ✅ | Bậc thang con số ✅
     │        └── HÌNH HỌC ─── (C) Lắp Hình Vui Nhộn (shape_builder, IMPLEMENTED)
     │        └── SO SÁNH ─── (C) Khu Chợ Của Bé (comparison_market, IMPLEMENTED)
+    │        └── PHÂN LOẠI ─ (C) Thành Phố Phân Loại (classification_city, IMPLEMENTED)
     │        └── SO SÁNH ──── (C) [CHƯA CÓ TRÒ CHƠI]
     │        └── PHÂN LOẠI ── (C) [CHƯA CÓ TRÒ CHƠI]
     │        └── THỨ TỰ ───── (C) [CHƯA CÓ TRÒ CHƠI]
@@ -118,6 +120,7 @@ Selection Yard (empty skills show `[CHƯA CÓ TRÒ CHƠI]`, no fake games).
 | `StairPlayScene` | game: Bậc thang con số | lazy micro slot | arena `NumberStairs` (unchanged) |
 | `GeometryPlayScene` | game: Lắp Hình Vui Nhộn | lazy micro slot | arena `GeometryPlay` (IMPLEMENTED, not HUMAN_ACCEPTED) |
 | `ComparisonMarketPlayScene` | game: Khu Chợ Của Bé | lazy micro slot | arena `ComparisonMarket` (IMPLEMENTED, not HUMAN_ACCEPTED) |
+| `ClassificationCityPlayScene` | game: Thành Phố Phân Loại | lazy micro slot | arena `ClassificationCity` (IMPLEMENTED, not HUMAN_ACCEPTED) |
 
 - ONE generic yard scene serves both B and C (data-driven by subject/skill context);
   no 21 scene copies. A yard is rebuilt on each entry (level + context set before load).
