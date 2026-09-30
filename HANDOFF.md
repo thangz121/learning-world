@@ -3103,3 +3103,85 @@ Bằng chứng các vòng: `E:\LWW\fullj-shots\` (run1: `stuck_run1.log` +
   đóng (`E:\LWW\z-journey14.log` + `z-jshots14`).
 - Backup bất biến: `E:\LWW\learning-world-BACKUP-2026-09-28-P2Z32` (xem §90).
 - Cây làm việc SẠCH (mọi thứ đã push). Chờ lệnh user vòng tiếp theo.
+
+## 94. FULL ARCHITECTURE RESET A→B→C→GAME (2026-09-29→30, ASUS) — PHIÊN MỚI ĐỌC MỤC NÀY TRƯỚC
+
+### 94.1 Lệnh user đang hiệu lực (BẮT BUỘC)
+- **TUYỆT ĐỐI KHÔNG mở game / journey trên ASUS** (windowed cũng không).
+  Trên ASUS chỉ được: EditMode suite (batchmode) + production build (batchmode).
+  Journey (windowed, `-journeys3`, `-journeyfull`, `-playlog`) CHỈ chạy trên maynode.
+- maynode **đang OFFLINE** (user báo sáng 2026-09-30). Khi user báo node bật lại:
+  scp bundle → fetch/ff → node build → node journey → kéo log/shots về → phân tích.
+- Commit mọi tooling/driver đi kèm bundle. **Không push origin từ ASUS**
+  (origin/main = `54a9126`; local main ahead).
+- Plan `tái cấu trúc.md` (repo root) là SOP authoritative — session log cập nhật
+  tới hết PHASE 4d. Mọi phase sau làm đúng file đó.
+
+### 94.2 Trạng thái git (repo ASUS `D:\Vscode\little-world-english`, branch main)
+- **HEAD = `43e86e2`** (tree sạch; commit handoff này là docs-only, theo sau).
+- Dòng reset `54a9126..43e86e2` (đủ 21 commit): `149537a` cleanup → `5744d1e` P1
+  skeleton → `ef7e238` P2 5-cổng → `0a6fad7` P3 A→B→C → `c492c41` docs node →
+  `430f660` playlog → `60ff77a` P4 C→GAME→C → `ebfad79` P4b chữ/diorama →
+  `a0e936a` P4c nhịp+demo+nhạc → `43e86e2` P4d decor+full demo+baroque+quiz.
+- Nhánh maynode cũ (`842203c/asus-merge-check`) đã merge vào dòng này từ trước.
+
+### 94.3 Đã xây & verify (bàn giao kỹ thuật)
+- `_SharedKernel/LearningMap.cs`: taxonomy 5 môn / 21 kỹ năng / ĐÚNG 2 game
+  HUMAN_ACCEPTED (`rabbit_feeding`, `number_stairs`).
+- `A_World/SelectionYard/`: `SelectionGate` (Skill/Game/Play/Back), `SelectionYardBuilder`
+  (B+C data-driven; diorama không chữ trước cổng game; huy hiệu môn trên cổng kỹ
+  năng; bảng `CHƯA CÓ TRÒ CHƠI` cho kỹ năng rỗng), `SelectionYardArea` (travel beats
+  + lifecycle 2 game re-home + luồng C→GAME→C), `TempS13Journey` (`-journeys3`:
+  closed-loop click, stuck-detect + skip, cancel sau 2 fail, LUÔN tự đóng),
+  `TempPlayLog` (`-playlog`: log click/vị trí/scene/yard + shots).
+- Hub = Sân chọn Môn 5 cổng (KHÁM PHÁ mới ở giữa; Toán/Tư duy bẻ walkway vòng
+  tránh cổng Việt/Anh); cổng môn gọi `EnterSkill` (không còn travel MathScene).
+- Arenas GIỮ NGUYÊN gameplay; chạy voice-first (`ActivityFeedback.TextHidden`);
+  demo NPC **đủ bước** (thỏ: đi–nhặt–bưng–đặt từng củ / trừ: lấy từ bát bưng về
+  vườn; thang: từ vòng tròn → chân thang → từng bậc có dừng); tỉ lệ bài 80/12/8
+  (`KindForRoll`); **game bảng đáp án** trong arena thỏ (3 ô hình củ; cứ 3 lượt
+  tìm số 1 lượt; CT-S16).
+- Nhạc theme baroque kiểu Pachelbel (cung D, 100 BPM) trong `AudioDirector`
+  (`SetMusicEnabled`, ducking) + nút "Nhạc: bật/tắt" dưới nút ngôn ngữ
+  (`MusicSettings` + `PlayerProgress.MusicOn`).
+- Tests: CT-S10..S16 (+S12E/F, S13G). KHÔNG dùng assertion yếu đi.
+- **Verify batch cuối (ASUS, 2026-09-30 sáng): suite `701/696/0/5`, production
+  build `Succeeded errors=0`.** Journey cuối đã chạy TRÊN NODE: `-journeys3`
+  28/28, 0 lỗi, tự đóng (kèm cả 2 demo + theme).
+
+### 94.4 Chờ HUMAN REVIEW (không tự chốt)
+- 2 visual QA cũ: cỡ nhãn trong yard + HUD cắt chữ dài (đã best-fit — xem lại).
+- "Feel" của demo / nhạc / lượt bảng đáp án (user tự chơi trên node).
+- **Finding tồn:** cổng TƯ DUY không vào được bằng click từ hub (hành lang kẹp bởi
+  U-carve quận + snap cổng Anh) — xử lý ở PHASE 5 khi dọn legacy.
+- **Log phiên chơi cuối còn NGUYÊN TRÊN NODE:** `E:\LWW\play-session.log` +
+  `E:\LWW\play-shots` (chưa kéo về được vì node offline) — kéo về + phân tích khi
+  node bật. Bản cũ đã kéo: `D:\Vscode\play-node.log` (phiên phân tích trước).
+
+### 94.5 Bundle cho lần verify cuối (đã tạo, để sẵn ở D:\)
+- **`D:\asus-20260930-0804.bundle`** (verify OK; HEAD `43e86e2`; requires
+  `54a9126` + `bbfed86`) + `D:\asus-20260930-0804-diff.patch`.
+- Bundle trước đó `asus-20260929-2237` (y hệt nội dung) đã scp sang node + node đã
+  build + journey 28/28 trên chính 43e86e2.
+- Khi node bật lại (user sẽ báo):
+  1. `scp -i $env:USERPROFILE\.ssh\id_ed25519 D:\asus-20260930-0804.bundle Admin@100.124.132.59:E:/LWW/incoming/`
+  2. Trên node: `git fetch E:\LWW\incoming\asus-20260930-0804.bundle HEAD` →
+     `git merge --ff-only FETCH_HEAD` (node đang 43e86e2 → có thể no-op).
+  3. Build node: `Start-Process Unity.exe -ArgumentList '-batchmode -quit -projectPath E:\LWW\learning-world -executeMethod TempBuildP62.Build -logFile E:\LWW\s-fin-build.log' -Wait`.
+  4. Journey node: tạo task `schtasks /IT` chạy `LWE.exe -journeys3 ...` (SSH KHÔNG
+     có DXGI — lỗi 887a0022; phải /IT trong session console) → đối chiếu 28/28.
+  5. Kéo về: `s4j-player.log`, `s4j-shots/`, `play-session.log`, `play-shots/`.
+
+### 94.6 Việc tiếp theo theo `tái cấu trúc.md`
+- PHASE 5 (dọn legacy): xóa `MathScene`/`CountingGardenScene`/`DiscoveryScene` +
+  catalog/districts/return triggers + test legacy (CT-P45..P62 dòng cũ) → Build
+  Settings còn 5 scene (Bootstrap, Market, SelectionYard, StairPlay, RabbitPlay).
+  Nhớ xử lý finding cổng Tư duy trong phase này.
+- PHASE 6 content/catalog reset + docs `LEARNING_MAP.md`; PHASE 7 test/build reset +
+  retarget `TempFullJourney` (A→B→C→game→return); PHASE 8 final verification + report §18.
+
+### 94.7 Lệnh verify nhanh (ASUS, BATCH-ONLY — nhắc lại luật)
+- Suite: `Unity.exe -batchmode -projectPath D:\Vscode\little-world-english -runTests -testPlatform EditMode -testResults <xml> -logFile <log>`
+- Build: `Unity.exe -batchmode -quit -projectPath D:\Vscode\little-world-english -executeMethod TempBuildP62.Build -logFile <log>`
+- KHÔNG chạy `LWE.exe -journeys3` / `-journeyfull` / `-playlog` trên ASUS.
+
