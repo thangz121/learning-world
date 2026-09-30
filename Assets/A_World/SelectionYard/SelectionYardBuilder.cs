@@ -432,6 +432,29 @@ public class SelectionYardBuilder : MonoBehaviour {
       ci.transform.localScale = Vector3.one * 0.5f;
       GeometryPlayBuilder.BuildKindVisual(ci.transform, GeometryKind.Circle,
         GeometryShapes.ColorAt(2));
+    } else if (gameId == "comparison_market") {
+      GameObject kit = new GameObject("SYPreview_comparison_market");
+      kit.transform.SetParent(parent, false);
+      kit.transform.localPosition = p;
+      Ignore(kit);
+      // Two baskets, one fuller: the market motif, no words.
+      for (int i = 0; i < 2; i++) {
+        float bx = i == 0 ? -0.34f : 0.34f;
+        int n = i == 0 ? 2 : 4;
+        GameObject tub = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        tub.name = "Tub" + i;
+        tub.transform.SetParent(kit.transform, false);
+        tub.transform.localPosition = new Vector3(bx, 0.14f, 0f);
+        tub.transform.localScale = new Vector3(0.5f, 0.2f, 0.5f);
+        tub.GetComponent<Renderer>().sharedMaterial = Lit(i == 0 ? Wood : Gold);
+        Strip(tub);
+        Ignore(tub);
+        for (int f = 0; f < n; f++) {
+          Ball(kit.transform, "Apple" + i + "_" + f,
+            new Vector3(bx + (f % 2 - 0.5f) * 0.2f, 0.3f + (f / 2) * 0.12f, (f % 3 - 1) * 0.1f),
+            0.14f, new Color(0.92f, 0.32f, 0.34f));
+        }
+      }
     }
   }
 

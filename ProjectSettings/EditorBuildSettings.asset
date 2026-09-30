@@ -32,4 +32,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/A_World/GeometryPlay/GeometryPlayScene.unity
     guid: 7c4e9a12b6d84f3a8e1c5b90d2f47a18
+  - enabled: 1
+    path: Assets/A_World/ComparisonMarket/ComparisonMarketPlayScene.unity
+    guid: 9d5f1b23c7e84a4b9f2d6c01e3a58b29
   m_configObjects: {}

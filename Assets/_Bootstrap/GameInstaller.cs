@@ -162,6 +162,10 @@ public class GameInstaller : MonoBehaviour {
       BuildGeometryPlayScene(scene);
       return;
     }
+    if (scene.name == ComparisonMarketBuilder.SceneName) {
+      BuildComparisonMarketPlayScene(scene);
+      return;
+    }
     // COUNTING GARDEN CLEANUP (product decision): Build Yard / Delivery /
     // Match gameplay scenes were removed; their hub gates stay landmarks.
     if (scene.name == DiscoveryBuilder.SceneName) {
@@ -504,6 +508,51 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] GeometryPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildComparisonMarketPlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "ComparisonMarketWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] ComparisonMarketPlayScene has no ComparisonMarketWorld root.", this);
+        return;
+      }
+      root.transform.position = ComparisonMarketBuilder.WorldOffset;
+      ComparisonMarketBuilder builder = root.GetComponent<ComparisonMarketBuilder>();
+      if (builder == null) builder = root.AddComponent<ComparisonMarketBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = ComparisonMarketBuilder.WorldOffset + ComparisonMarketBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, ComparisonMarketBuilder.WorldOffset,
+          ComparisonMarketBuilder.BoundX, ComparisonMarketBuilder.BoundZ, ComparisonMarketBuilder.FollowOffset,
+          DialogueLang.T(ComparisonMarketBuilder.ObjectiveEn, ComparisonMarketBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        ComparisonMarket game = root.GetComponent<ComparisonMarket>();
+        if (game == null) game = root.AddComponent<ComparisonMarket>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle marketLife = _yardArea != null ? _yardArea.MarketLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, marketLife);
+        if (_yardArea != null) _yardArea.BindMarketGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Market play wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Market Play scene built entry="
+          + (ComparisonMarketBuilder.WorldOffset + ComparisonMarketBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] ComparisonMarketPlayScene build failed: " + e.Message, this);
     }
   }
 

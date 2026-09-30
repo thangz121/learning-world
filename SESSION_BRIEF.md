@@ -32,7 +32,8 @@
   leo từng bậc có settle); tỉ lệ bài **80/12/8**; **nhạc baroque** Pachelbel-D +
   nút "Nhạc: bật/tắt" dưới nút ngôn ngữ; **game bảng đáp án 3 ô** (thỏ, cứ 3
   lượt tìm số 1 lượt — CT-S16).
-- **Verify batch cuối (ASUS): suite `709/704/0/5`** (`Temp/s17-suite.xml`) + build errors=0.
+- **Verify batch cuối (ASUS): suite `716/711/0/5`** (`Temp/s18-suite.xml`) + build errors=0.
+- `comparison_market` (Khu Chợ Của Bé, IMPLEMENTED): LV3→LV10 một chợ, CT-S18 7/7.
   Journey cuối trên NODE vẫn là bản cũ: `-journeys3` **28/28** (chưa có beauty pass).
 
 ## 1b. Beauty pass (2026-09-30, chưa human review)
@@ -62,7 +63,7 @@
 Unity.exe là GUI app → PowerShell luôn dùng `Start-Process -Wait`.
 1. **Suite**: `-batchmode -projectPath D:\Vscode\little-world-english -runTests
    -testPlatform EditMode -testResults <xml> -logFile <log>` → kỳ vọng
-    **709/704/0/5**.
+    **716/711/0/5**.
 2. **Build**: `-batchmode -quit -executeMethod TempBuildP62.Build -logFile <log>`
    → kỳ vọng **Succeeded errors=0**.
 3. ⛔ KHÔNG chạy: `LWE.exe -journeys3` / `-journeyfull` / `-playlog` trên ASUS.
