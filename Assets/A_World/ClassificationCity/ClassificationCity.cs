@@ -35,6 +35,9 @@ public class ClassificationCity : MonoBehaviour {
   Transform _fx;
   float _phaseT;
   bool _waitCalled;
+  float _restT;
+  bool _finishAfterRest;
+  float _idleT;
   readonly List<ClassificationBin> _liveBins = new List<ClassificationBin>();
   readonly Queue<string> _askEn = new Queue<string>();
   readonly Queue<string> _askVi = new Queue<string>();
@@ -73,9 +76,19 @@ public class ClassificationCity : MonoBehaviour {
     if (_voice != null) _voice.Tick(dt);
     TickAsk();
     if (Completed && Current == Phase.Done) return;
+    if (_restT > 0f) {
+      _restT -= dt;
+      if (_restT <= 0f) AfterWin();
+      return;
+    }
     _phaseT += dt;
     if (Current == Phase.Wait) TickWait(dt);
-    else if (Current == Phase.Sort) TickPlay(dt);
+    else if (Current == Phase.Sort) {
+      _idleT += dt;
+      if (_idleT >= 8f && _idleT - dt < 8f) PointTask();
+      else if (_idleT >= 15f && _idleT - dt < 15f) PointTask();
+      TickPlay(dt);
+    }
   }
 
   void TickWait(float dt) {
@@ -89,7 +102,7 @@ public class ClassificationCity : MonoBehaviour {
 
   void TickPlay(float dt) {
     if (Carried != null) {
-      ClassificationBin near = NearestBin(1.45f);
+      ClassificationBin near = NearestBin(1.05f);
       if (near != null) TryPlace(near);
     }
   }
@@ -107,7 +120,9 @@ public class ClassificationCity : MonoBehaviour {
     PlacedCount = 0;
     OddPicked = false;
     OddIndex = -1;
+    _idleT = 0f;
     ApplyRound();
+    ActivityFeedback.ProgressKeep(RoundIndex, RoundsOf(Level));
     foreach (ClassificationBin b in _builder.Bins)
       if (b != null) b.Game = this;
     foreach (ClassificationItem it in _builder.Items)
@@ -152,10 +167,10 @@ public class ClassificationCity : MonoBehaviour {
   }
 
   static readonly Vector3[] PlazaSlots = {
-    new Vector3(-1.8f, 0f, 0.8f), new Vector3(-0.6f, 0f, 0.8f),
-    new Vector3(0.6f, 0f, 0.8f), new Vector3(1.8f, 0f, 0.8f),
-    new Vector3(-1.2f, 0f, 1.9f), new Vector3(0f, 0f, 1.9f),
-    new Vector3(1.2f, 0f, 1.9f),
+    new Vector3(-1.8f, 0f, 2.2f), new Vector3(-0.6f, 0f, 2.2f),
+    new Vector3(0.6f, 0f, 2.2f), new Vector3(1.8f, 0f, 2.2f),
+    new Vector3(-1.2f, 0f, 3.2f), new Vector3(0f, 0f, 3.2f),
+    new Vector3(1.2f, 0f, 3.2f),
   };
 
   static Vector3[] BinSlots(int n, int round) {
@@ -347,10 +362,8 @@ public class ClassificationCity : MonoBehaviour {
     }
     Vector3[] slots = BinSlots(2, RoundIndex);
     string b0 = Groups[0], b1 = Groups[1];
-    string kind0 = k == 0 ? (b0 == "big" ? "bigpad" : "smallpad") : (b0 == "wheels" ? "wheelspad" : "plainpad");
-    string kind1 = k == 0 ? (b1 == "big" ? "bigpad" : "smallpad") : (b1 == "wheels" ? "wheelspad" : "plainpad");
-    LiveBin(slots[0], kind0, b0, 0);
-    LiveBin(slots[1], kind1, b1, 0);
+    LiveBin(slots[0], "house", b0, 0);
+    LiveBin(slots[1], "house", b1, 0);
     // Pre-sorted examples (visual, non-interactive).
     ClassItem exA0, exA1, exB0, exB1, nw0, nw1;
     if (k == 0) {
@@ -385,14 +398,14 @@ public class ClassificationCity : MonoBehaviour {
   }
 
   void SpeakTask() {
-    if (Level == 3) Ask("Animals home, cars garage.", "Vật vào nhà, xe vào gara.");
+    if (Level == 3) Ask("Animals home, cars garage.", "Thú vào nhà, xe gara.");
     else if (Level == 4) Ask("Big to big, small to small.", "Lớn sân lớn, nhỏ sân nhỏ.");
     else if (Level == 5) Ask("Wheels to the workshop.", "Có bánh vào xưởng.");
     else if (Level == 6) Ask("Animals home, food market, cars garage.", "Vật nhà, ăn chợ, xe gara.");
     else if (Level == 7) {
       int sub = RoundIndex % 3;
       if (sub > 0) Ask("New sorting rule!", "Đổi cách xếp nhé!");
-      if (sub == 0) Ask("Animals home, cars garage.", "Vật vào nhà, xe vào gara.");
+      if (sub == 0) Ask("Animals home, cars garage.", "Thú vào nhà, xe gara.");
       else if (sub == 1) Ask("Big to big, small to small.", "Lớn sân lớn, nhỏ sân nhỏ.");
       else Ask("Red things go here.", "Đỏ vào đây nhé.");
     } else if (Level == 8) Ask("Food market, cars garage, toys playground.", "Ăn chợ, xe gara, chơi sân.");
@@ -404,11 +417,23 @@ public class ClassificationCity : MonoBehaviour {
   }
 
   void PointTask() {
+    if (_builder == null) return;
+    if (Carried != null) {
+      ClassificationBin want = MatchingBin();
+      if (want != null) { ActivityGuide.PointAt(want.transform.position); return; }
+    }
+    foreach (ClassificationItem it in _builder.Items) {
+      if (it != null && it.State == ClassificationItem.ItemState.Idle) {
+        ActivityGuide.PointAt(it.transform.position);
+        return;
+      }
+    }
     ActivityGuide.PointAt(_builder.transform.TransformPoint(new Vector3(0f, 0f, 2.2f)));
   }
 
   public void TrySelect(ClassificationItem item) {
     if (item == null || Completed) return;
+    if (_restT > 0f) return;
     if (Current == Phase.Wait || Current == Phase.Done) return;
     if (item.State == ClassificationItem.ItemState.Placed
         || item.State == ClassificationItem.ItemState.Example) return;
@@ -422,6 +447,7 @@ public class ClassificationCity : MonoBehaviour {
         OddPicked = true;
         item.BeginCarry(_player != null ? _player : transform);
         Carried = item;
+        _idleT = 0f;
         PlaySfx("pickup");
         Say("Right! To the other pad.", "Đúng! Mang ra khác.");
         ClassificationBin other = _liveBins.Count > 0 ? _liveBins[0] : null;
@@ -434,12 +460,15 @@ public class ClassificationCity : MonoBehaviour {
     }
     item.BeginCarry(_player != null ? _player : transform);
     Carried = item;
+    _idleT = 0f;
     PlaySfx("pickup");
     GameJuice.PickFx(_fx, item.transform.position, item.transform);
+    PointTask();
   }
 
   public void TryPlace(ClassificationBin bin) {
     if (bin == null || Carried == null || Completed) return;
+    if (_restT > 0f) return;
     if (!_liveBins.Contains(bin)) return;
     ClassificationItem item = Carried;
     if (Level == 9) {
@@ -459,6 +488,7 @@ public class ClassificationCity : MonoBehaviour {
       bin.Accept(item);
       Carried = null;
       PlacedCount++;
+      _idleT = 0f;
       PlaySfx("place");
       GameJuice.PlaceFx(_fx, bin.transform.position, bin.transform);
       Say("Right group!", "Đúng nhóm rồi!");
@@ -507,13 +537,27 @@ public class ClassificationCity : MonoBehaviour {
     if (Carried != null) { Carried.ReturnHome(); Carried = null; }
     int max = RoundsOf(Level);
     RoundIndex++;
+    ActivityFeedback.ProgressKeep(RoundIndex, max);
+    bool finish = false;
     if (RoundIndex >= max) {
       Level++;
       RoundIndex = 0;
-      if (Level > LastLevel) { FinishVisit(); return; }
-      Say("Well done!", "Giỏi lắm!");
+      finish = Level > LastLevel;
+      if (!finish) Say("Well done!", "Giỏi lắm!");
     }
-    BeginRound();
+    RestThenAdvance(finish);
+  }
+
+  void RestThenAdvance(bool finish) {
+    _finishAfterRest = finish;
+    _restT = Application.isPlaying ? 1.6f : 0f;
+    if (_restT <= 0f) AfterWin();
+  }
+
+  void AfterWin() {
+    _restT = 0f;
+    if (_finishAfterRest) FinishVisit();
+    else BeginRound();
   }
 
   public static int RoundsOf(int level) {
@@ -587,11 +631,27 @@ public class ClassificationCity : MonoBehaviour {
     for (int i = 0; i < _liveBins.Count; i++) {
       ClassificationBin b = _liveBins[i];
       if (b == null) continue;
+      if (!BinMatchesCarried(b)) continue;
       Vector3 d = _player.position - b.transform.position;
       d.y = 0f;
       float m = d.sqrMagnitude;
       if (m <= bestD) { bestD = m; best = b; }
     }
     return best;
+  }
+
+  bool BinMatchesCarried(ClassificationBin bin) {
+    if (bin == null || Carried == null) return false;
+    if (Level == 9) return bin.GroupKey == "other";
+    int g = ClassLogic.GroupFor(Carried.Props, Criterion, Groups);
+    string want = g >= 0 && Groups != null && g < Groups.Length ? Groups[g] : "";
+    return bin.GroupKey == want;
+  }
+
+  ClassificationBin MatchingBin() {
+    for (int i = 0; i < _liveBins.Count; i++) {
+      if (BinMatchesCarried(_liveBins[i])) return _liveBins[i];
+    }
+    return null;
   }
 }

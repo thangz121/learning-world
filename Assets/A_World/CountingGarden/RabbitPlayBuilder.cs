@@ -269,8 +269,10 @@ public class RabbitPlayBuilder : MonoBehaviour {
       bush.transform.SetParent(parent, false);
       bush.transform.localPosition = new Vector3(Mathf.Sin(rad) * 15.5f, 0.55f, 3f + Mathf.Cos(rad) * 15.5f);
       bush.transform.localScale = (i % 2 == 0) ? new Vector3(3.4f, 2.2f, 3.4f) : new Vector3(2.8f, 1.9f, 2.8f);
-      bush.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.24f, 0.55f, 0.30f));
+      bush.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.28f, 0.58f, 0.34f));
       StripCollider(bush);
+      IgnoreFromBuild(bush);
+      WorldBeauty.HedgeBloom(parent, "RPHedgeBloom" + i, bush.transform.localPosition);
     }
   }
 
@@ -577,6 +579,38 @@ public class RabbitPlayBuilder : MonoBehaviour {
     nose.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.95f, 0.55f, 0.60f));
     StripCollider(nose);
     IgnoreFromBuild(nose);
+    GameObject cheekL = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    cheekL.name = "RPCheekL";
+    cheekL.transform.SetParent(head.transform, false);
+    cheekL.transform.localPosition = new Vector3(-0.12f, -0.04f, -0.1f);
+    cheekL.transform.localScale = new Vector3(0.07f, 0.05f, 0.04f);
+    cheekL.GetComponent<Renderer>().sharedMaterial = Lit(WorldBeauty.BlossomDeep);
+    StripCollider(cheekL);
+    IgnoreFromBuild(cheekL);
+    GameObject cheekR = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    cheekR.name = "RPCheekR";
+    cheekR.transform.SetParent(head.transform, false);
+    cheekR.transform.localPosition = new Vector3(0.12f, -0.04f, -0.1f);
+    cheekR.transform.localScale = new Vector3(0.07f, 0.05f, 0.04f);
+    cheekR.GetComponent<Renderer>().sharedMaterial = Lit(WorldBeauty.BlossomDeep);
+    StripCollider(cheekR);
+    IgnoreFromBuild(cheekR);
+    GameObject bowL = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    bowL.name = "RPBowL";
+    bowL.transform.SetParent(head.transform, false);
+    bowL.transform.localPosition = new Vector3(-0.07f, 0.14f, 0.06f);
+    bowL.transform.localScale = new Vector3(0.1f, 0.08f, 0.06f);
+    bowL.GetComponent<Renderer>().sharedMaterial = Lit(WorldBeauty.BlossomDeep);
+    StripCollider(bowL);
+    IgnoreFromBuild(bowL);
+    GameObject bowR = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    bowR.name = "RPBowR";
+    bowR.transform.SetParent(head.transform, false);
+    bowR.transform.localPosition = new Vector3(0.07f, 0.14f, 0.06f);
+    bowR.transform.localScale = new Vector3(0.1f, 0.08f, 0.06f);
+    bowR.GetComponent<Renderer>().sharedMaterial = Lit(WorldBeauty.BlossomDeep);
+    StripCollider(bowR);
+    IgnoreFromBuild(bowR);
     RabbitEarL = MakeEar(rabbit.transform, "RPEarL", new Vector3(-0.1f, 0.95f, -0.28f), -10f);
     RabbitEarR = MakeEar(rabbit.transform, "RPEarR", new Vector3(0.1f, 0.95f, -0.28f), 10f);
     GameObject tail = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -604,7 +638,7 @@ public class RabbitPlayBuilder : MonoBehaviour {
     outer.name = name + "Outer";
     outer.transform.SetParent(ear.transform, false);
     outer.transform.localPosition = new Vector3(0f, 0.22f, 0f);
-    outer.transform.localScale = new Vector3(0.1f, 0.44f, 0.07f);
+    outer.transform.localScale = new Vector3(0.13f, 0.62f, 0.08f);
     outer.GetComponent<Renderer>().sharedMaterial = Lit(BunnyGrey);
     StripCollider(outer);
     IgnoreFromBuild(outer);
@@ -612,7 +646,7 @@ public class RabbitPlayBuilder : MonoBehaviour {
     inner.name = name + "Inner";
     inner.transform.SetParent(ear.transform, false);
     inner.transform.localPosition = new Vector3(0f, 0.2f, -0.02f);
-    inner.transform.localScale = new Vector3(0.05f, 0.3f, 0.03f);
+    inner.transform.localScale = new Vector3(0.07f, 0.42f, 0.035f);
     inner.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.95f, 0.65f, 0.68f));
     StripCollider(inner);
     IgnoreFromBuild(inner);

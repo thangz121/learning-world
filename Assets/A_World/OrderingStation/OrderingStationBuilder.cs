@@ -11,7 +11,7 @@ public class OrderingStationBuilder : MonoBehaviour {
   public const float BoundZ = 14f;
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -3f);
   public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -10.8f);
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 3.4f, -5.6f);
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 2.8f, -4.2f);
   public static readonly Vector3 PlaySpotLocal = new Vector3(0f, 0f, 0.2f);
   public static readonly Vector3 TrackCenter = new Vector3(0f, 0f, 3.4f);
   public const string ObjectiveEn = "Order at the station";
@@ -83,9 +83,11 @@ public class OrderingStationBuilder : MonoBehaviour {
     ground.transform.SetParent(parent, false);
     ground.transform.localScale = new Vector3(3.2f, 1f, 3.2f);
     ground.GetComponent<Renderer>().sharedMaterial = Lit(Lawn);
-    Pad(parent, "OSPlaza", new Vector3(0f, 0.006f, 2.2f), 11f, Sand);
+    Pad(parent, "OSPlaza", new Vector3(0f, 0.006f, 2.2f), 11f, new Color(0.93f, 0.84f, 0.58f));
     Box(parent, "OSPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f),
       new Color(0.76f, 0.60f, 0.40f));
+    StageLight(parent, new Vector3(0f, 7.5f, 2.8f));
+    DemoJuice.AttachSpotlight(parent, "OSStageLight", TrackCenter + new Vector3(0f, 0.012f, 0f), 6.6f);
   }
 
   void BuildEntryAndExit(Transform parent) {
@@ -94,7 +96,7 @@ public class OrderingStationBuilder : MonoBehaviour {
     GameObject beam = Box(parent, "OSEntryBeam", new Vector3(0f, 2.08f, -9.2f),
       new Vector3(3.2f, 0.16f, 0.16f), Cream);
     Ignore(beam);
-    Pad(parent, "OSPlayDisc", PlaySpotLocal + new Vector3(0f, 0.012f, 0f), 2.4f, Gold);
+    Pad(parent, "OSPlayDisc", PlaySpotLocal + new Vector3(0f, 0.012f, 0f), 3.0f, Gold);
     GameObject spot = new GameObject("OSPlaySpot");
     spot.transform.SetParent(parent, false);
     spot.transform.localPosition = PlaySpotLocal;
@@ -211,6 +213,7 @@ public class OrderingStationBuilder : MonoBehaviour {
     root.transform.SetParent(RoundRoot, false);
     root.transform.localPosition = home;
     Color col = Palette[Mathf.Abs(colorIdx) % Palette.Length];
+    if (locked) col = Color.Lerp(col, new Color(0.5f, 0.5f, 0.52f), 0.55f);
     if (dim == OrderDim.Size) {
       float r = 0.22f + rank * 0.09f;
       Ball(root.transform, "Ball", new Vector3(0f, r, 0f), r * 2f, col);
@@ -224,11 +227,11 @@ public class OrderingStationBuilder : MonoBehaviour {
       rope.name = "Rope";
       rope.transform.SetParent(root.transform, false);
       rope.transform.localPosition = new Vector3(0f, 0.1f, 0f);
-      rope.transform.localScale = new Vector3(len, 0.12f, 0.16f);
+      rope.transform.localScale = new Vector3(0.16f, 0.12f, len);
       rope.GetComponent<Renderer>().sharedMaterial = Lit(col);
       Strip(rope);
       Ignore(rope);
-      Ball(root.transform, "Knob", new Vector3(len * 0.5f, 0.1f, 0f), 0.22f, Gold);
+      Ball(root.transform, "Knob", new Vector3(0f, 0.1f, len * 0.5f), 0.22f, Gold);
     }
     BoxCollider box = root.AddComponent<BoxCollider>();
     box.center = new Vector3(0f, 0.4f, 0f);
@@ -245,6 +248,18 @@ public class OrderingStationBuilder : MonoBehaviour {
       if (c != null) c.enabled = false;
     }
     return piece;
+  }
+
+  public void HighlightEmpty() {
+    for (int i = 0; i < Slots.Count; i++) {
+      OrderingSlot s = Slots[i];
+      if (s == null) continue;
+      Transform pad = s.transform.Find("Pad");
+      if (pad == null) continue;
+      Renderer r = pad.GetComponent<Renderer>();
+      if (r == null) continue;
+      r.sharedMaterial = Lit(s.Filled ? Cream : Gold);
+    }
   }
 
   public void PrePlace(int slotIdx, OrderingPiece piece) {
@@ -289,6 +304,17 @@ public class OrderingStationBuilder : MonoBehaviour {
     Strip(pad);
     Ignore(pad);
     return pad;
+  }
+
+  static void StageLight(Transform parent, Vector3 local) {
+    GameObject go = new GameObject("OSFillLight");
+    go.transform.SetParent(parent, false);
+    go.transform.localPosition = local;
+    Light light = go.AddComponent<Light>();
+    light.type = LightType.Point;
+    light.range = 24f;
+    light.intensity = 4.2f;
+    light.color = new Color(1f, 0.96f, 0.88f);
   }
 
   static void Strip(GameObject go) {

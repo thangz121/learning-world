@@ -11,7 +11,7 @@ public class GeometryPlayBuilder : MonoBehaviour {
   public const float BoundZ = 14f;
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -3f);
   public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -10.8f);
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 3.4f, -5.6f);
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 2.8f, -4.2f);
   public static readonly Vector3 PlaySpotLocal = new Vector3(0f, 0f, 0.2f);
   public static readonly Vector3 HuntCenter = new Vector3(0f, 0f, 2.6f);
   public static readonly Vector3 WorkshopLocal = new Vector3(0f, 0f, 5.1f);
@@ -83,8 +83,10 @@ public class GeometryPlayBuilder : MonoBehaviour {
     ground.transform.SetParent(parent, false);
     ground.transform.localScale = new Vector3(3.2f, 1f, 3.2f);
     ground.GetComponent<Renderer>().sharedMaterial = Lit(Lawn);
-    Pad(parent, "GPPlaza", new Vector3(0f, 0.006f, 1.8f), 9.2f, Sand);
+    Pad(parent, "GPPlaza", new Vector3(0f, 0.006f, 1.8f), 9.2f, new Color(0.93f, 0.84f, 0.58f));
     Box(parent, "GPPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f), PathTan);
+    StageLight(parent, new Vector3(0f, 7.5f, 2.8f));
+    DemoJuice.AttachSpotlight(parent, "GPStageLight", HuntCenter + new Vector3(0f, 0.01f, 0f), 6.2f);
   }
 
   void BuildEntryAndExit(Transform parent) {
@@ -93,7 +95,7 @@ public class GeometryPlayBuilder : MonoBehaviour {
     GameObject beam = Box(parent, "GPEntryBeam", new Vector3(0f, 2.08f, -9.2f),
       new Vector3(3.2f, 0.16f, 0.16f), Cream);
     Ignore(beam);
-    Pad(parent, "GPPlayDisc", PlaySpotLocal + new Vector3(0f, 0.012f, 0f), 2.4f, Gold);
+    Pad(parent, "GPPlayDisc", PlaySpotLocal + new Vector3(0f, 0.012f, 0f), 3.0f, Gold);
     GameObject spot = new GameObject("GPPlaySpot");
     spot.transform.SetParent(parent, false);
     spot.transform.localPosition = PlaySpotLocal;
@@ -199,6 +201,7 @@ public class GeometryPlayBuilder : MonoBehaviour {
     GeometrySocket s = Sockets[index];
     s.transform.localPosition = local;
     s.Bind(s.Game, kind, upright, 0f);
+    DressSocket(s, kind);
     s.gameObject.SetActive(true);
     return s;
   }
@@ -221,17 +224,44 @@ public class GeometryPlayBuilder : MonoBehaviour {
 
   GeometrySocket MakeSocket(Transform parent, string name, Vector3 local, GeometryKind kind,
       bool upright, float yaw) {
+    GameObject root = new GameObject(name);
+    root.transform.SetParent(parent, false);
+    root.transform.localPosition = local;
     GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    pad.name = name;
-    pad.transform.SetParent(parent, false);
-    pad.transform.localPosition = local;
-    pad.transform.localScale = new Vector3(1.35f, 0.04f, 1.35f);
+    pad.name = "Pad";
+    pad.transform.SetParent(root.transform, false);
+    pad.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+    pad.transform.localScale = new Vector3(1.45f, 0.04f, 1.45f);
     pad.GetComponent<Renderer>().sharedMaterial = Lit(Cream);
+    Strip(pad);
     Ignore(pad);
-    GeometrySocket sock = pad.AddComponent<GeometrySocket>();
+    BoxCollider box = root.AddComponent<BoxCollider>();
+    box.center = new Vector3(0f, 0.18f, 0f);
+    box.size = new Vector3(1.5f, 0.45f, 1.5f);
+    Ignore(root);
+    GeometrySocket sock = root.AddComponent<GeometrySocket>();
     sock.Bind(null, kind, upright, yaw);
     Sockets.Add(sock);
     return sock;
+  }
+
+  void DressSocket(GeometrySocket s, GeometryKind kind) {
+    if (s == null) return;
+    Transform pad = s.transform.Find("Pad");
+    if (pad != null) {
+      Renderer r = pad.GetComponent<Renderer>();
+      if (r != null)
+        r.sharedMaterial = Lit(Color.Lerp(GeometryShapes.ColorAt((int)kind), Cream, 0.55f));
+    }
+    Transform old = s.transform.Find("Ghost");
+    if (old != null) CharacterPresentation.DestroyNow(old.gameObject);
+    GameObject ghost = new GameObject("Ghost");
+    ghost.transform.SetParent(s.transform, false);
+    ghost.transform.localPosition = new Vector3(0f, 0.16f, 0f);
+    ghost.transform.localScale = Vector3.one * 0.7f;
+    BuildKindVisual(ghost.transform, kind,
+      Color.Lerp(GeometryShapes.ColorAt((int)kind), Cream, 0.28f), true);
+    Ignore(ghost);
   }
 
   public static GeometryPiece MakeShape(Transform parent, string name, GeometryKind kind,
@@ -241,11 +271,19 @@ public class GeometryPlayBuilder : MonoBehaviour {
     go.transform.localPosition = local;
     go.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
     go.transform.localScale = Vector3.one * scale;
-    BuildKindVisual(go.transform, kind, color);
+    BuildKindVisual(go.transform, kind, color, !env);
     BoxCollider box = go.AddComponent<BoxCollider>();
-    box.center = new Vector3(0f, 0.2f, 0f);
-    box.size = new Vector3(1.1f, 0.5f, 1.1f);
+    box.center = new Vector3(0f, env ? 0.28f : 0.36f, 0f);
+    box.size = env ? new Vector3(1.25f, 0.7f, 1.25f) : new Vector3(0.9f, 0.8f, 0.9f);
     Ignore(go);
+    if (!env) {
+      UnityEngine.AI.NavMeshObstacle obs = go.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+      obs.carving = true;
+      obs.shape = UnityEngine.AI.NavMeshObstacleShape.Capsule;
+      obs.center = new Vector3(0f, 0.36f, 0f);
+      obs.radius = 0.42f;
+      obs.height = 0.85f;
+    }
     GeometryPiece piece = go.AddComponent<GeometryPiece>();
     piece.Kind = kind;
     piece.HomeLocal = local;
@@ -255,12 +293,16 @@ public class GeometryPlayBuilder : MonoBehaviour {
   }
 
   public static void BuildKindVisual(Transform parent, GeometryKind kind, Color color) {
+    BuildKindVisual(parent, kind, color, false);
+  }
+
+  public static void BuildKindVisual(Transform parent, GeometryKind kind, Color color, bool toy) {
     if (kind == GeometryKind.Circle) {
-      GameObject c = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      GameObject c = GameObject.CreatePrimitive(toy ? PrimitiveType.Sphere : PrimitiveType.Cylinder);
       c.name = "Vis";
       c.transform.SetParent(parent, false);
-      c.transform.localPosition = new Vector3(0f, 0.1f, 0f);
-      c.transform.localScale = new Vector3(1.0f, 0.1f, 1.0f);
+      c.transform.localPosition = new Vector3(0f, toy ? 0.28f : 0.1f, 0f);
+      c.transform.localScale = toy ? new Vector3(0.56f, 0.56f, 0.56f) : new Vector3(1.0f, 0.14f, 1.0f);
       c.GetComponent<Renderer>().sharedMaterial = Lit(color);
       Strip(c);
       Ignore(c);
@@ -269,6 +311,8 @@ public class GeometryPlayBuilder : MonoBehaviour {
     if (kind == GeometryKind.Triangle) {
       GameObject t = new GameObject("Vis");
       t.transform.SetParent(parent, false);
+      t.transform.localPosition = toy ? new Vector3(0f, 0.22f, 0f) : Vector3.zero;
+      t.transform.localScale = toy ? new Vector3(1.4f, 4.6f, 1.4f) : Vector3.one;
       MeshFilter mf = t.AddComponent<MeshFilter>();
       mf.sharedMesh = TriangleMesh();
       MeshRenderer mr = t.AddComponent<MeshRenderer>();
@@ -279,9 +323,11 @@ public class GeometryPlayBuilder : MonoBehaviour {
     GameObject b = GameObject.CreatePrimitive(PrimitiveType.Cube);
     b.name = "Vis";
     b.transform.SetParent(parent, false);
-    b.transform.localPosition = new Vector3(0f, 0.1f, 0f);
-    if (kind == GeometryKind.Rectangle) b.transform.localScale = new Vector3(1.35f, 0.18f, 0.78f);
-    else b.transform.localScale = new Vector3(1.0f, 0.18f, 1.0f);
+    b.transform.localPosition = new Vector3(0f, toy ? 0.4f : 0.1f, 0f);
+    if (kind == GeometryKind.Rectangle)
+      b.transform.localScale = toy ? new Vector3(1.15f, 0.8f, 0.5f) : new Vector3(1.35f, 0.28f, 0.78f);
+    else
+      b.transform.localScale = toy ? new Vector3(0.8f, 0.8f, 0.8f) : new Vector3(1.0f, 0.28f, 1.0f);
     b.GetComponent<Renderer>().sharedMaterial = Lit(color);
     Strip(b);
     Ignore(b);
@@ -328,6 +374,17 @@ public class GeometryPlayBuilder : MonoBehaviour {
     Strip(pad);
     Ignore(pad);
     return pad;
+  }
+
+  static void StageLight(Transform parent, Vector3 local) {
+    GameObject go = new GameObject("GPFillLight");
+    go.transform.SetParent(parent, false);
+    go.transform.localPosition = local;
+    Light light = go.AddComponent<Light>();
+    light.type = LightType.Point;
+    light.range = 24f;
+    light.intensity = 4.2f;
+    light.color = new Color(1f, 0.96f, 0.88f);
   }
 
   static void Strip(GameObject go) {

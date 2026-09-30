@@ -641,6 +641,8 @@ public class RabbitFeed : MonoBehaviour {
   // USER ROUND (round 2): a wrong ANSWER-BOARD tap re-reads instead of
   // resetting the bowl (there is no bowl state to reset in a quiz round).
   bool _wrongQuiz;
+  // Age-4 affordance: once the bowl matches, say the bell once (not every frame).
+  bool _bellCued;
 
   // Rabbit life: nibble bursts + ear twitches + breathing (procedural, small).
   float _nibbleT;
@@ -1426,6 +1428,13 @@ public class RabbitFeed : MonoBehaviour {
     Submits++;
     PlaySfx("pickup");
     if (Count == Target) { SuccessBeats(); return; }
+    // Age 4: off by one keeps the bowl (add one / put one back). Off by two or
+    // more still empties and re-reads — a real miss, not a near miss.
+    int gap = Count - Target;
+    if (gap == 1 || gap == -1) {
+      NearMiss(gap < 0);
+      return;
+    }
     To(Phase.Wrong);
     _wrongT = 0f;
     FaceTowards(_teacher, PlayerLocal(), 0.2f, 5f);
@@ -1436,6 +1445,22 @@ public class RabbitFeed : MonoBehaviour {
       Count < Target ? "Chưa đủ rồi. Đếm lại nhé!" : "Thừa rồi. Đếm lại nhé!");
     Point(_teacher, RabbitWorld(), 2.2f);
     Log("wrong submit: count=" + Count + " target=" + Target);
+  }
+
+  // Off by one: the work stays. One short line, the garden shows where to go.
+  void NearMiss(bool shortfall) {
+    GameJuice.WrongFx(_board != null ? _board.transform : null, _fx, BoardWorld());
+    ActivityFeedback.Retry();
+    if (shortfall) {
+      Say("One more carrot!", "Thêm một củ nhé!");
+      Point(_teacher, PatchWorld(), 2.2f);
+      ActivityGuide.PointAt(PatchWorld());
+    } else {
+      Say("Put one back!", "Bỏ một củ về!");
+      Point(_teacher, PatchWorld(), 2.2f);
+      ActivityGuide.PointAt(PatchWorld());
+    }
+    Log("near miss: count=" + Count + " target=" + Target + " (bowl kept)");
   }
 
   // The wrong beat: hold the line, then every fed carrot walks home and the
@@ -1583,8 +1608,30 @@ public class RabbitFeed : MonoBehaviour {
     FaceTowards(_teacher, PlayerLocal(), dt, 2.2f);
     FaceTowards(_student, PlayerLocal(), dt, 2.2f);
     FaceRabbitTo(PlayerWorld(), dt);
-    // S3-P2Z35: show where to bring the carried carrot.
-    if (Carried != null) ActivityGuide.PointAt(BowlWorld()); else ActivityGuide.Clear();
+    // Carried carrot still goes to the bowl. A full bowl points at the bell
+    // once — the second verb a 4-year-old otherwise never finds.
+    if (Carried != null) {
+      ActivityGuide.PointAt(BowlWorld());
+    } else if (Count == Target && Count > 0) {
+      Vector3 bell = BellWorld();
+      ActivityGuide.PointAt(bell);
+      if (!_bellCued && _voice != null && _voice.Idle && !_voice.HasLine) {
+        _bellCued = true;
+        Say("Ring the bell!", "Bấm chuông nhé!");
+        Point(_teacher, bell, 1.8f);
+        HopRabbit();
+        Transform bellGo = _builder != null ? _builder.transform.Find("RPSubmitBell") : null;
+        if (bellGo != null) GameJuice.Pop(bellGo, 0.22f, 0.45f);
+      }
+    } else {
+      _bellCued = false;
+      ActivityGuide.Clear();
+    }
+  }
+
+  Vector3 BellWorld() {
+    if (_builder != null && _builder.SubmitAnchor != null) return _builder.SubmitAnchor.position;
+    return _root != null ? _root.TransformPoint(RabbitPlayBuilder.SubmitLocal) : Vector3.zero;
   }
 
   // "Stop, then feed" (same discipline as gameplay #1): walking PAST the bowl

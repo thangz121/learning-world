@@ -157,9 +157,15 @@ public class CT_S18_ComparisonMarket {
       int answers = 0;
       for (int i = 0; i < builder.Choices.Count; i++)
         if (builder.Choices[i].IsAnswer) answers++;
-      Assert.AreEqual(2, answers, "spread does not decide: both equal");
-      game.TryTapChoice(builder.Choices[0]);
-      Assert.IsTrue(game.LastCorrect, "either basket wins on equal");
+      Assert.AreEqual(1, answers, "equal pad is the only answer");
+      ComparisonChoice basket = WrongOf(builder);
+      Assert.IsNotNull(basket, "a basket is not the answer");
+      game.TryTapChoice(basket);
+      Assert.IsFalse(game.LastCorrect, "tapping a basket does not prove equal");
+      ComparisonChoice eq = AnswerOf(builder);
+      Assert.IsNotNull(eq, "equal pad");
+      game.TryTapChoice(eq);
+      Assert.IsTrue(game.LastCorrect, "equal pad wins");
       // LV5: pair three apples with four oranges, then confirm.
       game.SetLevelForTests(5, 0);
       Assert.AreEqual(ComparisonMarket.Phase.Pair, game.Current, "pairing phase");

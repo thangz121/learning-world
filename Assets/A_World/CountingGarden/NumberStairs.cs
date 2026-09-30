@@ -166,6 +166,7 @@ public enum Phase {
   // have/want question once in a while (never a fail, never while plain).
   float _reaskT;
   bool _reaskArmed = true;
+  bool _staySaid;
   const float ReaskDwell = 6f;      // settled on a non-target step before a re-ask
   // Live arithmetic visits are a bounded lesson (like the ladder): a handful of
   // random questions from the area's first target, then the visit settles.
@@ -777,10 +778,18 @@ public enum Phase {
     // no CHECK button — the world notices, then waits ~1s).
     bool moving = IsPlayerMoving();
     if (CurrentStep == Target && !moving) {
+      // Age 4 walks off the right step before the 1.1s confirm. Pulse the
+      // tread once so "stay" is a picture, never a line that steals the
+      // success sentence (PacedVoice keeps only the newest pending line).
+      if (!_staySaid) {
+        _staySaid = true;
+        PulseStep(Target);
+      }
       _dwellT += dt;
       if (_dwellT >= SuccessDwell) Success();
     } else {
       _dwellT = 0f;
+      if (CurrentStep != Target) _staySaid = false;
     }
     // S3-P2Z32 "nhắc lại nhẹ": on a +/- round, a settled stand on a NON-target
     // step re-reads the have/want/how-many question once in a while (never a

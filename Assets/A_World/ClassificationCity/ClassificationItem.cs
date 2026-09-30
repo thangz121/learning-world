@@ -38,7 +38,7 @@ public class ClassificationItem : MonoBehaviour, IClickTarget {
     if (State == ItemState.Placed || State == ItemState.Example) return;
     State = ItemState.Carried;
     transform.SetParent(holder, true);
-    transform.localPosition = new Vector3(0.15f, 1.05f, 0.35f);
+    transform.localPosition = new Vector3(0.55f, 0.88f, 0.95f);
     transform.localRotation = Quaternion.identity;
     if (_col != null) _col.enabled = false;
   }
@@ -56,8 +56,10 @@ public class ClassificationItem : MonoBehaviour, IClickTarget {
   public void PlaceAt(Transform bin) {
     State = ItemState.Placed;
     transform.SetParent(bin, true);
-    transform.localPosition = new Vector3(
-      (HomeLocal.x % 1.0f) * 0.3f, 0.35f, (HomeLocal.z % 1.0f) * 0.3f);
+    int n = 0;
+    ClassificationBin binComp = bin.GetComponent<ClassificationBin>();
+    if (binComp != null) n = Mathf.Max(0, binComp.Occupants.Count - 1);
+    transform.localPosition = new Vector3((n % 3 - 1) * 0.45f, 0.4f, (n / 3) * 0.4f);
     transform.localRotation = Quaternion.identity;
     if (_col != null) _col.enabled = false;
   }

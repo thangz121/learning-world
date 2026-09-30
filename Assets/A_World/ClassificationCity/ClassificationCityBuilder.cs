@@ -11,11 +11,11 @@ public class ClassificationCityBuilder : MonoBehaviour {
   public const float BoundZ = 14f;
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -3f);
   public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -10.8f);
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 3.4f, -5.6f);
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 2.8f, -4.2f);
   public static readonly Vector3 PlaySpotLocal = new Vector3(0f, 0f, 0.2f);
-  public static readonly Vector3 SlotA = new Vector3(-2.6f, 0f, 3.0f);
-  public static readonly Vector3 SlotB = new Vector3(2.6f, 0f, 3.0f);
-  public static readonly Vector3 SlotC = new Vector3(0f, 0f, 5.0f);
+  public static readonly Vector3 SlotA = new Vector3(-2.6f, 0f, 4.4f);
+  public static readonly Vector3 SlotB = new Vector3(2.6f, 0f, 4.4f);
+  public static readonly Vector3 SlotC = new Vector3(0f, 0f, 6.2f);
   public const string ObjectiveEn = "Sort the town";
   public const string ObjectiveVi = "Thành phố phân loại";
 
@@ -85,9 +85,11 @@ public class ClassificationCityBuilder : MonoBehaviour {
     ground.transform.SetParent(parent, false);
     ground.transform.localScale = new Vector3(3.2f, 1f, 3.2f);
     ground.GetComponent<Renderer>().sharedMaterial = Lit(Lawn);
-    Pad(parent, "CCPlaza", new Vector3(0f, 0.006f, 2.6f), 11f, Sand);
+    Pad(parent, "CCPlaza", new Vector3(0f, 0.006f, 2.6f), 11f, new Color(0.93f, 0.84f, 0.58f));
     Box(parent, "CCPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f),
       new Color(0.76f, 0.60f, 0.40f));
+    StageLight(parent, new Vector3(0f, 7.5f, 2.8f));
+    DemoJuice.AttachSpotlight(parent, "CCStageLight", new Vector3(0f, 0.012f, 2.4f), 6.4f);
   }
 
   void BuildEntryAndExit(Transform parent) {
@@ -96,7 +98,7 @@ public class ClassificationCityBuilder : MonoBehaviour {
     GameObject beam = Box(parent, "CCEntryBeam", new Vector3(0f, 2.08f, -9.2f),
       new Vector3(3.2f, 0.16f, 0.16f), Cream);
     Ignore(beam);
-    Pad(parent, "CCPlayDisc", PlaySpotLocal + new Vector3(0f, 0.012f, 0f), 2.4f, Gold);
+    Pad(parent, "CCPlayDisc", PlaySpotLocal + new Vector3(0f, 0.012f, 0f), 3.0f, Gold);
     GameObject spot = new GameObject("CCPlaySpot");
     spot.transform.SetParent(parent, false);
     spot.transform.localPosition = PlaySpotLocal;
@@ -340,6 +342,17 @@ public class ClassificationCityBuilder : MonoBehaviour {
     Strip(pad);
     Ignore(pad);
     return pad;
+  }
+
+  static void StageLight(Transform parent, Vector3 local) {
+    GameObject go = new GameObject("CCFillLight");
+    go.transform.SetParent(parent, false);
+    go.transform.localPosition = local;
+    Light light = go.AddComponent<Light>();
+    light.type = LightType.Point;
+    light.range = 24f;
+    light.intensity = 4.2f;
+    light.color = new Color(1f, 0.96f, 0.88f);
   }
 
   static void Strip(GameObject go) {

@@ -618,8 +618,9 @@ public class GameInstaller : MonoBehaviour {
         }
       }
       if (root == null) {
-        Debug.LogError("[GameInstaller] OrderingStationPlayScene has no OrderingStationWorld root.", this);
-        return;
+        root = new GameObject("OrderingStationWorld");
+        if (scene.IsValid()) SceneManager.MoveGameObjectToScene(root, scene);
+        Debug.LogWarning("[GameInstaller] OrderingStationWorld was missing; created.", this);
       }
       root.transform.position = OrderingStationBuilder.WorldOffset;
       OrderingStationBuilder builder = root.GetComponent<OrderingStationBuilder>();

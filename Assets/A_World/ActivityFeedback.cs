@@ -92,7 +92,12 @@ public class ActivityFeedback : MonoBehaviour {
   // Round progress. total <= 0 hides the row (free-play). done is clamped.
   public static void Progress(int done, int total) {
     ActivityFeedback f = Ensure();
-    f.ShowProgress(done, total);
+    f.ShowProgress(done, total, false);
+  }
+
+  public static void ProgressKeep(int done, int total) {
+    ActivityFeedback f = Ensure();
+    f.ShowProgress(done, total, true);
   }
 
   // The persistent task line ("Feed 7 carrots." / "Đi tới bậc năm."), shown
@@ -112,7 +117,7 @@ public class ActivityFeedback : MonoBehaviour {
   public static void Clear() {
     if (_instance == null) return;
     _retryStreak = 0;
-    _instance.ShowProgress(0, 0);
+    _instance.ShowProgress(0, 0, false);
     _instance._bannerT = 0f;
     _instance._bannerDur = 0f;
     if (_instance._banner != null) SetBannerAlpha(_instance._banner, 0f);
@@ -235,11 +240,11 @@ public class ActivityFeedback : MonoBehaviour {
     _objective.gameObject.SetActive(true);
   }
 
-  void ShowProgress(int done, int total) {
+  void ShowProgress(int done, int total, bool stay) {
     if (_progressRow == null) return;
     if (total <= 0) { _progressRow.gameObject.SetActive(false); return; }
     _progressRow.gameObject.SetActive(true);
-    _progressHold = 6f;
+    _progressHold = stay ? 3600f : 6f;
     while (_dots.Count < total) {
       GameObject dotGo = new GameObject("Dot" + _dots.Count);
       dotGo.transform.SetParent(_progressRow, false);

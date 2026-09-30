@@ -284,8 +284,8 @@ public class CT_P55_RabbitGame {
     }
   }
 
-  // E. S3-P2Z23: the submit can be WRONG — too few AND too many both gently
-  // reset the bowl so the child retries; only an exact count wins.
+  // E. S3-P2Z23: a FAR miss (off by 2+) gently resets the bowl so the child
+  // retries; only an exact count wins. Off-by-one is pinned in P55W.
   [Test] public void P55E_WrongSubmitThenRetry() {
     GameObject arena;
     RabbitPlayBuilder builder = BuildArena(out arena);
@@ -296,9 +296,8 @@ public class CT_P55_RabbitGame {
       RabbitFeed game = BuildGame(builder, arena, player, audio, life, 3);
       AdvanceToFeeding(game, player);
 
-      // Too few: 2 of 3.
+      // Too few, and not close: 1 of 3.
       FeedOne(game, player, 0);
-      FeedOne(game, player, 1);
       for (int i = 0; i < 60; i++) game.Tick(0.1f); // let the count lines drain
       player.transform.position = RabbitPlayBuilder.SubmitLocal;
       game.TrySubmit();
@@ -316,13 +315,14 @@ public class CT_P55_RabbitGame {
         Assert.AreEqual(RabbitCarrot.CarrotState.Available, game.CarrotAt(i).State,
           "carrot " + i + " is back home to retry");
 
-      // Too many: 4 of 3.
+      // Too many, and not close: 5 of 3.
       FeedOne(game, player, 0);
       FeedOne(game, player, 1);
       FeedOne(game, player, 2);
       FeedOne(game, player, 3);
+      FeedOne(game, player, 4);
       for (int i = 0; i < 60; i++) game.Tick(0.1f); // let the count lines drain
-      Assert.AreEqual(4, game.Count, "the child CAN overshoot");
+      Assert.AreEqual(5, game.Count, "the child CAN overshoot");
       Assert.AreEqual(RabbitFeed.Phase.Feeding, game.Current, "still feeding after 4");
       player.transform.position = RabbitPlayBuilder.SubmitLocal;
       game.TrySubmit();
@@ -753,11 +753,10 @@ public class CT_P55_RabbitGame {
         new ActivityLifecycle("rabbit_feed", "test"), 3);
       AdvanceToFeeding(game, player);
       FeedOne(game, player, 0);
-      FeedOne(game, player, 1);
       for (int i = 0; i < 60; i++) game.Tick(0.1f); // let the count lines drain
       player.transform.position = RabbitPlayBuilder.SubmitLocal;
       game.TrySubmit();
-      Assert.AreEqual(RabbitFeed.Phase.Wrong, game.Current, "too few is a wrong submit");
+      Assert.AreEqual(RabbitFeed.Phase.Wrong, game.Current, "far miss is a wrong submit");
       for (int i = 0; i < 60 && game.Current != RabbitFeed.Phase.Feeding; i++) game.Tick(0.1f);
       Assert.AreEqual(RabbitFeed.Phase.Feeding, game.Current, "the retry opens");
       Assert.AreEqual(0, game.Count, "the bowl cleared");
@@ -949,6 +948,63 @@ public class CT_P55_RabbitGame {
       Assert.IsTrue(audio.Lines.Contains(
         DialogueLang.T("That's right! This is subtraction.", "Đúng rồi! Đây là phép trừ.")),
         "the explanation was read");
+    } finally {
+      Object.DestroyImmediate(player);
+      Object.DestroyImmediate(arena);
+    }
+  }
+
+  // W. Age-4 near miss: off by one keeps the bowl and names the one fix.
+  // A second bell after the fix still wins. Far misses stay on the reset path.
+  [Test] public void P55W_NearMissKeepsTheBowl() {
+    GameObject arena;
+    RabbitPlayBuilder builder = BuildArena(out arena);
+    GameObject player = BuildPlayer(RabbitPlayBuilder.EntryLocal);
+    try {
+      FakeAudio audio = new FakeAudio();
+      RabbitFeed game = BuildGame(builder, arena, player, audio,
+        new ActivityLifecycle("rabbit_feed", "test"), 3);
+      AdvanceToFeeding(game, player);
+      FeedOne(game, player, 0);
+      FeedOne(game, player, 1);
+      player.transform.position = RabbitPlayBuilder.SubmitLocal;
+      game.TrySubmit();
+      Assert.AreEqual(RabbitFeed.Phase.Feeding, game.Current, "off by one is not a reset");
+      Assert.AreEqual(2, game.Count, "the two carrots stay in the bowl");
+      for (int i = 0; i < 40; i++) game.Tick(0.1f); // the count line must finish first
+      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("One more carrot!", "Thêm một củ nhé!")),
+        "the teacher names the one missing carrot");
+      FeedOne(game, player, 2);
+      for (int i = 0; i < 40; i++) game.Tick(0.1f);
+      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Ring the bell!", "Bấm chuông nhé!")),
+        "a full bowl points at the bell");
+      Submit(game, player);
+      for (int i = 0; i < 20 && game.Current != RabbitFeed.Phase.Success; i++) game.Tick(0.1f);
+      Assert.AreEqual(RabbitFeed.Phase.Success, game.Current, "the fixed bowl wins");
+
+      GameObject arena2;
+      RabbitPlayBuilder builder2 = BuildArena(out arena2);
+      GameObject player2 = BuildPlayer(RabbitPlayBuilder.EntryLocal);
+      try {
+        FakeAudio audio2 = new FakeAudio();
+        RabbitFeed over = BuildGame(builder2, arena2, player2, audio2,
+          new ActivityLifecycle("rabbit_feed", "test"), 3);
+        AdvanceToFeeding(over, player2);
+        FeedOne(over, player2, 0);
+        FeedOne(over, player2, 1);
+        FeedOne(over, player2, 2);
+        FeedOne(over, player2, 3);
+        player2.transform.position = RabbitPlayBuilder.SubmitLocal;
+        over.TrySubmit();
+        Assert.AreEqual(RabbitFeed.Phase.Feeding, over.Current, "one extra is not a reset");
+        Assert.AreEqual(4, over.Count, "the extra carrot stays until the child puts it back");
+        for (int i = 0; i < 40; i++) over.Tick(0.1f);
+        Assert.IsTrue(audio2.Lines.Contains(DialogueLang.T("Put one back!", "Bỏ một củ về!")),
+          "the teacher names the one extra carrot");
+      } finally {
+        Object.DestroyImmediate(player2);
+        Object.DestroyImmediate(arena2);
+      }
     } finally {
       Object.DestroyImmediate(player);
       Object.DestroyImmediate(arena);

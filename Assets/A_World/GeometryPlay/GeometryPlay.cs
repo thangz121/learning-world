@@ -36,6 +36,9 @@ public class GeometryPlay : MonoBehaviour {
   float _phaseT;
   bool _waitCalled;
   bool _asked;
+  float _restT;
+  bool _finishAfterRest;
+  float _idleT;
   Vector3[] _huntSlots;
   readonly List<GeometrySocket> _liveSockets = new List<GeometrySocket>();
   readonly Queue<string> _askEn = new Queue<string>();
@@ -93,9 +96,19 @@ public class GeometryPlay : MonoBehaviour {
     }
     if (_voice != null) _voice.Tick(dt);
     TickAsk();
+    if (_restT > 0f) {
+      _restT -= dt;
+      if (_restT <= 0f) AfterWin();
+      return;
+    }
     _phaseT += dt;
     if (Current == Phase.Wait) TickWait(dt);
-    else if (Current == Phase.Hunt || Current == Phase.Carry) TickPlay(dt);
+    else if (Current == Phase.Hunt || Current == Phase.Carry) {
+      _idleT += dt;
+      if (_idleT >= 8f && _idleT - dt < 8f) PointTask();
+      else if (_idleT >= 15f && _idleT - dt < 15f) PointTask();
+      TickPlay(dt);
+    }
   }
 
   void TickWait(float dt) {
@@ -109,7 +122,7 @@ public class GeometryPlay : MonoBehaviour {
 
   void TickPlay(float dt) {
     if (Carried != null && Action != ActionKind.TapEnv && Action != ActionKind.FindBehind) {
-      GeometrySocket near = NearestOpenSocket(1.45f);
+      GeometrySocket near = NearestOpenSocket(1.05f);
       if (near != null) TryPlace(near);
     }
   }
@@ -128,7 +141,9 @@ public class GeometryPlay : MonoBehaviour {
     MemoryStep = 0;
     LastWrongKind = false;
     LastOrientationFix = false;
+    _idleT = 0f;
     ApplyRound();
+    ActivityFeedback.ProgressKeep(RoundIndex, RoundsOf(Level));
     if (_life != null && _life.State == ActivityState.Available) {
       try { _life.Begin("geometry round"); } catch (Exception) { }
     }
@@ -169,7 +184,7 @@ public class GeometryPlay : MonoBehaviour {
       GeometryKind.Rectangle, GeometryKind.Triangle, GeometryKind.Square
     };
     Target = cycle[RoundIndex % cycle.Length];
-    SpawnFour(false, true, 0);
+    SpawnFour(false, false, 0);
     ShowPad(Target);
   }
 
@@ -332,7 +347,7 @@ public class GeometryPlay : MonoBehaviour {
     else if (PropertyId == "equal4")
       Ask("Find four equal sides.", "Tìm hình bốn cạnh đều.");
     else
-      Ask("Find two long two short.", "Tìm hai cạnh dài ngắn.");
+      Ask("Find long short sides.", "Tìm cạnh dài ngắn.");
   }
 
   void PointTask() {
@@ -341,13 +356,19 @@ public class GeometryPlay : MonoBehaviour {
       if (env != null) ActivityGuide.PointAt(env.transform.position);
     } else if (Action == ActionKind.FindBehind && _builder.Crate != null) {
       ActivityGuide.PointAt(_builder.Crate.position);
+    } else if (Carried != null) {
+      GeometrySocket open = FirstOpenMatching();
+      if (open != null) ActivityGuide.PointAt(open.transform.position);
     } else {
-      ActivityGuide.PointAt(_builder.transform.TransformPoint(GeometryPlayBuilder.HuntCenter));
+      GeometryPiece hunt = HuntOf(Target);
+      if (hunt != null) ActivityGuide.PointAt(hunt.transform.position);
+      else ActivityGuide.PointAt(_builder.transform.TransformPoint(GeometryPlayBuilder.HuntCenter));
     }
   }
 
   public void TrySelect(GeometryPiece piece) {
     if (piece == null || Current == Phase.Wait || Current == Phase.Done) return;
+    if (_restT > 0f) return;
     if (Action == ActionKind.TapEnv || Action == ActionKind.FindBehind) {
       TryTap(piece);
       return;
@@ -369,6 +390,7 @@ public class GeometryPlay : MonoBehaviour {
     piece.BeginCarry(holder);
     Carried = piece;
     Current = Phase.Carry;
+    _idleT = 0f;
     PlaySfx("pickup");
     GameJuice.PickFx(_fx, piece.transform.position, piece.transform);
     if (_liveSockets.Count > 0 && _liveSockets[0] != null)
@@ -377,6 +399,8 @@ public class GeometryPlay : MonoBehaviour {
 
   public void TryTap(GeometryPiece piece) {
     if (piece == null) return;
+    if (_restT > 0f) return;
+    _idleT = 0f;
     if (piece.Kind == Target) {
       WinRound();
       return;
@@ -388,6 +412,7 @@ public class GeometryPlay : MonoBehaviour {
 
   public void TryPlace(GeometrySocket socket) {
     if (socket == null || Carried == null) return;
+    if (_restT > 0f) return;
     if (!socket.gameObject.activeInHierarchy) return;
     GeometryPiece piece = Carried;
     if (piece.Kind != socket.Kind) {
@@ -402,6 +427,7 @@ public class GeometryPlay : MonoBehaviour {
     }
     socket.Accept(piece);
     Carried = null;
+    _idleT = 0f;
     PlaySfx("place");
     GameJuice.PlaceFx(_fx, socket.transform.position, socket.transform);
     if (Action == ActionKind.Memory) {
@@ -438,13 +464,27 @@ public class GeometryPlay : MonoBehaviour {
     if (Carried != null) { Carried.ReturnHome(); Carried = null; }
     int max = RoundsOf(Level);
     RoundIndex++;
+    ActivityFeedback.ProgressKeep(RoundIndex, max);
+    bool finish = false;
     if (RoundIndex >= max) {
       Level++;
       RoundIndex = 0;
-      if (Level > LastLevel) { FinishVisit(); return; }
-      Say("Well done!", "Giỏi lắm!");
+      finish = Level > LastLevel;
+      if (!finish) Say("Well done!", "Giỏi lắm!");
     }
-    BeginRound();
+    RestThenAdvance(finish);
+  }
+
+  void RestThenAdvance(bool finish) {
+    _finishAfterRest = finish;
+    _restT = Application.isPlaying ? 1.6f : 0f;
+    if (_restT <= 0f) AfterWin();
+  }
+
+  void AfterWin() {
+    _restT = 0f;
+    if (_finishAfterRest) FinishVisit();
+    else BeginRound();
   }
 
   public static int RoundsOf(int level) {
@@ -514,11 +554,32 @@ public class GeometryPlay : MonoBehaviour {
     for (int i = 0; i < _liveSockets.Count; i++) {
       GeometrySocket s = _liveSockets[i];
       if (s == null || !s.gameObject.activeInHierarchy || s.Filled) continue;
+      if (Carried != null && s.Kind != Carried.Kind) continue;
       Vector3 d = _player.position - s.transform.position;
       d.y = 0f;
       float m = d.sqrMagnitude;
       if (m <= bestD) { bestD = m; best = s; }
     }
     return best;
+  }
+
+  GeometrySocket FirstOpenMatching() {
+    for (int i = 0; i < _liveSockets.Count; i++) {
+      GeometrySocket s = _liveSockets[i];
+      if (s == null || !s.gameObject.activeInHierarchy || s.Filled) continue;
+      if (Carried != null && s.Kind != Carried.Kind) continue;
+      return s;
+    }
+    return null;
+  }
+
+  GeometryPiece HuntOf(GeometryKind kind) {
+    if (_builder == null) return null;
+    for (int i = 0; i < _builder.Pieces.Count; i++) {
+      GeometryPiece p = _builder.Pieces[i];
+      if (p != null && !p.EnvRole && p.Kind == kind
+          && p.State == GeometryPiece.PieceState.Idle) return p;
+    }
+    return null;
   }
 }

@@ -350,6 +350,8 @@ public class StairHillBuilder : MonoBehaviour {
       bush.transform.localScale = (i % 2 == 0) ? new Vector3(3.4f, 2.2f, 3.4f) : new Vector3(2.8f, 1.9f, 2.8f);
       bush.GetComponent<Renderer>().sharedMaterial = Lit(BushGreen);
       StripCollider(bush);
+      IgnoreFromBuild(bush);
+      WorldBeauty.HedgeBloom(parent, "SHHedgeBloom" + i, bush.transform.localPosition);
     }
   }
 

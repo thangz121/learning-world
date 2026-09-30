@@ -126,6 +126,10 @@ public class CT_S17_ShapeBuilder {
         if (builder.Pieces[i] != null && !builder.Pieces[i].EnvRole)
           seen.Add(builder.Pieces[i].Kind);
       Assert.AreEqual(4, seen.Count, "four hunt candidates");
+      GeometrySocket startPad = Live(builder, game.Target);
+      Assert.IsNotNull(startPad, "workshop pad");
+      Assert.IsNotNull(startPad.transform.Find("Ghost"), "socket shows a shape ghost");
+      Assert.IsNotNull(startPad.transform.Find("Pad"), "socket pad is unscaled");
       game.SetLevelForTests(4, 0);
       Assert.AreEqual(4, game.Level);
       game.SetLevelForTests(5, 0);

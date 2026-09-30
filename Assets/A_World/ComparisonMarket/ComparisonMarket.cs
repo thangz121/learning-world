@@ -33,6 +33,9 @@ public class ComparisonMarket : MonoBehaviour {
   Transform _fx;
   float _phaseT;
   bool _waitCalled;
+  float _restT;
+  bool _finishAfterRest;
+  float _idleT;
   readonly Queue<string> _askEn = new Queue<string>();
   readonly Queue<string> _askVi = new Queue<string>();
 
@@ -76,8 +79,18 @@ public class ComparisonMarket : MonoBehaviour {
     if (_voice != null) _voice.Tick(dt);
     TickAsk();
     if (Completed && Current == Phase.Done) return;
+    if (_restT > 0f) {
+      _restT -= dt;
+      if (_restT <= 0f) AfterWin();
+      return;
+    }
     _phaseT += dt;
     if (Current == Phase.Wait) TickWait(dt);
+    else if (Current != Phase.Done) {
+      _idleT += dt;
+      if (_idleT >= 8f && _idleT - dt < 8f) PointTask();
+      else if (_idleT >= 15f && _idleT - dt < 15f) PointTask();
+    }
   }
 
   void TickWait(float dt) {
@@ -101,7 +114,9 @@ public class ComparisonMarket : MonoBehaviour {
     Selected = null;
     PairsDone = 0;
     PairsNeed = 0;
+    _idleT = 0f;
     ApplyRound();
+    ActivityFeedback.ProgressKeep(RoundIndex, RoundsOf(Level));
     foreach (ComparisonChoice c in _builder.Choices)
       if (c != null) c.Game = this;
     foreach (ComparisonFruit f in _builder.Fruits)
@@ -151,9 +166,10 @@ public class ComparisonMarket : MonoBehaviour {
     int[] counts = { 4, 3, 5, 4 };
     int n = counts[RoundIndex % 4];
     _builder.SpawnBasket(ComparisonMarketBuilder.SlotA, ComparisonMarketBuilder.BasketColor(0),
-      n, 0.7f, ComparisonMarketBuilder.AppleColor(0), 0.32f, "L", true);
+      n, 0.7f, ComparisonMarketBuilder.AppleColor(0), 0.32f, "L", false);
     _builder.SpawnBasket(ComparisonMarketBuilder.SlotB, ComparisonMarketBuilder.BasketColor(1),
-      n, 1.6f, ComparisonMarketBuilder.AppleColor(1), 0.32f, "R", true);
+      n, 1.6f, ComparisonMarketBuilder.AppleColor(1), 0.32f, "R", false);
+    _builder.SpawnEqualPad(new Vector3(0f, 0f, 3.4f), "EQ");
   }
 
   // LV5: tap-to-pair, then tap the leftover group.
@@ -192,9 +208,10 @@ public class ComparisonMarket : MonoBehaviour {
       Relation = TargetRelation.Equal;
       int n = i == 1 ? 3 : 2;
       _builder.SpawnBasket(ComparisonMarketBuilder.SlotA, ComparisonMarketBuilder.BasketColor(0),
-        n, 1f, ComparisonMarketBuilder.AppleColor(0), 0.42f, "L", true);
+        n, 1f, ComparisonMarketBuilder.AppleColor(0), 0.42f, "L", false);
       _builder.SpawnBasket(ComparisonMarketBuilder.SlotB, ComparisonMarketBuilder.BasketColor(1),
-        n, 1f, ComparisonMarketBuilder.OrangeColor(), 0.24f, "R", true);
+        n, 1f, ComparisonMarketBuilder.OrangeColor(), 0.24f, "R", false);
+      _builder.SpawnEqualPad(new Vector3(0f, 0f, 3.4f), "EQ");
       return;
     }
     Relation = TargetRelation.More;
@@ -310,17 +327,23 @@ public class ComparisonMarket : MonoBehaviour {
 
   void SpeakTask() {
     if (Level == 3 || Level == 4) {
-      if (Relation == TargetRelation.Equal) Ask("Look at both baskets!", "Nhìn cả hai giỏ!");
+      if (Relation == TargetRelation.Equal) Ask("Are they the same?", "Bằng nhau không?");
       else if (Relation == TargetRelation.More) Ask("Which basket has more?", "Giỏ nào nhiều hơn?");
       else Ask("Which basket has less?", "Giỏ nào ít hơn?");
     } else if (Level == 5) {
       Ask("Match apple with orange.", "Xếp một táo một cam.");
     } else if (Level == 6) {
-      if (Relation == TargetRelation.Equal) Ask("Look at both baskets!", "Nhìn cả hai giỏ!");
+      if (Relation == TargetRelation.Equal) Ask("Are they the same?", "Bằng nhau không?");
       else Ask("Which basket has more?", "Giỏ nào nhiều hơn?");
     } else if (Level == 7) {
-      if (Relation == TargetRelation.Larger) Ask("Which ball is bigger?", "Bóng nào lớn hơn?");
-      else Ask("Which box is smaller?", "Hộp nào nhỏ hơn?");
+      bool boxes = (RoundIndex % 4) >= 2;
+      if (Relation == TargetRelation.Larger) {
+        if (boxes) Ask("Which box is bigger?", "Hộp nào lớn hơn?");
+        else Ask("Which ball is bigger?", "Bóng nào lớn hơn?");
+      } else {
+        if (boxes) Ask("Which box is smaller?", "Hộp nào nhỏ hơn?");
+        else Ask("Which ball is smaller?", "Bóng nào nhỏ hơn?");
+      }
     } else if (Level == 8) {
       if (Relation == TargetRelation.Longer) Ask("Which rope is longer?", "Dây nào dài hơn?");
       else Ask("Which rope is shorter?", "Dây nào ngắn hơn?");
@@ -335,17 +358,31 @@ public class ComparisonMarket : MonoBehaviour {
   }
 
   void PointTask() {
-    ActivityGuide.PointAt(_builder.transform.TransformPoint(new Vector3(0f, 0f, 2.6f)));
+    if (_builder == null) return;
+    if (Level == 10 && Current == Phase.Deliver && _builder.Cart != null) {
+      ActivityGuide.PointAt(_builder.Cart.position);
+      return;
+    }
+    ComparisonChoice mark = null;
+    for (int i = 0; i < _builder.Choices.Count; i++) {
+      ComparisonChoice c = _builder.Choices[i];
+      if (c != null && c.IsAnswer && !c.IsCart) { mark = c; break; }
+    }
+    if (mark != null) ActivityGuide.PointAt(mark.transform.position);
+    else ActivityGuide.PointAt(_builder.transform.TransformPoint(new Vector3(0f, 0f, 2.6f)));
   }
 
   public void TryTapChoice(ComparisonChoice choice) {
     if (choice == null || Completed) return;
+    if (_restT > 0f) return;
     if (Current == Phase.Wait || Current == Phase.Done) return;
+    _idleT = 0f;
     if (choice.IsCart) { TryDeliver(); return; }
     if (Level == 10) {
       if (choice.IsAnswer) {
         Selected = choice;
         Current = Phase.Deliver;
+        choice.transform.localScale = Vector3.one * 1.12f;
         PlaySfx("pickup");
         Say("To the cart!", "Mang ra xe nào!");
         ActivityGuide.PointAt(_builder.Cart.position);
@@ -366,6 +403,8 @@ public class ComparisonMarket : MonoBehaviour {
 
   public void TryTapFruit(ComparisonFruit fruit) {
     if (fruit == null || Completed || Current != Phase.Pair) return;
+    if (_restT > 0f) return;
+    _idleT = 0f;
     if (fruit.Paired) return;
     // Pair with the first unpaired fruit of the other group.
     ComparisonFruit mate = null;
@@ -423,13 +462,27 @@ public class ComparisonMarket : MonoBehaviour {
     SayPraise();
     int max = RoundsOf(Level);
     RoundIndex++;
+    ActivityFeedback.ProgressKeep(RoundIndex, max);
+    bool finish = false;
     if (RoundIndex >= max) {
       Level++;
       RoundIndex = 0;
-      if (Level > LastLevel) { FinishVisit(); return; }
-      Say("Well done!", "Giỏi lắm!");
+      finish = Level > LastLevel;
+      if (!finish) Say("Well done!", "Giỏi lắm!");
     }
-    BeginRound();
+    RestThenAdvance(finish);
+  }
+
+  void RestThenAdvance(bool finish) {
+    _finishAfterRest = finish;
+    _restT = Application.isPlaying ? 1.6f : 0f;
+    if (_restT <= 0f) AfterWin();
+  }
+
+  void AfterWin() {
+    _restT = 0f;
+    if (_finishAfterRest) FinishVisit();
+    else BeginRound();
   }
 
   void SayPraise() {

@@ -77,10 +77,11 @@ public class ActivityGuide : MonoBehaviour {
     _phase += Time.deltaTime;
     float pulse = GameJuice.ReduceMotion ? 1f : 1f + 0.10f * Mathf.Sin(_phase * 3.4f);
     _ring.transform.position = new Vector3(_target.x, _target.y + 0.03f, _target.z);
-    _ring.transform.localScale = new Vector3(1.7f * pulse, 0.02f, 1.7f * pulse);
+    _ring.transform.localScale = new Vector3(2.2f * pulse, 0.03f, 2.2f * pulse);
     _ring.transform.rotation = Quaternion.identity;
     float bob = GameJuice.ReduceMotion ? 0f : 0.12f * Mathf.Sin(_phase * 3f);
-    _beacon.transform.position = new Vector3(_target.x, _target.y + 1.5f + bob, _target.z);
+    _beacon.transform.position = new Vector3(_target.x, _target.y + 1.7f + bob, _target.z);
+    _beacon.transform.localScale = Vector3.one * (0.38f * pulse);
   }
 
   static void Strip(GameObject go) {

@@ -35,6 +35,9 @@ public class OrderingStation : MonoBehaviour {
   Transform _fx;
   float _phaseT;
   bool _waitCalled;
+  float _restT;
+  bool _finishAfterRest;
+  float _idleT;
   readonly Queue<string> _askEn = new Queue<string>();
   readonly Queue<string> _askVi = new Queue<string>();
 
@@ -78,9 +81,19 @@ public class OrderingStation : MonoBehaviour {
     if (_voice != null) _voice.Tick(dt);
     TickAsk();
     if (Completed && Current == Phase.Done) return;
+    if (_restT > 0f) {
+      _restT -= dt;
+      if (_restT <= 0f) AfterWin();
+      return;
+    }
     _phaseT += dt;
     if (Current == Phase.Wait) TickWait(dt);
-    else if (Current == Phase.Arrange) TickPlay(dt);
+    else if (Current == Phase.Arrange || Current == Phase.TapAnswer) {
+      _idleT += dt;
+      if (_idleT >= 8f && _idleT - dt < 8f) PointTask();
+      else if (_idleT >= 15f && _idleT - dt < 15f) PointTask();
+      if (Current == Phase.Arrange) TickPlay(dt);
+    }
   }
 
   void TickWait(float dt) {
@@ -94,7 +107,7 @@ public class OrderingStation : MonoBehaviour {
 
   void TickPlay(float dt) {
     if (Carried != null) {
-      OrderingSlot near = NearestSlot(1.45f);
+      OrderingSlot near = NearestSlot(0.85f);
       if (near != null) TryPlace(near);
     }
   }
@@ -110,7 +123,9 @@ public class OrderingStation : MonoBehaviour {
     _phaseT = 0f;
     Carried = null;
     TapTargetSlot = -1;
+    _idleT = 0f;
     ApplyRound();
+    ActivityFeedback.ProgressKeep(RoundIndex, RoundsOf(Level));
     foreach (OrderingSlot s in _builder.Slots)
       if (s != null) s.Game = this;
     foreach (OrderingPiece p in _builder.Pieces)
@@ -203,6 +218,7 @@ public class OrderingStation : MonoBehaviour {
     Vector3 missHome = PlazaSlots[gap % PlazaSlots.Length];
     OrderingPiece miss = _builder.SpawnPiece(missHome, ranks[gap], Dim, gap + 2, "miss", false);
     miss.Bind(this, _builder.transform, ranks[gap], Dim, "miss", missHome, false);
+    _builder.HighlightEmpty();
   }
 
   void ApplyInsertFive() {
@@ -226,6 +242,7 @@ public class OrderingStation : MonoBehaviour {
     Vector3 missHome = PlazaSlots[gap % PlazaSlots.Length];
     OrderingPiece miss = _builder.SpawnPiece(missHome, missRank, Dim, gap + 1, "miss", false);
     miss.Bind(this, _builder.transform, missRank, Dim, "miss", missHome, false);
+    _builder.HighlightEmpty();
   }
 
   // LV7 positional language on a pre-built correct track.
@@ -273,19 +290,45 @@ public class OrderingStation : MonoBehaviour {
       else if (q == 1) Ask("Who stands last?", "Con nào đứng cuối?");
       else if (q == 2) Ask("Which stands second?", "Con nào đứng thứ hai?");
       else Ask("Which stands third?", "Con nào đứng thứ ba?");
-    } else if (Level == 8) {
-      if (Descending) Ask("Order long to short.", "Xếp từ dài đến ngắn.");
-      else Ask("Order short to long.", "Xếp từ ngắn đến dài.");
-    } else if (Level == 9) Ask("Which spot is empty?", "Chỗ nào còn trống?");
+    } else if (Level == 8) SpeakOrder();
+    else if (Level == 9) Ask("Which spot is empty?", "Chỗ nào còn trống?");
     else Ask("Order boxes onto the train.", "Xếp hộp lên tàu.");
   }
 
+  void SpeakOrder() {
+    if (Dim == OrderDim.Height) {
+      if (Descending) Ask("Order high to low.", "Xếp cao xuống thấp.");
+      else Ask("Order low to high.", "Xếp thấp lên cao.");
+    } else if (Dim == OrderDim.Length) {
+      if (Descending) Ask("Order long to short.", "Xếp dài đến ngắn.");
+      else Ask("Order short to long.", "Xếp ngắn đến dài.");
+    } else {
+      if (Descending) Ask("Order large to small.", "Xếp lớn đến nhỏ.");
+      else Ask("Order small to large.", "Xếp nhỏ đến lớn.");
+    }
+  }
+
   void PointTask() {
+    if (_builder == null) return;
+    if (Task == TaskKind.Insert) {
+      OrderingSlot gap = FirstEmptySlot();
+      if (gap != null) { ActivityGuide.PointAt(gap.transform.position); return; }
+    }
+    if (Task == TaskKind.TapPosition && TapTargetSlot >= 0
+        && TapTargetSlot < _builder.Slots.Count && _builder.Slots[TapTargetSlot] != null) {
+      ActivityGuide.PointAt(_builder.Slots[TapTargetSlot].transform.position);
+      return;
+    }
+    if (Carried != null) {
+      OrderingSlot open = FirstEmptySlot();
+      if (open != null) { ActivityGuide.PointAt(open.transform.position); return; }
+    }
     ActivityGuide.PointAt(_builder.transform.TransformPoint(OrderingStationBuilder.TrackCenter));
   }
 
   public void TrySelect(OrderingPiece piece) {
     if (piece == null || Completed) return;
+    if (_restT > 0f) return;
     if (Current == Phase.Wait || Current == Phase.Done) return;
     if (Current == Phase.TapAnswer) {
       TryTapAnswer(piece);
@@ -297,8 +340,10 @@ public class OrderingStation : MonoBehaviour {
         && piece.State != OrderingPiece.PieceState.Placed) return;
     piece.BeginCarry(_player != null ? _player : transform);
     Carried = piece;
+    _idleT = 0f;
     PlaySfx("pickup");
     GameJuice.PickFx(_fx, piece.transform.position, piece.transform);
+    PointTask();
   }
 
   void TryTapAnswer(OrderingPiece piece) {
@@ -312,11 +357,13 @@ public class OrderingStation : MonoBehaviour {
 
   public void TryPlace(OrderingSlot slot) {
     if (slot == null || Carried == null || Completed) return;
+    if (_restT > 0f) return;
     if (Current != Phase.Arrange) return;
     if (!_builder.Slots.Contains(slot)) return;
     OrderingPiece piece = Carried;
     slot.Accept(piece);
     Carried = null;
+    _idleT = 0f;
     PlaySfx("place");
     GameJuice.PlaceFx(_fx, slot.transform.position, slot.transform);
     if (TrackFull()) CheckSequence();
@@ -383,17 +430,38 @@ public class OrderingStation : MonoBehaviour {
     if (Carried != null) { Carried.ReturnHome(); Carried = null; }
     int max = RoundsOf(Level);
     RoundIndex++;
+    ActivityFeedback.ProgressKeep(RoundIndex, max);
+    bool finish = false;
     if (RoundIndex >= max) {
       Level++;
       RoundIndex = 0;
-      if (Level > LastLevel) { FinishVisit(); return; }
-      Say("Well done!", "Giỏi lắm!");
+      finish = Level > LastLevel;
+      if (!finish) Say("Well done!", "Giỏi lắm!");
     }
-    BeginRound();
+    RestThenAdvance(finish);
+  }
+
+  void RestThenAdvance(bool finish) {
+    _finishAfterRest = finish;
+    _restT = Application.isPlaying ? 1.6f : 0f;
+    if (_restT <= 0f) AfterWin();
+  }
+
+  void AfterWin() {
+    _restT = 0f;
+    if (_finishAfterRest) FinishVisit();
+    else BeginRound();
   }
 
   void SayPraise() {
-    if (Descending) Say("Right! Big to small.", "Đúng rồi! Lớn đến nhỏ.");
+    if (Task == TaskKind.TapPosition) Say("Right!", "Đúng rồi!");
+    else if (Dim == OrderDim.Height) {
+      if (Descending) Say("Right! High to low.", "Đúng! Cao đến thấp.");
+      else Say("Right! Low to high.", "Đúng! Thấp đến cao.");
+    } else if (Dim == OrderDim.Length) {
+      if (Descending) Say("Right! Long to short.", "Đúng! Dài đến ngắn.");
+      else Say("Right! Short to long.", "Đúng! Ngắn đến dài.");
+    } else if (Descending) Say("Right! Big to small.", "Đúng rồi! Lớn đến nhỏ.");
     else Say("Right! Small to large.", "Đúng rồi! Nhỏ đến lớn.");
   }
 
@@ -474,5 +542,14 @@ public class OrderingStation : MonoBehaviour {
       if (m <= bestD) { bestD = m; best = s; }
     }
     return best;
+  }
+
+  OrderingSlot FirstEmptySlot() {
+    if (_builder == null) return null;
+    for (int i = 0; i < _builder.Slots.Count; i++) {
+      OrderingSlot s = _builder.Slots[i];
+      if (s != null && !s.Filled) return s;
+    }
+    return null;
   }
 }

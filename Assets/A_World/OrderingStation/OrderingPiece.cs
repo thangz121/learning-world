@@ -43,7 +43,7 @@ public class OrderingPiece : MonoBehaviour, IClickTarget {
     if (State == PieceState.Placed) Game.DetachFromSlot(this);
     State = PieceState.Carried;
     transform.SetParent(holder, true);
-    transform.localPosition = new Vector3(0.15f, 1.05f, 0.35f);
+    transform.localPosition = new Vector3(0.55f, 0.88f, 0.95f);
     transform.localRotation = Quaternion.identity;
     if (_col != null) _col.enabled = false;
   }
