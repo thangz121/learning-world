@@ -1,0 +1,18 @@
+{
+  "silero_thr": 0.5,
+  "files": {
+    "IMG_0639": {
+      "n_segments": 0,
+      "speech_ratio": 0.0,
+      "speech_duration_s": 0,
+      "processing_s": 8.241592300008051
+    },
+    "NEW": {
+      "n_segments": 38,
+      "speech_ratio": 0.5977697974682535,
+      "speech_duration_s": 56.20000000000001,
+      "processing_s": 3.891326700017089
+    }
+  },
+  "note": "frozen Phase1.8 reproduction"
+}

@@ -1,0 +1,57 @@
+[
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "soft_full": 100.0,
+    "soft_silero_crop": 100.0,
+    "soft_hybrid_crop": 100.0,
+    "delta_silero": 0.0,
+    "delta_hybrid": 0.0,
+    "silero_nseg": 1,
+    "hybrid_nseg": 1
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "soft_full": 100.0,
+    "soft_silero_crop": 100.0,
+    "soft_hybrid_crop": 100.0,
+    "delta_silero": 0.0,
+    "delta_hybrid": 0.0,
+    "silero_nseg": 1,
+    "hybrid_nseg": 1
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "soft_full": 75.2,
+    "soft_silero_crop": 75.0,
+    "soft_hybrid_crop": 75.0,
+    "delta_silero": -0.2,
+    "delta_hybrid": -0.2,
+    "silero_nseg": 1,
+    "hybrid_nseg": 1
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "soft_full": 5.8,
+    "soft_silero_crop": 33.3,
+    "soft_hybrid_crop": 33.3,
+    "delta_silero": 27.5,
+    "delta_hybrid": 27.5,
+    "silero_nseg": 1,
+    "hybrid_nseg": 1
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "soft_full": 33.3,
+    "soft_silero_crop": 100.0,
+    "soft_hybrid_crop": 100.0,
+    "delta_silero": 66.7,
+    "delta_hybrid": 66.7,
+    "silero_nseg": 1,
+    "hybrid_nseg": 1
+  }
+]

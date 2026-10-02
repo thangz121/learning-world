@@ -1,0 +1,44 @@
+{
+  "classification": "SILERO_PLUS_ADAPTIVE_GATE",
+  "rationale": [
+    "IMG silero=0 but energy/hybrid recover candidates; NEW hybrid keeps high F1 vs silero ref"
+  ],
+  "recommended_default": "silero_thr_0.5",
+  "recommended_difficult_real_audio": "adaptive_then_silero OR energy_pregate_then_silero",
+  "threshold_sweep_fixes_IMG": false,
+  "img_threshold_sweep": [
+    {
+      "silero_thr": 0.3,
+      "n_segments": 0,
+      "speech_ratio": 0.0
+    },
+    {
+      "silero_thr": 0.4,
+      "n_segments": 0,
+      "speech_ratio": 0.0
+    },
+    {
+      "silero_thr": 0.5,
+      "n_segments": 0,
+      "speech_ratio": 0.0
+    },
+    {
+      "silero_thr": 0.6,
+      "n_segments": 0,
+      "speech_ratio": 0.0
+    },
+    {
+      "silero_thr": 0.7,
+      "n_segments": 0,
+      "speech_ratio": 0.0
+    }
+  ],
+  "new_best_hybrid": {
+    "mode": "adaptive_then_silero",
+    "f1": 0.9967398008635121,
+    "precision": 0.9935007904444054,
+    "recall": 1.0,
+    "n_segments": 34
+  },
+  "phoneme_preservation_max_abs_delta": 66.7
+}
