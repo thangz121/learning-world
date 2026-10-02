@@ -83,16 +83,16 @@ No “hybrid detected speech”, no scores, no ASR, no energy/spectral.
 
 ## 5. Answers to the 8 required questions
 
-| # | Question | Answer now |
+| # | Question | Answer |
 |---|---|---|
 | 1 | Hybrid candidate count? | **28** |
-| 2 | Human SPEECH count? | **PENDING_HUMAN** (0 labels filled) |
-| 3 | NON_SPEECH count? | **PENDING_HUMAN** |
-| 4 | MIXED/UNCERTAIN? | **PENDING_HUMAN** |
-| 5 | SPEECH by duration bin? | **PENDING_HUMAN** (all candidates &lt;0.5s; bins ready in analyzer) |
-| 6 | Evidence hybrid recovers speech when Silero=0? | **PENDING_HUMAN** — pack ready, listening not done |
-| 7 | Enough for production VAD? | **NO** |
-| 8 | Exact next research step? | Human completes all 28 MODE A labels → run `analyze_human_labels.py` → A/B/C from real counts. If A: Phase 1.9.7 multi-recording rescue validation. If B: research-only fragmentation study. If still C: stop heuristics. |
+| 2 | Human SPEECH count? | **28** (Round 2 min2s); Round 1 short = undecidable |
+| 3 | NON_SPEECH count? | **0** (Round 2) |
+| 4 | MIXED/UNCERTAIN? | Round2 **0**; Round1 short **28 UNCERTAIN** |
+| 5 | SPEECH by duration? | Raw all &lt;0.5s; human-decidable only with **≥2s** context |
+| 6 | Hybrid recovers speech when Silero=0? | **YES on these 28 candidates** (IMG only) |
+| 7 | Production VAD? | **NO** |
+| 8 | Next? | **Phase 1.9.7** multi-recording + boundary/merge study |
 
 ---
 
@@ -107,31 +107,38 @@ No “hybrid detected speech”, no scores, no ASR, no energy/spectral.
 
 ---
 
-## 7. Decision (after Round 1 human listen)
+## 7. Decision (after Round 1 + Round 2 human listen)
 
-### **C. HUMAN_REVIEW_INCONCLUSIVE**
+### **A. HUMAN_VERIFIED_PROMISING**
 
-**Round 1 human (maynode):** all **28/28 = UNCERTAIN**.  
-Reason given by reviewer: clips **too short** to identify speech (raw mean ~0.25s, all &lt;0.5s).  
-SPEECH=0, NON_SPEECH=0 — not a SPEECH recovery claim and not a NON_SPEECH claim.
+| Round | Window | Result |
+|---|---|---|
+| 1 | raw / ±50ms (mean ~0.25s) | **28/28 UNCERTAIN** — too short to decide |
+| 2 | centered **≥2.0s** | **28/28 SPEECH** |
 
-**Speech reference standard designated:**  
+**Speech reference standard:**  
 `1790932799243_8856108714107255767_8856108714107255767.mp3`  
-SHA `17E3DA86267D1B7B864EA862A6C5C3B12AF4E49FD649F2FE140652A53DDF33FF`
+SHA `17E3DA86267D1B7B864EA862A6C5C3B12AF4E49FD649F2FE140652A53DDF33FF`  
+(clearer calibration; cuts still sometimes mid-word)
 
-**Round 2 pack (ready):** min **2.0s** listen windows + NEW reference clips.  
-UI: `HumanReview/review_min2s.html`  
-Does not change detector timestamps or algorithm.
+**Reviewer qualitative notes:**
+- All hybrid candidates contain speech when given ≥2s context.
+- Word identity hard; ~**70%** words guessable.
+- Boundaries often feel truncated / not end-of-word clean.
+- IMG source = hosting-program audio (difficult).
+
+**Still true:**
+- Candidate-level only — **not** full-file VAD GT / recall.
+- **Not** production VAD; **no** router lock; **no** Unity.
+- Do not feed tight raw crops to pronunciation scorer.
+
+Artifacts: `Results/ROUND1_HUMAN_OUTCOME.md`, `Results/ROUND2_HUMAN_OUTCOME.md`,  
+`Results/Human_Review_Labels_min2s_Filled.csv`, `Results/human_review_results.json`
 
 ---
 
-## 8. How to finish Round 2
+## 8. Exact next step
 
-```text
-1. Open Research/Speech/Phase1_9_6/HumanReview/review_min2s.html
-2. Listen section A (NEW reference) to calibrate SPEECH
-3. Label all 28 section B clips (>=2s windows)
-4. Export → Results/Human_Review_Labels_min2s_Filled.csv
-```
-
-No algorithm change required.
+**Phase 1.9.7 — Multi-recording Hybrid Rescue Validation**  
++ boundary/merge research (incomplete word ends).  
+Do not change Silero default or lock production constants yet.

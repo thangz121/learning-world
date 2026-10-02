@@ -1,17 +1,13 @@
 metric,value
 status,HUMAN_REVIEW_COMPLETE
-decision,C. HUMAN_REVIEW_INCONCLUSIVE
-reason,Ambiguous (MIXED+UNCERTAIN)=28/28 too large
-total_candidates,28
-labels_filled,28
-speech_count,0
-non_speech_count,0
-mixed_count,0
-uncertain_count,28
-speech_rate,0.0
-non_speech_rate,0.0
-usable_rate,0.0
-ambiguous_rate,1.0
-strict_speech_recovery,0.0
-conservative_speech_recovery,0.0
+decision,A. HUMAN_VERIFIED_PROMISING
+round1_uncertain,28
+round2_speech,28
+round2_non_speech,0
+round2_mixed,0
+round2_uncertain,0
+speech_rate,1.0
+word_intelligibility_est,~70%
+boundary_quality,often_truncated
 production_vad,False
+next,Phase 1.9.7 multi-recording + boundary study

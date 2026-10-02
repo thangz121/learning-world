@@ -1,80 +1,56 @@
 {
   "phase": "1.9.6",
   "status": "HUMAN_REVIEW_COMPLETE",
-  "decision": "C. HUMAN_REVIEW_INCONCLUSIVE",
-  "reason": "Ambiguous (MIXED+UNCERTAIN)=28/28 too large",
-  "label_csv": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_6\\Results\\Human_Review_Labels_Filled.csv",
-  "total_candidates": 28,
-  "labels_filled": 28,
-  "missing_clip_ids": [],
-  "invalid": [],
-  "speech_count": 0,
-  "non_speech_count": 0,
-  "mixed_count": 0,
-  "uncertain_count": 28,
-  "speech_rate": 0.0,
-  "non_speech_rate": 0.0,
-  "usable_rate": 0.0,
-  "ambiguous_rate": 1.0,
-  "strict_speech_recovery": 0.0,
-  "conservative_speech_recovery": 0.0,
-  "by_duration_bin": {
-    "0.20_0.30": {
-      "UNCERTAIN": 12
-    },
-    "0.10_0.20": {
-      "UNCERTAIN": 9
-    },
-    "0.30_0.50": {
-      "UNCERTAIN": 7
-    }
+  "round1_short_clips": {
+    "n": 28,
+    "label": "UNCERTAIN_all",
+    "reason": "too_short_to_decide"
   },
-  "duration_stats_all_candidates": {
-    "min": 0.15,
-    "max": 0.47,
-    "mean": 0.2517857142857143,
-    "n_lt_0.10": 0,
-    "n_0.10_0.20": 9,
-    "n_0.20_0.30": 12,
-    "n_0.30_0.50": 7,
-    "n_ge_0.50": 0,
-    "all_lt_0.50": true
+  "round2_min2s": {
+    "n": 28,
+    "speech_count": 28,
+    "non_speech_count": 0,
+    "mixed_count": 0,
+    "uncertain_count": 0,
+    "speech_rate": 1.0,
+    "strict_speech_recovery": 1.0,
+    "conservative_speech_recovery": 1.0,
+    "word_intelligibility_estimate": "~70% words guessable by single reviewer",
+    "boundary_quality": "often incomplete / truncated word ends (subjective)",
+    "source_condition": "hosting-program audio; difficult listening",
+    "new_reference": "clearer SPEECH_REFERENCE_STANDARD; cuts also sometimes mid-word"
   },
-  "evidence_roles": {
-    "HUMAN_LABEL": "authority for candidate speech presence",
-    "Silero": "baseline (0 segs on IMG)",
-    "hybrid_score": "research candidate under test",
-    "energy": "WEAK_PSEUDO_REF only \u2014 not GT",
-    "ASR_Moonshine": "auxiliary only; ASR_EMPTY != NON_SPEECH"
-  },
-  "limitations": [
-    "Candidate-level review only \u2014 NOT full-file VAD ground truth",
-    "Cannot claim full-file recall/FN from these 28 clips alone",
-    "ASR_EMPTY != NON_SPEECH",
-    "Energy pseudo-ref is not human GT",
-    "SINGLE_REVIEWER_REFERENCE only \u2014 not multi-rater GT",
-    "Do not report hybrid accuracy% without explicit metric definition",
-    "Do not feed tight crops to pronunciation scorer (use full/padded)"
+  "decision": "A. HUMAN_VERIFIED_PROMISING",
+  "decision_rationale": [
+    "On IMG_0639 where Silero thr=0.5 yields 0 segments, all 28 hybrid_score candidates contain human-audible SPEECH when listened in >=2s windows.",
+    "This is candidate-level evidence only \u2014 NOT full-file recall/GT.",
+    "Boundary/word-cut quality is imperfect; intelligibility limited (~70% word guess).",
+    "NOT production VAD; NOT router lock; NOT Unity integration."
   ],
   "production_vad": false,
   "answers": {
     "1_n_candidates": 28,
-    "2_speech": 0,
+    "2_speech": 28,
     "3_non_speech": 0,
-    "4_mixed_uncertain": 28,
-    "5_duration_bins": {
-      "0.20_0.30": {
-        "UNCERTAIN": 12
-      },
-      "0.10_0.20": {
-        "UNCERTAIN": 9
-      },
-      "0.30_0.50": {
-        "UNCERTAIN": 7
-      }
-    },
-    "6_hybrid_recovers_speech_when_silero_0": "NO_ON_THESE_CANDIDATES",
+    "4_mixed_uncertain": 0,
+    "5_duration": "raw all <0.5s (mean~0.25s); human-decidable only with >=2s context",
+    "6_hybrid_recovers_speech_when_silero_0": "YES_ON_THIS_FILE_CANDIDATES (28/28 SPEECH in min2s listen)",
     "7_production_vad": false,
-    "8_next": "Complete human listening of all 28 MODE A clips"
+    "8_next": "Phase 1.9.7 multi-recording hybrid rescue validation + boundary/merge study; do not lock router"
+  },
+  "limitations": [
+    "Candidate review only \u2014 not full 219s annotation",
+    "Single reviewer SINGLE_REVIEWER_REFERENCE",
+    "Single difficult hosting-program recording (IMG)",
+    "Word identity not required for SPEECH label; intelligibility partial",
+    "Tight crops still unsafe for pronunciation scorer"
+  ],
+  "evidence_roles": {
+    "HUMAN_LABEL_round2_min2s": "authority for speech presence in candidates",
+    "NEW_mp3": "SPEECH_REFERENCE_STANDARD calibration",
+    "Silero": "baseline failed on IMG (0 segs)",
+    "hybrid_score": "research candidate \u2014 human-verified speech on these 28",
+    "energy": "WEAK_PSEUDO_REF only",
+    "ASR": "auxiliary only"
   }
 }
