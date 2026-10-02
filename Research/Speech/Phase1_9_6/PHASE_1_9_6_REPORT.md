@@ -107,24 +107,31 @@ No “hybrid detected speech”, no scores, no ASR, no energy/spectral.
 
 ---
 
-## 7. Decision
+## 7. Decision (after Round 1 human listen)
 
 ### **C. HUMAN_REVIEW_INCONCLUSIVE**
 
-Reason: human listening of all 28 clips is **not complete**. Agent must not pretend otherwise.
+**Round 1 human (maynode):** all **28/28 = UNCERTAIN**.  
+Reason given by reviewer: clips **too short** to identify speech (raw mean ~0.25s, all &lt;0.5s).  
+SPEECH=0, NON_SPEECH=0 — not a SPEECH recovery claim and not a NON_SPEECH claim.
 
-Not a failure of clip preparation. Blocker = **human evidence**.
+**Speech reference standard designated:**  
+`1790932799243_8856108714107255767_8856108714107255767.mp3`  
+SHA `17E3DA86267D1B7B864EA862A6C5C3B12AF4E49FD649F2FE140652A53DDF33FF`
+
+**Round 2 pack (ready):** min **2.0s** listen windows + NEW reference clips.  
+UI: `HumanReview/review_min2s.html`  
+Does not change detector timestamps or algorithm.
 
 ---
 
-## 8. How to finish this phase later (same artifacts)
+## 8. How to finish Round 2
 
 ```text
-1. Open Research/Speech/Phase1_9_6/HumanReview/review.html
-2. Label all 28 clips (MODE A)
-3. Save export as Results/Human_Review_Labels_Filled.csv
-4. python Research/Speech/Phase1_9_6/scripts/analyze_human_labels.py
-5. Read Results/human_review_results.json → decision A/B/C
+1. Open Research/Speech/Phase1_9_6/HumanReview/review_min2s.html
+2. Listen section A (NEW reference) to calibrate SPEECH
+3. Label all 28 section B clips (>=2s windows)
+4. Export → Results/Human_Review_Labels_min2s_Filled.csv
 ```
 
-No algorithm change required to complete.
+No algorithm change required.

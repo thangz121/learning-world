@@ -1,0 +1,123 @@
+{
+  "designation": "SPEECH_REFERENCE_STANDARD",
+  "original_filename": "1790932799243_8856108714107255767_8856108714107255767.mp3",
+  "sha256": "17E3DA86267D1B7B864EA862A6C5C3B12AF4E49FD649F2FE140652A53DDF33FF",
+  "path_repo_root": "1790932799243_8856108714107255767_8856108714107255767.mp3",
+  "derived_16k": "Research/Speech/Phase1_8/AudioDerived/NEW_16k_mono.wav",
+  "duration_s": 94.016125,
+  "silero_n_segments": 38,
+  "min_listen_s": 2.0,
+  "reference_clips": [
+    {
+      "ref_id": "NEW_ref_01",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 3.0,
+      "silero_raw_end": 5.6,
+      "export_start": 3.0,
+      "export_end": 5.6,
+      "export_duration": 2.5999999999999996,
+      "clip": "reference_NEW/NEW_ref_01.wav"
+    },
+    {
+      "ref_id": "NEW_ref_02",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 6.3,
+      "silero_raw_end": 8.1,
+      "export_start": 6.199999999999999,
+      "export_end": 8.2,
+      "export_duration": 2.0,
+      "clip": "reference_NEW/NEW_ref_02.wav"
+    },
+    {
+      "ref_id": "NEW_ref_03",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 11.0,
+      "silero_raw_end": 11.7,
+      "export_start": 10.35,
+      "export_end": 12.35,
+      "export_duration": 2.0,
+      "clip": "reference_NEW/NEW_ref_03.wav"
+    },
+    {
+      "ref_id": "NEW_ref_04",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 12.1,
+      "silero_raw_end": 13.8,
+      "export_start": 11.95,
+      "export_end": 13.95,
+      "export_duration": 2.0,
+      "clip": "reference_NEW/NEW_ref_04.wav"
+    },
+    {
+      "ref_id": "NEW_ref_05",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 18.2,
+      "silero_raw_end": 19.3,
+      "export_start": 17.75,
+      "export_end": 19.75,
+      "export_duration": 2.0,
+      "clip": "reference_NEW/NEW_ref_05.wav"
+    },
+    {
+      "ref_id": "NEW_ref_06",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 19.5,
+      "silero_raw_end": 21.3,
+      "export_start": 19.4,
+      "export_end": 21.4,
+      "export_duration": 2.0,
+      "clip": "reference_NEW/NEW_ref_06.wav"
+    },
+    {
+      "ref_id": "NEW_ref_07",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 21.9,
+      "silero_raw_end": 26.0,
+      "export_start": 21.9,
+      "export_end": 26.0,
+      "export_duration": 4.100000000000001,
+      "clip": "reference_NEW/NEW_ref_07.wav"
+    },
+    {
+      "ref_id": "NEW_ref_08",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 28.4,
+      "silero_raw_end": 29.0,
+      "export_start": 27.7,
+      "export_end": 29.7,
+      "export_duration": 2.0,
+      "clip": "reference_NEW/NEW_ref_08.wav"
+    },
+    {
+      "ref_id": "NEW_ref_09",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 29.5,
+      "silero_raw_end": 30.3,
+      "export_start": 28.9,
+      "export_end": 30.9,
+      "export_duration": 2.0,
+      "clip": "reference_NEW/NEW_ref_09.wav"
+    },
+    {
+      "ref_id": "NEW_ref_10",
+      "source": "NEW_1790",
+      "role": "SPEECH_REFERENCE_STANDARD",
+      "silero_raw_start": 32.5,
+      "silero_raw_end": 33.0,
+      "export_start": 31.75,
+      "export_end": 33.75,
+      "export_duration": 2.0,
+      "clip": "reference_NEW/NEW_ref_10.wav"
+    }
+  ],
+  "human_statement": "NEW mp3 is the standard clear recording for calibrating SPEECH listening."
+}
