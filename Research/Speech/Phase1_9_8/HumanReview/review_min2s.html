@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset=utf-8><title>1.9.8 child VAD review</title>
+<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 12px}
+.card{border:1px solid #ccc;border-radius:8px;padding:12px;margin:10px 0}audio{width:100%}</style></head>
+<body><h1>Phase 1.9.8 child VAD disagreement review (≥2s)</h1>
+<p>Labels: SPEECH | NON_SPEECH | MIXED | UNCERTAIN. Child audio — anonymous IDs only.</p>
+<div id=r>loading…</div>
+<script>
+fetch('review_metadata.json').then(r=>r.json()).then(m=>{
+ let h='';
+ for (const c of m.clips){
+  h+=`<section class=card><h3>${c.clip_id}</h3>
+  <p>rec=${c.recording_id}<br>speaker=${c.speaker_id} age=${c.age}<br>
+  detector_note=${c.detector}<br>window ${Number(c.human_review_window_start).toFixed(2)}–${Number(c.human_review_window_end).toFixed(2)}s
+  ${c.target?('<br>target='+c.target):''}</p>
+  <audio controls preload=none src="${c.clip_relpath}"></audio></section>`;
+ }
+ document.getElementById('r').innerHTML=h;
+});
+</script></body></html>

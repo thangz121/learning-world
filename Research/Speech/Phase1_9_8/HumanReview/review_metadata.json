@@ -1,0 +1,25 @@
+{
+  "clips": [
+    {
+      "clip_id": "rev_01",
+      "recording_id": "IMG_0639",
+      "speaker_id": "stress_ref",
+      "age": "adult_or_unknown",
+      "detector": "silero0_hybrid_pos",
+      "raw_start_s": 3.735,
+      "raw_end_s": 3.945,
+      "human_review_window_start": 2.84,
+      "human_review_window_end": 4.84,
+      "duration": 2.0,
+      "clip_relpath": "clips_min2s/rev_01.wav",
+      "human_label": "",
+      "target": ""
+    }
+  ],
+  "label_schema": [
+    "SPEECH",
+    "NON_SPEECH",
+    "MIXED",
+    "UNCERTAIN"
+  ]
+}

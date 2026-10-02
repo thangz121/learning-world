@@ -117,3 +117,7 @@ Research/Speech/Phase1_9_5/incoming-audio/
 !Research/Speech/Phase1_9_6/HumanReview/reference_NEW/
 !Research/Speech/Phase1_9_6/HumanReview/reference_NEW/**
 
+
+# External speech datasets (never commit raw child audio)
+Research/Speech/ExternalData/
+

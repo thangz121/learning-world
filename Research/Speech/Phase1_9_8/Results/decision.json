@@ -1,0 +1,8 @@
+{
+  "decision": "A. REAL_CHILD_VALIDATION_SUPPORTS_CURRENT_PIPELINE",
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "child_vad_failure_found": false,
+  "child_scorer_issue_suspected": false
+}

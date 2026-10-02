@@ -1,0 +1,12 @@
+speaker_id,age,age_source,age_bucket,sex_if_provided,native,n_recordings,total_duration_s
+child_01,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,M,native,38,110.66986394557821
+child_02,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,M,nonNative,63,373.1498185941043
+child_03,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,F,native,55,230.09684807256238
+child_04,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,M,nonNative,63,380.38526077097504
+child_05,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,F,native,53,305.81619047619046
+child_06,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,M,native,88,673.2569387755102
+child_07,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,F,native,65,469.0299319727891
+child_08,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,F,nonNative,28,247.2143537414966
+child_09,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,F,nonNative,80,1012.655192743764
+child_10,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,M,nonNative,71,754.3463945578231
+child_11,UNKNOWN_individual,dataset_mean_M=4.9y,4.x_years_dataset_mean,M,native,67,714.6955328798185

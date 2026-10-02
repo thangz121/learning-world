@@ -1,0 +1,71 @@
+{
+  "doi": "10.5281/zenodo.200495",
+  "metadata": {
+    "title": "Children speech recording (English, spontaneous speech + pre-defined sentences)",
+    "doi": "10.5281/zenodo.200495",
+    "license": {
+      "id": "cc-by-4.0"
+    },
+    "access_right": "open",
+    "creators": [
+      {
+        "name": "Kennedy, James",
+        "affiliation": "Plymouth University"
+      },
+      {
+        "name": "Lemaignan, S\u00e9verin",
+        "affiliation": "Plymouth University"
+      },
+      {
+        "name": "Montassier, Caroline",
+        "affiliation": "Plymouth University"
+      },
+      {
+        "name": "Lavalade, Pauline",
+        "affiliation": "Plymouth University"
+      },
+      {
+        "name": "Irfan, Bahar",
+        "affiliation": "Plymouth University"
+      },
+      {
+        "name": "Papadopoulos, Fotios",
+        "affiliation": "Plymouth University"
+      },
+      {
+        "name": "Senft, Emmanuel",
+        "affiliation": "Plymouth University"
+      },
+      {
+        "name": "Belpaeme, Tony",
+        "affiliation": "Plymouth University"
+      }
+    ],
+    "keywords": [
+      "speech",
+      "children",
+      "robot",
+      "spontaneous speech",
+      "voice",
+      "recordings"
+    ],
+    "related_identifiers": null,
+    "resource_type": {
+      "title": "Dataset",
+      "type": "dataset"
+    },
+    "publication_date": "2016-12-13",
+    "description": "<p>The dataset contains audio recordings (lossless WAV) of 11 young children (age M=4.9 years old; 5 females, 6 males).</p>\n\n<p>Recordings include:</p>\n\n<ul>\n\t<li>free speech (retelling a picture book, \u2018Frog, Where Are You?\u2019 by Mercer Mayer)</li>\n\t<li>repeating 5 pre-defined short sentences (like 'the horse is in the stable')</li>\n\t<li>telling the numbers from 1 to 10</li>\n</ul>\n\n<p>The recordings are in English and the participants include both native and non-native speakers.</p>\n\n<p>Each sample is recorded from 3 sources:</p>\n\n<ul>\n\t<li>A studio-grade microphone (Rode NT1-A)</li>\n\t<li>A portable microphone (Zoom H1)</li>\n\t<li>The two front microphones of the Aldebaran NAO robot</li>\n</ul>\n\n<p>(note that, due to technical issues, a few (sample/microphone) combinations are missing).</p>\n\n<p>\u00a0</p>\n\n<p>For the free-speech recording, a manual segmentation of the utterances is provided as well.</p>"
+  },
+  "files": [
+    {
+      "id": "3909a067-fbd1-43d7-8725-fc4106c1b9b4",
+      "key": "english_children.zip",
+      "size": 607539935,
+      "checksum": "md5:1a4fd6116554593324a0a493e44a1eea",
+      "links": {
+        "self": "https://zenodo.org/api/records/200495/files/english_children.zip/content"
+      }
+    }
+  ]
+}

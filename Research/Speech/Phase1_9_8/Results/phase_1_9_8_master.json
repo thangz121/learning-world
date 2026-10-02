@@ -1,0 +1,43 @@
+{
+  "phase": "1.9.8",
+  "decision": "A. REAL_CHILD_VALIDATION_SUPPORTS_CURRENT_PIPELINE",
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "asr_is_not_pronunciation_judge": true,
+  "dataset": {
+    "primary": "zenodo_200495",
+    "license": "CC-BY-4.0",
+    "n_children": 11,
+    "age_note": "individual ages UNKNOWN; dataset mean M=4.9y",
+    "n_recordings_inventoried": 671,
+    "n_targeted": 417,
+    "n_spontaneous": 254,
+    "total_minutes": 87.85527210884354
+  },
+  "vad": {
+    "child_silero_pct_zero": 0.02577319587628866,
+    "child_hybrid_pct_zero": 0.02577319587628866,
+    "child_silero_mean_n": 3.577319587628866,
+    "child_hybrid_mean_n": 3.1597938144329896,
+    "targeted_silero_pct_zero": 0.03333333333333333,
+    "n_disagree_review_clips": 1
+  },
+  "pronunciation": {
+    "n_scored": 80,
+    "mean_soft_full": 63.90375,
+    "frac_soft_lt_50": 0.275,
+    "canonical": "CMUdict",
+    "child_is_not_gold_pronunciation": true
+  },
+  "router": {
+    "status": "CHILD_ROUTER_NOT_CALIBRATED",
+    "hypothesis_C": 0.8,
+    "hypothesis_X": 0.4
+  },
+  "comparison_groups": [
+    "NEW_1790",
+    "IMG_0639",
+    "REAL_CHILD_zenodo200495"
+  ]
+}

@@ -1,0 +1,5 @@
+dataset_id,source_url,official_source,license,commercial_use_allowed,research_use_allowed,redistribution_allowed,download_allowed,attribution_required,share_alike_required,non_commercial,access_restrictions,consent_information_if_available,notes,usage_class,n_files,n_wav_total
+zenodo_200495,https://doi.org/10.5281/zenodo.200495,Zenodo,CC-BY-4.0,True,True,True,True,True,False,False,none_open,not_detailed_on_record_page,RESEARCH_ONLY recommended for product embed until legal review; CC-BY-4.0 allows commercial with attribution,POTENTIALLY_PRODUCT_COMPATIBLE_WITH_ATTRIBUTION,671,671
+CHILDES_Aligned,https://talkbank.org/childes/access/Derived/CHILDES-Aligned.html,,TalkBank membership/terms — NOT auto-downloaded,,conditional,,False,,,,,,Audited only; access restrictions; not downloaded this phase,RESEARCH_ONLY_IF_APPROVED,,
+CHILDES_Hall,https://talkbank.org/childes/access/Eng-NA/Hall.html,,TalkBank terms — NOT auto-downloaded,,,,False,,,,,,Audited only,RESEARCH_ONLY_IF_APPROVED,,
+OCSC_Ohio_Child_Speech,investigate_public_versions,,,,,,False,,,,,,No clear open bulk download confirmed this phase,DATASET_ACCESS_UNCLEAR,,
