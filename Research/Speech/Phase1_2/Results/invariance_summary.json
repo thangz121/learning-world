@@ -1,0 +1,66 @@
+[
+  {
+    "case": "baseline_red",
+    "score": 91.1,
+    "conf": 0.911,
+    "per": 0.0,
+    "asr": "Red"
+  },
+  {
+    "case": "corrupt_red_loud_2.0",
+    "score": 90.7,
+    "conf": 0.907,
+    "per": 0.0,
+    "asr": "Red"
+  },
+  {
+    "case": "corrupt_red_noise_snr0",
+    "score": 33.7,
+    "conf": 0.165,
+    "per": 0.667,
+    "asr": "Right."
+  },
+  {
+    "case": "corrupt_red_noise_snr5",
+    "score": 55.6,
+    "conf": 0.306,
+    "per": 0.333,
+    "asr": "Rest."
+  },
+  {
+    "case": "corrupt_red_pitch_down_0.75",
+    "score": 79.5,
+    "conf": 0.795,
+    "per": 0.0,
+    "asr": "Red."
+  },
+  {
+    "case": "corrupt_red_pitch_up_1.3",
+    "score": 59.8,
+    "conf": 0.504,
+    "per": 0.333,
+    "asr": "Red"
+  },
+  {
+    "case": "corrupt_red_soft_0.2",
+    "score": 90.7,
+    "conf": 0.907,
+    "per": 0.0,
+    "asr": "Red"
+  },
+  {
+    "case": "wrong_target_blue",
+    "score": 1.8,
+    "conf": 0.0,
+    "per": 1.0,
+    "asr": "Red"
+  },
+  {
+    "case": "silence",
+    "score": 0.0,
+    "conf": 0.0,
+    "per": 1.0,
+    "asr": "",
+    "vad": false
+  }
+]

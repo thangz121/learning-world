@@ -1,0 +1,212 @@
+{
+  "audio_path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_book.wav",
+  "target": {
+    "text": "book",
+    "normalized_text": "book",
+    "arpabet": [
+      "B",
+      "UH1",
+      "K"
+    ],
+    "ipa": [
+      "b",
+      "ʊ",
+      "k"
+    ],
+    "stress": [
+      "0",
+      "1",
+      "0"
+    ],
+    "variants": [
+      [
+        "B",
+        "UH1",
+        "K"
+      ]
+    ],
+    "dict_version": "cmudict.dict@2026-10-02",
+    "target_version": "1",
+    "reference_audio": null,
+    "warnings": []
+  },
+  "vad": {
+    "speech_detected": true,
+    "segments": [
+      {
+        "start_s": 0.2,
+        "end_s": 0.6,
+        "conf": null
+      }
+    ],
+    "duration_s": 1.2694375,
+    "processing_s": 0.04061630001524463,
+    "model": "silero-vad@6.2.3",
+    "warnings": []
+  },
+  "asr": {
+    "text": "",
+    "language": "en",
+    "confidence": null,
+    "processing_s": 0.01977199999964796,
+    "model": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+    "raw": {
+      "text": ""
+    },
+    "warnings": []
+  },
+  "phone": {
+    "phones": [
+      {
+        "phone": "v",
+        "conf": 0.9312039017677307,
+        "start_frame": 9,
+        "end_frame": 9
+      },
+      {
+        "phone": "ʌ",
+        "conf": 0.6260743737220764,
+        "start_frame": 12,
+        "end_frame": 12
+      },
+      {
+        "phone": "ŋ",
+        "conf": 0.857051432132721,
+        "start_frame": 18,
+        "end_frame": 18
+      },
+      {
+        "phone": "k",
+        "conf": 0.8146193623542786,
+        "start_frame": 22,
+        "end_frame": 22
+      }
+    ],
+    "frame_mean_conf": 0.9746128519376119,
+    "processing_s": 1.0369962000113446,
+    "model": "wav2vec2-xlsr-53-espeak-cv-ft",
+    "inventory": "espeak-ipa",
+    "warnings": []
+  },
+  "alignment": {
+    "words": [],
+    "processing_s": 9.00006853044033e-07,
+    "model": "whisperx",
+    "available": false,
+    "warnings": [
+      "whisperx_disabled_or_unavailable"
+    ]
+  },
+  "acoustic": {
+    "f0_mean": 175.9040077078836,
+    "f0_std": 73.7593816869213,
+    "f0_voiced_frac": 0.1951219512195122,
+    "f1_mean": 635.4723481043313,
+    "f2_mean": 1792.2658122412508,
+    "f3_mean": 3361.0679376824637,
+    "intensity_mean": 64.49532523953454,
+    "duration_s": 1.2694375,
+    "processing_s": 0.016592899977695197,
+    "model": "parselmouth@0.4.7",
+    "warnings": []
+  },
+  "scores": {
+    "scorer_v1": {
+      "source": "scorer-v1",
+      "score_0_100": 30.6,
+      "confidence_0_1": 0.0,
+      "per": 1.0,
+      "diagnostics": [
+        {
+          "expected": "*",
+          "observed": "v",
+          "status": "ins",
+          "score": 0.0,
+          "confidence": 0.9312039017677307,
+          "error_type": "insertion",
+          "start_s": null,
+          "end_s": null,
+          "acoustic": {}
+        },
+        {
+          "expected": "b",
+          "observed": "ʌ",
+          "status": "sub",
+          "score": 7.5,
+          "confidence": 0.626,
+          "error_type": "substitution",
+          "start_s": null,
+          "end_s": null,
+          "acoustic": {}
+        },
+        {
+          "expected": "ʊ",
+          "observed": "ŋ",
+          "status": "sub",
+          "score": 2.9,
+          "confidence": 0.857,
+          "error_type": "substitution",
+          "start_s": null,
+          "end_s": null,
+          "acoustic": {}
+        },
+        {
+          "expected": "k",
+          "observed": "k",
+          "status": "ok",
+          "score": 81.5,
+          "confidence": 0.815,
+          "error_type": null,
+          "start_s": null,
+          "end_s": null,
+          "acoustic": {}
+        }
+      ],
+      "processing_s": 0.0001398000167682767,
+      "raw": {
+        "ref_ipa": [
+          "b",
+          "ʊ",
+          "k"
+        ],
+        "hyp_ipa": [
+          "v",
+          "ʌ",
+          "ŋ",
+          "k"
+        ],
+        "dist": 3
+      },
+      "warnings": []
+    },
+    "openpronounce": {
+      "source": "openpronounce",
+      "score_0_100": 0.0,
+      "confidence_0_1": 0.0,
+      "per": null,
+      "diagnostics": [],
+      "processing_s": 8.999777492135763e-07,
+      "raw": {},
+      "warnings": [
+        "openpronounce_cli_not_found"
+      ]
+    }
+  },
+  "primary_score_0_100": 30.6,
+  "primary_confidence_0_1": 0.0,
+  "primary_source": "scorer_v1",
+  "pipeline_version": "phase1.2.0-2026-10-02",
+  "model_versions": {
+    "vad": "6.2.3",
+    "asr": "sherpa-onnx-1.13.8",
+    "target": "cmudict.dict@2026-10-02",
+    "phone": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "acoustic": "0.4.7",
+    "scorer_v1": "1.0.0-phase1.2"
+  },
+  "total_processing_s": 1.115,
+  "warnings": [
+    "whisperx_disabled_or_unavailable"
+  ],
+  "population_label": "adult-tts-or-synthetic"
+}

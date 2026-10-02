@@ -1,0 +1,791 @@
+{
+  "n_words": 25,
+  "n_resolved": 25,
+  "missing": [],
+  "n_unique_phones": 27,
+  "phones": {
+    "AE": [
+      {
+        "word": "apple",
+        "pos": "initial"
+      },
+      {
+        "word": "cat",
+        "pos": "medial"
+      },
+      {
+        "word": "banana",
+        "pos": "medial"
+      },
+      {
+        "word": "basket",
+        "pos": "medial"
+      },
+      {
+        "word": "bag",
+        "pos": "medial"
+      },
+      {
+        "word": "thank",
+        "pos": "medial"
+      }
+    ],
+    "AH": [
+      {
+        "word": "apple",
+        "pos": "medial"
+      },
+      {
+        "word": "one",
+        "pos": "medial"
+      },
+      {
+        "word": "open",
+        "pos": "medial"
+      },
+      {
+        "word": "banana",
+        "pos": "medial"
+      },
+      {
+        "word": "banana",
+        "pos": "final"
+      },
+      {
+        "word": "basket",
+        "pos": "medial"
+      }
+    ],
+    "AO": [
+      {
+        "word": "ball",
+        "pos": "medial"
+      },
+      {
+        "word": "dog",
+        "pos": "medial"
+      },
+      {
+        "word": "small",
+        "pos": "medial"
+      }
+    ],
+    "AY": [
+      {
+        "word": "find",
+        "pos": "medial"
+      }
+    ],
+    "B": [
+      {
+        "word": "ball",
+        "pos": "initial"
+      },
+      {
+        "word": "blue",
+        "pos": "initial"
+      },
+      {
+        "word": "book",
+        "pos": "initial"
+      },
+      {
+        "word": "big",
+        "pos": "initial"
+      },
+      {
+        "word": "banana",
+        "pos": "initial"
+      },
+      {
+        "word": "bread",
+        "pos": "initial"
+      },
+      {
+        "word": "basket",
+        "pos": "initial"
+      },
+      {
+        "word": "bag",
+        "pos": "initial"
+      },
+      {
+        "word": "bring",
+        "pos": "initial"
+      }
+    ],
+    "D": [
+      {
+        "word": "red",
+        "pos": "final"
+      },
+      {
+        "word": "teddy",
+        "pos": "medial"
+      },
+      {
+        "word": "dog",
+        "pos": "initial"
+      },
+      {
+        "word": "bread",
+        "pos": "final"
+      },
+      {
+        "word": "find",
+        "pos": "final"
+      }
+    ],
+    "EH": [
+      {
+        "word": "red",
+        "pos": "medial"
+      },
+      {
+        "word": "teddy",
+        "pos": "medial"
+      },
+      {
+        "word": "bread",
+        "pos": "medial"
+      },
+      {
+        "word": "help",
+        "pos": "medial"
+      }
+    ],
+    "F": [
+      {
+        "word": "find",
+        "pos": "initial"
+      }
+    ],
+    "G": [
+      {
+        "word": "dog",
+        "pos": "final"
+      },
+      {
+        "word": "big",
+        "pos": "final"
+      },
+      {
+        "word": "bag",
+        "pos": "final"
+      }
+    ],
+    "HH": [
+      {
+        "word": "help",
+        "pos": "initial"
+      }
+    ],
+    "IH": [
+      {
+        "word": "big",
+        "pos": "medial"
+      },
+      {
+        "word": "milk",
+        "pos": "medial"
+      },
+      {
+        "word": "bring",
+        "pos": "medial"
+      }
+    ],
+    "IY": [
+      {
+        "word": "please",
+        "pos": "medial"
+      },
+      {
+        "word": "teddy",
+        "pos": "final"
+      },
+      {
+        "word": "three",
+        "pos": "final"
+      }
+    ],
+    "K": [
+      {
+        "word": "cat",
+        "pos": "initial"
+      },
+      {
+        "word": "book",
+        "pos": "final"
+      },
+      {
+        "word": "close",
+        "pos": "initial"
+      },
+      {
+        "word": "milk",
+        "pos": "final"
+      },
+      {
+        "word": "basket",
+        "pos": "medial"
+      },
+      {
+        "word": "thank",
+        "pos": "final"
+      }
+    ],
+    "L": [
+      {
+        "word": "apple",
+        "pos": "final"
+      },
+      {
+        "word": "ball",
+        "pos": "final"
+      },
+      {
+        "word": "blue",
+        "pos": "medial"
+      },
+      {
+        "word": "please",
+        "pos": "medial"
+      },
+      {
+        "word": "small",
+        "pos": "final"
+      },
+      {
+        "word": "close",
+        "pos": "medial"
+      },
+      {
+        "word": "milk",
+        "pos": "medial"
+      },
+      {
+        "word": "help",
+        "pos": "medial"
+      }
+    ],
+    "M": [
+      {
+        "word": "small",
+        "pos": "medial"
+      },
+      {
+        "word": "milk",
+        "pos": "initial"
+      }
+    ],
+    "N": [
+      {
+        "word": "one",
+        "pos": "final"
+      },
+      {
+        "word": "open",
+        "pos": "final"
+      },
+      {
+        "word": "banana",
+        "pos": "medial"
+      },
+      {
+        "word": "banana",
+        "pos": "medial"
+      },
+      {
+        "word": "find",
+        "pos": "medial"
+      }
+    ],
+    "NG": [
+      {
+        "word": "bring",
+        "pos": "final"
+      },
+      {
+        "word": "thank",
+        "pos": "medial"
+      }
+    ],
+    "OW": [
+      {
+        "word": "open",
+        "pos": "initial"
+      },
+      {
+        "word": "close",
+        "pos": "medial"
+      }
+    ],
+    "P": [
+      {
+        "word": "apple",
+        "pos": "medial"
+      },
+      {
+        "word": "please",
+        "pos": "initial"
+      },
+      {
+        "word": "open",
+        "pos": "medial"
+      },
+      {
+        "word": "help",
+        "pos": "final"
+      }
+    ],
+    "R": [
+      {
+        "word": "red",
+        "pos": "initial"
+      },
+      {
+        "word": "bread",
+        "pos": "medial"
+      },
+      {
+        "word": "bring",
+        "pos": "medial"
+      },
+      {
+        "word": "three",
+        "pos": "medial"
+      }
+    ],
+    "S": [
+      {
+        "word": "small",
+        "pos": "initial"
+      },
+      {
+        "word": "close",
+        "pos": "final"
+      },
+      {
+        "word": "basket",
+        "pos": "medial"
+      }
+    ],
+    "T": [
+      {
+        "word": "teddy",
+        "pos": "initial"
+      },
+      {
+        "word": "cat",
+        "pos": "final"
+      },
+      {
+        "word": "basket",
+        "pos": "final"
+      },
+      {
+        "word": "two",
+        "pos": "initial"
+      }
+    ],
+    "TH": [
+      {
+        "word": "thank",
+        "pos": "initial"
+      },
+      {
+        "word": "three",
+        "pos": "initial"
+      }
+    ],
+    "UH": [
+      {
+        "word": "book",
+        "pos": "medial"
+      }
+    ],
+    "UW": [
+      {
+        "word": "blue",
+        "pos": "final"
+      },
+      {
+        "word": "two",
+        "pos": "final"
+      }
+    ],
+    "W": [
+      {
+        "word": "one",
+        "pos": "initial"
+      }
+    ],
+    "Z": [
+      {
+        "word": "please",
+        "pos": "final"
+      }
+    ]
+  },
+  "words": [
+    {
+      "word": "apple",
+      "arpa": [
+        "AE1",
+        "P",
+        "AH0",
+        "L"
+      ],
+      "ipa": [
+        "\u00e6",
+        "p",
+        "\u0259",
+        "l"
+      ]
+    },
+    {
+      "word": "ball",
+      "arpa": [
+        "B",
+        "AO1",
+        "L"
+      ],
+      "ipa": [
+        "b",
+        "\u0254",
+        "l"
+      ]
+    },
+    {
+      "word": "red",
+      "arpa": [
+        "R",
+        "EH1",
+        "D"
+      ],
+      "ipa": [
+        "\u0279",
+        "\u025b",
+        "d"
+      ]
+    },
+    {
+      "word": "blue",
+      "arpa": [
+        "B",
+        "L",
+        "UW1"
+      ],
+      "ipa": [
+        "b",
+        "l",
+        "u\u02d0"
+      ]
+    },
+    {
+      "word": "one",
+      "arpa": [
+        "W",
+        "AH1",
+        "N"
+      ],
+      "ipa": [
+        "w",
+        "\u0259",
+        "n"
+      ]
+    },
+    {
+      "word": "please",
+      "arpa": [
+        "P",
+        "L",
+        "IY1",
+        "Z"
+      ],
+      "ipa": [
+        "p",
+        "l",
+        "i\u02d0",
+        "z"
+      ]
+    },
+    {
+      "word": "teddy",
+      "arpa": [
+        "T",
+        "EH1",
+        "D",
+        "IY0"
+      ],
+      "ipa": [
+        "t",
+        "\u025b",
+        "d",
+        "i\u02d0"
+      ]
+    },
+    {
+      "word": "cat",
+      "arpa": [
+        "K",
+        "AE1",
+        "T"
+      ],
+      "ipa": [
+        "k",
+        "\u00e6",
+        "t"
+      ]
+    },
+    {
+      "word": "dog",
+      "arpa": [
+        "D",
+        "AO1",
+        "G"
+      ],
+      "ipa": [
+        "d",
+        "\u0254",
+        "\u0261"
+      ]
+    },
+    {
+      "word": "book",
+      "arpa": [
+        "B",
+        "UH1",
+        "K"
+      ],
+      "ipa": [
+        "b",
+        "\u028a",
+        "k"
+      ]
+    },
+    {
+      "word": "big",
+      "arpa": [
+        "B",
+        "IH1",
+        "G"
+      ],
+      "ipa": [
+        "b",
+        "\u026a",
+        "\u0261"
+      ]
+    },
+    {
+      "word": "small",
+      "arpa": [
+        "S",
+        "M",
+        "AO1",
+        "L"
+      ],
+      "ipa": [
+        "s",
+        "m",
+        "\u0254",
+        "l"
+      ]
+    },
+    {
+      "word": "open",
+      "arpa": [
+        "OW1",
+        "P",
+        "AH0",
+        "N"
+      ],
+      "ipa": [
+        "o\u028a",
+        "p",
+        "\u0259",
+        "n"
+      ]
+    },
+    {
+      "word": "close",
+      "arpa": [
+        "K",
+        "L",
+        "OW1",
+        "S"
+      ],
+      "ipa": [
+        "k",
+        "l",
+        "o\u028a",
+        "s"
+      ]
+    },
+    {
+      "word": "banana",
+      "arpa": [
+        "B",
+        "AH0",
+        "N",
+        "AE1",
+        "N",
+        "AH0"
+      ],
+      "ipa": [
+        "b",
+        "\u0259",
+        "n",
+        "\u00e6",
+        "n",
+        "\u0259"
+      ]
+    },
+    {
+      "word": "milk",
+      "arpa": [
+        "M",
+        "IH1",
+        "L",
+        "K"
+      ],
+      "ipa": [
+        "m",
+        "\u026a",
+        "l",
+        "k"
+      ]
+    },
+    {
+      "word": "bread",
+      "arpa": [
+        "B",
+        "R",
+        "EH1",
+        "D"
+      ],
+      "ipa": [
+        "b",
+        "\u0279",
+        "\u025b",
+        "d"
+      ]
+    },
+    {
+      "word": "basket",
+      "arpa": [
+        "B",
+        "AE1",
+        "S",
+        "K",
+        "AH0",
+        "T"
+      ],
+      "ipa": [
+        "b",
+        "\u00e6",
+        "s",
+        "k",
+        "\u0259",
+        "t"
+      ]
+    },
+    {
+      "word": "bag",
+      "arpa": [
+        "B",
+        "AE1",
+        "G"
+      ],
+      "ipa": [
+        "b",
+        "\u00e6",
+        "\u0261"
+      ]
+    },
+    {
+      "word": "find",
+      "arpa": [
+        "F",
+        "AY1",
+        "N",
+        "D"
+      ],
+      "ipa": [
+        "f",
+        "a\u026a",
+        "n",
+        "d"
+      ]
+    },
+    {
+      "word": "bring",
+      "arpa": [
+        "B",
+        "R",
+        "IH1",
+        "NG"
+      ],
+      "ipa": [
+        "b",
+        "\u0279",
+        "\u026a",
+        "\u014b"
+      ]
+    },
+    {
+      "word": "help",
+      "arpa": [
+        "HH",
+        "EH1",
+        "L",
+        "P"
+      ],
+      "ipa": [
+        "h",
+        "\u025b",
+        "l",
+        "p"
+      ]
+    },
+    {
+      "word": "thank",
+      "arpa": [
+        "TH",
+        "AE1",
+        "NG",
+        "K"
+      ],
+      "ipa": [
+        "\u03b8",
+        "\u00e6",
+        "\u014b",
+        "k"
+      ]
+    },
+    {
+      "word": "two",
+      "arpa": [
+        "T",
+        "UW1"
+      ],
+      "ipa": [
+        "t",
+        "u\u02d0"
+      ]
+    },
+    {
+      "word": "three",
+      "arpa": [
+        "TH",
+        "R",
+        "IY1"
+      ],
+      "ipa": [
+        "\u03b8",
+        "\u0279",
+        "i\u02d0"
+      ]
+    }
+  ]
+}

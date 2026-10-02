@@ -1,0 +1,12 @@
+{
+  "n": 30,
+  "population": "adult-L2-speechocean762",
+  "NOT_4yo": true,
+  "human_scale": "total 0-10, compared as *10 to 0-100",
+  "pearson_s1_vs_human_x10": 0.11623299380977457,
+  "spearman_s1_vs_human_x10": 0.03448275862068966,
+  "mae_s1_vs_human_x10": 20.759999999999998,
+  "mean_s1": 62.266666666666666,
+  "mean_human_x10": 83.0,
+  "rows_path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_2\\Results\\speechocean762_rows.json"
+}
