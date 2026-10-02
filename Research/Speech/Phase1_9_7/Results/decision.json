@@ -1,0 +1,13 @@
+{
+  "decision": "A. HYBRID_RESCUE_SUPPORTED_FOR_RESEARCH",
+  "rationale": [
+    "NORMAL NEW: Silero n=38 speech_ratio=0.598 \u2014 default path works",
+    "NORMAL NEW: hybrid n=38 tracks silero (disagree iou=0.934)",
+    "STRESS IMG: Silero n=0; hybrid n=28; human 28/28 SPEECH (1.9.6)",
+    "Boundary pad/merge reduces fragmentation on stress case (see boundary_merge_results)",
+    "Only 2 recordings \u2192 router NOT calibrated; production_vad=false"
+  ],
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false
+}

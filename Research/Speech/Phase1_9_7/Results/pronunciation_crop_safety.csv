@@ -1,0 +1,7 @@
+word,file,status,full,silero_raw_crop,silero_pad250,hybrid_raw_crop,hybrid_pad250,artificial_mid40_crop,delta_silero_raw,delta_silero_pad250,delta_hybrid_raw,delta_hybrid_pad250,delta_mid40,silero_n,hybrid_n,note
+red,sapi_red.wav,OK,100.0,100.0,100.0,100.0,100.0,66.7,0.0,0.0,0.0,0.0,-33.3,1,1,BOUNDARY_SENSITIVITY if large abs delta; higher score != better
+cat,sapi_cat.wav,OK,100.0,100.0,100.0,100.0,100.0,66.7,0.0,0.0,0.0,0.0,-33.3,1,1,BOUNDARY_SENSITIVITY if large abs delta; higher score != better
+apple,pregen_apple_normal.wav,OK,75.2,75.1,75.2,75.1,75.2,75.1,-0.1,0.0,-0.1,0.0,-0.1,1,1,BOUNDARY_SENSITIVITY if large abs delta; higher score != better
+blue,sapi_blue.wav,OK,5.8,66.7,41.7,5.9,33.3,0.0,60.9,35.9,0.1,27.5,-5.8,1,1,BOUNDARY_SENSITIVITY if large abs delta; higher score != better
+big,sapi_big.wav,OK,33.3,66.7,66.7,66.8,66.7,33.3,33.4,33.4,33.5,33.4,0.0,1,1,BOUNDARY_SENSITIVITY if large abs delta; higher score != better
+silence,zeros_1s,OK,14.2,14.2,14.2,14.2,14.2,14.2,,,,,,,,control

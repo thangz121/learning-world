@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phase 1.9.7 optional review — NEW normal + IMG post regions</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 12px;line-height:1.4}
+.card{border:1px solid #ccc;border-radius:8px;padding:12px 16px;margin:12px 0}
+.normal{border-color:#2a7}.stress{border-color:#a50}
+audio{width:100%;margin:8px 0}
+.banner{background:#f5f5f5;padding:12px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="banner">
+<h1>Phase 1.9.7 optional human review</h1>
+<p><b>NEW</b> = NORMAL reference. <b>IMG</b> = STRESS only (not normal calibration).</p>
+<p>Phase 1.9.6 already verified IMG raw hybrid candidates 28/28 SPEECH at ≥2s.</p>
+<p>This pack: sample NEW Silero regions + IMG hybrid after pad/merge research post-process.</p>
+<p>Labels optional: SPEECH | NON_SPEECH | MIXED | UNCERTAIN</p>
+</div>
+<div id="root">Loading metadata…</div>
+<script>
+fetch('review_metadata.json').then(r=>r.json()).then(meta=>{
+  const root=document.getElementById('root');
+  let h='<h2>A. NEW Silero samples (NORMAL)</h2>';
+  for (const c of meta.new_silero_samples||[]) {
+    h += `<section class="card normal"><h3>${c.clip_id}</h3>
+      <p>Source: NEW_1790 (NORMAL)<br>Raw: ${c.raw_start_s.toFixed(3)}–${c.raw_end_s.toFixed(3)}s
+      <br>Listen: ${c.human_review_window_start.toFixed(3)}–${c.human_review_window_end.toFixed(3)}s (${c.listen_duration_s.toFixed(2)}s)</p>
+      <audio controls preload="none" src="${c.clip_relpath}"></audio></section>`;
+  }
+  h += '<h2>B. IMG post pad/merge regions (STRESS)</h2>';
+  for (const c of meta.img_postprocess_regions||[]) {
+    h += `<section class="card stress"><h3>${c.clip_id}</h3>
+      <p>Source: IMG_0639 (STRESS)<br>Region: ${c.region_start_s.toFixed(3)}–${c.region_end_s.toFixed(3)}s (${c.region_duration_s.toFixed(2)}s)
+      <br>Listen: ${c.human_review_window_start.toFixed(3)}–${c.human_review_window_end.toFixed(3)}s</p>
+      <audio controls preload="none" src="${c.clip_relpath}"></audio></section>`;
+  }
+  root.innerHTML=h;
+}).catch(e=>{document.getElementById('root').textContent='Failed to load review_metadata.json: '+e;});
+</script>
+</body>
+</html>
