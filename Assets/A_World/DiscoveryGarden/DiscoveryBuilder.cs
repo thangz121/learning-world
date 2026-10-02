@@ -434,7 +434,8 @@ public class DiscoveryBuilder : MonoBehaviour {
       new Vector3(0f, 1.95f, -0.09f), 0.3f, MintLeaf);
     result.SetActive(false);
     Result = result;
-    DemoJuice.AttachSpotlight(parent, "DGGameSpotlight", new Vector3(0.2f, 0.018f, 3.2f), 6.4f);
+    // USER ROUND 2026-10-01: the big glowing floor disc was removed (annoying
+    // blob under the child).
   }
 
   void BuildCameras(Transform parent) {

@@ -142,13 +142,16 @@ public class StairHillBuilder : MonoBehaviour {
   // User round "chọn bậc nào thì sáng bậc đó": the selected/hovered tread top
   // swaps to an emissive gold material (0 clears). Called only on change, so no
   // per-frame material churn.
+  // USER ROUND 2026-10-01: the emissive "selected tread" glow bloomed into a
+  // big yellow blob under the child ("ô tròn"). The highlight is disabled —
+  // the number rail (SetRail) still shows the target/aim. Kept as a method so
+  // callers/tests are untouched.
   public void GlowStep(int step) {
     if (_stepTops == null) return;
-    Material glow = (step >= 1 && step <= StepCount) ? GlowMat() : null;
     Material plain = Lit(StepCap);
     for (int i = 0; i < _stepTops.Length; i++) {
       if (_stepTops[i] == null) continue;
-      _stepTops[i].sharedMaterial = (glow != null && i == step - 1) ? glow : plain;
+      _stepTops[i].sharedMaterial = plain;
     }
   }
 
@@ -626,8 +629,9 @@ public class StairHillBuilder : MonoBehaviour {
     LookDemo = Marker(parent, "SHLookDemo", CamDemoLook);
     CamSuccess = Marker(parent, "SHCamSuccess", CamSuccessPos);
     LookSuccess = Marker(parent, "SHLookSuccess", CamSuccessLook);
-    // A soft stage pool at the stair foot ("this is the stage").
-    DemoJuice.AttachSpotlight(parent, "SHStageLight", new Vector3(0f, 0.018f, 3.4f), 5.6f);
+    // USER ROUND 2026-10-01: the big glowing floor disc ("ô tròn") read as an
+    // annoying blob under the child — removed. The listen ring stays as the one
+    // intentional "stand here" marker.
     BuildListenCircle(parent);
   }
 
@@ -653,6 +657,26 @@ public class StairHillBuilder : MonoBehaviour {
       new Vector3(0.12f, 1.0f, 0.12f), BasketBrown);
     Sphere(parent, "SHListenBell", ListenLocal + new Vector3(1.45f, 1.08f, 0.15f),
       0.34f, Gold, true);
+  }
+
+  // USER ROUND 2026-10-01: step numbers along the stair edge, shown during
+  // add/sub questions ("bên mép cầu thang có hiện số thứ tự bậc thang").
+  GameObject _edgeNumbers;
+  public void SetEdgeNumbers(bool on) {
+    if (_edgeNumbers == null) _edgeNumbers = BuildEdgeNumbers();
+    if (_edgeNumbers != null) _edgeNumbers.SetActive(on);
+  }
+  GameObject BuildEdgeNumbers() {
+    GameObject g = new GameObject("SHEdgeNumbers");
+    g.transform.SetParent(transform, false);
+    float x = CenterX - StairWidth * 0.5f - 0.4f;
+    for (int i = 1; i <= StepCount; i++) {
+      float zc = BaseZ + (i - 0.5f) * Tread;
+      CountingGardenBuilder.Digit(g.transform, "SHEdgeNum" + i,
+        new Vector3(x, i * Rise + 0.05f, zc), 0.4f, 0.3f, Gold, 90f, i);
+    }
+    g.SetActive(false);
+    return g;
   }
 
   static Transform Marker(Transform parent, string name, Vector3 pos) {

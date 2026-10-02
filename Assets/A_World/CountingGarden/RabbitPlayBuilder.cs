@@ -706,7 +706,8 @@ public class RabbitPlayBuilder : MonoBehaviour {
       new Vector3(0f, 1.82f, -0.09f), 0.3f, MintLeaf);
     result.SetActive(false);
     Result = result;
-    DemoJuice.AttachSpotlight(parent, "RPGameSpotlight", new Vector3(0.4f, 0.018f, 3.2f), 5.4f);
+    // USER ROUND 2026-10-01: the big glowing floor disc was removed (annoying
+    // blob under the child).
   }
 
   // S3-P2Z23: the submit bell (user: "có cơ chế nộp bài"). A wooden post + a
@@ -742,6 +743,15 @@ public class RabbitPlayBuilder : MonoBehaviour {
     // PHASE 4b (user order: no words for pre-readers): the old floating
     // "Submit/Nộp bài" text label is gone — the golden bell + the pad are the
     // wordless submit cue.
+    // USER ROUND 2026-10-01: "biển nộp bài bị mất chữ" — the board was blank;
+    // paint the submit word back onto the sign, facing the play spot.
+    GameObject signLabelGo = new GameObject("RPSubmitLabel");
+    signLabelGo.transform.SetParent(parent, false);
+    WorldNameLabel signLabel = signLabelGo.AddComponent<WorldNameLabel>();
+    signLabel.SetupLocked(DialogueLang.T("Submit", "Nộp bài"),
+      parent.TransformPoint(new Vector3(p.x, 1.95f, p.z - 0.18f)),
+      parent.TransformPoint(PlaySpotLocal));
+    signLabel.Show();
     GameObject anchor = new GameObject("RPSubmitAnchor");
     anchor.transform.SetParent(parent, false);
     anchor.transform.localPosition = p;

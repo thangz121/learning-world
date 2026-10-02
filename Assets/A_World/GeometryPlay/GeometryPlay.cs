@@ -45,8 +45,8 @@ public class GeometryPlay : MonoBehaviour {
   readonly Queue<string> _askVi = new Queue<string>();
 
   static readonly Vector3[] HuntSlots = {
-    new Vector3(-1.6f, 0.12f, 2.1f), new Vector3(1.6f, 0.12f, 2.1f),
-    new Vector3(-1.4f, 0.12f, 3.5f), new Vector3(1.4f, 0.12f, 3.5f),
+    new Vector3(-2.4f, 0.12f, 1.5f), new Vector3(2.4f, 0.12f, 1.5f),
+    new Vector3(-1.7f, 0.12f, 3.1f), new Vector3(1.7f, 0.12f, 3.1f),
   };
 
   public void Build(GeometryPlayBuilder builder, Transform player, SmartCamera cam,
@@ -225,8 +225,8 @@ public class GeometryPlay : MonoBehaviour {
       Need = new GeometryKind[] { GeometryKind.Rectangle, GeometryKind.Circle, GeometryKind.Circle };
       SpawnKinds(Need, true, 3);
       LiveSocket(0, GeometryPlayBuilder.BuildLocal, GeometryKind.Rectangle, false);
-      LiveSocket(1, GeometryPlayBuilder.BuildLocal + new Vector3(-0.7f, 0f, -0.75f), GeometryKind.Circle, false);
-      LiveSocket(2, GeometryPlayBuilder.BuildLocal + new Vector3(0.7f, 0f, -0.75f), GeometryKind.Circle, false);
+      LiveSocket(1, GeometryPlayBuilder.BuildLocal + new Vector3(-1.5f, 0f, -1.1f), GeometryKind.Circle, false);
+      LiveSocket(2, GeometryPlayBuilder.BuildLocal + new Vector3(1.5f, 0f, -1.1f), GeometryKind.Circle, false);
     }
     Target = Need[0];
   }
@@ -235,9 +235,9 @@ public class GeometryPlay : MonoBehaviour {
     Need = new GeometryKind[] { GeometryKind.Square, GeometryKind.Circle, GeometryKind.Triangle };
     Target = Need[0];
     SpawnKinds(Need, true, 2);
-    LiveSocket(0, GeometryPlayBuilder.WorkshopLocal + new Vector3(-1.0f, 0f, 0f), GeometryKind.Square, false);
+    LiveSocket(0, GeometryPlayBuilder.WorkshopLocal + new Vector3(-1.7f, 0f, 0f), GeometryKind.Square, false);
     LiveSocket(1, GeometryPlayBuilder.WorkshopLocal, GeometryKind.Circle, false);
-    LiveSocket(2, GeometryPlayBuilder.WorkshopLocal + new Vector3(1.0f, 0f, 0f), GeometryKind.Triangle, false);
+    LiveSocket(2, GeometryPlayBuilder.WorkshopLocal + new Vector3(1.7f, 0f, 0f), GeometryKind.Triangle, false);
   }
 
   void ApplySpatial() {
@@ -270,7 +270,7 @@ public class GeometryPlay : MonoBehaviour {
       Need = new GeometryKind[] { GeometryKind.Square, GeometryKind.Circle };
       SpawnKinds(Need, true, 6);
       LiveSocket(0, GeometryPlayBuilder.WorkshopLocal, GeometryKind.Square, false);
-      LiveSocket(1, GeometryPlayBuilder.WorkshopLocal + new Vector3(-1.2f, 0f, 0f), GeometryKind.Circle, false);
+      LiveSocket(1, GeometryPlayBuilder.WorkshopLocal + new Vector3(-1.7f, 0f, 0f), GeometryKind.Circle, false);
     }
   }
 

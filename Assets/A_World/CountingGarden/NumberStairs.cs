@@ -172,6 +172,13 @@ public enum Phase {
   // random questions from the area's first target, then the visit settles.
   const int ArithmeticRounds = 5;
   int _roundsPlayed;
+  // USER ROUND 2026-10-01: the +/- teaching (the "watch me" demo + the equation
+  // explanation) plays ONCE per visit; later +/- rounds just confirm and the
+  // child auto-returns to the start position before the next question.
+  bool _arithDemoShown;
+  bool _arithTutorialDone;
+  bool _returnHome;
+  float _returnHomeT;
 
   public void Build(StairHillBuilder builder, Transform player, SmartCamera cam,
       IAudioDirector audio, ActivityLifecycle life, int target = 0) {
@@ -404,6 +411,11 @@ public enum Phase {
 
   void SetRoundRandomFromCurrent() {
     int from = Mathf.Clamp(CurrentStep, 1, StairHillBuilder.StepCount);
+    // USER ROUND 2026-10-01: after the auto-return the child stands at the start
+    // circle; pick a mid-range starting step for +/- so the auto-walk up to the
+    // operand step is meaningful (never 1 or the top).
+    if (from < 2 || from > StairHillBuilder.StepCount - 1)
+      from = UnityEngine.Random.Range(2, StairHillBuilder.StepCount);
     int prev = Target;
     bool canAdd = from < StairHillBuilder.StepCount;
     bool canSub = from > 1;
@@ -434,6 +446,8 @@ public enum Phase {
     _builder.SetResult(Target);
     _board = _builder.NumberBoard;
     _builder.SetRail(CurrentStep, Target);
+    // Edge step numbers only during add/sub rounds.
+    try { _builder.SetEdgeNumbers(Kind != RoundKind.Plain); } catch (Exception) { }
     _boardPulseT = 0f;
     // S3-P2Z36: the persistent task line ("Đi tới bậc năm.").
     ActivityFeedback.Objective(DialogueLang.T(
@@ -575,8 +589,10 @@ public enum Phase {
     }
     // Hand over only once the whole question has been read (or a hard timeout).
     if (t >= 3.0f && AskSpoken()) {
-      // USER ROUND 2026-09-29: EVERY + / - round is demonstrated first.
-      if (ArithmeticEnabled && _student != null) {
+      // USER ROUND 2026-10-01: the +/- demo runs only ONCE per visit
+      // ("chỉ hướng dẫn 1 lần đối với câu hỏi cộng và trừ").
+      if (ArithmeticEnabled && !_arithDemoShown && _student != null) {
+        _arithDemoShown = true;
         BeginDemo(Kind == RoundKind.Add, OpA, Target, Mathf.Max(1, OpB), false);
         return;
       }
@@ -713,11 +729,38 @@ public enum Phase {
     return LessonMotion.WalkTo(_student, approach, dt, speed);
   }
 
+  // USER ROUND 2026-10-01: after answering a round the child auto-returns to
+  // the start circle before the next question.
+  void ReturnHome() {
+    Vector3 home = ListenWorld();
+    if (_mover != null) { if (!_mover.WarpTo(home)) _mover.WarpToLoose(home); }
+    else if (_player != null) { _player.position = home; }
+    CurrentStep = 0;
+    _pendingStep = 0;
+    _pendingT = 0f;
+    _dwellT = 0f;
+    _staySaid = false;
+    _overStep = 0;
+    _overT = 0f;
+    _overCounted = false;
+    try { if (_builder != null) _builder.SetRail(0, Target); } catch (Exception) { }
+    Log("auto-return to the start circle");
+  }
+
   void StartClimb() {
     To(Phase.Climb);
     Follow();
     _followHanded = true;
     if (_life != null) { try { _life.Begin("question read"); } catch (Exception) { } }
+    // USER ROUND 2026-10-01: on an add/sub round the step numbers show along the
+    // stair edge, and after the question the child auto-walks up to the operand
+    // step (the first number of the equation) if not already standing there.
+    if (_builder != null) { try { _builder.SetEdgeNumbers(Kind != RoundKind.Plain); } catch (Exception) { } }
+    if (Kind != RoundKind.Plain && _mover != null && _player != null) {
+      int a = StairHillBuilder.ClampTarget(OpA);
+      int here = _run != null ? _run.StepAt(_player.position) : a;
+      if (here != a) { try { _mover.MoveTo(StepWorld(a)); } catch (Exception) { } }
+    }
     _lastPos = _player != null ? _player.position : Vector3.zero;
     Log("child control (climb phase).");
   }
@@ -938,9 +981,18 @@ public enum Phase {
         try { _builder.SetQuestion((int)Kind, OpA, OpB, Target); } catch (Exception) { }
         _board = _builder != null ? _builder.NumberBoard : _board;
       }
-      QueueExplanation();
-      _liveNext = true;
-      _liveT = 0f;
+      // USER ROUND 2026-10-01: the equation explanation plays ONCE; later +/-
+      // rounds confirm briefly and auto-return to the start position.
+      if (!_arithTutorialDone) {
+        _arithTutorialDone = true;
+        QueueExplanation();
+        _liveNext = true;
+        _liveT = 0f;
+      } else {
+        Say(Cap(N(Target)) + " " + Steps(Target) + "!", Cap(Nvi(Target)) + " bậc!");
+        _returnHome = true;
+        _returnHomeT = 1.8f;
+      }
       Log("operation round won: " + OpA + " " + Kind + " " + OpB + " = " + Target);
       return;
     }
@@ -1012,6 +1064,15 @@ public enum Phase {
     FaceTowards(_student, PlayerLocal(), dt, 2f);
     // Chained round: hold the win pose briefly, then ask the next question.
     if (!_finalized) {
+      if (_returnHome) {
+        _returnHomeT -= dt;
+        if (_returnHomeT <= 0f) {
+          _returnHome = false;
+          ReturnHome();
+          AskNextQuestion();
+        }
+        return;
+      }
       if (_liveNext) {
         // +/- win: hold until the explanation has fully played, then move on.
         _liveT += dt;
@@ -1267,9 +1328,10 @@ public enum Phase {
   float _boardPulseT;
 
   void PulseStep(int step) {
-    if (_stepCues == null || step < 1 || step > _stepCues.Length) return;
-    _pulsingCue = _stepCues[step - 1];
-    _stepPulse = 0.5f;
+    // USER ROUND 2026-10-01: the pulsing step cue also read as an annoying
+    // yellow blob — disabled. The target is shown on the number rail.
+    _pulsingCue = null;
+    _stepPulse = 0f;
   }
 
   void PulseBoard(float seconds) { _boardPulseT = Mathf.Max(_boardPulseT, seconds); }

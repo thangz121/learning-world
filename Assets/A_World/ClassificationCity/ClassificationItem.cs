@@ -34,6 +34,13 @@ public class ClassificationItem : MonoBehaviour, IClickTarget {
     Game.TrySelect(this);
   }
 
+  // Demo/pre-sorted hint item: never sortable, never counted as a town object.
+  public void MarkExample() {
+    State = ItemState.Example;
+    if (_col == null) _col = GetComponent<Collider>();
+    if (_col != null) _col.enabled = false;
+  }
+
   public void BeginCarry(Transform holder) {
     if (State == ItemState.Placed || State == ItemState.Example) return;
     State = ItemState.Carried;

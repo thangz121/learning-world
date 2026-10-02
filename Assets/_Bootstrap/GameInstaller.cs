@@ -622,6 +622,10 @@ public class GameInstaller : MonoBehaviour {
         if (scene.IsValid()) SceneManager.MoveGameObjectToScene(root, scene);
         Debug.LogWarning("[GameInstaller] OrderingStationWorld was missing; created.", this);
       }
+      // Root-cause guard (journey: the arena showed empty sky): the scene asset
+      // shipped without m_IsActive, so the root loaded INACTIVE and every
+      // arena object was hidden. Force the root active before building.
+      root.SetActive(true);
       root.transform.position = OrderingStationBuilder.WorldOffset;
       OrderingStationBuilder builder = root.GetComponent<OrderingStationBuilder>();
       if (builder == null) builder = root.AddComponent<OrderingStationBuilder>();

@@ -96,6 +96,22 @@ public class ClickToMove : MonoBehaviour {
     return true;
   }
 
+  // Arena entry after a scene swap: SamplePosition and isOnNavMesh can briefly
+  // fail while the new arena's NavMesh settles, which used to leave the child
+  // standing outside the arena (ordering_station bug). Widen the search and
+  // place the agent regardless; the child must never be stranded off-island.
+  public bool WarpToLoose(Vector3 destination) {
+    if (_agent == null) return false;
+    NavMeshHit hit;
+    bool found = NavMesh.SamplePosition(destination, out hit, 6.0f, NavMesh.AllAreas);
+    Vector3 pos = found ? hit.position : destination;
+    _hasDestination = false;
+    _hasTarget = false;
+    _agent.Warp(pos);
+    ResetIdle();
+    return found;
+  }
+
   void Update() {
     // Update() only runs while enabled (and the GameObject active), so click
     // input and idle tracking are inherently gated on enabled.

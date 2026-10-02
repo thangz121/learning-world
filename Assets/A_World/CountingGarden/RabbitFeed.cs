@@ -1197,8 +1197,14 @@ public class RabbitFeed : MonoBehaviour {
     Vector3 approach = targetLocal;
     if (dist > 0.55f) {
       Vector3 dir = flat / dist;
-      approach = new Vector3(targetLocal.x - dir.x * 0.55f, targetLocal.y,
+      // USER ROUND 2026-10-01: keep the demo student on the GROUND while he
+      // walks (the old code lerped his Y toward the prop's height, so crossing
+      // the carrot patch's raised soil/fence read as "climbing the wall").
+      // The carried carrot still arcs up into the bowl, so no height is lost.
+      approach = new Vector3(targetLocal.x - dir.x * 0.55f, 0f,
         targetLocal.z - dir.z * 0.55f);
+    } else {
+      approach = new Vector3(targetLocal.x, 0f, targetLocal.z);
     }
     return LessonMotion.WalkTo(_student, approach, dt, speed);
   }

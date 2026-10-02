@@ -63,6 +63,9 @@ public class OrderingPiece : MonoBehaviour, IClickTarget {
     transform.SetParent(slot, true);
     transform.localPosition = new Vector3(0f, 0.32f, 0f);
     transform.localRotation = Quaternion.identity;
-    if (_col != null) _col.enabled = false;
+    // USER ROUND 2026-10-01 (spec: "objects must be movable after placement"):
+    // keep the collider ENABLED so the child can pick the piece back up, move it
+    // or swap/insert it elsewhere without a full reset.
+    if (_col != null) _col.enabled = true;
   }
 }

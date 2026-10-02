@@ -88,7 +88,8 @@ public class ComparisonMarketBuilder : MonoBehaviour {
     Box(parent, "CMPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f),
       new Color(0.76f, 0.60f, 0.40f));
     StageLight(parent, new Vector3(0f, 7.5f, 2.8f));
-    DemoJuice.AttachSpotlight(parent, "CMStageLight", new Vector3(0f, 0.012f, 2.6f), 6.4f);
+    // USER ROUND 2026-10-01: the big glowing floor disc was removed (annoying
+    // blob under the child).
   }
 
   void BuildEntryAndExit(Transform parent) {

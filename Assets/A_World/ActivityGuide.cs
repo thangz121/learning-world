@@ -53,12 +53,10 @@ public class ActivityGuide : MonoBehaviour {
   // ---- build -----------------------------------------------------------------
 
   void Build() {
-    if (_ring != null) return;
-    _ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    _ring.name = "GuideRing";
-    _ring.transform.SetParent(transform, false);
-    _ring.GetComponent<Renderer>().sharedMaterial = DemoJuice.Lit(Gold);
-    Strip(_ring);
+    if (_beacon != null) return;
+    // USER ROUND 2026-10-01: the big flat gold GuideRing ("ô tròn vàng") under
+    // the child was removed — it read as a blob on the floor in every arena.
+    // The small bobbing beacon diamond stays as the wordless guide.
 
     _beacon = GameObject.CreatePrimitive(PrimitiveType.Cube);
     _beacon.name = "GuideBeacon";
@@ -68,7 +66,6 @@ public class ActivityGuide : MonoBehaviour {
     _beacon.GetComponent<Renderer>().sharedMaterial = DemoJuice.Lit(Gold);
     Strip(_beacon);
 
-    _ring.SetActive(false);
     _beacon.SetActive(false);
   }
 
@@ -76,9 +73,6 @@ public class ActivityGuide : MonoBehaviour {
     if (!_active) return;
     _phase += Time.deltaTime;
     float pulse = GameJuice.ReduceMotion ? 1f : 1f + 0.10f * Mathf.Sin(_phase * 3.4f);
-    _ring.transform.position = new Vector3(_target.x, _target.y + 0.03f, _target.z);
-    _ring.transform.localScale = new Vector3(2.2f * pulse, 0.03f, 2.2f * pulse);
-    _ring.transform.rotation = Quaternion.identity;
     float bob = GameJuice.ReduceMotion ? 0f : 0.12f * Mathf.Sin(_phase * 3f);
     _beacon.transform.position = new Vector3(_target.x, _target.y + 1.7f + bob, _target.z);
     _beacon.transform.localScale = Vector3.one * (0.38f * pulse);

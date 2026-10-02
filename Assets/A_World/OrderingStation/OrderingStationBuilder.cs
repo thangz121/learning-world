@@ -87,7 +87,8 @@ public class OrderingStationBuilder : MonoBehaviour {
     Box(parent, "OSPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f),
       new Color(0.76f, 0.60f, 0.40f));
     StageLight(parent, new Vector3(0f, 7.5f, 2.8f));
-    DemoJuice.AttachSpotlight(parent, "OSStageLight", TrackCenter + new Vector3(0f, 0.012f, 0f), 6.6f);
+    // USER ROUND 2026-10-01: the big glowing floor disc was removed (annoying
+    // blob under the child).
   }
 
   void BuildEntryAndExit(Transform parent) {
@@ -196,8 +197,11 @@ public class OrderingStationBuilder : MonoBehaviour {
       Box(root.transform, "Post", new Vector3(0f, 0.35f, 0.62f), new Vector3(0.1f, 0.7f, 0.1f), Wood);
       Ball(root.transform, "Nub", new Vector3(0f, 0.75f, 0.62f), 0.2f, Gold);
       BoxCollider box = root.AddComponent<BoxCollider>();
-      box.center = new Vector3(0f, 0.5f, 0f);
-      box.size = new Vector3(1.3f, 1.1f, 1.3f);
+      // USER ROUND 2026-10-01: a tall slot collider swallowed clicks on the
+      // piece standing in it (no repositioning). Keep it a low pad so the placed
+      // piece above stays clickable; placement itself is proximity-driven.
+      box.center = new Vector3(0f, 0.06f, 0f);
+      box.size = new Vector3(1.3f, 0.12f, 1.3f);
       Ignore(root);
       OrderingSlot slot = root.AddComponent<OrderingSlot>();
       slot.SlotIndex = i;
@@ -235,7 +239,8 @@ public class OrderingStationBuilder : MonoBehaviour {
     }
     BoxCollider box = root.AddComponent<BoxCollider>();
     box.center = new Vector3(0f, 0.4f, 0f);
-    box.size = new Vector3(1.0f, 0.9f, 1.0f);
+    // Smaller pick volume so clicking a piece never grabs its neighbour.
+    box.size = new Vector3(0.72f, 0.9f, 0.72f);
     Ignore(root);
     OrderingPiece piece = root.AddComponent<OrderingPiece>();
     piece.Rank = rank;

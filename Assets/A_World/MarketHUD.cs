@@ -430,6 +430,11 @@ public class MarketHUD : BusBehaviour {
     _objectiveText.fontSize = 23;
     _objectiveText.color = new Color(0.35f, 0.22f, 0.12f);
     _objectiveText.alignment = MarketBuilder.HubSelectionOnly ? TextAnchor.MiddleCenter : TextAnchor.MiddleLeft;
+    // Best-fit so long Vietnamese objectives never cut ("Phân loại — Chọn trò
+    // chơi" truncated to "Phân loại — Chọn trò" before).
+    _objectiveText.resizeTextForBestFit = true;
+    _objectiveText.resizeTextMinSize = 12;
+    _objectiveText.resizeTextMaxSize = 23;
     _objectiveText.verticalOverflow = VerticalWrapMode.Truncate;
     _objectiveText.text = CurrentObjective;
     RectTransform textRt = textGo.GetComponent<RectTransform>();

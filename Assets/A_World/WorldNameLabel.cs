@@ -141,6 +141,8 @@ public class WorldNameLabel : MonoBehaviour {
     _text.resizeTextMaxSize = 112;
     _text.color = Color.white;
     _text.alignment = TextAnchor.MiddleCenter;
+    _text.horizontalOverflow = HorizontalWrapMode.Overflow;
+    _text.verticalOverflow = VerticalWrapMode.Overflow;
     Shadow shadow = textGo.AddComponent<Shadow>();
     shadow.effectColor = new Color(0.25f, 0.16f, 0.1f, 0.85f);
     shadow.effectDistance = new Vector2(6f, -6f);

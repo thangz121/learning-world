@@ -218,6 +218,11 @@ public class ClassificationCity : MonoBehaviour {
       Vehicle(3, false), Vehicle(1, true), Vehicle(0, false),
     };
     SpawnAll(items);
+    // USER ROUND 2026-10-01 ("không có demo"): first-level demo — show one of
+    // each group already parked in its correct bin (same mechanism as the LV10
+    // discover round), so the sorting rule is visible before the child plays.
+    ParkExample(first == "animal" ? Animal(4, false) : Vehicle(4, false), 0);
+    ParkExample(second == "animal" ? Animal(4, true) : Vehicle(4, true), 1);
   }
 
   void ApplySize() {

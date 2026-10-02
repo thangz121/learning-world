@@ -265,6 +265,17 @@ public class SelectionYardBuilder : MonoBehaviour {
     GameObject plaque = Box(parent, "SYNamePlaque_" + id, new Vector3(x, 2.72f, z + 0.1f),
       new Vector3(1.72f, 0.46f, 0.06f), Cream);
     Ignore(plaque);
+    // USER ROUND 2026-10-01 ("tên cổng xiên vào bảng"): the label faces the yard
+    // entry point (which yaws side gates), but the plaque was axis-aligned — so
+    // the name looked skewed against the board. Yaw the plaque to the SAME
+    // facing as the label so name + board read as one sign.
+    Vector3 faceTo = new Vector3(x, 0f, z) - EntryLocal;
+    faceTo.y = 0f;
+    if (faceTo.sqrMagnitude > 0.0001f) {
+      Quaternion signRot = Quaternion.LookRotation(faceTo);
+      plaqueFrame.transform.localRotation = signRot;
+      plaque.transform.localRotation = signRot;
+    }
     // The walk-in door (7cm/mouth toward the entry) + approach glow for live
     // gates only (an empty skill/game never pretends to be an activity).
     GameObject door = new GameObject("Door");

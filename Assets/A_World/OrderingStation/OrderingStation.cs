@@ -41,10 +41,15 @@ public class OrderingStation : MonoBehaviour {
   readonly Queue<string> _askEn = new Queue<string>();
   readonly Queue<string> _askVi = new Queue<string>();
 
+  // Object Yard (south of the Ordering Track): pieces are collectable here.
+  // USER ROUND 2026-10-01: the old slots (z 2.2..3.2) sat INSIDE the track
+  // slots' colliders, so a click on a piece hit the slot instead. The yard is
+  // now clearly separated from the track (z 0.4..1.6).
   static readonly Vector3[] PlazaSlots = {
-    new Vector3(-2.2f, 0f, 0.9f), new Vector3(-0.8f, 0f, 0.7f),
-    new Vector3(0.8f, 0f, 0.7f), new Vector3(2.2f, 0f, 0.9f),
-    new Vector3(-1.4f, 0f, 1.9f), new Vector3(1.4f, 0f, 1.9f),
+    new Vector3(-2.6f, 0f, 0.5f), new Vector3(-1.3f, 0f, 0.5f),
+    new Vector3(0f, 0f, 0.5f), new Vector3(1.3f, 0f, 0.5f),
+    new Vector3(-1.95f, 0f, 1.6f), new Vector3(-0.65f, 0f, 1.6f),
+    new Vector3(0.65f, 0f, 1.6f),
   };
 
   public void Build(OrderingStationBuilder builder, Transform player, SmartCamera cam,
@@ -105,9 +110,18 @@ public class OrderingStation : MonoBehaviour {
     if (PlayerNear(SpotWorld(), 1.5f) || _phaseT >= 8f) BeginRound();
   }
 
+  Vector3 _lastPlayerPos;
   void TickPlay(float dt) {
+    if (_player == null) { _lastPlayerPos = Vector3.zero; return; }
+    Vector3 p = _player.position;
+    float dx = p.x - _lastPlayerPos.x, dz = p.z - _lastPlayerPos.z;
+    bool moving = dx * dx + dz * dz > 0.0004f;
+    _lastPlayerPos = p;
+    // USER ROUND 2026-10-01: only snap when the child has STOPPED at a slot —
+    // walking past a slot on the way to another one must never drop the piece.
+    if (moving) return;
     if (Carried != null) {
-      OrderingSlot near = NearestSlot(0.85f);
+      OrderingSlot near = NearestSlot(0.55f);
       if (near != null) TryPlace(near);
     }
   }

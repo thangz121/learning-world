@@ -302,7 +302,7 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
         SetPending(YardLevel.Game, "", CurrentSkillId);
         try { await _transition.EnterMicroAsync(_sceneOps, SelectionYardBuilder.SceneName); } catch (Exception) { }
         CurrentLevel = YardLevel.Game;
-        if (_player != null) _player.WarpTo(_yardEntry);
+        WarpPlayer(_yardEntry);
         PushYardBounds();
         if (_camera != null && _player != null)
           _camera.Follow(_player.transform, SelectionYardBuilder.FollowOffset);
@@ -312,7 +312,12 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
       }
       IsInPlay = true;
       CurrentGameId = game.Id;
-      if (_player != null) _player.WarpTo(_playEntry);
+      if (_player != null) {
+        bool warped = _player.WarpTo(_playEntry);
+        if (!warped) warped = _player.WarpToLoose(_playEntry);
+        Log("play warp " + (warped ? "ok " : "forced ") + Fmt(_playEntry)
+          + " player=" + Fmt(_player.transform.position));
+      }
       PushPlayBounds();
       if (_camera != null && _player != null)
         _camera.Follow(_player.transform, _playFollow);
@@ -357,7 +362,7 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
       IsInPlay = false;
       CurrentGameId = "";
       CurrentLevel = YardLevel.Game;
-      if (_player != null) _player.WarpTo(_yardEntry);
+      WarpPlayer(_yardEntry);
       PushYardBounds();
       if (_camera != null && _player != null)
         _camera.Follow(_player.transform, SelectionYardBuilder.FollowOffset);
@@ -451,7 +456,7 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
       CurrentLevel = PendingLevel;
       CurrentSubjectId = PendingSubjectId;
       CurrentSkillId = PendingSkillId;
-      if (_player != null) _player.WarpTo(_yardEntry);
+      WarpPlayer(_yardEntry);
       PushYardBounds();
       if (_camera != null && _player != null)
         _camera.Follow(_player.transform, SelectionYardBuilder.FollowOffset);
@@ -471,7 +476,7 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
     IsBusy = true;
     try {
       PlayTunnel();
-      if (_player != null) _player.WarpTo(HubReturnPos);
+      WarpPlayer(HubReturnPos);
       PushMainBounds();
       if (_camera != null && _player != null)
         _camera.Follow(_player.transform, MarketBuilder.HubFollowOffset);
@@ -494,6 +499,14 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   // selection gates call EnterSkill/EnterGame directly).
   public void EnterFromHub() {
     if (PendingLevel != YardLevel.None) EnterYardAsync();
+  }
+
+  // Robust reposition: the strict WarpTo can fail while a freshly loaded
+  // arena's NavMesh is still settling; fall back to the loose warp so the
+  // child is never left off the island.
+  void WarpPlayer(Vector3 p) {
+    if (_player == null) return;
+    if (!_player.WarpTo(p)) _player.WarpToLoose(p);
   }
 
   void PushYardBounds() {

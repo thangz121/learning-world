@@ -86,7 +86,8 @@ public class GeometryPlayBuilder : MonoBehaviour {
     Pad(parent, "GPPlaza", new Vector3(0f, 0.006f, 1.8f), 9.2f, new Color(0.93f, 0.84f, 0.58f));
     Box(parent, "GPPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f), PathTan);
     StageLight(parent, new Vector3(0f, 7.5f, 2.8f));
-    DemoJuice.AttachSpotlight(parent, "GPStageLight", HuntCenter + new Vector3(0f, 0.01f, 0f), 6.2f);
+    // USER ROUND 2026-10-01: the big glowing floor disc was removed (it read as
+    // an annoying blob under the child in every arena).
   }
 
   void BuildEntryAndExit(Transform parent) {
@@ -311,8 +312,11 @@ public class GeometryPlayBuilder : MonoBehaviour {
     if (kind == GeometryKind.Triangle) {
       GameObject t = new GameObject("Vis");
       t.transform.SetParent(parent, false);
-      t.transform.localPosition = toy ? new Vector3(0f, 0.22f, 0f) : Vector3.zero;
-      t.transform.localScale = toy ? new Vector3(1.4f, 4.6f, 1.4f) : Vector3.one;
+      t.transform.localPosition = toy ? new Vector3(0f, 0.14f, 0f) : Vector3.zero;
+      // USER ROUND 2026-10-01: the toy triangle was scaled 4.6x tall (a spike)
+      // so a child could not read it as a triangle. Squat it into an obvious
+      // triangular prism instead.
+      t.transform.localScale = toy ? new Vector3(1.7f, 1.9f, 1.7f) : Vector3.one;
       MeshFilter mf = t.AddComponent<MeshFilter>();
       mf.sharedMesh = TriangleMesh();
       MeshRenderer mr = t.AddComponent<MeshRenderer>();
