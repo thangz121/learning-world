@@ -99,3 +99,7 @@ Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips/
 Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_250ms/
 Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_500ms/
 *.mp3
+
+# Phase 1.9.6 review clips
+Research/Speech/Phase1_9_6/HumanReview/clips_hybrid/
+

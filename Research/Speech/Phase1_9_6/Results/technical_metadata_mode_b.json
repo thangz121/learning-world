@@ -1,0 +1,254 @@
+[
+  {
+    "clip_id": "clip_01",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 3.735,
+    "raw_end_s": 3.945,
+    "raw_duration_s": 0.21,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_02",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 5.375,
+    "raw_end_s": 5.535,
+    "raw_duration_s": 0.16,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_03",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 9.085,
+    "raw_end_s": 9.295,
+    "raw_duration_s": 0.21,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_04",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 14.315,
+    "raw_end_s": 14.605,
+    "raw_duration_s": 0.29,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_05",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 15.295,
+    "raw_end_s": 15.545,
+    "raw_duration_s": 0.25,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_06",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 19.425,
+    "raw_end_s": 19.895,
+    "raw_duration_s": 0.47,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_07",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 20.715,
+    "raw_end_s": 20.885,
+    "raw_duration_s": 0.17,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_08",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 21.835,
+    "raw_end_s": 22.175,
+    "raw_duration_s": 0.34,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_09",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 22.775,
+    "raw_end_s": 22.925,
+    "raw_duration_s": 0.15,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_10",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 23.455,
+    "raw_end_s": 23.725,
+    "raw_duration_s": 0.27,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_11",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 25.365,
+    "raw_end_s": 25.575,
+    "raw_duration_s": 0.21,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_12",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 26.835,
+    "raw_end_s": 27.065,
+    "raw_duration_s": 0.23,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_13",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 27.545,
+    "raw_end_s": 27.925,
+    "raw_duration_s": 0.38,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_14",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 37.475,
+    "raw_end_s": 37.795,
+    "raw_duration_s": 0.32,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_15",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 38.205,
+    "raw_end_s": 38.595,
+    "raw_duration_s": 0.39,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_16",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 40.105,
+    "raw_end_s": 40.265,
+    "raw_duration_s": 0.16,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_17",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 41.695,
+    "raw_end_s": 41.895,
+    "raw_duration_s": 0.2,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_18",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 42.845,
+    "raw_end_s": 43.135,
+    "raw_duration_s": 0.29,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_19",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 43.495,
+    "raw_end_s": 43.665,
+    "raw_duration_s": 0.17,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_20",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 45.105,
+    "raw_end_s": 45.295,
+    "raw_duration_s": 0.19,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_21",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 45.745,
+    "raw_end_s": 45.995,
+    "raw_duration_s": 0.25,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_22",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 46.475,
+    "raw_end_s": 46.875,
+    "raw_duration_s": 0.4,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_23",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 47.305,
+    "raw_end_s": 47.685,
+    "raw_duration_s": 0.38,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_24",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 56.955,
+    "raw_end_s": 57.185,
+    "raw_duration_s": 0.23,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_25",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 62.235,
+    "raw_end_s": 62.455,
+    "raw_duration_s": 0.22,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_26",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 64.875,
+    "raw_end_s": 65.065,
+    "raw_duration_s": 0.19,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_27",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 117.595,
+    "raw_end_s": 117.755,
+    "raw_duration_s": 0.16,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  },
+  {
+    "clip_id": "clip_28",
+    "detector": "hybrid_score",
+    "silero_thr": 0.5,
+    "raw_start_s": 132.435,
+    "raw_end_s": 132.595,
+    "raw_duration_s": 0.16,
+    "note": "MODE_B_ONLY \u2014 hide during primary human review"
+  }
+]
