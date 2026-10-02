@@ -1,0 +1,203 @@
+{
+  "ok": true,
+  "protocol_version": "lwe-speaking-protocol-1.4.0",
+  "pipeline_version": "phase1.2.0-2026-10-02+soft_v2",
+  "inventory_version": "phone-inventory-v1.4.0",
+  "recognized_text": "Apple,",
+  "score": 67.6,
+  "confidence": 0.065,
+  "primary_source": "ensemble_soft_op_mean",
+  "score_channels": {
+    "scorer_v1": 29.6,
+    "soft_phone_v2": 75.2,
+    "openpronounce": 60.0
+  },
+  "confidence_channels": {
+    "scorer_v1": 0.121,
+    "soft_phone_v2": 0.065
+  },
+  "confidenceReasons": [
+    "PHONE_POSTERIOR_LOW"
+  ],
+  "phonemeDiagnostics": [
+    {
+      "expectedPhone": "æ",
+      "observedEvidence": "æ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.023,
+      "similarity": 1.0,
+      "posterior": 0.023,
+      "start": 0.0,
+      "end": 0.266,
+      "duration": 0.266,
+      "topk": [
+        [
+          "ɑ",
+          0.03326620161533356
+        ],
+        [
+          "æ",
+          0.019419364631175995
+        ],
+        [
+          "ɛ",
+          0.005649488884955645
+        ]
+      ],
+      "evidenceSources": [
+        "w2v2-espeak",
+        "ctc_align",
+        "soft_sim"
+      ]
+    },
+    {
+      "expectedPhone": "p",
+      "observedEvidence": "p",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.278,
+      "similarity": 1.0,
+      "posterior": 0.278,
+      "start": 0.266,
+      "end": 0.389,
+      "duration": 0.123,
+      "topk": [
+        [
+          "p",
+          0.2782994210720062
+        ],
+        [
+          "b",
+          0.011682716198265553
+        ],
+        [
+          "t",
+          0.0011163883609697223
+        ]
+      ],
+      "evidenceSources": [
+        "w2v2-espeak",
+        "ctc_align",
+        "soft_sim"
+      ]
+    },
+    {
+      "expectedPhone": "ə",
+      "observedEvidence": "ɔ",
+      "matchType": "miss",
+      "score": 0.9,
+      "confidence": 0.018,
+      "similarity": 0.009,
+      "posterior": 0.018,
+      "start": 0.389,
+      "end": 0.43,
+      "duration": 0.041,
+      "topk": [
+        [
+          "oʊ",
+          0.14207637310028076
+        ],
+        [
+          "ʊ",
+          0.10335499048233032
+        ],
+        [
+          "uː",
+          0.06727053225040436
+        ]
+      ],
+      "evidenceSources": [
+        "w2v2-espeak",
+        "ctc_align",
+        "soft_sim"
+      ]
+    },
+    {
+      "expectedPhone": "l",
+      "observedEvidence": "l",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.028,
+      "similarity": 1.0,
+      "posterior": 0.028,
+      "start": 0.43,
+      "end": 0.84,
+      "duration": 0.41,
+      "topk": [
+        [
+          "l",
+          0.027840178459882736
+        ],
+        [
+          "ɭ",
+          0.00033344788243994117
+        ],
+        [
+          "w",
+          0.00024981657043099403
+        ]
+      ],
+      "evidenceSources": [
+        "w2v2-espeak",
+        "ctc_align",
+        "soft_sim"
+      ]
+    }
+  ],
+  "vad": {
+    "speech_detected": true,
+    "segments": [
+      {
+        "start": 0.1,
+        "end": 0.7
+      }
+    ]
+  },
+  "alignment": {
+    "method": "ctc_forced_v1"
+  },
+  "acousticSummary": {
+    "f0_mean": 186.82022427145577,
+    "f1_mean": 814.0742918647356,
+    "f2_mean": 1575.3838925260795,
+    "duration_s": 0.84,
+    "voiced_frac": 0.5
+  },
+  "target": {
+    "text": "apple",
+    "arpabet": [
+      "AE1",
+      "P",
+      "AH0",
+      "L"
+    ],
+    "canon": [
+      "æ",
+      "p",
+      "ə",
+      "l"
+    ],
+    "dict_version": "cmudict.dict@2026-10-02"
+  },
+  "model_versions": {
+    "vad": "6.2.3",
+    "asr": "sherpa-onnx-1.13.8",
+    "target": "cmudict.dict@2026-10-02",
+    "phone": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "acoustic": "0.4.7",
+    "scorer_v1": "1.0.0-phase1.2",
+    "soft_phone": "phone-evidence-v2@1.4.0",
+    "inventory": "phone-inventory-v1.4.0"
+  },
+  "warnings": [
+    "whisperx_disabled_or_unavailable"
+  ],
+  "timings": {
+    "total_s": 42.738,
+    "pipeline_s": 38.623,
+    "soft_s": 3.846096799999941
+  },
+  "population_label": "cli",
+  "asr_is_not_pronunciation_judge": true
+}

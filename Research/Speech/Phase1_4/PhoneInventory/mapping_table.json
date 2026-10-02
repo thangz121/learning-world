@@ -1,0 +1,414 @@
+{
+  "version": "phone-inventory-v1.4.0",
+  "mappings": [
+    {
+      "source": "AA",
+      "normalized": "ɑ",
+      "type": "arpa"
+    },
+    {
+      "source": "AE",
+      "normalized": "æ",
+      "type": "arpa"
+    },
+    {
+      "source": "AH",
+      "normalized": "ə",
+      "type": "arpa"
+    },
+    {
+      "source": "AO",
+      "normalized": "ɔ",
+      "type": "arpa"
+    },
+    {
+      "source": "AW",
+      "normalized": "aʊ",
+      "type": "arpa"
+    },
+    {
+      "source": "AY",
+      "normalized": "aɪ",
+      "type": "arpa"
+    },
+    {
+      "source": "B",
+      "normalized": "b",
+      "type": "arpa"
+    },
+    {
+      "source": "CH",
+      "normalized": "tʃ",
+      "type": "arpa"
+    },
+    {
+      "source": "D",
+      "normalized": "d",
+      "type": "arpa"
+    },
+    {
+      "source": "DH",
+      "normalized": "ð",
+      "type": "arpa"
+    },
+    {
+      "source": "EH",
+      "normalized": "ɛ",
+      "type": "arpa"
+    },
+    {
+      "source": "ER",
+      "normalized": "ɝ",
+      "type": "arpa"
+    },
+    {
+      "source": "EY",
+      "normalized": "eɪ",
+      "type": "arpa"
+    },
+    {
+      "source": "F",
+      "normalized": "f",
+      "type": "arpa"
+    },
+    {
+      "source": "G",
+      "normalized": "ɡ",
+      "type": "arpa"
+    },
+    {
+      "source": "HH",
+      "normalized": "h",
+      "type": "arpa"
+    },
+    {
+      "source": "IH",
+      "normalized": "ɪ",
+      "type": "arpa"
+    },
+    {
+      "source": "IY",
+      "normalized": "iː",
+      "type": "arpa"
+    },
+    {
+      "source": "JH",
+      "normalized": "dʒ",
+      "type": "arpa"
+    },
+    {
+      "source": "K",
+      "normalized": "k",
+      "type": "arpa"
+    },
+    {
+      "source": "L",
+      "normalized": "l",
+      "type": "arpa"
+    },
+    {
+      "source": "M",
+      "normalized": "m",
+      "type": "arpa"
+    },
+    {
+      "source": "N",
+      "normalized": "n",
+      "type": "arpa"
+    },
+    {
+      "source": "NG",
+      "normalized": "ŋ",
+      "type": "arpa"
+    },
+    {
+      "source": "OW",
+      "normalized": "oʊ",
+      "type": "arpa"
+    },
+    {
+      "source": "OY",
+      "normalized": "ɔɪ",
+      "type": "arpa"
+    },
+    {
+      "source": "P",
+      "normalized": "p",
+      "type": "arpa"
+    },
+    {
+      "source": "R",
+      "normalized": "ɹ",
+      "type": "arpa"
+    },
+    {
+      "source": "S",
+      "normalized": "s",
+      "type": "arpa"
+    },
+    {
+      "source": "SH",
+      "normalized": "ʃ",
+      "type": "arpa"
+    },
+    {
+      "source": "SIL",
+      "normalized": "sil",
+      "type": "arpa"
+    },
+    {
+      "source": "SPN",
+      "normalized": "sil",
+      "type": "arpa"
+    },
+    {
+      "source": "T",
+      "normalized": "t",
+      "type": "arpa"
+    },
+    {
+      "source": "TH",
+      "normalized": "θ",
+      "type": "arpa"
+    },
+    {
+      "source": "UH",
+      "normalized": "ʊ",
+      "type": "arpa"
+    },
+    {
+      "source": "UW",
+      "normalized": "uː",
+      "type": "arpa"
+    },
+    {
+      "source": "V",
+      "normalized": "v",
+      "type": "arpa"
+    },
+    {
+      "source": "W",
+      "normalized": "w",
+      "type": "arpa"
+    },
+    {
+      "source": "Y",
+      "normalized": "j",
+      "type": "arpa"
+    },
+    {
+      "source": "Z",
+      "normalized": "z",
+      "type": "arpa"
+    },
+    {
+      "source": "ZH",
+      "normalized": "ʒ",
+      "type": "arpa"
+    },
+    {
+      "source": " ",
+      "normalized": "",
+      "type": "alias"
+    },
+    {
+      "source": "</s>",
+      "normalized": "",
+      "type": "alias"
+    },
+    {
+      "source": "<pad>",
+      "normalized": "",
+      "type": "alias"
+    },
+    {
+      "source": "<s>",
+      "normalized": "",
+      "type": "alias"
+    },
+    {
+      "source": "[PAD]",
+      "normalized": "",
+      "type": "alias"
+    },
+    {
+      "source": "a",
+      "normalized": "æ",
+      "type": "alias"
+    },
+    {
+      "source": "aː",
+      "normalized": "ɑ",
+      "type": "alias"
+    },
+    {
+      "source": "d͡ʒ",
+      "normalized": "dʒ",
+      "type": "alias"
+    },
+    {
+      "source": "e",
+      "normalized": "ɛ",
+      "type": "alias"
+    },
+    {
+      "source": "g",
+      "normalized": "ɡ",
+      "type": "alias"
+    },
+    {
+      "source": "i",
+      "normalized": "iː",
+      "type": "alias"
+    },
+    {
+      "source": "iː",
+      "normalized": "iː",
+      "type": "alias"
+    },
+    {
+      "source": "o",
+      "normalized": "oʊ",
+      "type": "alias"
+    },
+    {
+      "source": "oː",
+      "normalized": "ɔ",
+      "type": "alias"
+    },
+    {
+      "source": "r",
+      "normalized": "ɹ",
+      "type": "alias"
+    },
+    {
+      "source": "sil",
+      "normalized": "sil",
+      "type": "alias"
+    },
+    {
+      "source": "spn",
+      "normalized": "sil",
+      "type": "alias"
+    },
+    {
+      "source": "t͡ʃ",
+      "normalized": "tʃ",
+      "type": "alias"
+    },
+    {
+      "source": "u",
+      "normalized": "uː",
+      "type": "alias"
+    },
+    {
+      "source": "uː",
+      "normalized": "uː",
+      "type": "alias"
+    },
+    {
+      "source": "y",
+      "normalized": "j",
+      "type": "alias"
+    },
+    {
+      "source": "|",
+      "normalized": "",
+      "type": "alias"
+    },
+    {
+      "source": "æː",
+      "normalized": "æ",
+      "type": "alias"
+    },
+    {
+      "source": "ɐ",
+      "normalized": "ə",
+      "type": "alias"
+    },
+    {
+      "source": "ɑː",
+      "normalized": "ɑ",
+      "type": "alias"
+    },
+    {
+      "source": "ɔː",
+      "normalized": "ɔ",
+      "type": "alias"
+    },
+    {
+      "source": "ɚ",
+      "normalized": "ɝ",
+      "type": "alias"
+    },
+    {
+      "source": "ɛː",
+      "normalized": "ɛ",
+      "type": "alias"
+    },
+    {
+      "source": "ɜ",
+      "normalized": "ɝ",
+      "type": "alias"
+    },
+    {
+      "source": "ɡ",
+      "normalized": "ɡ",
+      "type": "alias"
+    },
+    {
+      "source": "ɪ",
+      "normalized": "ɪ",
+      "type": "alias"
+    },
+    {
+      "source": "ɹ",
+      "normalized": "ɹ",
+      "type": "alias"
+    },
+    {
+      "source": "ɾ",
+      "normalized": "ɹ",
+      "type": "alias"
+    },
+    {
+      "source": "ʊ",
+      "normalized": "ʊ",
+      "type": "alias"
+    },
+    {
+      "source": "ʔ",
+      "normalized": "sil",
+      "type": "alias"
+    },
+    {
+      "source": "ʤ",
+      "normalized": "dʒ",
+      "type": "alias"
+    },
+    {
+      "source": "ʧ",
+      "normalized": "tʃ",
+      "type": "alias"
+    }
+  ],
+  "pair_sim": {
+    "['iː', 'ɪ']": 0.55,
+    "['æ', 'ɛ']": 0.5,
+    "['uː', 'ʊ']": 0.55,
+    "['ɑ', 'ʌ']": 0.45,
+    "['ɑ', 'ɔ']": 0.4,
+    "['t', 'θ']": 0.35,
+    "['s', 'θ']": 0.4,
+    "['d', 'ð']": 0.35,
+    "['z', 'ð']": 0.4,
+    "['l', 'ɹ']": 0.35,
+    "['v', 'w']": 0.4,
+    "['b', 'v']": 0.45,
+    "['s', 'ʃ']": 0.45,
+    "['tʃ', 'ʃ']": 0.5,
+    "['b', 'p']": 0.5,
+    "['d', 't']": 0.5,
+    "['k', 'ɡ']": 0.5
+  }
+}

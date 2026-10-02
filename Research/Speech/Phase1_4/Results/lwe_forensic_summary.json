@@ -1,0 +1,92 @@
+[
+  {
+    "word": "red",
+    "asr": "Red",
+    "old_s1": 91.1,
+    "new_s1": 91.1,
+    "soft": 100.0,
+    "op": 100.0,
+    "ensemble": 100.0,
+    "evidence_quality": 0.1
+  },
+  {
+    "word": "blue",
+    "asr": "Blue.",
+    "old_s1": 11.8,
+    "new_s1": 11.8,
+    "soft": 5.8,
+    "op": 17.68,
+    "ensemble": 11.7,
+    "evidence_quality": 0.0
+  },
+  {
+    "word": "apple",
+    "asr": "Apple,",
+    "old_s1": 29.6,
+    "new_s1": 29.6,
+    "soft": 75.2,
+    "op": 60.0,
+    "ensemble": 67.6,
+    "evidence_quality": 0.087
+  },
+  {
+    "word": "book",
+    "asr": "",
+    "old_s1": 30.6,
+    "new_s1": 30.6,
+    "soft": 66.7,
+    "op": 23.23,
+    "ensemble": 49.3,
+    "evidence_quality": 0.007
+  },
+  {
+    "word": "big",
+    "asr": "Big",
+    "old_s1": 35.2,
+    "new_s1": 35.2,
+    "soft": 33.3,
+    "op": 60.57,
+    "ensemble": 46.9,
+    "evidence_quality": 0.0
+  },
+  {
+    "word": "dog",
+    "asr": "Dog.",
+    "old_s1": 54.8,
+    "new_s1": 54.8,
+    "soft": 33.3,
+    "op": 86.67,
+    "ensemble": 54.6,
+    "evidence_quality": 0.003
+  },
+  {
+    "word": "cat",
+    "asr": "Cat",
+    "old_s1": 68.9,
+    "new_s1": 68.9,
+    "soft": 100.0,
+    "op": 100.0,
+    "ensemble": 100.0,
+    "evidence_quality": 0.059
+  },
+  {
+    "word": "red apple",
+    "asr": "Red apple",
+    "old_s1": 49.0,
+    "new_s1": 49.0,
+    "soft": 100.0,
+    "op": 98.86,
+    "ensemble": 99.4,
+    "evidence_quality": 0.12
+  },
+  {
+    "word": "red",
+    "asr": "",
+    "old_s1": 0.0,
+    "new_s1": 0.0,
+    "soft": 14.2,
+    "op": 0.0,
+    "ensemble": 7.1,
+    "evidence_quality": 0.0
+  }
+]

@@ -1,0 +1,1075 @@
+[
+  {
+    "file": "sapi_red.wav",
+    "target": "red",
+    "asr": "Red",
+    "target_arpa": [
+      "R",
+      "EH1",
+      "D"
+    ],
+    "target_canon": [
+      "ɹ",
+      "ɛ",
+      "d"
+    ],
+    "old_s1_score": 91.1,
+    "s1_score": 91.1,
+    "s1_conf": 0.911,
+    "s1_per": 0.0,
+    "soft_score": 100.0,
+    "soft_conf": 0.1,
+    "soft_mean_sim": 1.0,
+    "soft_mean_post": 0.1,
+    "soft_hits": [
+      {
+        "exp": "ɹ",
+        "obs": "ɹ",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.091,
+        "t0": 0.0,
+        "t1": 0.203,
+        "topk": [
+          [
+            "ɹ",
+            0.09076401591300964
+          ],
+          [
+            "w",
+            0.0011309337569400668
+          ],
+          [
+            "ɝ",
+            0.0006959118181839585
+          ]
+        ]
+      },
+      {
+        "exp": "ɛ",
+        "obs": "ɛ",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.179,
+        "t0": 0.203,
+        "t1": 0.305,
+        "topk": [
+          [
+            "ɛ",
+            0.17375081777572632
+          ],
+          [
+            "æ",
+            0.010206708684563637
+          ],
+          [
+            "ɛ",
+            0.00449471827596426
+          ]
+        ]
+      },
+      {
+        "exp": "d",
+        "obs": "d",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.029,
+        "t0": 0.305,
+        "t1": 1.219,
+        "topk": [
+          [
+            "d",
+            0.02920627035200596
+          ],
+          [
+            "t",
+            0.00012641192006412894
+          ],
+          [
+            "n",
+            0.0001226509630214423
+          ]
+        ]
+      }
+    ],
+    "op_score": 100.0,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 100.0,
+    "ensemble_note": "agree_mean"
+  },
+  {
+    "file": "sapi_blue.wav",
+    "target": "blue",
+    "asr": "Blue.",
+    "target_arpa": [
+      "B",
+      "L",
+      "UW1"
+    ],
+    "target_canon": [
+      "b",
+      "l",
+      "uː"
+    ],
+    "old_s1_score": 11.8,
+    "s1_score": 11.8,
+    "s1_conf": 0.0,
+    "s1_per": 1.333,
+    "soft_score": 5.8,
+    "soft_conf": 0.0,
+    "soft_mean_sim": 0.058,
+    "soft_mean_post": 0.0,
+    "soft_hits": [
+      {
+        "exp": "b",
+        "obs": "l",
+        "type": "miss",
+        "sim": 0.0,
+        "post": 0.0,
+        "t0": 0.0,
+        "t1": 0.02,
+        "topk": [
+          [
+            "t",
+            4.131439345655963e-05
+          ],
+          [
+            "w",
+            4.077341145602986e-05
+          ],
+          [
+            "æ",
+            3.9373739127768204e-05
+          ]
+        ]
+      },
+      {
+        "exp": "l",
+        "obs": "j",
+        "type": "soft",
+        "sim": 0.175,
+        "post": 0.0,
+        "t0": 0.02,
+        "t1": 1.179,
+        "topk": [
+          [
+            "j",
+            0.014498254284262657
+          ],
+          [
+            "t",
+            0.013809069991111755
+          ],
+          [
+            "uː",
+            0.01021595299243927
+          ]
+        ]
+      },
+      {
+        "exp": "uː",
+        "obs": "l",
+        "type": "miss",
+        "sim": 0.0,
+        "post": 0.0,
+        "t0": 1.179,
+        "t1": 1.199,
+        "topk": [
+          [
+            "t",
+            3.226704211556353e-05
+          ],
+          [
+            "æ",
+            1.9049850379815325e-05
+          ],
+          [
+            "n",
+            1.7462280084146187e-05
+          ]
+        ]
+      }
+    ],
+    "op_score": 17.68,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_MATCH_WEAK",
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 11.7,
+    "ensemble_note": "agree_mean"
+  },
+  {
+    "file": "pregen_apple_normal.wav",
+    "target": "apple",
+    "asr": "Apple,",
+    "target_arpa": [
+      "AE1",
+      "P",
+      "AH0",
+      "L"
+    ],
+    "target_canon": [
+      "æ",
+      "p",
+      "ə",
+      "l"
+    ],
+    "old_s1_score": 29.6,
+    "s1_score": 29.6,
+    "s1_conf": 0.121,
+    "s1_per": 0.75,
+    "soft_score": 75.2,
+    "soft_conf": 0.065,
+    "soft_mean_sim": 0.752,
+    "soft_mean_post": 0.087,
+    "soft_hits": [
+      {
+        "exp": "æ",
+        "obs": "æ",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.023,
+        "t0": 0.0,
+        "t1": 0.266,
+        "topk": [
+          [
+            "ɑ",
+            0.03326620161533356
+          ],
+          [
+            "æ",
+            0.019419364631175995
+          ],
+          [
+            "ɛ",
+            0.005649488884955645
+          ]
+        ]
+      },
+      {
+        "exp": "p",
+        "obs": "p",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.278,
+        "t0": 0.266,
+        "t1": 0.389,
+        "topk": [
+          [
+            "p",
+            0.2782994210720062
+          ],
+          [
+            "b",
+            0.011682716198265553
+          ],
+          [
+            "t",
+            0.0011163883609697223
+          ]
+        ]
+      },
+      {
+        "exp": "ə",
+        "obs": "ɔ",
+        "type": "miss",
+        "sim": 0.009,
+        "post": 0.018,
+        "t0": 0.389,
+        "t1": 0.43,
+        "topk": [
+          [
+            "oʊ",
+            0.14207637310028076
+          ],
+          [
+            "ʊ",
+            0.10335499048233032
+          ],
+          [
+            "uː",
+            0.06727053225040436
+          ]
+        ]
+      },
+      {
+        "exp": "l",
+        "obs": "l",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.028,
+        "t0": 0.43,
+        "t1": 0.84,
+        "topk": [
+          [
+            "l",
+            0.027840178459882736
+          ],
+          [
+            "ɭ",
+            0.00033344788243994117
+          ],
+          [
+            "w",
+            0.00024981657043099403
+          ]
+        ]
+      }
+    ],
+    "op_score": 60.0,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 67.6,
+    "ensemble_note": "agree_mean"
+  },
+  {
+    "file": "sapi_book.wav",
+    "target": "book",
+    "asr": "",
+    "target_arpa": [
+      "B",
+      "UH1",
+      "K"
+    ],
+    "target_canon": [
+      "b",
+      "ʊ",
+      "k"
+    ],
+    "old_s1_score": 30.6,
+    "s1_score": 30.6,
+    "s1_conf": 0.0,
+    "s1_per": 1.0,
+    "soft_score": 66.7,
+    "soft_conf": 0.005,
+    "soft_mean_sim": 0.667,
+    "soft_mean_post": 0.007,
+    "soft_hits": [
+      {
+        "exp": "b",
+        "obs": "b",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.002,
+        "t0": 0.0,
+        "t1": 0.242,
+        "topk": [
+          [
+            "v",
+            0.1101858913898468
+          ],
+          [
+            "b",
+            0.002429649233818054
+          ],
+          [
+            "f",
+            0.0018411473138257861
+          ]
+        ]
+      },
+      {
+        "exp": "ʊ",
+        "obs": "ɔ",
+        "type": "miss",
+        "sim": 0.002,
+        "post": 0.003,
+        "t0": 0.242,
+        "t1": 0.262,
+        "topk": [
+          [
+            "ʌ",
+            0.6260743737220764
+          ],
+          [
+            "ɔ",
+            0.06847219914197922
+          ],
+          [
+            "æ",
+            0.06111183762550354
+          ]
+        ]
+      },
+      {
+        "exp": "k",
+        "obs": "k",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.016,
+        "t0": 0.262,
+        "t1": 1.269,
+        "topk": [
+          [
+            "ŋ",
+            0.021473191678524017
+          ],
+          [
+            "k",
+            0.016351230442523956
+          ],
+          [
+            "ɡ",
+            0.0030263953376561403
+          ]
+        ]
+      }
+    ],
+    "op_score": 23.23,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 49.3,
+    "ensemble_note": "disagreement>30_weighted_0.6soft"
+  },
+  {
+    "file": "sapi_big.wav",
+    "target": "big",
+    "asr": "Big",
+    "target_arpa": [
+      "B",
+      "IH1",
+      "G"
+    ],
+    "target_canon": [
+      "b",
+      "ɪ",
+      "ɡ"
+    ],
+    "old_s1_score": 35.2,
+    "s1_score": 35.2,
+    "s1_conf": 0.281,
+    "s1_per": 0.667,
+    "soft_score": 33.3,
+    "soft_conf": 0.0,
+    "soft_mean_sim": 0.333,
+    "soft_mean_post": 0.0,
+    "soft_hits": [
+      {
+        "exp": "b",
+        "obs": "b",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.001,
+        "t0": 0.0,
+        "t1": 0.222,
+        "topk": [
+          [
+            "v",
+            0.08697717636823654
+          ],
+          [
+            "b",
+            0.0006687856512144208
+          ],
+          [
+            "ð",
+            0.0006317236111499369
+          ]
+        ]
+      },
+      {
+        "exp": "ɪ",
+        "obs": "ə",
+        "type": "miss",
+        "sim": 0.0,
+        "post": 0.0,
+        "t0": 0.222,
+        "t1": 1.249,
+        "topk": [
+          [
+            "ɡ",
+            0.019123656675219536
+          ],
+          [
+            "ɛ",
+            0.012064838781952858
+          ],
+          [
+            "ɛ",
+            0.0032123583368957043
+          ]
+        ]
+      },
+      {
+        "exp": "ɡ",
+        "obs": "l",
+        "type": "miss",
+        "sim": 0.0,
+        "post": 0.0,
+        "t0": 1.249,
+        "t1": 1.269,
+        "topk": [
+          [
+            "n",
+            1.778093610482756e-05
+          ],
+          [
+            "t",
+            1.4540056326950435e-05
+          ],
+          [
+            "æ",
+            6.744423444615677e-06
+          ]
+        ]
+      }
+    ],
+    "op_score": 60.57,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_MATCH_WEAK",
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 46.9,
+    "ensemble_note": "agree_mean"
+  },
+  {
+    "file": "sapi_dog.wav",
+    "target": "dog",
+    "asr": "Dog.",
+    "target_arpa": [
+      "D",
+      "AO1",
+      "G"
+    ],
+    "target_canon": [
+      "d",
+      "ɔ",
+      "ɡ"
+    ],
+    "old_s1_score": 54.8,
+    "s1_score": 54.8,
+    "s1_conf": 0.202,
+    "s1_per": 0.667,
+    "soft_score": 33.3,
+    "soft_conf": 0.001,
+    "soft_mean_sim": 0.333,
+    "soft_mean_post": 0.003,
+    "soft_hits": [
+      {
+        "exp": "d",
+        "obs": "d",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.009,
+        "t0": 0.0,
+        "t1": 1.229,
+        "topk": [
+          [
+            "ɡ",
+            0.01597665622830391
+          ],
+          [
+            "d",
+            0.009018883109092712
+          ],
+          [
+            "ə",
+            0.005603745114058256
+          ]
+        ]
+      },
+      {
+        "exp": "ɔ",
+        "obs": "l",
+        "type": "miss",
+        "sim": 0.0,
+        "post": 0.0,
+        "t0": 1.229,
+        "t1": 1.249,
+        "topk": [
+          [
+            "n",
+            2.218797817477025e-05
+          ],
+          [
+            "t",
+            1.2777003576047719e-05
+          ],
+          [
+            "j",
+            1.0732137525337748e-05
+          ]
+        ]
+      },
+      {
+        "exp": "ɡ",
+        "obs": "æ",
+        "type": "miss",
+        "sim": 0.0,
+        "post": 0.0,
+        "t0": 1.249,
+        "t1": 1.269,
+        "topk": [
+          [
+            "n",
+            2.026297261181753e-05
+          ],
+          [
+            "t",
+            1.5307858120650053e-05
+          ],
+          [
+            "l",
+            8.114016964100301e-06
+          ]
+        ]
+      }
+    ],
+    "op_score": 86.67,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_MATCH_WEAK",
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 54.6,
+    "ensemble_note": "disagreement>30_weighted_0.6soft"
+  },
+  {
+    "file": "sapi_cat.wav",
+    "target": "cat",
+    "asr": "Cat",
+    "target_arpa": [
+      "K",
+      "AE1",
+      "T"
+    ],
+    "target_canon": [
+      "k",
+      "æ",
+      "t"
+    ],
+    "old_s1_score": 68.9,
+    "s1_score": 68.9,
+    "s1_conf": 0.518,
+    "s1_per": 0.333,
+    "soft_score": 100.0,
+    "soft_conf": 0.059,
+    "soft_mean_sim": 1.0,
+    "soft_mean_post": 0.059,
+    "soft_hits": [
+      {
+        "exp": "k",
+        "obs": "k",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.122,
+        "t0": 0.0,
+        "t1": 0.163,
+        "topk": [
+          [
+            "k",
+            0.12207172065973282
+          ],
+          [
+            "ɡ",
+            0.0005711742560379207
+          ],
+          [
+            "t",
+            0.0003507406509015709
+          ]
+        ]
+      },
+      {
+        "exp": "æ",
+        "obs": "æ",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.034,
+        "t0": 0.163,
+        "t1": 0.345,
+        "topk": [
+          [
+            "ɛ",
+            0.04312654957175255
+          ],
+          [
+            "æ",
+            0.030089007690548897
+          ],
+          [
+            "ɑ",
+            0.005054281558841467
+          ]
+        ]
+      },
+      {
+        "exp": "t",
+        "obs": "t",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.022,
+        "t0": 0.345,
+        "t1": 1.259,
+        "topk": [
+          [
+            "t",
+            0.021642044186592102
+          ],
+          [
+            "d",
+            0.00018188742978964
+          ],
+          [
+            "ɹ",
+            0.00012316775973886251
+          ]
+        ]
+      }
+    ],
+    "op_score": 100.0,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 100.0,
+    "ensemble_note": "agree_mean"
+  },
+  {
+    "file": "sapi_red_apple.wav",
+    "target": "red apple",
+    "asr": "Red apple",
+    "target_arpa": [
+      "R",
+      "EH1",
+      "D",
+      "AE1",
+      "P",
+      "AH0",
+      "L"
+    ],
+    "target_canon": [
+      "ɹ",
+      "ɛ",
+      "d",
+      "æ",
+      "p",
+      "ə",
+      "l"
+    ],
+    "old_s1_score": 49.0,
+    "s1_score": 49.0,
+    "s1_conf": 0.341,
+    "s1_per": 0.429,
+    "soft_score": 100.0,
+    "soft_conf": 0.12,
+    "soft_mean_sim": 1.0,
+    "soft_mean_post": 0.12,
+    "soft_hits": [
+      {
+        "exp": "ɹ",
+        "obs": "ɹ",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.118,
+        "t0": 0.0,
+        "t1": 0.162,
+        "topk": [
+          [
+            "ɹ",
+            0.11808177083730698
+          ],
+          [
+            "w",
+            0.0007837059092707932
+          ],
+          [
+            "ɝ",
+            0.0006037935963831842
+          ]
+        ]
+      },
+      {
+        "exp": "ɛ",
+        "obs": "ɛ",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.312,
+        "t0": 0.162,
+        "t1": 0.222,
+        "topk": [
+          [
+            "ɛ",
+            0.3048727810382843
+          ],
+          [
+            "æ",
+            0.006961753126233816
+          ],
+          [
+            "ɛ",
+            0.005778864026069641
+          ]
+        ]
+      },
+      {
+        "exp": "d",
+        "obs": "d",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.201,
+        "t0": 0.222,
+        "t1": 0.343,
+        "topk": [
+          [
+            "d",
+            0.20051051676273346
+          ],
+          [
+            "t",
+            0.0015453348169103265
+          ],
+          [
+            "h",
+            0.0011466965079307556
+          ]
+        ]
+      },
+      {
+        "exp": "æ",
+        "obs": "æ",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.087,
+        "t0": 0.343,
+        "t1": 0.444,
+        "topk": [
+          [
+            "ɛ",
+            0.07216895371675491
+          ],
+          [
+            "æ",
+            0.06910081952810287
+          ],
+          [
+            "æ",
+            0.017877038568258286
+          ]
+        ]
+      },
+      {
+        "exp": "p",
+        "obs": "p",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.089,
+        "t0": 0.444,
+        "t1": 0.525,
+        "topk": [
+          [
+            "p",
+            0.08911904692649841
+          ],
+          [
+            "b",
+            0.08589654415845871
+          ],
+          [
+            "v",
+            0.04972432926297188
+          ]
+        ]
+      },
+      {
+        "exp": "ə",
+        "obs": "ə",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.019,
+        "t0": 0.525,
+        "t1": 0.566,
+        "topk": [
+          [
+            "ɔ",
+            0.17039291560649872
+          ],
+          [
+            "ɔ",
+            0.057126548141241074
+          ],
+          [
+            "oʊ",
+            0.02184736356139183
+          ]
+        ]
+      },
+      {
+        "exp": "l",
+        "obs": "l",
+        "type": "exact",
+        "sim": 1.0,
+        "post": 0.012,
+        "t0": 0.566,
+        "t1": 1.474,
+        "topk": [
+          [
+            "l",
+            0.011878850869834423
+          ],
+          [
+            "n",
+            0.0001235228992300108
+          ],
+          [
+            "w",
+            8.183324825949967e-05
+          ]
+        ]
+      }
+    ],
+    "op_score": 98.86,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 99.4,
+    "ensemble_note": "agree_mean"
+  },
+  {
+    "file": "stress_silence.wav",
+    "target": "red",
+    "asr": "",
+    "target_arpa": [
+      "R",
+      "EH1",
+      "D"
+    ],
+    "target_canon": [
+      "ɹ",
+      "ɛ",
+      "d"
+    ],
+    "old_s1_score": 0.0,
+    "s1_score": 0.0,
+    "s1_conf": 0.0,
+    "s1_per": 1.0,
+    "soft_score": 14.2,
+    "soft_conf": 0.0,
+    "soft_mean_sim": 0.142,
+    "soft_mean_post": 0.0,
+    "soft_hits": [
+      {
+        "exp": "ɹ",
+        "obs": "l",
+        "type": "soft",
+        "sim": 0.175,
+        "post": 0.001,
+        "t0": 0.0,
+        "t1": 1.96,
+        "topk": [
+          [
+            "æ",
+            0.015562900342047215
+          ],
+          [
+            "sil",
+            0.008783348836004734
+          ],
+          [
+            "l",
+            0.0041386461816728115
+          ]
+        ]
+      },
+      {
+        "exp": "ɛ",
+        "obs": "æ",
+        "type": "soft",
+        "sim": 0.25,
+        "post": 0.0,
+        "t0": 1.96,
+        "t1": 1.98,
+        "topk": [
+          [
+            "æ",
+            0.00575309107080102
+          ],
+          [
+            "sil",
+            0.002565152710303664
+          ],
+          [
+            "l",
+            0.0013815927086398005
+          ]
+        ]
+      },
+      {
+        "exp": "d",
+        "obs": "l",
+        "type": "miss",
+        "sim": 0.0,
+        "post": 0.0,
+        "t0": 1.98,
+        "t1": 2.0,
+        "topk": [
+          [
+            "æ",
+            0.010729202069342136
+          ],
+          [
+            "sil",
+            0.004767024423927069
+          ],
+          [
+            "ɑ",
+            0.0021894469391554594
+          ]
+        ]
+      }
+    ],
+    "op_score": 0.0,
+    "op_warnings": [
+      "confidence_is_distance_proxy"
+    ],
+    "conf_reasons": [
+      "PHONE_POSTERIOR_LOW"
+    ],
+    "alignment_method": "ctc_forced_v1",
+    "inventory_version": "phone-inventory-v1.4.0",
+    "ensemble_soft_op": 7.1,
+    "ensemble_note": "agree_mean"
+  }
+]

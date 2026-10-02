@@ -1,0 +1,170 @@
+{
+  "ok": true,
+  "protocol_version": "lwe-speaking-protocol-1.4.0",
+  "pipeline_version": "phase1.2.0-2026-10-02+soft_v2",
+  "inventory_version": "phone-inventory-v1.4.0",
+  "recognized_text": "Red",
+  "score": 100.0,
+  "confidence": 0.1,
+  "primary_source": "ensemble_soft_op_mean",
+  "score_channels": {
+    "scorer_v1": 91.1,
+    "soft_phone_v2": 100.0,
+    "openpronounce": 100.0
+  },
+  "confidence_channels": {
+    "scorer_v1": 0.911,
+    "soft_phone_v2": 0.1
+  },
+  "confidenceReasons": [
+    "PHONE_POSTERIOR_LOW"
+  ],
+  "phonemeDiagnostics": [
+    {
+      "expectedPhone": "ɹ",
+      "observedEvidence": "ɹ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.091,
+      "similarity": 1.0,
+      "posterior": 0.091,
+      "start": 0.0,
+      "end": 0.203,
+      "duration": 0.203,
+      "topk": [
+        [
+          "ɹ",
+          0.09076401591300964
+        ],
+        [
+          "w",
+          0.0011309337569400668
+        ],
+        [
+          "ɝ",
+          0.0006959118181839585
+        ]
+      ],
+      "evidenceSources": [
+        "w2v2-espeak",
+        "ctc_align",
+        "soft_sim"
+      ]
+    },
+    {
+      "expectedPhone": "ɛ",
+      "observedEvidence": "ɛ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.179,
+      "similarity": 1.0,
+      "posterior": 0.179,
+      "start": 0.203,
+      "end": 0.305,
+      "duration": 0.102,
+      "topk": [
+        [
+          "ɛ",
+          0.17375081777572632
+        ],
+        [
+          "æ",
+          0.010206708684563637
+        ],
+        [
+          "ɛ",
+          0.00449471827596426
+        ]
+      ],
+      "evidenceSources": [
+        "w2v2-espeak",
+        "ctc_align",
+        "soft_sim"
+      ]
+    },
+    {
+      "expectedPhone": "d",
+      "observedEvidence": "d",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.029,
+      "similarity": 1.0,
+      "posterior": 0.029,
+      "start": 0.305,
+      "end": 1.219,
+      "duration": 0.915,
+      "topk": [
+        [
+          "d",
+          0.02920627035200596
+        ],
+        [
+          "t",
+          0.00012641192006412894
+        ],
+        [
+          "n",
+          0.0001226509630214423
+        ]
+      ],
+      "evidenceSources": [
+        "w2v2-espeak",
+        "ctc_align",
+        "soft_sim"
+      ]
+    }
+  ],
+  "vad": {
+    "speech_detected": true,
+    "segments": [
+      {
+        "start": 0.1,
+        "end": 0.6
+      }
+    ]
+  },
+  "alignment": {
+    "method": "ctc_forced_v1"
+  },
+  "acousticSummary": {
+    "f0_mean": 164.50165341307303,
+    "f1_mean": 589.2448131634179,
+    "f2_mean": 1861.6440180674083,
+    "duration_s": 1.2194375,
+    "voiced_frac": 0.2542372881355932
+  },
+  "target": {
+    "text": "red",
+    "arpabet": [
+      "R",
+      "EH1",
+      "D"
+    ],
+    "canon": [
+      "ɹ",
+      "ɛ",
+      "d"
+    ],
+    "dict_version": "cmudict.dict@2026-10-02"
+  },
+  "model_versions": {
+    "vad": "6.2.3",
+    "asr": "sherpa-onnx-1.13.8",
+    "target": "cmudict.dict@2026-10-02",
+    "phone": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "acoustic": "0.4.7",
+    "scorer_v1": "1.0.0-phase1.2",
+    "soft_phone": "phone-evidence-v2@1.4.0",
+    "inventory": "phone-inventory-v1.4.0"
+  },
+  "warnings": [
+    "whisperx_disabled_or_unavailable"
+  ],
+  "timings": {
+    "total_s": 44.674,
+    "pipeline_s": 40.089,
+    "soft_s": 4.303194900014205
+  },
+  "population_label": "cli",
+  "asr_is_not_pronunciation_judge": true
+}
