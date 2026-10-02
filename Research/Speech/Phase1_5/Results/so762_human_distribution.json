@@ -1,0 +1,14 @@
+{
+  "n_words": 31816,
+  "mean": 9.378017349761127,
+  "std": 1.8777386439645039,
+  "median": 10.0,
+  "min": 0.0,
+  "max": 10.0,
+  "n_nonceil_lt10": 3557,
+  "n_hard_lt8": 2907,
+  "n_severe_lt7": 2851,
+  "pct_perfect10": 0.8882009052049283,
+  "NOT_4yo": true,
+  "population": "adult-L2-speechocean762"
+}

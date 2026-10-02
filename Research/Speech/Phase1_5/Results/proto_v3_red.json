@@ -1,0 +1,84 @@
+{
+  "ok": true,
+  "protocol_version": "lwe-speaking-protocol-1.5.0",
+  "pipeline_version": "phase1.2.0-2026-10-02+p15",
+  "inventory_version": "phone-inventory-v1.4.0",
+  "recognized_text": "Red",
+  "score": 100.0,
+  "confidence": 0.1,
+  "primary_source": "ensemble_mean",
+  "conflicts": [
+    "HIGH_SCORE_LOW_CONFIDENCE"
+  ],
+  "confidenceReasons": [
+    "PHONE_POSTERIOR_LOW"
+  ],
+  "scoreEvidence": {
+    "phoneEvidence": {
+      "value": 100.0,
+      "confidence": 0.1,
+      "source": "phone-evidence-v2@1.4.0",
+      "mean_sim": 1.0,
+      "mean_posterior": 0.09978104941546917
+    },
+    "openPronounceEvidence": {
+      "value": 100.0,
+      "source": "openpronounce"
+    },
+    "asrEvidence": {
+      "value": "Red",
+      "role": "supporting_only_not_pronunciation_judge"
+    },
+    "vadEvidence": {
+      "speech_detected": true
+    },
+    "acousticEvidence": {
+      "f0": 164.50165341307303,
+      "f1": 589.2448131634179,
+      "f2": 1861.6440180674083
+    },
+    "scorerV1Evidence": {
+      "value": 91.1
+    }
+  },
+  "phonemeDiagnostics": [
+    {
+      "expectedPhone": "ɹ",
+      "observedEvidence": "ɹ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.091,
+      "start": 0.0,
+      "end": 0.203,
+      "similarity": 1.0,
+      "posterior": 0.091
+    },
+    {
+      "expectedPhone": "ɛ",
+      "observedEvidence": "ɛ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.179,
+      "start": 0.203,
+      "end": 0.305,
+      "similarity": 1.0,
+      "posterior": 0.179
+    },
+    {
+      "expectedPhone": "d",
+      "observedEvidence": "d",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.029,
+      "start": 0.305,
+      "end": 1.219,
+      "similarity": 1.0,
+      "posterior": 0.029
+    }
+  ],
+  "asr_is_not_pronunciation_judge": true,
+  "population_label": "unspecified",
+  "timings": {
+    "wall_s": 40.24
+  }
+}

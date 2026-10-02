@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "protocol_version": "lwe-speaking-protocol-1.5.0",
+  "pipeline_version": "phase1.2.0-2026-10-02+p15",
+  "inventory_version": "phone-inventory-v1.4.0",
+  "recognized_text": "Dog.",
+  "score": 33.3,
+  "confidence": 0.001,
+  "primary_source": "conflict_conservative_min",
+  "conflicts": [
+    "PHONE_VS_OPENPRONOUNCE"
+  ],
+  "confidenceReasons": [
+    "CONFLICTING_EVIDENCE",
+    "OPENPRONOUNCE_DISAGREEMENT",
+    "PHONE_MATCH_WEAK",
+    "PHONE_POSTERIOR_LOW"
+  ],
+  "scoreEvidence": {
+    "phoneEvidence": {
+      "value": 33.3,
+      "confidence": 0.001,
+      "source": "phone-evidence-v2@1.4.0",
+      "mean_sim": 0.3333334318868282,
+      "mean_posterior": 0.003006491476687264
+    },
+    "openPronounceEvidence": {
+      "value": 86.67,
+      "source": "openpronounce"
+    },
+    "asrEvidence": {
+      "value": "Dog.",
+      "role": "supporting_only_not_pronunciation_judge"
+    },
+    "vadEvidence": {
+      "speech_detected": true
+    },
+    "acousticEvidence": {
+      "f0": 153.42003499193248,
+      "f1": 607.7664441539324,
+      "f2": 1819.1135272091158
+    },
+    "scorerV1Evidence": {
+      "value": 54.8
+    }
+  },
+  "phonemeDiagnostics": [
+    {
+      "expectedPhone": "d",
+      "observedEvidence": "d",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.009,
+      "start": 0.0,
+      "end": 1.229,
+      "similarity": 1.0,
+      "posterior": 0.009
+    },
+    {
+      "expectedPhone": "ɔ",
+      "observedEvidence": "l",
+      "matchType": "miss",
+      "score": 0.0,
+      "confidence": 0.0,
+      "start": 1.229,
+      "end": 1.249,
+      "similarity": 0.0,
+      "posterior": 0.0
+    },
+    {
+      "expectedPhone": "ɡ",
+      "observedEvidence": "æ",
+      "matchType": "miss",
+      "score": 0.0,
+      "confidence": 0.0,
+      "start": 1.249,
+      "end": 1.269,
+      "similarity": 0.0,
+      "posterior": 0.0
+    }
+  ],
+  "asr_is_not_pronunciation_judge": true,
+  "population_label": "unspecified",
+  "timings": {
+    "wall_s": 39.318
+  }
+}

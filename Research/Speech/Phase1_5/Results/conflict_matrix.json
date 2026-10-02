@@ -1,0 +1,16 @@
+{
+  "both_high": [
+    "red",
+    "cat",
+    "red apple",
+    "ball"
+  ],
+  "both_low": [
+    "blue",
+    "red"
+  ],
+  "soft_high_op_low": [],
+  "soft_low_op_high": [
+    "dog"
+  ]
+}

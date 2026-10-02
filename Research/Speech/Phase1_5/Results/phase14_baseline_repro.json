@@ -1,0 +1,42 @@
+[
+  {
+    "file": "sapi_red.wav",
+    "target": "red",
+    "exp_soft": 100.0,
+    "soft": 100.0,
+    "delta": 0.0,
+    "s1": 91.1,
+    "vad": true,
+    "asr": "Red"
+  },
+  {
+    "file": "sapi_blue.wav",
+    "target": "blue",
+    "exp_soft": 5.8,
+    "soft": 5.8,
+    "delta": 0.0,
+    "s1": 11.8,
+    "vad": true,
+    "asr": "Blue."
+  },
+  {
+    "file": "pregen_apple_normal.wav",
+    "target": "apple",
+    "exp_soft": 75.2,
+    "soft": 75.2,
+    "delta": 0.0,
+    "s1": 29.6,
+    "vad": true,
+    "asr": "Apple,"
+  },
+  {
+    "file": "stress_silence.wav",
+    "target": "red",
+    "exp_soft": 0.0,
+    "soft": 0.0,
+    "delta": 0.0,
+    "s1": 0.0,
+    "vad": false,
+    "asr": ""
+  }
+]

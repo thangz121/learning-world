@@ -1,0 +1,1011 @@
+{
+  "matrix": {
+    "both_high": [
+      "red",
+      "cat",
+      "red apple",
+      "ball"
+    ],
+    "both_low": [
+      "blue",
+      "red"
+    ],
+    "soft_high_op_low": [],
+    "soft_low_op_high": [
+      "dog"
+    ]
+  },
+  "rows": [
+    {
+      "file": "sapi_red.wav",
+      "target": "red",
+      "asr": "Red",
+      "soft": 100.0,
+      "soft_conf": 0.1,
+      "op": 100.0,
+      "s1": 91.1,
+      "conflicts": [
+        "HIGH_SCORE_LOW_CONFIDENCE"
+      ],
+      "conf_reasons": [
+        "PHONE_POSTERIOR_LOW"
+      ],
+      "ensembles": {
+        "soft_only": 100.0,
+        "op_only": 100.0,
+        "mean": 100.0,
+        "conf_weighted": 100.0,
+        "rule_conservative_min": 100.0,
+        "rule_soft60_op40": 100.0
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 100.0,
+          "confidence": 0.1,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 1.0,
+          "mean_posterior": 0.09978104941546917,
+          "hits": [
+            {
+              "exp": "ɹ",
+              "obs": "ɹ",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.091
+            },
+            {
+              "exp": "ɛ",
+              "obs": "ɛ",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.179
+            },
+            {
+              "exp": "d",
+              "obs": "d",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.029
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 100.0,
+          "confidence": 1.0,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "Red",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 164.50165341307303,
+          "f1": 589.2448131634179,
+          "f2": 1861.6440180674083,
+          "voiced_frac": 0.2542372881355932,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 91.1,
+          "confidence": 0.911,
+          "per": 0.0
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "sapi_blue.wav",
+      "target": "blue",
+      "asr": "Blue.",
+      "soft": 5.8,
+      "soft_conf": 0.0,
+      "op": 17.68,
+      "s1": 11.8,
+      "conflicts": [
+        "CLEAN_OR_SPEECH_LOW_EVIDENCE",
+        "PHONE_VS_ASR_INFORMATIONAL"
+      ],
+      "conf_reasons": [
+        "PHONE_MATCH_WEAK",
+        "PHONE_POSTERIOR_LOW"
+      ],
+      "ensembles": {
+        "soft_only": 5.8,
+        "op_only": 17.68,
+        "mean": 11.7,
+        "conf_weighted": 17.7,
+        "rule_conservative_min": 11.7,
+        "rule_soft60_op40": 11.7
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 5.8,
+          "confidence": 0.0,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 0.05835640481446944,
+          "mean_posterior": 0.000122628763430536,
+          "hits": [
+            {
+              "exp": "b",
+              "obs": "l",
+              "type": "miss",
+              "sim": 0.0,
+              "post": 0.0
+            },
+            {
+              "exp": "l",
+              "obs": "j",
+              "type": "soft",
+              "sim": 0.175,
+              "post": 0.0
+            },
+            {
+              "exp": "uː",
+              "obs": "l",
+              "type": "miss",
+              "sim": 0.0,
+              "post": 0.0
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 17.68,
+          "confidence": 0.252,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "Blue.",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 153.81331161175606,
+          "f1": 569.4668435770155,
+          "f2": 1620.7489918569038,
+          "voiced_frac": 0.25,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 11.8,
+          "confidence": 0.0,
+          "per": 1.333
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "pregen_apple_normal.wav",
+      "target": "apple",
+      "asr": "Apple,",
+      "soft": 75.2,
+      "soft_conf": 0.065,
+      "op": 60.0,
+      "s1": 29.6,
+      "conflicts": [],
+      "conf_reasons": [
+        "PHONE_POSTERIOR_LOW"
+      ],
+      "ensembles": {
+        "soft_only": 75.2,
+        "op_only": 60.0,
+        "mean": 67.6,
+        "conf_weighted": 60.9,
+        "rule_conservative_min": 67.6,
+        "rule_soft60_op40": 67.6
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 75.2,
+          "confidence": 0.065,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 0.752265534363687,
+          "mean_posterior": 0.08692073449492455,
+          "hits": [
+            {
+              "exp": "æ",
+              "obs": "æ",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.023
+            },
+            {
+              "exp": "p",
+              "obs": "p",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.278
+            },
+            {
+              "exp": "ə",
+              "obs": "ɔ",
+              "type": "miss",
+              "sim": 0.009,
+              "post": 0.018
+            },
+            {
+              "exp": "l",
+              "obs": "l",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.028
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 60.0,
+          "confidence": 1.0,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "Apple,",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 186.82022427145577,
+          "f1": 814.0742918647356,
+          "f2": 1575.3838925260795,
+          "voiced_frac": 0.5,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 29.6,
+          "confidence": 0.121,
+          "per": 0.75
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "sapi_book.wav",
+      "target": "book",
+      "asr": "",
+      "soft": 66.7,
+      "soft_conf": 0.005,
+      "op": 23.23,
+      "s1": 30.6,
+      "conflicts": [
+        "PHONE_VS_OPENPRONOUNCE"
+      ],
+      "conf_reasons": [
+        "PHONE_POSTERIOR_LOW",
+        "OPENPRONOUNCE_DISAGREEMENT"
+      ],
+      "ensembles": {
+        "soft_only": 66.7,
+        "op_only": 23.23,
+        "mean": 45.0,
+        "conf_weighted": 23.8,
+        "rule_conservative_min": 23.2,
+        "rule_soft60_op40": 49.3
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 66.7,
+          "confidence": 0.005,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 0.6672318306130668,
+          "mean_posterior": 0.007390621118247509,
+          "hits": [
+            {
+              "exp": "b",
+              "obs": "b",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.002
+            },
+            {
+              "exp": "ʊ",
+              "obs": "ɔ",
+              "type": "miss",
+              "sim": 0.002,
+              "post": 0.003
+            },
+            {
+              "exp": "k",
+              "obs": "k",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.016
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 23.23,
+          "confidence": 0.385,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 175.9040077078836,
+          "f1": 635.4723481043313,
+          "f2": 1792.2658122412508,
+          "voiced_frac": 0.1951219512195122,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 30.6,
+          "confidence": 0.0,
+          "per": 1.0
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "sapi_big.wav",
+      "target": "big",
+      "asr": "Big",
+      "soft": 33.3,
+      "soft_conf": 0.0,
+      "op": 60.57,
+      "s1": 35.2,
+      "conflicts": [],
+      "conf_reasons": [
+        "PHONE_MATCH_WEAK",
+        "PHONE_POSTERIOR_LOW"
+      ],
+      "ensembles": {
+        "soft_only": 33.3,
+        "op_only": 60.57,
+        "mean": 46.9,
+        "conf_weighted": 60.6,
+        "rule_conservative_min": 46.9,
+        "rule_soft60_op40": 46.9
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 33.3,
+          "confidence": 0.0,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 0.33336964578433975,
+          "mean_posterior": 0.00029555345241760733,
+          "hits": [
+            {
+              "exp": "b",
+              "obs": "b",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.001
+            },
+            {
+              "exp": "ɪ",
+              "obs": "ə",
+              "type": "miss",
+              "sim": 0.0,
+              "post": 0.0
+            },
+            {
+              "exp": "ɡ",
+              "obs": "l",
+              "type": "miss",
+              "sim": 0.0,
+              "post": 0.0
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 60.57,
+          "confidence": 0.57,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "Big",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 150.52403451828042,
+          "f1": 570.6941010629789,
+          "f2": 1991.1845798193453,
+          "voiced_frac": 0.1951219512195122,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 35.2,
+          "confidence": 0.281,
+          "per": 0.667
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "sapi_dog.wav",
+      "target": "dog",
+      "asr": "Dog.",
+      "soft": 33.3,
+      "soft_conf": 0.001,
+      "op": 86.67,
+      "s1": 54.8,
+      "conflicts": [
+        "PHONE_VS_OPENPRONOUNCE"
+      ],
+      "conf_reasons": [
+        "PHONE_MATCH_WEAK",
+        "PHONE_POSTERIOR_LOW",
+        "OPENPRONOUNCE_DISAGREEMENT"
+      ],
+      "ensembles": {
+        "soft_only": 33.3,
+        "op_only": 86.67,
+        "mean": 60.0,
+        "conf_weighted": 86.6,
+        "rule_conservative_min": 33.3,
+        "rule_soft60_op40": 54.6
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 33.3,
+          "confidence": 0.001,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 0.3333334318868282,
+          "mean_posterior": 0.003006491476687264,
+          "hits": [
+            {
+              "exp": "d",
+              "obs": "d",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.009
+            },
+            {
+              "exp": "ɔ",
+              "obs": "l",
+              "type": "miss",
+              "sim": 0.0,
+              "post": 0.0
+            },
+            {
+              "exp": "ɡ",
+              "obs": "æ",
+              "type": "miss",
+              "sim": 0.0,
+              "post": 0.0
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 86.67,
+          "confidence": 1.0,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "Dog.",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 153.42003499193248,
+          "f1": 607.7664441539324,
+          "f2": 1819.1135272091158,
+          "voiced_frac": 0.21138211382113822,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 54.8,
+          "confidence": 0.202,
+          "per": 0.667
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "sapi_cat.wav",
+      "target": "cat",
+      "asr": "Cat",
+      "soft": 100.0,
+      "soft_conf": 0.059,
+      "op": 100.0,
+      "s1": 68.9,
+      "conflicts": [
+        "HIGH_SCORE_LOW_CONFIDENCE"
+      ],
+      "conf_reasons": [
+        "PHONE_POSTERIOR_LOW"
+      ],
+      "ensembles": {
+        "soft_only": 100.0,
+        "op_only": 100.0,
+        "mean": 100.0,
+        "conf_weighted": 100.0,
+        "rule_conservative_min": 100.0,
+        "rule_soft60_op40": 100.0
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 100.0,
+          "confidence": 0.059,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 1.0,
+          "mean_posterior": 0.059142474085092545,
+          "hits": [
+            {
+              "exp": "k",
+              "obs": "k",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.122
+            },
+            {
+              "exp": "æ",
+              "obs": "æ",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.034
+            },
+            {
+              "exp": "t",
+              "obs": "t",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.022
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 100.0,
+          "confidence": 1.0,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "Cat",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 166.10240332572488,
+          "f1": 679.864023778811,
+          "f2": 1941.4371318408964,
+          "voiced_frac": 0.14754098360655737,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 68.9,
+          "confidence": 0.518,
+          "per": 0.333
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "sapi_red_apple.wav",
+      "target": "red apple",
+      "asr": "Red apple",
+      "soft": 100.0,
+      "soft_conf": 0.12,
+      "op": 98.86,
+      "s1": 49.0,
+      "conflicts": [
+        "HIGH_SCORE_LOW_CONFIDENCE"
+      ],
+      "conf_reasons": [
+        "PHONE_POSTERIOR_LOW"
+      ],
+      "ensembles": {
+        "soft_only": 100.0,
+        "op_only": 98.86,
+        "mean": 99.4,
+        "conf_weighted": 99.0,
+        "rule_conservative_min": 99.4,
+        "rule_soft60_op40": 99.4
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 100.0,
+          "confidence": 0.12,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 1.0,
+          "mean_posterior": 0.11970239731350116,
+          "hits": [
+            {
+              "exp": "ɹ",
+              "obs": "ɹ",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.118
+            },
+            {
+              "exp": "ɛ",
+              "obs": "ɛ",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.312
+            },
+            {
+              "exp": "d",
+              "obs": "d",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.201
+            },
+            {
+              "exp": "æ",
+              "obs": "æ",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.087
+            },
+            {
+              "exp": "p",
+              "obs": "p",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.089
+            },
+            {
+              "exp": "ə",
+              "obs": "ə",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.019
+            },
+            {
+              "exp": "l",
+              "obs": "l",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.012
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 98.86,
+          "confidence": 0.833,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "Red apple",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 182.28215764778196,
+          "f1": 593.3083333126191,
+          "f2": 1637.4062169184815,
+          "voiced_frac": 0.3888888888888889,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 49.0,
+          "confidence": 0.341,
+          "per": 0.429
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "stress_silence.wav",
+      "target": "red",
+      "asr": "",
+      "soft": 0.0,
+      "soft_conf": 0.0,
+      "op": 0.0,
+      "s1": 0.0,
+      "conflicts": [],
+      "conf_reasons": [
+        "PHONE_POSTERIOR_LOW"
+      ],
+      "ensembles": {
+        "soft_only": 0.0,
+        "op_only": 0.0,
+        "mean": 0.0,
+        "conf_weighted": 0.0,
+        "rule_conservative_min": 0.0,
+        "rule_soft60_op40": 0.0
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 0.0,
+          "confidence": 0.0,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 0.14177682999434182,
+          "mean_posterior": 0.00048465459258295596,
+          "hits": [
+            {
+              "exp": "ɹ",
+              "obs": "l",
+              "type": "soft",
+              "sim": 0.175,
+              "post": 0.001
+            },
+            {
+              "exp": "ɛ",
+              "obs": "æ",
+              "type": "soft",
+              "sim": 0.25,
+              "post": 0.0
+            },
+            {
+              "exp": "d",
+              "obs": "l",
+              "type": "miss",
+              "sim": 0.0,
+              "post": 0.0
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 0.0,
+          "confidence": 0.0,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": false,
+          "segments": 0,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": null,
+          "f1": null,
+          "f2": null,
+          "voiced_frac": 0.0,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 0.0,
+          "confidence": 0.0,
+          "per": 1.0
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    },
+    {
+      "file": "pregen_ball_normal.wav",
+      "target": "ball",
+      "asr": "Ball.",
+      "soft": 73.6,
+      "soft_conf": 0.034,
+      "op": 73.33,
+      "s1": 20.7,
+      "conflicts": [],
+      "conf_reasons": [
+        "PHONE_POSTERIOR_LOW"
+      ],
+      "ensembles": {
+        "soft_only": 73.6,
+        "op_only": 73.33,
+        "mean": 73.5,
+        "conf_weighted": 73.3,
+        "rule_conservative_min": 73.5,
+        "rule_soft60_op40": 73.5
+      },
+      "provenance": {
+        "phoneEvidence": {
+          "value": 73.6,
+          "confidence": 0.034,
+          "source": "phone-evidence-v2@1.4.0",
+          "alignment": "ctc_forced_v1",
+          "mean_sim": 0.7355780094861984,
+          "mean_posterior": 0.041912892212470375,
+          "hits": [
+            {
+              "exp": "b",
+              "obs": "b",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.062
+            },
+            {
+              "exp": "ɔ",
+              "obs": "ɑ",
+              "type": "soft",
+              "sim": 0.207,
+              "post": 0.034
+            },
+            {
+              "exp": "l",
+              "obs": "l",
+              "type": "exact",
+              "sim": 1.0,
+              "post": 0.03
+            }
+          ]
+        },
+        "openPronounceEvidence": {
+          "value": 73.33,
+          "confidence": 1.0,
+          "source": "openpronounce",
+          "warnings": [
+            "confidence_is_distance_proxy"
+          ]
+        },
+        "asrEvidence": {
+          "value": "Ball.",
+          "confidence": null,
+          "source": "moonshine-tiny-en-int8@sherpa-onnx-1.13.8",
+          "role": "supporting_only_not_pronunciation_judge"
+        },
+        "vadEvidence": {
+          "speech_detected": true,
+          "segments": 1,
+          "source": "silero-vad@6.2.3"
+        },
+        "acousticEvidence": {
+          "f0": 188.11880252776197,
+          "f1": 839.630637624565,
+          "f2": 1434.9087913194417,
+          "voiced_frac": 0.5657894736842105,
+          "source": "parselmouth@0.4.7"
+        },
+        "scorerV1Evidence": {
+          "value": 20.7,
+          "confidence": 0.13,
+          "per": 0.667
+        }
+      },
+      "thresholds": {
+        "version": "conflict-rules-v1.5.0",
+        "HIGH_SCORE": 80.0,
+        "LOW_SCORE": 40.0,
+        "HIGH_CONF": 0.6,
+        "LOW_CONF": 0.25,
+        "DISAGREE_ABS": 30.0
+      }
+    }
+  ],
+  "thresholds": {
+    "version": "conflict-rules-v1.5.0",
+    "HIGH_SCORE": 80.0,
+    "LOW_SCORE": 40.0,
+    "HIGH_CONF": 0.6,
+    "LOW_CONF": 0.25,
+    "DISAGREE_ABS": 30.0
+  }
+}

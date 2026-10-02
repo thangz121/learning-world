@@ -1,0 +1,146 @@
+[
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "asr": "Red",
+    "p12_s1": 91.1,
+    "p13_s1": 91.1,
+    "p14_soft": 100.0,
+    "p15_soft": 100.0,
+    "p15_op": 100.0,
+    "p15_primary": 100.0,
+    "p15_conf": 0.1,
+    "primary_rule": [
+      "agree_mean"
+    ],
+    "s1_now": 91.1
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "asr": "Blue.",
+    "p12_s1": 11.8,
+    "p13_s1": 11.8,
+    "p14_soft": 5.8,
+    "p15_soft": 5.8,
+    "p15_op": 17.68,
+    "p15_primary": 11.7,
+    "p15_conf": 0.0,
+    "primary_rule": [
+      "agree_mean"
+    ],
+    "s1_now": 11.8
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "asr": "Apple,",
+    "p12_s1": 29.6,
+    "p13_s1": 29.6,
+    "p14_soft": 75.2,
+    "p15_soft": 75.2,
+    "p15_op": 60.0,
+    "p15_primary": 67.6,
+    "p15_conf": 0.065,
+    "primary_rule": [
+      "agree_mean"
+    ],
+    "s1_now": 29.6
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "asr": "",
+    "p12_s1": 30.6,
+    "p13_s1": 30.6,
+    "p14_soft": 66.7,
+    "p15_soft": 66.7,
+    "p15_op": 23.23,
+    "p15_primary": 23.23,
+    "p15_conf": 0.005,
+    "primary_rule": [
+      "conflict_conservative_min"
+    ],
+    "s1_now": 30.6
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "asr": "Big",
+    "p12_s1": 35.2,
+    "p13_s1": 35.2,
+    "p14_soft": 33.3,
+    "p15_soft": 33.3,
+    "p15_op": 60.57,
+    "p15_primary": 46.9,
+    "p15_conf": 0.0,
+    "primary_rule": [
+      "agree_mean"
+    ],
+    "s1_now": 35.2
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "asr": "Dog.",
+    "p12_s1": 54.8,
+    "p13_s1": 54.8,
+    "p14_soft": 33.3,
+    "p15_soft": 33.3,
+    "p15_op": 86.67,
+    "p15_primary": 33.3,
+    "p15_conf": 0.001,
+    "primary_rule": [
+      "conflict_conservative_min"
+    ],
+    "s1_now": 54.8
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "asr": "Cat",
+    "p12_s1": 68.9,
+    "p13_s1": 68.9,
+    "p14_soft": 100.0,
+    "p15_soft": 100.0,
+    "p15_op": 100.0,
+    "p15_primary": 100.0,
+    "p15_conf": 0.059,
+    "primary_rule": [
+      "agree_mean"
+    ],
+    "s1_now": 68.9
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "asr": "Red apple",
+    "p12_s1": 91.1,
+    "p13_s1": 91.1,
+    "p14_soft": 100.0,
+    "p15_soft": 100.0,
+    "p15_op": 98.86,
+    "p15_primary": 99.4,
+    "p15_conf": 0.12,
+    "primary_rule": [
+      "agree_mean"
+    ],
+    "s1_now": 49.0
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "asr": "",
+    "p12_s1": 91.1,
+    "p13_s1": 91.1,
+    "p14_soft": 100.0,
+    "p15_soft": 0.0,
+    "p15_op": 0.0,
+    "p15_primary": 0.0,
+    "p15_conf": 0.0,
+    "primary_rule": [
+      "agree_mean"
+    ],
+    "s1_now": 0.0
+  }
+]
