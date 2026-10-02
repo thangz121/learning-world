@@ -1,0 +1,55 @@
+{
+  "population": "adult-L2-non-native-English",
+  "NOT_4yo": true,
+  "license": "CC BY 4.0 OpenSLR 101",
+  "n_utterances": 5000,
+  "n_speakers": 250,
+  "utt_fields": [
+    "accuracy",
+    "completeness",
+    "fluency",
+    "prosodic",
+    "words",
+    "total",
+    "text"
+  ],
+  "word_fields": [
+    "accuracy",
+    "stress",
+    "phones",
+    "total",
+    "text",
+    "phones-accuracy"
+  ],
+  "word_accuracy_scale": "0-10 (human)",
+  "phones_accuracy_scale": "0-2 per phone (human)",
+  "detail_has_5_annotators": true,
+  "sample_utt": "000010011",
+  "sample_word": {
+    "accuracy": 10,
+    "stress": 10,
+    "phones": [
+      "W",
+      "IY0"
+    ],
+    "total": 10,
+    "text": "WE",
+    "phones-accuracy": [
+      2.0,
+      2.0
+    ]
+  },
+  "split_seed": "phase1.3-so762-v1",
+  "split_rule": "speaker hash md5 % 100 -> train60/valid20/test20",
+  "split_utt_counts": {
+    "train": 2840,
+    "test": 1080,
+    "valid": 1080
+  },
+  "split_speaker_counts": {
+    "train": 142,
+    "test": 54,
+    "valid": 54
+  },
+  "speaker_leakage": []
+}

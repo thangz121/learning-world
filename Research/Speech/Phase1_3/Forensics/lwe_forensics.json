@@ -1,0 +1,519 @@
+[
+  {
+    "file": "sapi_blue.wav",
+    "target": "blue",
+    "asr": "Blue.",
+    "asr_match": true,
+    "target_arpa": [
+      "B",
+      "L",
+      "UW1"
+    ],
+    "target_ipa": [
+      "b",
+      "l",
+      "uː"
+    ],
+    "observed_phones": [
+      "t",
+      "u",
+      "j",
+      "ɐ̃ʊ̃"
+    ],
+    "observed_confs": [
+      0.78,
+      0.542,
+      0.607,
+      0.086
+    ],
+    "frame_mean_conf": 0.9544156182367923,
+    "score": 11.8,
+    "conf": 0.0,
+    "per": 1.333,
+    "diagnostics": [
+      {
+        "exp": "*",
+        "obs": "t",
+        "status": "ins",
+        "score": 0.0,
+        "conf": 0.7803981900215149
+      },
+      {
+        "exp": "b",
+        "obs": "u",
+        "status": "sub",
+        "score": 9.2,
+        "conf": 0.542
+      },
+      {
+        "exp": "l",
+        "obs": "j",
+        "status": "sub",
+        "score": 7.9,
+        "conf": 0.607
+      },
+      {
+        "exp": "uː",
+        "obs": "ɐ̃ʊ̃",
+        "status": "sub",
+        "score": 18.3,
+        "conf": 0.086
+      }
+    ],
+    "vad_segs": [
+      [
+        0.1,
+        0.5
+      ]
+    ],
+    "f0": 153.81331161175606,
+    "f1": 569.4668435770155,
+    "f2": 1620.7489918569038,
+    "warnings": [
+      "whisperx_disabled_or_unavailable"
+    ],
+    "failure_sources": [
+      "phone_model_or_inventory_mismatch",
+      "missing_expected_phones:['b', 'l', 'uː']"
+    ]
+  },
+  {
+    "file": "pregen_apple_normal.wav",
+    "target": "apple",
+    "asr": "Apple,",
+    "asr_match": true,
+    "target_arpa": [
+      "AE1",
+      "P",
+      "AH0",
+      "L"
+    ],
+    "target_ipa": [
+      "æ",
+      "p",
+      "ə",
+      "l"
+    ],
+    "observed_phones": [
+      "aː",
+      "p",
+      "o"
+    ],
+    "observed_confs": [
+      0.431,
+      0.928,
+      0.284
+    ],
+    "frame_mean_conf": 0.9394479779208579,
+    "score": 29.6,
+    "conf": 0.121,
+    "per": 0.75,
+    "diagnostics": [
+      {
+        "exp": "æ",
+        "obs": "aː",
+        "status": "sub",
+        "score": 11.4,
+        "conf": 0.431
+      },
+      {
+        "exp": "p",
+        "obs": "p",
+        "status": "ok",
+        "score": 92.8,
+        "conf": 0.928
+      },
+      {
+        "exp": "ə",
+        "obs": null,
+        "status": "del",
+        "score": 0.0,
+        "conf": 0.3
+      },
+      {
+        "exp": "l",
+        "obs": "o",
+        "status": "sub",
+        "score": 14.3,
+        "conf": 0.284
+      }
+    ],
+    "vad_segs": [
+      [
+        0.1,
+        0.7
+      ]
+    ],
+    "f0": 186.82022427145577,
+    "f1": 814.0742918647356,
+    "f2": 1575.3838925260795,
+    "warnings": [
+      "whisperx_disabled_or_unavailable"
+    ],
+    "failure_sources": [
+      "phone_model_or_inventory_mismatch",
+      "missing_expected_phones:['l', 'æ', 'ə']"
+    ]
+  },
+  {
+    "file": "sapi_book.wav",
+    "target": "book",
+    "asr": "",
+    "asr_match": false,
+    "target_arpa": [
+      "B",
+      "UH1",
+      "K"
+    ],
+    "target_ipa": [
+      "b",
+      "ʊ",
+      "k"
+    ],
+    "observed_phones": [
+      "v",
+      "ʌ",
+      "ŋ",
+      "k"
+    ],
+    "observed_confs": [
+      0.931,
+      0.626,
+      0.857,
+      0.815
+    ],
+    "frame_mean_conf": 0.9746128519376119,
+    "score": 30.6,
+    "conf": 0.0,
+    "per": 1.0,
+    "diagnostics": [
+      {
+        "exp": "*",
+        "obs": "v",
+        "status": "ins",
+        "score": 0.0,
+        "conf": 0.9312039017677307
+      },
+      {
+        "exp": "b",
+        "obs": "ʌ",
+        "status": "sub",
+        "score": 7.5,
+        "conf": 0.626
+      },
+      {
+        "exp": "ʊ",
+        "obs": "ŋ",
+        "status": "sub",
+        "score": 2.9,
+        "conf": 0.857
+      },
+      {
+        "exp": "k",
+        "obs": "k",
+        "status": "ok",
+        "score": 81.5,
+        "conf": 0.815
+      }
+    ],
+    "vad_segs": [
+      [
+        0.2,
+        0.6
+      ]
+    ],
+    "f0": 175.9040077078836,
+    "f1": 635.4723481043313,
+    "f2": 1792.2658122412508,
+    "warnings": [
+      "whisperx_disabled_or_unavailable"
+    ],
+    "failure_sources": [
+      "asr_empty",
+      "missing_expected_phones:['b', 'ʊ']"
+    ]
+  },
+  {
+    "file": "sapi_big.wav",
+    "target": "big",
+    "asr": "Big",
+    "asr_match": true,
+    "target_arpa": [
+      "B",
+      "IH1",
+      "G"
+    ],
+    "target_ipa": [
+      "b",
+      "ɪ",
+      "ɡ"
+    ],
+    "observed_phones": [
+      "v",
+      "eː",
+      "ɡ"
+    ],
+    "observed_confs": [
+      0.948,
+      0.61,
+      0.968
+    ],
+    "frame_mean_conf": 0.9827664352598644,
+    "score": 35.2,
+    "conf": 0.281,
+    "per": 0.667,
+    "diagnostics": [
+      {
+        "exp": "b",
+        "obs": "v",
+        "status": "sub",
+        "score": 1.0,
+        "conf": 0.948
+      },
+      {
+        "exp": "ɪ",
+        "obs": "eː",
+        "status": "sub",
+        "score": 7.8,
+        "conf": 0.61
+      },
+      {
+        "exp": "ɡ",
+        "obs": "ɡ",
+        "status": "ok",
+        "score": 96.8,
+        "conf": 0.968
+      }
+    ],
+    "vad_segs": [
+      [
+        0.1,
+        0.6
+      ]
+    ],
+    "f0": 150.52403451828042,
+    "f1": 570.6941010629789,
+    "f2": 1991.1845798193453,
+    "warnings": [
+      "whisperx_disabled_or_unavailable"
+    ],
+    "failure_sources": [
+      "phone_model_or_inventory_mismatch",
+      "missing_expected_phones:['b', 'ɪ']"
+    ]
+  },
+  {
+    "file": "sapi_dog.wav",
+    "target": "dog",
+    "asr": "Dog.",
+    "asr_match": true,
+    "target_arpa": [
+      "D",
+      "AO1",
+      "G"
+    ],
+    "target_ipa": [
+      "d",
+      "ɔ",
+      "ɡ"
+    ],
+    "observed_phones": [
+      "d",
+      "ɑː",
+      "ɡ",
+      "ə"
+    ],
+    "observed_confs": [
+      0.54,
+      0.308,
+      0.966,
+      0.337
+    ],
+    "frame_mean_conf": 0.9689798487557305,
+    "score": 54.8,
+    "conf": 0.202,
+    "per": 0.667,
+    "diagnostics": [
+      {
+        "exp": "d",
+        "obs": "d",
+        "status": "ok",
+        "score": 54.0,
+        "conf": 0.54
+      },
+      {
+        "exp": "ɔ",
+        "obs": "ɑː",
+        "status": "sub",
+        "score": 13.8,
+        "conf": 0.308
+      },
+      {
+        "exp": "ɡ",
+        "obs": "ɡ",
+        "status": "ok",
+        "score": 96.6,
+        "conf": 0.966
+      },
+      {
+        "exp": "*",
+        "obs": "ə",
+        "status": "ins",
+        "score": 0.0,
+        "conf": 0.3371751010417938
+      }
+    ],
+    "vad_segs": [
+      [
+        0.1,
+        0.6
+      ]
+    ],
+    "f0": 153.42003499193248,
+    "f1": 607.7664441539324,
+    "f2": 1819.1135272091158,
+    "warnings": [
+      "whisperx_disabled_or_unavailable"
+    ],
+    "failure_sources": [
+      "phone_model_or_inventory_mismatch",
+      "missing_expected_phones:['ɔ']"
+    ]
+  },
+  {
+    "file": "sapi_cat.wav",
+    "target": "cat",
+    "asr": "Cat",
+    "asr_match": true,
+    "target_arpa": [
+      "K",
+      "AE1",
+      "T"
+    ],
+    "target_ipa": [
+      "k",
+      "æ",
+      "t"
+    ],
+    "observed_phones": [
+      "k",
+      "ɛ",
+      "t"
+    ],
+    "observed_confs": [
+      0.975,
+      0.387,
+      0.97
+    ],
+    "frame_mean_conf": 0.9883082374449699,
+    "score": 68.9,
+    "conf": 0.518,
+    "per": 0.333,
+    "diagnostics": [
+      {
+        "exp": "k",
+        "obs": "k",
+        "status": "ok",
+        "score": 97.5,
+        "conf": 0.975
+      },
+      {
+        "exp": "æ",
+        "obs": "ɛ",
+        "status": "sub",
+        "score": 12.3,
+        "conf": 0.387
+      },
+      {
+        "exp": "t",
+        "obs": "t",
+        "status": "ok",
+        "score": 97.0,
+        "conf": 0.97
+      }
+    ],
+    "vad_segs": [
+      [
+        0.1,
+        0.6
+      ]
+    ],
+    "f0": 166.10240332572488,
+    "f1": 679.864023778811,
+    "f2": 1941.4371318408964,
+    "warnings": [
+      "whisperx_disabled_or_unavailable"
+    ],
+    "failure_sources": [
+      "missing_expected_phones:['æ']"
+    ]
+  },
+  {
+    "file": "sapi_red.wav",
+    "target": "red",
+    "asr": "Red",
+    "asr_match": true,
+    "target_arpa": [
+      "R",
+      "EH1",
+      "D"
+    ],
+    "target_ipa": [
+      "ɹ",
+      "ɛ",
+      "d"
+    ],
+    "observed_phones": [
+      "ɹ",
+      "ɛ",
+      "d"
+    ],
+    "observed_confs": [
+      0.907,
+      0.869,
+      0.957
+    ],
+    "frame_mean_conf": 0.9890713940064112,
+    "score": 91.1,
+    "conf": 0.911,
+    "per": 0.0,
+    "diagnostics": [
+      {
+        "exp": "ɹ",
+        "obs": "ɹ",
+        "status": "ok",
+        "score": 90.7,
+        "conf": 0.907
+      },
+      {
+        "exp": "ɛ",
+        "obs": "ɛ",
+        "status": "ok",
+        "score": 86.9,
+        "conf": 0.869
+      },
+      {
+        "exp": "d",
+        "obs": "d",
+        "status": "ok",
+        "score": 95.7,
+        "conf": 0.957
+      }
+    ],
+    "vad_segs": [
+      [
+        0.1,
+        0.6
+      ]
+    ],
+    "f0": 164.50165341307303,
+    "f1": 589.2448131634179,
+    "f2": 1861.6440180674083,
+    "warnings": [
+      "whisperx_disabled_or_unavailable"
+    ],
+    "failure_sources": [
+      "none_or_true_mismatch"
+    ]
+  }
+]

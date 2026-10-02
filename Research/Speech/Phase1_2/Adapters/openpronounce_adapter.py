@@ -14,23 +14,41 @@ class OpenPronounceAdapter:
     name = "openpronounce"
     version = "0.3.0"
 
-    def __init__(self, python_exe: str = None):
-        self.python_exe = python_exe  # unused; calls openpronounce CLI if on PATH
+    def __init__(self, cli_path: str = None):
+        self.cli_path = cli_path
         self._available = None
+        self._resolved = None
+
+    def _resolve(self) -> str:
+        if self._resolved is not None:
+            return self._resolved
+        import shutil
+        from pathlib import Path
+        candidates = []
+        if self.cli_path:
+            candidates.append(self.cli_path)
+        which = shutil.which("openpronounce")
+        if which:
+            candidates.append(which)
+        # known speech-lab venv
+        candidates.append(r"D:\speech-lab\venvs\p0\Scripts\openpronounce.exe")
+        for c in candidates:
+            if c and Path(c).exists():
+                self._resolved = c
+                return c
+        self._resolved = ""
+        return ""
 
     def available(self) -> bool:
         if self._available is not None:
             return self._available
-        try:
-            import shutil
-            self._available = shutil.which("openpronounce") is not None
-        except Exception:
-            self._available = False
+        self._available = bool(self._resolve())
         return self._available
 
     def run(self, wav_path: str, target_text: str) -> PronunciationResult:
         t0 = now()
-        if not self.available():
+        cli = self._resolve()
+        if not cli:
             return PronunciationResult(
                 source=self.name, score_0_100=0.0, confidence_0_1=0.0, per=None,
                 diagnostics=[], processing_s=now() - t0,
@@ -40,7 +58,7 @@ class OpenPronounceAdapter:
         env["PATH"] = env.get("PATH", "") + r";C:\Program Files\eSpeak NG"
         try:
             proc = subprocess.run(
-                ["openpronounce", "--json", "--no-prosody", str(wav_path), target_text],
+                [cli, "--json", "--no-prosody", str(wav_path), target_text],
                 capture_output=True, timeout=180, env=env)
             raw = (proc.stdout or b"").decode("utf-8", errors="replace").strip()
             # strip BOM

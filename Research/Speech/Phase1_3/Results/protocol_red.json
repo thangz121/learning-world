@@ -1,0 +1,81 @@
+{
+  "ok": true,
+  "protocol_version": "lwe-speaking-protocol-1.3.0",
+  "pipeline_version": "phase1.2.0-2026-10-02",
+  "recognized_text": "Red",
+  "score": 91.1,
+  "confidence": 0.911,
+  "primary_source": "scorer_v1",
+  "per": 0.0,
+  "phonemes": [
+    {
+      "expected": "ɹ",
+      "observed": "ɹ",
+      "status": "ok",
+      "score": 90.7,
+      "confidence": 0.907,
+      "error_type": null
+    },
+    {
+      "expected": "ɛ",
+      "observed": "ɛ",
+      "status": "ok",
+      "score": 86.9,
+      "confidence": 0.869,
+      "error_type": null
+    },
+    {
+      "expected": "d",
+      "observed": "d",
+      "status": "ok",
+      "score": 95.7,
+      "confidence": 0.957,
+      "error_type": null
+    }
+  ],
+  "vad": {
+    "speech_detected": true,
+    "segments": [
+      {
+        "start": 0.1,
+        "end": 0.6
+      }
+    ]
+  },
+  "acoustic": {
+    "f0_mean": 164.50165341307303,
+    "f1_mean": 589.2448131634179,
+    "f2_mean": 1861.6440180674083,
+    "duration_s": 1.2194375
+  },
+  "target": {
+    "text": "red",
+    "arpabet": [
+      "R",
+      "EH1",
+      "D"
+    ],
+    "ipa": [
+      "ɹ",
+      "ɛ",
+      "d"
+    ],
+    "dict_version": "cmudict.dict@2026-10-02"
+  },
+  "model_versions": {
+    "vad": "6.2.3",
+    "asr": "sherpa-onnx-1.13.8",
+    "target": "cmudict.dict@2026-10-02",
+    "phone": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "acoustic": "0.4.7",
+    "scorer_v1": "1.0.0-phase1.2"
+  },
+  "warnings": [
+    "whisperx_disabled_or_unavailable"
+  ],
+  "timings": {
+    "total_s": 9.583,
+    "wall_s": 9.862
+  },
+  "population_label": "cli"
+}

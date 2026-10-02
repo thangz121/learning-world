@@ -1,0 +1,86 @@
+{
+  "cli_available": true,
+  "cli_path": null,
+  "cases": [
+    {
+      "file": "sapi_red.wav",
+      "target": "red",
+      "asr": "Red",
+      "s1_score": 91.1,
+      "s1_conf": 0.911,
+      "op_score": 100.0,
+      "op_conf": 1.0,
+      "op_warnings": [
+        "confidence_is_distance_proxy"
+      ],
+      "combined_score": 95.1,
+      "combined_conf": 0.951,
+      "primary": "combined",
+      "total_s": 43.41
+    },
+    {
+      "file": "sapi_blue.wav",
+      "target": "blue",
+      "asr": "Blue.",
+      "s1_score": 11.8,
+      "s1_conf": 0.0,
+      "op_score": 17.68,
+      "op_conf": 0.252,
+      "op_warnings": [
+        "confidence_is_distance_proxy"
+      ],
+      "combined_score": 14.4,
+      "combined_conf": 0.113,
+      "primary": "combined",
+      "total_s": 31.243
+    },
+    {
+      "file": "sapi_cat.wav",
+      "target": "cat",
+      "asr": "Cat",
+      "s1_score": 68.9,
+      "s1_conf": 0.518,
+      "op_score": 100.0,
+      "op_conf": 1.0,
+      "op_warnings": [
+        "confidence_is_distance_proxy"
+      ],
+      "combined_score": 82.9,
+      "combined_conf": 0.551,
+      "primary": "combined",
+      "total_s": 30.907
+    },
+    {
+      "file": "pregen_apple_normal.wav",
+      "target": "apple",
+      "asr": "Apple,",
+      "s1_score": 29.6,
+      "s1_conf": 0.121,
+      "op_score": 60.0,
+      "op_conf": 1.0,
+      "op_warnings": [
+        "confidence_is_distance_proxy"
+      ],
+      "combined_score": 43.3,
+      "combined_conf": 0.387,
+      "primary": "combined",
+      "total_s": 25.686
+    },
+    {
+      "file": "stress_silence.wav",
+      "target": "red",
+      "asr": "",
+      "s1_score": 0.0,
+      "s1_conf": 0.0,
+      "op_score": 0.0,
+      "op_conf": 0.0,
+      "op_warnings": [
+        "confidence_is_distance_proxy"
+      ],
+      "combined_score": 0.0,
+      "combined_conf": 0.0,
+      "primary": "combined",
+      "total_s": 25.417
+    }
+  ]
+}

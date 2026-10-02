@@ -1,0 +1,38 @@
+[
+  {
+    "file": "sapi_red.wav",
+    "target": "red",
+    "score": 91.1,
+    "conf": 0.911,
+    "per": 0.0,
+    "asr": "Red",
+    "exp_score": 91.1,
+    "exp_conf": 0.911,
+    "score_delta": 0.0,
+    "conf_delta": 0.0
+  },
+  {
+    "file": "stress_silence.wav",
+    "target": "red",
+    "score": 0.0,
+    "conf": 0.0,
+    "per": 1.0,
+    "asr": "",
+    "exp_score": 0.0,
+    "exp_conf": 0.0,
+    "score_delta": 0.0,
+    "conf_delta": 0.0
+  },
+  {
+    "file": "sapi_blue.wav",
+    "target": "blue",
+    "score": 11.8,
+    "conf": 0.0,
+    "per": 1.333,
+    "asr": "Blue.",
+    "exp_score": 11.8,
+    "exp_conf": 0.0,
+    "score_delta": 0.0,
+    "conf_delta": 0.0
+  }
+]
