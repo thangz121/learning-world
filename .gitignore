@@ -85,5 +85,7 @@ IMG_*.wav
 Research/Speech/Phase1_7/AudioDerived/
 Research/Speech/Phase1_8/AudioDerived/
 Research/Speech/Phase1_8/ControlledNoise/
+Research/Speech/Phase1_9/Results/_noise_tmp.wav
+Research/Speech/Phase1_9/Results/*.wav
 Research/Speech/**/real-audio/
 Research/Speech/**/real-child/
