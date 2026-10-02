@@ -1,0 +1,282 @@
+[
+  {
+    "segment_index": 0,
+    "start_s": 3.735,
+    "end_s": 3.945,
+    "duration_s": 0.21,
+    "rms": 0.052359566619119384,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 1,
+    "start_s": 5.375,
+    "end_s": 5.535,
+    "duration_s": 0.16,
+    "rms": 0.07906260208144371,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 2,
+    "start_s": 9.085,
+    "end_s": 9.295,
+    "duration_s": 0.21,
+    "rms": 0.08509276177470154,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 3,
+    "start_s": 14.315,
+    "end_s": 14.605,
+    "duration_s": 0.29,
+    "rms": 0.06974842578179256,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 4,
+    "start_s": 15.295,
+    "end_s": 15.545,
+    "duration_s": 0.25,
+    "rms": 0.08424928593091667,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 5,
+    "start_s": 19.425,
+    "end_s": 19.895,
+    "duration_s": 0.47,
+    "rms": 0.06731331558819947,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 6,
+    "start_s": 20.715,
+    "end_s": 20.885,
+    "duration_s": 0.17,
+    "rms": 0.0502870478162451,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 7,
+    "start_s": 21.835,
+    "end_s": 22.175,
+    "duration_s": 0.34,
+    "rms": 0.17268441267966186,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 8,
+    "start_s": 22.775,
+    "end_s": 22.925,
+    "duration_s": 0.15,
+    "rms": 0.0906565563172339,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 9,
+    "start_s": 23.455,
+    "end_s": 23.725,
+    "duration_s": 0.27,
+    "rms": 0.05803705661910553,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 10,
+    "start_s": 25.365,
+    "end_s": 25.575,
+    "duration_s": 0.21,
+    "rms": 0.09520458913614295,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 11,
+    "start_s": 26.835,
+    "end_s": 27.065,
+    "duration_s": 0.23,
+    "rms": 0.10663194446713276,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 12,
+    "start_s": 27.545,
+    "end_s": 27.925,
+    "duration_s": 0.38,
+    "rms": 0.09856999793727828,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 13,
+    "start_s": 37.475,
+    "end_s": 37.795,
+    "duration_s": 0.32,
+    "rms": 0.11269037047657078,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 14,
+    "start_s": 38.205,
+    "end_s": 38.595,
+    "duration_s": 0.39,
+    "rms": 0.10091767866663871,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 15,
+    "start_s": 40.105,
+    "end_s": 40.265,
+    "duration_s": 0.16,
+    "rms": 0.08571447566618065,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 16,
+    "start_s": 41.695,
+    "end_s": 41.895,
+    "duration_s": 0.2,
+    "rms": 0.08488860792568052,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 17,
+    "start_s": 42.845,
+    "end_s": 43.135,
+    "duration_s": 0.29,
+    "rms": 0.07066006984124391,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 18,
+    "start_s": 43.495,
+    "end_s": 43.665,
+    "duration_s": 0.17,
+    "rms": 0.08859833110866142,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 19,
+    "start_s": 45.105,
+    "end_s": 45.295,
+    "duration_s": 0.19,
+    "rms": 0.05344984581784701,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 20,
+    "start_s": 45.745,
+    "end_s": 45.995,
+    "duration_s": 0.25,
+    "rms": 0.06969515305591407,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 21,
+    "start_s": 46.475,
+    "end_s": 46.875,
+    "duration_s": 0.4,
+    "rms": 0.1308236717545335,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 22,
+    "start_s": 47.305,
+    "end_s": 47.685,
+    "duration_s": 0.38,
+    "rms": 0.19980166101496022,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 23,
+    "start_s": 56.955,
+    "end_s": 57.185,
+    "duration_s": 0.23,
+    "rms": 0.1527142999303673,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 24,
+    "start_s": 62.235,
+    "end_s": 62.455,
+    "duration_s": 0.22,
+    "rms": 0.15808969927937913,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 25,
+    "start_s": 64.875,
+    "end_s": 65.065,
+    "duration_s": 0.19,
+    "rms": 0.1357884853258245,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 26,
+    "start_s": 117.595,
+    "end_s": 117.755,
+    "duration_s": 0.16,
+    "rms": 0.1051858289359954,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  },
+  {
+    "segment_index": 27,
+    "start_s": 132.435,
+    "end_s": 132.595,
+    "duration_s": 0.16,
+    "rms": 0.11195985759756655,
+    "moonshine_asr": "",
+    "weak_probe": "ASR_EMPTY",
+    "reference_type": "WEAK_AUTOMATED_PROBE_NOT_HUMAN"
+  }
+]

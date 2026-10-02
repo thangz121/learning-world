@@ -1,0 +1,722 @@
+[
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 100.0,
+    "soft_conf": 0.1,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.158,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.115,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.109,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.102,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.107,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.109,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "sapi_red.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.109,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 75.2,
+    "soft_conf": 0.065,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 75.1,
+    "soft_conf": 0.041,
+    "delta_vs_full": -0.1
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 1,
+    "soft_score": 75.2,
+    "soft_conf": 0.066,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 75.2,
+    "soft_conf": 0.065,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 1,
+    "soft_score": 75.2,
+    "soft_conf": 0.065,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 75.1,
+    "soft_conf": 0.039,
+    "delta_vs_full": -0.1
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 75.2,
+    "soft_conf": 0.065,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "apple",
+    "file": "pregen_apple_normal.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 75.2,
+    "soft_conf": 0.065,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 100.0,
+    "soft_conf": 0.059,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.092,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.072,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.064,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.061,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.117,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.064,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "cat",
+    "file": "sapi_cat.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.064,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 5.8,
+    "soft_conf": 0.0,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.015,
+    "delta_vs_full": 60.9
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 1,
+    "soft_score": 33.3,
+    "soft_conf": 0.005,
+    "delta_vs_full": 27.5
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 41.7,
+    "soft_conf": 0.005,
+    "delta_vs_full": 35.9
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 1,
+    "soft_score": 5.8,
+    "soft_conf": 0.0,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 5.9,
+    "soft_conf": 0.001,
+    "delta_vs_full": 0.1
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 33.3,
+    "soft_conf": 0.003,
+    "delta_vs_full": 27.5
+  },
+  {
+    "word": "blue",
+    "file": "sapi_blue.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 41.7,
+    "soft_conf": 0.005,
+    "delta_vs_full": 35.9
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 33.3,
+    "soft_conf": 0.0,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.023,
+    "delta_vs_full": 33.4
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 1,
+    "soft_score": 66.8,
+    "soft_conf": 0.014,
+    "delta_vs_full": 33.5
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.009,
+    "delta_vs_full": 33.4
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 1,
+    "soft_score": 33.3,
+    "soft_conf": 0.0,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 66.8,
+    "soft_conf": 0.018,
+    "delta_vs_full": 33.5
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.009,
+    "delta_vs_full": 33.4
+  },
+  {
+    "word": "big",
+    "file": "sapi_big.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.009,
+    "delta_vs_full": 33.4
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 66.7,
+    "soft_conf": 0.005,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 40.9,
+    "soft_conf": 0.01,
+    "delta_vs_full": -25.8
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 1,
+    "soft_score": 66.9,
+    "soft_conf": 0.012,
+    "delta_vs_full": 0.2
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.008,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.006,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 66.8,
+    "soft_conf": 0.015,
+    "delta_vs_full": 0.1
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.008,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "book",
+    "file": "sapi_book.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 66.7,
+    "soft_conf": 0.008,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 33.3,
+    "soft_conf": 0.001,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.094,
+    "delta_vs_full": 66.7
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 1,
+    "soft_score": 33.3,
+    "soft_conf": 0.003,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 33.3,
+    "soft_conf": 0.002,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 1,
+    "soft_score": 33.3,
+    "soft_conf": 0.001,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.095,
+    "delta_vs_full": 66.7
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 33.3,
+    "soft_conf": 0.002,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "dog",
+    "file": "sapi_dog.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 33.3,
+    "soft_conf": 0.002,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 100.0,
+    "soft_conf": 0.12,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.206,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.161,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.148,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.129,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.179,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.148,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red apple",
+    "file": "sapi_red_apple.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 1,
+    "soft_score": 100.0,
+    "soft_conf": 0.148,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "mode": "full",
+    "pad_s": null,
+    "n_segments": null,
+    "soft_score": 14.2,
+    "soft_conf": 0.0,
+    "delta_vs_full": 0.0
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "mode": "silero",
+    "pad_s": 0.0,
+    "n_segments": 0,
+    "soft_score": 0.0,
+    "soft_conf": 0.0,
+    "delta_vs_full": -14.2
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "mode": "silero",
+    "pad_s": 0.1,
+    "n_segments": 0,
+    "soft_score": 0.0,
+    "soft_conf": 0.0,
+    "delta_vs_full": -14.2
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "mode": "silero",
+    "pad_s": 0.25,
+    "n_segments": 0,
+    "soft_score": 0.0,
+    "soft_conf": 0.0,
+    "delta_vs_full": -14.2
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "mode": "silero",
+    "pad_s": 0.5,
+    "n_segments": 0,
+    "soft_score": 0.0,
+    "soft_conf": 0.0,
+    "delta_vs_full": -14.2
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.0,
+    "n_segments": 0,
+    "soft_score": 0.0,
+    "soft_conf": 0.0,
+    "delta_vs_full": -14.2
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "mode": "hybrid_score",
+    "pad_s": 0.25,
+    "n_segments": 0,
+    "soft_score": 0.0,
+    "soft_conf": 0.0,
+    "delta_vs_full": -14.2
+  },
+  {
+    "word": "red",
+    "file": "stress_silence.wav",
+    "mode": "adaptive_then_silero",
+    "pad_s": 0.25,
+    "n_segments": 0,
+    "soft_score": 0.0,
+    "soft_conf": 0.0,
+    "delta_vs_full": -14.2
+  }
+]

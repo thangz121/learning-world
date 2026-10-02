@@ -87,5 +87,8 @@ Research/Speech/Phase1_8/AudioDerived/
 Research/Speech/Phase1_8/ControlledNoise/
 Research/Speech/Phase1_9/Results/_noise_tmp.wav
 Research/Speech/Phase1_9/Results/*.wav
+Research/Speech/Phase1_9_1/HumanReview/clips_hybrid/
+Research/Speech/Phase1_9_1/HumanReview/clips_energy/
+Research/Speech/Phase1_9_1/Results/*.wav
 Research/Speech/**/real-audio/
 Research/Speech/**/real-child/

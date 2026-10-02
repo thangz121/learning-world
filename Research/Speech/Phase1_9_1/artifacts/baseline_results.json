@@ -1,0 +1,1184 @@
+{
+  "git_commit_expected_phase19": "fd0c5f4",
+  "repro_rows": [
+    {
+      "file": "IMG_0639",
+      "mode": "silero",
+      "silero_thr": 0.5,
+      "n_segments": 0,
+      "speech_ratio": 0.0,
+      "speech_duration_s": 0,
+      "duration_s": 219.284,
+      "processing_s": 6.282038500008639,
+      "wall_s": 6.284088373184204,
+      "profile": {
+        "rms_mean": 0.08350644550603273,
+        "floor_mean": 0.05663887950399158,
+        "energy_gate_frac": 0.21034388397336495,
+        "spectral_gate_frac": 0.9413937790750707,
+        "silero_frac": 0.0
+      },
+      "segments": [],
+      "n_segments_full": 0,
+      "reference_type": "SELF_OR_NO_REFERENCE_for_repro_counts_only",
+      "input_sha256_note": "see Baseline_Reproduction.md"
+    },
+    {
+      "file": "IMG_0639",
+      "mode": "energy",
+      "silero_thr": 0.5,
+      "n_segments": 75,
+      "speech_ratio": 0.09312124915634512,
+      "speech_duration_s": 20.419999999999984,
+      "duration_s": 219.284,
+      "processing_s": 4.3746969000203535,
+      "wall_s": 4.375273704528809,
+      "profile": {
+        "rms_mean": 0.08350644550603273,
+        "floor_mean": 0.05663887950399158,
+        "energy_gate_frac": 0.21034388397336495,
+        "spectral_gate_frac": 0.9413937790750707,
+        "silero_frac": 0.0
+      },
+      "segments": [
+        {
+          "start": 1.055,
+          "end": 1.235
+        },
+        {
+          "start": 3.065,
+          "end": 3.295
+        },
+        {
+          "start": 3.725,
+          "end": 3.965
+        },
+        {
+          "start": 4.365,
+          "end": 4.565
+        },
+        {
+          "start": 5.315,
+          "end": 5.555
+        },
+        {
+          "start": 6.905,
+          "end": 7.175
+        },
+        {
+          "start": 7.545,
+          "end": 7.755
+        },
+        {
+          "start": 8.245,
+          "end": 8.425
+        },
+        {
+          "start": 8.995,
+          "end": 9.305
+        },
+        {
+          "start": 10.535,
+          "end": 10.765
+        },
+        {
+          "start": 12.355,
+          "end": 12.625
+        },
+        {
+          "start": 13.685,
+          "end": 13.965
+        },
+        {
+          "start": 14.305,
+          "end": 14.655
+        },
+        {
+          "start": 15.285,
+          "end": 15.595
+        },
+        {
+          "start": 16.235,
+          "end": 16.385
+        },
+        {
+          "start": 17.265,
+          "end": 17.465
+        },
+        {
+          "start": 18.075,
+          "end": 18.285
+        },
+        {
+          "start": 19.355,
+          "end": 19.925
+        },
+        {
+          "start": 20.705,
+          "end": 20.905
+        },
+        {
+          "start": 21.325,
+          "end": 21.525
+        },
+        {
+          "start": 21.815,
+          "end": 22.185
+        },
+        {
+          "start": 22.765,
+          "end": 22.965
+        },
+        {
+          "start": 23.435,
+          "end": 23.755
+        },
+        {
+          "start": 24.235,
+          "end": 24.455
+        },
+        {
+          "start": 25.215,
+          "end": 25.585
+        },
+        {
+          "start": 25.925,
+          "end": 26.135
+        },
+        {
+          "start": 26.825,
+          "end": 27.135
+        },
+        {
+          "start": 27.495,
+          "end": 27.945
+        },
+        {
+          "start": 28.375,
+          "end": 28.615
+        },
+        {
+          "start": 29.095,
+          "end": 29.305
+        },
+        {
+          "start": 29.665,
+          "end": 29.945
+        },
+        {
+          "start": 32.695,
+          "end": 32.855
+        },
+        {
+          "start": 34.255,
+          "end": 34.635
+        },
+        {
+          "start": 35.075,
+          "end": 35.345
+        },
+        {
+          "start": 36.105,
+          "end": 36.455
+        },
+        {
+          "start": 36.845,
+          "end": 37.205
+        },
+        {
+          "start": 37.465,
+          "end": 37.845
+        },
+        {
+          "start": 38.195,
+          "end": 38.605
+        },
+        {
+          "start": 40.095,
+          "end": 40.275
+        },
+        {
+          "start": 41.645,
+          "end": 41.945
+        },
+        {
+          "start": 42.165,
+          "end": 42.385
+        },
+        {
+          "start": 42.815,
+          "end": 43.175
+        },
+        {
+          "start": 43.435,
+          "end": 43.695
+        },
+        {
+          "start": 44.115,
+          "end": 44.315
+        },
+        {
+          "start": 45.085,
+          "end": 45.345
+        },
+        {
+          "start": 45.725,
+          "end": 46.035
+        },
+        {
+          "start": 46.465,
+          "end": 46.895
+        },
+        {
+          "start": 47.295,
+          "end": 47.695
+        },
+        {
+          "start": 54.285,
+          "end": 54.575
+        },
+        {
+          "start": 56.915,
+          "end": 57.295
+        }
+      ],
+      "n_segments_full": 75,
+      "reference_type": "SELF_OR_NO_REFERENCE_for_repro_counts_only",
+      "input_sha256_note": "see Baseline_Reproduction.md"
+    },
+    {
+      "file": "IMG_0639",
+      "mode": "hybrid_score",
+      "silero_thr": 0.5,
+      "n_segments": 28,
+      "speech_ratio": 0.03215008846974706,
+      "speech_duration_s": 7.050000000000014,
+      "duration_s": 219.284,
+      "processing_s": 4.3738827999914065,
+      "wall_s": 4.374456405639648,
+      "profile": {
+        "rms_mean": 0.08350644550603273,
+        "floor_mean": 0.05663887950399158,
+        "energy_gate_frac": 0.21034388397336495,
+        "spectral_gate_frac": 0.9413937790750707,
+        "silero_frac": 0.0
+      },
+      "segments": [
+        {
+          "start": 3.735,
+          "end": 3.945
+        },
+        {
+          "start": 5.375,
+          "end": 5.535
+        },
+        {
+          "start": 9.085,
+          "end": 9.295
+        },
+        {
+          "start": 14.315,
+          "end": 14.605
+        },
+        {
+          "start": 15.295,
+          "end": 15.545
+        },
+        {
+          "start": 19.425,
+          "end": 19.895
+        },
+        {
+          "start": 20.715,
+          "end": 20.885
+        },
+        {
+          "start": 21.835,
+          "end": 22.175
+        },
+        {
+          "start": 22.775,
+          "end": 22.925
+        },
+        {
+          "start": 23.455,
+          "end": 23.725
+        },
+        {
+          "start": 25.365,
+          "end": 25.575
+        },
+        {
+          "start": 26.835,
+          "end": 27.065
+        },
+        {
+          "start": 27.545,
+          "end": 27.925
+        },
+        {
+          "start": 37.475,
+          "end": 37.795
+        },
+        {
+          "start": 38.205,
+          "end": 38.595
+        },
+        {
+          "start": 40.105,
+          "end": 40.265
+        },
+        {
+          "start": 41.695,
+          "end": 41.895
+        },
+        {
+          "start": 42.845,
+          "end": 43.135
+        },
+        {
+          "start": 43.495,
+          "end": 43.665
+        },
+        {
+          "start": 45.105,
+          "end": 45.295
+        },
+        {
+          "start": 45.745,
+          "end": 45.995
+        },
+        {
+          "start": 46.475,
+          "end": 46.875
+        },
+        {
+          "start": 47.305,
+          "end": 47.685
+        },
+        {
+          "start": 56.955,
+          "end": 57.185
+        },
+        {
+          "start": 62.235,
+          "end": 62.455
+        },
+        {
+          "start": 64.875,
+          "end": 65.065
+        },
+        {
+          "start": 117.595,
+          "end": 117.755
+        },
+        {
+          "start": 132.435,
+          "end": 132.595
+        }
+      ],
+      "n_segments_full": 28,
+      "reference_type": "SELF_OR_NO_REFERENCE_for_repro_counts_only",
+      "input_sha256_note": "see Baseline_Reproduction.md"
+    },
+    {
+      "file": "IMG_0639",
+      "mode": "adaptive_then_silero",
+      "silero_thr": 0.5,
+      "n_segments": 0,
+      "speech_ratio": 0.0,
+      "speech_duration_s": 0,
+      "duration_s": 219.284,
+      "processing_s": 4.364625799993519,
+      "wall_s": 4.365453720092773,
+      "profile": {
+        "rms_mean": 0.08350644550603273,
+        "floor_mean": 0.05663887950399158,
+        "energy_gate_frac": 0.21034388397336495,
+        "spectral_gate_frac": 0.9413937790750707,
+        "silero_frac": 0.0
+      },
+      "segments": [],
+      "n_segments_full": 0,
+      "reference_type": "SELF_OR_NO_REFERENCE_for_repro_counts_only",
+      "input_sha256_note": "see Baseline_Reproduction.md"
+    },
+    {
+      "file": "NEW",
+      "mode": "silero",
+      "silero_thr": 0.5,
+      "n_segments": 38,
+      "speech_ratio": 0.5977697974682535,
+      "speech_duration_s": 56.20000000000001,
+      "duration_s": 94.016125,
+      "processing_s": 1.8855841000040527,
+      "wall_s": 1.886047601699829,
+      "profile": {
+        "rms_mean": 0.019426611162962792,
+        "floor_mean": 0.007856000903319059,
+        "energy_gate_frac": 0.39982976912437496,
+        "spectral_gate_frac": 0.9698904138738164,
+        "silero_frac": 0.597935950633046
+      },
+      "segments": [
+        {
+          "start": 3.0,
+          "end": 5.6
+        },
+        {
+          "start": 6.3,
+          "end": 8.1
+        },
+        {
+          "start": 11.0,
+          "end": 11.7
+        },
+        {
+          "start": 12.1,
+          "end": 13.8
+        },
+        {
+          "start": 18.2,
+          "end": 19.3
+        },
+        {
+          "start": 19.5,
+          "end": 21.3
+        },
+        {
+          "start": 21.9,
+          "end": 26.0
+        },
+        {
+          "start": 28.4,
+          "end": 29.0
+        },
+        {
+          "start": 29.5,
+          "end": 30.3
+        },
+        {
+          "start": 32.5,
+          "end": 33.0
+        },
+        {
+          "start": 33.8,
+          "end": 35.3
+        },
+        {
+          "start": 35.5,
+          "end": 38.2
+        },
+        {
+          "start": 38.7,
+          "end": 39.3
+        },
+        {
+          "start": 39.4,
+          "end": 40.0
+        },
+        {
+          "start": 40.7,
+          "end": 43.0
+        },
+        {
+          "start": 45.5,
+          "end": 46.5
+        },
+        {
+          "start": 46.9,
+          "end": 48.4
+        },
+        {
+          "start": 48.6,
+          "end": 49.3
+        },
+        {
+          "start": 49.4,
+          "end": 51.1
+        },
+        {
+          "start": 52.8,
+          "end": 54.2
+        },
+        {
+          "start": 54.7,
+          "end": 56.9
+        },
+        {
+          "start": 58.7,
+          "end": 59.7
+        },
+        {
+          "start": 60.1,
+          "end": 61.3
+        },
+        {
+          "start": 62.5,
+          "end": 63.5
+        },
+        {
+          "start": 63.6,
+          "end": 64.1
+        },
+        {
+          "start": 64.5,
+          "end": 67.6
+        },
+        {
+          "start": 70.3,
+          "end": 70.7
+        },
+        {
+          "start": 70.8,
+          "end": 71.6
+        },
+        {
+          "start": 71.8,
+          "end": 72.8
+        },
+        {
+          "start": 73.3,
+          "end": 74.0
+        },
+        {
+          "start": 74.5,
+          "end": 74.9
+        },
+        {
+          "start": 75.5,
+          "end": 76.2
+        },
+        {
+          "start": 76.6,
+          "end": 78.0
+        },
+        {
+          "start": 78.8,
+          "end": 79.3
+        },
+        {
+          "start": 79.6,
+          "end": 83.5
+        },
+        {
+          "start": 84.9,
+          "end": 86.0
+        },
+        {
+          "start": 86.3,
+          "end": 86.9
+        },
+        {
+          "start": 87.1,
+          "end": 93.1
+        }
+      ],
+      "n_segments_full": 38,
+      "reference_type": "SELF_OR_NO_REFERENCE_for_repro_counts_only",
+      "input_sha256_note": "see Baseline_Reproduction.md"
+    },
+    {
+      "file": "NEW",
+      "mode": "energy",
+      "silero_thr": 0.5,
+      "n_segments": 79,
+      "speech_ratio": 0.37057472853725915,
+      "speech_duration_s": 34.840000000000025,
+      "duration_s": 94.016125,
+      "processing_s": 1.8937643999815919,
+      "wall_s": 1.89408540725708,
+      "profile": {
+        "rms_mean": 0.019426611162962792,
+        "floor_mean": 0.007856000903319059,
+        "energy_gate_frac": 0.39982976912437496,
+        "spectral_gate_frac": 0.9698904138738164,
+        "silero_frac": 0.597935950633046
+      },
+      "segments": [
+        {
+          "start": 0.445,
+          "end": 0.625
+        },
+        {
+          "start": 3.055,
+          "end": 3.515
+        },
+        {
+          "start": 3.775,
+          "end": 3.995
+        },
+        {
+          "start": 4.245,
+          "end": 4.475
+        },
+        {
+          "start": 5.055,
+          "end": 5.545
+        },
+        {
+          "start": 5.915,
+          "end": 6.595
+        },
+        {
+          "start": 7.655,
+          "end": 8.175
+        },
+        {
+          "start": 9.715,
+          "end": 10.115
+        },
+        {
+          "start": 10.955,
+          "end": 11.605
+        },
+        {
+          "start": 12.075,
+          "end": 12.545
+        },
+        {
+          "start": 13.275,
+          "end": 13.725
+        },
+        {
+          "start": 14.105,
+          "end": 14.405
+        },
+        {
+          "start": 15.255,
+          "end": 15.535
+        },
+        {
+          "start": 16.005,
+          "end": 16.995
+        },
+        {
+          "start": 17.375,
+          "end": 17.795
+        },
+        {
+          "start": 18.185,
+          "end": 18.555
+        },
+        {
+          "start": 18.785,
+          "end": 19.185
+        },
+        {
+          "start": 19.505,
+          "end": 19.955
+        },
+        {
+          "start": 20.365,
+          "end": 21.225
+        },
+        {
+          "start": 21.945,
+          "end": 23.225
+        },
+        {
+          "start": 23.575,
+          "end": 24.275
+        },
+        {
+          "start": 25.425,
+          "end": 25.955
+        },
+        {
+          "start": 27.205,
+          "end": 27.565
+        },
+        {
+          "start": 28.455,
+          "end": 28.895
+        },
+        {
+          "start": 29.355,
+          "end": 29.645
+        },
+        {
+          "start": 29.965,
+          "end": 30.205
+        },
+        {
+          "start": 32.475,
+          "end": 32.715
+        },
+        {
+          "start": 34.905,
+          "end": 35.105
+        },
+        {
+          "start": 35.545,
+          "end": 36.025
+        },
+        {
+          "start": 36.345,
+          "end": 36.675
+        },
+        {
+          "start": 36.975,
+          "end": 37.285
+        },
+        {
+          "start": 37.655,
+          "end": 38.085
+        },
+        {
+          "start": 38.665,
+          "end": 39.135
+        },
+        {
+          "start": 39.455,
+          "end": 39.885
+        },
+        {
+          "start": 40.725,
+          "end": 40.985
+        },
+        {
+          "start": 41.415,
+          "end": 41.645
+        },
+        {
+          "start": 41.975,
+          "end": 42.295
+        },
+        {
+          "start": 42.525,
+          "end": 42.855
+        },
+        {
+          "start": 45.495,
+          "end": 46.355
+        },
+        {
+          "start": 46.955,
+          "end": 47.225
+        },
+        {
+          "start": 48.025,
+          "end": 48.295
+        },
+        {
+          "start": 48.675,
+          "end": 49.155
+        },
+        {
+          "start": 49.445,
+          "end": 50.055
+        },
+        {
+          "start": 50.385,
+          "end": 50.925
+        },
+        {
+          "start": 52.845,
+          "end": 53.275
+        },
+        {
+          "start": 54.745,
+          "end": 55.245
+        },
+        {
+          "start": 55.735,
+          "end": 56.645
+        },
+        {
+          "start": 58.705,
+          "end": 58.985
+        },
+        {
+          "start": 59.215,
+          "end": 59.575
+        },
+        {
+          "start": 60.245,
+          "end": 60.805
+        }
+      ],
+      "n_segments_full": 79,
+      "reference_type": "SELF_OR_NO_REFERENCE_for_repro_counts_only",
+      "input_sha256_note": "see Baseline_Reproduction.md"
+    },
+    {
+      "file": "NEW",
+      "mode": "hybrid_score",
+      "silero_thr": 0.5,
+      "n_segments": 38,
+      "speech_ratio": 0.6392520432000359,
+      "speech_duration_s": 60.09999999999998,
+      "duration_s": 94.016125,
+      "processing_s": 1.854326200002106,
+      "wall_s": 1.8546128273010254,
+      "profile": {
+        "rms_mean": 0.019426611162962792,
+        "floor_mean": 0.007856000903319059,
+        "energy_gate_frac": 0.39982976912437496,
+        "spectral_gate_frac": 0.9698904138738164,
+        "silero_frac": 0.597935950633046
+      },
+      "segments": [
+        {
+          "start": 3.005,
+          "end": 5.605
+        },
+        {
+          "start": 5.915,
+          "end": 8.115
+        },
+        {
+          "start": 9.725,
+          "end": 10.045
+        },
+        {
+          "start": 10.975,
+          "end": 11.705
+        },
+        {
+          "start": 12.075,
+          "end": 13.805
+        },
+        {
+          "start": 14.125,
+          "end": 14.405
+        },
+        {
+          "start": 15.265,
+          "end": 15.525
+        },
+        {
+          "start": 16.005,
+          "end": 16.985
+        },
+        {
+          "start": 17.385,
+          "end": 17.795
+        },
+        {
+          "start": 18.185,
+          "end": 21.305
+        },
+        {
+          "start": 21.905,
+          "end": 26.005
+        },
+        {
+          "start": 27.345,
+          "end": 27.505
+        },
+        {
+          "start": 28.405,
+          "end": 29.005
+        },
+        {
+          "start": 29.365,
+          "end": 30.305
+        },
+        {
+          "start": 32.485,
+          "end": 33.005
+        },
+        {
+          "start": 33.805,
+          "end": 35.305
+        },
+        {
+          "start": 35.505,
+          "end": 38.205
+        },
+        {
+          "start": 38.675,
+          "end": 40.005
+        },
+        {
+          "start": 40.705,
+          "end": 43.005
+        },
+        {
+          "start": 45.505,
+          "end": 46.505
+        },
+        {
+          "start": 46.905,
+          "end": 51.105
+        },
+        {
+          "start": 52.805,
+          "end": 54.205
+        },
+        {
+          "start": 54.705,
+          "end": 56.905
+        },
+        {
+          "start": 58.705,
+          "end": 59.705
+        },
+        {
+          "start": 60.105,
+          "end": 61.305
+        },
+        {
+          "start": 62.505,
+          "end": 64.105
+        },
+        {
+          "start": 64.505,
+          "end": 67.605
+        },
+        {
+          "start": 70.295,
+          "end": 71.605
+        },
+        {
+          "start": 71.805,
+          "end": 72.805
+        },
+        {
+          "start": 73.305,
+          "end": 74.005
+        },
+        {
+          "start": 74.495,
+          "end": 74.905
+        },
+        {
+          "start": 75.505,
+          "end": 76.205
+        },
+        {
+          "start": 76.605,
+          "end": 78.005
+        },
+        {
+          "start": 78.805,
+          "end": 79.305
+        },
+        {
+          "start": 79.605,
+          "end": 83.505
+        },
+        {
+          "start": 84.905,
+          "end": 86.005
+        },
+        {
+          "start": 86.305,
+          "end": 86.905
+        },
+        {
+          "start": 87.105,
+          "end": 93.105
+        }
+      ],
+      "n_segments_full": 38,
+      "reference_type": "SELF_OR_NO_REFERENCE_for_repro_counts_only",
+      "input_sha256_note": "see Baseline_Reproduction.md"
+    },
+    {
+      "file": "NEW",
+      "mode": "adaptive_then_silero",
+      "silero_thr": 0.5,
+      "n_segments": 34,
+      "speech_ratio": 0.6020243867740774,
+      "speech_duration_s": 56.60000000000001,
+      "duration_s": 94.016125,
+      "processing_s": 1.8571136000100523,
+      "wall_s": 1.8574273586273193,
+      "profile": {
+        "rms_mean": 0.019426611162962792,
+        "floor_mean": 0.007856000903319059,
+        "energy_gate_frac": 0.39982976912437496,
+        "spectral_gate_frac": 0.9698904138738164,
+        "silero_frac": 0.597935950633046
+      },
+      "segments": [
+        {
+          "start": 3.0,
+          "end": 5.6
+        },
+        {
+          "start": 6.3,
+          "end": 8.1
+        },
+        {
+          "start": 11.0,
+          "end": 11.7
+        },
+        {
+          "start": 12.1,
+          "end": 13.8
+        },
+        {
+          "start": 18.2,
+          "end": 19.3
+        },
+        {
+          "start": 19.5,
+          "end": 21.3
+        },
+        {
+          "start": 21.9,
+          "end": 26.0
+        },
+        {
+          "start": 28.4,
+          "end": 29.0
+        },
+        {
+          "start": 29.5,
+          "end": 30.3
+        },
+        {
+          "start": 32.5,
+          "end": 33.0
+        },
+        {
+          "start": 33.8,
+          "end": 35.3
+        },
+        {
+          "start": 35.5,
+          "end": 38.2
+        },
+        {
+          "start": 38.7,
+          "end": 40.0
+        },
+        {
+          "start": 40.7,
+          "end": 43.0
+        },
+        {
+          "start": 45.5,
+          "end": 46.5
+        },
+        {
+          "start": 46.9,
+          "end": 48.4
+        },
+        {
+          "start": 48.6,
+          "end": 51.1
+        },
+        {
+          "start": 52.8,
+          "end": 54.2
+        },
+        {
+          "start": 54.7,
+          "end": 56.9
+        },
+        {
+          "start": 58.7,
+          "end": 59.7
+        },
+        {
+          "start": 60.1,
+          "end": 61.3
+        },
+        {
+          "start": 62.5,
+          "end": 64.1
+        },
+        {
+          "start": 64.5,
+          "end": 67.6
+        },
+        {
+          "start": 70.3,
+          "end": 71.6
+        },
+        {
+          "start": 71.8,
+          "end": 72.8
+        },
+        {
+          "start": 73.3,
+          "end": 74.0
+        },
+        {
+          "start": 74.5,
+          "end": 74.9
+        },
+        {
+          "start": 75.5,
+          "end": 76.2
+        },
+        {
+          "start": 76.6,
+          "end": 78.0
+        },
+        {
+          "start": 78.8,
+          "end": 79.3
+        },
+        {
+          "start": 79.6,
+          "end": 83.5
+        },
+        {
+          "start": 84.9,
+          "end": 86.0
+        },
+        {
+          "start": 86.3,
+          "end": 86.9
+        },
+        {
+          "start": 87.1,
+          "end": 93.1
+        }
+      ],
+      "n_segments_full": 34,
+      "reference_type": "SELF_OR_NO_REFERENCE_for_repro_counts_only",
+      "input_sha256_note": "see Baseline_Reproduction.md"
+    }
+  ],
+  "checks": [
+    {
+      "file": "IMG_0639",
+      "mode": "silero",
+      "got": 0,
+      "expected": 0,
+      "match": true
+    },
+    {
+      "file": "IMG_0639",
+      "mode": "energy",
+      "got": 75,
+      "expected": 75,
+      "match": true
+    },
+    {
+      "file": "IMG_0639",
+      "mode": "hybrid_score",
+      "got": 28,
+      "expected": 28,
+      "match": true
+    },
+    {
+      "file": "IMG_0639",
+      "mode": "adaptive_then_silero",
+      "got": 0,
+      "expected": 0,
+      "match": true
+    },
+    {
+      "file": "NEW",
+      "mode": "silero",
+      "got": 38,
+      "expected": 38,
+      "match": true
+    },
+    {
+      "file": "NEW",
+      "mode": "adaptive_then_silero",
+      "got": 34,
+      "expected": 34,
+      "match": true
+    }
+  ],
+  "all_match": true
+}
