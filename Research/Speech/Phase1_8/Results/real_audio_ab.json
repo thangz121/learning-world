@@ -1,0 +1,132 @@
+{
+  "pipeline_version": "Phase1.7/1.6 components identical A/B",
+  "silero_threshold_baseline": 0.5,
+  "outcome_code": "A_IMG_FAILS_NEW_WORKS",
+  "outcome_interpretation": "Material difference: same Silero thr=0.5 yields 0 segs on IMG_0639 but >0 on NEW",
+  "table": [
+    {
+      "metric": "duration_s",
+      "IMG_0639": 219.284,
+      "NEW": 94.016125,
+      "delta_NEW_minus_IMG": -125.26787499999999
+    },
+    {
+      "metric": "rms",
+      "IMG_0639": 0.09374001872430406,
+      "NEW": 0.031183833413554938,
+      "delta_NEW_minus_IMG": -0.06255618531074912
+    },
+    {
+      "metric": "peak",
+      "IMG_0639": 0.790130615234375,
+      "NEW": 0.57806396484375,
+      "delta_NEW_minus_IMG": -0.212066650390625
+    },
+    {
+      "metric": "noise_floor_p10_rms",
+      "IMG_0639": 0.030078812109802313,
+      "NEW": 0.00316518189405213,
+      "delta_NEW_minus_IMG": -0.026913630215750182
+    },
+    {
+      "metric": "snr_p90_over_p10_db",
+      "IMG_0639": 13.266092757265326,
+      "NEW": 23.63361258738702,
+      "delta_NEW_minus_IMG": 10.367519830121694
+    },
+    {
+      "metric": "silence_ratio_abs_lt_0.01",
+      "IMG_0639": 0.12861175461958008,
+      "NEW": 0.6323616028633386,
+      "delta_NEW_minus_IMG": 0.5037498482437586
+    },
+    {
+      "metric": "continuous_energy_ratio_1s_gt_0.03",
+      "IMG_0639": 0.9726027397260274,
+      "NEW": 0.23404255319148937,
+      "delta_NEW_minus_IMG": -0.738560186534538
+    },
+    {
+      "metric": "energy_contrast_std_over_mean",
+      "IMG_0639": 0.30846789343057057,
+      "NEW": 0.8773186126773648,
+      "delta_NEW_minus_IMG": 0.5688507192467942
+    },
+    {
+      "metric": "spectral_centroid_hz",
+      "IMG_0639": 2202.15498253843,
+      "NEW": 1561.39567370906,
+      "delta_NEW_minus_IMG": -640.75930882937
+    },
+    {
+      "metric": "spectral_flatness",
+      "IMG_0639": 0.48977454485050725,
+      "NEW": 0.2787963512521373,
+      "delta_NEW_minus_IMG": -0.21097819359836995
+    },
+    {
+      "metric": "vad_n_segments_thr0.5",
+      "IMG_0639": 0,
+      "NEW": 38,
+      "delta_NEW_minus_IMG": 38
+    },
+    {
+      "metric": "vad_speech_ratio_thr0.5",
+      "IMG_0639": 0.0,
+      "NEW": 0.5977697974682535,
+      "delta_NEW_minus_IMG": 0.5977697974682535
+    },
+    {
+      "metric": "vad_speech_duration_s",
+      "IMG_0639": 0,
+      "NEW": 56.20000000000001,
+      "delta_NEW_minus_IMG": 56.20000000000001
+    },
+    {
+      "metric": "asr_nonempty_8s_windows",
+      "IMG_0639": 4,
+      "NEW": 8,
+      "delta_NEW_minus_IMG": 4
+    },
+    {
+      "metric": "total_processing_s",
+      "IMG_0639": 19.311522799980594,
+      "NEW": 8.41590749999159,
+      "delta_NEW_minus_IMG": -10.895615299989004
+    }
+  ],
+  "files": {
+    "IMG_0639": {
+      "sha256": "E4CDF24D2B5140B91EF637676CD5FA1B9A7F6B6A629F62AE9AC2657CB171A6F7",
+      "source": "IMG_0639.mp3"
+    },
+    "NEW": {
+      "sha256": "17E3DA86267D1B7B864EA862A6C5C3B12AF4E49FD649F2FE140652A53DDF33FF",
+      "source": "1790932799243_8856108714107255767_8856108714107255767.mp3"
+    }
+  },
+  "key_deltas": {
+    "continuous_energy": -0.738560186534538,
+    "energy_contrast": 0.5688507192467942,
+    "snr_db": 10.367519830121694,
+    "vad_segments": 38,
+    "vad_speech_ratio": 0.5977697974682535
+  },
+  "research_roles": {
+    "IMG_0639": [
+      "REAL_SPEAKER_UNKNOWN_AGE",
+      "VAD_STRESS_CASE_CONTINUOUS_ENERGY",
+      "NOT_CANONICAL"
+    ],
+    "NEW": [
+      "REAL_SPEAKER_UNKNOWN_AGE",
+      "REAL_MIC_OR_DEVICE_SAMPLE",
+      "NOT_CANONICAL",
+      "REAL_SPEECH_CANDIDATE_VAD_POSITIVE",
+      "VAD_CONTRAST_CASE_VS_IMG_0639"
+    ]
+  },
+  "pronunciation": "not_scored_no_authorized_target_either_file",
+  "age": "UNKNOWN_both",
+  "language": "UNKNOWN_both_en_only_probes"
+}

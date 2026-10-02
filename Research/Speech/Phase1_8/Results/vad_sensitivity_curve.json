@@ -1,0 +1,51 @@
+[
+  {
+    "condition": "clean",
+    "snr_db": null,
+    "n_seg": 38,
+    "speech_dur": 56.20000000000001,
+    "speech_ratio": 0.5977697974682535
+  },
+  {
+    "condition": "white_noise_snr_20",
+    "snr_db": 20,
+    "n_seg": 38,
+    "speech_dur": 49.6,
+    "speech_ratio": 0.5275690739221597
+  },
+  {
+    "condition": "white_noise_snr_10",
+    "snr_db": 10,
+    "n_seg": 29,
+    "speech_dur": 43.199999999999996,
+    "speech_ratio": 0.45949564502897766
+  },
+  {
+    "condition": "white_noise_snr_5",
+    "snr_db": 5,
+    "n_seg": 26,
+    "speech_dur": 39.3,
+    "speech_ratio": 0.418013399297195
+  },
+  {
+    "condition": "white_noise_snr_0",
+    "snr_db": 0,
+    "n_seg": 29,
+    "speech_dur": 37.099999999999994,
+    "speech_ratio": 0.3946131581151637
+  },
+  {
+    "condition": "white_noise_snr_-5",
+    "snr_db": -5,
+    "n_seg": 10,
+    "speech_dur": 13.199999999999992,
+    "speech_ratio": 0.14040144709218755
+  },
+  {
+    "condition": "IMG_0639_as_is",
+    "snr_db": null,
+    "n_seg": 0,
+    "speech_dur": 0,
+    "speech_ratio": 0.0
+  }
+]

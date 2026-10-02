@@ -81,6 +81,9 @@ Research/Speech/**/models/
 IMG_0639.mp3
 IMG_*.mp3
 IMG_*.wav
+1790*.mp3
 Research/Speech/Phase1_7/AudioDerived/
+Research/Speech/Phase1_8/AudioDerived/
+Research/Speech/Phase1_8/ControlledNoise/
 Research/Speech/**/real-audio/
 Research/Speech/**/real-child/
