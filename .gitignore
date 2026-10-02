@@ -87,19 +87,27 @@ Research/Speech/Phase1_8/AudioDerived/
 Research/Speech/Phase1_8/ControlledNoise/
 Research/Speech/Phase1_9/Results/_noise_tmp.wav
 Research/Speech/Phase1_9/Results/*.wav
-Research/Speech/Phase1_9_1/HumanReview/clips_hybrid/
+# clips_hybrid tracked for remote human review; energy sample clips still local-only
 Research/Speech/Phase1_9_1/HumanReview/clips_energy/
 Research/Speech/Phase1_9_1/Results/*.wav
 Research/Speech/**/real-audio/
 Research/Speech/**/real-child/
 
-# Phase 1.9.5 real audio + review clips (binaries)
+# Phase 1.9.5 full incoming originals only (not short review clips)
 Research/Speech/Phase1_9_5/incoming-audio/
-Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips/
-Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_250ms/
-Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_500ms/
 *.mp3
 
-# Phase 1.9.6 review clips
-Research/Speech/Phase1_9_6/HumanReview/clips_hybrid/
+# Short hybrid human-review clips ARE tracked (user-requested for remote review).
+# Full-length sources remain ignored above (IMG_*.mp3, AudioDerived/, incoming-audio/).
+!Research/Speech/Phase1_9_1/HumanReview/clips_hybrid/
+!Research/Speech/Phase1_9_1/HumanReview/clips_hybrid/**
+!Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips/
+!Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips/**
+!Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_250ms/
+!Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_250ms/**
+!Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_500ms/
+!Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_500ms/**
+!Research/Speech/Phase1_9_6/HumanReview/clips_hybrid/
+!Research/Speech/Phase1_9_6/HumanReview/clips_hybrid/**
+
 
