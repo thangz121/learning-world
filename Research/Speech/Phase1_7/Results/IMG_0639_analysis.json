@@ -1,0 +1,492 @@
+{
+  "audio_id": "IMG_0639",
+  "source_file": "IMG_0639.mp3",
+  "source_path": "D:\\Vscode\\little-world-english\\IMG_0639.mp3",
+  "sha256": "E4CDF24D2B5140B91EF637676CD5FA1B9A7F6B6A629F62AE9AC2657CB171A6F7",
+  "original_untouched": true,
+  "original_format": {
+    "container": "mp3",
+    "codec": "mp3",
+    "sample_rate": 48000,
+    "channels": 2,
+    "duration_s": 219.284,
+    "bit_rate": 192000,
+    "size_bytes": 5264528
+  },
+  "derived": {
+    "path_repo": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_7\\AudioDerived\\IMG_0639_16k_mono.wav",
+    "path_external": "D:\\speech-lab\\data\\real-audio\\IMG_0639_16k_mono.wav",
+    "sample_rate": 16000,
+    "channels": 1,
+    "codec": "pcm_s16le"
+  },
+  "privacy_sensitive": true,
+  "consent_status": "unknown",
+  "speaker_age_months": null,
+  "speaker_age_status": "UNKNOWN",
+  "speaker_identity": "UNKNOWN",
+  "language_global": "UNKNOWN",
+  "language_method_limitation": "primary ASR is English-only moonshine-tiny-en",
+  "audio_quality": {
+    "duration_s": 219.284,
+    "sample_rate": 16000,
+    "n_samples": 3508544,
+    "rms": 0.09374001872430406,
+    "peak": 0.790130615234375,
+    "clip_frac": 0.0,
+    "silence_ratio_abs_lt_0.01": 0.12861175461958008,
+    "snr_proxy_db": 19.610819136316216,
+    "spectral_centroid_hz_first5s": 2202.1549825382813,
+    "dynamic_range_db": 18.515477076344375
+  },
+  "vad": {
+    "speech_detected": false,
+    "n_raw_segments": 0,
+    "n_merged_segments": 0,
+    "model": "silero-vad@6.2.3",
+    "processing_s": 3.5513359000033233,
+    "raw_segments": []
+  },
+  "segments": [],
+  "whole_file_acoustic": {
+    "f0_mean": 340.81223251719985,
+    "f0_std": 144.14599128543767,
+    "f1_mean": 904.1339341684512,
+    "f2_mean": 1869.8303196942734,
+    "intensity": 73.42062981141257,
+    "voiced_frac": 0.48738882554161916,
+    "duration_s": 219.284,
+    "processing_s": 2.14116179998382,
+    "warnings": []
+  },
+  "asr_hypothesis_score_probes": [],
+  "synthetic_compare_sapi_red": {
+    "quality": {
+      "duration_s": 1.2194375,
+      "sample_rate": 16000,
+      "n_samples": 19511,
+      "rms": 0.059254603089526056,
+      "peak": 0.685882568359375,
+      "clip_frac": 0.0,
+      "silence_ratio_abs_lt_0.01": 0.7875557377889396,
+      "snr_proxy_db": 31.46909511062497,
+      "spectral_centroid_hz_first5s": 1210.0929555055802,
+      "dynamic_range_db": 21.270553440879123
+    },
+    "vad_segs": 1,
+    "asr": "Red",
+    "f0": 164.50165341307303,
+    "f1": 589.2448131634179,
+    "f2": 1861.6440180674083
+  },
+  "research_roles": [
+    "REAL_SPEAKER_UNKNOWN_AGE",
+    "REAL_MICROPHONE_OR_DEVICE_RECORDING_CONDITION_SAMPLE",
+    "VAD_STRESS_CASE_CONTINUOUS_ENERGY",
+    "PIPELINE_REAL_AUDIO_FAILURE_DISCOVERY",
+    "NOT_CANONICAL_REFERENCE",
+    "NOT_GOLDEN_CHILD_VOICE",
+    "NOT_ENGLISH_PRONUNCIATION_BENCHMARK_WITHOUT_KNOWN_TARGET",
+    "POSSIBLE_MIXED_OR_NON_ENGLISH_CONTENT_UNCONFIRMED"
+  ],
+  "pronunciation_scoring_policy": "NOT_RUN_WITHOUT_AUTHORIZED_KNOWN_TARGET; ASR-only probes marked non-GT",
+  "canonical_truth": "CMUdict/G2P only; this file is NOT canonical",
+  "total_processing_s": 7.991522099997383,
+  "pipeline_baseline": "Phase1.6 bdc5851 / protocol 1.6.0 components",
+  "language_probes": {
+    "faster_whisper_tiny_windows_10s": {
+      "lang_counts": {
+        "ja": 3,
+        "zh": 1,
+        "en": 16,
+        "ko": 1,
+        "vi": 1
+      },
+      "mean_lang_p_by_lang": {
+        "ja": 0.27014367779095966,
+        "zh": 0.5334494113922119,
+        "en": 0.3580661043524742,
+        "ko": 0.2604086101055145,
+        "vi": 0.6728222966194153
+      },
+      "windows": [
+        {
+          "t0": 0.0,
+          "t1": 10.0,
+          "lang": "ja",
+          "lang_p": 0.38140061497688293,
+          "text": "ペン ナイペンオイの ピン デースが リンバーイへの リンバーイ ニャリああ"
+        },
+        {
+          "t0": 10.0,
+          "t1": 20.0,
+          "lang": "ja",
+          "lang_p": 0.20925651490688324,
+          "text": "ちょちょちょちょちょ、ちょちょ!"
+        },
+        {
+          "t0": 20.0,
+          "t1": 30.0,
+          "lang": "zh",
+          "lang_p": 0.5334494113922119,
+          "text": "你們一起立體 麻將 麻將 麻將 麻將"
+        },
+        {
+          "t0": 30.0,
+          "t1": 40.0,
+          "lang": "en",
+          "lang_p": 0.3982495665550232,
+          "text": "Oh man, are you ready? We're ready, we're ready. No, we're ready, we're ready. We're ready, we're ready. We're ready, we're ready."
+        },
+        {
+          "t0": 40.0,
+          "t1": 50.0,
+          "lang": "en",
+          "lang_p": 0.2535074055194855,
+          "text": "We love you, we love you, we love you, we love you."
+        },
+        {
+          "t0": 50.0,
+          "t1": 60.0,
+          "lang": "en",
+          "lang_p": 0.33332890272140503,
+          "text": "I'm gonna fight. I'm gonna fight. I'm gonna fight."
+        },
+        {
+          "t0": 60.0,
+          "t1": 70.0,
+          "lang": "en",
+          "lang_p": 0.5256382822990417,
+          "text": ""
+        },
+        {
+          "t0": 70.0,
+          "t1": 80.0,
+          "lang": "en",
+          "lang_p": 0.5193347930908203,
+          "text": ""
+        },
+        {
+          "t0": 80.0,
+          "t1": 90.0,
+          "lang": "en",
+          "lang_p": 0.36770519614219666,
+          "text": ""
+        },
+        {
+          "t0": 90.0,
+          "t1": 100.0,
+          "lang": "en",
+          "lang_p": 0.2832515239715576,
+          "text": ""
+        },
+        {
+          "t0": 100.0,
+          "t1": 110.0,
+          "lang": "ja",
+          "lang_p": 0.21977390348911285,
+          "text": ""
+        },
+        {
+          "t0": 110.0,
+          "t1": 120.0,
+          "lang": "ko",
+          "lang_p": 0.2604086101055145,
+          "text": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"
+        },
+        {
+          "t0": 120.0,
+          "t1": 130.0,
+          "lang": "en",
+          "lang_p": 0.5997240543365479,
+          "text": "Two, three, four, five, six, seven. Two, three, four, five, six, seven. Yay, two, three, four, five, seven."
+        },
+        {
+          "t0": 130.0,
+          "t1": 140.0,
+          "lang": "en",
+          "lang_p": 0.50101238489151,
+          "text": "Cut, end, out, one, head, cut. Three, two, set, here we go, first. You're me. You're me, you're me. You're me, you're me, you're me."
+        },
+        {
+          "t0": 140.0,
+          "t1": 150.0,
+          "lang": "en",
+          "lang_p": 0.32293668389320374,
+          "text": ""
+        },
+        {
+          "t0": 150.0,
+          "t1": 160.0,
+          "lang": "en",
+          "lang_p": 0.29331791400909424,
+          "text": ""
+        },
+        {
+          "t0": 160.0,
+          "t1": 170.0,
+          "lang": "en",
+          "lang_p": 0.2805873155593872,
+          "text": ""
+        },
+        {
+          "t0": 170.0,
+          "t1": 180.0,
+          "lang": "en",
+          "lang_p": 0.3154643476009369,
+          "text": ""
+        },
+        {
+          "t0": 180.0,
+          "t1": 190.0,
+          "lang": "en",
+          "lang_p": 0.21752704679965973,
+          "text": ""
+        },
+        {
+          "t0": 190.0,
+          "t1": 200.0,
+          "lang": "en",
+          "lang_p": 0.15503443777561188,
+          "text": ""
+        },
+        {
+          "t0": 200.0,
+          "t1": 210.0,
+          "lang": "en",
+          "lang_p": 0.36243781447410583,
+          "text": "I'm with you, I'm with you I'm with you I'm with you"
+        },
+        {
+          "t0": 210.0,
+          "t1": 219.284,
+          "lang": "vi",
+          "lang_p": 0.6728222966194153,
+          "text": "Cảm ơn giữ kênh của tụi xe đọc của các bạn đến lúc kỷ tìm ổ thạm."
+        }
+      ],
+      "reliability": "LOW — tiny model on continuous noisy/ambient audio; frequent empty text; mixed ja/zh/ko/en/vi with often low p"
+    },
+    "moonshine_en_only_fixed_8s": {
+      "n_windows": 28,
+      "n_nonempty": 4,
+      "windows": [
+        {
+          "i": 0,
+          "t0": 0.0,
+          "t1": 8.0,
+          "rms": 0.07535651517363581,
+          "asr": ""
+        },
+        {
+          "i": 1,
+          "t0": 8.0,
+          "t1": 16.0,
+          "rms": 0.06358589683062298,
+          "asr": ""
+        },
+        {
+          "i": 2,
+          "t0": 16.0,
+          "t1": 24.0,
+          "rms": 0.06003820842514596,
+          "asr": "I'm not acting. I'm not acting. I'm not acting. I'm not acting."
+        },
+        {
+          "i": 3,
+          "t0": 24.0,
+          "t1": 32.0,
+          "rms": 0.0805049734656638,
+          "asr": ""
+        },
+        {
+          "i": 4,
+          "t0": 32.0,
+          "t1": 40.0,
+          "rms": 0.06743265617103392,
+          "asr": ""
+        },
+        {
+          "i": 5,
+          "t0": 40.0,
+          "t1": 48.0,
+          "rms": 0.0777236671730607,
+          "asr": ""
+        },
+        {
+          "i": 6,
+          "t0": 48.0,
+          "t1": 56.0,
+          "rms": 0.05158796072277281,
+          "asr": ""
+        },
+        {
+          "i": 7,
+          "t0": 56.0,
+          "t1": 64.0,
+          "rms": 0.10327116076618668,
+          "asr": ""
+        },
+        {
+          "i": 8,
+          "t0": 64.0,
+          "t1": 72.0,
+          "rms": 0.09259315835074548,
+          "asr": "Oh, Lord, start this time. Here we go. You'll be here. I'm looking for some fucking doctor."
+        },
+        {
+          "i": 9,
+          "t0": 72.0,
+          "t1": 80.0,
+          "rms": 0.08736440689325488,
+          "asr": ""
+        },
+        {
+          "i": 10,
+          "t0": 80.0,
+          "t1": 88.0,
+          "rms": 0.10936744081260762,
+          "asr": ""
+        },
+        {
+          "i": 11,
+          "t0": 88.0,
+          "t1": 96.0,
+          "rms": 0.11144835649022013,
+          "asr": ""
+        },
+        {
+          "i": 12,
+          "t0": 96.0,
+          "t1": 104.0,
+          "rms": 0.1122739174286688,
+          "asr": ""
+        },
+        {
+          "i": 13,
+          "t0": 104.0,
+          "t1": 112.0,
+          "rms": 0.11623458857835249,
+          "asr": ""
+        },
+        {
+          "i": 14,
+          "t0": 112.0,
+          "t1": 120.0,
+          "rms": 0.0867023337383677,
+          "asr": ""
+        },
+        {
+          "i": 15,
+          "t0": 120.0,
+          "t1": 128.0,
+          "rms": 0.0879690039235011,
+          "asr": "Oh, classic, simulating. Two feet, four, five, six, seven, eight, two, eight."
+        },
+        {
+          "i": 16,
+          "t0": 128.0,
+          "t1": 136.0,
+          "rms": 0.09130028991556902,
+          "asr": ""
+        },
+        {
+          "i": 17,
+          "t0": 136.0,
+          "t1": 144.0,
+          "rms": 0.08730386096476221,
+          "asr": ""
+        },
+        {
+          "i": 18,
+          "t0": 144.0,
+          "t1": 152.0,
+          "rms": 0.10910806002325517,
+          "asr": ""
+        },
+        {
+          "i": 19,
+          "t0": 152.0,
+          "t1": 160.0,
+          "rms": 0.1088918476754757,
+          "asr": ""
+        },
+        {
+          "i": 20,
+          "t0": 160.0,
+          "t1": 168.0,
+          "rms": 0.11885655371990013,
+          "asr": ""
+        },
+        {
+          "i": 21,
+          "t0": 168.0,
+          "t1": 176.0,
+          "rms": 0.10497779991807177,
+          "asr": ""
+        },
+        {
+          "i": 22,
+          "t0": 176.0,
+          "t1": 184.0,
+          "rms": 0.1081852150629183,
+          "asr": ""
+        },
+        {
+          "i": 23,
+          "t0": 184.0,
+          "t1": 192.0,
+          "rms": 0.11210256950188408,
+          "asr": ""
+        },
+        {
+          "i": 24,
+          "t0": 192.0,
+          "t1": 200.0,
+          "rms": 0.10667792703344725,
+          "asr": ""
+        },
+        {
+          "i": 25,
+          "t0": 200.0,
+          "t1": 208.0,
+          "rms": 0.10013351502763265,
+          "asr": ""
+        },
+        {
+          "i": 26,
+          "t0": 208.0,
+          "t1": 216.0,
+          "rms": 0.03587471475150246,
+          "asr": ""
+        },
+        {
+          "i": 27,
+          "t0": 216.0,
+          "t1": 219.284,
+          "rms": 0.09030873766639926,
+          "asr": "I'm going to tell you about the story of the people who are in the world."
+        }
+      ],
+      "reliability": "EN-only model; nonempty may be hallucination (repetition) or English-like content"
+    }
+  },
+  "vad_forensics": {
+    "silero_default_threshold": "0 segments",
+    "silero_threshold_0.1": "1 short segment ~1.3-1.7s",
+    "silero_threshold_0.05": "1 segment ~0.7-1.7s",
+    "energy_profile": "near-continuous rms~0.05-0.14 across 1s windows; no clear speech/silence gating",
+    "failure_class": "VAD",
+    "implication": "real-audio continuous energy defeats default Silero settings used on clean TTS benchmarks"
+  },
+  "language_evidence_summary": "No reliable LID. EN-only Moonshine mostly empty with few possibly-hallucinated English strings. faster-whisper tiny assigns mixed languages with generally low probability; one window tagged vi p~0.67 is insufficient to label the full file Vietnamese. Human listen required.",
+  "pronunciation_scoring": {
+    "ran": false,
+    "reason": "no authorized known English target; ASR hypotheses are not ground-truth targets"
+  },
+  "git_policy": {
+    "commit_original_mp3": false,
+    "commit_derived_wav": false,
+    "reason": "privacy_sensitive_real_audio"
+  }
+}

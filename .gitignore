@@ -76,3 +76,11 @@ Research/Speech/**/models/
 *.onnx
 *.bin
 !Research/**/*.md
+
+# Real human audio (privacy-sensitive) — never commit.
+IMG_0639.mp3
+IMG_*.mp3
+IMG_*.wav
+Research/Speech/Phase1_7/AudioDerived/
+Research/Speech/**/real-audio/
+Research/Speech/**/real-child/
