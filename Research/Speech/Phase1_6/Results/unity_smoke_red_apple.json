@@ -1,0 +1,203 @@
+{
+  "ok": true,
+  "protocol_version": "lwe-speaking-protocol-1.6.0",
+  "pipeline_version": "phase1.2.0-2026-10-02+p16",
+  "inventory_version": "phone-inventory-v1.4.0",
+  "recognized_text": "Red apple",
+  "score": 99.4,
+  "confidence": 0.12,
+  "primary_source": "ensemble_mean",
+  "confidenceSemantics": "research: soft conf related to phone posterior; calibrated P(|err|<=10) is adult-L2 only when conf_map present",
+  "conflicts": [
+    "HIGH_SCORE_LOW_CONFIDENCE"
+  ],
+  "confidenceReasons": [
+    "PHONE_POSTERIOR_LOW"
+  ],
+  "wordDiagnostics": [
+    {
+      "word": "red",
+      "start": 0.0,
+      "end": 0.343,
+      "score": 100.0,
+      "confidence": 0.21,
+      "phones": [
+        {
+          "exp": "ɹ",
+          "obs": "ɹ",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.118,
+          "t0": 0.0,
+          "t1": 0.162
+        },
+        {
+          "exp": "ɛ",
+          "obs": "ɛ",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.312,
+          "t0": 0.162,
+          "t1": 0.222
+        },
+        {
+          "exp": "d",
+          "obs": "d",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.201,
+          "t0": 0.222,
+          "t1": 0.343
+        }
+      ]
+    },
+    {
+      "word": "apple",
+      "start": 0.343,
+      "end": 1.474,
+      "score": 100.0,
+      "confidence": 0.052,
+      "phones": [
+        {
+          "exp": "æ",
+          "obs": "æ",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.087,
+          "t0": 0.343,
+          "t1": 0.444
+        },
+        {
+          "exp": "p",
+          "obs": "p",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.089,
+          "t0": 0.444,
+          "t1": 0.525
+        },
+        {
+          "exp": "ə",
+          "obs": "ə",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.019,
+          "t0": 0.525,
+          "t1": 0.566
+        },
+        {
+          "exp": "l",
+          "obs": "l",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.012,
+          "t0": 0.566,
+          "t1": 1.474
+        }
+      ]
+    }
+  ],
+  "phonemeDiagnostics": [
+    {
+      "expectedPhone": "ɹ",
+      "observedEvidence": "ɹ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.118,
+      "start": 0.0,
+      "end": 0.162
+    },
+    {
+      "expectedPhone": "ɛ",
+      "observedEvidence": "ɛ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.312,
+      "start": 0.162,
+      "end": 0.222
+    },
+    {
+      "expectedPhone": "d",
+      "observedEvidence": "d",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.201,
+      "start": 0.222,
+      "end": 0.343
+    },
+    {
+      "expectedPhone": "æ",
+      "observedEvidence": "æ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.087,
+      "start": 0.343,
+      "end": 0.444
+    },
+    {
+      "expectedPhone": "p",
+      "observedEvidence": "p",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.089,
+      "start": 0.444,
+      "end": 0.525
+    },
+    {
+      "expectedPhone": "ə",
+      "observedEvidence": "ə",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.019,
+      "start": 0.525,
+      "end": 0.566
+    },
+    {
+      "expectedPhone": "l",
+      "observedEvidence": "l",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.012,
+      "start": 0.566,
+      "end": 1.474
+    }
+  ],
+  "scoreEvidence": {
+    "phoneEvidence": {
+      "value": 100.0,
+      "confidence": 0.12,
+      "source": "phone-evidence-v2@1.4.0"
+    },
+    "openPronounceEvidence": {
+      "value": 98.86,
+      "source": "openpronounce"
+    },
+    "asrEvidence": {
+      "value": "Red apple",
+      "role": "supporting_only_not_pronunciation_judge"
+    },
+    "vadEvidence": {
+      "speech_detected": true
+    },
+    "alignmentEvidence": {
+      "method": "word_ctc_forced_v1",
+      "n_words": 2
+    },
+    "acousticEvidence": {
+      "f0": 182.28215764778196,
+      "f1": 593.3083333126191,
+      "f2": 1637.4062169184815
+    },
+    "ensembleCandidates": {
+      "soft": 100.0,
+      "op": 98.86,
+      "mean": 99.4,
+      "min": 98.9
+    }
+  },
+  "asr_is_not_pronunciation_judge": true,
+  "population_label": "unity_harness_smoke",
+  "timings": {
+    "wall_s": 59.328
+  }
+}

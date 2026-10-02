@@ -1,0 +1,84 @@
+{
+  "ok": true,
+  "protocol_version": "lwe-speaking-protocol-1.6.0",
+  "pipeline_version": "phase1.2.0-2026-10-02+p16",
+  "inventory_version": "phone-inventory-v1.4.0",
+  "recognized_text": "",
+  "score": 0.0,
+  "confidence": 0.0,
+  "primary_source": "ensemble_mean",
+  "confidenceSemantics": "research: soft conf related to phone posterior; calibrated P(|err|<=10) is adult-L2 only when conf_map present",
+  "conflicts": [],
+  "confidenceReasons": [
+    "PHONE_POSTERIOR_LOW",
+    "VAD_NO_SPEECH"
+  ],
+  "wordDiagnostics": [],
+  "phonemeDiagnostics": [
+    {
+      "expectedPhone": "ɹ",
+      "observedEvidence": "l",
+      "matchType": "soft",
+      "score": 17.5,
+      "confidence": 0.001,
+      "start": 0.0,
+      "end": 1.96
+    },
+    {
+      "expectedPhone": "ɛ",
+      "observedEvidence": "æ",
+      "matchType": "soft",
+      "score": 25.0,
+      "confidence": 0.0,
+      "start": 1.96,
+      "end": 1.98
+    },
+    {
+      "expectedPhone": "d",
+      "observedEvidence": "l",
+      "matchType": "miss",
+      "score": 0.0,
+      "confidence": 0.0,
+      "start": 1.98,
+      "end": 2.0
+    }
+  ],
+  "scoreEvidence": {
+    "phoneEvidence": {
+      "value": 0.0,
+      "confidence": 0.0,
+      "source": "phone-evidence-v2@1.4.0"
+    },
+    "openPronounceEvidence": {
+      "value": 0.0,
+      "source": "openpronounce"
+    },
+    "asrEvidence": {
+      "value": "",
+      "role": "supporting_only_not_pronunciation_judge"
+    },
+    "vadEvidence": {
+      "speech_detected": false
+    },
+    "alignmentEvidence": {
+      "method": null,
+      "n_words": 0
+    },
+    "acousticEvidence": {
+      "f0": null,
+      "f1": null,
+      "f2": null
+    },
+    "ensembleCandidates": {
+      "soft": 0.0,
+      "op": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    }
+  },
+  "asr_is_not_pronunciation_judge": true,
+  "population_label": "unity_harness_smoke",
+  "timings": {
+    "wall_s": 50.219
+  }
+}

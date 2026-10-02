@@ -1,0 +1,35 @@
+[
+  {
+    "target": "red",
+    "ok": true,
+    "returncode": 0,
+    "score": 100.0,
+    "confidence": 0.1,
+    "words": 1,
+    "stdout_tail": "OK score= 100.0 conf= 0.1 src= ensemble_mean words= 1\nWROTE D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_6\\Results\\unity_smoke_red.json\n",
+    "stderr_tail": "]\nLoading weights: 100%|##########| 424/424 [00:00<00:00, 11898.97it/s]\n\nLoading weights:   0%|          | 0/424 [00:00<?, ?it/s]\nLoading weights: 100%|##########| 424/424 [00:00<00:00, 13630.71it/s]\n",
+    "out": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_6\\Results\\unity_smoke_red.json"
+  },
+  {
+    "target": "red apple",
+    "ok": true,
+    "returncode": 0,
+    "score": 99.4,
+    "confidence": 0.12,
+    "words": 2,
+    "stdout_tail": "OK score= 99.4 conf= 0.12 src= ensemble_mean words= 2\nWROTE D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_6\\Results\\unity_smoke_red_apple.json\n",
+    "stderr_tail": "]\nLoading weights: 100%|##########| 424/424 [00:00<00:00, 14553.31it/s]\n\nLoading weights:   0%|          | 0/424 [00:00<?, ?it/s]\nLoading weights: 100%|##########| 424/424 [00:00<00:00, 16463.48it/s]\n",
+    "out": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_6\\Results\\unity_smoke_red_apple.json"
+  },
+  {
+    "target": "red",
+    "ok": true,
+    "returncode": 0,
+    "score": 0.0,
+    "confidence": 0.0,
+    "words": 0,
+    "stdout_tail": "OK score= 0.0 conf= 0.0 src= ensemble_mean words= 0\nWROTE D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_6\\Results\\unity_smoke_silence.json\n",
+    "stderr_tail": "]\nLoading weights: 100%|##########| 424/424 [00:00<00:00, 12630.31it/s]\n\nLoading weights:   0%|          | 0/424 [00:00<?, ?it/s]\nLoading weights: 100%|##########| 424/424 [00:00<00:00, 19497.70it/s]\n",
+    "out": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_6\\Results\\unity_smoke_silence.json"
+  }
+]

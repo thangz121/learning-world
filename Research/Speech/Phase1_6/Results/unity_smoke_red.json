@@ -1,0 +1,122 @@
+{
+  "ok": true,
+  "protocol_version": "lwe-speaking-protocol-1.6.0",
+  "pipeline_version": "phase1.2.0-2026-10-02+p16",
+  "inventory_version": "phone-inventory-v1.4.0",
+  "recognized_text": "Red",
+  "score": 100.0,
+  "confidence": 0.1,
+  "primary_source": "ensemble_mean",
+  "confidenceSemantics": "research: soft conf related to phone posterior; calibrated P(|err|<=10) is adult-L2 only when conf_map present",
+  "conflicts": [
+    "HIGH_SCORE_LOW_CONFIDENCE"
+  ],
+  "confidenceReasons": [
+    "PHONE_POSTERIOR_LOW"
+  ],
+  "wordDiagnostics": [
+    {
+      "word": "red",
+      "start": 0.0,
+      "end": 1.219,
+      "score": 100.0,
+      "confidence": 0.1,
+      "phones": [
+        {
+          "exp": "ɹ",
+          "obs": "ɹ",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.091,
+          "t0": 0.0,
+          "t1": 0.203
+        },
+        {
+          "exp": "ɛ",
+          "obs": "ɛ",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.179,
+          "t0": 0.203,
+          "t1": 0.305
+        },
+        {
+          "exp": "d",
+          "obs": "d",
+          "type": "exact",
+          "sim": 1.0,
+          "post": 0.029,
+          "t0": 0.305,
+          "t1": 1.219
+        }
+      ]
+    }
+  ],
+  "phonemeDiagnostics": [
+    {
+      "expectedPhone": "ɹ",
+      "observedEvidence": "ɹ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.091,
+      "start": 0.0,
+      "end": 0.203
+    },
+    {
+      "expectedPhone": "ɛ",
+      "observedEvidence": "ɛ",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.179,
+      "start": 0.203,
+      "end": 0.305
+    },
+    {
+      "expectedPhone": "d",
+      "observedEvidence": "d",
+      "matchType": "exact",
+      "score": 100.0,
+      "confidence": 0.029,
+      "start": 0.305,
+      "end": 1.219
+    }
+  ],
+  "scoreEvidence": {
+    "phoneEvidence": {
+      "value": 100.0,
+      "confidence": 0.1,
+      "source": "phone-evidence-v2@1.4.0"
+    },
+    "openPronounceEvidence": {
+      "value": 100.0,
+      "source": "openpronounce"
+    },
+    "asrEvidence": {
+      "value": "Red",
+      "role": "supporting_only_not_pronunciation_judge"
+    },
+    "vadEvidence": {
+      "speech_detected": true
+    },
+    "alignmentEvidence": {
+      "method": "word_ctc_forced_v1",
+      "n_words": 1
+    },
+    "acousticEvidence": {
+      "f0": 164.50165341307303,
+      "f1": 589.2448131634179,
+      "f2": 1861.6440180674083
+    },
+    "ensembleCandidates": {
+      "soft": 100.0,
+      "op": 100.0,
+      "mean": 100.0,
+      "min": 100.0
+    }
+  },
+  "asr_is_not_pronunciation_judge": true,
+  "population_label": "unity_harness_smoke",
+  "timings": {
+    "wall_s": 57.897
+  }
+}

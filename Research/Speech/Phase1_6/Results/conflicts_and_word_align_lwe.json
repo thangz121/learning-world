@@ -1,0 +1,599 @@
+[
+  {
+    "file": "sapi_red.wav",
+    "target": "red",
+    "asr": "Red",
+    "soft": 100.0,
+    "soft_conf": 0.1,
+    "op": 100.0,
+    "ensembles": {
+      "soft": 100.0,
+      "op": 100.0,
+      "mean": 100.0,
+      "min": 100.0,
+      "max": 100.0,
+      "conf_weighted": 100.0
+    },
+    "conflict_class": "AGREE",
+    "suggested_action": "mean",
+    "word_spans": [
+      {
+        "word": "red",
+        "t0": 0.0,
+        "t1": 1.2194375,
+        "soft": 100.0,
+        "conf": 0.1,
+        "phones": [
+          {
+            "exp": "ɹ",
+            "obs": "ɹ",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.091,
+            "t0": 0.0,
+            "t1": 0.203
+          },
+          {
+            "exp": "ɛ",
+            "obs": "ɛ",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.179,
+            "t0": 0.203,
+            "t1": 0.305
+          },
+          {
+            "exp": "d",
+            "obs": "d",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.029,
+            "t0": 0.305,
+            "t1": 1.219
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "sapi_blue.wav",
+    "target": "blue",
+    "asr": "Blue.",
+    "soft": 5.8,
+    "soft_conf": 0.0,
+    "op": 17.68,
+    "ensembles": {
+      "soft": 5.8,
+      "op": 17.68,
+      "mean": 11.7,
+      "min": 5.8,
+      "max": 17.7,
+      "conf_weighted": 17.7
+    },
+    "conflict_class": "AGREE",
+    "suggested_action": "mean",
+    "word_spans": [
+      {
+        "word": "blue",
+        "t0": 0.0,
+        "t1": 1.1994375,
+        "soft": 5.8,
+        "conf": 0.0,
+        "phones": [
+          {
+            "exp": "b",
+            "obs": "l",
+            "type": "miss",
+            "sim": 0.0,
+            "post": 0.0,
+            "t0": 0.0,
+            "t1": 0.02
+          },
+          {
+            "exp": "l",
+            "obs": "j",
+            "type": "soft",
+            "sim": 0.175,
+            "post": 0.0,
+            "t0": 0.02,
+            "t1": 1.179
+          },
+          {
+            "exp": "uː",
+            "obs": "l",
+            "type": "miss",
+            "sim": 0.0,
+            "post": 0.0,
+            "t0": 1.179,
+            "t1": 1.199
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "pregen_apple_normal.wav",
+    "target": "apple",
+    "asr": "Apple,",
+    "soft": 75.2,
+    "soft_conf": 0.065,
+    "op": 60.0,
+    "ensembles": {
+      "soft": 75.2,
+      "op": 60.0,
+      "mean": 67.6,
+      "min": 60.0,
+      "max": 75.2,
+      "conf_weighted": 60.9
+    },
+    "conflict_class": "BOTH_UNCERTAIN",
+    "suggested_action": "no_auto_pick",
+    "word_spans": [
+      {
+        "word": "apple",
+        "t0": 0.0,
+        "t1": 0.8400000000000001,
+        "soft": 75.2,
+        "conf": 0.076,
+        "phones": [
+          {
+            "exp": "æ",
+            "obs": "æ",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.023,
+            "t0": 0.0,
+            "t1": 0.266
+          },
+          {
+            "exp": "p",
+            "obs": "p",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.278,
+            "t0": 0.266,
+            "t1": 0.389
+          },
+          {
+            "exp": "ə",
+            "obs": "ɔ",
+            "type": "miss",
+            "sim": 0.009,
+            "post": 0.018,
+            "t0": 0.389,
+            "t1": 0.43
+          },
+          {
+            "exp": "l",
+            "obs": "l",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.028,
+            "t0": 0.43,
+            "t1": 0.84
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "sapi_book.wav",
+    "target": "book",
+    "asr": "",
+    "soft": 66.7,
+    "soft_conf": 0.005,
+    "op": 23.23,
+    "ensembles": {
+      "soft": 66.7,
+      "op": 23.23,
+      "mean": 45.0,
+      "min": 23.2,
+      "max": 66.7,
+      "conf_weighted": 23.8
+    },
+    "conflict_class": "ASR_EMPTY_SOFT_NONZERO",
+    "suggested_action": "inspect_audio",
+    "word_spans": [
+      {
+        "word": "book",
+        "t0": 0.0,
+        "t1": 1.2694375,
+        "soft": 66.7,
+        "conf": 0.006,
+        "phones": [
+          {
+            "exp": "b",
+            "obs": "b",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.002,
+            "t0": 0.0,
+            "t1": 0.242
+          },
+          {
+            "exp": "ʊ",
+            "obs": "ɔ",
+            "type": "miss",
+            "sim": 0.002,
+            "post": 0.003,
+            "t0": 0.242,
+            "t1": 0.262
+          },
+          {
+            "exp": "k",
+            "obs": "k",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.016,
+            "t0": 0.262,
+            "t1": 1.269
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "sapi_big.wav",
+    "target": "big",
+    "asr": "Big",
+    "soft": 33.3,
+    "soft_conf": 0.0,
+    "op": 60.57,
+    "ensembles": {
+      "soft": 33.3,
+      "op": 60.57,
+      "mean": 46.9,
+      "min": 33.3,
+      "max": 60.6,
+      "conf_weighted": 60.6
+    },
+    "conflict_class": "BOTH_UNCERTAIN",
+    "suggested_action": "no_auto_pick",
+    "word_spans": [
+      {
+        "word": "big",
+        "t0": 0.0,
+        "t1": 1.2694375,
+        "soft": 33.3,
+        "conf": 0.0,
+        "phones": [
+          {
+            "exp": "b",
+            "obs": "b",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.001,
+            "t0": 0.0,
+            "t1": 0.222
+          },
+          {
+            "exp": "ɪ",
+            "obs": "ə",
+            "type": "miss",
+            "sim": 0.0,
+            "post": 0.0,
+            "t0": 0.222,
+            "t1": 1.249
+          },
+          {
+            "exp": "ɡ",
+            "obs": "l",
+            "type": "miss",
+            "sim": 0.0,
+            "post": 0.0,
+            "t0": 1.249,
+            "t1": 1.269
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "sapi_dog.wav",
+    "target": "dog",
+    "asr": "Dog.",
+    "soft": 33.3,
+    "soft_conf": 0.001,
+    "op": 86.67,
+    "ensembles": {
+      "soft": 33.3,
+      "op": 86.67,
+      "mean": 60.0,
+      "min": 33.3,
+      "max": 86.7,
+      "conf_weighted": 86.6
+    },
+    "conflict_class": "SOFT_LIKELY_WEAK_PHONE_MODEL",
+    "suggested_action": "inspect_both_prefer_lower_for_safety_not_truth",
+    "word_spans": [
+      {
+        "word": "dog",
+        "t0": 0.0,
+        "t1": 1.2694375,
+        "soft": 33.3,
+        "conf": 0.002,
+        "phones": [
+          {
+            "exp": "d",
+            "obs": "d",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.009,
+            "t0": 0.0,
+            "t1": 1.229
+          },
+          {
+            "exp": "ɔ",
+            "obs": "l",
+            "type": "miss",
+            "sim": 0.0,
+            "post": 0.0,
+            "t0": 1.229,
+            "t1": 1.249
+          },
+          {
+            "exp": "ɡ",
+            "obs": "æ",
+            "type": "miss",
+            "sim": 0.0,
+            "post": 0.0,
+            "t0": 1.249,
+            "t1": 1.269
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "sapi_cat.wav",
+    "target": "cat",
+    "asr": "Cat",
+    "soft": 100.0,
+    "soft_conf": 0.059,
+    "op": 100.0,
+    "ensembles": {
+      "soft": 100.0,
+      "op": 100.0,
+      "mean": 100.0,
+      "min": 100.0,
+      "max": 100.0,
+      "conf_weighted": 100.0
+    },
+    "conflict_class": "AGREE",
+    "suggested_action": "mean",
+    "word_spans": [
+      {
+        "word": "cat",
+        "t0": 0.0,
+        "t1": 1.2594375,
+        "soft": 100.0,
+        "conf": 0.059,
+        "phones": [
+          {
+            "exp": "k",
+            "obs": "k",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.122,
+            "t0": 0.0,
+            "t1": 0.163
+          },
+          {
+            "exp": "æ",
+            "obs": "æ",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.034,
+            "t0": 0.163,
+            "t1": 0.345
+          },
+          {
+            "exp": "t",
+            "obs": "t",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.022,
+            "t0": 0.345,
+            "t1": 1.259
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "sapi_red_apple.wav",
+    "target": "red apple",
+    "asr": "Red apple",
+    "soft": 100.0,
+    "soft_conf": 0.12,
+    "op": 98.86,
+    "ensembles": {
+      "soft": 100.0,
+      "op": 98.86,
+      "mean": 99.4,
+      "min": 98.9,
+      "max": 100.0,
+      "conf_weighted": 99.0
+    },
+    "conflict_class": "AGREE",
+    "suggested_action": "mean",
+    "word_spans": [
+      {
+        "word": "red",
+        "t0": 0.0,
+        "t1": 0.34334760273972603,
+        "soft": 100.0,
+        "conf": 0.21,
+        "phones": [
+          {
+            "exp": "ɹ",
+            "obs": "ɹ",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.118,
+            "t0": 0.0,
+            "t1": 0.162
+          },
+          {
+            "exp": "ɛ",
+            "obs": "ɛ",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.312,
+            "t0": 0.162,
+            "t1": 0.222
+          },
+          {
+            "exp": "d",
+            "obs": "d",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.201,
+            "t0": 0.222,
+            "t1": 0.343
+          }
+        ]
+      },
+      {
+        "word": "apple",
+        "t0": 0.34334760273972603,
+        "t1": 1.474375,
+        "soft": 100.0,
+        "conf": 0.052,
+        "phones": [
+          {
+            "exp": "æ",
+            "obs": "æ",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.087,
+            "t0": 0.343,
+            "t1": 0.444
+          },
+          {
+            "exp": "p",
+            "obs": "p",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.089,
+            "t0": 0.444,
+            "t1": 0.525
+          },
+          {
+            "exp": "ə",
+            "obs": "ə",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.019,
+            "t0": 0.525,
+            "t1": 0.566
+          },
+          {
+            "exp": "l",
+            "obs": "l",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.012,
+            "t0": 0.566,
+            "t1": 1.474
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "stress_silence.wav",
+    "target": "red",
+    "asr": "",
+    "soft": 0.0,
+    "soft_conf": 0.0,
+    "op": 0.0,
+    "ensembles": {
+      "soft": 0.0,
+      "op": 0.0,
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "conf_weighted": 0.0
+    },
+    "conflict_class": "AGREE",
+    "suggested_action": "mean",
+    "word_spans": [],
+    "alignment_method": null,
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  },
+  {
+    "file": "pregen_ball_normal.wav",
+    "target": "ball",
+    "asr": "Ball.",
+    "soft": 73.6,
+    "soft_conf": 0.034,
+    "op": 73.33,
+    "ensembles": {
+      "soft": 73.6,
+      "op": 73.33,
+      "mean": 73.5,
+      "min": 73.3,
+      "max": 73.6,
+      "conf_weighted": 73.3
+    },
+    "conflict_class": "AGREE",
+    "suggested_action": "mean",
+    "word_spans": [
+      {
+        "word": "ball",
+        "t0": 0.0,
+        "t1": 0.792,
+        "soft": 73.6,
+        "conf": 0.042,
+        "phones": [
+          {
+            "exp": "b",
+            "obs": "b",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.062,
+            "t0": 0.0,
+            "t1": 0.162
+          },
+          {
+            "exp": "ɔ",
+            "obs": "ɑ",
+            "type": "soft",
+            "sim": 0.207,
+            "post": 0.034,
+            "t0": 0.162,
+            "t1": 0.183
+          },
+          {
+            "exp": "l",
+            "obs": "l",
+            "type": "exact",
+            "sim": 1.0,
+            "post": 0.03,
+            "t0": 0.183,
+            "t1": 0.792
+          }
+        ]
+      }
+    ],
+    "alignment_method": "word_ctc_forced_v1",
+    "note": "ensemble values are candidates; final policy requires held-out human eval on SO762"
+  }
+]
