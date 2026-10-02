@@ -44,19 +44,21 @@ public class TempUxRealJourney : MonoBehaviour {
   const float IdleSeconds = 10f;
   const float WatchdogSeconds = 2400f;
 
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: rút "order" khỏi journey (mở lại thì thêm lại
+  // stage + SkillIds/GameIds/ArenaScenes idx3 + case "order" + solver).
   static readonly string[] StageOrder = {
     "hub.boot", "math.yard",
     "counting.yard", "rabbit", "stairs",
     "math.return",
-    "geometry", "comparison", "classification", "order",
+    "geometry", "comparison", "classification",
     "exploration.empty", "hub.final"
   };
 
-  static readonly string[] SkillIds = { "math_geometry", "math_comparison", "math_classification", "math_order" };
-  static readonly string[] GameIds = { "shape_builder", "comparison_market", "classification_city", "ordering_station" };
+  static readonly string[] SkillIds = { "math_geometry", "math_comparison", "math_classification" };
+  static readonly string[] GameIds = { "shape_builder", "comparison_market", "classification_city" };
   static readonly string[] ArenaScenes = {
     GeometryPlayBuilder.SceneName, ComparisonMarketBuilder.SceneName,
-    ClassificationCityBuilder.SceneName, OrderingStationBuilder.SceneName,
+    ClassificationCityBuilder.SceneName,
     RabbitPlayBuilder.SceneName, StairHillBuilder.SceneName
   };
 
@@ -148,18 +150,12 @@ public class TempUxRealJourney : MonoBehaviour {
       if (m != null) sb.Append("cmp=").Append(m.Current).Append(' ');
       ClassificationCity c = FindObjectOfType<ClassificationCity>();
       if (c != null) sb.Append("cls=").Append(c.Current).Append(' ');
-      OrderingStation o = FindObjectOfType<OrderingStation>();
-      if (o != null) sb.Append("ord=").Append(o.Current).Append(' ');
       RabbitFeed r = FindObjectOfType<RabbitFeed>();
       if (r != null) sb.Append("rab=").Append(r.Current).Append(" count=").Append(r.Count)
         .Append(" target=").Append(r.Target).Append(" subs=").Append(r.Submits).Append(' ');
       NumberStairs st = FindObjectOfType<NumberStairs>();
       if (st != null) sb.Append("stair=").Append(st.Current).Append(" step=").Append(st.CurrentStep)
         .Append(" target=").Append(st.Target).Append(' ');
-      OrderingStationBuilder ob = FindObjectOfType<OrderingStationBuilder>();
-      if (ob != null) sb.Append("os@").Append(Fmt(ob.transform.position))
-        .Append(" pieces=").Append(ob.Pieces.Count).Append(" slots=").Append(ob.Slots.Count)
-        .Append(" exit=").Append(ob.ExitPortal != null).Append(' ');
       MicroWorldPortal[] ports = FindObjectsOfType<MicroWorldPortal>();
       int playPorts = 0;
       for (int i = 0; i < ports.Length; i++) if (ports[i] != null && ports[i].PlayExit) playPorts++;
@@ -339,7 +335,6 @@ public class TempUxRealJourney : MonoBehaviour {
       case "geometry": yield return StageArena(0); break;
       case "comparison": yield return StageArena(1); break;
       case "classification": yield return StageArena(2); break;
-      case "order": yield return StageArena(3); break;
       case "exploration.empty": yield return StageExplorationEmpty(); break;
       case "hub.final": yield return StageHubFinal(); break;
     }
@@ -566,20 +561,16 @@ public class TempUxRealJourney : MonoBehaviour {
     Shot(tag + "_task");
     _watchOff = false;
 
-    if (idx == 3) {
-      yield return PlayOrderingArena(tag);
-    } else {
-      for (int round = 0; round < 3; round++) {
-        Transform clickable = FirstArenaClickable();
-        if (clickable == null) { Log(tag + " round " + round + ": no clickable"); break; }
-        yield return WalkStep(delegate { return PlayerNear(clickable.position, 1.8f); },
-          clickable.position, 1.8f, 50f, tag + " walk piece " + round, null, null);
-        yield return TapWorld(clickable.position);
-        _watchOff = true;
-        yield return new WaitForSeconds(1.4f);
-        Shot(tag + "_click_" + round);
-        _watchOff = false;
-      }
+    for (int round = 0; round < 3; round++) {
+      Transform clickable = FirstArenaClickable();
+      if (clickable == null) { Log(tag + " round " + round + ": no clickable"); break; }
+      yield return WalkStep(delegate { return PlayerNear(clickable.position, 1.8f); },
+        clickable.position, 1.8f, 50f, tag + " walk piece " + round, null, null);
+      yield return TapWorld(clickable.position);
+      _watchOff = true;
+      yield return new WaitForSeconds(1.4f);
+      Shot(tag + "_click_" + round);
+      _watchOff = false;
     }
 
     yield return ExitArenaStep(skill, tag + " exit");
@@ -589,147 +580,13 @@ public class TempUxRealJourney : MonoBehaviour {
     Shot(tag + "_back_c");
   }
 
-  // ---- ordering solver (physically plays LV3..LV10) ----------------------------
-  IEnumerator PlayOrderingArena(string tag) {
-    float deadline = Time.realtimeSinceStartup + 1800f;
-    int guard = 0;
-    while (Time.realtimeSinceStartup < deadline && guard < 60) {
-      OrderingStation g = FindObjectOfType<OrderingStation>();
-      OrderingStationBuilder b = FindObjectOfType<OrderingStationBuilder>();
-      if (g == null || b == null) break;
-      if (g.Completed || g.Current == OrderingStation.Phase.Done) break;
-      if (g.Current == OrderingStation.Phase.Wait) {
-        Transform spot = FindNamed("OSPlaySpot");
-        if (spot != null) {
-          yield return WalkStep(delegate {
-            OrderingStation s = FindObjectOfType<OrderingStation>();
-            return s != null && s.Current != OrderingStation.Phase.Wait;
-          }, spot.position, 1.2f, 50f, tag + " play spot", null, null);
-        } else { yield return new WaitForSeconds(1f); }
-        continue;
-      }
-      int lvl = g.Level; int rnd = g.RoundIndex;
-      _watchOff = true; yield return new WaitForSeconds(0.7f); _watchOff = false;
-      Shot(tag + "_L" + lvl + "R" + rnd);
-      if (g.Task == OrderingStation.TaskKind.TapPosition) yield return SolveOrderingTap(g, b, tag);
-      else yield return SolveOrderingTrack(g, b, tag);
-      guard++;
-      yield return WaitStep(delegate {
-        OrderingStation s = FindObjectOfType<OrderingStation>();
-        return s == null || s.Completed || s.Current == OrderingStation.Phase.Done
-          || s.Level != lvl || s.RoundIndex != rnd;
-      }, 30f, tag + " L" + lvl + "R" + rnd + " advance");
-    }
-    OrderingStation fin = FindObjectOfType<OrderingStation>();
-    Record("ordering played through levels", fin != null && (fin.Completed || fin.Level >= OrderingStation.LastLevel),
-      fin == null ? "gone" : "level=" + fin.Level + " completed=" + fin.Completed);
-  }
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: ordering solver rút cùng journey.
 
-  IEnumerator SolveOrderingTap(OrderingStation g, OrderingStationBuilder b, string tag) {
-    int t = g.TapTargetSlot;
-    if (t < 0 || t >= b.Slots.Count || b.Slots[t] == null) yield break;
-    OrderingSlot slot = b.Slots[t];
-    if (slot.Occupant == null) yield break;
-    OrderingPiece occ = slot.Occupant;
-    yield return WalkStep(delegate { return PlayerNear(occ.transform.position, 1.5f); },
-      occ.transform.position, 1.5f, 40f, tag + " tap target", null, null);
-    yield return TapWorld(occ.transform.position + Vector3.up * 0.45f);
-    _watchOff = true; yield return new WaitForSeconds(0.8f); _watchOff = false;
-  }
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: SolveOrderingTap + TrackStr rút cùng journey.
 
-  string TrackStr(OrderingStationBuilder bb) {
-    System.Text.StringBuilder sb = new System.Text.StringBuilder("track=");
-    for (int i = 0; i < bb.Slots.Count; i++) {
-      OrderingSlot s = bb.Slots[i];
-      sb.Append(s != null && s.Occupant != null ? s.Occupant.Rank.ToString("F0") : "_").Append(',');
-    }
-    return sb.ToString();
-  }
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: SolveOrderingTrack rút cùng journey.
 
-  IEnumerator SolveOrderingTrack(OrderingStation g, OrderingStationBuilder b, string tag) {
-    for (int iter = 0; iter < 24; iter++) {
-      g = FindObjectOfType<OrderingStation>();
-      b = FindObjectOfType<OrderingStationBuilder>();
-      if (g == null || b == null) yield break;
-      if (g.Completed || g.Current == OrderingStation.Phase.Done
-          || g.Current == OrderingStation.Phase.Wait || g.Current == OrderingStation.Phase.TapAnswer) yield break;
-
-      // Already holding a piece: put it in its own correct slot first (also
-      // self-heals if the click grabbed a neighbour piece).
-      if (g.Carried != null) {
-        OrderingSlot dest = SlotForRank(g, b, g.Carried.Rank);
-        if (dest != null) {
-          Log(tag + " iter " + iter + " carry r" + g.Carried.Rank.ToString("F0")
-            + " -> slot " + dest.SlotIndex + " " + TrackStr(b));
-          yield return PlaceInto(g, b, dest, tag);
-        } else { yield return new WaitForSeconds(0.3f); }
-        continue;
-      }
-
-      OrderingSlot needSlot = null; float needRank = 0f;
-      if (g.Task == OrderingStation.TaskKind.Insert) {
-        for (int i = 0; i < b.Slots.Count; i++) { OrderingSlot s = b.Slots[i]; if (s != null && !s.Filled) { needSlot = s; break; } }
-        for (int i = 0; i < b.Pieces.Count; i++) { OrderingPiece p = b.Pieces[i]; if (p != null && !p.Locked) { needRank = p.Rank; break; } }
-      } else {
-        int n = b.Slots.Count;
-        if (n <= 0) yield break;
-        for (int i = 0; i < n; i++) {
-          OrderingSlot s = b.Slots[i]; if (s == null) continue;
-          float want = g.Descending ? (n - i) : (i + 1);
-          if (s.Occupant == null || Mathf.Abs(s.Occupant.Rank - want) > 0.01f) { needSlot = s; needRank = want; break; }
-        }
-        if (needSlot == null) yield break; // whole track already correct
-      }
-      if (needSlot == null) yield break;
-
-      Log(tag + " iter " + iter + " need=" + needSlot.SlotIndex + " rank=" + needRank
-        + " " + TrackStr(b) + " task=" + g.Task + " desc=" + g.Descending);
-
-      OrderingPiece piece = null;
-      for (int i = 0; i < b.Pieces.Count; i++) {
-        OrderingPiece p = b.Pieces[i];
-        if (p != null && !p.Locked && Mathf.Abs(p.Rank - needRank) < 0.01f) { piece = p; break; }
-      }
-      if (piece == null) { yield return new WaitForSeconds(0.4f); continue; }
-
-      yield return WalkStep(delegate { return PlayerNear(piece.transform.position, 1.4f); },
-        piece.transform.position, 1.4f, 40f, tag + " go r" + needRank, null, null);
-      yield return TapWorld(piece.transform.position + Vector3.up * 0.45f);
-      yield return WaitStep(delegate {
-        OrderingStation s = FindObjectOfType<OrderingStation>();
-        return s == null || s.Completed || s.Carried != null;
-      }, 8f, tag + " pick r" + needRank);
-      // The next loop pass carries whatever was picked to its correct slot.
-    }
-  }
-
-  OrderingSlot SlotForRank(OrderingStation g, OrderingStationBuilder b, float rank) {
-    if (g.Task == OrderingStation.TaskKind.Insert) {
-      for (int i = 0; i < b.Slots.Count; i++) { OrderingSlot s = b.Slots[i]; if (s != null && !s.Filled) return s; }
-      return null;
-    }
-    int n = b.Slots.Count;
-    for (int i = 0; i < n; i++) {
-      OrderingSlot s = b.Slots[i]; if (s == null) continue;
-      float want = g.Descending ? (n - i) : (i + 1);
-      if (Mathf.Abs(want - rank) < 0.01f) return s;
-    }
-    return null;
-  }
-
-  IEnumerator PlaceInto(OrderingStation g, OrderingStationBuilder b, OrderingSlot slot, string tag) {
-    Vector3 sp = slot.transform.position;
-    Vector3 south = new Vector3(sp.x, 0f, sp.z - 1.7f);
-    yield return WalkStep(delegate {
-      OrderingStation s = FindObjectOfType<OrderingStation>();
-      return s == null || s.Carried == null || PlayerNear(south, 0.8f);
-    }, south, 0.8f, 35f, tag + " stage->" + slot.SlotIndex, null, null);
-    yield return WalkStep(delegate {
-      OrderingStation s = FindObjectOfType<OrderingStation>();
-      return s == null || s.Carried == null || PlayerNear(sp, 0.5f);
-    }, sp, 0.5f, 35f, tag + " place->" + slot.SlotIndex, null, null);
-    _watchOff = true; yield return new WaitForSeconds(0.9f); _watchOff = false;
-  }
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: SlotForRank + PlaceInto rút cùng journey.
 
   IEnumerator StageExplorationEmpty() {
     yield return ReturnToHub();
@@ -1065,8 +922,6 @@ public class TempUxRealJourney : MonoBehaviour {
     if (m != null) return m.Current != ComparisonMarket.Phase.Wait;
     ClassificationCity c = FindObjectOfType<ClassificationCity>();
     if (c != null) return c.Current != ClassificationCity.Phase.Wait;
-    OrderingStation s = FindObjectOfType<OrderingStation>();
-    if (s != null) return s.Current != OrderingStation.Phase.Wait;
     return false;
   }
 
@@ -1075,7 +930,6 @@ public class TempUxRealJourney : MonoBehaviour {
       case 0: return "GPPlaySpot";
       case 1: return "CMPlaySpot";
       case 2: return "CCPlaySpot";
-      case 3: return "OSPlaySpot";
     }
     return "";
   }
@@ -1087,8 +941,6 @@ public class TempUxRealJourney : MonoBehaviour {
     if (ch != null) return ch.transform;
     ClassificationItem it = FirstIdleItem();
     if (it != null) return it.transform;
-    OrderingPiece op = FirstIdleOrder();
-    if (op != null) return op.transform;
     return null;
   }
 
@@ -1113,12 +965,7 @@ public class TempUxRealJourney : MonoBehaviour {
     return null;
   }
 
-  static OrderingPiece FirstIdleOrder() {
-    OrderingPiece[] all = FindObjectsOfType<OrderingPiece>();
-    for (int i = 0; i < all.Length; i++)
-      if (all[i] != null && !all[i].Locked && all[i].State == OrderingPiece.PieceState.Idle) return all[i];
-    return null;
-  }
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: FirstIdleOrder rút cùng journey.
 
   static RabbitCarrot FirstAvailable(RabbitFeed game) {
     for (int i = 0; i < game.CarrotCount; i++) {

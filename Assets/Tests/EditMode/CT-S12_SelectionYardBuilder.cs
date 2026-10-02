@@ -51,7 +51,7 @@ public class CT_S12_SelectionYardBuilder {
       Transform[] all = root.GetComponentsInChildren<Transform>(true);
       for (int i = 0; i < all.Length; i++)
         if (all[i].GetComponent<MicroGateHint>() != null) hints++;
-      Assert.AreEqual(5, hints, "all five math skills glow");
+      Assert.AreEqual(4, hints, "four live math skills glow (order closed)");
       Assert.IsNotNull(builder.BackGate, "skill yard has the way back");
       Assert.AreEqual(SelectionGate.GateKind.Back, builder.BackGate.Kind, "back gate kind");
       Assert.IsNotNull(builder.TitleBoard, "orientation sign staged");

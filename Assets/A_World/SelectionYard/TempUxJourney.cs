@@ -33,18 +33,21 @@ public class TempUxJourney : MonoBehaviour {
   const float ArrivedNoProgressSeconds = 12f;
   const float WatchdogSeconds = 1200f;
 
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: rút khỏi journey (mở lại thì thêm
+  // "math_order" / "ordering_station" / OrderingStationBuilder.SceneName /
+  // "OSPlaySpot" vào cuối 4 mảng dưới).
   static readonly string[] SkillIds = {
-    "math_geometry", "math_comparison", "math_classification", "math_order"
+    "math_geometry", "math_comparison", "math_classification"
   };
   static readonly string[] GameIds = {
-    "shape_builder", "comparison_market", "classification_city", "ordering_station"
+    "shape_builder", "comparison_market", "classification_city"
   };
   static readonly string[] SceneNames = {
     GeometryPlayBuilder.SceneName, ComparisonMarketBuilder.SceneName,
-    ClassificationCityBuilder.SceneName, OrderingStationBuilder.SceneName
+    ClassificationCityBuilder.SceneName
   };
   static readonly string[] SpotNames = {
-    "GPPlaySpot", "CMPlaySpot", "CCPlaySpot", "OSPlaySpot"
+    "GPPlaySpot", "CMPlaySpot", "CCPlaySpot"
   };
 
   string _shotDir = DefaultShotDir;
@@ -267,8 +270,6 @@ public class TempUxJourney : MonoBehaviour {
     if (m != null) return m.Current != ComparisonMarket.Phase.Wait;
     ClassificationCity c = FindObjectOfType<ClassificationCity>();
     if (c != null) return c.Current != ClassificationCity.Phase.Wait;
-    OrderingStation s = FindObjectOfType<OrderingStation>();
-    if (s != null) return s.Current != OrderingStation.Phase.Wait;
     return false;
   }
 
@@ -279,8 +280,6 @@ public class TempUxJourney : MonoBehaviour {
     if (ch != null) return ch.transform;
     ClassificationItem it = FirstIdleItem();
     if (it != null) return it.transform;
-    OrderingPiece op = FirstIdleOrder();
-    if (op != null) return op.transform;
     return null;
   }
 
@@ -309,14 +308,7 @@ public class TempUxJourney : MonoBehaviour {
     return null;
   }
 
-  static OrderingPiece FirstIdleOrder() {
-    OrderingPiece[] all = FindObjectsOfType<OrderingPiece>();
-    for (int i = 0; i < all.Length; i++) {
-      if (all[i] != null && !all[i].Locked && all[i].State == OrderingPiece.PieceState.Idle)
-        return all[i];
-    }
-    return null;
-  }
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: FirstIdleOrder rút cùng journey.
 
   IEnumerator ExitArenaStep(string expectSkill, string label) {
     _stepOk = false;

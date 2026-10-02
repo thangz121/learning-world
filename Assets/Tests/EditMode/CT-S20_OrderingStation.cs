@@ -1,4 +1,5 @@
-// CT-S20: ordering_station (Ga Thứ Tự). IMPLEMENTED, not HUMAN_ACCEPTED.
+// CT-S20: ordering_station (Ga Thứ Tự). TẠM ĐÓNG 2026-10-02 (rút khỏi catalog).
+// S20A/S20C pin trạng thái đóng; S20B/D/E/F/G giữ nguyên logic sắp xếp.
 // C# 9.0 only.
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -102,16 +103,13 @@ public class CT_S20_OrderingStation {
     }
   }
 
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: S20A pin trạng thái đóng (không còn đăng ký,
+  // không vào được). Logic sắp xếp (S20B/D/E/F/G) giữ nguyên vì code còn đó.
   [Test] public void S20A_Registration() {
-    GameEntry g = LearningMap.Game("ordering_station");
-    Assert.IsNotNull(g, "registered");
-    Assert.AreEqual("math_order", g.SkillId, "correct skill");
-    Assert.AreEqual("math", LearningMap.SubjectOfSkill(g.SkillId).Id, "correct subject");
-    Assert.AreEqual("OrderingStationPlayScene", g.SceneName, "correct scene");
-    Assert.AreEqual(GameStatus.Implemented, g.Status, "IMPLEMENTED");
-    Assert.IsFalse(g.HumanAccepted, "not HUMAN_ACCEPTED");
-    Assert.IsFalse(LearningMap.IsPlayable("ordering_station"), "acceptance firewall holds");
-    Assert.IsTrue(LearningMap.CanLaunch("ordering_station"), "may enter for play");
+    Assert.IsNull(LearningMap.Game("ordering_station"), "unregistered while closed");
+    Assert.AreEqual(0, LearningMap.GamesOf("math_order").Length, "order yard is empty");
+    Assert.IsFalse(LearningMap.IsPlayable("ordering_station"), "closed is never playable");
+    Assert.IsFalse(LearningMap.CanLaunch("ordering_station"), "closed cannot be entered");
   }
 
   [Test] public void S20B_OrderingModel() {
@@ -127,6 +125,8 @@ public class CT_S20_OrderingStation {
     Assert.AreEqual(2, OrderLogic.MiddleSlot(5), "middle");
   }
 
+  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: sân Thứ tự thành sân trống (placeholder,
+  // không cổng), PlayGame bị từ chối.
   [Test] public void S20C_YardDoorAndReturn() {
     GameObject r = new GameObject("S20Yard");
     try {
@@ -134,9 +134,9 @@ public class CT_S20_OrderingStation {
       b.Level = "game";
       b.SkillId = "math_order";
       b.BuildContent(r.transform);
-      Assert.AreEqual(1, b.GatePortals.Count, "one station door");
-      Assert.AreEqual("ordering_station", b.GateTargetIds[0]);
-      Assert.IsNotNull(FindDeep(r.transform, "SYPreview_ordering_station"), "wordless preview");
+      Assert.AreEqual(0, b.GatePortals.Count, "no doors while closed");
+      Assert.IsNotNull(b.PlaceholderBoard, "empty order yard shows the placeholder");
+      Assert.IsNotNull(FindDeep(r.transform, "SYPlaceholderLabel"), "placeholder label staged");
     } finally { Object.DestroyImmediate(r); }
     GameObject go = new GameObject("S20Area");
     try {
@@ -144,10 +144,10 @@ public class CT_S20_OrderingStation {
       area.Bind(null, null, null, null, null, Vector3.zero);
       area.SetCurrentForTests(SelectionYardArea.YardLevel.Game, "", "math_order");
       area.PlayGame("ordering_station");
-      Assert.AreEqual(1, area.PlayRequests, "order yard launches the station");
+      Assert.AreEqual(0, area.PlayRequests, "closed station launch refused");
       Assert.AreEqual("skill:math", area.BackTargetForTests(), "return is the skill yard");
       area.PlayGame("rabbit_feeding");
-      Assert.AreEqual(1, area.PlayRequests, "counting game refused here");
+      Assert.AreEqual(0, area.PlayRequests, "counting game refused here");
     } finally { Object.DestroyImmediate(go); }
   }
 
