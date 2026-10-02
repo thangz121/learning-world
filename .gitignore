@@ -92,3 +92,10 @@ Research/Speech/Phase1_9_1/HumanReview/clips_energy/
 Research/Speech/Phase1_9_1/Results/*.wav
 Research/Speech/**/real-audio/
 Research/Speech/**/real-child/
+
+# Phase 1.9.5 real audio + review clips (binaries)
+Research/Speech/Phase1_9_5/incoming-audio/
+Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips/
+Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_250ms/
+Research/Speech/Phase1_9_5/artifacts/phase_1_9_5/IMG_Human_Review/clips_padded_500ms/
+*.mp3

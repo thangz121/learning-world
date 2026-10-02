@@ -1,0 +1,88 @@
+{
+  "phase": "1.9.5",
+  "git_head_at_acquisition": "1aef969",
+  "note_on_fbd50b8": "Phase 1.9.4 commit fbd50b8 NOT present on this checkout; frozen from HEAD 1aef969 + Phase1.8/1.9 artifacts",
+  "recordings": [
+    {
+      "recording_id": "IMG_0639",
+      "original_filename": "IMG_0639.mp3",
+      "incoming_path": "Research/Speech/Phase1_9_5/incoming-audio/IMG_0639.mp3",
+      "sha256": "E4CDF24D2B5140B91EF637676CD5FA1B9A7F6B6A629F62AE9AC2657CB171A6F7",
+      "derived_16k_path": "Research/Speech/Phase1_8/AudioDerived/IMG_0639_16k_mono.wav",
+      "derived_16k_sha256": "9A662E8639D7C9694CFD997A221C541900BE39BEA26C3B961CFC2DF3162E5BCB",
+      "duration_seconds": 219.284,
+      "sample_rate_derived": 16000,
+      "channels_derived": 1,
+      "format": "mp3",
+      "byte_size": 5264528,
+      "source": "project real-audio (user-provided device recording)",
+      "license": "project internal use",
+      "provenance": "REAL_SOURCE; full SHA match Phase1.7/1.8 E4CDF24D2B5140B91EF637676CD5FA1B9A7F6B6A629F62AE9AC2657CB171A6F7",
+      "is_original": true,
+      "is_synthetic": false,
+      "is_duplicate": false,
+      "language": "unknown",
+      "speaker_count": null,
+      "recording_condition": "long continuous-energy difficult",
+      "selected_for_validation": true,
+      "reference_classification": "REAL_SOURCE",
+      "energy_stats": {
+        "duration_seconds": 219.284,
+        "simple_cont_energy_proxy": 0.41339049530238076,
+        "simple_energy_contrast_proxy": 3.138397492099839,
+        "silero_n_segments": 0,
+        "silero_speech_ratio": 0.0,
+        "profile_from_silero_run": {
+          "rms_mean": 0.08350644550603273,
+          "floor_mean": 0.05663887950399158,
+          "energy_gate_frac": 0.21034388397336495,
+          "spectral_gate_frac": 0.9413937790750707,
+          "silero_frac": 0.0
+        },
+        "prior_continuous_energy_ratio": 0.9726027397260274,
+        "prior_energy_contrast": 0.3084678949077175
+      }
+    },
+    {
+      "recording_id": "NEW_1790",
+      "original_filename": "1790932799243_8856108714107255767_8856108714107255767.mp3",
+      "incoming_path": "Research/Speech/Phase1_9_5/incoming-audio/NEW_1790932799243.mp3",
+      "incoming_filename": "NEW_1790932799243.mp3",
+      "sha256": "17E3DA86267D1B7B864EA862A6C5C3B12AF4E49FD649F2FE140652A53DDF33FF",
+      "derived_16k_path": "Research/Speech/Phase1_8/AudioDerived/NEW_16k_mono.wav",
+      "derived_16k_sha256": "7281C131C777F5B590BC3583B771DED300434E6D09306292D8DDEF8587CCF4EE",
+      "duration_seconds": 94.016,
+      "sample_rate_derived": 16000,
+      "channels_derived": 1,
+      "format": "mp3",
+      "byte_size": 1505682,
+      "source": "project real-audio (user-provided device recording)",
+      "license": "project internal use",
+      "provenance": "REAL_SOURCE; full SHA match Phase1.8 17E3DA86267D1B7B864EA862A6C5C3B12AF4E49FD649F2FE140652A53DDF33FF",
+      "is_original": true,
+      "is_synthetic": false,
+      "is_duplicate": false,
+      "language": "unknown",
+      "speaker_count": null,
+      "recording_condition": "long higher-contrast structure",
+      "selected_for_validation": true,
+      "reference_classification": "REAL_SOURCE",
+      "energy_stats": {
+        "duration_seconds": 94.016125,
+        "simple_cont_energy_proxy": 0.5587828492392808,
+        "simple_energy_contrast_proxy": 13.427980049531138,
+        "silero_n_segments": 38,
+        "silero_speech_ratio": 0.5977697974682535,
+        "profile_from_silero_run": {
+          "rms_mean": 0.019426611162962792,
+          "floor_mean": 0.007856000903319059,
+          "energy_gate_frac": 0.39982976912437496,
+          "spectral_gate_frac": 0.9698904138738164,
+          "silero_frac": 0.597935950633046
+        },
+        "prior_continuous_energy_ratio": 0.23404255319148937,
+        "prior_energy_contrast": 0.8773186139949414
+      }
+    }
+  ]
+}
