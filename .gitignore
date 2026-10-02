@@ -63,3 +63,16 @@ __pycache__/
 
 # Nested scratch Unity project (not part of this checkpoint)
 My project/
+
+# Local-only SSH notes (Tailscale IP/username) — never commit.
+connect ssh maynode.md
+
+# Speech research local model caches / HF blobs — never commit.
+hub/
+model_checkpoints/
+Research/Speech/**/models/
+*.pt
+*.pth
+*.onnx
+*.bin
+!Research/**/*.md

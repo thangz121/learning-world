@@ -1,0 +1,786 @@
+{
+  "baseline": [
+    {
+      "ref_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "hyp_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "ops": [
+        {
+          "type": "eq",
+          "ref": "ɹ",
+          "hyp": "ɹ"
+        },
+        {
+          "type": "eq",
+          "ref": "ɛ",
+          "hyp": "ɛ"
+        },
+        {
+          "type": "eq",
+          "ref": "d",
+          "hyp": "d"
+        }
+      ],
+      "PER": 0.0,
+      "word_score": 91.1,
+      "confidence": 0.911,
+      "phone_scores": [
+        {
+          "phone": "ɹ",
+          "status": "ok",
+          "score": 90.7,
+          "conf": 0.907
+        },
+        {
+          "phone": "ɛ",
+          "status": "ok",
+          "score": 86.9,
+          "conf": 0.869
+        },
+        {
+          "phone": "d",
+          "status": "ok",
+          "score": 95.7,
+          "conf": 0.957
+        }
+      ],
+      "target": "red",
+      "file": "sapi_red.wav",
+      "frame_mean_conf": 0.989,
+      "T": 0.64
+    },
+    {
+      "ref_ipa": [
+        "k",
+        "æ",
+        "t"
+      ],
+      "hyp_ipa": [
+        "k",
+        "ɛ",
+        "t"
+      ],
+      "ops": [
+        {
+          "type": "eq",
+          "ref": "k",
+          "hyp": "k"
+        },
+        {
+          "type": "sub",
+          "ref": "æ",
+          "hyp": "ɛ"
+        },
+        {
+          "type": "eq",
+          "ref": "t",
+          "hyp": "t"
+        }
+      ],
+      "PER": 0.333,
+      "word_score": 68.9,
+      "confidence": 0.518,
+      "phone_scores": [
+        {
+          "phone": "k",
+          "status": "ok",
+          "score": 97.5,
+          "conf": 0.975
+        },
+        {
+          "phone": "æ",
+          "status": "sub",
+          "heard": "ɛ",
+          "score": 12.3,
+          "conf": 0.387
+        },
+        {
+          "phone": "t",
+          "status": "ok",
+          "score": 97.0,
+          "conf": 0.97
+        }
+      ],
+      "target": "cat",
+      "file": "sapi_cat.wav",
+      "frame_mean_conf": 0.988,
+      "T": 0.39
+    },
+    {
+      "ref_ipa": [
+        "æ",
+        "p",
+        "ə",
+        "l"
+      ],
+      "hyp_ipa": [
+        "aː",
+        "p",
+        "o"
+      ],
+      "ops": [
+        {
+          "type": "sub",
+          "ref": "æ",
+          "hyp": "aː"
+        },
+        {
+          "type": "eq",
+          "ref": "p",
+          "hyp": "p"
+        },
+        {
+          "type": "del",
+          "ref": "ə",
+          "hyp": null
+        },
+        {
+          "type": "sub",
+          "ref": "l",
+          "hyp": "o"
+        }
+      ],
+      "PER": 0.75,
+      "word_score": 29.6,
+      "confidence": 0.121,
+      "phone_scores": [
+        {
+          "phone": "æ",
+          "status": "sub",
+          "heard": "aː",
+          "score": 11.4,
+          "conf": 0.431
+        },
+        {
+          "phone": "p",
+          "status": "ok",
+          "score": 92.8,
+          "conf": 0.928
+        },
+        {
+          "phone": "ə",
+          "status": "del",
+          "score": 0.0,
+          "conf": 0.3
+        },
+        {
+          "phone": "l",
+          "status": "sub",
+          "heard": "o",
+          "score": 14.3,
+          "conf": 0.284
+        }
+      ],
+      "target": "apple",
+      "file": "pregen_apple_normal.wav",
+      "frame_mean_conf": 0.939,
+      "T": 0.35
+    },
+    {
+      "ref_ipa": [
+        "æ",
+        "p",
+        "ə",
+        "l"
+      ],
+      "hyp_ipa": [
+        "ɹ",
+        "ɛ",
+        "d",
+        "ɛ",
+        "p",
+        "ɔ"
+      ],
+      "ops": [
+        {
+          "type": "ins",
+          "ref": null,
+          "hyp": "ɹ"
+        },
+        {
+          "type": "ins",
+          "ref": null,
+          "hyp": "ɛ"
+        },
+        {
+          "type": "sub",
+          "ref": "æ",
+          "hyp": "d"
+        },
+        {
+          "type": "sub",
+          "ref": "p",
+          "hyp": "ɛ"
+        },
+        {
+          "type": "sub",
+          "ref": "ə",
+          "hyp": "p"
+        },
+        {
+          "type": "sub",
+          "ref": "l",
+          "hyp": "ɔ"
+        }
+      ],
+      "PER": 1.5,
+      "word_score": 9.9,
+      "confidence": 0.0,
+      "phone_scores": [
+        {
+          "phone": "æ",
+          "status": "sub",
+          "heard": "d",
+          "score": 0.8,
+          "conf": 0.96
+        },
+        {
+          "phone": "p",
+          "status": "sub",
+          "heard": "ɛ",
+          "score": 12.8,
+          "conf": 0.36
+        },
+        {
+          "phone": "ə",
+          "status": "sub",
+          "heard": "p",
+          "score": 12.9,
+          "conf": 0.356
+        },
+        {
+          "phone": "l",
+          "status": "sub",
+          "heard": "ɔ",
+          "score": 13.2,
+          "conf": 0.341
+        }
+      ],
+      "target": "apple",
+      "file": "sapi_red_apple.wav",
+      "frame_mean_conf": 0.958,
+      "T": 0.43
+    },
+    {
+      "ref_ipa": [
+        "b",
+        "l",
+        "uː"
+      ],
+      "hyp_ipa": [
+        "t",
+        "u",
+        "j",
+        "ɐ̃ʊ̃"
+      ],
+      "ops": [
+        {
+          "type": "ins",
+          "ref": null,
+          "hyp": "t"
+        },
+        {
+          "type": "sub",
+          "ref": "b",
+          "hyp": "u"
+        },
+        {
+          "type": "sub",
+          "ref": "l",
+          "hyp": "j"
+        },
+        {
+          "type": "sub",
+          "ref": "uː",
+          "hyp": "ɐ̃ʊ̃"
+        }
+      ],
+      "PER": 1.333,
+      "word_score": 11.8,
+      "confidence": 0.0,
+      "phone_scores": [
+        {
+          "phone": "b",
+          "status": "sub",
+          "heard": "u",
+          "score": 9.2,
+          "conf": 0.542
+        },
+        {
+          "phone": "l",
+          "status": "sub",
+          "heard": "j",
+          "score": 7.9,
+          "conf": 0.607
+        },
+        {
+          "phone": "uː",
+          "status": "sub",
+          "heard": "ɐ̃ʊ̃",
+          "score": 18.3,
+          "conf": 0.086
+        }
+      ],
+      "target": "blue",
+      "file": "sapi_blue.wav",
+      "frame_mean_conf": 0.954,
+      "T": 0.38
+    },
+    {
+      "ref_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "hyp_ipa": [],
+      "ops": [
+        {
+          "type": "del",
+          "ref": "ɹ",
+          "hyp": null
+        },
+        {
+          "type": "del",
+          "ref": "ɛ",
+          "hyp": null
+        },
+        {
+          "type": "del",
+          "ref": "d",
+          "hyp": null
+        }
+      ],
+      "PER": 1.0,
+      "word_score": 0.0,
+      "confidence": 0.0,
+      "phone_scores": [
+        {
+          "phone": "ɹ",
+          "status": "del",
+          "score": 0.0,
+          "conf": 0.3
+        },
+        {
+          "phone": "ɛ",
+          "status": "del",
+          "score": 0.0,
+          "conf": 0.3
+        },
+        {
+          "phone": "d",
+          "status": "del",
+          "score": 0.0,
+          "conf": 0.3
+        }
+      ],
+      "target": "red",
+      "file": "stress_silence.wav",
+      "frame_mean_conf": 0.943,
+      "T": 0.54
+    }
+  ],
+  "corruptions": [
+    {
+      "ref_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "hyp_ipa": [
+        "ɹ",
+        "aː",
+        "d"
+      ],
+      "ops": [
+        {
+          "type": "eq",
+          "ref": "ɹ",
+          "hyp": "ɹ"
+        },
+        {
+          "type": "sub",
+          "ref": "ɛ",
+          "hyp": "aː"
+        },
+        {
+          "type": "eq",
+          "ref": "d",
+          "hyp": "d"
+        }
+      ],
+      "PER": 0.333,
+      "word_score": 59.8,
+      "confidence": 0.504,
+      "phone_scores": [
+        {
+          "phone": "ɹ",
+          "status": "ok",
+          "score": 76.7,
+          "conf": 0.767
+        },
+        {
+          "phone": "ɛ",
+          "status": "sub",
+          "heard": "aː",
+          "score": 8.8,
+          "conf": 0.562
+        },
+        {
+          "phone": "d",
+          "status": "ok",
+          "score": 93.8,
+          "conf": 0.938
+        }
+      ],
+      "target": "red",
+      "file": "corrupt_red_pitch_up_1.3.wav",
+      "frame_mean_conf": 0.983,
+      "corruption": "pitch_up_1.3"
+    },
+    {
+      "ref_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "hyp_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "ops": [
+        {
+          "type": "eq",
+          "ref": "ɹ",
+          "hyp": "ɹ"
+        },
+        {
+          "type": "eq",
+          "ref": "ɛ",
+          "hyp": "ɛ"
+        },
+        {
+          "type": "eq",
+          "ref": "d",
+          "hyp": "d"
+        }
+      ],
+      "PER": 0.0,
+      "word_score": 73.4,
+      "confidence": 0.734,
+      "phone_scores": [
+        {
+          "phone": "ɹ",
+          "status": "ok",
+          "score": 91.6,
+          "conf": 0.916
+        },
+        {
+          "phone": "ɛ",
+          "status": "ok",
+          "score": 53.0,
+          "conf": 0.53
+        },
+        {
+          "phone": "d",
+          "status": "ok",
+          "score": 75.6,
+          "conf": 0.756
+        }
+      ],
+      "target": "red",
+      "file": "corrupt_red_pitch_down_0.75.wav",
+      "frame_mean_conf": 0.985,
+      "corruption": "pitch_down_0.75"
+    },
+    {
+      "ref_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "hyp_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "ops": [
+        {
+          "type": "eq",
+          "ref": "ɹ",
+          "hyp": "ɹ"
+        },
+        {
+          "type": "eq",
+          "ref": "ɛ",
+          "hyp": "ɛ"
+        },
+        {
+          "type": "eq",
+          "ref": "d",
+          "hyp": "d"
+        }
+      ],
+      "PER": 0.0,
+      "word_score": 79.1,
+      "confidence": 0.791,
+      "phone_scores": [
+        {
+          "phone": "ɹ",
+          "status": "ok",
+          "score": 91.4,
+          "conf": 0.914
+        },
+        {
+          "phone": "ɛ",
+          "status": "ok",
+          "score": 86.3,
+          "conf": 0.863
+        },
+        {
+          "phone": "d",
+          "status": "ok",
+          "score": 59.6,
+          "conf": 0.596
+        }
+      ],
+      "target": "red",
+      "file": "corrupt_red_soft_0.2.wav",
+      "frame_mean_conf": 0.988,
+      "corruption": "soft_0.2"
+    },
+    {
+      "ref_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "hyp_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "ops": [
+        {
+          "type": "eq",
+          "ref": "ɹ",
+          "hyp": "ɹ"
+        },
+        {
+          "type": "eq",
+          "ref": "ɛ",
+          "hyp": "ɛ"
+        },
+        {
+          "type": "eq",
+          "ref": "d",
+          "hyp": "d"
+        }
+      ],
+      "PER": 0.0,
+      "word_score": 90.7,
+      "confidence": 0.907,
+      "phone_scores": [
+        {
+          "phone": "ɹ",
+          "status": "ok",
+          "score": 89.9,
+          "conf": 0.899
+        },
+        {
+          "phone": "ɛ",
+          "status": "ok",
+          "score": 86.8,
+          "conf": 0.868
+        },
+        {
+          "phone": "d",
+          "status": "ok",
+          "score": 95.5,
+          "conf": 0.955
+        }
+      ],
+      "target": "red",
+      "file": "corrupt_red_loud_2.0.wav",
+      "frame_mean_conf": 0.989,
+      "corruption": "loud_2.0"
+    },
+    {
+      "ref_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "hyp_ipa": [
+        "ɹ",
+        "ɛ"
+      ],
+      "ops": [
+        {
+          "type": "eq",
+          "ref": "ɹ",
+          "hyp": "ɹ"
+        },
+        {
+          "type": "eq",
+          "ref": "ɛ",
+          "hyp": "ɛ"
+        },
+        {
+          "type": "del",
+          "ref": "d",
+          "hyp": null
+        }
+      ],
+      "PER": 0.333,
+      "word_score": 55.6,
+      "confidence": 0.437,
+      "phone_scores": [
+        {
+          "phone": "ɹ",
+          "status": "ok",
+          "score": 92.6,
+          "conf": 0.926
+        },
+        {
+          "phone": "ɛ",
+          "status": "ok",
+          "score": 74.1,
+          "conf": 0.741
+        },
+        {
+          "phone": "d",
+          "status": "del",
+          "score": 0.0,
+          "conf": 0.3
+        }
+      ],
+      "target": "red",
+      "file": "corrupt_red_noise_snr5.wav",
+      "frame_mean_conf": 0.972,
+      "corruption": "noise_snr5"
+    },
+    {
+      "ref_ipa": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "hyp_ipa": [
+        "ɹ",
+        "æ"
+      ],
+      "ops": [
+        {
+          "type": "eq",
+          "ref": "ɹ",
+          "hyp": "ɹ"
+        },
+        {
+          "type": "del",
+          "ref": "ɛ",
+          "hyp": null
+        },
+        {
+          "type": "sub",
+          "ref": "d",
+          "hyp": "æ"
+        }
+      ],
+      "PER": 0.667,
+      "word_score": 33.7,
+      "confidence": 0.165,
+      "phone_scores": [
+        {
+          "phone": "ɹ",
+          "status": "ok",
+          "score": 87.5,
+          "conf": 0.875
+        },
+        {
+          "phone": "ɛ",
+          "status": "del",
+          "score": 0.0,
+          "conf": 0.3
+        },
+        {
+          "phone": "d",
+          "status": "sub",
+          "heard": "æ",
+          "score": 13.7,
+          "conf": 0.314
+        }
+      ],
+      "target": "red",
+      "file": "corrupt_red_noise_snr0.wav",
+      "frame_mean_conf": 0.961,
+      "corruption": "noise_snr0"
+    }
+  ],
+  "wrong_target": {
+    "ref_ipa": [
+      "b",
+      "l",
+      "uː"
+    ],
+    "hyp_ipa": [
+      "ɹ",
+      "ɛ",
+      "d"
+    ],
+    "ops": [
+      {
+        "type": "sub",
+        "ref": "b",
+        "hyp": "ɹ"
+      },
+      {
+        "type": "sub",
+        "ref": "l",
+        "hyp": "ɛ"
+      },
+      {
+        "type": "sub",
+        "ref": "uː",
+        "hyp": "d"
+      }
+    ],
+    "PER": 1.0,
+    "word_score": 1.8,
+    "confidence": 0.0,
+    "phone_scores": [
+      {
+        "phone": "b",
+        "status": "sub",
+        "heard": "ɹ",
+        "score": 1.9,
+        "conf": 0.907
+      },
+      {
+        "phone": "l",
+        "status": "sub",
+        "heard": "ɛ",
+        "score": 2.6,
+        "conf": 0.869
+      },
+      {
+        "phone": "uː",
+        "status": "sub",
+        "heard": "d",
+        "score": 0.9,
+        "conf": 0.957
+      }
+    ],
+    "target": "blue",
+    "file": "sapi_red.wav",
+    "frame_mean_conf": 0.989
+  },
+  "principle": "Canonical target = CMUdict ARPAbet; child voice never defines correctness."
+}
