@@ -1,7 +1,7 @@
 # PHASE 1.9.10 REPORT — Deep-Dive 12 Phone-Model-Error Cases
 
 **Base:** Phase 1.9.9 `e2449c5`  
-**Date:** 2026-10-03  
+**Date:** 2026-10-03 (revised after human second pass)  
 **production_vad:** false · **router_locked:** false · **unity_integrated:** false · **scorer_modified:** false  
 **asr_is_not_pronunciation_judge:** true
 
@@ -11,28 +11,34 @@
 
 The 12 PHONE_MODEL_ERROR cases from Phase 1.9.9 were re-run through the frozen pipeline with
 full/raw/padded variants (0–500 ms), CTC span inspection, parselmouth acoustics (F0/F1/F2),
-phone confusion analysis, and an adult diagnostic control.
+phone confusion analysis, and an adult diagnostic control — **then reviewed by the human
+second pass (Stage A blind + Stage B evidence)**.
+
+Human verdict rule (reviewer-confirmed): **Stage B = UNCERTAIN means the child's pronunciation
+is ACCEPTABLE; the low score is system-side**, not a pronunciation problem.  
+Stage B = TRUE_PRONUNCIATION_ERROR means the child actually deviated.
 
 | Finding | Value |
 |---|---|
-| Cases | **12/12 human-CORRECT** (by construction of the PME set) |
+| Human second pass | **filled (12/12)** |
+| Acceptable pronunciation + wrongly low score (system-side) | **7/12 (58%)** |
+| True pronunciation errors (low score justified) | **5/12 (42%)** |
+| Window-related among system-side cases | **4/7** (boundary 3 + full-file alignment 1) |
 | Boundary rescue (raw&lt;50 → pad≥50, or +≥20) | **4/12 (33%)** |
-| Rescue to usable score (≥50) | **2/12 (17%)** |
 | Crop-beats-full inversion (raw≥50 & full&lt;50) | **2/12** |
 | Mismatches at word-initial position | **12/12 initial phones (100%)** |
-| Mismatches at word-final position | **10/12 final phones (83%)** |
 | Mismatched CTC spans &lt;50 ms | **15/29 (52%)**, median 21 ms |
 | Adult control exact-match rate (6 words) | **0.56** (blue/dog/big also fail for adult) |
 | F0 median PME vs OK group | **281.5 vs 280.7 Hz — no separation** |
-| Formant F1/F2 PME vs OK | 948/2452 vs 901/2298 Hz (+5–7%, descriptive only) |
-| Decision | **B. ROOT_CAUSE_PARTIALLY_IDENTIFIED** |
+| Revised 1.9.9 `human_correct_low_score_rate` | 0.414 → **0.292** (7/24) |
+| Decision | **A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED** |
 
-**Headline:** low scores on these 12 human-correct child tokens are **not** explained by pitch.
-They split into measurable mechanisms: boundary/crop loss, full-file CTC alignment failure,
-attractor collapse of the phone posterior (repeated `l`/`n`), and documented child-realization
-substitutions (θ→t, ɹ→w, f→v) that the canonical target treats as errors.
+**Headline:** among the 12 cases, **7 are acceptable child speech scored too low by the
+pipeline** — dominated by scoring-window/boundary effects with measured evidence; 5 are true
+pronunciation errors where the low score was appropriate. Pitch is **not** a discriminator.
 
-**No scorer change is justified yet.**
+**No scorer change is implemented.** A research-only fix (score the padded VAD window /
+multi-variant evidence) can now be designed and must be A/B validated first.
 
 ---
 
@@ -57,22 +63,23 @@ This phase asks: **why did the phone evidence fail on these 12?**
 
 ## 4. The 12 PHONE_MODEL_ERROR Cases
 
-| case | speaker | target | human | full | raw | best pad | primary cause | conf |
+| case | speaker | target | 1st-pass | full | raw | best pad | measured mechanism | 2nd-pass verdict |
 |---|---|---|---|---|---:|---:|---|---|---|
-| pme_01 | child_07 | eight | PROBABLY_CORRECT | 0.0 | 50.0 | 0.0 | CTC_ALIGNMENT_ERROR | MED |
-| pme_02 | child_06 | two | CLEAR_CORRECT | 0.0 | 0.0 | 50.0 | BOUNDARY_ERROR | HIGH |
-| pme_03 | child_07 | eight | PROBABLY_CORRECT | 0.0 | 0.1 | 0.0 | CTC_ALIGNMENT_ERROR | LOW |
-| pme_04 | child_07 | one | CLEAR_CORRECT | 0.0 | 72.5 | 72.5 | CTC_ALIGNMENT_ERROR | MED |
-| pme_05 | child_08 | eight | PROBABLY_CORRECT | 0.0 | 0.0 | 0.0 | PHONE_MODEL_GENERALIZATION_FAILURE | MED |
-| pme_06 | child_04 | three | CLEAR_CORRECT | 11.7 | 6.7 | 39.2 | BOUNDARY_ERROR | MED |
-| pme_07 | child_01 | seven | CLEAR_CORRECT | 20.0 | 40.1 | 44.1 | PHONE_MODEL_GENERALIZATION_FAILURE | MED |
-| pme_08 | child_06 | six | CLEAR_CORRECT | 25.0 | 0.0 | 25.1 | BOUNDARY_ERROR | MED |
-| pme_09 | child_09 | five | CLEAR_CORRECT | 33.4 | 33.4 | 33.4 | PHONE_MODEL_GENERALIZATION_FAILURE | LOW |
-| pme_10 | child_01 | five | PROBABLY_CORRECT | 33.5 | 39.2 | 66.7 | BOUNDARY_ERROR | HIGH |
-| pme_11 | child_03 | three | CLEAR_CORRECT | 39.2 | 39.2 | 39.2 | PHONEME_REALIZATION_VARIATION | LOW |
-| pme_12 | child_08 | five | CLEAR_CORRECT | 39.2 | 39.2 | 39.2 | PHONEME_REALIZATION_VARIATION | LOW |
+| pme_01 | child_07 | eight | PROBABLY_CORRECT | 0.0 | 50.0 | 0.0 | CTC_ALIGNMENT (crop&gt;full) | **TRUE_ERROR** (A/B conflict) |
+| pme_02 | child_06 | two | CLEAR_CORRECT | 0.0 | 0.0 | 50.0 | BOUNDARY_ERROR | system-side |
+| pme_03 | child_07 | eight | PROBABLY_CORRECT | 0.0 | 0.1 | 0.0 | CTC_ALIGNMENT | **TRUE_ERROR** |
+| pme_04 | child_07 | one | CLEAR_CORRECT | 0.0 | 72.5 | 72.5 | CTC_ALIGNMENT (crop&gt;full) | system-side |
+| pme_05 | child_08 | eight | PROBABLY_CORRECT | 0.0 | 0.0 | 0.0 | GENERALIZATION (attractor) | **TRUE_ERROR** |
+| pme_06 | child_04 | three | CLEAR_CORRECT | 11.7 | 6.7 | 39.2 | BOUNDARY_ERROR | system-side |
+| pme_07 | child_01 | seven | CLEAR_CORRECT | 20.0 | 40.1 | 44.1 | GENERALIZATION (attractor) | system-side |
+| pme_08 | child_06 | six | CLEAR_CORRECT | 25.0 | 0.0 | 25.1 | BOUNDARY_ERROR | system-side |
+| pme_09 | child_09 | five | CLEAR_CORRECT | 33.4 | 33.4 | 33.4 | GENERALIZATION | **TRUE_ERROR** |
+| pme_10 | child_01 | five | PROBABLY_CORRECT | 33.5 | 39.2 | 66.7 | BOUNDARY_ERROR | **TRUE_ERROR** |
+| pme_11 | child_03 | three | CLEAR_CORRECT | 39.2 | 39.2 | 39.2 | REALIZATION (θ→t) | system-side |
+| pme_12 | child_08 | five | CLEAR_CORRECT | 39.2 | 39.2 | 39.2 | REALIZATION (f→v) | system-side |
 
-Artifacts: `phone_model_error_cases.csv`, `phone_model_error_root_causes.csv`
+Artifacts: `phone_model_error_cases.csv`, `phone_model_error_root_causes.csv`,
+`human_second_pass.csv`
 
 ---
 
@@ -284,46 +291,72 @@ Frozen pipeline on 6 adult `sapi_*` words (`adult_vs_child_phone_model.csv`):
 
 ## 19. Human Second-Pass Review
 
-Pack created for the 12 cases (mobile-friendly):
+Pack: `HumanReview/review_blind.html` (Stage A) + `review_reveal.html` (Stage B), submitted
+directly over LAN (`serve_review.py` → `Results/Human_SecondPass_StageA/B_Filled.csv`).
 
-- `HumanReview/review_blind.html` — Stage A: target + audio only, pronunciation judgment
-- `HumanReview/review_reveal.html` — Stage B: score/phones/alignment/acoustics/ASR + "most responsible factor"
-- 24 clips (`clips/pme_XX_LISTEN.wav`, `_FULL.wav`)
-- Template: `Results/human_second_pass.csv` (labels empty)
+**Reviewer rule (confirmed):** Stage B UNCERTAIN = pronunciation acceptable, low score is
+system-side; TRUE_PRONUNCIATION_ERROR = child truly deviated.
 
-**Status: not yet filled.** `single_reviewer = true` for any future fill; one reviewer is a
-limitation, not independent ground truth.
+| case | Stage A | Stage B | verdict |
+|---|---|---|---|
+| pme_01 | CLEAR_CORRECT | TRUE_PRONUNCIATION_ERROR | true error (A/B inconsistent — see note) |
+| pme_02 | PROBABLY_CORRECT | UNCERTAIN | system-side |
+| pme_03 | PROBABLY_INCORRECT | TRUE_PRONUNCIATION_ERROR | true error |
+| pme_04 | CLEAR_CORRECT | UNCERTAIN | system-side |
+| pme_05 | PROBABLY_INCORRECT | TRUE_PRONUNCIATION_ERROR | true error |
+| pme_06 | CLEAR_CORRECT | UNCERTAIN | system-side |
+| pme_07 | CLEAR_CORRECT | UNCERTAIN | system-side |
+| pme_08 | CLEAR_CORRECT | UNCERTAIN | system-side |
+| pme_09 | PROBABLY_INCORRECT | TRUE_PRONUNCIATION_ERROR | true error |
+| pme_10 | PROBABLY_INCORRECT | TRUE_PRONUNCIATION_ERROR | true error |
+| pme_11 | CLEAR_CORRECT | UNCERTAIN | system-side |
+| pme_12 | CLEAR_CORRECT | UNCERTAIN | system-side |
+
+- **7 system-side acceptable**, **5 true errors**
+- `single_reviewer = true` — one reviewer, not independent ground truth
+- **Data note:** pme_01 Stage A (CLEAR_CORRECT) conflicts with Stage B (TRUE_PRONUNCIATION_ERROR);
+  Stage B is treated as the verdict per the reviewer's stated rule, and the inconsistency is recorded.
+
+Artifact: `Results/human_second_pass.csv`
 
 ---
 
-## 20. Root-Cause Classification
+## 20. Root-Cause Classification (revised after human verdicts)
 
-Priority rules (documented in `run_phase_1_9_10.py`): measured boundary rescue → crop-beats-full
-inversion → documented realization pairs → attractor collapse → short-span → unresolved.
+Measured mechanism rules (documented in `run_phase_1_9_10.py`), then human verdict applied:
+TRUE_PRONUNCIATION_ERROR overrides; UNCERTAIN keeps the measured system-side mechanism.
 
-| primary cause | n | cases |
+| revised root cause | n | cases |
 |---|---:|---|
-| BOUNDARY_ERROR | **4** | pme_02, 06, 08, 10 |
-| CTC_ALIGNMENT_ERROR | **3** | pme_01, 03, 04 |
-| PHONE_MODEL_GENERALIZATION_FAILURE | **3** | pme_05, 07, 09 |
-| PHONEME_REALIZATION_VARIATION | **2** | pme_11, 12 |
-| secondary causes | 4 | CTC×2 (05,07), realization×2 (06,10) |
+| TRUE_PRONUNCIATION_ERROR (human) | **5** | pme_01, 03, 05, 09, 10 |
+| BOUNDARY_ERROR (measured) | **3** | pme_02, 06, 08 |
+| PHONEME_REALIZATION_VARIATION (measured) | **2** | pme_11, 12 |
+| CTC_ALIGNMENT_ERROR (measured, full-file alignment) | **1** | pme_04 |
+| PHONE_MODEL_GENERALIZATION_FAILURE (measured, attractor) | **1** | pme_07 |
 
-Counting method: each case contributes exactly 1 primary cause; secondaries are listed
-separately and never double-counted in the distribution.
+System-side cases (7): **4 window-related** (boundary 3 + full-file alignment 1),
+2 realization variations, 1 attractor collapse.
+
+Counting method: 1 revised cause per case; measured mechanism is preserved for system-side
+cases in `phone_model_error_root_causes.csv` (`measured_mechanism` + `human_verdict` columns).
 
 ---
 
 ## 21. What Is Proven
 
-1. **12/12 PME cases are human-correct** — low score ≠ mispronunciation here.
+1. **7/12 PME cases are human-acceptable speech scored too low by the pipeline** (system-side);
+   **5/12 are true pronunciation errors** where the low score was appropriate.
 2. **Word-edge failure concentration:** 22/29 mismatches at initial/final positions.
-3. **Boundary/crop path explains 4/12** (rescue ≥20 pts; 2 reach ≥50).
-4. **Full-file alignment can be worse than the VAD crop** (2/12, e.g. raw 72.5 vs full 0.0).
-5. **Phone-posterior attractor collapse** (`l`/`n` repeats) is a real measurable mode (2–3/12).
-6. **Documented child-realization substitutions** (θ→t, ɹ→w, f→v) occur in human-accepted speech.
-7. **F0 does not discriminate** PME vs OK groups.
+3. **Window/boundary path dominates the system-side cases (4/7)** — boundary rescue 3,
+   full-file alignment inversion 1.
+4. **Full-file alignment can be worse than the VAD crop** (raw 72.5 vs full 0.0 on pme_04).
+5. **Phone-posterior attractor collapse** (`l`/`n` repeats) is a real measurable mode (pme_07).
+6. **Documented child-realization substitutions** (θ→t, ɹ→w, f→v) occur in human-accepted speech
+   (pme_11, 12).
+7. **F0 does not discriminate** system-side vs OK groups.
 8. Adult pipeline also fails on some words (blue 0.0) → fragility is not purely child-specific.
+9. **Revised 1.9.9 rate:** `human_correct_low_score_rate` 0.414 → **0.292** after second-pass
+   corrections (7/24).
 
 ---
 
@@ -340,15 +373,13 @@ separately and never double-counted in the distribution.
 
 ## 23. Does the Scorer Need Modification?
 
-### **PARTIALLY**
+### **PARTIALLY — pipeline window policy yes (research-only); scorer model no**
 
-Mechanisms are now measurable but not yet sufficient to design a safe fix:
-
-- boundary loss could justify **crop/pad policy** research (not score changes)
-- full-file alignment inversion could justify **scoring the VAD window instead of the file**
-  (a pipeline policy question, not a model change)
-- attractor collapse and realization substitutions need the **human second pass** and a larger
-  sample before any model-side conclusion
+- 4/7 system-side cases are window-related → **scoring the padded VAD window instead of the raw
+  full file** is a designable, targeted change (pipeline policy, not score formula)
+- 2/7 realization variations → canonical-target handling question (accept developmental variants)
+- 1/7 attractor collapse → model-side research needed
+- 5/12 true errors → the scorer's low score was appropriate; do not "fix" those
 
 **Do not modify the scorer in this phase.**
 
@@ -368,19 +399,23 @@ None of these are approved or implemented.
 
 ## 25. Limitations
 
-- Human second-pass review **not yet filled** (Stage A/B pack ready)
+- **Single reviewer** (`single_reviewer = true`) — not independent ground truth
+- **pme_01 Stage A/B inconsistency** recorded, not resolved
 - n=12; one recording session per child; individual ages unknown
 - Adult comparison uses different words (diagnostic only)
 - Child-realization pair table is documented phonology, not validated per-speaker
 - F0/F1/F2 single-pass parselmouth measurements; no normalization
-- `pme_03` classified with LOW confidence (weak short-span evidence)
 - No statistical tests claimed anywhere
 
 ---
 
 ## 26. Decision
 
-### **B. ROOT_CAUSE_PARTIALLY_IDENTIFIED**
+### **A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED**
+
+Human second pass + measured mechanisms are sufficient to design a targeted research-only fix
+for the dominant system-side mechanism (scoring window / boundary), while true errors are
+correctly excluded.
 
 ```
 production_vad = false
@@ -393,12 +428,13 @@ scorer_modified = false
 
 ## 27. Exact Next Step
 
-1. Human fills `HumanReview/review_blind.html` → Stage A, then `review_reveal.html` → Stage B
-   for the 12 cases (single reviewer; documented limitation).
-2. Run the same forensic pack on the **6 SCORER_MISS** cases (human-incorrect, score≥50)
+1. Run the same forensic pack on the **6 SCORER_MISS** cases (human-incorrect, score≥50)
    to test whether the same mechanisms act in reverse.
-3. Only after 1–2: design a research-only A/B on **scoring window policy** (full vs padded VAD
-   window) against the frozen Phase 1.9.8 baseline — no model changes.
+2. Design a research-only A/B on **scoring window policy** (raw full file vs padded VAD window
+   vs multi-variant agreement) against the frozen Phase 1.9.8 baseline — no model changes,
+   no calibration; validate on the 80-token set with human spot checks.
+3. Only after 1–2 pass: consider canonical-target handling for documented child realizations
+   (θ→t, ɹ→w, f→v) as a separate research question.
 
 ---
 

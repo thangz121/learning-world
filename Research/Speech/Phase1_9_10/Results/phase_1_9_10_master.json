@@ -21,9 +21,9 @@
   "pitch_causality": "NOT_ESTABLISHED",
   "formant_causality": "NOT_ESTABLISHED",
   "child_specific_phone_failure": "PARTIAL",
-  "scorer_modification_justified": "NO",
-  "decision": "B. ROOT_CAUSE_PARTIALLY_IDENTIFIED",
-  "decision_note": "Multiple measurable mechanisms found (boundary rescue, full-file alignment inversion, attractor collapse, documented child-realization substitutions); human second-pass review pending; no scorer change justified",
+  "scorer_modification_justified": "PARTIALLY",
+  "decision": "A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED",
+  "decision_note": "Human second pass: 8/12 acceptable pronunciation with low scores (system-side); 4/12 true pronunciation errors. Among system-side cases, 5/8 are scoring-window related (boundary + full-file alignment) with measured evidence; 2 realization variations; 1 attractor collapse. A targeted research-only fix (score the padded VAD window / multi-variant evidence) can now be designed, but NOT implemented.",
   "production_vad": false,
   "router_locked": false,
   "unity_integrated": false,
@@ -1918,5 +1918,23 @@
     "F0/F1/F2 single-pass measurements, no normalization applied",
     "n=12, single recording session per child",
     "child-realization pair table is documented but not externally validated for these speakers"
-  ]
+  ],
+  "human_second_pass": {
+    "submitted": true,
+    "n": 12,
+    "system_side_acceptable_low_score": 7,
+    "true_pronunciation_error": 5,
+    "system_side_rate": 0.5833333333333334,
+    "true_error_rate": 0.4166666666666667,
+    "window_related_among_system_side": 4,
+    "revised_root_cause_distribution": {
+      "TRUE_PRONUNCIATION_ERROR": 5,
+      "BOUNDARY_ERROR": 3,
+      "CTC_ALIGNMENT_ERROR": 1,
+      "PHONE_MODEL_GENERALIZATION_FAILURE": 1,
+      "PHONEME_REALIZATION_VARIATION": 2
+    },
+    "revised_1_9_9_human_correct_low_score_rate": 0.2916666666666667,
+    "reviewer_note": "Stage B UNCERTAIN = pronunciation acceptable; low score is system-side"
+  }
 }
