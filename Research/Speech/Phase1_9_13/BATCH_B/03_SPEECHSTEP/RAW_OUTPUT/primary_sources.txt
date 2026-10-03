@@ -1,0 +1,10 @@
+SOURCE (E0/E1): https://speechstep.com/
+- wav2vec2 + GOP acoustic scoring (claim); 'declined rather than guessed at';
+- age bands: Nest 1-3 (no scores on toddlers), Garden 4-8 (zero numbers on kids),
+  Quest 9-12 (honest mastery scores), Studio 13-16;
+- frontal vs lateral lisp separated by substitution diagnosis; word positions begin/middle/end.
+SOURCE (E1): https://speechstep.com/coppa
+- recording OFF until parent consent; no upload before consent; local demo scorer
+  ('demonstration rather than measurement'); age in months; random identifiers; two consents;
+  no third-party ad/analytics; cookieless counts; review/delete/withdraw; 30-day response.
+BLOCKED: mic-only AI tools; no upload/API.
