@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>1.9.11 SCORER_MISS blind</title><style>
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;margin:0 auto;max-width:760px;padding:12px 12px 96px;line-height:1.45;background:#f7f7f8}
+.banner{background:#e7f1ff;border:1px solid #a9c9f5;border-radius:12px;padding:14px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;margin:0 0 16px}
+.card h2{font-size:1.05rem;margin:0 0 6px}
+.meta{font-size:.85rem;color:#444}
+.audio-block{margin:8px 0}.lbl{font-size:.8rem;font-weight:600;color:#333;margin-bottom:4px}
+audio{width:100%}
+fieldset{border:1px solid #ccc;border-radius:10px;margin:12px 0 0;padding:10px;background:#fafafa}
+legend{font-weight:700;font-size:.95rem;padding:0 6px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.opts label{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:.95rem}
+.opts input{width:20px;height:20px;flex-shrink:0}
+.opts label:has(input:checked){border-color:#0b5fff;background:#e8f0ff}
+.notes{width:100%;min-height:44px;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:10px;margin-top:8px}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:#111;color:#fff;padding:12px 14px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:50}
+.sticky button{flex:1;min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff}
+.sticky .count{align-self:center;font-size:.85rem;white-space:nowrap}
+pre{white-space:pre-wrap;font-size:.78rem;background:#eee;padding:8px;border-radius:8px}
+</style></head><body>
+<div class="banner"><h1>SCORER_MISS — chấm mù (6 ca)</h1>
+<p>Nghe trước, chấm phát âm. <b>Ẩn</b> điểm/phone/acoustics.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p></div>
+<section class="card"><h2>sm_01 — SIX</h2>
+<p class="meta">speaker=child_03</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/sm_01_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/sm_01_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_sm_01" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label><label><input type="radio" name="p_sm_01" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_sm_01" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_sm_01" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_sm_01" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label></div></fieldset>
+<input class="notes" name="n_sm_01" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card"><h2>sm_02 — TWO</h2>
+<p class="meta">speaker=child_03</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/sm_02_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/sm_02_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_sm_02" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label><label><input type="radio" name="p_sm_02" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_sm_02" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_sm_02" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_sm_02" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label></div></fieldset>
+<input class="notes" name="n_sm_02" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card"><h2>sm_03 — EIGHT</h2>
+<p class="meta">speaker=child_04</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/sm_03_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/sm_03_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_sm_03" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label><label><input type="radio" name="p_sm_03" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_sm_03" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_sm_03" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_sm_03" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label></div></fieldset>
+<input class="notes" name="n_sm_03" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card"><h2>sm_04 — FOUR</h2>
+<p class="meta">speaker=child_07</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/sm_04_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/sm_04_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_sm_04" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label><label><input type="radio" name="p_sm_04" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_sm_04" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_sm_04" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_sm_04" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label></div></fieldset>
+<input class="notes" name="n_sm_04" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card"><h2>sm_05 — FOUR</h2>
+<p class="meta">speaker=child_06</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/sm_05_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/sm_05_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_sm_05" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label><label><input type="radio" name="p_sm_05" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_sm_05" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_sm_05" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_sm_05" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label></div></fieldset>
+<input class="notes" name="n_sm_05" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card"><h2>sm_06 — FOUR</h2>
+<p class="meta">speaker=child_09</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/sm_06_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/sm_06_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_sm_06" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label><label><input type="radio" name="p_sm_06" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_sm_06" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_sm_06" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_sm_06" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label></div></fieldset>
+<input class="notes" name="n_sm_06" placeholder="ghi chú (tuỳ chọn)">
+</section>
+<div class="sticky"><span class="count" id="prog">0/6</span><button id="exp">Nộp Stage A</button></div>
+<script>
+const ids=["sm_01", "sm_02", "sm_03", "sm_04", "sm_05", "sm_06"];
+function v(p,id){const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}
+function upd(){let n=0;for(const id of ids)if(v('p',id))n++;document.getElementById('prog').textContent=n+'/'+ids.length;}
+document.body.addEventListener('change',upd);upd();
+
+async function submitCsv(t,stage,btnId){
+ const rid=(document.getElementById('reviewer')||{value:'human_mobile'}).value||'human_mobile';
+ const btn=document.getElementById(btnId);
+ try{
+  const r=await fetch('/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({pack:'scorer_miss',stage:stage,csv:t,reviewer_id:rid,timestamp:new Date().toISOString()})});
+  if(r.ok){const j=await r.json();btn.textContent='Đã nộp ✓ ('+j.rows+' dòng)';btn.style.background='#1a7f37';return;}
+  throw new Error('http '+r.status);
+ }catch(e){
+  btn.textContent='Không gửi được — tải CSV';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
+  a.download='ScorerMiss_Stage'+stage+'_Filled.csv';a.click();
+ }
+}
+
+document.getElementById('exp').onclick=async()=>{
+ let lines=['case_id,stage_a_pronunciation,notes'];
+ for(const id of ids){
+  const notes=(document.querySelector('input[name="n_'+id+'"]')||{value:''}).value.replace(/,/g,';');
+  lines.push([id,v('p',id),notes].join(','));
+ }
+ await submitCsv(lines.join('\n'),'A','exp');
+};
+</script></body></html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.9.11 SCORER_MISS reveal</title><style>
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;margin:0 auto;max-width:760px;padding:12px 12px 96px;line-height:1.45;background:#f7f7f8}
+.banner{background:#e7f1ff;border:1px solid #a9c9f5;border-radius:12px;padding:14px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;margin:0 0 16px}
+.card h2{font-size:1.05rem;margin:0 0 6px}
+.meta{font-size:.85rem;color:#444}
+.audio-block{margin:8px 0}.lbl{font-size:.8rem;font-weight:600;color:#333;margin-bottom:4px}
+audio{width:100%}
+fieldset{border:1px solid #ccc;border-radius:10px;margin:12px 0 0;padding:10px;background:#fafafa}
+legend{font-weight:700;font-size:.95rem;padding:0 6px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.opts label{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:.95rem}
+.opts input{width:20px;height:20px;flex-shrink:0}
+.opts label:has(input:checked){border-color:#0b5fff;background:#e8f0ff}
+.notes{width:100%;min-height:44px;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:10px;margin-top:8px}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:#111;color:#fff;padding:12px 14px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:50}
+.sticky button{flex:1;min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff}
+.sticky .count{align-self:center;font-size:.85rem;white-space:nowrap}
+pre{white-space:pre-wrap;font-size:.78rem;background:#eee;padding:8px;border-radius:8px}
+</style></head><body>
+<h1>SCORER_MISS — Stage B (evidence)</h1>
+<p>Dùng sau khi Stage A đã chấm mù.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p>
+<section class="card"><h2>sm_01 — SIX</h2>
+<audio controls preload="none" src="clips/sm_01_FULL.wav"></audio>
+<pre>full_score=50.0  raw_score=25.1  range=25.0
+canonical=S IH1 K S
+observed =s æ k k
+mismatch =ɪ->eɪ;k->ɹ;s->k
+mechanism=WINDOW_DEPENDENT_SCORER_MISS (MEDIUM)
+asr=ASR_WRONG  f0_median=398.633198508154</pre>
+<fieldset><legend>Theo bạn, vì sao hệ thống chấm cao dù trẻ nói sai?</legend><div class="opts"><label><input type="radio" name="s_sm_01" value="TRUE_SCORER_MISS"><span>Scorer bỏ sót lỗi thật</span></label><label><input type="radio" name="s_sm_01" value="PHONE_MODEL_FALSE_POSITIVE"><span>Phone model báo sai (dương tính giả)</span></label><label><input type="radio" name="s_sm_01" value="SOFT_MATCH_TOO_PERMISSIVE"><span>Soft-match quá dễ tính</span></label><label><input type="radio" name="s_sm_01" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_sm_01" value="HUMAN_UNCERTAINTY"><span>Người nghe không chắc</span></label><label><input type="radio" name="s_sm_01" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>sm_02 — TWO</h2>
+<audio controls preload="none" src="clips/sm_02_FULL.wav"></audio>
+<pre>full_score=50.0  raw_score=0.0  range=50.0
+canonical=T UW1
+observed =t j
+mismatch =t->iɛ5;uː->j
+mechanism=WINDOW_DEPENDENT_SCORER_MISS (MEDIUM)
+asr=ASR_EMPTY  f0_median=411.2788959486154</pre>
+<fieldset><legend>Theo bạn, vì sao hệ thống chấm cao dù trẻ nói sai?</legend><div class="opts"><label><input type="radio" name="s_sm_02" value="TRUE_SCORER_MISS"><span>Scorer bỏ sót lỗi thật</span></label><label><input type="radio" name="s_sm_02" value="PHONE_MODEL_FALSE_POSITIVE"><span>Phone model báo sai (dương tính giả)</span></label><label><input type="radio" name="s_sm_02" value="SOFT_MATCH_TOO_PERMISSIVE"><span>Soft-match quá dễ tính</span></label><label><input type="radio" name="s_sm_02" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_sm_02" value="HUMAN_UNCERTAINTY"><span>Người nghe không chắc</span></label><label><input type="radio" name="s_sm_02" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>sm_03 — EIGHT</h2>
+<audio controls preload="none" src="clips/sm_03_FULL.wav"></audio>
+<pre>full_score=50.0  raw_score=58.8  range=8.799999999999997
+canonical=EY1 T
+observed =n t
+mismatch =eɪ->ɛ
+mechanism=SOFT_MATCH_TOO_PERMISSIVE (MEDIUM)
+asr=ASR_EMPTY  f0_median=266.7088289695313</pre>
+<fieldset><legend>Theo bạn, vì sao hệ thống chấm cao dù trẻ nói sai?</legend><div class="opts"><label><input type="radio" name="s_sm_03" value="TRUE_SCORER_MISS"><span>Scorer bỏ sót lỗi thật</span></label><label><input type="radio" name="s_sm_03" value="PHONE_MODEL_FALSE_POSITIVE"><span>Phone model báo sai (dương tính giả)</span></label><label><input type="radio" name="s_sm_03" value="SOFT_MATCH_TOO_PERMISSIVE"><span>Soft-match quá dễ tính</span></label><label><input type="radio" name="s_sm_03" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_sm_03" value="HUMAN_UNCERTAINTY"><span>Người nghe không chắc</span></label><label><input type="radio" name="s_sm_03" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>sm_04 — FOUR</h2>
+<audio controls preload="none" src="clips/sm_04_FULL.wav"></audio>
+<pre>full_score=100.0  raw_score=6.0  range=94.0
+canonical=F AO1 R
+observed =f ɔ ɹ
+mismatch =f->n;ɔ->ɑu5;ɹ->j
+mechanism=WINDOW_DEPENDENT_SCORER_MISS (MEDIUM)
+asr=ASR_WRONG  f0_median=241.75725079550952</pre>
+<fieldset><legend>Theo bạn, vì sao hệ thống chấm cao dù trẻ nói sai?</legend><div class="opts"><label><input type="radio" name="s_sm_04" value="TRUE_SCORER_MISS"><span>Scorer bỏ sót lỗi thật</span></label><label><input type="radio" name="s_sm_04" value="PHONE_MODEL_FALSE_POSITIVE"><span>Phone model báo sai (dương tính giả)</span></label><label><input type="radio" name="s_sm_04" value="SOFT_MATCH_TOO_PERMISSIVE"><span>Soft-match quá dễ tính</span></label><label><input type="radio" name="s_sm_04" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_sm_04" value="HUMAN_UNCERTAINTY"><span>Người nghe không chắc</span></label><label><input type="radio" name="s_sm_04" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>sm_05 — FOUR</h2>
+<audio controls preload="none" src="clips/sm_05_FULL.wav"></audio>
+<pre>full_score=100.0  raw_score=66.7  range=33.3
+canonical=F AO1 R
+observed =f ɔ ɹ
+mismatch =f->d
+mechanism=SOFT_MATCH_TOO_PERMISSIVE (MEDIUM)
+asr=ASR_WRONG  f0_median=211.39023060156362</pre>
+<fieldset><legend>Theo bạn, vì sao hệ thống chấm cao dù trẻ nói sai?</legend><div class="opts"><label><input type="radio" name="s_sm_05" value="TRUE_SCORER_MISS"><span>Scorer bỏ sót lỗi thật</span></label><label><input type="radio" name="s_sm_05" value="PHONE_MODEL_FALSE_POSITIVE"><span>Phone model báo sai (dương tính giả)</span></label><label><input type="radio" name="s_sm_05" value="SOFT_MATCH_TOO_PERMISSIVE"><span>Soft-match quá dễ tính</span></label><label><input type="radio" name="s_sm_05" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_sm_05" value="HUMAN_UNCERTAINTY"><span>Người nghe không chắc</span></label><label><input type="radio" name="s_sm_05" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>sm_06 — FOUR</h2>
+<audio controls preload="none" src="clips/sm_06_FULL.wav"></audio>
+<pre>full_score=66.8  raw_score=6.1  range=60.699999999999996
+canonical=F AO1 R
+observed =f ɔ æ
+mismatch =f->d;ɔ->oʊ;ɹ->m
+mechanism=WINDOW_DEPENDENT_SCORER_MISS (MEDIUM)
+asr=ASR_EMPTY  f0_median=321.4491639395134</pre>
+<fieldset><legend>Theo bạn, vì sao hệ thống chấm cao dù trẻ nói sai?</legend><div class="opts"><label><input type="radio" name="s_sm_06" value="TRUE_SCORER_MISS"><span>Scorer bỏ sót lỗi thật</span></label><label><input type="radio" name="s_sm_06" value="PHONE_MODEL_FALSE_POSITIVE"><span>Phone model báo sai (dương tính giả)</span></label><label><input type="radio" name="s_sm_06" value="SOFT_MATCH_TOO_PERMISSIVE"><span>Soft-match quá dễ tính</span></label><label><input type="radio" name="s_sm_06" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_sm_06" value="HUMAN_UNCERTAINTY"><span>Người nghe không chắc</span></label><label><input type="radio" name="s_sm_06" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section>
+<p><button id="expb" style="min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff;padding:0 16px">Nộp Stage B</button></p>
+<script>
+const ids=["sm_01", "sm_02", "sm_03", "sm_04", "sm_05", "sm_06"];
+function v(p,id){const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}
+
+async function submitCsv(t,stage,btnId){
+ const rid=(document.getElementById('reviewer')||{value:'human_mobile'}).value||'human_mobile';
+ const btn=document.getElementById(btnId);
+ try{
+  const r=await fetch('/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({pack:'scorer_miss',stage:stage,csv:t,reviewer_id:rid,timestamp:new Date().toISOString()})});
+  if(r.ok){const j=await r.json();btn.textContent='Đã nộp ✓ ('+j.rows+' dòng)';btn.style.background='#1a7f37';return;}
+  throw new Error('http '+r.status);
+ }catch(e){
+  btn.textContent='Không gửi được — tải CSV';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
+  a.download='ScorerMiss_Stage'+stage+'_Filled.csv';a.click();
+ }
+}
+
+document.getElementById('expb').onclick=async()=>{
+ let lines=['case_id,stage_b_most_responsible'];
+ for(const id of ids)lines.push([id,v('s',id)].join(','));
+ await submitCsv(lines.join('\n'),'B','expb');
+};
+</script></body></html>

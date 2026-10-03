@@ -1,0 +1,323 @@
+{
+  "section": "scorer_miss",
+  "n": 6,
+  "stage_a_schema": [
+    "CLEAR_INCORRECT",
+    "PROBABLY_INCORRECT",
+    "AMBIGUOUS",
+    "PROBABLY_CORRECT",
+    "CLEAR_CORRECT"
+  ],
+  "stage_b_schema": [
+    "TRUE_SCORER_MISS",
+    "PHONE_MODEL_FALSE_POSITIVE",
+    "SOFT_MATCH_TOO_PERMISSIVE",
+    "WINDOW_EFFECT",
+    "HUMAN_UNCERTAINTY",
+    "UNCERTAIN"
+  ],
+  "items": [
+    {
+      "case_id": "sm_01",
+      "speaker_id": "child_03",
+      "target": "six",
+      "clips": {
+        "LISTEN": "clips/sm_01_LISTEN.wav",
+        "FULL": "clips/sm_01_FULL.wav"
+      },
+      "canonical_phones": "S IH1 K S",
+      "observed_phones": "s \u00e6 k k",
+      "mismatch": "\u026a->e\u026a;k->\u0279;s->k",
+      "full_score": 50.0,
+      "raw_score": 25.1,
+      "score_range": 25.0,
+      "mechanism": "WINDOW_DEPENDENT_SCORER_MISS",
+      "mechanism_confidence": "MEDIUM",
+      "asr_status": "ASR_WRONG",
+      "f0_median": 398.633198508154
+    },
+    {
+      "case_id": "sm_02",
+      "speaker_id": "child_03",
+      "target": "two",
+      "clips": {
+        "LISTEN": "clips/sm_02_LISTEN.wav",
+        "FULL": "clips/sm_02_FULL.wav"
+      },
+      "canonical_phones": "T UW1",
+      "observed_phones": "t j",
+      "mismatch": "t->i\u025b5;u\u02d0->j",
+      "full_score": 50.0,
+      "raw_score": 0.0,
+      "score_range": 50.0,
+      "mechanism": "WINDOW_DEPENDENT_SCORER_MISS",
+      "mechanism_confidence": "MEDIUM",
+      "asr_status": "ASR_EMPTY",
+      "f0_median": 411.2788959486154
+    },
+    {
+      "case_id": "sm_03",
+      "speaker_id": "child_04",
+      "target": "eight",
+      "clips": {
+        "LISTEN": "clips/sm_03_LISTEN.wav",
+        "FULL": "clips/sm_03_FULL.wav"
+      },
+      "canonical_phones": "EY1 T",
+      "observed_phones": "n t",
+      "mismatch": "e\u026a->\u025b",
+      "full_score": 50.0,
+      "raw_score": 58.8,
+      "score_range": 8.799999999999997,
+      "mechanism": "SOFT_MATCH_TOO_PERMISSIVE",
+      "mechanism_confidence": "MEDIUM",
+      "asr_status": "ASR_EMPTY",
+      "f0_median": 266.7088289695313
+    },
+    {
+      "case_id": "sm_04",
+      "speaker_id": "child_07",
+      "target": "four",
+      "clips": {
+        "LISTEN": "clips/sm_04_LISTEN.wav",
+        "FULL": "clips/sm_04_FULL.wav"
+      },
+      "canonical_phones": "F AO1 R",
+      "observed_phones": "f \u0254 \u0279",
+      "mismatch": "f->n;\u0254->\u0251u5;\u0279->j",
+      "full_score": 100.0,
+      "raw_score": 6.0,
+      "score_range": 94.0,
+      "mechanism": "WINDOW_DEPENDENT_SCORER_MISS",
+      "mechanism_confidence": "MEDIUM",
+      "asr_status": "ASR_WRONG",
+      "f0_median": 241.75725079550952
+    },
+    {
+      "case_id": "sm_05",
+      "speaker_id": "child_06",
+      "target": "four",
+      "clips": {
+        "LISTEN": "clips/sm_05_LISTEN.wav",
+        "FULL": "clips/sm_05_FULL.wav"
+      },
+      "canonical_phones": "F AO1 R",
+      "observed_phones": "f \u0254 \u0279",
+      "mismatch": "f->d",
+      "full_score": 100.0,
+      "raw_score": 66.7,
+      "score_range": 33.3,
+      "mechanism": "SOFT_MATCH_TOO_PERMISSIVE",
+      "mechanism_confidence": "MEDIUM",
+      "asr_status": "ASR_WRONG",
+      "f0_median": 211.39023060156362
+    },
+    {
+      "case_id": "sm_06",
+      "speaker_id": "child_09",
+      "target": "four",
+      "clips": {
+        "LISTEN": "clips/sm_06_LISTEN.wav",
+        "FULL": "clips/sm_06_FULL.wav"
+      },
+      "canonical_phones": "F AO1 R",
+      "observed_phones": "f \u0254 \u00e6",
+      "mismatch": "f->d;\u0254->o\u028a;\u0279->m",
+      "full_score": 66.8,
+      "raw_score": 6.1,
+      "score_range": 60.699999999999996,
+      "mechanism": "WINDOW_DEPENDENT_SCORER_MISS",
+      "mechanism_confidence": "MEDIUM",
+      "asr_status": "ASR_EMPTY",
+      "f0_median": 321.4491639395134
+    }
+  ],
+  "window_spot_check": {
+    "n": 13,
+    "note": "balanced: FULL_UNDERSCORES/FULL_OVERSCORES/WINDOW_STABLE/LARGEST_RANGE; blind first",
+    "items": [
+      {
+        "token_id": "tok_06",
+        "speaker_id": "child_01",
+        "target": "seven",
+        "spot_group": "FULL_UNDERSCORES",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_06_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_06_FULL.wav"
+        },
+        "full_score": 20.0,
+        "raw_vad_score": 40.1,
+        "pad250_score": 44.1,
+        "score_range": 24.1
+      },
+      {
+        "token_id": "tok_02",
+        "speaker_id": "child_01",
+        "target": "five",
+        "spot_group": "FULL_UNDERSCORES",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_02_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_02_FULL.wav"
+        },
+        "full_score": 33.5,
+        "raw_vad_score": 39.2,
+        "pad250_score": 66.7,
+        "score_range": 33.2
+      },
+      {
+        "token_id": "tok_68",
+        "speaker_id": "child_08",
+        "target": "seven",
+        "spot_group": "FULL_UNDERSCORES",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_68_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_68_FULL.wav"
+        },
+        "full_score": 47.5,
+        "raw_vad_score": 25.0,
+        "pad250_score": 60.0,
+        "score_range": 40.0
+      },
+      {
+        "token_id": "tok_44",
+        "speaker_id": "child_05",
+        "target": "three",
+        "spot_group": "FULL_OVERSCORES",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_44_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_44_FULL.wav"
+        },
+        "full_score": 72.5,
+        "raw_vad_score": 33.4,
+        "pad250_score": 45.1,
+        "score_range": 39.1
+      },
+      {
+        "token_id": "tok_30",
+        "speaker_id": "child_04",
+        "target": "four",
+        "spot_group": "FULL_OVERSCORES",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_30_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_30_FULL.wav"
+        },
+        "full_score": 66.7,
+        "raw_vad_score": 33.4,
+        "pad250_score": 33.3,
+        "score_range": 60.800000000000004
+      },
+      {
+        "token_id": "tok_01",
+        "speaker_id": "child_01",
+        "target": "eight",
+        "spot_group": "WINDOW_STABLE",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_01_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_01_FULL.wav"
+        },
+        "full_score": 50.0,
+        "raw_vad_score": 50.0,
+        "pad250_score": 50.0,
+        "score_range": 0.0
+      },
+      {
+        "token_id": "tok_03",
+        "speaker_id": "child_01",
+        "target": "four",
+        "spot_group": "WINDOW_STABLE",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_03_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_03_FULL.wav"
+        },
+        "full_score": 72.5,
+        "raw_vad_score": 66.7,
+        "pad250_score": 72.5,
+        "score_range": 5.799999999999997
+      },
+      {
+        "token_id": "tok_04",
+        "speaker_id": "child_01",
+        "target": "nine",
+        "spot_group": "WINDOW_STABLE",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_04_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_04_FULL.wav"
+        },
+        "full_score": 100.0,
+        "raw_vad_score": 33.8,
+        "pad250_score": 100.0,
+        "score_range": 66.2
+      },
+      {
+        "token_id": "tok_05",
+        "speaker_id": "child_01",
+        "target": "one",
+        "spot_group": "WINDOW_STABLE",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_05_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_05_FULL.wav"
+        },
+        "full_score": 72.6,
+        "raw_vad_score": 100.0,
+        "pad250_score": 72.6,
+        "score_range": 27.400000000000006
+      },
+      {
+        "token_id": "tok_07",
+        "speaker_id": "child_01",
+        "target": "ten",
+        "spot_group": "WINDOW_STABLE",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_07_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_07_FULL.wav"
+        },
+        "full_score": 100.0,
+        "raw_vad_score": 100.0,
+        "pad250_score": 100.0,
+        "score_range": 0.0
+      },
+      {
+        "token_id": "tok_56",
+        "speaker_id": "child_07",
+        "target": "four",
+        "spot_group": "LARGEST_RANGE",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_56_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_56_FULL.wav"
+        },
+        "full_score": 100.0,
+        "raw_vad_score": 6.0,
+        "pad250_score": 100.0,
+        "score_range": 94.0
+      },
+      {
+        "token_id": "tok_79",
+        "speaker_id": "child_09",
+        "target": "six",
+        "spot_group": "LARGEST_RANGE",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_79_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_79_FULL.wav"
+        },
+        "full_score": 75.0,
+        "raw_vad_score": 0.0,
+        "pad250_score": 75.0,
+        "score_range": 75.0
+      },
+      {
+        "token_id": "tok_58",
+        "speaker_id": "child_07",
+        "target": "one",
+        "spot_group": "LARGEST_RANGE",
+        "clips": {
+          "LISTEN": "spotcheck_clips/tok_58_LISTEN.wav",
+          "FULL": "spotcheck_clips/tok_58_FULL.wav"
+        },
+        "full_score": 0.0,
+        "raw_vad_score": 72.5,
+        "pad250_score": 0.0,
+        "score_range": 72.5
+      }
+    ]
+  }
+}

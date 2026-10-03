@@ -1,0 +1,7 @@
+case_id,speaker_id,recording_id,target,score_full_1_9_9,confidence,human_stage_a,human_stage_b,canonical_phones,observed_phones,asr_status,boundary_status
+sm_01,child_03,,six,50.0,,CLEAR_INCORRECT,,S IH1 K S,s æ k k,ASR_WRONG,BOUNDARY_OK
+sm_02,child_03,,two,50.0,,CLEAR_INCORRECT,,T UW1,t j,ASR_EMPTY,BOUNDARY_OK
+sm_03,child_04,,eight,50.0,,CLEAR_INCORRECT,,EY1 T,n t,ASR_EMPTY,BOUNDARY_OK
+sm_04,child_07,,four,100.0,,CLEAR_INCORRECT,,F AO1 R,f ɔ ɹ,ASR_WRONG,BOUNDARY_OK
+sm_05,child_06,,four,100.0,,CLEAR_INCORRECT,,F AO1 R,f ɔ ɹ,ASR_WRONG,BOUNDARY_OK
+sm_06,child_09,,four,66.8,,CLEAR_INCORRECT,,F AO1 R,f ɔ æ,ASR_EMPTY,BOUNDARY_OK

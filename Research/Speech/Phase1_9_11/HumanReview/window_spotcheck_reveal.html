@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.9.11 window spot-check reveal</title><style>
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;margin:0 auto;max-width:760px;padding:12px 12px 96px;line-height:1.45;background:#f7f7f8}
+.banner{background:#e7f1ff;border:1px solid #a9c9f5;border-radius:12px;padding:14px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;margin:0 0 16px}
+.card h2{font-size:1.05rem;margin:0 0 6px}
+.audio-block{margin:8px 0}.lbl{font-size:.8rem;font-weight:600;color:#333;margin-bottom:4px}
+audio{width:100%}
+fieldset{border:1px solid #ccc;border-radius:10px;margin:12px 0 0;padding:10px;background:#fafafa}
+legend{font-weight:700;font-size:.95rem;padding:0 6px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.opts label{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:.95rem}
+.opts input{width:20px;height:20px;flex-shrink:0}
+.opts label:has(input:checked){border-color:#0b5fff;background:#e8f0ff}
+.notes{width:100%;min-height:44px;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:10px;margin-top:8px}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:#111;color:#fff;padding:12px 14px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:50}
+.sticky button{flex:1;min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff}
+pre{white-space:pre-wrap;font-size:.78rem;background:#eee;padding:8px;border-radius:8px}
+</style></head><body>
+<h1>Window spot-check — Stage B</h1>
+<p>Dùng sau khi Stage A đã chấm mù.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p>
+<section class="card"><h2>tok_06 — SEVEN</h2>
+<p class="meta">speaker=child_01 · group=FULL_UNDERSCORES</p>
+<audio controls preload="none" src="spotcheck_clips/tok_06_FULL.wav"></audio>
+<pre>full=20.0  raw=40.1  pad250=44.1  range=24.1</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_06" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_06" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_06" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_06" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_02 — FIVE</h2>
+<p class="meta">speaker=child_01 · group=FULL_UNDERSCORES</p>
+<audio controls preload="none" src="spotcheck_clips/tok_02_FULL.wav"></audio>
+<pre>full=33.5  raw=39.2  pad250=66.7  range=33.2</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_02" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_02" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_02" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_02" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_68 — SEVEN</h2>
+<p class="meta">speaker=child_08 · group=FULL_UNDERSCORES</p>
+<audio controls preload="none" src="spotcheck_clips/tok_68_FULL.wav"></audio>
+<pre>full=47.5  raw=25.0  pad250=60.0  range=40.0</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_68" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_68" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_68" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_68" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_44 — THREE</h2>
+<p class="meta">speaker=child_05 · group=FULL_OVERSCORES</p>
+<audio controls preload="none" src="spotcheck_clips/tok_44_FULL.wav"></audio>
+<pre>full=72.5  raw=33.4  pad250=45.1  range=39.1</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_44" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_44" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_44" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_44" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_30 — FOUR</h2>
+<p class="meta">speaker=child_04 · group=FULL_OVERSCORES</p>
+<audio controls preload="none" src="spotcheck_clips/tok_30_FULL.wav"></audio>
+<pre>full=66.7  raw=33.4  pad250=33.3  range=60.800000000000004</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_30" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_30" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_30" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_30" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_01 — EIGHT</h2>
+<p class="meta">speaker=child_01 · group=WINDOW_STABLE</p>
+<audio controls preload="none" src="spotcheck_clips/tok_01_FULL.wav"></audio>
+<pre>full=50.0  raw=50.0  pad250=50.0  range=0.0</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_01" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_01" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_01" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_01" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_03 — FOUR</h2>
+<p class="meta">speaker=child_01 · group=WINDOW_STABLE</p>
+<audio controls preload="none" src="spotcheck_clips/tok_03_FULL.wav"></audio>
+<pre>full=72.5  raw=66.7  pad250=72.5  range=5.799999999999997</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_03" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_03" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_03" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_03" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_04 — NINE</h2>
+<p class="meta">speaker=child_01 · group=WINDOW_STABLE</p>
+<audio controls preload="none" src="spotcheck_clips/tok_04_FULL.wav"></audio>
+<pre>full=100.0  raw=33.8  pad250=100.0  range=66.2</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_04" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_04" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_04" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_04" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_05 — ONE</h2>
+<p class="meta">speaker=child_01 · group=WINDOW_STABLE</p>
+<audio controls preload="none" src="spotcheck_clips/tok_05_FULL.wav"></audio>
+<pre>full=72.6  raw=100.0  pad250=72.6  range=27.400000000000006</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_05" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_05" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_05" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_05" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_07 — TEN</h2>
+<p class="meta">speaker=child_01 · group=WINDOW_STABLE</p>
+<audio controls preload="none" src="spotcheck_clips/tok_07_FULL.wav"></audio>
+<pre>full=100.0  raw=100.0  pad250=100.0  range=0.0</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_07" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_07" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_07" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_07" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_56 — FOUR</h2>
+<p class="meta">speaker=child_07 · group=LARGEST_RANGE</p>
+<audio controls preload="none" src="spotcheck_clips/tok_56_FULL.wav"></audio>
+<pre>full=100.0  raw=6.0  pad250=100.0  range=94.0</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_56" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_56" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_56" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_56" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_79 — SIX</h2>
+<p class="meta">speaker=child_09 · group=LARGEST_RANGE</p>
+<audio controls preload="none" src="spotcheck_clips/tok_79_FULL.wav"></audio>
+<pre>full=75.0  raw=0.0  pad250=75.0  range=75.0</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_79" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_79" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_79" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_79" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card"><h2>tok_58 — ONE</h2>
+<p class="meta">speaker=child_07 · group=LARGEST_RANGE</p>
+<audio controls preload="none" src="spotcheck_clips/tok_58_FULL.wav"></audio>
+<pre>full=0.0  raw=72.5  pad250=0.0  range=72.5</pre>
+<fieldset><legend>Điểm thay đổi theo cửa sổ — theo bạn vì sao?</legend><div class="opts"><label><input type="radio" name="s_tok_58" value="WINDOW_EFFECT"><span>Do cửa sổ cắt</span></label><label><input type="radio" name="s_tok_58" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_tok_58" value="AUDIO_QUALITY"><span>Chất lượng audio</span></label><label><input type="radio" name="s_tok_58" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section>
+<p><button id="expb" style="min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff;padding:0 16px">Nộp Stage B</button></p>
+<script>
+const ids=["tok_06", "tok_02", "tok_68", "tok_44", "tok_30", "tok_01", "tok_03", "tok_04", "tok_05", "tok_07", "tok_56", "tok_79", "tok_58"];
+function v(p,id){const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}
+
+async function submitCsv(t,stage,btnId){
+ const rid=(document.getElementById('reviewer')||{value:'human_mobile'}).value||'human_mobile';
+ const btn=document.getElementById(btnId);
+ try{
+  const r=await fetch('/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({pack:'window_spot',stage:stage,csv:t,reviewer_id:rid,timestamp:new Date().toISOString()})});
+  if(r.ok){const j=await r.json();btn.textContent='Đã nộp ✓ ('+j.rows+' dòng)';btn.style.background='#1a7f37';return;}
+  throw new Error('http '+r.status);
+ }catch(e){
+  btn.textContent='Không gửi được — tải CSV';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
+  a.download='WindowSpot_Stage'+stage+'_Filled.csv';a.click();
+ }
+}
+
+document.getElementById('expb').onclick=async()=>{
+ let lines=['token_id,stage_b_most_responsible'];
+ for(const id of ids)lines.push([id,v('s',id)].join(','));
+ await submitCsv(lines.join('\n'),'B','expb');
+};
+</script></body></html>

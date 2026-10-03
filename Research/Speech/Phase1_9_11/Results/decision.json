@@ -1,0 +1,12 @@
+{
+  "decision": "B. WINDOW_EFFECT_REAL_BUT_NOT_SAFE",
+  "note": "Window effects large and frequent; padding rescues confirmed errors too often",
+  "window_sensitive_rate": 0.5125,
+  "false_rescue_n": 7,
+  "true_error_rescue_n": 5,
+  "scorer_formula_change": "NOT_JUSTIFIED",
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "scorer_modified": false
+}

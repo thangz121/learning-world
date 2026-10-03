@@ -1,0 +1,51 @@
+{
+  "phase": "1.9.11",
+  "n_tokens": 80,
+  "pads_ms": [
+    100,
+    200,
+    250,
+    300,
+    500
+  ],
+  "thresholds": {
+    "range_sensitive": 20.0,
+    "stable_range": 10.0,
+    "full_underscore": 10.0,
+    "full_overscore": 10.0
+  },
+  "window_sensitive_rate": 0.5125,
+  "median_score_range": 23.5,
+  "p90_score_range": 50.25000000000002,
+  "groups": {
+    "WINDOW_STABLE": 75,
+    "FULL_UNDERSCORES": 3,
+    "FULL_OVERSCORES": 2
+  },
+  "raw_beats_full_count": 4,
+  "full_beats_raw_count": 17,
+  "pad_beats_full_count": 4,
+  "full_beats_pad_count": 0,
+  "human_status_counts": {
+    "HUMAN_CONFIRMED_CORRECT": 17,
+    "HUMAN_CONFIRMED_ERROR": 15,
+    "NOT_HUMAN_REVIEWED": 38,
+    "HUMAN_UNCERTAIN": 10
+  },
+  "confirmed_error_n": 15,
+  "false_rescue_n": 7,
+  "true_error_rescue_n": 5,
+  "pad_rescue_confirmed_correct_n": 0,
+  "m4_agreement_rates": {
+    "th5": 0.9125,
+    "th10": 0.925,
+    "th15": 0.925
+  },
+  "scorer_formula_changed": false,
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "scorer_modified": false,
+  "decision": "B. WINDOW_EFFECT_REAL_BUT_NOT_SAFE",
+  "decision_note": "Window effects large and frequent; padding rescues confirmed errors too often"
+}

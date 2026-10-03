@@ -1,0 +1,10 @@
+{
+  "n": 6,
+  "mechanisms": {
+    "WINDOW_DEPENDENT_SCORER_MISS": 4,
+    "SOFT_MATCH_TOO_PERMISSIVE": 2
+  },
+  "all_variants_ge50": 2,
+  "score_range_ge20": 5,
+  "note": "Mechanisms are measured hypotheses; human second review pack prepared, labels empty"
+}
