@@ -1,0 +1,6 @@
+SOURCE (E0/E1): https://speechtherapymagic.com/
+- dual engine: 'a specialist engine we trained on children's speech and an industry-standard one'
+- output: word score + every sound breakdown: which slipped, what it sounded like, tip
+- adult-managed accounts; child never signs up; PIN play; progress by sound; SLP dashboard
+- free 100 attempts/month; Pro 5000; no ads; data minimization.
+BLOCKED: account + mic; no upload.
