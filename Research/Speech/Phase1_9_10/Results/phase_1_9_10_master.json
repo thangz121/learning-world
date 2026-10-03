@@ -21,9 +21,9 @@
   "pitch_causality": "NOT_ESTABLISHED",
   "formant_causality": "NOT_ESTABLISHED",
   "child_specific_phone_failure": "PARTIAL",
-  "scorer_modification_justified": "PARTIALLY",
-  "decision": "A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED",
-  "decision_note": "Human second pass: 8/12 acceptable pronunciation with low scores (system-side); 4/12 true pronunciation errors. Among system-side cases, 5/8 are scoring-window related (boundary + full-file alignment) with measured evidence; 2 realization variations; 1 attractor collapse. A targeted research-only fix (score the padded VAD window / multi-variant evidence) can now be designed, but NOT implemented.",
+  "scorer_modification_justified": "NO",
+  "decision": "B. ROOT_CAUSE_PARTIALLY_IDENTIFIED",
+  "decision_note": "Methodology repaired: raw Stage B = 5 TRUE_PRONUNCIATION_ERROR + 7 UNCERTAIN. Normalized: 4 clean HUMAN_TRUE_ERROR + 7 HUMAN_UNCERTAIN + 1 HUMAN_CONFLICTED (pme_01); 0 explicitly HUMAN_ACCEPTABLE. Measured mechanisms for the 7 uncertain cases are a diagnostic hypothesis only (boundary 3, full-file CTC 1, attractor 1, realization 2), not human-verified truth. Scorer unchanged.",
   "production_vad": false,
   "router_locked": false,
   "unity_integrated": false,
@@ -1922,19 +1922,44 @@
   "human_second_pass": {
     "submitted": true,
     "n": 12,
-    "system_side_acceptable_low_score": 7,
-    "true_pronunciation_error": 5,
-    "system_side_rate": 0.5833333333333334,
-    "true_error_rate": 0.4166666666666667,
-    "window_related_among_system_side": 4,
-    "revised_root_cause_distribution": {
+    "raw_stage_b_distribution": {
       "TRUE_PRONUNCIATION_ERROR": 5,
+      "UNCERTAIN": 7
+    },
+    "state_distribution": {
+      "HUMAN_CONFLICTED": 1,
+      "HUMAN_UNCERTAIN": 7,
+      "HUMAN_TRUE_ERROR": 4
+    },
+    "human_true_error_clean": 4,
+    "human_conflicted": 1,
+    "human_uncertain": 7,
+    "human_acceptable": 0,
+    "raw_true_error_including_conflicted": 5,
+    "measured_mechanism_hypothesis_for_uncertain": {
       "BOUNDARY_ERROR": 3,
       "CTC_ALIGNMENT_ERROR": 1,
       "PHONE_MODEL_GENERALIZATION_FAILURE": 1,
       "PHONEME_REALIZATION_VARIATION": 2
     },
-    "revised_1_9_9_human_correct_low_score_rate": 0.2916666666666667,
-    "reviewer_note": "Stage B UNCERTAIN = pronunciation acceptable; low score is system-side"
+    "note": "HUMAN_UNCERTAIN is NOT treated as acceptable; pme_01 conflict kept visible"
+  },
+  "phase_1_9_9_counts_derived": {
+    "reviewed": 42,
+    "first_pass_correct": 29,
+    "first_pass_incorrect": 11,
+    "first_pass_ambiguous": 2,
+    "first_pass_correct_low_score": 12,
+    "first_pass_rate_12_over_29": 0.41379310344827586
+  },
+  "revised_metric": {
+    "metric": "human_correct_low_score_rate",
+    "definition": "confirmed-acceptable = first-pass CORRECT cases not revised by second pass; numerator = those with score<50",
+    "denominator_confirmed_acceptable": 17,
+    "numerator_confirmed_low": 0,
+    "revised_rate": 0.0,
+    "superseded_first_pass_rate": 0.41379310344827586,
+    "unresolved_cases_excluded": 8,
+    "metric_status": "RECALCULATED_WITH_EXPLICIT_DEFINITION"
   }
 }

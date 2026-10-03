@@ -1,19 +1,23 @@
 # Phase 1.9.10 — Deep-dive 12 child phone-model-error cases
 
-**Decision:** `A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED` (after human second pass)  
+**Decision:** `B. ROOT_CAUSE_PARTIALLY_IDENTIFIED` (methodology repaired in 1.9.11)  
 **No scorer changes.** production_vad/router/unity/scorer_modified = false
 
-Human second pass (Stage A blind + Stage B evidence, submitted over LAN):
+Human second pass (raw Stage B): **TRUE_PRONUNCIATION_ERROR = 5, UNCERTAIN = 7**
 
-| verdict | n |
+Normalized states:
+
+| state | n |
 |---|---:|
-| acceptable pronunciation, low score = system-side | **7** |
-| true pronunciation error (low score justified) | **5** |
+| HUMAN_TRUE_ERROR (clean) | 4 |
+| HUMAN_UNCERTAIN (not acceptable) | 7 |
+| HUMAN_CONFLICTED (pme_01) | 1 |
+| HUMAN_ACCEPTABLE (explicit) | 0 |
 
-System-side mechanisms: BOUNDARY 3, full-file CTC alignment 1, realization variation 2,
-attractor collapse 1 → **4/7 window-related**.
+Measured mechanisms for the 7 uncertain cases are a **diagnostic hypothesis only**:
+boundary 3, full-file CTC alignment 1, attractor 1, realization variation 2.
 
-- revised 1.9.9 `human_correct_low_score_rate`: 0.414 → **0.292**
+- revised 1.9.9 metric: 0.414 superseded → **0.0 (0/17 confirmed)**, 8 unresolved
 - boundary rescue: 4/12; crop-beats-full inversion: 2/12
 - F0 does **not** separate error vs OK groups (281.5 vs 280.7 Hz)
 - word-edge mismatches: initial 12/12, final 10/12

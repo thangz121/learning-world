@@ -1,9 +1,15 @@
-"""Merge human second-pass submissions and revise Phase 1.9.10 conclusions.
+"""Phase 1.9.11 methodology repair — normalize human second-pass states (Phase 1.9.10).
 
-Interpretation (confirmed by reviewer):
-- Stage B = TRUE_PRONUNCIATION_ERROR  -> child actually mispronounced (low score justified)
-- Stage B = UNCERTAIN (or anything else) -> pronunciation ACCEPTABLE;
-  the low score is system-side (boundary/window/phone-model evidence), not the child.
+Supersedes the previous version of this script (which treated Stage B UNCERTAIN as
+"acceptable" and contained hard-coded 29/12 counts and stale 8/12 text).
+
+State model (three distinct human states + conflict):
+- Stage B TRUE_PRONUNCIATION_ERROR -> HUMAN_TRUE_ERROR
+- Stage B UNCERTAIN                -> HUMAN_UNCERTAIN (NOT acceptable)
+- Stage A correct + Stage B error  -> HUMAN_CONFLICTED (conflict kept visible)
+- no explicit acceptable verdict   -> HUMAN_ACCEPTABLE does not occur in this set
+
+All counts are derived from the actual submitted records; nothing hard-coded.
 """
 from __future__ import annotations
 
@@ -14,7 +20,11 @@ from pathlib import Path
 
 PHASE = Path(__file__).resolve().parents[1]
 RES = PHASE / "Results"
-SUBS = RES / "submissions"
+P199 = PHASE.parent / "Phase1_9_9" / "Results"
+
+CORRECT = {"CLEAR_CORRECT", "PROBABLY_CORRECT"}
+INCORRECT = {"CLEAR_INCORRECT", "PROBABLY_INCORRECT"}
+AMBIG = {"AMBIGUOUS"}
 
 
 def read_csv(p: Path):
@@ -33,6 +43,28 @@ def write_csv(p: Path, rows, fields=None):
         w.writerows(rows)
 
 
+def derive_199_counts():
+    """Trace the original Phase 1.9.9 records; no hard-coded counts."""
+    rows = read_csv(P199 / "human_review_results.csv")
+    rows = [r for r in rows if r.get("human_pronunciation")]
+    human_ok = [r for r in rows if r["human_pronunciation"] in CORRECT]
+    human_bad = [r for r in rows if r["human_pronunciation"] in INCORRECT]
+    human_amb = [r for r in rows if r["human_pronunciation"] in AMBIG]
+    low_ok = [
+        r
+        for r in human_ok
+        if r.get("full_score") not in (None, "") and float(r["full_score"]) < 50
+    ]
+    return {
+        "reviewed": len(rows),
+        "first_pass_correct": len(human_ok),
+        "first_pass_incorrect": len(human_bad),
+        "first_pass_ambiguous": len(human_amb),
+        "first_pass_correct_low_score": len(low_ok),
+        "first_pass_rate_12_over_29": (len(low_ok) / len(human_ok)) if human_ok else None,
+    }
+
+
 def main():
     stage_a = read_csv(RES / "Human_SecondPass_StageA_Filled.csv")
     stage_b = read_csv(RES / "Human_SecondPass_StageB_Filled.csv")
@@ -41,20 +73,23 @@ def main():
 
     cases = read_csv(RES / "phone_model_error_cases.csv")
     roots = read_csv(RES / "phone_model_error_root_causes.csv")
-    master = json.loads((RES / "phase_1_9_10_master.json").read_text(encoding="utf-8"))
-    by_case_root = {r["case_id"]: r for r in roots}
+    by_root = {r["case_id"]: r for r in roots}
 
     merged = []
     for c in cases:
         cid = c["case_id"]
         a = a_by.get(cid, "")
         b = b_by.get(cid, "")
-        verdict = (
-            "TRUE_PRONUNCIATION_ERROR"
-            if b == "TRUE_PRONUNCIATION_ERROR"
-            else "SYSTEM_SIDE_ACCEPTABLE_LOW_SCORE"
-        )
-        measured = by_case_root.get(cid, {}).get("root_cause", "")
+        measured = by_root.get(cid, {}).get("root_cause", "")
+        conflict = a in CORRECT and b == "TRUE_PRONUNCIATION_ERROR"
+        if b == "TRUE_PRONUNCIATION_ERROR":
+            state = "HUMAN_CONFLICTED" if conflict else "HUMAN_TRUE_ERROR"
+        elif b == "UNCERTAIN":
+            state = "HUMAN_UNCERTAIN"
+        elif b in CORRECT:
+            state = "HUMAN_ACCEPTABLE"
+        else:
+            state = "HUMAN_UNCERTAIN"
         merged.append(
             {
                 "case_id": cid,
@@ -64,80 +99,101 @@ def main():
                 "raw_score": c.get("raw_score", ""),
                 "stage_a_pronunciation": a,
                 "stage_b_most_responsible": b,
-                "human_verdict": verdict,
+                "human_state": state,
+                "human_review_conflict": conflict,
+                "final_human_certainty": "CONFLICTED" if conflict else ("CERTAIN" if state in ("HUMAN_TRUE_ERROR", "HUMAN_ACCEPTABLE") else "UNCERTAIN"),
                 "measured_mechanism": measured,
-                "revised_root_cause": (
-                    "TRUE_PRONUNCIATION_ERROR" if verdict == "TRUE_PRONUNCIATION_ERROR" else measured
-                ),
                 "reviewer_id": "human_mobile",
                 "review_date": "2026-10-03",
             }
         )
     write_csv(RES / "human_second_pass.csv", merged)
 
-    # update root-cause table with human columns
+    state_counts = Counter(m["human_state"] for m in merged)
+    raw_stage_b = Counter(m["stage_b_most_responsible"] for m in merged)
+
+    # diagnostic hypothesis for the 7 uncertain cases (measured mechanisms, NOT truth)
+    uncertain_mech = Counter(
+        m["measured_mechanism"] for m in merged if m["human_state"] == "HUMAN_UNCERTAIN"
+    )
+
+    # update root-cause table with normalized columns
     for r in roots:
         m = next(x for x in merged if x["case_id"] == r["case_id"])
         r["human_stage_a"] = m["stage_a_pronunciation"]
         r["human_stage_b"] = m["stage_b_most_responsible"]
-        r["human_verdict"] = m["human_verdict"]
-        r["revised_root_cause"] = m["revised_root_cause"]
+        r["human_state"] = m["human_state"]
+        r["human_review_conflict"] = m["human_review_conflict"]
+        r["measured_mechanism"] = m["measured_mechanism"]
     write_csv(RES / "phone_model_error_root_causes.csv", roots)
 
-    sys_n = sum(1 for m in merged if m["human_verdict"] == "SYSTEM_SIDE_ACCEPTABLE_LOW_SCORE")
-    true_n = sum(1 for m in merged if m["human_verdict"] == "TRUE_PRONUNCIATION_ERROR")
-    n = len(merged)
+    # derive 1.9.9 counts from actual records
+    c199 = derive_199_counts()
+    # map pme_XX -> original 1.9.9 review_id (same order as PME rows in human_review_results.csv)
+    reviewed = read_csv(P199 / "human_review_results.csv")
+    pme_rows = [r for r in reviewed if r.get("diagnostic") == "PHONE_MODEL_ERROR"]
+    second_pass_review_ids = {r["review_id"] for r in pme_rows}
+    assert len(second_pass_review_ids) == len(merged), (len(second_pass_review_ids), len(merged))
+    # first-pass correct cases NOT revised by second pass = confirmed acceptable
+    first_pass_ok = [
+        r
+        for r in reviewed
+        if r.get("human_pronunciation") in CORRECT
+        and r.get("review_id") not in second_pass_review_ids
+    ]
+    confirmed_low = [
+        r
+        for r in first_pass_ok
+        if r.get("full_score") not in (None, "") and float(r["full_score"]) < 50
+    ]
+    revised_rate = (len(confirmed_low) / len(first_pass_ok)) if first_pass_ok else None
 
-    # revised distribution: system-side cases keep measured mechanism; true errors override
-    dist = Counter(m["revised_root_cause"] for m in merged)
-
-    # revised Phase 1.9.9 metric: 4 of the 12 previously human-OK low-score cases are true errors
-    old_human_ok = 29
-    old_low_ok = 12
-    revised_human_ok = old_human_ok - true_n
-    revised_low_ok = old_low_ok - true_n
-    revised_rate = revised_low_ok / revised_human_ok if revised_human_ok else None
-
-    # scoring-window-related share among system-side cases
-    window_related = sum(
-        1
-        for m in merged
-        if m["human_verdict"] == "SYSTEM_SIDE_ACCEPTABLE_LOW_SCORE"
-        and m["measured_mechanism"] in ("BOUNDARY_ERROR", "CTC_ALIGNMENT_ERROR")
-    )
-
+    master = json.loads((RES / "phase_1_9_10_master.json").read_text(encoding="utf-8"))
     master["human_second_pass"] = {
         "submitted": True,
-        "n": n,
-        "system_side_acceptable_low_score": sys_n,
-        "true_pronunciation_error": true_n,
-        "system_side_rate": sys_n / n,
-        "true_error_rate": true_n / n,
-        "window_related_among_system_side": window_related,
-        "revised_root_cause_distribution": dict(dist),
-        "revised_1_9_9_human_correct_low_score_rate": revised_rate,
-        "reviewer_note": "Stage B UNCERTAIN = pronunciation acceptable; low score is system-side",
+        "n": len(merged),
+        "raw_stage_b_distribution": dict(raw_stage_b),
+        "state_distribution": dict(state_counts),
+        "human_true_error_clean": state_counts.get("HUMAN_TRUE_ERROR", 0),
+        "human_conflicted": state_counts.get("HUMAN_CONFLICTED", 0),
+        "human_uncertain": state_counts.get("HUMAN_UNCERTAIN", 0),
+        "human_acceptable": state_counts.get("HUMAN_ACCEPTABLE", 0),
+        "raw_true_error_including_conflicted": raw_stage_b.get("TRUE_PRONUNCIATION_ERROR", 0),
+        "measured_mechanism_hypothesis_for_uncertain": dict(uncertain_mech),
+        "note": "HUMAN_UNCERTAIN is NOT treated as acceptable; pme_01 conflict kept visible",
     }
-    master["decision"] = "A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED"
+    master["phase_1_9_9_counts_derived"] = c199
+    master["revised_metric"] = {
+        "metric": "human_correct_low_score_rate",
+        "definition": "confirmed-acceptable = first-pass CORRECT cases not revised by second pass; numerator = those with score<50",
+        "denominator_confirmed_acceptable": len(first_pass_ok),
+        "numerator_confirmed_low": len(confirmed_low),
+        "revised_rate": revised_rate,
+        "superseded_first_pass_rate": c199["first_pass_rate_12_over_29"],
+        "unresolved_cases_excluded": state_counts.get("HUMAN_UNCERTAIN", 0)
+        + state_counts.get("HUMAN_CONFLICTED", 0),
+        "metric_status": "RECALCULATED_WITH_EXPLICIT_DEFINITION",
+    }
+    master["decision"] = "B. ROOT_CAUSE_PARTIALLY_IDENTIFIED"
     master["decision_note"] = (
-        "Human second pass: 8/12 acceptable pronunciation with low scores (system-side); "
-        "4/12 true pronunciation errors. Among system-side cases, 5/8 are scoring-window "
-        "related (boundary + full-file alignment) with measured evidence; 2 realization "
-        "variations; 1 attractor collapse. A targeted research-only fix (score the padded "
-        "VAD window / multi-variant evidence) can now be designed, but NOT implemented."
+        "Methodology repaired: raw Stage B = 5 TRUE_PRONUNCIATION_ERROR + 7 UNCERTAIN. "
+        "Normalized: 4 clean HUMAN_TRUE_ERROR + 7 HUMAN_UNCERTAIN + 1 HUMAN_CONFLICTED (pme_01); "
+        "0 explicitly HUMAN_ACCEPTABLE. Measured mechanisms for the 7 uncertain cases are a "
+        "diagnostic hypothesis only (boundary 3, full-file CTC 1, attractor 1, realization 2), "
+        "not human-verified truth. Scorer unchanged."
     )
-    master["scorer_modification_justified"] = "PARTIALLY"
-    master["scorer_modified"] = False
+    master["scorer_modification_justified"] = "NO"
     (RES / "phase_1_9_10_master.json").write_text(
         json.dumps(master, indent=2, ensure_ascii=True), encoding="utf-8"
     )
     (RES / "decision.json").write_text(
         json.dumps(
             {
-                "decision": "A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED",
+                "decision": "B. ROOT_CAUSE_PARTIALLY_IDENTIFIED",
                 "note": master["decision_note"],
                 "human_second_pass": master["human_second_pass"],
-                "scorer_modification_justified": "PARTIALLY",
+                "revised_metric": master["revised_metric"],
+                "scorer_modification_justified": "NO",
                 "scorer_modified": False,
                 "production_vad": False,
                 "router_locked": False,
@@ -149,6 +205,8 @@ def main():
     )
 
     print(json.dumps(master["human_second_pass"], indent=2, ensure_ascii=True))
+    print(json.dumps(master["phase_1_9_9_counts_derived"], indent=2, ensure_ascii=True))
+    print(json.dumps(master["revised_metric"], indent=2, ensure_ascii=True))
 
 
 if __name__ == "__main__":

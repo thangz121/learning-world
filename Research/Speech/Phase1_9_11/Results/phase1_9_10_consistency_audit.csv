@@ -1,0 +1,16 @@
+artifact,issue,stale_value,corrected_value,status
+Research/Speech/Phase1_9_10/Scripts/merge_second_pass.py,hard-coded 1.9.9 counts,old_human_ok=29 old_low_ok=12,derived from human_review_results.csv records,FIXED
+Research/Speech/Phase1_9_10/Scripts/merge_second_pass.py,UNCERTAIN converted to SYSTEM_SIDE_ACCEPTABLE_LOW_SCORE,7/12 acceptable,system_side_acceptable key removed; HUMAN_UNCERTAIN kept,FIXED
+Research/Speech/Phase1_9_10/Scripts/merge_second_pass.py,stale decision note text,8/12 acceptable 4/12 true errors,raw Stage B 5 TRUE + 7 UNCERTAIN; normalized 4+7+1+0,FIXED
+Research/Speech/Phase1_9_10/Results/phase_1_9_10_master.json,stale decision_note,8/12 acceptable 4/12 true errors,repaired note with three states,FIXED
+Research/Speech/Phase1_9_10/Results/phase_1_9_10_master.json,system_side_acceptable_low_score key,7/12 acceptable,human_second_pass rebuilt with raw_stage_b_distribution + state_distribution,FIXED
+Research/Speech/Phase1_9_10/Results/decision.json,stale note,8/12 acceptable 4/12 true errors,repaired note; decision B,FIXED
+Research/Speech/Phase1_9_10/Results/decision.json,decision overstated,A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED,B. ROOT_CAUSE_PARTIALLY_IDENTIFIED (uncertain not truth),FIXED
+Research/Speech/Phase1_9_10/Results/human_second_pass.csv,verdict column collapsed states,human_verdict SYSTEM_SIDE_ACCEPTABLE_LOW_SCORE,human_state HUMAN_TRUE_ERROR/HUMAN_UNCERTAIN/HUMAN_CONFLICTED + conflict flag,FIXED
+Research/Speech/Phase1_9_10/Results/phone_model_error_root_causes.csv,revised_root_cause treated uncertain as resolved,TRUE_PRONUNCIATION_ERROR override only,measured_mechanism + human_state separate columns,FIXED
+Research/Speech/Phase1_9_10/PHASE_1_9_10_REPORT.md,exec summary claimed 7/12 acceptable,7/12 (58%) acceptable,3-state model; 0 explicit acceptable; 7 uncertain,FIXED
+Research/Speech/Phase1_9_10/PHASE_1_9_10_REPORT.md,case table speaker mapping wrong for pme_01,pme_01 child_07,pme_01 child_03 (verified from records),FIXED
+Research/Speech/Phase1_9_10/PHASE_1_9_10_REPORT.md,decision A overstated,A. ROOT_CAUSE_SUFFICIENTLY_IDENTIFIED,B. ROOT_CAUSE_PARTIALLY_IDENTIFIED,FIXED
+Research/Speech/Phase1_9_10/PHASE_1_9_10_REPORT.md,metric 0.292 treated uncertain as correct,revised rate 7/24,0.0 (0/17 confirmed) with 8 unresolved excluded,FIXED
+Research/Speech/Phase1_9_10/README.md,claimed 7 acceptable,7 acceptable,3-state model summary,FIXED
+Research/Speech/Phase1_9_10/Results/phase_1_9_10_master.json,metric derived from hard-coded counts,revised_rate 0.292,derived: denominator 17 numerator 0 -> 0.0,FIXED
