@@ -1,2 +1,10 @@
-note,human_correct_low_score_rate,human_incorrect_high_score_rate,human_ambiguous_rate
-PENDING_HUMAN_BLIND_REVIEW,,,
+human,score_band,count
+AMBIGUOUS,High(>=50),1
+AMBIGUOUS,Low(<50),1
+CLEAR_CORRECT,High(>=50),14
+CLEAR_CORRECT,Low(<50),8
+CLEAR_INCORRECT,High(>=50),6
+CLEAR_INCORRECT,Low(<50),2
+PROBABLY_CORRECT,High(>=50),3
+PROBABLY_CORRECT,Low(<50),4
+PROBABLY_INCORRECT,Low(<50),3

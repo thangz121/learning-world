@@ -5,8 +5,10 @@
 **production_vad / router_locked / unity:** **false**  
 **asr_is_not_pronunciation_judge:** true  
 
-**Decision this phase:** **C. EVIDENCE_INSUFFICIENT**  
-Reason: automated forensics + blind-review evidence pack are complete; **human Stage A labels not yet filled**. Scorer A/B cannot be chosen without the human ear as authority.
+**Decision this phase:** **B. SCORER_NEEDS_CHILD_SPECIFIC_RESEARCH**  
+Reason: Stage A human blind labels complete (n=42).  
+**human_correct_low_score_rate = 0.414** (12/29 human-OK tokens scored &lt;50).  
+Also **human_incorrect_high_score_rate = 0.545** (6/11 human-bad scored ≥50).
 
 ---
 
@@ -19,10 +21,13 @@ Reason: automated forensics + blind-review evidence pack are complete; **human S
 | Clips exported | FULL / RAW / PAD250 / HYB / LISTEN per item |
 | Blind UI | `HumanReview/review_blind.html` (scores hidden) |
 | Reveal UI | `HumanReview/review_reveal.html` |
-| Human labels filled | **0** |
+| Human labels filled | **42/42** |
+| human_correct_low_score_rate | **0.414** (12/29) |
+| human_incorrect_high_score_rate | **0.545** (6/11) |
 | LWE vocab in Zenodo | **LIMITED** (numbers + sentence tokens; not full LWE list) |
 
-VAD architecture **unchanged**: Silero default; hybrid research rescue only.
+VAD architecture **unchanged**: Silero default; hybrid research rescue only.  
+Scorer: **needs child-specific research** (not production change yet).
 
 ---
 
@@ -74,30 +79,35 @@ Counts: see `phase_1_9_9_master.json` → `inventory_counts`.
 
 ## 6. Human Blind Review
 
-Pack: **42** items, multi-child multi-word, not worst-only.
+Pack: **42** items. Stage A completed by human (file `Human_Review_StageA_Filled.csv` → Results/).
 
-Stage A (`review_blind.html`):
-- Shows target + audio (LISTEN/FULL/RAW/PAD250/HYB)
-- Hides score, confidence, ASR, phone evidence
-- Labels: CLEAR_CORRECT … CLEAR_INCORRECT, boundary, quality, confidence
+| Human label | n |
+|---|---:|
+| CLEAR_CORRECT + PROBABLY_CORRECT | **29** |
+| CLEAR_INCORRECT + PROBABLY_INCORRECT | **11** |
+| AMBIGUOUS | **2** |
 
-Stage B (`review_reveal.html`): reveals model evidence after Stage A.
-
-**Status:** labels empty — awaiting human on maynode/local.
-
-Export path: `Human_Review_StageA_Filled.csv` → merge into `Results/human_review_results.csv`.
+Most boundary labels: BOUNDARY_OK (few BOTH_CUT / END_CUT / UNCLEAR).
 
 ---
 
 ## 7. Human vs Score
 
 | Metric | Value |
-|---|---|
-| human_correct_low_score_rate | **PENDING** |
-| human_incorrect_high_score_rate | **PENDING** |
-| human_ambiguous_rate | **PENDING** |
+|---|---:|
+| human_correct_low_score_rate | **0.414** (12/29) |
+| human_incorrect_high_score_rate | **0.545** (6/11) |
+| human_ambiguous_rate | **0.048** (2/42) |
 
-Matrix placeholder: `human_vs_score_matrix.csv`
+| Human \ Score | Low (&lt;50) | High (≥50) |
+|---|---:|---:|
+| CLEAR/PROBABLY_CORRECT | **12** | 17 |
+| CLEAR/PROBABLY_INCORRECT | 5 | **6** |
+| AMBIGUOUS | 1 | 1 |
+
+**12 human-OK but score&lt;50** (examples): eight/two/one/three/seven/six/five with soft 0–39 and phone n_miss≥1 → classified **PHONE_MODEL_ERROR** (heuristic; human authority on correctness).
+
+**6 human-BAD but score≥50** (SCORER_MISS): e.g. four@100, six@50, two@50, eight@50.
 
 ---
 
@@ -105,10 +115,17 @@ Matrix placeholder: `human_vs_score_matrix.csv`
 
 For each sample token: canonical ARPABET, soft hits (expected/best_obs/match_type/sim/posterior/spans), n_miss, conf_reasons.
 
-Artifact: `phone_diagnostics.csv`  
-`diagnostic=UNRESOLVED_PENDING_HUMAN` until Stage A.
+Artifact: `phone_diagnostics.csv` (updated with human + diagnostic).
 
-**Example pattern (automated):** several VERY_LOW “two”/“eight” show high n_miss and weak posteriors — consistent with *either* true error *or* phone-model/child mismatch; **not classified without human**.
+| diagnostic | n |
+|---|---:|
+| AGREEMENT_OK | 17 |
+| PHONE_MODEL_ERROR | **12** |
+| SCORER_MISS | **6** |
+| TRUE_PRONUNCIATION_ERROR | 5 |
+| HUMAN_UNCERTAIN | 2 |
+
+Human-OK + low score + phone misses → primary research signal: **phone model / child acoustic mismatch**, not “child always wrong”.
 
 ---
 
@@ -173,43 +190,48 @@ Do **not** map unrelated child words to LWE targets.
 
 ## 18. Failure Mode Classification
 
-Taxonomy ready; all sample diagnostics **UNRESOLVED_PENDING_HUMAN** until Stage A:
-TRUE_PRONUNCIATION_ERROR / PHONE_MODEL_ERROR / BOUNDARY_ERROR / … / UNRESOLVED
+See §7–8. Dominant research-relevant modes on this sample:
+- **PHONE_MODEL_ERROR** (12): human acceptably correct, score low, phone misses  
+- **SCORER_MISS** (6): human incorrect, score still mid/high  
+- **TRUE_PRONUNCIATION_ERROR** (5): human incorrect + score low (useful detection)  
+- Boundary-cut rarely primary (most BOUNDARY_OK)
 
 ---
 
 ## 19. What Is Proven
 
-1. 1.9.8 baseline scores are stable and reproducible from stored results.  
-2. A balanced 42-item blind-review pack with multi-crop audio can be served.  
-3. Phone-hit forensics and pad sweeps are extractable without changing the scorer.  
-4. LWE full vocabulary is **not** covered by Zenodo numbers alone.
+1. Baseline 80-token scores reproducible.  
+2. On 42 blind-reviewed tokens, **~41% of human-correct speech scores &lt;50**.  
+3. **~55% of human-incorrect speech still scores ≥50**.  
+4. Low scores are **not** equivalent to “child mispronounced”.  
+5. Phone-model mismatch is a leading candidate mechanism (not proven causal F0).  
+6. LWE full vocab still not covered by Zenodo numbers.
 
 ---
 
 ## 20. What Is NOT Proven
 
-1. Fraction of low scores that are human-acceptable child speech.  
-2. Systematic child-acoustic bias of the scorer.  
-3. Need for pitch normalization.  
-4. Production scorer changes.  
-5. ASR conflict rates (ASR unavailable).
+1. Exact fix (calibration vs phone model vs child norm).  
+2. Pitch/formant causality.  
+3. Production-ready child scorer.  
+4. Generalization beyond numbers / this 42-sample.  
+5. ASR conflicts (ASR unavailable).
 
 ---
 
 ## 21. Limitations
 
-- No human labels yet → Decision C  
-- ASR missing in environment  
-- F0 is proxy only  
-- Numbers ≠ LWE game vocab  
-- Individual child ages unknown  
+- Single reviewer Stage A  
+- n=42 balanced sample of 80  
+- Numbers only; not full LWE vocab  
+- Diagnostic labels are heuristic on top of human pronunciation authority  
+- ASR missing  
 
 ---
 
 ## 22. Decision
 
-### **C. EVIDENCE_INSUFFICIENT**
+### **B. SCORER_NEEDS_CHILD_SPECIFIC_RESEARCH**
 
 ```
 production_vad = false
@@ -217,17 +239,18 @@ router_locked = false
 unity_integrated = false
 ```
 
-Do not choose A (scorer generalizes) or B (needs child-specific fix) without human Stage A rates.
+Do **not** integrate scorer changes into Unity yet.  
+Do **not** blindly calibrate scores before isolating phone-model vs true error.
 
 ---
 
 ## 23. Exact Next Step
 
-1. Open `HumanReview/review_blind.html` (maynode or local).  
-2. Complete Stage A for all 42 items → save `Human_Review_StageA_Filled.csv`.  
-3. Run merge script / update `human_review_results.csv`.  
-4. Recompute `human_correct_low_score_rate` and failure taxonomy → flip decision to **A or B**.  
-5. Only then consider isolated research scorer variants — **do not calibrate first**.
+**Phase 1.9.10 (suggested):** isolated research variants on the 12 PHONE_MODEL_ERROR + 6 SCORER_MISS cases only:
+1. phone-posterior / soft-match diagnostics deep dive  
+2. optional child-aware research head **without** overwriting frozen soft-v2  
+3. expand human review to more LWE vocab if real child audio becomes available  
+Keep VAD architecture frozen (Silero default).
 
 ---
 

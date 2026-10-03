@@ -1,43 +1,33 @@
 {
   "phase": "1.9.9",
-  "baseline": {
-    "baseline_commit": "3ca915b",
-    "baseline_file": "Research/Speech/Phase1_9_8/Results/pronunciation_results.csv",
-    "baseline_subset": "phase1.9.8_studio_numbers_cap80",
-    "n": 80,
-    "mean_soft_full": 63.90375,
-    "frac_lt_50": 0.275,
-    "reproduction_ok": true,
-    "note": "Reproduced from Phase 1.9.8 CSV (same frozen scorer outputs)"
+  "human_reviewed": 42,
+  "human_correct_n": 29,
+  "human_incorrect_n": 11,
+  "human_ambiguous_n": 2,
+  "human_correct_low_score_rate": 0.41379310344827586,
+  "human_incorrect_high_score_rate": 0.5454545454545454,
+  "human_ambiguous_rate": 0.047619047619047616,
+  "diagnostic_counts": {
+    "PHONE_MODEL_ERROR": 12,
+    "TRUE_PRONUNCIATION_ERROR": 5,
+    "HUMAN_UNCERTAIN": 2,
+    "AGREEMENT_OK": 17,
+    "SCORER_MISS": 6
   },
-  "inventory_counts": {
-    "MID": 32,
-    "LOW": 14,
-    "HIGH": 26,
-    "VERY_LOW": 8
-  },
-  "sample_n": 42,
-  "human_reviewed": 0,
-  "human_correct_low_score_rate": null,
-  "human_incorrect_high_score_rate": null,
-  "human_ambiguous_rate": null,
-  "lwe_vocabulary_coverage": {
-    "n_lwe_items": 12,
-    "n_overlap_zenodo_tokens": 1,
-    "coverage_frac": 0.08333333333333333,
-    "ZENODO_TARGET_COVERAGE": "LIMITED",
-    "REAL_CHILD_LWE_VOCABULARY_DATA": "PARTIAL_NUMBERS_ONLY"
-  },
-  "pitch": "descriptive f0_med HIGH mean=352.2 LOW mean=347.3 (proxy only; not causal)",
-  "formant": "FORMANT_EFFECT_NOT_IDENTIFIED",
-  "decision": "C. EVIDENCE_INSUFFICIENT",
+  "decision": "B. SCORER_NEEDS_CHILD_SPECIFIC_RESEARCH",
+  "decision_reason": "human_correct_low_score_rate=0.414 (12/29 human-OK tokens scored <50)",
   "production_vad": false,
   "router_locked": false,
   "unity_integrated": false,
-  "asr_is_not_pronunciation_judge": true,
-  "rationale": [
-    "Automated forensics and blind-review pack complete",
-    "Human pronunciation labels not yet filled \u2014 cannot compute human_correct_low_score_rate",
-    "Do not choose A/B without human ear authority"
-  ]
+  "matrix": {
+    "PROBABLY_CORRECT|Low(<50)": 4,
+    "CLEAR_INCORRECT|Low(<50)": 2,
+    "CLEAR_CORRECT|Low(<50)": 8,
+    "PROBABLY_INCORRECT|Low(<50)": 3,
+    "AMBIGUOUS|Low(<50)": 1,
+    "CLEAR_CORRECT|High(>=50)": 14,
+    "CLEAR_INCORRECT|High(>=50)": 6,
+    "PROBABLY_CORRECT|High(>=50)": 3,
+    "AMBIGUOUS|High(>=50)": 1
+  }
 }

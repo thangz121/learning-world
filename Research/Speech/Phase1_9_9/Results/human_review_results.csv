@@ -1,43 +1,43 @@
-review_id,speaker_id,target,score_band,full_score,human_pronunciation,phoneme_error,boundary_label,audio_quality,review_confidence,notes,reviewer_id,review_date
-child_03_eight_00,child_03,eight,VERY_LOW,0.0,,,,,,,,
-child_04_two_01,child_04,two,VERY_LOW,0.0,,,,,,,,
-child_06_two_02,child_06,two,VERY_LOW,0.0,,,,,,,,
-child_07_eight_03,child_07,eight,VERY_LOW,0.0,,,,,,,,
-child_07_one_04,child_07,one,VERY_LOW,0.0,,,,,,,,
-child_08_eight_05,child_08,eight,VERY_LOW,0.0,,,,,,,,
-child_07_three_06,child_07,three,VERY_LOW,5.8,,,,,,,,
-child_04_three_07,child_04,three,VERY_LOW,11.7,,,,,,,,
-child_01_seven_08,child_01,seven,LOW,20.0,,,,,,,,
-child_07_seven_09,child_07,seven,LOW,20.0,,,,,,,,
-child_06_six_10,child_06,six,LOW,25.0,,,,,,,,
-child_09_five_11,child_09,five,LOW,33.4,,,,,,,,
-child_01_five_12,child_01,five,LOW,33.5,,,,,,,,
-child_02_one_13,child_02,one,LOW,39.2,,,,,,,,
-child_02_three_14,child_02,three,LOW,39.2,,,,,,,,
-child_03_three_15,child_03,three,LOW,39.2,,,,,,,,
-child_08_five_16,child_08,five,LOW,39.2,,,,,,,,
-child_08_four_17,child_08,four,LOW,39.2,,,,,,,,
-child_01_eight_18,child_01,eight,MID,50.0,,,,,,,,
-child_01_two_19,child_01,two,MID,50.0,,,,,,,,
-child_02_eight_20,child_02,eight,MID,50.0,,,,,,,,
-child_02_two_21,child_02,two,MID,50.0,,,,,,,,
-child_03_six_22,child_03,six,MID,50.0,,,,,,,,
-child_03_two_23,child_03,two,MID,50.0,,,,,,,,
-child_04_eight_24,child_04,eight,MID,50.0,,,,,,,,
-child_07_six_25,child_07,six,MID,55.7,,,,,,,,
-child_04_seven_26,child_04,seven,MID,60.1,,,,,,,,
-child_03_seven_27,child_03,seven,MID,63.5,,,,,,,,
-child_09_nine_28,child_09,nine,HIGH,100.0,,,,,,,,
-child_08_six_29,child_08,six,HIGH,100.0,,,,,,,,
-child_08_nine_30,child_08,nine,HIGH,100.0,,,,,,,,
-child_07_ten_31,child_07,ten,HIGH,100.0,,,,,,,,
-child_07_nine_32,child_07,nine,HIGH,100.0,,,,,,,,
-child_07_four_33,child_07,four,HIGH,100.0,,,,,,,,
-child_06_seven_34,child_06,seven,HIGH,100.0,,,,,,,,
-child_06_four_35,child_06,four,HIGH,100.0,,,,,,,,
-child_06_five_36,child_06,five,HIGH,100.0,,,,,,,,
-child_05_seven_37,child_05,seven,HIGH,100.0,,,,,,,,
-child_09_six_38,child_09,six,MID,75.0,,,,,,,,
-child_01_nine_39,child_01,nine,HIGH,100.0,,,,,,,,
-child_09_four_40,child_09,four,MID,66.8,,,,,,,,
-child_04_five_41,child_04,five,HIGH,100.0,,,,,,,,
+review_id,speaker_id,target,full_score,score_band,full_confidence,human_pronunciation,boundary_label,audio_quality,review_confidence,notes,n_phone_miss,boundary_pattern,silero_raw_score,silero_pad250_score,phone_evidence,canonical,diagnostic
+child_03_eight_00,child_03,eight,0.0,VERY_LOW,0.0,PROBABLY_CORRECT,BOUNDARY_UNCLEAR,CLEAR,LOW,,2,,50.0,0.0,d æ,EY1 T,PHONE_MODEL_ERROR
+child_04_two_01,child_04,two,0.0,VERY_LOW,0.0,CLEAR_INCORRECT,BOTH_CUT,UNCERTAIN,HIGH,,2,,0.2,0.1,ŋ w,T UW1,TRUE_PRONUNCIATION_ERROR
+child_06_two_02,child_06,two,0.0,VERY_LOW,0.0,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,MEDIUM,,2,,0.0,0.0,ts. ŋ,T UW1,PHONE_MODEL_ERROR
+child_07_eight_03,child_07,eight,0.0,VERY_LOW,0.0,PROBABLY_CORRECT,BOUNDARY_OK,NOISY,MEDIUM,,2,,0.1,0.0,l p,EY1 T,PHONE_MODEL_ERROR
+child_07_one_04,child_07,one,0.0,VERY_LOW,0.0,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,3,,72.5,0.0,k k l,W AH1 N,PHONE_MODEL_ERROR
+child_08_eight_05,child_08,eight,0.0,VERY_LOW,0.0,PROBABLY_CORRECT,BOUNDARY_OK,NOISY,MEDIUM,,2,,0.0,0.0,n n,EY1 T,PHONE_MODEL_ERROR
+child_07_three_06,child_07,three,5.8,VERY_LOW,0.0,PROBABLY_INCORRECT,BOUNDARY_UNCLEAR,CLEAR,MEDIUM,,2,,39.2,5.8,t z j,TH R IY1,TRUE_PRONUNCIATION_ERROR
+child_04_three_07,child_04,three,11.7,VERY_LOW,0.0,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,6.7,5.9,t w l,TH R IY1,PHONE_MODEL_ERROR
+child_01_seven_08,child_01,seven,20.0,LOW,0.0,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,4,,40.1,44.1,l l l j n,S EH1 V AH0 N,PHONE_MODEL_ERROR
+child_07_seven_09,child_07,seven,20.0,LOW,0.001,PROBABLY_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,4,,43.5,20.0,l l l p n,S EH1 V AH0 N,TRUE_PRONUNCIATION_ERROR
+child_06_six_10,child_06,six,25.0,LOW,0.0,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,3,,0.0,25.0,l l ɹ s,S IH1 K S,PHONE_MODEL_ERROR
+child_09_five_11,child_09,five,33.4,LOW,0.004,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,2,,,,l aɪ n,F AY1 V,PHONE_MODEL_ERROR
+child_01_five_12,child_01,five,33.5,LOW,0.008,PROBABLY_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,2,,39.2,66.7,p aɪ ɑ,F AY1 V,PHONE_MODEL_ERROR
+child_02_one_13,child_02,one,39.2,LOW,0.004,AMBIGUOUS,END_CUT,CLEAR,HIGH,,1,,40.1,39.2,j j n,W AH1 N,HUMAN_UNCERTAIN
+child_02_three_14,child_02,three,39.2,LOW,0.003,PROBABLY_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,33.4,39.2,t ɹ ə,TH R IY1,TRUE_PRONUNCIATION_ERROR
+child_03_three_15,child_03,three,39.2,LOW,0.005,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,39.2,39.2,t ɹ t,TH R IY1,PHONE_MODEL_ERROR
+child_08_five_16,child_08,five,39.2,LOW,0.008,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,39.2,39.2,v aɪ t,F AY1 V,PHONE_MODEL_ERROR
+child_08_four_17,child_08,four,39.2,LOW,0.002,CLEAR_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,,,f f w,F AO1 R,TRUE_PRONUNCIATION_ERROR
+child_01_eight_18,child_01,eight,50.0,MID,0.006,CLEAR_CORRECT,BOUNDARY_OK,NOISY,HIGH,,1,,50.0,50.0,d t,EY1 T,AGREEMENT_OK
+child_01_two_19,child_01,two,50.0,MID,0.005,CLEAR_CORRECT,BOUNDARY_OK,QUIET,HIGH,,1,,0.1,50.0,t p,T UW1,AGREEMENT_OK
+child_02_eight_20,child_02,eight,50.0,MID,0.006,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,100.0,50.0,l t,EY1 T,AGREEMENT_OK
+child_02_two_21,child_02,two,50.0,MID,0.004,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,0.0,50.0,t k,T UW1,AGREEMENT_OK
+child_03_six_22,child_03,six,50.0,MID,0.004,CLEAR_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,2,,25.1,50.0,s æ k k,S IH1 K S,SCORER_MISS
+child_03_two_23,child_03,two,50.0,MID,0.004,CLEAR_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,0.0,50.0,t j,T UW1,SCORER_MISS
+child_04_eight_24,child_04,eight,50.0,MID,0.002,CLEAR_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,58.8,50.0,n t,EY1 T,SCORER_MISS
+child_07_six_25,child_07,six,55.7,MID,0.019,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,75.0,55.7,ʃ ɛ k s,S IH1 K S,AGREEMENT_OK
+child_04_seven_26,child_04,seven,60.1,MID,0.016,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,2,,27.6,60.1,s ɛ v ɨ t,S EH1 V AH0 N,AGREEMENT_OK
+child_03_seven_27,child_03,seven,63.5,MID,0.021,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,40.0,63.5,s p v ɑ n,S EH1 V AH0 N,AGREEMENT_OK
+child_09_nine_28,child_09,nine,100.0,HIGH,0.103,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,100.0,100.0,n aɪ n,N AY1 N,AGREEMENT_OK
+child_08_six_29,child_08,six,100.0,HIGH,0.034,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,50.2,80.6,s ɪ k s,S IH1 K S,AGREEMENT_OK
+child_08_nine_30,child_08,nine,100.0,HIGH,0.077,PROBABLY_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,100.0,100.0,n aɪ n,N AY1 N,AGREEMENT_OK
+child_07_ten_31,child_07,ten,100.0,HIGH,0.07,PROBABLY_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,100.0,100.0,t ɛ n,T EH1 N,AGREEMENT_OK
+child_07_nine_32,child_07,nine,100.0,HIGH,0.112,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,100.0,100.0,n aɪ n,N AY1 N,AGREEMENT_OK
+child_07_four_33,child_07,four,100.0,HIGH,0.078,CLEAR_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,6.0,100.0,f ɔ ɹ,F AO1 R,SCORER_MISS
+child_06_seven_34,child_06,seven,100.0,HIGH,0.2,PROBABLY_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,100.0,100.0,s ɛ v ə n,S EH1 V AH0 N,AGREEMENT_OK
+child_06_four_35,child_06,four,100.0,HIGH,0.129,CLEAR_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,66.7,100.0,f ɔ ɹ,F AO1 R,SCORER_MISS
+child_06_five_36,child_06,five,100.0,HIGH,0.096,AMBIGUOUS,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,100.0,100.0,f aɪ v,F AY1 V,HUMAN_UNCERTAIN
+child_05_seven_37,child_05,seven,100.0,HIGH,0.236,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,100.0,100.0,s ɛ v ə n,S EH1 V AH0 N,AGREEMENT_OK
+child_09_six_38,child_09,six,75.0,MID,0.011,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,ALL_HIGHISH,0.0,75.0,s k k s,S IH1 K S,AGREEMENT_OK
+child_01_nine_39,child_01,nine,100.0,HIGH,0.05,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,33.8,100.0,n aɪ n,N AY1 N,AGREEMENT_OK
+child_09_four_40,child_09,four,66.8,MID,0.015,CLEAR_INCORRECT,BOUNDARY_OK,CLEAR,HIGH,,1,,6.1,66.8,f ɔ æ,F AO1 R,SCORER_MISS
+child_04_five_41,child_04,five,100.0,HIGH,0.018,CLEAR_CORRECT,BOUNDARY_OK,CLEAR,HIGH,,0,ALL_HIGHISH,45.0,100.0,f aɪ v,F AY1 V,AGREEMENT_OK

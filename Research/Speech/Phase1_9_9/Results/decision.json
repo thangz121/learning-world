@@ -1,7 +1,17 @@
 {
-  "decision": "C. EVIDENCE_INSUFFICIENT",
+  "decision": "B. SCORER_NEEDS_CHILD_SPECIFIC_RESEARCH",
+  "reason": "human_correct_low_score_rate=0.414 (12/29 human-OK tokens scored <50)",
+  "human_correct_low_score_rate": 0.41379310344827586,
+  "human_incorrect_high_score_rate": 0.5454545454545454,
+  "human_ambiguous_rate": 0.047619047619047616,
+  "diagnostic_counts": {
+    "PHONE_MODEL_ERROR": 12,
+    "TRUE_PRONUNCIATION_ERROR": 5,
+    "HUMAN_UNCERTAIN": 2,
+    "AGREEMENT_OK": 17,
+    "SCORER_MISS": 6
+  },
   "production_vad": false,
   "router_locked": false,
-  "unity_integrated": false,
-  "reason": "Human blind review labels required before A/B"
+  "unity_integrated": false
 }

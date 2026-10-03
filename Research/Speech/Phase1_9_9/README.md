@@ -1,6 +1,7 @@
 # Phase 1.9.9 — Child pronunciation phone-level audit
 
-**Decision:** `C. EVIDENCE_INSUFFICIENT` (await Stage A human blind labels)
+**Decision:** `B. SCORER_NEEDS_CHILD_SPECIFIC_RESEARCH`  
+Stage A human: 42/42 · human_correct_low_score_rate **0.414**
 
 ## Review
 1. Open `HumanReview/review_blind.html` — scores hidden  
