@@ -1,0 +1,17 @@
+{
+  "phase": "1.9.16",
+  "kind": "zero-shot frozen baseline reproduction (no training)",
+  "model": "facebook/wav2vec2-xlsr-53-espeak-cv-ft@2c73378",
+  "pipeline": "PhoneEvidenceV2@1.4.0",
+  "n_scored": 482,
+  "n_errors": 0,
+  "soft_exact_agreement_with_1_9_15": "482/482",
+  "reproduced": true,
+  "frr_proxy_soft_lt_50_on_rating_ge_80": 0.1224,
+  "frr_denominator": 196,
+  "mean_confidence": 0.0436,
+  "mean_processing_s": 0.405,
+  "PER": "NOT_COMPUTABLE (SIAK has expert ratings, not phone labels)",
+  "confusion_matrix": "NOT_COMPUTABLE (same reason)",
+  "wall_s": 197.9
+}

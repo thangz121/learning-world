@@ -1,0 +1,47 @@
+{
+  "phase": "1.9.16",
+  "datasets": {
+    "SIAK": {
+      "role": "child population for validation/calibration; NOT supervised phone training (ratings only)",
+      "license": "CC-BY-ND-4.0 (training use BLOCKED pending review)",
+      "n_utterances_selected": 3168,
+      "total_duration_s": 2837.2,
+      "sample_rates": [
+        16000
+      ],
+      "channels": [
+        1
+      ],
+      "duration_s": {
+        "mean": 0.896,
+        "min": 0.257,
+        "max": 3.86
+      },
+      "clipped_files": 210,
+      "mean_silence_ratio_lt_0.01": 0.5542,
+      "missing_or_undecodable": 0,
+      "phone_labels": "NONE (columns: file, utterance, score only)",
+      "label_quality": "single expert rating 0-100; min 1 max 100; rejected items absent from release"
+    },
+    "LWE_committed": {
+      "role": "external validation / failure replay (derivatives)",
+      "n_reviewed_tokens_1_9_9": 42,
+      "phone_labels": "NONE (human verdicts + model phone_evidence strings only)"
+    },
+    "CMU_Kids_mirrors": {
+      "role": "assessed, NOT downloaded",
+      "reason": "word transcripts only; no phone labels; mirror license claims unverified (MagicLuke asserts MIT, 1 like; kwhu5695 none)",
+      "status": "NOT_REQUIRED"
+    },
+    "MyST_PFSTAR": {
+      "status": "BLOCKED_ACCESS"
+    }
+  },
+  "phone_label_determination": {
+    "SIAK": "RATINGS_ONLY \u2014 no phone-level labels exist in train.csv / test.csv (verified column inspection)",
+    "LWE": "VERDICTS_ONLY \u2014 human correct/incorrect + model outputs",
+    "CMU_Kids": "WORDS_ONLY (not downloaded; no phone tier)",
+    "conclusion": "NO corpus with defensible gold phone labels is available. Supervised phone-head training (B1) is UNSUPPORTABLE on current materials."
+  },
+  "status": "VERIFIED_COMPLETE"
+}
