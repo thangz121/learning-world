@@ -18,13 +18,13 @@ E5 product observed · E6 product + controlled audio
 ## Status
 | System | Status |
 |---|---|
-| 01 Speech Blubs | BLOCKED (mobile-only, no web/API) — documented |
-| 02 AI Speak / M-Speak | pending |
-| 03 ELSA | pending |
-| 04 Microsoft PA | pending |
-| 05 Speechace | pending |
-| 06 OpenPronounce | pending |
-| 07 speak-better-than-ai | pending |
+| 01 Speech Blubs | BLOCKED (mobile-only) — E1/E5 documented |
+| 02 AI Speak / M-Speak | BLOCKED (app-only) — E0/E1 documented |
+| 03 ELSA | BLOCKED (partner token) — E2 architecture documented |
+| 04 Microsoft PA | BLOCKED (Azure key) — E1 full schema captured |
+| 05 Speechace | BLOCKED (key by request) — E1 fidelity taxonomy captured |
+| 06 OpenPronounce | **RAN LOCALLY (E4/E6)** — 16 cases, raw JSON archived |
+| 07 speak-better-than-ai | next |
 | 08 ALFreeD | pending |
 | 09 additional child system | pending |
 | 10 additional open research | pending |
