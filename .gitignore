@@ -121,3 +121,7 @@ Research/Speech/Phase1_9_5/incoming-audio/
 # External speech datasets (never commit raw child audio)
 Research/Speech/ExternalData/
 
+
+# Phase 1.9.13 external repos (not committed)
+Research/Speech/ExternalData/
+
