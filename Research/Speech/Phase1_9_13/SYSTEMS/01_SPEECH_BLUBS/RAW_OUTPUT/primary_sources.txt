@@ -1,0 +1,9 @@
+SOURCE: https://speechblubs.com/ (fetched 2026-10-03)
+- age 1-8; video modeling; subscription; iOS/Android only; no web app.
+SOURCE: https://speechblubs.com/legal/en/privacy-policy-for-applications (fetched 2026-10-03)
+- "WE WILL NOT SAVE NOR COLLECT ANY VOICE RECORDS OR ANY PHOTOS STORED ON THE DEVICE."
+- TrueDepth face data on-device only.
+SOURCE: App Store listing (id1239522573), Google Play (org.blubblub.app.speechblubs)
+- prices: $14.49/mo, $59.99/yr; 7-day trial on yearly; age rating 4+.
+SOURCE: https://speechblubs.com/research
+- design whitepaper + MARS assessment; no ASR/scoring publication.
