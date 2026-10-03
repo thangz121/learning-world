@@ -1,0 +1,13 @@
+SOURCE: https://www.monkeyenglish.net/monkey-junior/monkey-speak (fetched 2026-10-03)
+- M-Speak: pronunciation/intonation/fluency scoring; "detailed comments".
+SOURCE: App Store id6736606662 / Google Play com.earlystart.android.aispeak (fetched 2026-10-03)
+- age 3-8; "scoring down to each syllable".
+SOURCE: https://www.monkeyenglish.net/news/monkey-junior-curriculum-powered-by-exclusive-technologies-en
+- stars in Monkey ABC; M-Speak + Speech-to-Text; child repeats prompt.
+SOURCE: https://monkey.edu.vn/tin-tuc/cong-nghe-tri-tue-nhan-tao-m-speak (2023-12-04)
+- word stress correct/incorrect per word; per-page + story aggregation; phoneme claim.
+SOURCE: https://www.monkeyenglish.net/policy
+- personal data only; NO audio retention statement.
+LEAD (for SYSTEM 10): Karhila et al., SLATE 2023 "A Pronunciation Scoring System Embedded into
+Children's Foreign Language Learning Games" — SIAK dataset (huggingface.co/datasets/rkarhila/SIAK),
+6-12yo, rejected-class (silence/wrong word/noise/lack of effort), released game code + data.
