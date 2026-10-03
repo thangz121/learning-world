@@ -1,0 +1,22 @@
+{
+  "system": "openpronounce",
+  "test_id": "adult_red_vs_blue",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_red.wav",
+  "target_text": "blue",
+  "expected_condition": "04_WRONG_WORD",
+  "score": 6.77,
+  "transcription": "RED",
+  "phoneme_error_rate": 1.0,
+  "word_error_rate": 1.0,
+  "errors": [
+    {
+      "word": "blue",
+      "expected": "blu",
+      "actual": "\u0279\u025bd"
+    }
+  ],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: blue\n",
+  "runtime_ms": 1689,
+  "acoustic_distance": 12.969,
+  "distance": 791
+}

@@ -1,0 +1,22 @@
+{
+  "system": "openpronounce",
+  "test_id": "child_07_one",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\07_F_native\\studio_mic\\numbers\\one.wav",
+  "target_text": "one",
+  "expected_condition": "01_CORRECT_child(final present)",
+  "score": 2.46,
+  "transcription": "RIVE",
+  "phoneme_error_rate": 1.3333,
+  "word_error_rate": 1.0,
+  "errors": [
+    {
+      "word": "one",
+      "expected": "w\u028cn",
+      "actual": "v\u00e6\u0279s"
+    }
+  ],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: one\n",
+  "runtime_ms": 1378,
+  "acoustic_distance": 14.261,
+  "distance": 884
+}

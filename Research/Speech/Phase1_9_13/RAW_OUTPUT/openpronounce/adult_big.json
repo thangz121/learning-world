@@ -1,0 +1,16 @@
+{
+  "system": "openpronounce",
+  "test_id": "adult_big",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_big.wav",
+  "target_text": "big",
+  "expected_condition": "01_CORRECT/10_NORMAL",
+  "score": 65.62,
+  "transcription": "BIG",
+  "phoneme_error_rate": 0.6667,
+  "word_error_rate": 0.0,
+  "errors": [],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+  "runtime_ms": 1750,
+  "acoustic_distance": 8.313,
+  "distance": 540
+}

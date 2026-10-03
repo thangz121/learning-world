@@ -1,0 +1,81 @@
+system,test_id,audio_file,target_text,expected_condition,actual_output,score,confidence,fidelity,recognized_text,phoneme_output,word_output,timestamps,error_type,feedback,raw_output_file,runtime_ms,notes
+openpronounce,adult_red,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\sapi_red.wav,red,01_CORRECT/10_NORMAL,RED,100.0,NOT_EXPOSED,NOT_SUPPORTED,RED,[],"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",NOT_EXPOSED,PER=0.0,"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",RAW_OUTPUT/openpronounce/adult_red.json,35987,
+openpronounce,adult_blue,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\sapi_blue.wav,blue,01_CORRECT/10_NORMAL,BLILL,23.23,NOT_EXPOSED,NOT_SUPPORTED,BLILL,"[{""word"": ""blue"", ""expected"": ""blu"", ""actual"": ""bl\u0289\u014b""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: blue
+",NOT_EXPOSED,PER=0.6667,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: blue
+",RAW_OUTPUT/openpronounce/adult_blue.json,1737,
+openpronounce,adult_cat,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\sapi_cat.wav,cat,01_CORRECT/10_NORMAL,CAT,100.0,NOT_EXPOSED,NOT_SUPPORTED,CAT,[],"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",NOT_EXPOSED,PER=0.0,"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",RAW_OUTPUT/openpronounce/adult_cat.json,1735,
+openpronounce,adult_apple,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\pregen_apple_normal.wav,apple,01_CORRECT/10_NORMAL,APPLE,53.34,NOT_EXPOSED,NOT_SUPPORTED,APPLE,"[{""word"": ""apple"", ""expected"": ""\u00e6p\u0259l"", ""actual"": ""abo""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: apple
+",NOT_EXPOSED,PER=1.0,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: apple
+",RAW_OUTPUT/openpronounce/adult_apple.json,1495,
+openpronounce,adult_big,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\sapi_big.wav,big,01_CORRECT/10_NORMAL,BIG,65.62,NOT_EXPOSED,NOT_SUPPORTED,BIG,[],"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",NOT_EXPOSED,PER=0.6667,"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",RAW_OUTPUT/openpronounce/adult_big.json,1750,
+openpronounce,adult_book,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\sapi_book.wav,book,01_CORRECT/10_NORMAL,VOG,25.49,NOT_EXPOSED,NOT_SUPPORTED,VOG,"[{""word"": ""book"", ""expected"": ""b\u028ak"", ""actual"": ""b\u0251nk""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: book
+",NOT_EXPOSED,PER=0.6667,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: book
+",RAW_OUTPUT/openpronounce/adult_book.json,1699,
+openpronounce,adult_dog,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\sapi_dog.wav,dog,01_CORRECT/10_NORMAL,DOG,80.7,NOT_EXPOSED,NOT_SUPPORTED,DOG,[],"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",NOT_EXPOSED,PER=0.3333,"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",RAW_OUTPUT/openpronounce/adult_dog.json,1709,
+openpronounce,adult_red_apple,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\sapi_red_apple.wav,red apple,01_CORRECT/10_NORMAL,RED APPLE,100.0,NOT_EXPOSED,NOT_SUPPORTED,RED APPLE,[],"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",NOT_EXPOSED,PER=0.0,"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",RAW_OUTPUT/openpronounce/adult_red_apple.json,1836,
+openpronounce,adult_red_vs_blue,D:\Vscode\little-world-english\Research\Speech\Phase1_1\audio\sapi_red.wav,blue,04_WRONG_WORD,RED,6.77,NOT_EXPOSED,NOT_SUPPORTED,RED,"[{""word"": ""blue"", ""expected"": ""blu"", ""actual"": ""\u0279\u025bd""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: blue
+",NOT_EXPOSED,PER=1.0,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: blue
+",RAW_OUTPUT/openpronounce/adult_red_vs_blue.json,1689,
+openpronounce,child_07_four,D:\Vscode\little-world-english\Research\Speech\ExternalData\zenodo_200495\extracted\english_children\english_words_sentences\07_F_native\studio_mic\numbers\four.wav,four,03_MISSING_FINAL_CONSONANT,FOR,20.48,NOT_EXPOSED,NOT_SUPPORTED,FOR,"[{""word"": ""four"", ""expected"": ""fo\u0279"", ""actual"": ""f\u0251""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: four
+",NOT_EXPOSED,PER=0.5,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: four
+",RAW_OUTPUT/openpronounce/child_07_four.json,1376,
+openpronounce,child_06_four,D:\Vscode\little-world-english\Research\Speech\ExternalData\zenodo_200495\extracted\english_children\english_words_sentences\06_M_native\studio_mic\numbers\four.wav,four,03_MISSING_FINAL_CONSONANT,FORTH,24.69,NOT_EXPOSED,NOT_SUPPORTED,FORTH,"[{""word"": ""four"", ""expected"": ""fo\u0279"", ""actual"": ""fo\u028a""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: four
+",NOT_EXPOSED,PER=0.5,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: four
+",RAW_OUTPUT/openpronounce/child_06_four.json,1290,
+openpronounce,child_09_four,D:\Vscode\little-world-english\Research\Speech\ExternalData\zenodo_200495\extracted\english_children\english_words_sentences\09_F_nonNative\studio_mic\numbers\four.wav,four,03_MISSING_FINAL_CONSONANT,NOT I,12.19,NOT_EXPOSED,NOT_SUPPORTED,NOT I,"[{""word"": ""four"", ""expected"": ""fo\u0279"", ""actual"": ""uma""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: four
+",NOT_EXPOSED,PER=1.5,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: four
+",RAW_OUTPUT/openpronounce/child_09_four.json,1541,
+openpronounce,child_05_four,D:\Vscode\little-world-english\Research\Speech\ExternalData\zenodo_200495\extracted\english_children\english_words_sentences\05_F_native\studio_mic\numbers\four.wav,four,UNLABELED_CHILD,BONER,3.05,NOT_EXPOSED,NOT_SUPPORTED,BONER,"[{""word"": ""four"", ""expected"": ""fo\u0279"", ""actual"": ""po""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: four
+",NOT_EXPOSED,PER=1.0,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: four
+",RAW_OUTPUT/openpronounce/child_05_four.json,1283,
+openpronounce,child_07_one,D:\Vscode\little-world-english\Research\Speech\ExternalData\zenodo_200495\extracted\english_children\english_words_sentences\07_F_native\studio_mic\numbers\one.wav,one,01_CORRECT_child(final present),RIVE,2.46,NOT_EXPOSED,NOT_SUPPORTED,RIVE,"[{""word"": ""one"", ""expected"": ""w\u028cn"", ""actual"": ""v\u00e6\u0279s""}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: one
+",NOT_EXPOSED,PER=1.3333,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: one
+",RAW_OUTPUT/openpronounce/child_07_one.json,1378,
+openpronounce,child_02_eight,D:\Vscode\little-world-english\Research\Speech\ExternalData\zenodo_200495\extracted\english_children\english_words_sentences\02_M_nonNative\studio_mic\numbers\eight.wav,eight,01_CORRECT_child(final present),AND TI THY,20.0,NOT_EXPOSED,NOT_SUPPORTED,AND TI THY,[],"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",NOT_EXPOSED,PER=0.5,"🔊 Feedback on your pronunciation:
+✅ Your pronunciation is excellent! 🎉
+",RAW_OUTPUT/openpronounce/child_02_eight.json,1507,
+openpronounce,silence_1s_vs_red,D:\Vscode\little-world-english\Research\Speech\Phase1_9_13\RAW_OUTPUT\openpronounce\_silence_1s.wav,red,06_SILENCE,,0.0,NOT_EXPOSED,NOT_SUPPORTED,,"[{""word"": ""red"", ""expected"": ""\u0279\u025bd"", ""actual"": """"}]","🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: red
+",NOT_EXPOSED,PER=1.0,"🔊 Feedback on your pronunciation:
+❌ You need to better pronounce these words: red
+",RAW_OUTPUT/openpronounce/silence_1s_vs_red.json,1753,

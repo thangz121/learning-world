@@ -1,0 +1,22 @@
+{
+  "system": "openpronounce",
+  "test_id": "adult_book",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_book.wav",
+  "target_text": "book",
+  "expected_condition": "01_CORRECT/10_NORMAL",
+  "score": 25.49,
+  "transcription": "VOG",
+  "phoneme_error_rate": 0.6667,
+  "word_error_rate": 1.0,
+  "errors": [
+    {
+      "word": "book",
+      "expected": "b\u028ak",
+      "actual": "b\u0251nk"
+    }
+  ],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: book\n",
+  "runtime_ms": 1699,
+  "acoustic_distance": 11.351,
+  "distance": 737
+}

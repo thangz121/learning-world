@@ -1,0 +1,286 @@
+[
+  {
+    "system": "openpronounce",
+    "test_id": "adult_red",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_red.wav",
+    "target_text": "red",
+    "expected_condition": "01_CORRECT/10_NORMAL",
+    "score": 100.0,
+    "transcription": "RED",
+    "phoneme_error_rate": 0.0,
+    "word_error_rate": 0.0,
+    "errors": [],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+    "runtime_ms": 35987
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "adult_blue",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_blue.wav",
+    "target_text": "blue",
+    "expected_condition": "01_CORRECT/10_NORMAL",
+    "score": 23.23,
+    "transcription": "BLILL",
+    "phoneme_error_rate": 0.6667,
+    "word_error_rate": 1.0,
+    "errors": [
+      {
+        "word": "blue",
+        "expected": "blu",
+        "actual": "bl\u0289\u014b"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: blue\n",
+    "runtime_ms": 1737
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "adult_cat",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_cat.wav",
+    "target_text": "cat",
+    "expected_condition": "01_CORRECT/10_NORMAL",
+    "score": 100.0,
+    "transcription": "CAT",
+    "phoneme_error_rate": 0.0,
+    "word_error_rate": 0.0,
+    "errors": [],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+    "runtime_ms": 1735
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "adult_apple",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\pregen_apple_normal.wav",
+    "target_text": "apple",
+    "expected_condition": "01_CORRECT/10_NORMAL",
+    "score": 53.34,
+    "transcription": "APPLE",
+    "phoneme_error_rate": 1.0,
+    "word_error_rate": 0.0,
+    "errors": [
+      {
+        "word": "apple",
+        "expected": "\u00e6p\u0259l",
+        "actual": "abo"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: apple\n",
+    "runtime_ms": 1495
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "adult_big",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_big.wav",
+    "target_text": "big",
+    "expected_condition": "01_CORRECT/10_NORMAL",
+    "score": 65.62,
+    "transcription": "BIG",
+    "phoneme_error_rate": 0.6667,
+    "word_error_rate": 0.0,
+    "errors": [],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+    "runtime_ms": 1750
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "adult_book",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_book.wav",
+    "target_text": "book",
+    "expected_condition": "01_CORRECT/10_NORMAL",
+    "score": 25.49,
+    "transcription": "VOG",
+    "phoneme_error_rate": 0.6667,
+    "word_error_rate": 1.0,
+    "errors": [
+      {
+        "word": "book",
+        "expected": "b\u028ak",
+        "actual": "b\u0251nk"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: book\n",
+    "runtime_ms": 1699
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "adult_dog",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_dog.wav",
+    "target_text": "dog",
+    "expected_condition": "01_CORRECT/10_NORMAL",
+    "score": 80.7,
+    "transcription": "DOG",
+    "phoneme_error_rate": 0.3333,
+    "word_error_rate": 0.0,
+    "errors": [],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+    "runtime_ms": 1709
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "adult_red_apple",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_red_apple.wav",
+    "target_text": "red apple",
+    "expected_condition": "01_CORRECT/10_NORMAL",
+    "score": 100.0,
+    "transcription": "RED APPLE",
+    "phoneme_error_rate": 0.0,
+    "word_error_rate": 0.0,
+    "errors": [],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+    "runtime_ms": 1836
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "adult_red_vs_blue",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_red.wav",
+    "target_text": "blue",
+    "expected_condition": "04_WRONG_WORD",
+    "score": 6.77,
+    "transcription": "RED",
+    "phoneme_error_rate": 1.0,
+    "word_error_rate": 1.0,
+    "errors": [
+      {
+        "word": "blue",
+        "expected": "blu",
+        "actual": "\u0279\u025bd"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: blue\n",
+    "runtime_ms": 1689
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "child_07_four",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\07_F_native\\studio_mic\\numbers\\four.wav",
+    "target_text": "four",
+    "expected_condition": "03_MISSING_FINAL_CONSONANT",
+    "score": 20.48,
+    "transcription": "FOR",
+    "phoneme_error_rate": 0.5,
+    "word_error_rate": 1.0,
+    "errors": [
+      {
+        "word": "four",
+        "expected": "fo\u0279",
+        "actual": "f\u0251"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: four\n",
+    "runtime_ms": 1376
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "child_06_four",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\06_M_native\\studio_mic\\numbers\\four.wav",
+    "target_text": "four",
+    "expected_condition": "03_MISSING_FINAL_CONSONANT",
+    "score": 24.69,
+    "transcription": "FORTH",
+    "phoneme_error_rate": 0.5,
+    "word_error_rate": 1.0,
+    "errors": [
+      {
+        "word": "four",
+        "expected": "fo\u0279",
+        "actual": "fo\u028a"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: four\n",
+    "runtime_ms": 1290
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "child_09_four",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\09_F_nonNative\\studio_mic\\numbers\\four.wav",
+    "target_text": "four",
+    "expected_condition": "03_MISSING_FINAL_CONSONANT",
+    "score": 12.19,
+    "transcription": "NOT I",
+    "phoneme_error_rate": 1.5,
+    "word_error_rate": 2.0,
+    "errors": [
+      {
+        "word": "four",
+        "expected": "fo\u0279",
+        "actual": "uma"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: four\n",
+    "runtime_ms": 1541
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "child_05_four",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\05_F_native\\studio_mic\\numbers\\four.wav",
+    "target_text": "four",
+    "expected_condition": "UNLABELED_CHILD",
+    "score": 3.05,
+    "transcription": "BONER",
+    "phoneme_error_rate": 1.0,
+    "word_error_rate": 1.0,
+    "errors": [
+      {
+        "word": "four",
+        "expected": "fo\u0279",
+        "actual": "po"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: four\n",
+    "runtime_ms": 1283
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "child_07_one",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\07_F_native\\studio_mic\\numbers\\one.wav",
+    "target_text": "one",
+    "expected_condition": "01_CORRECT_child(final present)",
+    "score": 2.46,
+    "transcription": "RIVE",
+    "phoneme_error_rate": 1.3333,
+    "word_error_rate": 1.0,
+    "errors": [
+      {
+        "word": "one",
+        "expected": "w\u028cn",
+        "actual": "v\u00e6\u0279s"
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: one\n",
+    "runtime_ms": 1378
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "child_02_eight",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\02_M_nonNative\\studio_mic\\numbers\\eight.wav",
+    "target_text": "eight",
+    "expected_condition": "01_CORRECT_child(final present)",
+    "score": 20.0,
+    "transcription": "AND TI THY",
+    "phoneme_error_rate": 0.5,
+    "word_error_rate": 3.0,
+    "errors": [],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+    "runtime_ms": 1507
+  },
+  {
+    "system": "openpronounce",
+    "test_id": "silence_1s_vs_red",
+    "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_13\\RAW_OUTPUT\\openpronounce\\_silence_1s.wav",
+    "target_text": "red",
+    "expected_condition": "06_SILENCE",
+    "score": 0.0,
+    "transcription": "",
+    "phoneme_error_rate": 1.0,
+    "word_error_rate": 1.0,
+    "errors": [
+      {
+        "word": "red",
+        "expected": "\u0279\u025bd",
+        "actual": ""
+      }
+    ],
+    "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: red\n",
+    "runtime_ms": 1753
+  }
+]

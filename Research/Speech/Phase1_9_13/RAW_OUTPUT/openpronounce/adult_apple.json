@@ -1,0 +1,22 @@
+{
+  "system": "openpronounce",
+  "test_id": "adult_apple",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\pregen_apple_normal.wav",
+  "target_text": "apple",
+  "expected_condition": "01_CORRECT/10_NORMAL",
+  "score": 53.34,
+  "transcription": "APPLE",
+  "phoneme_error_rate": 1.0,
+  "word_error_rate": 0.0,
+  "errors": [
+    {
+      "word": "apple",
+      "expected": "\u00e6p\u0259l",
+      "actual": "abo"
+    }
+  ],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: apple\n",
+  "runtime_ms": 1495,
+  "acoustic_distance": 7.998,
+  "distance": 535
+}

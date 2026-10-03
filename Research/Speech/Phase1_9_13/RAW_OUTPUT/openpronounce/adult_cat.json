@@ -1,0 +1,16 @@
+{
+  "system": "openpronounce",
+  "test_id": "adult_cat",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_cat.wav",
+  "target_text": "cat",
+  "expected_condition": "01_CORRECT/10_NORMAL",
+  "score": 100.0,
+  "transcription": "CAT",
+  "phoneme_error_rate": 0.0,
+  "word_error_rate": 0.0,
+  "errors": [],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+  "runtime_ms": 1735,
+  "acoustic_distance": 3.811,
+  "distance": 243
+}

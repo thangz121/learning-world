@@ -1,0 +1,22 @@
+{
+  "system": "openpronounce",
+  "test_id": "silence_1s_vs_red",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_13\\RAW_OUTPUT\\openpronounce\\_silence_1s.wav",
+  "target_text": "red",
+  "expected_condition": "06_SILENCE",
+  "score": 0.0,
+  "transcription": "",
+  "phoneme_error_rate": 1.0,
+  "word_error_rate": 1.0,
+  "errors": [
+    {
+      "word": "red",
+      "expected": "\u0279\u025bd",
+      "actual": ""
+    }
+  ],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: red\n",
+  "runtime_ms": 1753,
+  "acoustic_distance": 18.818,
+  "distance": 1129
+}

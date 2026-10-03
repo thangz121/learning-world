@@ -1,0 +1,22 @@
+{
+  "system": "openpronounce",
+  "test_id": "child_05_four",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\05_F_native\\studio_mic\\numbers\\four.wav",
+  "target_text": "four",
+  "expected_condition": "UNLABELED_CHILD",
+  "score": 3.05,
+  "transcription": "BONER",
+  "phoneme_error_rate": 1.0,
+  "word_error_rate": 1.0,
+  "errors": [
+    {
+      "word": "four",
+      "expected": "fo\u0279",
+      "actual": "po"
+    }
+  ],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: four\n",
+  "runtime_ms": 1283,
+  "acoustic_distance": 14.086,
+  "distance": 887
+}

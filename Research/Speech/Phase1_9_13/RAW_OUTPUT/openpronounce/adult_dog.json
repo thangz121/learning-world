@@ -1,0 +1,16 @@
+{
+  "system": "openpronounce",
+  "test_id": "adult_dog",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_dog.wav",
+  "target_text": "dog",
+  "expected_condition": "01_CORRECT/10_NORMAL",
+  "score": 80.7,
+  "transcription": "DOG",
+  "phoneme_error_rate": 0.3333,
+  "word_error_rate": 0.0,
+  "errors": [],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+  "runtime_ms": 1709,
+  "acoustic_distance": 7.79,
+  "distance": 506
+}

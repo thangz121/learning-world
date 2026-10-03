@@ -1,0 +1,16 @@
+{
+  "system": "openpronounce",
+  "test_id": "child_02_eight",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\zenodo_200495\\extracted\\english_children\\english_words_sentences\\02_M_nonNative\\studio_mic\\numbers\\eight.wav",
+  "target_text": "eight",
+  "expected_condition": "01_CORRECT_child(final present)",
+  "score": 20.0,
+  "transcription": "AND TI THY",
+  "phoneme_error_rate": 0.5,
+  "word_error_rate": 3.0,
+  "errors": [],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u2705 Your pronunciation is excellent! \ud83c\udf89\n",
+  "runtime_ms": 1507,
+  "acoustic_distance": 16.033,
+  "distance": 913
+}

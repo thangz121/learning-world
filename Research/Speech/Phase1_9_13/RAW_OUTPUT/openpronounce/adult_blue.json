@@ -1,0 +1,22 @@
+{
+  "system": "openpronounce",
+  "test_id": "adult_blue",
+  "audio_file": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_1\\audio\\sapi_blue.wav",
+  "target_text": "blue",
+  "expected_condition": "01_CORRECT/10_NORMAL",
+  "score": 23.23,
+  "transcription": "BLILL",
+  "phoneme_error_rate": 0.6667,
+  "word_error_rate": 1.0,
+  "errors": [
+    {
+      "word": "blue",
+      "expected": "blu",
+      "actual": "bl\u0289\u014b"
+    }
+  ],
+  "feedback": "\ud83d\udd0a Feedback on your pronunciation:\n\u274c You need to better pronounce these words: blue\n",
+  "runtime_ms": 1737,
+  "acoustic_distance": 12.031,
+  "distance": 745
+}
