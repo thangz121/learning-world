@@ -1,0 +1,8 @@
+SOURCE (E2): Anguera & Van, Interspeech 2016 (ELSA Speak demo)
+- client-server; streaming; server-side endpointing; Kaldi + custom DNN; L1-specific models.
+SOURCE (E2): Anguera et al., SLATE 2023 (Speech Analyzer)
+- end-to-end ASR fine-tuned on 100h non-native; speaker-ID; pronunciation via phonetic
+  deviations; intonation; fluency; grammar; vocabulary; weighted overall.
+SOURCE (E1): https://elsaspeak.com/en/elsa-api/ ; api-external-doc.elsanow.co
+- scripted /score_audio; unscripted /score_audio_plus; WebSocket; partner token only.
+BLOCKED: no public key; no file upload in app/demo.
