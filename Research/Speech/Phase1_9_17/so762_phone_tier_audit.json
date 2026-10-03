@@ -140,6 +140,10 @@
       "n": 35
     }
   ],
+  "csv_evidence": [
+    "evidence/so762_per_phone.csv",
+    "evidence/so762_substitution_pairs.csv"
+  ],
   "inventory_mapping": {
     "distinct_phones_mapped": 67,
     "distinct_phones_unmapped": 0,

@@ -8,6 +8,7 @@ wav examples (one child, one adult) for the record.
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import struct
@@ -16,6 +17,7 @@ from collections import Counter
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[1]
+EVIDENCE = OUT / "evidence" / "so762_original_wav"
 FORMAT_CAP_PER_SPLIT = 20
 MAX_SCAN_PER_SPLIT = 500
 KEEP = 2
@@ -58,6 +60,7 @@ def main() -> dict:
     from datasets import Audio, load_dataset
     rows = []
     kept: list[dict] = []
+    kept_bytes: dict[int, bytes] = {}
     total = 0
     per_split = {"train": 0, "test": 0}
     for split in ("train", "test"):
@@ -81,10 +84,19 @@ def main() -> dict:
                    (ex["age"] > 15 and not have_adult):
                     role = "child" if ex["age"] <= 15 else "adult"
                     kept.append(dict(hdr, role=role))
+                    kept_bytes[len(kept) - 1] = b
             if scanned >= FORMAT_CAP_PER_SPLIT and len(kept) >= KEEP:
                 break
             if scanned >= MAX_SCAN_PER_SPLIT:
                 break
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    for i, ex in enumerate(kept):
+        b = kept_bytes[i]
+        name = (f"so762_{ex['role']}_age{ex['age']}_spk{ex['speaker']}"
+                f"_{ex['path']}")
+        (EVIDENCE / name).write_bytes(b)
+        ex["saved_as"] = f"evidence/so762_original_wav/{name}"
+        ex["sha256"] = hashlib.sha256(b).hexdigest()
     fmts = Counter(
         (r.get("container"), r.get("audio_format"), r.get("channels"),
          r.get("sample_rate"), r.get("bits_per_sample"))

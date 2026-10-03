@@ -42,7 +42,9 @@
       "age": 6,
       "path": "000010011.wav",
       "bytes": 82604,
-      "role": "child"
+      "role": "child",
+      "saved_as": "evidence/so762_original_wav/so762_child_age6_spk0001_000010011.wav",
+      "sha256": "b9486ce67a0310dd6677f6bce98b076b213e1cefdf00d5786827c1f8af141809"
     },
     {
       "container": "RIFF/WAVE",
@@ -63,7 +65,9 @@
       "age": 21,
       "path": "000360013.wav",
       "bytes": 105644,
-      "role": "adult"
+      "role": "adult",
+      "saved_as": "evidence/so762_original_wav/so762_adult_age21_spk0036_000360013.wav",
+      "sha256": "57d1ad6a8745d2338820dd176b0523536b48056c446aa69def3266acc1c740fd"
     }
   ]
 }

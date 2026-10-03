@@ -7,6 +7,7 @@ LWE inventory (phone-inventory-v1.4.0).
 """
 from __future__ import annotations
 
+import csv
 import json
 import sys
 from collections import Counter, defaultdict
@@ -131,6 +132,9 @@ def main() -> dict:
         "top_substitution_pairs": [
             {"canonical": c, "pronounced": p, "n": k}
             for (c, p), k in subs.most_common(20)],
+        "csv_evidence": [
+            "evidence/so762_per_phone.csv",
+            "evidence/so762_substitution_pairs.csv"],
         "inventory_mapping": {
             "distinct_phones_mapped": mapped,
             "distinct_phones_unmapped": len(per_phone) - mapped,
@@ -148,6 +152,27 @@ def main() -> dict:
     }
     (OUT / "so762_phone_tier_audit.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    ev = OUT / "evidence"
+    ev.mkdir(parents=True, exist_ok=True)
+    with open(ev / "so762_per_phone.csv", "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["canonical_arpa", "tokens", "mean_accuracy", "bad_lt_0.5",
+                    "zero", "canon_inventory"])
+        for p, r in sorted(per_phone.items(),
+                           key=lambda kv: kv[1]["tokens"], reverse=True):
+            w.writerow([p, r["tokens"], round(r["acc_sum"] / r["tokens"], 6),
+                        r["bad"], r["zero"], r["canon"]])
+    with open(ev / "so762_substitution_pairs.csv", "w", encoding="utf-8",
+              newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["canonical_phone", "pronounced_phone", "kind", "count"])
+        for (c, p), k in sorted(subs.items(), key=lambda kv: kv[1],
+                                reverse=True):
+            kind = ("deletion" if p == "<DEL>" else
+                    "unknown" if p == "<unk>" else "substitution")
+            w.writerow([c, p, kind, k])
+
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return report
 
