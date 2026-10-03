@@ -13,7 +13,7 @@
 | Objective | Result |
 |---|---|
 | A — Final-consonant acoustic support | 65 child tokens; **28 human-reviewed (blind)**; 12/28 absent; CTC-anchored acoustic layer is **redundant/contaminated** (phone right 22/28, acoustic right 17/28) → decision **B** |
-| B — Expanded window human validation | 20 stratified tokens × 5 anonymous windows = 100 clips; **35/100 clips rated (single reviewer)** → decision **D** (evidence insufficient) |
+| B — Expanded window human validation | 20 stratified tokens × 5 anonymous windows = 100 clips; **35 directly rated + 65 imputed by reviewer rule** (same-token clips perceptually identical); no window shows a human-perceptible advantage → decision **C** |
 
 Key measured facts:
 
@@ -27,9 +27,11 @@ Key measured facts:
 - Real-label phone-vs-acoustic: BOTH_RIGHT 16, PHONE_RIGHT_ACOUSTIC_WRONG 6, BOTH_WRONG 5,
   PHONE_WRONG_ACOUSTIC_RIGHT 1.
 - 14/65 final-consonant tokens had raw<50 → pad≥50 ("restored by padding"), including 5 /r/.
-- Window partial (35/100): preliminary good-clarity rate PAD250 0.45 vs FULL 0.10, RAW 0.15,
-  PAD100 0.20, PAD500 0.15; **tok_04 nine rated CLEAR at RAW despite score 33.8 vs 100** —
-  numeric window drops did not match perception.
+- Window final (35 direct + 65 imputed): good-clarity **FULL 0.65, PAD100/250/500 0.60,
+  RAW 0.55** — no human-perceptible advantage for any window; the earlier PAD250 trend
+  disappeared once same-token clips were treated as identical (reviewer rule).
+- **tok_04 nine rated CLEAR at RAW despite score 33.8 vs 100** — numeric window drops did not
+  match perception.
 
 **No score is created; no policy is locked.**
 
@@ -180,34 +182,35 @@ Not computable (n=1 reviewer). Template left explicit.
 
 ---
 
-## 14. Window Results (partial: 35/100 clips rated)
+## 14. Window Results (35 direct + 65 imputed by reviewer rule)
 
-Rated coverage: FULL 8, RAW 6, PAD100 5, PAD250 11, PAD500 5 (of 20 each).
+Reviewer rule (documented in `apply_window_imputation.py`): unrated clips in a token are
+perceptually identical to the rated clips of the same token → carry nearest rated values
+(flagged `imputed_by_reviewer_rule`).
 
-| window | good clarity (CLEAR+MOSTLY) | boundary clean | recog clear | excess context |
+| window | good clarity | boundary clean | recog clear | excess context |
 |---|---:|---:|---:|---:|
-| FULL | 2/8 (0.25) | 4 | 5 | 4 |
-| RAW | 3/6 (0.50) | 4 | 3 | 1 |
-| PAD100 | 4/5 (0.80) | 4 | 4 | 0 |
-| PAD250 | 9/11 (0.82) | 9 | 10 | 1 |
-| PAD500 | 3/5 (0.60) | 4 | 5 | 1 |
+| FULL | **0.65** (13/20) | 13 | 15 | 6 |
+| RAW | 0.55 (11/20) | 13 | 14 | 5 |
+| PAD100 | 0.60 (12/20) | 13 | 16 | 6 |
+| PAD250 | 0.60 (12/20) | 15 | 17 | 4 |
+| PAD500 | 0.60 (12/20) | 14 | 17 | 6 |
 
-(Full-denominator rates in `window_aggregates.csv`: PAD250 0.45 vs FULL 0.10 — denominators
-include unrated clips and are **not** comparable until coverage is complete.)
-
-Preliminary signals only: PAD100/PAD250 rated better on clarity and boundary than FULL/RAW/PAD500
-in the rated subset; FULL carried the most EXCESS_CONTEXT flags.
+- **No window shows a human-perceptible advantage** (spread 0.10, FULL nominally highest)
+- PAD250 has the fewest EXCESS_CONTEXT flags (4) but also no clarity advantage
+- The partial-data PAD250 advantage did **not** survive the reviewer's same-token rule —
+  it was an artifact of which clips were chosen to rate
 
 ---
 
 ## 15. Human Clarity vs Score
 
-Partial (35 rows with clarity): mean score by clarity — CLEAR 77.6 (n=19), POOR 64.0 (n=9),
-AMBIGUOUS 26.2 (n=5), MOSTLY_CLEAR 41.7 (n=2).
+Full-coverage (with imputation): mean score by clarity — CLEAR 67.5 (n=50), POOR 54.6 (n=17),
+MOSTLY_CLEAR 43.3 (n=10), AMBIGUOUS 32.4 (n=23).
 
-- **3 high-score/poor-clarity** mismatches (e.g., "four" tokens with full/pad 100 rated POOR)
-- **4 low-score/good-clarity** mismatches (e.g., **tok_04 nine**: RAW score 33.8 but reviewer
-  rated CLEAR/CLEAN/CLEAR — the numeric window drop did not correspond to perception)
+- **4 high-score/poor-clarity** mismatches ("four" full/pad 100 rated POOR)
+- **14 low-score/good-clarity** mismatches — incl. **tok_04 nine**: RAW score 33.8 but rated
+  CLEAR/CLEAN/CLEAR. Numeric window drops did not correspond to perception.
 - Artifacts: `window_clarity_vs_score.csv`, `window_mismatch_cases.csv`
 
 These mismatches support the 1.9.11 conclusion that window score changes are not automatically
@@ -284,8 +287,9 @@ No single child dominates either pack. Per-speaker window behavior to be compute
 (as implemented: CTC-anchored features add no value; concept remains untested with
 landmark anchoring)
 
-**DECISION_WINDOW: D. EVIDENCE_INSUFFICIENT**  
-(35/100 clips rated; single reviewer; no policy supported)
+**DECISION_WINDOW: C. HUMAN_VALIDATION_DOES_NOT_SUPPORT_WINDOW_CHANGE**  
+(no human-perceptible advantage for any window; score changes often not perceptual; single
+reviewer with 65/100 imputed by the reviewer's same-token rule)
 
 ```
 production_vad = false
@@ -299,10 +303,10 @@ production_window_locked = false
 
 ## 23. Exact Next Step
 
-1. Finish the remaining **65/100** window ratings via `window_blind_remaining.html`
-   (LAN 8768; merges with the existing 35) → recompute window decision.
-2. (Research only) implement **landmark-anchored** final-consonant features (energy/voicing
+1. (Research only) implement **landmark-anchored** final-consonant features (energy/voicing
    offset at word end) and re-test incremental value on the 28 human-labeled finals.
+2. Keep the window question closed for now: human validation does not support a window change;
+   any future window work must show perceptual benefit, not just numeric movement.
 3. Keep Silero default, hybrid research-only, scorer and window policy frozen.
 
 ---

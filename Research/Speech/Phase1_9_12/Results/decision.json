@@ -1,6 +1,6 @@
 {
   "decision_acoustic": "B. ACOUSTIC_SUPPORT_IS_REDUNDANT",
-  "decision_window": "D. EVIDENCE_INSUFFICIENT",
+  "decision_window": "C. HUMAN_VALIDATION_DOES_NOT_SUPPORT_WINDOW_CHANGE",
   "acoustic_value_counts": {
     "BOTH_RIGHT": 16,
     "PHONE_RIGHT_ACOUSTIC_WRONG": 6,
@@ -9,11 +9,11 @@
   },
   "n_human_labeled_final_consonants": 28,
   "window_good_clarity": {
-    "FULL": 0.1,
-    "RAW": 0.15,
-    "PAD100": 0.2,
-    "PAD250": 0.45,
-    "PAD500": 0.15
+    "FULL": 0.65,
+    "RAW": 0.55,
+    "PAD100": 0.6,
+    "PAD250": 0.6,
+    "PAD500": 0.6
   },
   "over_padding_excess_context": {
     "FULL": 4,
@@ -28,5 +28,6 @@
   "production_window_locked": false,
   "window_coverage": "35/100",
   "acoustic_note": "As implemented: features anchored on CTC spans inherit forced-alignment errors. Phone correct 22/28, acoustic correct 17/28; when acoustic differed from phone it was wrong 6x vs right 1x. Concept (landmark-anchored) remains untested.",
-  "window_note": "Coverage 35/100 clips (single reviewer); preliminary trend PAD250 good-clarity 0.45 vs FULL 0.10; tok_04 nine: reviewer rated RAW CLEAR despite raw score 33.8 vs 100 -> numeric window drops did not match perception. Decision D until remaining 65 clips are rated."
+  "window_note": "Direct 35/100 + 65 imputed by reviewer rule (clips perceptually identical within token). Good-clarity: {'FULL': 0.65, 'RAW': 0.55, 'PAD100': 0.6, 'PAD250': 0.6, 'PAD500': 0.6}. Over-padding EXCESS_CONTEXT: {'FULL': 6, 'PAD500': 6, 'RAW': 5, 'PAD100': 6, 'PAD250': 4}. high-score/poor-clarity 4; low-score/good-clarity 14.",
+  "window_imputed_n": 65
 }

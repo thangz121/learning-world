@@ -3,8 +3,8 @@
 **Decisions:**
 - `ACOUSTIC_SUPPORT: B. REDUNDANT` — CTC-span-anchored features inherit forced-alignment errors
   (phone right 22/28 vs acoustic 17/28)
-- `WINDOW: D. EVIDENCE_INSUFFICIENT` — 35/100 clips rated; finish via
-  `HumanReview/window_blind_remaining.html`
+- `WINDOW: C. HUMAN_VALIDATION_DOES_NOT_SUPPORT_WINDOW_CHANGE` — 35 direct + 65 imputed by
+  reviewer rule; good-clarity FULL 0.65 vs RAW 0.55 vs PAD 0.60 (no perceptual advantage)
 
 production_vad/router/unity/scorer_modified/production_window_locked = **false**
 

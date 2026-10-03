@@ -1,22 +1,18 @@
 {
   "POOR": {
-    "n": 9,
-    "mean_score": 64.03333333333333
+    "n": 17,
+    "mean_score": 54.64705882352941
   },
   "CLEAR": {
-    "n": 19,
-    "mean_score": 77.57894736842105
-  },
-  "": {
-    "n": 65,
-    "mean_score": 49.48
+    "n": 50,
+    "mean_score": 67.46
   },
   "MOSTLY_CLEAR": {
-    "n": 2,
-    "mean_score": 41.65
+    "n": 10,
+    "mean_score": 43.339999999999996
   },
   "AMBIGUOUS": {
-    "n": 5,
-    "mean_score": 26.2
+    "n": 23,
+    "mean_score": 32.40869565217391
   }
 }

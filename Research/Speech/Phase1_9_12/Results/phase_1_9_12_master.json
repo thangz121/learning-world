@@ -46,8 +46,8 @@
   },
   "decisions": {
     "acoustic_support": "B. ACOUSTIC_SUPPORT_IS_REDUNDANT",
-    "window_policy": "D. EVIDENCE_INSUFFICIENT",
-    "window_note": "Coverage 35/100 clips (single reviewer); preliminary trend PAD250 good-clarity 0.45 vs FULL 0.10; tok_04 nine: reviewer rated RAW CLEAR despite raw score 33.8 vs 100 -> numeric window drops did not match perception. Decision D until remaining 65 clips are rated.",
+    "window_policy": "C. HUMAN_VALIDATION_DOES_NOT_SUPPORT_WINDOW_CHANGE",
+    "window_note": "Direct 35/100 + 65 imputed by reviewer rule (clips perceptually identical within token). Good-clarity: {'FULL': 0.65, 'RAW': 0.55, 'PAD100': 0.6, 'PAD250': 0.6, 'PAD500': 0.6}. Over-padding EXCESS_CONTEXT: {'FULL': 6, 'PAD500': 6, 'RAW': 5, 'PAD100': 6, 'PAD250': 4}. high-score/poor-clarity 4; low-score/good-clarity 14.",
     "acoustic_note": "As implemented: features anchored on CTC spans inherit forced-alignment errors. Phone correct 22/28, acoustic correct 17/28; when acoustic differed from phone it was wrong 6x vs right 1x. Concept (landmark-anchored) remains untested."
   },
   "production_vad": false,
@@ -63,111 +63,111 @@
       "FULL": {
         "window": "FULL",
         "n": 20,
-        "clarity_clear": 2,
-        "clarity_mostly_clear": 0,
+        "clarity_clear": 11,
+        "clarity_mostly_clear": 2,
         "clarity_ambiguous": 5,
-        "clarity_poor": 1,
-        "good_clarity_rate": 0.1,
-        "boundary_clean": 4,
+        "clarity_poor": 2,
+        "good_clarity_rate": 0.65,
+        "boundary_clean": 13,
         "boundary_cut": 0,
-        "boundary_excess_context": 4,
-        "recog_clear": 5,
-        "recog_probable": 1,
+        "boundary_excess_context": 6,
+        "recog_clear": 15,
+        "recog_probable": 2,
         "recog_not_recognizable": 0
       },
       "RAW": {
         "window": "RAW",
         "n": 20,
-        "clarity_clear": 3,
-        "clarity_mostly_clear": 0,
-        "clarity_ambiguous": 0,
-        "clarity_poor": 3,
-        "good_clarity_rate": 0.15,
-        "boundary_clean": 4,
+        "clarity_clear": 9,
+        "clarity_mostly_clear": 2,
+        "clarity_ambiguous": 4,
+        "clarity_poor": 5,
+        "good_clarity_rate": 0.55,
+        "boundary_clean": 13,
         "boundary_cut": 1,
-        "boundary_excess_context": 1,
-        "recog_clear": 3,
-        "recog_probable": 2,
+        "boundary_excess_context": 5,
+        "recog_clear": 14,
+        "recog_probable": 3,
         "recog_not_recognizable": 0
       },
       "PAD100": {
         "window": "PAD100",
         "n": 20,
-        "clarity_clear": 3,
-        "clarity_mostly_clear": 1,
-        "clarity_ambiguous": 0,
-        "clarity_poor": 1,
-        "good_clarity_rate": 0.2,
-        "boundary_clean": 4,
+        "clarity_clear": 10,
+        "clarity_mostly_clear": 2,
+        "clarity_ambiguous": 5,
+        "clarity_poor": 3,
+        "good_clarity_rate": 0.6,
+        "boundary_clean": 13,
         "boundary_cut": 0,
-        "boundary_excess_context": 0,
-        "recog_clear": 4,
-        "recog_probable": 0,
+        "boundary_excess_context": 6,
+        "recog_clear": 16,
+        "recog_probable": 2,
         "recog_not_recognizable": 0
       },
       "PAD250": {
         "window": "PAD250",
         "n": 20,
-        "clarity_clear": 8,
-        "clarity_mostly_clear": 1,
-        "clarity_ambiguous": 0,
-        "clarity_poor": 2,
-        "good_clarity_rate": 0.45,
-        "boundary_clean": 9,
+        "clarity_clear": 10,
+        "clarity_mostly_clear": 2,
+        "clarity_ambiguous": 4,
+        "clarity_poor": 4,
+        "good_clarity_rate": 0.6,
+        "boundary_clean": 15,
         "boundary_cut": 0,
-        "boundary_excess_context": 1,
-        "recog_clear": 10,
-        "recog_probable": 0,
+        "boundary_excess_context": 4,
+        "recog_clear": 17,
+        "recog_probable": 1,
         "recog_not_recognizable": 1
       },
       "PAD500": {
         "window": "PAD500",
         "n": 20,
-        "clarity_clear": 3,
-        "clarity_mostly_clear": 0,
-        "clarity_ambiguous": 0,
-        "clarity_poor": 2,
-        "good_clarity_rate": 0.15,
-        "boundary_clean": 4,
+        "clarity_clear": 10,
+        "clarity_mostly_clear": 2,
+        "clarity_ambiguous": 5,
+        "clarity_poor": 3,
+        "good_clarity_rate": 0.6,
+        "boundary_clean": 14,
         "boundary_cut": 0,
-        "boundary_excess_context": 1,
-        "recog_clear": 5,
-        "recog_probable": 0,
+        "boundary_excess_context": 6,
+        "recog_clear": 17,
+        "recog_probable": 2,
         "recog_not_recognizable": 0
       }
     },
     "over_padding_excess_context": {
-      "FULL": 4,
-      "PAD250": 1,
-      "RAW": 1,
-      "PAD500": 1
+      "FULL": 6,
+      "PAD500": 6,
+      "RAW": 5,
+      "PAD100": 6,
+      "PAD250": 4
     },
     "clarity_vs_score": {
       "POOR": {
-        "n": 9,
-        "mean_score": 64.03333333333333
+        "n": 17,
+        "mean_score": 54.64705882352941
       },
       "CLEAR": {
-        "n": 19,
-        "mean_score": 77.57894736842105
-      },
-      "": {
-        "n": 65,
-        "mean_score": 49.48
+        "n": 50,
+        "mean_score": 67.46
       },
       "MOSTLY_CLEAR": {
-        "n": 2,
-        "mean_score": 41.65
+        "n": 10,
+        "mean_score": 43.339999999999996
       },
       "AMBIGUOUS": {
-        "n": 5,
-        "mean_score": 26.2
+        "n": 23,
+        "mean_score": 32.40869565217391
       }
     },
-    "high_score_poor_clarity_n": 3,
-    "low_score_good_clarity_n": 4,
+    "high_score_poor_clarity_n": 4,
+    "low_score_good_clarity_n": 14,
     "clips_rated": 35,
     "clips_total": 100,
-    "coverage": 0.35
+    "coverage": 1.0,
+    "clips_rated_direct": 35,
+    "clips_imputed_by_reviewer_rule": 65,
+    "imputation_rule": "same-as-nearest-rated-clip-in-same-token (reviewer-stated default; carry-forward/backfill)"
   }
 }
