@@ -1,0 +1,310 @@
+{
+  "phase": "1.9.15",
+  "experiment": "P3 external LWE validation",
+  "fit_population": "SIAK train speakers (ages 7-12)",
+  "candidates": [
+    "identity",
+    "affine_soft",
+    "isotonic_soft",
+    "linear_soft_conf_evidence",
+    "hgb_noage"
+  ],
+  "n_labeled": 48,
+  "n_human_correct": 29,
+  "n_human_incorrect": 13,
+  "n_human_uncertain": 6,
+  "per_candidate": {
+    "identity": {
+      "human_correct": {
+        "n": 29,
+        "frr_lt50": 0.3103448275862069,
+        "frr_lt40": 0.27586206896551724,
+        "far_ge50": 0.6896551724137931,
+        "far_ge80": 0.3448275862068966,
+        "mean_pred": 61.44827586206897,
+        "mean_soft": 61.44827586206897
+      },
+      "human_incorrect": {
+        "n": 13,
+        "frr_lt50": 0.6153846153846154,
+        "frr_lt40": 0.6153846153846154,
+        "far_ge50": 0.38461538461538464,
+        "far_ge80": 0.15384615384615385,
+        "mean_pred": 41.81538461538461,
+        "mean_soft": 41.81538461538461
+      },
+      "human_uncertain": {
+        "n": 6,
+        "frr_lt50": 0.3333333333333333,
+        "frr_lt40": 0.3333333333333333,
+        "far_ge50": 0.6666666666666666,
+        "far_ge80": 0.16666666666666666,
+        "mean_pred": 53.78333333333333,
+        "mean_soft": 53.78333333333333
+      },
+      "ordinal": {
+        "pearson_ordinal_all_labeled": 0.15778494167412804,
+        "spearman_ordinal_all_labeled": 0.1548315369943876
+      },
+      "auc_correct_vs_incorrect": 0.6591511936339522,
+      "matched_frr_le_0.31": [
+        47.5,
+        0.38461538461538464,
+        0.27586206896551724
+      ],
+      "matched_frr_le_0.10": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "matched_frr_le_0.00": [
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    "affine_soft": {
+      "human_correct": {
+        "n": 29,
+        "frr_lt50": 0.13793103448275862,
+        "frr_lt40": 0.0,
+        "far_ge50": 0.8620689655172413,
+        "far_ge80": 0.0,
+        "mean_pred": 62.63671055490977,
+        "mean_soft": 61.44827586206897
+      },
+      "human_incorrect": {
+        "n": 13,
+        "frr_lt50": 0.3076923076923077,
+        "frr_lt40": 0.0,
+        "far_ge50": 0.6923076923076923,
+        "far_ge80": 0.0,
+        "mean_pred": 57.527519697212725,
+        "mean_soft": 41.81538461538461
+      },
+      "human_uncertain": {
+        "n": 6,
+        "frr_lt50": 0.0,
+        "frr_lt40": 0.0,
+        "far_ge50": 1.0,
+        "far_ge80": 0.0,
+        "mean_pred": 60.642014317838566,
+        "mean_soft": 53.78333333333333
+      },
+      "ordinal": {
+        "pearson_ordinal_all_labeled": 0.15778494167412802,
+        "spearman_ordinal_all_labeled": 0.1548315369943876
+      },
+      "auc_correct_vs_incorrect": 0.6591511936339522,
+      "matched_frr_le_0.31": [
+        59.00686293747571,
+        0.38461538461538464,
+        0.27586206896551724
+      ],
+      "matched_frr_le_0.10": [
+        46.645638974520416,
+        1.0,
+        0.0
+      ],
+      "matched_frr_le_0.00": [
+        46.645638974520416,
+        1.0,
+        0.0
+      ]
+    },
+    "isotonic_soft": {
+      "human_correct": {
+        "n": 29,
+        "frr_lt50": 0.10344827586206896,
+        "frr_lt40": 0.0,
+        "far_ge50": 0.896551724137931,
+        "far_ge80": 0.0,
+        "mean_pred": 62.922741511509585,
+        "mean_soft": 61.44827586206897
+      },
+      "human_incorrect": {
+        "n": 13,
+        "frr_lt50": 0.3076923076923077,
+        "frr_lt40": 0.0,
+        "far_ge50": 0.6923076923076923,
+        "far_ge80": 0.0,
+        "mean_pred": 56.09028007043028,
+        "mean_soft": 41.81538461538461
+      },
+      "human_uncertain": {
+        "n": 6,
+        "frr_lt50": 0.0,
+        "frr_lt40": 0.0,
+        "far_ge50": 1.0,
+        "far_ge80": 0.0,
+        "mean_pred": 61.332576047673996,
+        "mean_soft": 53.78333333333333
+      },
+      "ordinal": {
+        "pearson_ordinal_all_labeled": 0.20456239548878277,
+        "spearman_ordinal_all_labeled": 0.14778161507574888
+      },
+      "auc_correct_vs_incorrect": 0.6591511936339522,
+      "matched_frr_le_0.31": [
+        62.375,
+        0.38461538461538464,
+        0.27586206896551724
+      ],
+      "matched_frr_le_0.10": [
+        44.121212121212125,
+        1.0,
+        0.0
+      ],
+      "matched_frr_le_0.00": [
+        44.121212121212125,
+        1.0,
+        0.0
+      ]
+    },
+    "linear_soft_conf_evidence": {
+      "human_correct": {
+        "n": 29,
+        "frr_lt50": 0.0,
+        "frr_lt40": 0.0,
+        "far_ge50": 1.0,
+        "far_ge80": 0.034482758620689655,
+        "mean_pred": 64.23562416510453,
+        "mean_soft": 61.44827586206897
+      },
+      "human_incorrect": {
+        "n": 13,
+        "frr_lt50": 0.07692307692307693,
+        "frr_lt40": 0.0,
+        "far_ge50": 0.9230769230769231,
+        "far_ge80": 0.0,
+        "mean_pred": 59.788045605666,
+        "mean_soft": 41.81538461538461
+      },
+      "human_uncertain": {
+        "n": 6,
+        "frr_lt50": 0.0,
+        "frr_lt40": 0.0,
+        "far_ge50": 1.0,
+        "far_ge80": 0.0,
+        "mean_pred": 63.97530596974263,
+        "mean_soft": 53.78333333333333
+      },
+      "ordinal": {
+        "pearson_ordinal_all_labeled": 0.10747421890911167,
+        "spearman_ordinal_all_labeled": 0.10846388695038697
+      },
+      "auc_correct_vs_incorrect": 0.6419098143236074,
+      "matched_frr_le_0.31": [
+        58.28453033186278,
+        0.38461538461538464,
+        0.27586206896551724
+      ],
+      "matched_frr_le_0.10": [
+        51.41427521188746,
+        0.7692307692307693,
+        0.06896551724137931
+      ],
+      "matched_frr_le_0.00": [
+        50.282126978818624,
+        0.9230769230769231,
+        0.0
+      ]
+    },
+    "hgb_noage": {
+      "human_correct": {
+        "n": 29,
+        "frr_lt50": 0.034482758620689655,
+        "frr_lt40": 0.0,
+        "far_ge50": 0.9655172413793104,
+        "far_ge80": 0.0,
+        "mean_pred": 64.05119083806008,
+        "mean_soft": 61.44827586206897
+      },
+      "human_incorrect": {
+        "n": 13,
+        "frr_lt50": 0.15384615384615385,
+        "frr_lt40": 0.0,
+        "far_ge50": 0.8461538461538461,
+        "far_ge80": 0.0,
+        "mean_pred": 57.745050694720746,
+        "mean_soft": 41.81538461538461
+      },
+      "human_uncertain": {
+        "n": 6,
+        "frr_lt50": 0.0,
+        "frr_lt40": 0.0,
+        "far_ge50": 1.0,
+        "far_ge80": 0.0,
+        "mean_pred": 63.229237657933986,
+        "mean_soft": 53.78333333333333
+      },
+      "ordinal": {
+        "pearson_ordinal_all_labeled": 0.2611093730214325,
+        "spearman_ordinal_all_labeled": 0.26283408140869025
+      },
+      "auc_correct_vs_incorrect": 0.7055702917771883,
+      "matched_frr_le_0.31": [
+        59.232539967637024,
+        0.3076923076923077,
+        0.27586206896551724
+      ],
+      "matched_frr_le_0.10": [
+        50.17808310881838,
+        0.8461538461538461,
+        0.034482758620689655
+      ],
+      "matched_frr_le_0.00": [
+        43.63157830545325,
+        1.0,
+        0.0
+      ]
+    },
+    "identity_raw_soft": {
+      "human_correct": {
+        "n": 29,
+        "frr_lt50": 0.3103448275862069,
+        "frr_lt40": 0.27586206896551724,
+        "far_ge50": 0.6896551724137931,
+        "far_ge80": 0.3448275862068966,
+        "mean_pred": 61.44827586206897,
+        "mean_soft": 61.44827586206897
+      },
+      "human_incorrect": {
+        "n": 13,
+        "frr_lt50": 0.6153846153846154,
+        "frr_lt40": 0.6153846153846154,
+        "far_ge50": 0.38461538461538464,
+        "far_ge80": 0.15384615384615385,
+        "mean_pred": 41.81538461538461,
+        "mean_soft": 41.81538461538461
+      },
+      "human_uncertain": {
+        "n": 6,
+        "frr_lt50": 0.3333333333333333,
+        "frr_lt40": 0.3333333333333333,
+        "far_ge50": 0.6666666666666666,
+        "far_ge80": 0.16666666666666666,
+        "mean_pred": 53.78333333333333,
+        "mean_soft": 53.78333333333333
+      }
+    }
+  },
+  "fidelity_gate_context": {
+    "human_correct_low_assessability_n": 7,
+    "human_correct_low_assessability_ids": [
+      "child_01_seven",
+      "child_01_ten",
+      "child_03_eight",
+      "child_04_three",
+      "child_06_six",
+      "child_06_two",
+      "child_07_one"
+    ],
+    "note": "with the 1.9.14 v2 gate these would be CANNOT_ASSESS, not false rejections; engine scoring still computes internally"
+  },
+  "provenance": {
+    "features_script": "external_lwe.py (frozen PhoneEvidenceV2@1.4.0)",
+    "p1_evidence_table_sha256": "A45D1750BDC22ACDB1737DD57FBECDC07AA734EDF7373B3D78274B38D5DEC8F1",
+    "fitted_on": "artifacts/siak/calibration_train.csv"
+  }
+}

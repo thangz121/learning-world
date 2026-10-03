@@ -1,0 +1,85 @@
+{
+  "phase": "1.9.15",
+  "objective": "P4 \u2014 is the phone model the dominant error source?",
+  "evidence": {
+    "lwe_1_9_9_diagnostic_counts": {
+      "AGREEMENT_OK": 17,
+      "PHONE_MODEL_ERROR": 12,
+      "HUMAN_UNCERTAIN": 2,
+      "TRUE_PRONUNCIATION_ERROR": 5,
+      "SCORER_MISS": 6
+    },
+    "lwe_human_correct_low_score_n": 9,
+    "lwe_human_correct_low_score_ids": [
+      "child_01_seven",
+      "child_03_eight",
+      "child_03_three",
+      "child_04_three",
+      "child_06_six",
+      "child_06_two",
+      "child_07_one",
+      "child_08_five",
+      "child_08_seven"
+    ],
+    "siak_test_identity": {
+      "note": "see artifacts/calibration/metrics.csv",
+      "identity_spearman": 0.272,
+      "identity_pearson": 0.307,
+      "identity_mae": 27.27,
+      "hgb_noage_spearman": 0.402,
+      "hgb_noage_pearson": 0.454,
+      "hgb_noage_mae": 19.76,
+      "isotonic_spearman": 0.279
+    },
+    "external_lwe_auc": {
+      "identity": 0.6591511936339522,
+      "affine_soft": 0.6591511936339522,
+      "isotonic_soft": 0.6591511936339522,
+      "linear_soft_conf_evidence": 0.6419098143236074,
+      "hgb_noage": 0.7055702917771883,
+      "identity_raw_soft": null
+    },
+    "external_lwe_matched_frr_010": {
+      "identity": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "affine_soft": [
+        46.645638974520416,
+        1.0,
+        0.0
+      ],
+      "isotonic_soft": [
+        44.121212121212125,
+        1.0,
+        0.0
+      ],
+      "linear_soft_conf_evidence": [
+        51.41427521188746,
+        0.7692307692307693,
+        0.06896551724137931
+      ],
+      "hgb_noage": [
+        50.17808310881838,
+        0.8461538461538461,
+        0.034482758620689655
+      ],
+      "identity_raw_soft": null
+    },
+    "deletion_aware_reference": "1.9.14 P2: deletion-aware/GOP did not beat soft-v2 under FRR-first"
+  },
+  "interpretation": {
+    "phone_evidence_limits_ranking": "Even with rich calibratable features, SIAK test Spearman is 0.40 and LWE external AUC is 0.71; the ranking signal is limited by the evidence itself.",
+    "human_correct_phone_errors": "Of 42 human-reviewed 1.9.9 tokens, 12 were PHONE_MODEL_ERROR (human correct / phone wrong).",
+    "calibration_cannot_fix_phone_errors": "Calibration shifts the scale but cannot recover information the phone evidence does not contain; LWE external FRR drops only by accepting more incorrect attempts."
+  },
+  "recommendation": "child phone model adaptation is a justified NEXT EXPERIMENT (separate phase; no training performed here)",
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  }
+}
