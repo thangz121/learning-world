@@ -1,0 +1,7 @@
+SOURCE (E2): https://teflon.aalto.fi/nocasa-2025/ ; arXiv 2504.20678
+- children 5-12; 205 Norwegian words; expert 1-5 stars; rating 0 excluded;
+  7,857 train / 1,460 test; UAR primary; baseline best 36.37% (multi-task wav2vec2);
+  Zenodo 14018511 (EULA required); baselines github.com/aalto-speech/nocasa-baselines.
+SOURCE (E2): speechocean762 (Interspeech 2021; openslr.org/101)
+- English; 5,000 utt; 250 Mandarin-L1 speakers (half children); 5 experts; sentence/word/phoneme
+  annotations; free commercial + non-commercial; Kaldi GOP recipe.
