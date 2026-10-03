@@ -1,0 +1,191 @@
+{
+  "source": "mispeech/speechocean762 (mirror of OpenSLR SLR101)",
+  "inventory_version": "phone-inventory-v1.4.0",
+  "rows_total": 5000,
+  "child_rows_le15": 2440,
+  "adult_rows_gt15": 2560,
+  "child_speakers_le15": 122,
+  "adult_speakers_gt15": 128,
+  "words": 31816,
+  "phone_tokens": 94445,
+  "distinct_canonical_arbabet_phones": 67,
+  "distinct_base_phones": 39,
+  "phone_accuracy_buckets_all": {
+    "perfect_2.0": 76202,
+    "high_1.5_2": 11013,
+    "mid_0.5_1.5": 3827,
+    "zero": 2287,
+    "below_0.5": 1116
+  },
+  "phone_accuracy_buckets_child": {
+    "perfect_2.0": 34033,
+    "high_1.5_2": 4703,
+    "mid_0.5_1.5": 1387,
+    "zero": 297,
+    "below_0.5": 217
+  },
+  "def_bad": "expert accuracy < 0.5 (= bucket 'zero' + 'below_0.5')",
+  "bad_tokens_all": 3403,
+  "bad_token_rate_all": 0.03603155275557202,
+  "child_phone_tokens": 40637,
+  "bad_tokens_child": 514,
+  "bad_token_rate_child": 0.01264857149888033,
+  "observed_substitution_records": 3403,
+  "observed_substitution_records_child": 514,
+  "distinct_substitution_pairs": 472,
+  "substitution_kind_counts": {
+    "substitution": 1737,
+    "unknown": 820,
+    "deletion": 846
+  },
+  "top_substitution_pairs": [
+    {
+      "canonical": "AH",
+      "pronounced": "<unk>",
+      "n": 106
+    },
+    {
+      "canonical": "T",
+      "pronounced": "<DEL>",
+      "n": 101
+    },
+    {
+      "canonical": "N",
+      "pronounced": "<DEL>",
+      "n": 78
+    },
+    {
+      "canonical": "IH",
+      "pronounced": "<DEL>",
+      "n": 71
+    },
+    {
+      "canonical": "D",
+      "pronounced": "<DEL>",
+      "n": 65
+    },
+    {
+      "canonical": "Z",
+      "pronounced": "<DEL>",
+      "n": 62
+    },
+    {
+      "canonical": "IH",
+      "pronounced": "<unk>",
+      "n": 61
+    },
+    {
+      "canonical": "AH",
+      "pronounced": "<DEL>",
+      "n": 58
+    },
+    {
+      "canonical": "N",
+      "pronounced": "<unk>",
+      "n": 56
+    },
+    {
+      "canonical": "S",
+      "pronounced": "<DEL>",
+      "n": 51
+    },
+    {
+      "canonical": "L",
+      "pronounced": "<DEL>",
+      "n": 50
+    },
+    {
+      "canonical": "R",
+      "pronounced": "<DEL>",
+      "n": 45
+    },
+    {
+      "canonical": "M",
+      "pronounced": "<DEL>",
+      "n": 44
+    },
+    {
+      "canonical": "T",
+      "pronounced": "<unk>",
+      "n": 44
+    },
+    {
+      "canonical": "EH",
+      "pronounced": "IH",
+      "n": 42
+    },
+    {
+      "canonical": "NG",
+      "pronounced": "<DEL>",
+      "n": 42
+    },
+    {
+      "canonical": "L",
+      "pronounced": "<unk>",
+      "n": 37
+    },
+    {
+      "canonical": "AO",
+      "pronounced": "<unk>",
+      "n": 37
+    },
+    {
+      "canonical": "R",
+      "pronounced": "<unk>",
+      "n": 36
+    },
+    {
+      "canonical": "AH",
+      "pronounced": "IH",
+      "n": 35
+    }
+  ],
+  "inventory_mapping": {
+    "distinct_phones_mapped": 67,
+    "distinct_phones_unmapped": 0,
+    "unmapped_phones": []
+  },
+  "base_phone_histogram": {
+    "AH": 8830,
+    "T": 7977,
+    "N": 6014,
+    "IH": 5907,
+    "S": 4230,
+    "IY": 3719,
+    "D": 3672,
+    "L": 3642,
+    "W": 3148,
+    "DH": 3027,
+    "M": 2979,
+    "AE": 2855,
+    "K": 2809,
+    "UW": 2765,
+    "EH": 2538,
+    "Z": 2529,
+    "AY": 2464,
+    "R": 2445,
+    "HH": 2174,
+    "B": 1747,
+    "F": 1714,
+    "V": 1617,
+    "EY": 1605,
+    "OW": 1558,
+    "AO": 1497,
+    "P": 1389,
+    "ER": 1327,
+    "Y": 1202,
+    "UH": 1131,
+    "G": 1118,
+    "NG": 1099,
+    "AA": 884,
+    "SH": 699,
+    "AW": 690,
+    "TH": 649,
+    "JH": 368,
+    "CH": 346,
+    "OY": 56,
+    "ZH": 25
+  },
+  "phone_tier_type": "MANUAL-EXPERT-SCORED canonical phones (5 experts, per-phone 0/1/2 averaged) + observed substituted phone recorded only when expert accuracy < 0.5; NOT a full observed-phone transcription",
+  "license_note": "OpenSLR SLR101 states CC BY 4.0 and free commercial+non-commercial use; the HF dataset card front-matter instead declares apache-2.0. Both are permissive; the discrepancy is recorded, not resolved."
+}

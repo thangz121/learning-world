@@ -1,0 +1,1770 @@
+{
+  "source": "mispeech/speechocean762 (mirror of OpenSLR SLR101, CC BY 4.0)",
+  "rows_streamed": {
+    "train": 2500,
+    "test": 2500
+  },
+  "total_rows": 5000,
+  "speakers_total": 250,
+  "child_speakers_le15": 122,
+  "child_utterances_le15": 2440,
+  "age_values": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    35,
+    37,
+    38,
+    43
+  ],
+  "age_histogram": {
+    "6": 500,
+    "7": 440,
+    "8": 160,
+    "9": 380,
+    "10": 120,
+    "11": 260,
+    "12": 220,
+    "13": 60,
+    "14": 40,
+    "15": 260,
+    "19": 200,
+    "20": 520,
+    "21": 540,
+    "22": 180,
+    "23": 120,
+    "24": 120,
+    "25": 180,
+    "26": 100,
+    "27": 40,
+    "28": 120,
+    "29": 80,
+    "30": 80,
+    "31": 40,
+    "32": 40,
+    "33": 60,
+    "35": 40,
+    "37": 60,
+    "38": 20,
+    "43": 20
+  },
+  "distinct_canonical_phones": 67,
+  "scored_phone_tokens": 94445,
+  "words_with_mispronunciations": 1877,
+  "phone_tier_type": "MANUAL-EXPERT-SCORED canonical phones (5 experts; per-phone accuracy 0/1/2; NOT transcribed observed strings)",
+  "examples": [
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "WE CALL IT BEAR",
+      "words": [
+        {
+          "text": "WE",
+          "phones": [
+            "W",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "CALL",
+          "phones": [
+            "K",
+            "AO0",
+            "L"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "IT",
+          "phones": [
+            "IH0",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "BEAR",
+          "phones": [
+            "B",
+            "EH0",
+            "R"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.0,
+            1.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "ZERO THREE FIVE ONE",
+      "words": [
+        {
+          "text": "ZERO",
+          "phones": [
+            "Z",
+            "IH1",
+            "R",
+            "OW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.4,
+            1.4,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "THREE",
+          "phones": [
+            "TH",
+            "R",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            1.2,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "FIVE",
+          "phones": [
+            "F",
+            "AY0",
+            "V"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "ONE",
+          "phones": [
+            "W",
+            "AH0",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "THREE TWO TWO SEVEN",
+      "words": [
+        {
+          "text": "THREE",
+          "phones": [
+            "TH",
+            "R",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            1.8,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TWO",
+          "phones": [
+            "T",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TWO",
+          "phones": [
+            "T",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "SEVEN",
+          "phones": [
+            "S",
+            "EH1",
+            "V",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "ELEPHANTS TAI GOOSE",
+      "words": [
+        {
+          "text": "ELEPHANTS",
+          "phones": [
+            "EH1",
+            "L",
+            "IH0",
+            "F",
+            "AH0",
+            "N",
+            "T",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            1.8,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TAI",
+          "phones": [
+            "T",
+            "AY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "GOOSE",
+          "phones": [
+            "G",
+            "UW0",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "TOM GIVES UP BOXING",
+      "words": [
+        {
+          "text": "TOM",
+          "phones": [
+            "T",
+            "AA0",
+            "M"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "GIVES",
+          "phones": [
+            "G",
+            "IH0",
+            "V",
+            "Z"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "UP",
+          "phones": [
+            "AH0",
+            "P"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "BOXING",
+          "phones": [
+            "B",
+            "AA1",
+            "K",
+            "S",
+            "IH0",
+            "NG"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "HE HATES SHOOTING",
+      "words": [
+        {
+          "text": "HE",
+          "phones": [
+            "HH",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "HATES",
+          "phones": [
+            "HH",
+            "EY0",
+            "T",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "SHOOTING",
+          "phones": [
+            "SH",
+            "UW1",
+            "T",
+            "IH0",
+            "NG"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "MANDY HAS A BIG ARM",
+      "words": [
+        {
+          "text": "MANDY",
+          "phones": [
+            "M",
+            "AE1",
+            "N",
+            "D",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "HAS",
+          "phones": [
+            "HH",
+            "AE0",
+            "Z"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "A",
+          "phones": [
+            "AH0"
+          ],
+          "phones-accuracy": [
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "BIG",
+          "phones": [
+            "B",
+            "IH0",
+            "G"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "ARM",
+          "phones": [
+            "AA0",
+            "R",
+            "M"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.6,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "LOOK AT ANN'S PANTS",
+      "words": [
+        {
+          "text": "LOOK",
+          "phones": [
+            "L",
+            "UH0",
+            "K"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "AT",
+          "phones": [
+            "AE0",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "ANN'S",
+          "phones": [
+            "AE0",
+            "N",
+            "Z"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.4
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "PANTS",
+          "phones": [
+            "P",
+            "AE0",
+            "N",
+            "T",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            1.8,
+            1.8
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "WHAT ABOUT THE BUS",
+      "words": [
+        {
+          "text": "WHAT",
+          "phones": [
+            "W",
+            "AH0",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "ABOUT",
+          "phones": [
+            "AH0",
+            "B",
+            "AW1",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "THE",
+          "phones": [
+            "DH",
+            "AH0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "BUS",
+          "phones": [
+            "B",
+            "AH0",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "THEN HE WENT TO THEME PARK",
+      "words": [
+        {
+          "text": "THEN",
+          "phones": [
+            "DH",
+            "EH0",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "HE",
+          "phones": [
+            "HH",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            1.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "WENT",
+          "phones": [
+            "W",
+            "EH0",
+            "N",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TO",
+          "phones": [
+            "T",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "THEME",
+          "phones": [
+            "TH",
+            "IY0",
+            "M"
+          ],
+          "phones-accuracy": [
+            1.2,
+            0.0,
+            1.6
+          ],
+          "mispronunciations": [
+            {
+              "canonical-phone": "IY",
+              "index": 1,
+              "pronounced-phone": "AH"
+            }
+          ]
+        },
+        {
+          "text": "PARK",
+          "phones": [
+            "P",
+            "AA0",
+            "R",
+            "K"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "LET'S GO TO THE RESTROOM",
+      "words": [
+        {
+          "text": "LET'S",
+          "phones": [
+            "L",
+            "EH0",
+            "T",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "GO",
+          "phones": [
+            "G",
+            "OW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TO",
+          "phones": [
+            "T",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "THE",
+          "phones": [
+            "DH",
+            "AH0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "RESTROOM",
+          "phones": [
+            "R",
+            "EH1",
+            "S",
+            "T",
+            "R",
+            "UW0",
+            "M"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "THEN MIKE WALKS TO COFFEE",
+      "words": [
+        {
+          "text": "THEN",
+          "phones": [
+            "DH",
+            "EH0",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "MIKE",
+          "phones": [
+            "M",
+            "AY0",
+            "K"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "WALKS",
+          "phones": [
+            "W",
+            "AO0",
+            "K",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TO",
+          "phones": [
+            "T",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "COFFEE",
+          "phones": [
+            "K",
+            "AO1",
+            "F",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.2,
+            1.6,
+            1.6
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "SO MARY WENT ON TO STUDY",
+      "words": [
+        {
+          "text": "SO",
+          "phones": [
+            "S",
+            "OW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "MARY",
+          "phones": [
+            "M",
+            "AE1",
+            "R",
+            "IH0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "WENT",
+          "phones": [
+            "W",
+            "EH0",
+            "N",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "ON",
+          "phones": [
+            "AA0",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TO",
+          "phones": [
+            "T",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "STUDY",
+          "phones": [
+            "S",
+            "T",
+            "AH1",
+            "D",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "KATE GOT THE TOMATO",
+      "words": [
+        {
+          "text": "KATE",
+          "phones": [
+            "K",
+            "EH0",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.6,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "GOT",
+          "phones": [
+            "G",
+            "AA0",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.6,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "THE",
+          "phones": [
+            "DH",
+            "AH0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TOMATO",
+          "phones": [
+            "T",
+            "AH0",
+            "M",
+            "EY1",
+            "T",
+            "OW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            1.0,
+            1.8,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "TINA LOVES EGGPLANT",
+      "words": [
+        {
+          "text": "TINA",
+          "phones": [
+            "T",
+            "IY1",
+            "N",
+            "AH0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "LOVES",
+          "phones": [
+            "L",
+            "AH0",
+            "V",
+            "Z"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            1.6
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "EGGPLANT",
+          "phones": [
+            "EH1",
+            "G",
+            "P",
+            "L",
+            "AE0",
+            "N",
+            "T"
+          ],
+          "phones-accuracy": [
+            1.6,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "DORA IS NOT A CLEANER",
+      "words": [
+        {
+          "text": "DORA",
+          "phones": [
+            "D",
+            "AO1",
+            "R",
+            "AH0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "IS",
+          "phones": [
+            "IH0",
+            "Z"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "NOT",
+          "phones": [
+            "N",
+            "AA0",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.6,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "A",
+          "phones": [
+            "AH0"
+          ],
+          "phones-accuracy": [
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "CLEANER",
+          "phones": [
+            "K",
+            "L",
+            "IY1",
+            "N",
+            "ER0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "MARK LIVED IN NEW YORK",
+      "words": [
+        {
+          "text": "MARK",
+          "phones": [
+            "M",
+            "AA0",
+            "R",
+            "K"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8,
+            1.6
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "LIVED",
+          "phones": [
+            "L",
+            "IH0",
+            "V",
+            "D"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "IN",
+          "phones": [
+            "IH0",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "NEW",
+          "phones": [
+            "N",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "YORK",
+          "phones": [
+            "Y",
+            "AO0",
+            "K"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "BOB LIVES IN CAIRO NOW",
+      "words": [
+        {
+          "text": "BOB",
+          "phones": [
+            "B",
+            "AA0",
+            "B"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.4,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "LIVES",
+          "phones": [
+            "L",
+            "IH0",
+            "V",
+            "Z"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            1.6
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "IN",
+          "phones": [
+            "IH0",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "CAIRO",
+          "phones": [
+            "K",
+            "AY1",
+            "R",
+            "OW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.6,
+            1.6,
+            1.4
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "NOW",
+          "phones": [
+            "N",
+            "AW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "BYE",
+      "words": [
+        {
+          "text": "BYE",
+          "phones": [
+            "B",
+            "AY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "gender": "m",
+      "text": "TREES",
+      "words": [
+        {
+          "text": "TREES",
+          "phones": [
+            "T",
+            "R",
+            "IY0",
+            "Z"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            1.2
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0005",
+      "age": 6,
+      "gender": "m",
+      "text": "MIKE LIKES THE WHITE ONE",
+      "words": [
+        {
+          "text": "MIKE",
+          "phones": [
+            "M",
+            "AY0",
+            "K"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "LIKES",
+          "phones": [
+            "L",
+            "AY0",
+            "K",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "THE",
+          "phones": [
+            "DH",
+            "AH0"
+          ],
+          "phones-accuracy": [
+            1.6,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "WHITE",
+          "phones": [
+            "W",
+            "AY0",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "ONE",
+          "phones": [
+            "W",
+            "AH0",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0005",
+      "age": 6,
+      "gender": "m",
+      "text": "ITS NAME IS SAY",
+      "words": [
+        {
+          "text": "ITS",
+          "phones": [
+            "IH0",
+            "T",
+            "S"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "NAME",
+          "phones": [
+            "N",
+            "EY0",
+            "M"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "IS",
+          "phones": [
+            "IH0",
+            "Z"
+          ],
+          "phones-accuracy": [
+            0.8,
+            1.4
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "SAY",
+          "phones": [
+            "S",
+            "EY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.4
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0005",
+      "age": 6,
+      "gender": "m",
+      "text": "BILLY LOVES AMERICA",
+      "words": [
+        {
+          "text": "BILLY",
+          "phones": [
+            "B",
+            "IH1",
+            "L",
+            "IY0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "LOVES",
+          "phones": [
+            "L",
+            "AH0",
+            "V",
+            "Z"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8,
+            1.4
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "AMERICA",
+          "phones": [
+            "AH0",
+            "M",
+            "EH1",
+            "R",
+            "IH0",
+            "K",
+            "AH0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            1.2,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0005",
+      "age": 6,
+      "gender": "m",
+      "text": "TWO TWO EIGHT SEVEN",
+      "words": [
+        {
+          "text": "TWO",
+          "phones": [
+            "T",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "TWO",
+          "phones": [
+            "T",
+            "UW0"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "EIGHT",
+          "phones": [
+            "EY0",
+            "T"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "SEVEN",
+          "phones": [
+            "S",
+            "EH1",
+            "V",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    },
+    {
+      "split": "train",
+      "speaker": "0005",
+      "age": 6,
+      "gender": "m",
+      "text": "FOUR FIVE FOUR SEVEN",
+      "words": [
+        {
+          "text": "FOUR",
+          "phones": [
+            "F",
+            "AO0",
+            "R"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "FIVE",
+          "phones": [
+            "F",
+            "AY0",
+            "V"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "FOUR",
+          "phones": [
+            "F",
+            "AO0",
+            "R"
+          ],
+          "phones-accuracy": [
+            2.0,
+            2.0,
+            1.8
+          ],
+          "mispronunciations": []
+        },
+        {
+          "text": "SEVEN",
+          "phones": [
+            "S",
+            "EH1",
+            "V",
+            "N"
+          ],
+          "phones-accuracy": [
+            2.0,
+            1.8,
+            1.8,
+            2.0
+          ],
+          "mispronunciations": []
+        }
+      ]
+    }
+  ]
+}

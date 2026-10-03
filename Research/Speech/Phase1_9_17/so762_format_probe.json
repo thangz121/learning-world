@@ -1,0 +1,69 @@
+{
+  "source": "mispeech/speechocean762 (mirror of OpenSLR SLR101)",
+  "method": "audio column cast to decode=False; RIFF/`fmt ` header parsed; stdlib wave cross-check; no sample decoding",
+  "files_sampled": 40,
+  "files_scanned_per_split": {
+    "train": 81,
+    "test": 20
+  },
+  "distinct_formats": [
+    {
+      "container": "RIFF/WAVE",
+      "audio_format": 1,
+      "channels": 1,
+      "sample_rate": 16000,
+      "bits_per_sample": 16,
+      "count": 40
+    }
+  ],
+  "expected_pipeline_input": {
+    "sample_rate": 16000,
+    "channels": 1
+  },
+  "format_uniform": true,
+  "matches_pipeline_input": true,
+  "examples": [
+    {
+      "container": "RIFF/WAVE",
+      "audio_format": 1,
+      "channels": 1,
+      "sample_rate": 16000,
+      "bits_per_sample": 16,
+      "data_bytes": 82560,
+      "wave_module": {
+        "channels": 1,
+        "sampwidth": 2,
+        "framerate": 16000,
+        "nframes": 41280,
+        "comptype": "NONE"
+      },
+      "split": "train",
+      "speaker": "0001",
+      "age": 6,
+      "path": "000010011.wav",
+      "bytes": 82604,
+      "role": "child"
+    },
+    {
+      "container": "RIFF/WAVE",
+      "audio_format": 1,
+      "channels": 1,
+      "sample_rate": 16000,
+      "bits_per_sample": 16,
+      "data_bytes": 105600,
+      "wave_module": {
+        "channels": 1,
+        "sampwidth": 2,
+        "framerate": 16000,
+        "nframes": 52800,
+        "comptype": "NONE"
+      },
+      "split": "train",
+      "speaker": "0036",
+      "age": 21,
+      "path": "000360013.wav",
+      "bytes": 105644,
+      "role": "adult"
+    }
+  ]
+}
