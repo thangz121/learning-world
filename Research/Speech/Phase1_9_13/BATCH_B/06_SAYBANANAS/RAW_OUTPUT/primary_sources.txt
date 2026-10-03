@@ -1,0 +1,10 @@
+SOURCE (E2): SayBananas effectiveness study (45 AU children 4;4-10;5, SSD)
+- ~100 trials/session target; median 44.7; gains on treated words; dose-response.
+SOURCE (E2): Syracuse handout (N. Benway) on Say Bananas AI Clinician
+- template matching: record correct + incorrect templates per word; compare during play;
+- 'fewer than half of the recordings could be analyzed for accuracy due to audio quality issues';
+- automated analysis agreed with experts more than parent feedback.
+SOURCE (E2): UNH thesis (Sjostedt)
+- stars mandatory to trigger exercises during gameplay; caregiver correct/move-on/try-again;
+  max one retry per word; KR/KP feedback; parent training day.
+BLOCKED: mobile app, no API/demo.
