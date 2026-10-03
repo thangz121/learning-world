@@ -1,0 +1,7 @@
+SOURCE (E1): https://sakura5.app/ (product listing, status 'soon')
+- SpeakStar: English speaking practice for Vietnamese children — free and fully offline.
+- word colouring: heard / nearly heard / not heard; 0-3 stars; on-device.
+- 24 lessons/4 levels; 44-sound IPA chart + animated mouth; phonetician references;
+  read-aloud + 6 songs (mic-free); Vietnamese UI.
+- Nothing collected: no account/ads/analytics/third-party SDKs/network; 476 bundled recordings.
+BLOCKED: unreleased ('soon').
