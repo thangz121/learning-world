@@ -1,7 +1,11 @@
 metric,count,note
-BOTH_RIGHT,7,preliminary; phone presence = exact|soft; human labels inferred from 1.9.11 packs
-BOTH_WRONG,4,preliminary; phone presence = exact|soft; human labels inferred from 1.9.11 packs
-PHONE_WRONG_ACOUSTIC_RIGHT,1,preliminary; phone presence = exact|soft; human labels inferred from 1.9.11 packs
-PHONE_RIGHT_ACOUSTIC_WRONG,1,preliminary; phone presence = exact|soft; human labels inferred from 1.9.11 packs
-N_WITH_HUMAN_FINAL_LABEL,13,inferred labels only
-N_PENDING_HUMAN_FINAL_REVIEW,52,
+BOTH_RIGHT,16,real human final-consonant labels (blind)
+PHONE_RIGHT_ACOUSTIC_WRONG,6,real human final-consonant labels (blind)
+BOTH_WRONG,5,real human final-consonant labels (blind)
+PHONE_WRONG_ACOUSTIC_RIGHT,1,real human final-consonant labels (blind)
+N_HUMAN_LABELED,28,
+N_PENDING,37,outside the 28-item sample
+CLASS_FRICATIVE,5,present=2 absent=3 ambiguous=0
+CLASS_LIQUID,6,present=1 absent=5 ambiguous=0
+CLASS_NASAL,9,present=8 absent=1 ambiguous=0
+CLASS_STOP,8,present=5 absent=3 ambiguous=0

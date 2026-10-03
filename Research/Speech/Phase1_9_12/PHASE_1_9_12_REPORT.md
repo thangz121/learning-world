@@ -12,21 +12,24 @@
 
 | Objective | Result |
 |---|---|
-| A — Final-consonant acoustic support | 65 child tokens with final consonants; features extracted on 5 regions each (325 rows); **preliminary acoustic layer is NOT independent** (anchored on CTC spans) → decision **C** |
-| B — Expanded window human validation | 20 stratified tokens × 5 anonymous windows = **100 clips**; blind pack ready; reviewer submission pending → decision **D** for now |
+| A — Final-consonant acoustic support | 65 child tokens; **28 human-reviewed (blind)**; 12/28 absent; CTC-anchored acoustic layer is **redundant/contaminated** (phone right 22/28, acoustic right 17/28) → decision **B** |
+| B — Expanded window human validation | 20 stratified tokens × 5 anonymous windows = 100 clips; **35/100 clips rated (single reviewer)** → decision **D** (evidence insufficient) |
 
 Key measured facts:
 
 - Child final-consonant classes available: NASAL 31 (/n/), FRICATIVE 16 (/s/ 7, /v/ 9),
   STOP 9 (/t/), LIQUID 9 (/r/). Other classes absent in child data.
-- **Methodology trap found:** extracting acoustic features over CTC-derived spans makes them
-  inherit forced-alignment errors — for the 5 human-confirmed ABSENT final /r/ ("four") cases
-  the span voicing ratio was **0.95–1.0 → "PRESENT"** (wrong).
-- Preliminary phone-vs-acoustic-vs-human on 13 inferred labels: BOTH_RIGHT 7, BOTH_WRONG 4,
-  PHONE_WRONG_ACOUSTIC_RIGHT 1, PHONE_RIGHT_ACOUSTIC_WRONG 1.
+- **Human final-consonant review (28):** present 16, absent 12 — deletion is broader than the
+  "four" class: STOP 3/8 absent (/t/ in eight), LIQUID 5/6 absent (/r/ in four),
+  FRICATIVE 3/5 absent (/s/, /v/), NASAL 1/9 absent.
+- **Methodology trap confirmed:** features anchored on CTC spans inherit forced-alignment
+  errors — span voicing 0.95–1.0 ("PRESENT") on human-confirmed ABSENT /r/ cases.
+- Real-label phone-vs-acoustic: BOTH_RIGHT 16, PHONE_RIGHT_ACOUSTIC_WRONG 6, BOTH_WRONG 5,
+  PHONE_WRONG_ACOUSTIC_RIGHT 1.
 - 14/65 final-consonant tokens had raw<50 → pad≥50 ("restored by padding"), including 5 /r/.
-- Window pack: 20 tokens (HIGH 3, MID 3, LOW 3, VERY_LOW 3, WINDOW_SENSITIVE 4,
-  FINAL_CONSONANT_CASE 4), 5 windows (FULL, RAW, PAD100, PAD250, PAD500), randomized A–E.
+- Window partial (35/100): preliminary good-clarity rate PAD250 0.45 vs FULL 0.10, RAW 0.15,
+  PAD100 0.20, PAD500 0.15; **tok_04 nine rated CLEAR at RAW despite score 33.8 vs 100** —
+  numeric window drops did not match perception.
 
 **No score is created; no policy is locked.**
 
@@ -96,27 +99,39 @@ voicing 0.95–1.0 (the span absorbs voiced vowel tail / trailing audio).
 
 ---
 
-## 7. Human Final-Consonant Review
+## 7. Human Final-Consonant Review (completed)
 
-New blind pack (`HumanReview/final_consonant_blind.html` → `_reveal.html`), **28 items**
-(eight 8, four 6, seven 4, five 3, one/six/ten 2, nine 1), 5-point final-consonant schema
-(clearly present → clearly absent; AMBIGUOUS kept distinct). **Submission pending** (LAN 8768).
+Blind pack submitted (28 items). Result: **present 16, absent 12, ambiguous 0** (all HIGH/MEDIUM
+confidence except two LOW).
 
-Existing inferred labels from 1.9.11 packs (13 tokens) used for the preliminary analysis only:
-5 "four" = CLEARLY_ABSENT (ending-sound rule); 8 correct tokens = inferred PRESENT.
+Class breakdown (present/absent/ambiguous):
+
+| class | present | absent | ambiguous |
+|---|---:|---:|---:|
+| STOP (/t/) | 5 | **3** | 0 |
+| FRICATIVE (/s/, /v/) | 2 | **3** | 0 |
+| LIQUID (/r/) | 1 | **5** | 0 |
+| NASAL (/n/) | 8 | **1** | 0 |
+
+Final-consonant deletion is a **broad class** in this sample, not limited to "four": three
+"eight" /t/ deletions (child_03, 07, 08), one "six" /s/ (child_03), two "five" /v/
+(child_09, child_01), five "four" /r/.
 
 ---
 
-## 8. Phone vs Acoustic Evidence
+## 8. Phone vs Acoustic Evidence (real labels)
 
-Preliminary (13 inferred labels; phone presence = exact|soft):
+Phone presence = match_type exact|soft; acoustic = exploratory class rules on FINAL_RAW:
 
 | combination | n |
 |---|---:|
-| BOTH_RIGHT | 7 |
-| BOTH_WRONG | 4 |
-| PHONE_WRONG_ACOUSTIC_RIGHT | 1 (child_07 one: phone miss, acoustic PRESENT, human PRESENT) |
-| PHONE_RIGHT_ACOUSTIC_WRONG | 1 (child_09 four: phone miss→absent correct, acoustic PRESENT wrong) |
+| BOTH_RIGHT | 16 |
+| PHONE_RIGHT_ACOUSTIC_WRONG | 6 |
+| BOTH_WRONG | 5 |
+| PHONE_WRONG_ACOUSTIC_RIGHT | 1 |
+
+Phone evidence was correct on **22/28**; acoustic on **17/28**. When the acoustic layer differed
+from phone evidence it was wrong **6×** vs right **1×**.
 
 `Results/acoustic_support_value.csv`, `final_consonant_human_vs_model.csv`.
 
@@ -124,13 +139,14 @@ Preliminary (13 inferred labels; phone presence = exact|soft):
 
 ## 9. Independent Acoustic Value
 
-**Not established.** The current acoustic layer is span-anchored → it mostly echoes phone
-boundaries (BOTH_WRONG on 4/5 confirmed-absent "four"). One case (child_07 one) shows potential
-acoustic value for /n/, but n=1.
+**Not established — as implemented the layer is redundant/contaminated.** Features were
+anchored on the phone model's CTC spans, so they inherit forced-alignment boundary errors
+(voicing 0.95–1.0 on human-confirmed absent /r/). It adds no incremental value and mostly
+adds error.
 
-The independent layer required by the phase must anchor on **acoustic landmarks**
-(energy/voicing offset at word end, spectral-class detection) rather than the CTC span.
-This is the main P2 methodological finding.
+The concept is not fully tested: an independent layer must anchor on **acoustic landmarks**
+(energy/voicing offset at word end, spectral-class detection), not the CTC span. This remains
+the P2 next step.
 
 ---
 
@@ -164,18 +180,38 @@ Not computable (n=1 reviewer). Template left explicit.
 
 ---
 
-## 14. Window Results
+## 14. Window Results (partial: 35/100 clips rated)
 
-Pending human submission. Numeric context (1.9.11): FULL≈padded in aggregate; RAW is the outlier
-(rejects 5/9 human-correct in the 13-token spot check). This pack tests whether human clarity/
-boundary/recognizability judgments agree with those numbers.
+Rated coverage: FULL 8, RAW 6, PAD100 5, PAD250 11, PAD500 5 (of 20 each).
+
+| window | good clarity (CLEAR+MOSTLY) | boundary clean | recog clear | excess context |
+|---|---:|---:|---:|---:|
+| FULL | 2/8 (0.25) | 4 | 5 | 4 |
+| RAW | 3/6 (0.50) | 4 | 3 | 1 |
+| PAD100 | 4/5 (0.80) | 4 | 4 | 0 |
+| PAD250 | 9/11 (0.82) | 9 | 10 | 1 |
+| PAD500 | 3/5 (0.60) | 4 | 5 | 1 |
+
+(Full-denominator rates in `window_aggregates.csv`: PAD250 0.45 vs FULL 0.10 — denominators
+include unrated clips and are **not** comparable until coverage is complete.)
+
+Preliminary signals only: PAD100/PAD250 rated better on clarity and boundary than FULL/RAW/PAD500
+in the rated subset; FULL carried the most EXCESS_CONTEXT flags.
 
 ---
 
 ## 15. Human Clarity vs Score
 
-Pending. After submission: cross-tab clarity × score band × window, plus
-high-score/poor-clarity and low-score/high-clarity cases.
+Partial (35 rows with clarity): mean score by clarity — CLEAR 77.6 (n=19), POOR 64.0 (n=9),
+AMBIGUOUS 26.2 (n=5), MOSTLY_CLEAR 41.7 (n=2).
+
+- **3 high-score/poor-clarity** mismatches (e.g., "four" tokens with full/pad 100 rated POOR)
+- **4 low-score/good-clarity** mismatches (e.g., **tok_04 nine**: RAW score 33.8 but reviewer
+  rated CLEAR/CLEAN/CLEAR — the numeric window drop did not correspond to perception)
+- Artifacts: `window_clarity_vs_score.csv`, `window_mismatch_cases.csv`
+
+These mismatches support the 1.9.11 conclusion that window score changes are not automatically
+perceptual improvements.
 
 ---
 
@@ -200,12 +236,14 @@ No single child dominates either pack. Per-speaker window behavior to be compute
 ## 18. What Is Proven
 
 1. 65 real child tokens with final consonants exist across 4 phoneme classes (n/s/v/t/r).
-2. CTC-span-anchored acoustic features **inherit forced-alignment errors** (5/5 confirmed-absent
-   /r/ showed "PRESENT" voicing) → not independent evidence.
-3. 14/65 final-consonant tokens are "restored by padding" (raw&lt;50→pad≥50), including all 5
-   confirmed ending-sound deletions → padding is unsafe for this class.
-4. A 100-clip anonymous A–E window pack across 20 stratified tokens is ready for human review.
-5. LWE vocabulary finals are absent from the child dataset (coverage still LIMITED).
+2. **Final-consonant deletion is common in this child sample:** 12/28 human-reviewed tokens
+   absent — /r/ 5/6, /t/ 3/8, fricatives 3/5, /n/ 1/9.
+3. CTC-span-anchored acoustic features **inherit forced-alignment errors** → redundant
+   (phone right 22/28 vs acoustic 17/28; acoustic wrong 6× vs right 1× when differing).
+4. 14/65 final-consonant tokens are "restored by padding" (raw&lt;50→pad≥50), including all 5
+   confirmed /r/ deletions → padding is unsafe for this class.
+5. Window ratings (partial) show **score changes do not always match perception** (tok_04:
+   RAW 33.8 rated CLEAR; "four" full/pad 100 rated POOR).
 
 ---
 
@@ -242,11 +280,12 @@ No single child dominates either pack. Per-speaker window behavior to be compute
 
 ## 22. Decision
 
-**DECISION_ACOUSTIC: C. ACOUSTIC_SUPPORT_IS_PROMISING_BUT_INSUFFICIENT**  
-(implementation not independent; needs landmark anchoring + human labels)
+**DECISION_ACOUSTIC: B. ACOUSTIC_SUPPORT_IS_REDUNDANT**  
+(as implemented: CTC-anchored features add no value; concept remains untested with
+landmark anchoring)
 
 **DECISION_WINDOW: D. EVIDENCE_INSUFFICIENT**  
-(pending expanded human submission; no policy supported)
+(35/100 clips rated; single reviewer; no policy supported)
 
 ```
 production_vad = false
@@ -260,12 +299,11 @@ production_window_locked = false
 
 ## 23. Exact Next Step
 
-1. Human submits the two packs over LAN (port 8768):
-   - `final_consonant_blind.html` → `_reveal.html` (28 items)
-   - `window_blind.html` → `window_reveal.html` (20 tokens × 5 clips)
-2. Recompute: final-consonant human-vs-model, acoustic value with real (not inferred) labels;
-   window clarity/boundary/recognizability vs scores; update both decisions.
-3. Then (research only): implement landmark-anchored final-consonant features and re-test.
+1. Finish the remaining **65/100** window ratings via `window_blind_remaining.html`
+   (LAN 8768; merges with the existing 35) → recompute window decision.
+2. (Research only) implement **landmark-anchored** final-consonant features (energy/voicing
+   offset at word end) and re-test incremental value on the 28 human-labeled finals.
+3. Keep Silero default, hybrid research-only, scorer and window policy frozen.
 
 ---
 

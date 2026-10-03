@@ -1,0 +1,22 @@
+{
+  "POOR": {
+    "n": 9,
+    "mean_score": 64.03333333333333
+  },
+  "CLEAR": {
+    "n": 19,
+    "mean_score": 77.57894736842105
+  },
+  "": {
+    "n": 65,
+    "mean_score": 49.48
+  },
+  "MOSTLY_CLEAR": {
+    "n": 2,
+    "mean_score": 41.65
+  },
+  "AMBIGUOUS": {
+    "n": 5,
+    "mean_score": 26.2
+  }
+}

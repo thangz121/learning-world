@@ -20,7 +20,7 @@ SUBS = RES / "submissions"
 SUBS.mkdir(parents=True, exist_ok=True)
 
 MAX_BODY = 4_000_000
-ALLOWED_PACKS = {"final_consonant", "window_expanded", "review"}
+ALLOWED_PACKS = {"final_consonant", "window_expanded", "window_expanded_remaining", "review"}
 
 
 class Handler(SimpleHTTPRequestHandler):

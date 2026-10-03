@@ -1,0 +1,525 @@
+{
+  "n": 65,
+  "items": [
+    {
+      "token_id": "tok_29",
+      "letter": "D",
+      "clip": "window_clips/tok_29_FULL.wav",
+      "word": "five",
+      "speaker_id": "child_04",
+      "stratum": "HIGH_SCORE"
+    },
+    {
+      "token_id": "tok_29",
+      "letter": "E",
+      "clip": "window_clips/tok_29_RAW.wav",
+      "word": "five",
+      "speaker_id": "child_04",
+      "stratum": "HIGH_SCORE"
+    },
+    {
+      "token_id": "tok_79",
+      "letter": "B",
+      "clip": "window_clips/tok_79_PAD500.wav",
+      "word": "six",
+      "speaker_id": "child_09",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_79",
+      "letter": "C",
+      "clip": "window_clips/tok_79_RAW.wav",
+      "word": "six",
+      "speaker_id": "child_09",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_79",
+      "letter": "D",
+      "clip": "window_clips/tok_79_FULL.wav",
+      "word": "six",
+      "speaker_id": "child_09",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_79",
+      "letter": "E",
+      "clip": "window_clips/tok_79_PAD100.wav",
+      "word": "six",
+      "speaker_id": "child_09",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_30",
+      "letter": "B",
+      "clip": "window_clips/tok_30_RAW.wav",
+      "word": "four",
+      "speaker_id": "child_04",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_30",
+      "letter": "C",
+      "clip": "window_clips/tok_30_PAD500.wav",
+      "word": "four",
+      "speaker_id": "child_04",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_30",
+      "letter": "D",
+      "clip": "window_clips/tok_30_PAD100.wav",
+      "word": "four",
+      "speaker_id": "child_04",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_30",
+      "letter": "E",
+      "clip": "window_clips/tok_30_FULL.wav",
+      "word": "four",
+      "speaker_id": "child_04",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_75",
+      "letter": "B",
+      "clip": "window_clips/tok_75_PAD100.wav",
+      "word": "four",
+      "speaker_id": "child_09",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_75",
+      "letter": "C",
+      "clip": "window_clips/tok_75_FULL.wav",
+      "word": "four",
+      "speaker_id": "child_09",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_75",
+      "letter": "D",
+      "clip": "window_clips/tok_75_RAW.wav",
+      "word": "four",
+      "speaker_id": "child_09",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_75",
+      "letter": "E",
+      "clip": "window_clips/tok_75_PAD250.wav",
+      "word": "four",
+      "speaker_id": "child_09",
+      "stratum": "MID_SCORE"
+    },
+    {
+      "token_id": "tok_68",
+      "letter": "C",
+      "clip": "window_clips/tok_68_PAD500.wav",
+      "word": "seven",
+      "speaker_id": "child_08",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_68",
+      "letter": "D",
+      "clip": "window_clips/tok_68_RAW.wav",
+      "word": "seven",
+      "speaker_id": "child_08",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_68",
+      "letter": "E",
+      "clip": "window_clips/tok_68_PAD100.wav",
+      "word": "seven",
+      "speaker_id": "child_08",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_71",
+      "letter": "B",
+      "clip": "window_clips/tok_71_PAD500.wav",
+      "word": "three",
+      "speaker_id": "child_08",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_71",
+      "letter": "C",
+      "clip": "window_clips/tok_71_PAD100.wav",
+      "word": "three",
+      "speaker_id": "child_08",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_71",
+      "letter": "D",
+      "clip": "window_clips/tok_71_RAW.wav",
+      "word": "three",
+      "speaker_id": "child_08",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_71",
+      "letter": "E",
+      "clip": "window_clips/tok_71_PAD250.wav",
+      "word": "three",
+      "speaker_id": "child_08",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_02",
+      "letter": "C",
+      "clip": "window_clips/tok_02_PAD500.wav",
+      "word": "five",
+      "speaker_id": "child_01",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_02",
+      "letter": "D",
+      "clip": "window_clips/tok_02_PAD100.wav",
+      "word": "five",
+      "speaker_id": "child_01",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_02",
+      "letter": "E",
+      "clip": "window_clips/tok_02_PAD250.wav",
+      "word": "five",
+      "speaker_id": "child_01",
+      "stratum": "LOW_SCORE"
+    },
+    {
+      "token_id": "tok_58",
+      "letter": "C",
+      "clip": "window_clips/tok_58_FULL.wav",
+      "word": "one",
+      "speaker_id": "child_07",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_58",
+      "letter": "D",
+      "clip": "window_clips/tok_58_PAD500.wav",
+      "word": "one",
+      "speaker_id": "child_07",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_58",
+      "letter": "E",
+      "clip": "window_clips/tok_58_PAD100.wav",
+      "word": "one",
+      "speaker_id": "child_07",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_19",
+      "letter": "B",
+      "clip": "window_clips/tok_19_PAD100.wav",
+      "word": "eight",
+      "speaker_id": "child_03",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_19",
+      "letter": "C",
+      "clip": "window_clips/tok_19_PAD500.wav",
+      "word": "eight",
+      "speaker_id": "child_03",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_19",
+      "letter": "D",
+      "clip": "window_clips/tok_19_PAD250.wav",
+      "word": "eight",
+      "speaker_id": "child_03",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_19",
+      "letter": "E",
+      "clip": "window_clips/tok_19_RAW.wav",
+      "word": "eight",
+      "speaker_id": "child_03",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_53",
+      "letter": "B",
+      "clip": "window_clips/tok_53_PAD500.wav",
+      "word": "two",
+      "speaker_id": "child_06",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_53",
+      "letter": "C",
+      "clip": "window_clips/tok_53_PAD100.wav",
+      "word": "two",
+      "speaker_id": "child_06",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_53",
+      "letter": "D",
+      "clip": "window_clips/tok_53_RAW.wav",
+      "word": "two",
+      "speaker_id": "child_06",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_53",
+      "letter": "E",
+      "clip": "window_clips/tok_53_PAD250.wav",
+      "word": "two",
+      "speaker_id": "child_06",
+      "stratum": "VERY_LOW_SCORE"
+    },
+    {
+      "token_id": "tok_32",
+      "letter": "B",
+      "clip": "window_clips/tok_32_PAD250.wav",
+      "word": "seven",
+      "speaker_id": "child_04",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_32",
+      "letter": "C",
+      "clip": "window_clips/tok_32_PAD500.wav",
+      "word": "seven",
+      "speaker_id": "child_04",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_32",
+      "letter": "D",
+      "clip": "window_clips/tok_32_FULL.wav",
+      "word": "seven",
+      "speaker_id": "child_04",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_32",
+      "letter": "E",
+      "clip": "window_clips/tok_32_PAD100.wav",
+      "word": "seven",
+      "speaker_id": "child_04",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_10",
+      "letter": "B",
+      "clip": "window_clips/tok_10_PAD100.wav",
+      "word": "eight",
+      "speaker_id": "child_02",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_10",
+      "letter": "C",
+      "clip": "window_clips/tok_10_FULL.wav",
+      "word": "eight",
+      "speaker_id": "child_02",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_10",
+      "letter": "D",
+      "clip": "window_clips/tok_10_PAD500.wav",
+      "word": "eight",
+      "speaker_id": "child_02",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_10",
+      "letter": "E",
+      "clip": "window_clips/tok_10_RAW.wav",
+      "word": "eight",
+      "speaker_id": "child_02",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_18",
+      "letter": "B",
+      "clip": "window_clips/tok_18_FULL.wav",
+      "word": "two",
+      "speaker_id": "child_02",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_18",
+      "letter": "C",
+      "clip": "window_clips/tok_18_PAD500.wav",
+      "word": "two",
+      "speaker_id": "child_02",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_18",
+      "letter": "D",
+      "clip": "window_clips/tok_18_RAW.wav",
+      "word": "two",
+      "speaker_id": "child_02",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_18",
+      "letter": "E",
+      "clip": "window_clips/tok_18_PAD250.wav",
+      "word": "two",
+      "speaker_id": "child_02",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_27",
+      "letter": "B",
+      "clip": "window_clips/tok_27_FULL.wav",
+      "word": "two",
+      "speaker_id": "child_03",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_27",
+      "letter": "C",
+      "clip": "window_clips/tok_27_PAD500.wav",
+      "word": "two",
+      "speaker_id": "child_03",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_27",
+      "letter": "D",
+      "clip": "window_clips/tok_27_RAW.wav",
+      "word": "two",
+      "speaker_id": "child_03",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_27",
+      "letter": "E",
+      "clip": "window_clips/tok_27_PAD250.wav",
+      "word": "two",
+      "speaker_id": "child_03",
+      "stratum": "WINDOW_SENSITIVE"
+    },
+    {
+      "token_id": "tok_37",
+      "letter": "B",
+      "clip": "window_clips/tok_37_PAD100.wav",
+      "word": "eight",
+      "speaker_id": "child_05",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_37",
+      "letter": "C",
+      "clip": "window_clips/tok_37_PAD500.wav",
+      "word": "eight",
+      "speaker_id": "child_05",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_37",
+      "letter": "D",
+      "clip": "window_clips/tok_37_PAD250.wav",
+      "word": "eight",
+      "speaker_id": "child_05",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_37",
+      "letter": "E",
+      "clip": "window_clips/tok_37_RAW.wav",
+      "word": "eight",
+      "speaker_id": "child_05",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_69",
+      "letter": "B",
+      "clip": "window_clips/tok_69_RAW.wav",
+      "word": "six",
+      "speaker_id": "child_08",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_69",
+      "letter": "C",
+      "clip": "window_clips/tok_69_FULL.wav",
+      "word": "six",
+      "speaker_id": "child_08",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_69",
+      "letter": "D",
+      "clip": "window_clips/tok_69_PAD100.wav",
+      "word": "six",
+      "speaker_id": "child_08",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_69",
+      "letter": "E",
+      "clip": "window_clips/tok_69_PAD500.wav",
+      "word": "six",
+      "speaker_id": "child_08",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_78",
+      "letter": "B",
+      "clip": "window_clips/tok_78_RAW.wav",
+      "word": "seven",
+      "speaker_id": "child_09",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_78",
+      "letter": "C",
+      "clip": "window_clips/tok_78_FULL.wav",
+      "word": "seven",
+      "speaker_id": "child_09",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_78",
+      "letter": "D",
+      "clip": "window_clips/tok_78_PAD100.wav",
+      "word": "seven",
+      "speaker_id": "child_09",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_78",
+      "letter": "E",
+      "clip": "window_clips/tok_78_PAD500.wav",
+      "word": "seven",
+      "speaker_id": "child_09",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_14",
+      "letter": "D",
+      "clip": "window_clips/tok_14_FULL.wav",
+      "word": "seven",
+      "speaker_id": "child_02",
+      "stratum": "FINAL_CONSONANT_CASE"
+    },
+    {
+      "token_id": "tok_14",
+      "letter": "E",
+      "clip": "window_clips/tok_14_PAD100.wav",
+      "word": "seven",
+      "speaker_id": "child_02",
+      "stratum": "FINAL_CONSONANT_CASE"
+    }
+  ]
+}

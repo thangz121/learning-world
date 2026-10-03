@@ -17,15 +17,157 @@
     },
     "review_sample_n": 28,
     "review_pending": true,
-    "methodology_finding": "Acoustic features extracted over CTC-derived final spans inherit forced-alignment boundary errors: for 5 human-confirmed ABSENT final /r/ cases the span-based voicing ratio was 0.95-1.0 (PRESENT). An independent layer must anchor on acoustic landmarks (energy/voicing offset), not the CTC span."
+    "methodology_finding": "Acoustic features extracted over CTC-derived final spans inherit forced-alignment boundary errors: for 5 human-confirmed ABSENT final /r/ cases the span-based voicing ratio was 0.95-1.0 (PRESENT). An independent layer must anchor on acoustic landmarks (energy/voicing offset), not the CTC span.",
+    "human_reviewed_final_consonants": 28,
+    "real_label_value_counts": {
+      "BOTH_RIGHT": 16,
+      "PHONE_RIGHT_ACOUSTIC_WRONG": 6,
+      "BOTH_WRONG": 5,
+      "PHONE_WRONG_ACOUSTIC_RIGHT": 1
+    },
+    "class_present_absent": {
+      "STOP": {
+        "present": 5,
+        "absent": 3
+      },
+      "FRICATIVE": {
+        "absent": 3,
+        "present": 2
+      },
+      "LIQUID": {
+        "absent": 5,
+        "present": 1
+      },
+      "NASAL": {
+        "present": 8,
+        "absent": 1
+      }
+    }
   },
   "decisions": {
-    "acoustic_support": "C. ACOUSTIC_SUPPORT_IS_PROMISING_BUT_INSUFFICIENT",
-    "window_policy": "D. EVIDENCE_INSUFFICIENT"
+    "acoustic_support": "B. ACOUSTIC_SUPPORT_IS_REDUNDANT",
+    "window_policy": "D. EVIDENCE_INSUFFICIENT",
+    "window_note": "Coverage 35/100 clips (single reviewer); preliminary trend PAD250 good-clarity 0.45 vs FULL 0.10; tok_04 nine: reviewer rated RAW CLEAR despite raw score 33.8 vs 100 -> numeric window drops did not match perception. Decision D until remaining 65 clips are rated.",
+    "acoustic_note": "As implemented: features anchored on CTC spans inherit forced-alignment errors. Phone correct 22/28, acoustic correct 17/28; when acoustic differed from phone it was wrong 6x vs right 1x. Concept (landmark-anchored) remains untested."
   },
   "production_vad": false,
   "router_locked": false,
   "unity_integrated": false,
   "scorer_modified": false,
-  "production_window_locked": false
+  "production_window_locked": false,
+  "objective_b": {
+    "tokens_reviewed": 20,
+    "clips_reviewed": 100,
+    "reviewers": 1,
+    "per_window": {
+      "FULL": {
+        "window": "FULL",
+        "n": 20,
+        "clarity_clear": 2,
+        "clarity_mostly_clear": 0,
+        "clarity_ambiguous": 5,
+        "clarity_poor": 1,
+        "good_clarity_rate": 0.1,
+        "boundary_clean": 4,
+        "boundary_cut": 0,
+        "boundary_excess_context": 4,
+        "recog_clear": 5,
+        "recog_probable": 1,
+        "recog_not_recognizable": 0
+      },
+      "RAW": {
+        "window": "RAW",
+        "n": 20,
+        "clarity_clear": 3,
+        "clarity_mostly_clear": 0,
+        "clarity_ambiguous": 0,
+        "clarity_poor": 3,
+        "good_clarity_rate": 0.15,
+        "boundary_clean": 4,
+        "boundary_cut": 1,
+        "boundary_excess_context": 1,
+        "recog_clear": 3,
+        "recog_probable": 2,
+        "recog_not_recognizable": 0
+      },
+      "PAD100": {
+        "window": "PAD100",
+        "n": 20,
+        "clarity_clear": 3,
+        "clarity_mostly_clear": 1,
+        "clarity_ambiguous": 0,
+        "clarity_poor": 1,
+        "good_clarity_rate": 0.2,
+        "boundary_clean": 4,
+        "boundary_cut": 0,
+        "boundary_excess_context": 0,
+        "recog_clear": 4,
+        "recog_probable": 0,
+        "recog_not_recognizable": 0
+      },
+      "PAD250": {
+        "window": "PAD250",
+        "n": 20,
+        "clarity_clear": 8,
+        "clarity_mostly_clear": 1,
+        "clarity_ambiguous": 0,
+        "clarity_poor": 2,
+        "good_clarity_rate": 0.45,
+        "boundary_clean": 9,
+        "boundary_cut": 0,
+        "boundary_excess_context": 1,
+        "recog_clear": 10,
+        "recog_probable": 0,
+        "recog_not_recognizable": 1
+      },
+      "PAD500": {
+        "window": "PAD500",
+        "n": 20,
+        "clarity_clear": 3,
+        "clarity_mostly_clear": 0,
+        "clarity_ambiguous": 0,
+        "clarity_poor": 2,
+        "good_clarity_rate": 0.15,
+        "boundary_clean": 4,
+        "boundary_cut": 0,
+        "boundary_excess_context": 1,
+        "recog_clear": 5,
+        "recog_probable": 0,
+        "recog_not_recognizable": 0
+      }
+    },
+    "over_padding_excess_context": {
+      "FULL": 4,
+      "PAD250": 1,
+      "RAW": 1,
+      "PAD500": 1
+    },
+    "clarity_vs_score": {
+      "POOR": {
+        "n": 9,
+        "mean_score": 64.03333333333333
+      },
+      "CLEAR": {
+        "n": 19,
+        "mean_score": 77.57894736842105
+      },
+      "": {
+        "n": 65,
+        "mean_score": 49.48
+      },
+      "MOSTLY_CLEAR": {
+        "n": 2,
+        "mean_score": 41.65
+      },
+      "AMBIGUOUS": {
+        "n": 5,
+        "mean_score": 26.2
+      }
+    },
+    "high_score_poor_clarity_n": 3,
+    "low_score_good_clarity_n": 4,
+    "clips_rated": 35,
+    "clips_total": 100,
+    "coverage": 0.35
+  }
 }
