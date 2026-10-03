@@ -24,10 +24,18 @@ Three sequential objectives completed:
 - `false_rescue` = 7/15 confirmed errors; `true_error_rescue` = 5/15
 - crop-beats-full inversion: 4/80 (5%); full-beats-raw: 17/80
 
+**Human review (both packs) completed** — key human-verified results:
+
+- SCORER_MISS: **3/6 confirmed TRUE_SCORER_MISS** (all "four", reviewer rule: missing ending sound
+  = fail); 2 uncertain; 1 conflicted. FULL scores these 100/100/66.8 → forced alignment cannot
+  represent a deleted final phone.
+- Window spot-check (13): FULL misses **3/3** confirmed ending-sound errors while rejecting **3/9**
+  correct; RAW catches 2/3 errors but rejects **5/9** correct; PAD250 misses 2/3 errors.
+
 **Decision:** **B. WINDOW_EFFECT_REAL_BUT_NOT_SAFE** — window effects are real and large per-token,
 but no single window/policy is safe; padding rescues true errors, raw VAD rejects correct speech.
 
-`SCORER_FORMULA_CHANGE: NOT_JUSTIFIED`
+`SCORER_FORMULA_CHANGE: RESEARCH_NEEDED` (ending-sound/final-phone evidence; not implemented)
 
 ---
 
@@ -113,13 +121,27 @@ human second review pack prepared (labels empty).
 
 ---
 
-## 7. Human Review of SCORER_MISS
+## 7. Human Review of SCORER_MISS (completed)
 
-- `HumanReview/scorer_miss_blind.html` (Stage A: listen only, no score/phone)
-- `HumanReview/scorer_miss_reveal.html` (Stage B: evidence + "why did the system score high?")
-- LAN submission server `Scripts/serve_review.py` (pack=`scorer_miss`) → `Results/scorer_miss_StageA/B_Filled.csv`
-- 12 clips; template `Results/scorer_miss_human_review.csv` (empty)
-- **Status: pending human review** — mechanisms above remain measured hypotheses
+Submitted over LAN (`serve_review.py`, pack=`scorer_miss`). Reviewer rule recorded:
+**missing ending sound → fail**.
+
+| case | target | Stage A | Stage B | state |
+|---|---|---|---|---|
+| sm_01 | six | CLEAR_CORRECT | TRUE_SCORER_MISS | **CONFLICTED** |
+| sm_02 | two | CLEAR_CORRECT | UNCERTAIN | UNCERTAIN |
+| sm_03 | eight | PROBABLY_INCORRECT | HUMAN_UNCERTAINTY | UNCERTAIN |
+| sm_04 | four | PROBABLY_INCORRECT | TRUE_SCORER_MISS | **TRUE_ERROR** |
+| sm_05 | four | CLEAR_INCORRECT | TRUE_SCORER_MISS | **TRUE_ERROR** |
+| sm_06 | four | CLEAR_INCORRECT | TRUE_SCORER_MISS | **TRUE_ERROR** |
+
+- **3/6 confirmed TRUE_SCORER_MISS** — all "four" with missing final /r/
+- FULL scored these **100.0 / 100.0 / 66.8** while the reviewer heard no ending sound
+- Observed phone evidence still emitted `f ɔ ɹ` (sm_04/05, 0 misses) →
+  **forced alignment assigns a match to a deleted final phone**; mechanism:
+  `FINAL_CONSONANT_DELETION_NOT_REPRESENTED_BY_FORCED_ALIGNMENT`
+- sm_01/sm_02/sm_03 remain uncertain/conflicted → not clean ground truth
+- Artifact: `Results/scorer_miss_human_review.csv`
 
 ---
 
@@ -224,25 +246,37 @@ FULL_OVERSCORES = full > median_pad + 10; else WINDOW_STABLE.
 
 - 4/6 SCORER_MISS cases are window-dependent; their high scores come from FULL/padded windows
 - Under the raw VAD window, only 2/15 confirmed errors still pass (vs 6/15 full, 7/15 padded)
+- **Human-confirmed ending-sound class:** the 3 "four" errors pass at FULL (100/100/66.8);
+  RAW catches 2/3 (6.0 / 66.7 / 6.1) but fails sm_05; PAD250 catches 0/3 (100/100/100)
 - **Window choice materially changes the specificity/sensitivity balance** — the apparent
-  "scorer miss" is partly a window/evidence problem, partly soft-match permissiveness
+  "scorer miss" is partly a window/evidence problem, partly forced-alignment/phone-model
+  permissiveness on deleted final phones
 
 ---
 
-## 16. Human Spot Check
+## 16. Human Spot Check (completed)
 
-Balanced pack prepared (`window_spotcheck_blind.html` / `_reveal.html`, server pack=`window_spot`):
+Balanced pack: 13 unique items (FULL_UNDERSCORES 3, FULL_OVERSCORES 2, WINDOW_STABLE 5,
+LARGEST_RANGE 3 after dedup). Human states: **9 correct, 3 error, 1 uncertain**.
 
-| group | available | selected |
-|---|---:|---:|
-| FULL_UNDERSCORES | 3 | 3 |
-| FULL_OVERSCORES | 2 | 2 |
-| WINDOW_STABLE | 75 | 5 |
-| LARGEST_RANGE | 80 | 3 (unique after dedup) |
+Window-conditioned behavior on the human-checked subset (`window_human_spot_check.csv`):
 
-Total **13 unique items**, 26 clips. **Labels empty — pending human review.**
-Limitation: only 3/2 under/over cases exist at the documented thresholds, so the "5 each"
-target cannot be met.
+| window | correct pass | correct rejected | error pass | error caught |
+|---|---:|---:|---:|---:|
+| FULL | 0.67 | **3/9** | **1.00** | **0/3** |
+| RAW_VAD | **0.44** | **5/9** | 0.33 | **2/3** |
+| PAD250 | 0.67 | 3/9 | 0.67 | 1/3 |
+
+Notable human-checked cases:
+- **tok_58 one (child_07)**: CLEAR_CORRECT — full=0.0, pad250=0.0, **raw=72.5** → crop beats full
+  on a human-correct token (direct confirmation of the inversion)
+- **tok_56 four (child_07)**: CLEAR_INCORRECT — full=100, raw=6.0 → full misses the ending-sound
+  error; raw catches it
+- **tok_79 six (child_09)**: CLEAR_CORRECT, Stage B = WINDOW_EFFECT — raw=0.0 vs full/pad=75
+- **tok_30 four (child_04)**: PROBABLY_INCORRECT — full=66.7 passes, raw/pad=33 correctly fail
+
+**No window is safe: FULL misses true errors, RAW rejects correct speech.**
+Limitation: 3/2 under/over cases exist, so the "5 each" target was not reachable.
 
 ---
 
@@ -251,22 +285,25 @@ target cannot be met.
 1. Phase 1.9.10 methodology repaired: 5 TRUE + 7 UNCERTAIN raw; 4+7+1+0 normalized;
    pme_01 conflict visible; stale 8/12–4/12 text removed (audit PASS).
 2. Revised 1.9.9 metric: 0.414 superseded → 0.0 (0/17 confirmed) with 8 unresolved.
-3. 6 SCORER_MISS cases: 4 window-dependent, 2 soft-match-too-permissive (measured).
+3. **Human-confirmed ending-sound class:** 3 "four" tokens with deleted final /r/ score
+   100/100/66.8 at FULL → forced alignment cannot represent deleted final phones.
 4. Window effects are real and large per-token: 51.3% sensitive; median range 23.5.
-5. FULL ≈ padded in aggregate; **RAW VAD is the outlier** (hurts correct speech 7/17).
-6. Padding rescues confirmed errors (7/15) — a specificity risk.
-7. No multi-variant policy beats FULL in aggregate safety on confirmed labels.
+5. FULL ≈ padded in aggregate; **RAW VAD is the outlier** (hurts correct speech).
+6. **Human-checked trade-off (13 tokens):** FULL catches 0/3 errors and rejects 3/9 correct;
+   RAW catches 2/3 errors and rejects 5/9 correct; PAD250 catches 1/3 and rejects 3/9.
+7. Crop-beats-full confirmed by ear on tok_58 (correct token: full=0, raw=72.5).
+8. No multi-variant policy beats FULL in aggregate safety on confirmed labels.
 
 ---
 
 ## 18. What Is NOT Proven
 
 1. That any window policy improves real scoring safety.
-2. That the 4 window-dependent SCORER_MISS cases are true scorer misses (human re-review pending).
-3. That soft-match permissiveness generalizes (2 cases only).
-4. That the 10 uncertain/38 unreviewed tokens behave like the labeled ones.
-5. That padding/raw window changes correspond to meaningful perceptual differences
-   (spot check pending).
+2. That sm_01/sm_02/sm_03 behave like the confirmed ending-sound cases (uncertain/conflicted).
+3. That soft-match permissiveness generalizes beyond these cases.
+4. That the 10 uncertain/38 unreviewed 80-token cases behave like the labeled ones.
+5. That a final-phone acoustic-support check would fix the ending-sound class without
+   breaking correct speech (not implemented, not tested).
 
 ---
 
@@ -281,13 +318,22 @@ target cannot be met.
 
 ## 20. Proposed Research-Only Policy
 
-None adopted. If forced to choose a direction for future research:
-**multi-variant evidence with explicit disagreement flagging** (M4-style) rather than a single
-window, because single windows trade sensitivity against specificity. Requires:
-proposed_change = score with pad200+pad300 agreement rule (th=10 exploratory),
-expected_effect = flag unstable tokens for review instead of silently rescoring,
-risk = 7.5% disagreement rate unvalidated perceptually,
-validation_plan = human spot check + SCORER_MISS re-review first.
+None adopted. Two separate proposals, documented only:
+
+**P1 — Window/evidence policy (not safe yet):** multi-variant evidence with explicit
+disagreement flagging (M4-style) rather than a single window.
+proposed_change = score with pad200+pad300 agreement rule (th=10 exploratory);
+expected_effect = flag unstable tokens instead of silently rescoring;
+risk = disagreement rate unvalidated; RAW/FULL trade-off now human-confirmed as unsafe;
+validation_plan = larger human-checked sample per window.
+
+**P2 — Final-phone evidence check (new, from human finding):**
+proposed_change = for word-final consonants, require acoustic support (e.g., energy/phone
+posterior above a floor in the final span) before accepting the forced-alignment match;
+expected_effect = catch deleted final phones like the "four" class;
+risk = may reject correct weak final consonants;
+validation_plan = test on the 3 confirmed cases + matched correct tokens with human labels.
+**Not implemented; scorer remains frozen.**
 
 ---
 
@@ -302,18 +348,18 @@ unity_integrated = false
 scorer_modified = false
 ```
 
-`SCORER_FORMULA_CHANGE: NOT_JUSTIFIED`
+`SCORER_FORMULA_CHANGE: RESEARCH_NEEDED` — specifically for the human-confirmed
+final-consonant-deletion class (P2 above); NOT implemented.
 
 ---
 
 ## 22. Exact Next Step
 
-1. Human fills the two pending packs over LAN (port 8767):
-   - `scorer_miss_blind.html` → `_reveal.html` (6 cases)
-   - `window_spotcheck_blind.html` → `_reveal.html` (13 cases)
-2. Re-run the window A/B analysis conditioned on the returned labels; recompute
-   false-rescue / true-error-rescue with human-verified windows.
-3. Only then consider a research-only multi-variant policy; scorer formula remains frozen.
+1. Design a research-only **final-phone acoustic-support check** (P2) targeting the confirmed
+   "four" ending-sound class; test against matched correct tokens before any scorer change.
+2. Expand human-checked window sample (the 13-token spot check is too small to pick a window
+   policy); no policy adoption until false-rescue is human-verified.
+3. Keep Silero default, hybrid research-only, scorer frozen.
 
 ---
 

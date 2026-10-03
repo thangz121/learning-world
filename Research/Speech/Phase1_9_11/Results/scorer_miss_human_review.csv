@@ -1,7 +1,7 @@
-case_id,speaker_id,target,stage_a_pronunciation,stage_b_most_responsible,notes,reviewer_id,review_date
-sm_01,child_03,six,,,,,
-sm_02,child_03,two,,,,,
-sm_03,child_04,eight,,,,,
-sm_04,child_07,four,,,,,
-sm_05,child_06,four,,,,,
-sm_06,child_09,four,,,,,
+case_id,speaker_id,target,stage_a_pronunciation,stage_b_most_responsible,human_state,measured_mechanism,full_score,raw_score,score_range,observed_full,canonical,reviewer_id,review_date
+sm_01,child_03,six,CLEAR_CORRECT,TRUE_SCORER_MISS,HUMAN_CONFLICTED,WINDOW_DEPENDENT_SCORER_MISS,50.0,25.1,25.0,s æ k k,S IH1 K S,human_mobile,2026-10-03
+sm_02,child_03,two,CLEAR_CORRECT,UNCERTAIN,HUMAN_UNCERTAIN,WINDOW_DEPENDENT_SCORER_MISS,50.0,0.0,50.0,t j,T UW1,human_mobile,2026-10-03
+sm_03,child_04,eight,PROBABLY_INCORRECT,HUMAN_UNCERTAINTY,HUMAN_UNCERTAIN,SOFT_MATCH_TOO_PERMISSIVE,50.0,58.8,8.799999999999997,n t,EY1 T,human_mobile,2026-10-03
+sm_04,child_07,four,PROBABLY_INCORRECT,TRUE_SCORER_MISS,HUMAN_TRUE_ERROR,WINDOW_DEPENDENT_SCORER_MISS,100.0,6.0,94.0,f ɔ ɹ,F AO1 R,human_mobile,2026-10-03
+sm_05,child_06,four,CLEAR_INCORRECT,TRUE_SCORER_MISS,HUMAN_TRUE_ERROR,SOFT_MATCH_TOO_PERMISSIVE,100.0,66.7,33.3,f ɔ ɹ,F AO1 R,human_mobile,2026-10-03
+sm_06,child_09,four,CLEAR_INCORRECT,TRUE_SCORER_MISS,HUMAN_TRUE_ERROR,WINDOW_DEPENDENT_SCORER_MISS,66.8,6.1,60.699999999999996,f ɔ æ,F AO1 R,human_mobile,2026-10-03

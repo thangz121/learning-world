@@ -47,5 +47,80 @@
   "unity_integrated": false,
   "scorer_modified": false,
   "decision": "B. WINDOW_EFFECT_REAL_BUT_NOT_SAFE",
-  "decision_note": "Window effects large and frequent; padding rescues confirmed errors too often"
+  "decision_note": "Human spot check (13 tokens) confirms: FULL misses 3/3 confirmed 'four' ending-sound errors while rejecting 3/9 correct; RAW catches 2/3 errors but rejects 4/9 correct; PAD250 misses 2/3 errors. No window/policy is safe; the ending-sound failure is a phone-model/forced-alignment issue, not fixable by window choice alone.",
+  "scorer_miss_human": {
+    "n": 6,
+    "state_distribution": {
+      "HUMAN_CONFLICTED": 1,
+      "HUMAN_UNCERTAIN": 2,
+      "HUMAN_TRUE_ERROR": 3
+    },
+    "reviewer_rule": "missing ending sound -> fail",
+    "confirmed_true_scorer_miss_n": 3,
+    "confirmed_true_scorer_miss_cases": [
+      {
+        "case_id": "sm_04",
+        "speaker_id": "child_07",
+        "target": "four",
+        "full_score": "100.0",
+        "raw_score": "6.0",
+        "observed_full": "f \u0254 \u0279",
+        "mechanism": "FINAL_CONSONANT_DELETION_NOT_REPRESENTED_BY_FORCED_ALIGNMENT"
+      },
+      {
+        "case_id": "sm_05",
+        "speaker_id": "child_06",
+        "target": "four",
+        "full_score": "100.0",
+        "raw_score": "66.7",
+        "observed_full": "f \u0254 \u0279",
+        "mechanism": "FINAL_CONSONANT_DELETION_NOT_REPRESENTED_BY_FORCED_ALIGNMENT"
+      },
+      {
+        "case_id": "sm_06",
+        "speaker_id": "child_09",
+        "target": "four",
+        "full_score": "66.8",
+        "raw_score": "6.1",
+        "observed_full": "f \u0254 \u00e6",
+        "mechanism": "FINAL_CONSONANT_DELETION_NOT_REPRESENTED_BY_FORCED_ALIGNMENT"
+      }
+    ],
+    "uncertain_or_conflicted": [
+      "sm_01",
+      "sm_02",
+      "sm_03"
+    ]
+  },
+  "window_spotcheck_human": {
+    "n": 13,
+    "state_distribution": {
+      "HUMAN_CONFIRMED_CORRECT": 9,
+      "HUMAN_UNCERTAIN": 1,
+      "HUMAN_CONFIRMED_ERROR": 3
+    },
+    "window_confusion_on_human_checked": {
+      "full": {
+        "correct_pass_rate": 0.6666666666666666,
+        "error_pass_rate": 1.0,
+        "correct_reject_n": 3,
+        "error_catch_n": 0
+      },
+      "raw": {
+        "correct_pass_rate": 0.4444444444444444,
+        "error_pass_rate": 0.3333333333333333,
+        "correct_reject_n": 5,
+        "error_catch_n": 2
+      },
+      "pad250": {
+        "correct_pass_rate": 0.6666666666666666,
+        "error_pass_rate": 0.6666666666666666,
+        "correct_reject_n": 3,
+        "error_catch_n": 1
+      }
+    },
+    "note": "small sample (9 correct / 3 error / 1 uncertain); descriptive only"
+  },
+  "scorer_formula_change": "RESEARCH_NEEDED",
+  "scorer_formula_change_note": "3 human-confirmed TRUE_SCORER_MISS cases (final consonant deletion in 'four'); forced alignment cannot represent a deleted final phone and still assigns a match. A targeted final-phone acoustic-support check could be designed, but NOT implemented."
 }
