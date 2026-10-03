@@ -1,0 +1,10 @@
+SOURCE (E1): https://www.speechace.com/speechace-v5-is-available/
+- Acoustic Model + Scoring Model + FIDELITY MODEL (faithful-attempt classification).
+SOURCE (E1): https://api-docs.speechace.com/guides-on-common-topics/interpreting-fidelity-class
+- fidelity_class: CORRECT | NO_SPEECH | INCOMPLETE | FREE_SPEAK
+SOURCE (E1): api-docs score/text v9
+- phone_score_list: quality_score + sound_most_like + stress + extent (10ms)
+- rubrics: Speechace/IELTS/PTE/TOEIC/CEFR
+SOURCE (E1): https://www.speechace.com/api-plans/
+- free trial per plan; API key by request/contact.
+BLOCKED: key requires signup/approval (human step).
