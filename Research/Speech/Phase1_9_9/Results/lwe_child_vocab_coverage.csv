@@ -1,0 +1,13 @@
+lwe_vocab_item,in_zenodo_numbers_or_sentence_tokens,in_phase198_scored_subset
+big,False,False
+blue,False,False
+book,False,False
+cat,False,False
+close,False,False
+dog,True,False
+open,False,False
+open the door,False,False
+red,False,False
+red apple,False,False
+small,False,False
+this is a cat,False,False

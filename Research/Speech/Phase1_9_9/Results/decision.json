@@ -1,0 +1,7 @@
+{
+  "decision": "C. EVIDENCE_INSUFFICIENT",
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "reason": "Human blind review labels required before A/B"
+}
