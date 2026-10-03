@@ -1,0 +1,7 @@
+metric,count,note
+BOTH_RIGHT,7,preliminary; phone presence = exact|soft; human labels inferred from 1.9.11 packs
+BOTH_WRONG,4,preliminary; phone presence = exact|soft; human labels inferred from 1.9.11 packs
+PHONE_WRONG_ACOUSTIC_RIGHT,1,preliminary; phone presence = exact|soft; human labels inferred from 1.9.11 packs
+PHONE_RIGHT_ACOUSTIC_WRONG,1,preliminary; phone presence = exact|soft; human labels inferred from 1.9.11 packs
+N_WITH_HUMAN_FINAL_LABEL,13,inferred labels only
+N_PENDING_HUMAN_FINAL_REVIEW,52,

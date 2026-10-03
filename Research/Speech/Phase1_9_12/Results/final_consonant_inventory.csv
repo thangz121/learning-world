@@ -1,0 +1,23 @@
+word,canonical_phones,final_phone,final_phone_class,n_child_examples,n_speakers,target_available,source
+eight,EY1 T,T,STOP,9,9,True,CHILD_WORD
+five,F AY1 V,V,FRICATIVE,9,9,True,CHILD_WORD
+four,F AO1 R,R,LIQUID,9,9,True,CHILD_WORD
+nine,N AY1 N,N,NASAL,8,8,True,CHILD_WORD
+one,W AH1 N,N,NASAL,5,5,True,CHILD_WORD
+seven,S EH1 V AH0 N,N,NASAL,9,9,True,CHILD_WORD
+six,S IH1 K S,S,FRICATIVE,7,7,True,CHILD_WORD
+ten,T EH1 N,N,NASAL,9,9,True,CHILD_WORD
+three,TH R IY1,IY1,VOWEL,8,8,False,CHILD_WORD
+two,T UW1,UW1,VOWEL,7,7,False,CHILD_WORD
+big,B IH1 G,G,STOP,0,0,False,LWE_VOCAB
+blue,B L UW1,UW1,VOWEL,0,0,False,LWE_VOCAB
+book,B UH1 K,K,STOP,0,0,False,LWE_VOCAB
+cat,K AE1 T,T,STOP,0,0,False,LWE_VOCAB
+close,K L OW1 S,S,FRICATIVE,0,0,False,LWE_VOCAB
+dog,D AO1 G,G,STOP,0,0,False,LWE_VOCAB
+open,OW1 P AH0 N,N,NASAL,0,0,False,LWE_VOCAB
+open the door,D AO1 R,R,LIQUID,0,0,False,LWE_VOCAB
+red,R EH1 D,D,STOP,0,0,False,LWE_VOCAB
+red apple,AE1 P AH0 L,L,LIQUID,0,0,False,LWE_VOCAB
+small,S M AO1 L,L,LIQUID,0,0,False,LWE_VOCAB
+this is a cat,K AE1 T,T,STOP,0,0,False,LWE_VOCAB

@@ -1,0 +1,31 @@
+{
+  "phase": "1.9.12",
+  "objective_a": {
+    "final_consonant_tokens_total": 65,
+    "class_availability_child_examples": {
+      "STOP": 9,
+      "FRICATIVE": 16,
+      "LIQUID": 9,
+      "NASAL": 31
+    },
+    "n_with_existing_human_final_label": 13,
+    "preliminary_value_counts": {
+      "BOTH_RIGHT": 7,
+      "BOTH_WRONG": 4,
+      "PHONE_WRONG_ACOUSTIC_RIGHT": 1,
+      "PHONE_RIGHT_ACOUSTIC_WRONG": 1
+    },
+    "review_sample_n": 28,
+    "review_pending": true,
+    "methodology_finding": "Acoustic features extracted over CTC-derived final spans inherit forced-alignment boundary errors: for 5 human-confirmed ABSENT final /r/ cases the span-based voicing ratio was 0.95-1.0 (PRESENT). An independent layer must anchor on acoustic landmarks (energy/voicing offset), not the CTC span."
+  },
+  "decisions": {
+    "acoustic_support": "C. ACOUSTIC_SUPPORT_IS_PROMISING_BUT_INSUFFICIENT",
+    "window_policy": "D. EVIDENCE_INSUFFICIENT"
+  },
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "scorer_modified": false,
+  "production_window_locked": false
+}
