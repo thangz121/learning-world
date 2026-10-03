@@ -25,6 +25,7 @@ pre{white-space:pre-wrap;font-size:.78rem;background:#eee;padding:8px;border-rad
 </style></head><body>
 <h1>1.9.10 — Stage B (hiện evidence)</h1>
 <p>Dùng sau khi Stage A đã chấm mù.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p>
 <section class="card">
 <h2>pme_01 — EIGHT</h2>
 <audio controls preload="none" src="clips/pme_01_FULL.wav"></audio>
@@ -150,11 +151,23 @@ f0_median=286.6145435067914  f1=1053.5263474565174  f2=2401.541568184941  durati
 <script>
 const ids=["pme_01", "pme_02", "pme_03", "pme_04", "pme_05", "pme_06", "pme_07", "pme_08", "pme_09", "pme_10", "pme_11", "pme_12"];
 function v(p,id){const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}
-document.getElementById('expb').onclick=()=>{
+async function submitCsv(t,stage,btnId){
+ const rid=(document.getElementById('reviewer')||{value:'human_mobile'}).value||'human_mobile';
+ const btn=document.getElementById(btnId);
+ try{
+  const r=await fetch('/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({stage:stage,csv:t,reviewer_id:rid,timestamp:new Date().toISOString()})});
+  if(r.ok){const j=await r.json();btn.textContent='Đã nộp ✓ ('+j.rows+' dòng)';btn.style.background='#1a7f37';return;}
+  throw new Error('http '+r.status);
+ }catch(e){
+  btn.textContent='Không gửi được — tải CSV';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
+  a.download='Human_SecondPass_Stage'+stage+'_Filled.csv';a.click();
+ }
+}
+document.getElementById('expb').onclick=async()=>{
  let lines=['case_id,stage_b_most_responsible'];
  for(const id of ids)lines.push([id,v('s',id)].join(','));
- const t=lines.join('\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
- a.download='Human_SecondPass_StageB_Filled.csv';a.click();
+ await submitCsv(lines.join('\n'),'B','expb');
 };
 </script></body></html>

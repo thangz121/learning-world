@@ -1053,7 +1053,8 @@ pre{white-space:pre-wrap;font-size:.78rem;background:#eee;padding:8px;border-rad
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>1.9.10 Second-pass blind</title>{style}</head><body>
 <div class="banner"><h1>1.9.10 — Second pass (mù)</h1>
-<p>12 ca phone-model-error. Nghe trước, chấm phát âm. <b>Ẩn</b> điểm/phone/acoustics.</p></div>
+<p>12 ca phone-model-error. Nghe trước, chấm phát âm. <b>Ẩn</b> điểm/phone/acoustics.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p></div>
 {''.join(cards_a)}
 <div class="sticky"><span class="count" id="prog">0/12</span><button id="exp">Xuất CSV Stage A</button></div>
 <script>
@@ -1061,15 +1062,27 @@ const ids={ids};
 function v(p,id){{const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}}
 function upd(){{let n=0;for(const id of ids)if(v('p',id))n++;document.getElementById('prog').textContent=n+'/'+ids.length;}}
 document.body.addEventListener('change',upd);upd();
-document.getElementById('exp').onclick=()=>{{
+async function submitCsv(t,stage,btnId){{
+ const rid=(document.getElementById('reviewer')||{{value:'human_mobile'}}).value||'human_mobile';
+ const btn=document.getElementById(btnId);
+ try{{
+  const r=await fetch('/submit',{{method:'POST',headers:{{'Content-Type':'application/json'}},
+   body:JSON.stringify({{stage:stage,csv:t,reviewer_id:rid,timestamp:new Date().toISOString()}})}});
+  if(r.ok){{const j=await r.json();btn.textContent='Đã nộp ✓ ('+j.rows+' dòng)';btn.style.background='#1a7f37';return;}}
+  throw new Error('http '+r.status);
+ }}catch(e){{
+  btn.textContent='Không gửi được — tải CSV';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{{type:'text/csv'}}));
+  a.download='Human_SecondPass_Stage'+stage+'_Filled.csv';a.click();
+ }}
+}}
+document.getElementById('exp').onclick=async()=>{{
  let lines=['case_id,stage_a_pronunciation,notes'];
  for(const id of ids){{
   const notes=(document.querySelector('input[name="n_'+id+'"]')||{{value:''}}).value.replace(/,/g,';');
   lines.push([id,v('p',id),notes].join(','));
  }}
- const t=lines.join('\\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{{type:'text/csv'}}));
- a.download='Human_SecondPass_StageA_Filled.csv';a.click();
+ await submitCsv(lines.join('\\n'),'A','exp');
 }};
 </script></body></html>"""
     (HR / "review_blind.html").write_text(blind, encoding="utf-8")
@@ -1079,17 +1092,30 @@ document.getElementById('exp').onclick=()=>{{
 <title>1.9.10 reveal</title>{style}</head><body>
 <h1>1.9.10 — Stage B (hiện evidence)</h1>
 <p>Dùng sau khi Stage A đã chấm mù.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p>
 {''.join(cards_b)}
 <p><button id="expb" style="min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff;padding:0 16px">Xuất CSV Stage B</button></p>
 <script>
 const ids={ids};
 function v(p,id){{const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}}
-document.getElementById('expb').onclick=()=>{{
+async function submitCsv(t,stage,btnId){{
+ const rid=(document.getElementById('reviewer')||{{value:'human_mobile'}}).value||'human_mobile';
+ const btn=document.getElementById(btnId);
+ try{{
+  const r=await fetch('/submit',{{method:'POST',headers:{{'Content-Type':'application/json'}},
+   body:JSON.stringify({{stage:stage,csv:t,reviewer_id:rid,timestamp:new Date().toISOString()}})}});
+  if(r.ok){{const j=await r.json();btn.textContent='Đã nộp ✓ ('+j.rows+' dòng)';btn.style.background='#1a7f37';return;}}
+  throw new Error('http '+r.status);
+ }}catch(e){{
+  btn.textContent='Không gửi được — tải CSV';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{{type:'text/csv'}}));
+  a.download='Human_SecondPass_Stage'+stage+'_Filled.csv';a.click();
+ }}
+}}
+document.getElementById('expb').onclick=async()=>{{
  let lines=['case_id,stage_b_most_responsible'];
  for(const id of ids)lines.push([id,v('s',id)].join(','));
- const t=lines.join('\\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{{type:'text/csv'}}));
- a.download='Human_SecondPass_StageB_Filled.csv';a.click();
+ await submitCsv(lines.join('\\n'),'B','expb');
 }};
 </script></body></html>"""
     (HR / "review_reveal.html").write_text(reveal, encoding="utf-8")

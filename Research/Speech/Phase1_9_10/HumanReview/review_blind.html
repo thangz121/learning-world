@@ -24,7 +24,8 @@ legend{font-weight:700;font-size:.95rem;padding:0 6px}
 pre{white-space:pre-wrap;font-size:.78rem;background:#eee;padding:8px;border-radius:8px}
 </style></head><body>
 <div class="banner"><h1>1.9.10 — Second pass (mù)</h1>
-<p>12 ca phone-model-error. Nghe trước, chấm phát âm. <b>Ẩn</b> điểm/phone/acoustics.</p></div>
+<p>12 ca phone-model-error. Nghe trước, chấm phát âm. <b>Ẩn</b> điểm/phone/acoustics.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p></div>
 <section class="card" id="a_pme_01">
 <h2>pme_01 — EIGHT</h2>
 <p class="meta">speaker=child_03 · dataset_mean_M=4.9y; individual UNKNOWN</p>
@@ -116,14 +117,26 @@ const ids=["pme_01", "pme_02", "pme_03", "pme_04", "pme_05", "pme_06", "pme_07",
 function v(p,id){const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}
 function upd(){let n=0;for(const id of ids)if(v('p',id))n++;document.getElementById('prog').textContent=n+'/'+ids.length;}
 document.body.addEventListener('change',upd);upd();
-document.getElementById('exp').onclick=()=>{
+async function submitCsv(t,stage,btnId){
+ const rid=(document.getElementById('reviewer')||{value:'human_mobile'}).value||'human_mobile';
+ const btn=document.getElementById(btnId);
+ try{
+  const r=await fetch('/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({stage:stage,csv:t,reviewer_id:rid,timestamp:new Date().toISOString()})});
+  if(r.ok){const j=await r.json();btn.textContent='Đã nộp ✓ ('+j.rows+' dòng)';btn.style.background='#1a7f37';return;}
+  throw new Error('http '+r.status);
+ }catch(e){
+  btn.textContent='Không gửi được — tải CSV';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
+  a.download='Human_SecondPass_Stage'+stage+'_Filled.csv';a.click();
+ }
+}
+document.getElementById('exp').onclick=async()=>{
  let lines=['case_id,stage_a_pronunciation,notes'];
  for(const id of ids){
   const notes=(document.querySelector('input[name="n_'+id+'"]')||{value:''}).value.replace(/,/g,';');
   lines.push([id,v('p',id),notes].join(','));
  }
- const t=lines.join('\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
- a.download='Human_SecondPass_StageA_Filled.csv';a.click();
+ await submitCsv(lines.join('\n'),'A','exp');
 };
 </script></body></html>
