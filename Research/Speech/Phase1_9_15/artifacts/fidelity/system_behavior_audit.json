@@ -1,0 +1,106 @@
+{
+  "phase": "1.9.15",
+  "artifact": "unlabeled system-behavior audit (NOT independent validation)",
+  "n_items": 115,
+  "v1_state_distribution": {
+    "POSSIBLE_ATTEMPT": 48,
+    "VALID_ATTEMPT": 40,
+    "ASSESSABLE": 7,
+    "FREE_SPEAK": 10,
+    "UNINTELLIGIBLE": 9,
+    "NO_SPEECH": 1
+  },
+  "v2_state_distribution": {
+    "POSSIBLE_ATTEMPT": 33,
+    "VALID_ATTEMPT": 74,
+    "ASSESSABLE": 7,
+    "NO_SPEECH": 1
+  },
+  "v2_refusal_n": 1,
+  "v2_low_assessability_n": 33,
+  "by_stratum_v2": {
+    "ASR_EMPTY": {
+      "POSSIBLE_ATTEMPT": 2,
+      "VALID_ATTEMPT": 12
+    },
+    "ASR_WRONG": {
+      "VALID_ATTEMPT": 8,
+      "POSSIBLE_ATTEMPT": 2
+    },
+    "FREE_SPEECH": {
+      "POSSIBLE_ATTEMPT": 9,
+      "NO_SPEECH": 1
+    },
+    "LOUD": {
+      "VALID_ATTEMPT": 5,
+      "ASSESSABLE": 2,
+      "POSSIBLE_ATTEMPT": 1
+    },
+    "NEAR_SILENCE": {
+      "POSSIBLE_ATTEMPT": 4
+    },
+    "NOISY": {
+      "VALID_ATTEMPT": 11,
+      "ASSESSABLE": 1
+    },
+    "NO_SPEECH": {
+      "POSSIBLE_ATTEMPT": 2
+    },
+    "ORDINARY_HIGH": {
+      "ASSESSABLE": 3,
+      "VALID_ATTEMPT": 12
+    },
+    "ORDINARY_MID": {
+      "VALID_ATTEMPT": 6
+    },
+    "PHONE_LOW": {
+      "VALID_ATTEMPT": 3,
+      "POSSIBLE_ATTEMPT": 5
+    },
+    "SENTENCE": {
+      "VALID_ATTEMPT": 9,
+      "POSSIBLE_ATTEMPT": 1
+    },
+    "SOFT": {
+      "VALID_ATTEMPT": 1,
+      "POSSIBLE_ATTEMPT": 7
+    },
+    "VERY_SHORT": {
+      "VALID_ATTEMPT": 7,
+      "ASSESSABLE": 1
+    }
+  },
+  "flags": {
+    "vad_negative_items_n": 2,
+    "vad_negative_states": {
+      "fi_001": "POSSIBLE_ATTEMPT",
+      "fi_002": "POSSIBLE_ATTEMPT"
+    },
+    "asr_empty_but_v2_medium_or_high_n": 35,
+    "asr_empty_but_v2_medium_or_high_ids": [
+      "fi_003",
+      "fi_004",
+      "fi_010",
+      "fi_015",
+      "fi_025",
+      "fi_031",
+      "fi_034",
+      "fi_036",
+      "fi_038",
+      "fi_044",
+      "fi_045",
+      "fi_046",
+      "fi_047",
+      "fi_048",
+      "fi_050",
+      "fi_051",
+      "fi_052",
+      "fi_053",
+      "fi_054",
+      "fi_055"
+    ],
+    "free_speech_but_v2_medium_or_high_n": 0,
+    "free_speech_but_v2_medium_or_high_ids": []
+  },
+  "interpretation": "Behavior only. Whether these states are correct cannot be established without human labels; this file exists so the system's behavior on the new blind selection is documented and reviewable."
+}
