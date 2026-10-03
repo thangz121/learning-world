@@ -1,0 +1,275 @@
+{
+  "phase": "1.9.15",
+  "title": "population calibration + independent child validation",
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  },
+  "P1_independent_fidelity": {
+    "n_items": 115,
+    "single_reviewer": true,
+    "v1_false_gate_rate_valid_attempts": 0.1650485436893204,
+    "v2_false_gate_rate_valid_attempts": 0.0,
+    "v2_dangerous_accept_strict_rate": 0.625,
+    "v1_dangerous_accept_strict_rate": 0.25,
+    "unlabeled_behavior_audit": {
+      "phase": "1.9.15",
+      "artifact": "unlabeled system-behavior audit (NOT independent validation)",
+      "n_items": 115,
+      "v1_state_distribution": {
+        "POSSIBLE_ATTEMPT": 48,
+        "VALID_ATTEMPT": 40,
+        "ASSESSABLE": 7,
+        "FREE_SPEAK": 10,
+        "UNINTELLIGIBLE": 9,
+        "NO_SPEECH": 1
+      },
+      "v2_state_distribution": {
+        "POSSIBLE_ATTEMPT": 33,
+        "VALID_ATTEMPT": 74,
+        "ASSESSABLE": 7,
+        "NO_SPEECH": 1
+      },
+      "v2_refusal_n": 1,
+      "v2_low_assessability_n": 33,
+      "by_stratum_v2": {
+        "ASR_EMPTY": {
+          "POSSIBLE_ATTEMPT": 2,
+          "VALID_ATTEMPT": 12
+        },
+        "ASR_WRONG": {
+          "VALID_ATTEMPT": 8,
+          "POSSIBLE_ATTEMPT": 2
+        },
+        "FREE_SPEECH": {
+          "POSSIBLE_ATTEMPT": 9,
+          "NO_SPEECH": 1
+        },
+        "LOUD": {
+          "VALID_ATTEMPT": 5,
+          "ASSESSABLE": 2,
+          "POSSIBLE_ATTEMPT": 1
+        },
+        "NEAR_SILENCE": {
+          "POSSIBLE_ATTEMPT": 4
+        },
+        "NOISY": {
+          "VALID_ATTEMPT": 11,
+          "ASSESSABLE": 1
+        },
+        "NO_SPEECH": {
+          "POSSIBLE_ATTEMPT": 2
+        },
+        "ORDINARY_HIGH": {
+          "ASSESSABLE": 3,
+          "VALID_ATTEMPT": 12
+        },
+        "ORDINARY_MID": {
+          "VALID_ATTEMPT": 6
+        },
+        "PHONE_LOW": {
+          "VALID_ATTEMPT": 3,
+          "POSSIBLE_ATTEMPT": 5
+        },
+        "SENTENCE": {
+          "VALID_ATTEMPT": 9,
+          "POSSIBLE_ATTEMPT": 1
+        },
+        "SOFT": {
+          "VALID_ATTEMPT": 1,
+          "POSSIBLE_ATTEMPT": 7
+        },
+        "VERY_SHORT": {
+          "VALID_ATTEMPT": 7,
+          "ASSESSABLE": 1
+        }
+      },
+      "flags": {
+        "vad_negative_items_n": 2,
+        "vad_negative_states": {
+          "fi_001": "POSSIBLE_ATTEMPT",
+          "fi_002": "POSSIBLE_ATTEMPT"
+        },
+        "asr_empty_but_v2_medium_or_high_n": 35,
+        "asr_empty_but_v2_medium_or_high_ids": [
+          "fi_003",
+          "fi_004",
+          "fi_010",
+          "fi_015",
+          "fi_025",
+          "fi_031",
+          "fi_034",
+          "fi_036",
+          "fi_038",
+          "fi_044",
+          "fi_045",
+          "fi_046",
+          "fi_047",
+          "fi_048",
+          "fi_050",
+          "fi_051",
+          "fi_052",
+          "fi_053",
+          "fi_054",
+          "fi_055"
+        ],
+        "free_speech_but_v2_medium_or_high_n": 0,
+        "free_speech_but_v2_medium_or_high_ids": []
+      },
+      "interpretation": "Behavior only. Whether these states are correct cannot be established without human labels; this file exists so the system's behavior on the new blind selection is documented and reviewable."
+    }
+  },
+  "P2_siak_calibration": {
+    "splits": {
+      "train": 2094,
+      "validation": 493,
+      "test": 482,
+      "ages46_external": 99
+    },
+    "candidate_names": [
+      "identity",
+      "affine_soft",
+      "isotonic_soft",
+      "linear_soft_conf",
+      "linear_soft_age",
+      "linear_soft_conf_age",
+      "linear_soft_conf_evidence",
+      "tree3_soft",
+      "tree3_full",
+      "tree3_noage",
+      "hgb_full",
+      "hgb_noage",
+      "hgb_soft"
+    ],
+    "age_conditioning_test": {
+      "no_age_test": {
+        "n": 482,
+        "pearson": 0.3040250146639157,
+        "spearman": 0.2679583728812503,
+        "mae": 21.399837020482423,
+        "rmse": 25.72902071959186,
+        "bias": 2.6295503108835776,
+        "pred_std": 7.777091449669536,
+        "true_std": 26.862906861548968,
+        "frr_proxy_lt50_on_ge80": 0.025510204081632654,
+        "frr_proxy_lt40_on_ge80": 0.0,
+        "far_proxy_ge80_on_lt50": 0.0,
+        "far_proxy_ge50_on_lt50": 0.8707482993197279,
+        "calibration_error_10bin": 4.279556281880893,
+        "candidate": "linear_soft_conf",
+        "split": "test",
+        "train_population": "SIAK ages7-12",
+        "test_population": "SIAK ages7-12",
+        "speaker_disjoint": true
+      },
+      "with_age_test": {
+        "n": 482,
+        "pearson": 0.3123841730222444,
+        "spearman": 0.28343609562784094,
+        "mae": 21.257932292107014,
+        "rmse": 25.655794953323845,
+        "bias": 2.6065635866313466,
+        "pred_std": 7.914120476902811,
+        "true_std": 26.862906861548968,
+        "frr_proxy_lt50_on_ge80": 0.025510204081632654,
+        "frr_proxy_lt40_on_ge80": 0.0,
+        "far_proxy_ge80_on_lt50": 0.0,
+        "far_proxy_ge50_on_lt50": 0.8775510204081632,
+        "calibration_error_10bin": 3.3106547418090093,
+        "candidate": "linear_soft_conf_age",
+        "split": "test",
+        "train_population": "SIAK ages7-12",
+        "test_population": "SIAK ages7-12",
+        "speaker_disjoint": true
+      }
+    },
+    "age_conditioning_rejected": true,
+    "siak_test_score_semantics": {
+      "test_n": 482,
+      "mean": 61.906639004149376,
+      "std": 26.862906861548968,
+      "frac_ge80": 0.4066390041493776,
+      "frac_ge90": 0.13900414937759337,
+      "frac_eq100": 0.0,
+      "frac_lt50": 0.3049792531120332,
+      "min": 1.0,
+      "max": 99.0
+    }
+  },
+  "P3_external_lwe": {
+    "n_labeled": 48,
+    "n_correct": 29,
+    "n_incorrect": 13,
+    "per_candidate_auc": {
+      "identity": 0.6591511936339522,
+      "affine_soft": 0.6591511936339522,
+      "isotonic_soft": 0.6591511936339522,
+      "linear_soft_conf_evidence": 0.6419098143236074,
+      "hgb_noage": 0.7055702917771883,
+      "identity_raw_soft": null
+    },
+    "per_candidate_human_correct_frr50": {
+      "identity": 0.3103448275862069,
+      "affine_soft": 0.13793103448275862,
+      "isotonic_soft": 0.10344827586206896,
+      "linear_soft_conf_evidence": 0.0,
+      "hgb_noage": 0.034482758620689655,
+      "identity_raw_soft": 0.3103448275862069
+    },
+    "per_candidate_human_incorrect_far50": {
+      "identity": 0.38461538461538464,
+      "affine_soft": 0.6923076923076923,
+      "isotonic_soft": 0.6923076923076923,
+      "linear_soft_conf_evidence": 0.9230769230769231,
+      "hgb_noage": 0.8461538461538461,
+      "identity_raw_soft": 0.38461538461538464
+    }
+  },
+  "P4_bottleneck": {
+    "recommendation": "child phone model adaptation is a justified NEXT EXPERIMENT (separate phase; no training performed here)",
+    "diagnostic_counts_199": {
+      "AGREEMENT_OK": 17,
+      "PHONE_MODEL_ERROR": 12,
+      "HUMAN_UNCERTAIN": 2,
+      "TRUE_PRONUNCIATION_ERROR": 5,
+      "SCORER_MISS": 6
+    }
+  },
+  "leakage": {
+    "speaker_overlap": {
+      "speaker_overlap_train_test": [],
+      "speaker_overlap_train_validation": [],
+      "speaker_overlap_validation_test": [],
+      "file_overlap": [],
+      "target_overlap_train_test_n": 155,
+      "target_overlap_examples": [
+        "air",
+        "apple",
+        "baby",
+        "bad",
+        "ball",
+        "baseball",
+        "bath",
+        "belt",
+        "berry",
+        "best",
+        "book",
+        "boy",
+        "bread",
+        "breakfast",
+        "bush",
+        "butter",
+        "buy",
+        "bye bye",
+        "cake",
+        "candy"
+      ]
+    },
+    "duplicate_audio_groups": 0
+  },
+  "decision": "B = CALIBRATION_PROMISING_BUT_INSUFFICIENT",
+  "p4_child_phone_model_research_justified": true
+}

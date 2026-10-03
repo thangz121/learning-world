@@ -91,11 +91,17 @@ def main():
         print("NO SUBMISSION YET — run the review first. Expected:",
               OUT / "Results" / "fidelity_v2_StageA_Filled.csv")
         return
-    sources = {p.name: read_csv(p) for p in subs}
-    primary = list(sources.values())[0]
-    print(f"submissions: {list(sources)} | primary rows: {len(primary)}")
+    # dedupe identical submissions (main file + timestamped history are the same)
+    unique = {}
+    for p in subs:
+        import hashlib
+        h = hashlib.sha256(p.read_bytes()).hexdigest()
+        unique.setdefault(h, (p, read_csv(p)))
+    sources = {p.name: rows for p, rows in unique.values()}
+    primary = list(unique.values())[0][1]
+    print(f"distinct submissions: {list(sources)} | primary rows: {len(primary)}")
 
-    # agreement if >1 submission
+    # agreement only across DISTINCT reviewer submissions
     agreement = None
     if len(sources) > 1:
         keys = [("content", "c"), ("attempt", "a"), ("assessability", "s"), ("confidence", "f")]
@@ -144,7 +150,9 @@ def main():
             return r["human_attempt"] == "VALID_ATTEMPT"
         return r["human_attempt"] in VALID_ATTEMPTS or r["human_attempt"] in ("INCOMPLETE",)
 
-    metrics = {"n_rows": len(rows), "agreement": agreement}
+    metrics = {"n_rows": len(rows), "n_distinct_submissions": len(sources), "agreement": agreement,
+               "reviewer_note": "single distinct reviewer submission; no inter-rater agreement "
+                                "computable (spec: document explicitly)"}
     for version in ("v1", "v2"):
         st = f"system_state_{version}"
         valid = [r for r in rows if is_valid_attempt(r)]
@@ -153,6 +161,7 @@ def main():
         false_gate_strict = [r for r in valid_strict if r[st] in REFUSAL_STATES]
         not_assess = [r for r in rows if r["human_assessability"] == "NOT_ASSESSABLE"]
         dangerous = [r for r in not_assess if r[st] in {"POSSIBLE_ATTEMPT", "VALID_ATTEMPT", "ASSESSABLE"}]
+        dangerous_strict = [r for r in not_assess if r[st] in {"VALID_ATTEMPT", "ASSESSABLE"}]
         matrix = defaultdict(Counter)
         for r in rows:
             matrix[r["human_assessability"] or "(blank)"][r[st]] += 1
@@ -184,9 +193,12 @@ def main():
             "false_gate_rate_strict": len(false_gate_strict) / len(valid_strict) if valid_strict else None,
             "false_gate_ids": [r["case_id"] for r in false_gate],
             "human_not_assessable_n": len(not_assess),
-            "dangerous_accept_n": len(dangerous),
-            "dangerous_accept_rate": len(dangerous) / len(not_assess) if not_assess else None,
-            "dangerous_accept_ids": [r["case_id"] for r in dangerous],
+            "dangerous_accept_loose_n": len(dangerous),
+            "dangerous_accept_loose_rate": len(dangerous) / len(not_assess) if not_assess else None,
+            "dangerous_accept_loose_ids": [r["case_id"] for r in dangerous],
+            "dangerous_accept_strict_n": len(dangerous_strict),
+            "dangerous_accept_strict_rate": len(dangerous_strict) / len(not_assess) if not_assess else None,
+            "dangerous_accept_strict_ids": [r["case_id"] for r in dangerous_strict],
             "assessability_matrix": {k: dict(v) for k, v in matrix.items()},
             "content_matrix": {k: dict(v) for k, v in content_matrix.items()},
             "state_precision_recall": state_pr,
@@ -204,8 +216,10 @@ def main():
                         "production_window_locked": False}
     (FID / "independent_metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     print(json.dumps({v: {k: metrics[v][k] for k in
-                          ("valid_attempt_n", "false_gate_rate", "false_gate_rate_strict",
-                           "dangerous_accept_rate")} for v in ("v1", "v2")}, indent=2))
+                          ("valid_attempt_n", "false_gate_n", "false_gate_rate",
+                           "false_gate_rate_strict", "human_not_assessable_n",
+                           "dangerous_accept_loose_rate", "dangerous_accept_strict_rate")}
+                      for v in ("v1", "v2")}, indent=2))
 
 
 if __name__ == "__main__":

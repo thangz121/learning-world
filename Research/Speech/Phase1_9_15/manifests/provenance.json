@@ -1,0 +1,37 @@
+{
+  "phase": "1.9.15",
+  "base": "d594821 (1.9.14)",
+  "model": "facebook/wav2vec2-xlsr-53-espeak-cv-ft via frozen PhoneEvidenceV2@1.4.0 (Apache-2.0); Moonshine-tiny ASR local; no model training",
+  "human_review": {
+    "pack": "fidelity_v2",
+    "n_items": 115,
+    "reviewer": "human_maynode",
+    "single_reviewer": true,
+    "submission_file": "Results/fidelity_v2_StageA_Filled.csv"
+  },
+  "inputs": {
+    "Research/Speech/ExternalData/SIAK/train.csv": "0EE4F498E52947AF84587AD60600419E9F57BA3C4CECFD4DEC08763665D8A812",
+    "Research/Speech/ExternalData/SIAK/test.csv": "AB98C9AD972536041336C846259A55753050E26D09CBB333ECAF7B70D156AF39",
+    "Research/Speech/ExternalData/SIAK/README.md": "E2E38FF8DE3B7ADC599481846A8103ECE604918E4D5DDDCD0102E9A9BA6E3513",
+    "Research/Speech/Phase1_9_14/artifacts/siak/siak_scored.csv": "E2996F49DCFF5487E21C3724547D2D1C6DB916150E0B65AF0568E1706DAAF3B3",
+    "Research/Speech/Phase1_9_14/artifacts/p1/p1_evidence_table.csv": "A45D1750BDC22ACDB1737DD57FBECDC07AA734EDF7373B3D78274B38D5DEC8F1",
+    "Research/Speech/Phase1_9_12/Results/final_consonant_human_review.csv": "7D069F720BB321D04BF3CA9E24C6D0A5C1B44173B432D630FA2C576808554F68"
+  },
+  "outputs": {
+    "Research/Speech/Phase1_9_15/artifacts/siak/siak_expanded_scored.csv": "AD01E8AD3C99C771EAF667C82D0CE04CC58BEEB92E28BEF787430B055204AE46",
+    "Research/Speech/Phase1_9_15/artifacts/siak/calibration_train.csv": "DC25F9D10E08D482C107764743F0EBA5286A18AAA36AE95EE218D66726414194",
+    "Research/Speech/Phase1_9_15/artifacts/siak/calibration_valid.csv": "DB9CB691A8DB7CF7FD508D2BEBAEF67815A3EC91C1369DC25EA7BCC4E4E4D417",
+    "Research/Speech/Phase1_9_15/artifacts/siak/calibration_test.csv": "B9E2B03DB117A3908C915718034EC0A4ECD7A53DC67B15526237B404FB8C7FF4",
+    "Research/Speech/Phase1_9_15/artifacts/siak/calibration_ages46.csv": "CC2B416666246839BCD00DEF6FEC63C49565C0BF81569B4B5E5B8FCA55A4FEAE",
+    "Research/Speech/Phase1_9_15/artifacts/siak/split_manifest.json": "64D4BB0B9494D927AB645210C7F091FFBA9FE28602DC3AC26D2DDBE66BDBED10",
+    "Research/Speech/Phase1_9_15/artifacts/calibration/metrics.csv": "A738204E316F8A1E3ECB0F2A7A0A88618174C60036B466DB78C551EB3072AEE9",
+    "Research/Speech/Phase1_9_15/artifacts/calibration/metrics.json": "EC3340FBB0D59D0D51556766E004B811590B5A5AAAE977E5194ABDB288C8AB40",
+    "Research/Speech/Phase1_9_15/artifacts/external/external_lwe_validation.csv": "4D05FEF172C964B48A90AFB4536D7DE33D6F6577E006EB2745677C60454B61A0",
+    "Research/Speech/Phase1_9_15/artifacts/external/external_lwe_metrics.json": "AD247867856EE016E05BAB95AAA249D196B0A3B88425FDC9020F500CCA9047D2",
+    "Research/Speech/Phase1_9_15/artifacts/fidelity/fidelity_independent.csv": "5BD48FFC264593F479FAF351E4398920F1A8F79CF6A109A61A92718A085E36C7",
+    "Research/Speech/Phase1_9_15/artifacts/fidelity/independent_metrics.json": "17F67A4AB1B1E1B56B06F40F8DDECB506F263DAD7A47830CF40F1E22FB7ADFE3",
+    "Research/Speech/Phase1_9_15/artifacts/fidelity/system_behavior_audit.json": "72D922D41E58DAC24CFE85A6D950700184ED37D72D3B8D2F694D35672437DAD9",
+    "Research/Speech/Phase1_9_15/artifacts/forensics/disagreement_cases.csv": "4455883076F901F55AE0C8CAB38E2A59E9758CE527FA5380BD200AF61AEE9005",
+    "Research/Speech/Phase1_9_15/Results/fidelity_v2_StageA_Filled.csv": "214CBAF0E93A3799B511E16107B44CEF6BDEC79567F488C2DF8FF0D21FF14CBB"
+  }
+}

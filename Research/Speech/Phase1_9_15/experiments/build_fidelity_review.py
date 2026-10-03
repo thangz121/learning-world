@@ -14,6 +14,7 @@ HumanReview/clips/*.wav, artifacts/fidelity/selection_table.csv
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import json
@@ -134,6 +135,15 @@ def write_clip(src: Path, dst: Path, max_s: float = 10.0) -> float:
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--html-only", action="store_true",
+                    help="regenerate the blind HTML from review_metadata.json")
+    args = ap.parse_args()
+    if args.html_only:
+        meta = json.loads((HR / "review_metadata.json").read_text(encoding="utf-8"))
+        build_html(meta["items"])
+        print(f"HTML regenerated from metadata ({len(meta['items'])} items)")
+        return
     HR.mkdir(parents=True, exist_ok=True)
     CLIPS.mkdir(parents=True, exist_ok=True)
     for old in CLIPS.glob("*.wav"):
@@ -383,14 +393,37 @@ legend{font-weight:700;font-size:.9rem;padding:0 6px}
 <title>1.9.15 fidelity blind review</title>{style}</head><body>
 <div class="banner"><h1>Đánh giá Fidelity / Assessability — mù</h1>
 <p>Chỉ nghe bản ghi. <b>Không</b> có điểm/score của máy trong trang này.</p>
-<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p></div>
+<p>Tiến độ được <b>tự lưu trong trình duyệt</b> — có thể đóng/mở lại trang rồi làm tiếp.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_maynode" size="16"></label></p></div>
 {''.join(cards)}
 <div class="sticky"><span class="count" id="prog">0/{len(items)}</span><button id="exp">Nộp</button></div>
 <script>
 const ids={ids};
+const SKEY='lwe1915_fidelity_answers';
 function v(p,id){{const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}}
+function collect(){{
+ const o={{}};
+ for(const id of ids){{
+  o[id]={{c:v('c',id),a:v('a',id),s:v('s',id),f:v('f',id),
+          n:(document.querySelector('input[name="n_'+id+'"]')||{{value:''}}).value}};
+ }}
+ return o;
+}}
+function saveState(){{try{{localStorage.setItem(SKEY,JSON.stringify(collect()));}}catch(e){{}}}}
+function restoreState(){{
+ let o={{}};try{{o=JSON.parse(localStorage.getItem(SKEY)||'{{}}');}}catch(e){{o={{}};}}
+ for(const id of ids){{
+  const st=o[id];if(!st)continue;
+  for(const p of ['c','a','s','f']){{
+   if(st[p]){{const e=document.querySelector('input[name="'+p+'_'+id+'"][value="'+st[p]+'"]');if(e)e.checked=true;}}
+  }}
+  const n=document.querySelector('input[name="n_'+id+'"]');if(n&&st.n)n.value=st.n;
+ }}
+}}
 function upd(){{let n=0;for(const id of ids)if(v('c',id))n++;document.getElementById('prog').textContent=n+'/'+ids.length;}}
-document.body.addEventListener('change',upd);upd();
+document.body.addEventListener('change',function(){{upd();saveState();}});
+document.body.addEventListener('input',saveState);
+restoreState();upd();
 async function submitCsv(t){{
  const rid=(document.getElementById('reviewer')||{{value:'human_mobile'}}).value||'human_mobile';
  const btn=document.getElementById('exp');

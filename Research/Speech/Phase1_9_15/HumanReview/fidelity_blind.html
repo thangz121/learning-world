@@ -17,7 +17,8 @@ legend{font-weight:700;font-size:.9rem;padding:0 6px}
 </style></head><body>
 <div class="banner"><h1>Đánh giá Fidelity / Assessability — mù</h1>
 <p>Chỉ nghe bản ghi. <b>Không</b> có điểm/score của máy trong trang này.</p>
-<p><label>Reviewer: <input id="reviewer" value="human_mobile" size="16"></label></p></div>
+<p>Tiến độ được <b>tự lưu trong trình duyệt</b> — có thể đóng/mở lại trang rồi làm tiếp.</p>
+<p><label>Reviewer: <input id="reviewer" value="human_maynode" size="16"></label></p></div>
 <section class="card"><h2>fi_001</h2>
 <p class="meta">nhiệm vụ: nói số <b>three</b></p>
 <audio controls preload="none" src="clips/fi_001.wav"></audio>
@@ -942,9 +943,31 @@ legend{font-weight:700;font-size:.9rem;padding:0 6px}
 <div class="sticky"><span class="count" id="prog">0/115</span><button id="exp">Nộp</button></div>
 <script>
 const ids=["fi_001", "fi_002", "fi_003", "fi_004", "fi_005", "fi_006", "fi_007", "fi_008", "fi_009", "fi_010", "fi_011", "fi_012", "fi_013", "fi_014", "fi_015", "fi_016", "fi_017", "fi_018", "fi_019", "fi_020", "fi_021", "fi_022", "fi_023", "fi_024", "fi_025", "fi_026", "fi_027", "fi_028", "fi_029", "fi_030", "fi_031", "fi_032", "fi_033", "fi_034", "fi_035", "fi_036", "fi_037", "fi_038", "fi_039", "fi_040", "fi_041", "fi_042", "fi_043", "fi_044", "fi_045", "fi_046", "fi_047", "fi_048", "fi_049", "fi_050", "fi_051", "fi_052", "fi_053", "fi_054", "fi_055", "fi_056", "fi_057", "fi_058", "fi_059", "fi_060", "fi_061", "fi_062", "fi_063", "fi_064", "fi_065", "fi_066", "fi_067", "fi_068", "fi_069", "fi_070", "fi_071", "fi_072", "fi_073", "fi_074", "fi_075", "fi_076", "fi_077", "fi_078", "fi_079", "fi_080", "fi_081", "fi_082", "fi_083", "fi_084", "fi_085", "fi_086", "fi_087", "fi_088", "fi_089", "fi_090", "fi_091", "fi_092", "fi_093", "fi_094", "fi_095", "fi_096", "fi_097", "fi_098", "fi_099", "fi_100", "fi_101", "fi_102", "fi_103", "fi_104", "fi_105", "fi_106", "fi_107", "fi_108", "fi_109", "fi_110", "fi_111", "fi_112", "fi_113", "fi_114", "fi_115"];
+const SKEY='lwe1915_fidelity_answers';
 function v(p,id){const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}
+function collect(){
+ const o={};
+ for(const id of ids){
+  o[id]={c:v('c',id),a:v('a',id),s:v('s',id),f:v('f',id),
+          n:(document.querySelector('input[name="n_'+id+'"]')||{value:''}).value};
+ }
+ return o;
+}
+function saveState(){try{localStorage.setItem(SKEY,JSON.stringify(collect()));}catch(e){}}
+function restoreState(){
+ let o={};try{o=JSON.parse(localStorage.getItem(SKEY)||'{}');}catch(e){o={};}
+ for(const id of ids){
+  const st=o[id];if(!st)continue;
+  for(const p of ['c','a','s','f']){
+   if(st[p]){const e=document.querySelector('input[name="'+p+'_'+id+'"][value="'+st[p]+'"]');if(e)e.checked=true;}
+  }
+  const n=document.querySelector('input[name="n_'+id+'"]');if(n&&st.n)n.value=st.n;
+ }
+}
 function upd(){let n=0;for(const id of ids)if(v('c',id))n++;document.getElementById('prog').textContent=n+'/'+ids.length;}
-document.body.addEventListener('change',upd);upd();
+document.body.addEventListener('change',function(){upd();saveState();});
+document.body.addEventListener('input',saveState);
+restoreState();upd();
 async function submitCsv(t){
  const rid=(document.getElementById('reviewer')||{value:'human_mobile'}).value||'human_mobile';
  const btn=document.getElementById('exp');

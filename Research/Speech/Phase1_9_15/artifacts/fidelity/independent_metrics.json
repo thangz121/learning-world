@@ -1,0 +1,217 @@
+{
+  "n_rows": 115,
+  "n_distinct_submissions": 1,
+  "agreement": null,
+  "reviewer_note": "single distinct reviewer submission; no inter-rater agreement computable (spec: document explicitly)",
+  "v1": {
+    "valid_attempt_n": 103,
+    "valid_attempt_strict_n": 99,
+    "false_gate_n": 17,
+    "false_gate_rate": 0.1650485436893204,
+    "false_gate_rate_strict": 0.16161616161616163,
+    "false_gate_ids": [
+      "fi_023",
+      "fi_030",
+      "fi_043",
+      "fi_049",
+      "fi_057",
+      "fi_058",
+      "fi_060",
+      "fi_061",
+      "fi_063",
+      "fi_065",
+      "fi_068",
+      "fi_070",
+      "fi_072",
+      "fi_073",
+      "fi_074",
+      "fi_094",
+      "fi_104"
+    ],
+    "human_not_assessable_n": 8,
+    "dangerous_accept_loose_n": 6,
+    "dangerous_accept_loose_rate": 0.75,
+    "dangerous_accept_loose_ids": [
+      "fi_003",
+      "fi_004",
+      "fi_005",
+      "fi_011",
+      "fi_076",
+      "fi_112"
+    ],
+    "dangerous_accept_strict_n": 2,
+    "dangerous_accept_strict_rate": 0.25,
+    "dangerous_accept_strict_ids": [
+      "fi_005",
+      "fi_076"
+    ],
+    "assessability_matrix": {
+      "ASSESSABLE": {
+        "POSSIBLE_ATTEMPT": 44,
+        "ASSESSABLE": 7,
+        "VALID_ATTEMPT": 38,
+        "FREE_SPEAK": 9,
+        "UNINTELLIGIBLE": 9
+      },
+      "NOT_ASSESSABLE": {
+        "POSSIBLE_ATTEMPT": 4,
+        "VALID_ATTEMPT": 2,
+        "FREE_SPEAK": 1,
+        "NO_SPEECH": 1
+      }
+    },
+    "content_matrix": {
+      "SPEECH_PRESENT": {
+        "POSSIBLE_ATTEMPT": 48,
+        "VALID_ATTEMPT": 40,
+        "ASSESSABLE": 7,
+        "FREE_SPEAK": 10,
+        "UNINTELLIGIBLE": 9
+      },
+      "NO_SPEECH": {
+        "NO_SPEECH": 1
+      }
+    },
+    "state_precision_recall": {
+      "NO_SPEECH": {
+        "n_system": 1,
+        "tp": 1,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "UNINTELLIGIBLE": {
+        "n_system": 9,
+        "tp": 0,
+        "precision": 0.0,
+        "recall": 0.0
+      },
+      "ASSESSABLE": {
+        "n_system": 7,
+        "tp": 7,
+        "precision": 1.0,
+        "recall": 0.06542056074766354
+      },
+      "POSSIBLE_ATTEMPT": {
+        "n_system": 48,
+        "tp": 2,
+        "precision": 0.041666666666666664,
+        "recall": 0.6666666666666666
+      },
+      "FREE_SPEAK": {
+        "n_system": 10,
+        "tp": 10,
+        "precision": 1.0,
+        "recall": 0.08695652173913043
+      },
+      "VALID_ATTEMPT": {
+        "n_system": 40,
+        "tp": 38,
+        "precision": 0.95,
+        "recall": 0.3838383838383838
+      }
+    }
+  },
+  "v2": {
+    "valid_attempt_n": 103,
+    "valid_attempt_strict_n": 99,
+    "false_gate_n": 0,
+    "false_gate_rate": 0.0,
+    "false_gate_rate_strict": 0.0,
+    "false_gate_ids": [],
+    "human_not_assessable_n": 8,
+    "dangerous_accept_loose_n": 7,
+    "dangerous_accept_loose_rate": 0.875,
+    "dangerous_accept_loose_ids": [
+      "fi_003",
+      "fi_004",
+      "fi_005",
+      "fi_009",
+      "fi_011",
+      "fi_076",
+      "fi_112"
+    ],
+    "dangerous_accept_strict_n": 5,
+    "dangerous_accept_strict_rate": 0.625,
+    "dangerous_accept_strict_ids": [
+      "fi_003",
+      "fi_004",
+      "fi_005",
+      "fi_009",
+      "fi_076"
+    ],
+    "assessability_matrix": {
+      "ASSESSABLE": {
+        "POSSIBLE_ATTEMPT": 31,
+        "ASSESSABLE": 7,
+        "VALID_ATTEMPT": 69
+      },
+      "NOT_ASSESSABLE": {
+        "VALID_ATTEMPT": 5,
+        "POSSIBLE_ATTEMPT": 2,
+        "NO_SPEECH": 1
+      }
+    },
+    "content_matrix": {
+      "SPEECH_PRESENT": {
+        "POSSIBLE_ATTEMPT": 33,
+        "VALID_ATTEMPT": 74,
+        "ASSESSABLE": 7
+      },
+      "NO_SPEECH": {
+        "NO_SPEECH": 1
+      }
+    },
+    "state_precision_recall": {
+      "ASSESSABLE": {
+        "n_system": 7,
+        "tp": 7,
+        "precision": 1.0,
+        "recall": 0.06542056074766354
+      },
+      "NO_SPEECH": {
+        "n_system": 1,
+        "tp": 1,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "POSSIBLE_ATTEMPT": {
+        "n_system": 33,
+        "tp": 2,
+        "precision": 0.06060606060606061,
+        "recall": 0.6666666666666666
+      },
+      "VALID_ATTEMPT": {
+        "n_system": 74,
+        "tp": 66,
+        "precision": 0.8918918918918919,
+        "recall": 0.6666666666666666
+      }
+    }
+  },
+  "reviewer_uncertain_rate": {
+    "content": 0.0,
+    "attempt": 0.0,
+    "assessability": 0.0
+  },
+  "human_content_counts": {
+    "SPEECH_PRESENT": 114,
+    "NO_SPEECH": 1
+  },
+  "human_attempt_counts": {
+    "VALID_ATTEMPT": 99,
+    "POSSIBLE_ATTEMPT": 3,
+    "UNINTELLIGIBLE": 12,
+    "INCOMPLETE": 1
+  },
+  "human_assessability_counts": {
+    "ASSESSABLE": 107,
+    "NOT_ASSESSABLE": 8
+  },
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  }
+}
