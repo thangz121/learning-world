@@ -1,0 +1,15 @@
+{
+  "so762_child_6_15_mandarin_l1": {
+    "n_good": 7728,
+    "baseline_frr": 0.2272,
+    "b1_frr": 0.2988
+  },
+  "lwe_child_vietnamese_l1_age4": {
+    "status": "BLOCKED_RAW_AUDIO_GITIGNORED",
+    "frozen_baseline_human_correct_low_score_rate": 0.3103,
+    "b1": "NOT_COMPUTABLE"
+  },
+  "siak": {
+    "status": "SEE_siak_transfer.json"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "source_case_file": "Research\\Speech\\Phase1_9_9\\Results\\scorer_failure_cases.csv",
+  "n_cases_found": 23,
+  "committed_diagnostic_counts": {
+    "?": 23
+  },
+  "b1_replay": "NOT_COMPUTABLE (case audio gitignored; requires the privacy-sensitive raw LWE recordings)",
+  "recovered_from_git": "Phase1_9_16/lwe_failure_replay.csv (12 PHONE_MODEL_ERROR + 6 SCORER_MISS + 5 context)"
+}

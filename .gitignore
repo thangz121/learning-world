@@ -76,6 +76,11 @@ Research/Speech/**/models/
 *.onnx
 *.bin
 !Research/**/*.md
+# Phase 1.9.18: the tiny B1 research head + feature-cache manifest are tracked
+# (8 KB head; provenance/hash is a required artifact). Large regenerable feature
+# caches (.npz) stay ignored.
+!Research/Speech/Phase1_9_18/checkpoints/b1_head.pt
+Research/Speech/Phase1_9_18/checkpoints/*.npz
 
 # Real human audio (privacy-sensitive) — never commit.
 IMG_0639.mp3

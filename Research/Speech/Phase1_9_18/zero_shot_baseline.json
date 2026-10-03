@@ -1,0 +1,25 @@
+{
+  "phase": "1.9.18",
+  "step": "zero_shot_frozen_baseline_so762_child_test",
+  "model": "facebook/wav2vec2-xlsr-53-espeak-cv-ft@2c733782da5604684829819a5eb744c193fe9398",
+  "pipeline": "PhoneEvidenceV2@1.4.0 (unchanged)",
+  "seed": 1515,
+  "test_speakers": 24,
+  "n_utterances": 480,
+  "n_scored": 480,
+  "n_errors": 0,
+  "n_phone_tokens_scored": 7853,
+  "mean_soft_full": 75.784,
+  "mean_confidence": 0.0763,
+  "mean_processing_s": 0.944,
+  "frr_first": {
+    "n_good": 7728,
+    "n_bad": 48,
+    "frr": 0.22722567287784678,
+    "far": 0.2708333333333333,
+    "rejected_good": 1756,
+    "accepted_bad": 13
+  },
+  "wall_s": 780.9,
+  "PER": "NOT_COMPUTABLE (SO762 gives expert scores + sparse observed errors, not dense observed-phone truth)"
+}

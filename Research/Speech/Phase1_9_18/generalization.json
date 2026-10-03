@@ -1,0 +1,169 @@
+{
+  "joined_tokens": 7853,
+  "missing_in_b1": 0,
+  "per_speaker": {
+    "0048": {
+      "n": 258,
+      "baseline_frr": 0.5116,
+      "b1_frr": 0.6357
+    },
+    "0056": {
+      "n": 273,
+      "baseline_frr": 0.2857,
+      "b1_frr": 0.3773
+    },
+    "0070": {
+      "n": 264,
+      "baseline_frr": 0.2083,
+      "b1_frr": 0.2803
+    },
+    "0075": {
+      "n": 274,
+      "baseline_frr": 0.2883,
+      "b1_frr": 0.365
+    },
+    "0093": {
+      "n": 269,
+      "baseline_frr": 0.1896,
+      "b1_frr": 0.2788
+    },
+    "0111": {
+      "n": 292,
+      "baseline_frr": 0.25,
+      "b1_frr": 0.3322
+    },
+    "0113": {
+      "n": 271,
+      "baseline_frr": 0.3247,
+      "b1_frr": 0.4871
+    },
+    "0114": {
+      "n": 284,
+      "baseline_frr": 0.2606,
+      "b1_frr": 0.3239
+    },
+    "0131": {
+      "n": 256,
+      "baseline_frr": 0.2305,
+      "b1_frr": 0.2969
+    },
+    "0133": {
+      "n": 284,
+      "baseline_frr": 0.2852,
+      "b1_frr": 0.3275
+    },
+    "0149": {
+      "n": 284,
+      "baseline_frr": 0.1796,
+      "b1_frr": 0.243
+    },
+    "1046": {
+      "n": 281,
+      "baseline_frr": 0.3879,
+      "b1_frr": 0.4733
+    },
+    "1197": {
+      "n": 322,
+      "baseline_frr": 0.2826,
+      "b1_frr": 0.3975
+    },
+    "1439": {
+      "n": 354,
+      "baseline_frr": 0.2768,
+      "b1_frr": 0.3785
+    },
+    "2179": {
+      "n": 303,
+      "baseline_frr": 0.2046,
+      "b1_frr": 0.2508
+    },
+    "3631": {
+      "n": 330,
+      "baseline_frr": 0.1848,
+      "b1_frr": 0.2212
+    },
+    "5017": {
+      "n": 361,
+      "baseline_frr": 0.1607,
+      "b1_frr": 0.2271
+    },
+    "5424": {
+      "n": 345,
+      "baseline_frr": 0.1652,
+      "b1_frr": 0.2319
+    },
+    "6401": {
+      "n": 352,
+      "baseline_frr": 0.2216,
+      "b1_frr": 0.3182
+    },
+    "6504": {
+      "n": 374,
+      "baseline_frr": 0.1952,
+      "b1_frr": 0.2353
+    },
+    "7551": {
+      "n": 448,
+      "baseline_frr": 0.1629,
+      "b1_frr": 0.2098
+    },
+    "9101": {
+      "n": 420,
+      "baseline_frr": 0.1405,
+      "b1_frr": 0.2095
+    },
+    "9553": {
+      "n": 417,
+      "baseline_frr": 0.1655,
+      "b1_frr": 0.2038
+    },
+    "9555": {
+      "n": 412,
+      "baseline_frr": 0.1141,
+      "b1_frr": 0.1481
+    }
+  },
+  "per_age": {
+    "6": {
+      "n": 2539,
+      "baseline_frr": 0.2867,
+      "b1_frr": 0.3824
+    },
+    "7": {
+      "n": 1427,
+      "baseline_frr": 0.274,
+      "b1_frr": 0.3497
+    },
+    "9": {
+      "n": 633,
+      "baseline_frr": 0.1943,
+      "b1_frr": 0.2354
+    },
+    "10": {
+      "n": 361,
+      "baseline_frr": 0.1607,
+      "b1_frr": 0.2271
+    },
+    "11": {
+      "n": 345,
+      "baseline_frr": 0.1652,
+      "b1_frr": 0.2319
+    },
+    "12": {
+      "n": 726,
+      "baseline_frr": 0.208,
+      "b1_frr": 0.2755
+    },
+    "13": {
+      "n": 448,
+      "baseline_frr": 0.1629,
+      "b1_frr": 0.2098
+    },
+    "15": {
+      "n": 1249,
+      "baseline_frr": 0.1401,
+      "b1_frr": 0.1873
+    }
+  },
+  "interpretation": "speaker-disjoint test; B1 FRR computed on the same held-out speakers as the baseline."
+}

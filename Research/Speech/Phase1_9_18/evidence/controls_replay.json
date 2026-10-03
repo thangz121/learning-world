@@ -1,0 +1,102 @@
+[
+  {
+    "file": "sapi_red.wav",
+    "target": "red",
+    "status": "OK",
+    "baseline_mean_sim": 1.0,
+    "baseline_soft": 100.0,
+    "b1_mean_prob": 0.6713,
+    "n_phones": 3,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "sapi_cat.wav",
+    "target": "cat",
+    "status": "OK",
+    "baseline_mean_sim": 1.0,
+    "baseline_soft": 100.0,
+    "b1_mean_prob": 0.6057,
+    "n_phones": 3,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "sapi_red_apple.wav",
+    "target": "red apple",
+    "status": "OK",
+    "baseline_mean_sim": 1.0,
+    "baseline_soft": 100.0,
+    "b1_mean_prob": 0.7109,
+    "n_phones": 7,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "sapi_blue.wav",
+    "target": "blue",
+    "status": "OK",
+    "baseline_mean_sim": 0.0584,
+    "baseline_soft": 5.8,
+    "b1_mean_prob": 0.1777,
+    "n_phones": 3,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "sapi_big.wav",
+    "target": "big",
+    "status": "OK",
+    "baseline_mean_sim": 0.3334,
+    "baseline_soft": 33.3,
+    "b1_mean_prob": 0.2326,
+    "n_phones": 3,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "sapi_book.wav",
+    "target": "book",
+    "status": "OK",
+    "baseline_mean_sim": 0.6672,
+    "baseline_soft": 66.7,
+    "b1_mean_prob": 0.2298,
+    "n_phones": 3,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "sapi_dog.wav",
+    "target": "dog",
+    "status": "OK",
+    "baseline_mean_sim": 0.3333,
+    "baseline_soft": 33.3,
+    "b1_mean_prob": 0.1828,
+    "n_phones": 3,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "pregen_apple_normal.wav",
+    "target": "apple",
+    "status": "OK",
+    "baseline_mean_sim": 0.7523,
+    "baseline_soft": 75.2,
+    "b1_mean_prob": 0.6133,
+    "n_phones": 4,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "stress_silence.wav",
+    "target": "red",
+    "status": "OK",
+    "baseline_mean_sim": 0.1418,
+    "baseline_soft": 14.2,
+    "b1_mean_prob": 0.1815,
+    "n_phones": 3,
+    "population_label": "adult-TTS-or-synthetic control"
+  },
+  {
+    "file": "stress_noise.wav",
+    "target": "red",
+    "status": "OK",
+    "baseline_mean_sim": 0.1669,
+    "baseline_soft": 16.7,
+    "b1_mean_prob": 0.1811,
+    "n_phones": 3,
+    "population_label": "adult-TTS-or-synthetic control"
+  }
+]

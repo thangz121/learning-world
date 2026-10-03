@@ -1,0 +1,24 @@
+{
+  "phase": "1.9.18",
+  "decision": "E",
+  "decision_label": "B1_REGRESSES_HUMAN_CORRECT_CHILD_SPEECH",
+  "rationale": "B1 (frozen encoder + trainable head) lowers FAR (0.271 -> 0.104) but RAISES FRR on expert-correct child phones (0.227 -> 0.299). FRR-first: rejecting more human-correct speech is a regression, so a FAR gain does not count as an improvement. B1 regresses FRR on every age band and on the majority of frequent phones, and it also lowers confidence on adult-TTS controls (no domain gain).",
+  "baseline_frr": 0.22722567287784678,
+  "b1_frr": 0.2987836438923395,
+  "delta_frr": 0.0716,
+  "baseline_far": 0.2708333333333333,
+  "b1_far": 0.10416666666666667,
+  "delta_far": -0.1667,
+  "b2_justified": false,
+  "checkpoint": "checkpoints/b1_head.pt",
+  "checkpoint_sha256": "44d863794e369a9b9fdfa50329918777902a4646cb2a5cd55916245e053da3e6",
+  "git_commit": "d45d3ed99528f2353b25fb7d5c3361faafe69466",
+  "production_locks": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  },
+  "production_untouched": true
+}

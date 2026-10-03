@@ -1,0 +1,57 @@
+{
+  "phase": "1.9.18",
+  "kind": "material/provenance audit (STEP 1, no experiment)",
+  "checks": {
+    "so762_mirror_revision": {
+      "value": "06385584fad212b26134c656fdd3ccf9f093f33e",
+      "expected": "06385584fad212b26134c656fdd3ccf9f093f33e",
+      "match": true,
+      "note": "HF mirror of OpenSLR SLR101"
+    },
+    "wav2vec2_revision": {
+      "value": "2c733782da5604684829819a5eb744c193fe9398",
+      "expected": "2c733782da5604684829819a5eb744c193fe9398",
+      "match": true,
+      "snapshot_exists": true,
+      "sha256_config.json": "4609fb49b7e1d28aecb2840da1926c40bd915bc6f1120a940afacf7159bbfb13",
+      "sha256_vocab.json": "d732ab2456c0c017930001dc9af0b41b3b93d25b2eb9740bf9d925508d7d87d0"
+    },
+    "cmudict": {
+      "exists": true,
+      "sha256": "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22",
+      "bytes": 3618488
+    },
+    "phone_inventory": {
+      "version": "phone-inventory-v1.4.0",
+      "import_ok": true,
+      "n_arpa_symbols": 41,
+      "sha256_inventory_py": "97d07c124f146a0b3a8dacd1293705cb47c2ecc31bb74ba380fefbf56cad0915"
+    },
+    "split_seed_1_9_15": {
+      "file": "Research\\Speech\\Phase1_9_16\\split_manifest.json",
+      "random_seed": 1515,
+      "match_seed_1515": true,
+      "status": "VERIFIED_COMPLETE"
+    },
+    "frozen_baseline_1_9_16": {
+      "file": "Research\\Speech\\Phase1_9_16\\baseline_metrics.json",
+      "reproduced": true,
+      "soft_agreement": "482/482",
+      "pipeline": "PhoneEvidenceV2@1.4.0"
+    },
+    "so762_phone_tier_1_9_17": {
+      "file": "Research\\Speech\\Phase1_9_17\\so762_phone_tier_audit.json",
+      "child_speakers_le15": 122,
+      "child_rows_le15": 2440,
+      "inventory_mapped": 67,
+      "inventory_unmapped": 0
+    },
+    "scripts": {
+      "phone_evidence_v2": true,
+      "target_cmudict": true,
+      "run_baseline_1_9_16": true
+    }
+  },
+  "blocking_issues": [],
+  "status": "VERIFIED_COMPLETE"
+}

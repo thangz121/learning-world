@@ -1,0 +1,11 @@
+{
+  "phase": "1.9.18",
+  "status": "SIAK_TRANSFER_BLOCKED_PENDING_ND_REVIEW",
+  "reason": "SIAK is CC-BY-ND-4.0; the training/evaluation-rights review opened in 1.9.14 is still unresolved. No B1 evaluation was run on SIAK data.",
+  "frozen_baseline_reference": {
+    "source": "Phase1_9_16/baseline_metrics.json (RERUN, matches 1.9.15)",
+    "frr_proxy_soft_lt_50_on_rating_ge_80": 0.1224,
+    "n": 482
+  },
+  "b1": "NOT_COMPUTABLE"
+}

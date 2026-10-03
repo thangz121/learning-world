@@ -1,0 +1,18 @@
+{
+  "phase": "1.9.18",
+  "step": "b1_head_only_eval_so762_child_test",
+  "model": "B1 head-only (frozen encoder) + frozen CTC alignment",
+  "seed": 1515,
+  "test_speakers": 24,
+  "n_utterances": 480,
+  "n_phone_tokens": 7853,
+  "frr_first": {
+    "n_good": 7728,
+    "n_bad": 48,
+    "frr": 0.2987836438923395,
+    "far": 0.10416666666666667,
+    "rejected_good": 2309,
+    "accepted_bad": 5
+  },
+  "wall_s": 767.7
+}

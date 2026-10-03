@@ -1,0 +1,11 @@
+{
+  "status": "LWE_TRANSFER_BLOCKED_RAW_AUDIO_GITIGNORED",
+  "reason": "real-child LWE waveforms are privacy-sensitive and not committed; only frozen per-token soft scores are available, so B1 cannot be run on this audio in this environment.",
+  "frozen_baseline_reference": {
+    "n_human_correct": 29,
+    "human_correct_low_score_rate": 0.3103,
+    "n_human_incorrect": 13,
+    "human_incorrect_high_score_rate": 0.3846
+  },
+  "b1_number": "NOT_COMPUTABLE"
+}

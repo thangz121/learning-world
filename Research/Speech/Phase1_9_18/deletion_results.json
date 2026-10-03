@@ -1,0 +1,110 @@
+{
+  "n_deletion_tokens": 10,
+  "baseline_rejected_true_deletion": 4,
+  "b1_rejected_true_deletion": 9,
+  "baseline_deletion_reject_rate": 0.4,
+  "b1_deletion_reject_rate": 0.9,
+  "note": "<DEL> is its own error category; never converted to a phone.",
+  "final_consonant_tokens": {
+    "T": {
+      "n": 593,
+      "baseline_reject_rate": 0.0523,
+      "b1_reject_rate": 0.1653
+    },
+    "N": {
+      "n": 576,
+      "baseline_reject_rate": 0.0417,
+      "b1_reject_rate": 0.1944
+    },
+    "S": {
+      "n": 434,
+      "baseline_reject_rate": 0.1382,
+      "b1_reject_rate": 0.1751
+    },
+    "L": {
+      "n": 333,
+      "baseline_reject_rate": 0.0841,
+      "b1_reject_rate": 0.2282
+    },
+    "K": {
+      "n": 308,
+      "baseline_reject_rate": 0.1201,
+      "b1_reject_rate": 0.1299
+    },
+    "D": {
+      "n": 291,
+      "baseline_reject_rate": 0.134,
+      "b1_reject_rate": 0.244
+    },
+    "M": {
+      "n": 277,
+      "baseline_reject_rate": 0.1191,
+      "b1_reject_rate": 0.1841
+    },
+    "R": {
+      "n": 227,
+      "baseline_reject_rate": 0.1145,
+      "b1_reject_rate": 0.2115
+    },
+    "Z": {
+      "n": 198,
+      "baseline_reject_rate": 0.1869,
+      "b1_reject_rate": 0.3131
+    },
+    "B": {
+      "n": 158,
+      "baseline_reject_rate": 0.3671,
+      "b1_reject_rate": 0.3797
+    },
+    "F": {
+      "n": 149,
+      "baseline_reject_rate": 0.1544,
+      "b1_reject_rate": 0.1544
+    },
+    "V": {
+      "n": 121,
+      "baseline_reject_rate": 0.1488,
+      "b1_reject_rate": 0.2149
+    },
+    "P": {
+      "n": 110,
+      "baseline_reject_rate": 0.1364,
+      "b1_reject_rate": 0.1909
+    },
+    "G": {
+      "n": 97,
+      "baseline_reject_rate": 0.2577,
+      "b1_reject_rate": 0.2784
+    },
+    "NG": {
+      "n": 81,
+      "baseline_reject_rate": 0.2099,
+      "b1_reject_rate": 0.321
+    },
+    "SH": {
+      "n": 62,
+      "baseline_reject_rate": 0.4194,
+      "b1_reject_rate": 0.4355
+    },
+    "JH": {
+      "n": 52,
+      "baseline_reject_rate": 0.7308,
+      "b1_reject_rate": 0.75
+    },
+    "TH": {
+      "n": 41,
+      "baseline_reject_rate": 0.6585,
+      "b1_reject_rate": 0.7317
+    },
+    "CH": {
+      "n": 23,
+      "baseline_reject_rate": 0.2609,
+      "b1_reject_rate": 0.3043
+    },
+    "ZH": {
+      "n": 3,
+      "baseline_reject_rate": 1.0,
+      "b1_reject_rate": 1.0
+    }
+  }
+}
