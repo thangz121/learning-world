@@ -1,0 +1,10 @@
+SOURCE (E1): https://speechlp.com/the-science-of-speech-sound-selection/
+- Crowe & McLeod 2020 norms: 2y b,n,m,p,h,w,d | 3y g,k,f,t,ng,j | 4y v,d3,tS,s,z,l,S |
+  5y r,dh,zh | 6y th
+- latest-consonant rule; multisyllabic +1y (cap 6+); position; blends; process filter (incl. FCD);
+  age-relative difficulty Easy/Medium/Hard (4 dimensions).
+SOURCE (E1): app store + site
+- ages 3-9; 1000+ words; smart voice detection separates child speech from game audio
+  ('every score reflects a real attempt'); on-device; HIPAA/COPPA claims;
+  screener 'useful first signal, not a diagnosis'.
+BLOCKED: app/account required.
