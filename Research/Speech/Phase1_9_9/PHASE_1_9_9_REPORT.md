@@ -131,9 +131,26 @@ Human-OK + low score + phone misses → primary research signal: **phone model /
 
 ## 9. ASR vs Phone Evidence
 
-Moonshine ASR **unavailable** in env this run (`ASR_UNAVAILABLE`).  
-Column reserved in `asr_phone_conflicts.csv`.  
-Policy unchanged: ASR is not the pronunciation judge.
+Moonshine (tiny) run on the 42 reviewed LISTEN/FULL clips (supporting evidence only).
+
+| ASR status | n |
+|---|---:|
+| ASR_EMPTY | **24** |
+| ASR_WRONG | **13** |
+| ASR_CORRECT | **5** |
+
+| Conflict vs human | n |
+|---|---:|
+| ASR_EMPTY_HUMAN_RIGHT | **18** |
+| ASR_WRONG_HUMAN_RIGHT | **7** |
+| ASR_EMPTY_HUMAN_WRONG | 5 |
+| NO_CONFLICT | 12 |
+| ASR_RIGHT_HUMAN_WRONG | 0 |
+
+**Key finding:** ASR is unreliable on isolated child number words (only 5/42 correct);  
+**ASR_EMPTY ≠ NON_SPEECH / incorrect** — 18 cases ASR-empty while human heard acceptable speech.  
+Policy unchanged: `asr_is_not_pronunciation_judge = true`.  
+Artifacts: `Results/asr_phone_conflicts.csv`, `Results/asr_conflict_summary.json`.
 
 ---
 
@@ -215,7 +232,7 @@ See §7–8. Dominant research-relevant modes on this sample:
 2. Pitch/formant causality.  
 3. Production-ready child scorer.  
 4. Generalization beyond numbers / this 42-sample.  
-5. ASR conflicts (ASR unavailable).
+5. ASR as a useful correct/incorrect signal (it is not — 5/42 correct).
 
 ---
 
@@ -225,7 +242,7 @@ See §7–8. Dominant research-relevant modes on this sample:
 - n=42 balanced sample of 80  
 - Numbers only; not full LWE vocab  
 - Diagnostic labels are heuristic on top of human pronunciation authority  
-- ASR missing  
+- ASR (Moonshine tiny) weak on isolated child words; supporting evidence only  
 
 ---
 

@@ -1,0 +1,12 @@
+{
+  "n": 42,
+  "conflicts": {
+    "ASR_EMPTY_HUMAN_RIGHT": 18,
+    "ASR_EMPTY_HUMAN_WRONG": 5,
+    "ASR_WRONG_HUMAN_RIGHT": 7,
+    "NO_CONFLICT": 12
+  },
+  "asr_correct_n": 5,
+  "asr_wrong_n": 13,
+  "asr_empty_n": 24
+}
