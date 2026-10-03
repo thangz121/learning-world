@@ -1,0 +1,345 @@
+{
+  "n_labeled": 28,
+  "n_present": 16,
+  "n_absent": 12,
+  "operating_points": {
+    "A_softv2_as_shipped": {
+      "frr": 0.0625,
+      "far": 0.4166666666666667,
+      "tp": 15,
+      "fp": 5,
+      "tn": 7,
+      "fn": 1,
+      "present_rejected": [
+        "fc_child_07_one"
+      ],
+      "absent_accepted": [
+        "fc_child_01_four",
+        "fc_child_02_four",
+        "fc_child_03_four",
+        "fc_child_06_four",
+        "fc_child_07_seven"
+      ]
+    },
+    "B_free_presence_zero_penalty": {
+      "frr": 0.4375,
+      "far": 0.16666666666666666,
+      "tp": 9,
+      "fp": 2,
+      "tn": 10,
+      "fn": 7,
+      "present_rejected": [
+        "fc_child_01_nine",
+        "fc_child_01_seven",
+        "fc_child_01_ten",
+        "fc_child_02_ten",
+        "fc_child_04_four",
+        "fc_child_06_six",
+        "fc_child_07_one"
+      ],
+      "absent_accepted": [
+        "fc_child_03_six",
+        "fc_child_07_seven"
+      ]
+    },
+    "B_margin_frr0_exact": {
+      "frr": 0.0,
+      "far": 0.5,
+      "tp": 16,
+      "fp": 6,
+      "tn": 6,
+      "fn": 0,
+      "present_rejected": [],
+      "absent_accepted": [
+        "fc_child_01_four",
+        "fc_child_02_four",
+        "fc_child_03_four",
+        "fc_child_03_six",
+        "fc_child_05_four",
+        "fc_child_07_seven"
+      ],
+      "threshold": -0.06714394080477422
+    },
+    "C_gop_frr0_best": {
+      "frr": 0.0,
+      "far": 1.0,
+      "tp": 16,
+      "fp": 12,
+      "tn": 0,
+      "fn": 0,
+      "present_rejected": [],
+      "absent_accepted": [
+        "fc_child_01_five",
+        "fc_child_01_four",
+        "fc_child_02_four",
+        "fc_child_03_eight",
+        "fc_child_03_four",
+        "fc_child_03_six",
+        "fc_child_05_four",
+        "fc_child_06_four",
+        "fc_child_07_eight",
+        "fc_child_07_seven",
+        "fc_child_08_eight",
+        "fc_child_09_five"
+      ],
+      "threshold": -7.204073152980269
+    }
+  },
+  "matched_frr_frontier": {
+    "frr_lt_0_of_16": {
+      "B_margin": {
+        "threshold": -0.06714394080477422,
+        "far": 0.5,
+        "frr": 0.0,
+        "absent_accepted": [
+          "fc_child_01_four",
+          "fc_child_02_four",
+          "fc_child_03_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_07_seven"
+        ],
+        "present_rejected": []
+      },
+      "C_gop": {
+        "threshold": -7.204073152980269,
+        "far": 1.0,
+        "frr": 0.0,
+        "absent_accepted": [
+          "fc_child_01_five",
+          "fc_child_01_four",
+          "fc_child_02_four",
+          "fc_child_03_eight",
+          "fc_child_03_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_06_four",
+          "fc_child_07_eight",
+          "fc_child_07_seven",
+          "fc_child_08_eight",
+          "fc_child_09_five"
+        ],
+        "present_rejected": []
+      }
+    },
+    "frr_lt_1_of_16": {
+      "A_baseline": {
+        "far": 0.4166666666666667,
+        "frr": 0.0625
+      },
+      "B_margin": {
+        "threshold": -0.06714394080477422,
+        "far": 0.5,
+        "frr": 0.0,
+        "absent_accepted": [
+          "fc_child_01_four",
+          "fc_child_02_four",
+          "fc_child_03_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_07_seven"
+        ],
+        "present_rejected": []
+      },
+      "C_gop": {
+        "threshold": -5.728484218232588,
+        "far": 0.9166666666666666,
+        "frr": 0.0625,
+        "absent_accepted": [
+          "fc_child_01_five",
+          "fc_child_01_four",
+          "fc_child_02_four",
+          "fc_child_03_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_06_four",
+          "fc_child_07_eight",
+          "fc_child_07_seven",
+          "fc_child_08_eight",
+          "fc_child_09_five"
+        ],
+        "present_rejected": [
+          "fc_child_07_one"
+        ]
+      }
+    },
+    "frr_lt_2_of_16": {
+      "A_baseline": {
+        "far": 0.4166666666666667,
+        "frr": 0.0625
+      },
+      "B_margin": {
+        "threshold": -0.05283916204241205,
+        "far": 0.4166666666666667,
+        "frr": 0.125,
+        "absent_accepted": [
+          "fc_child_01_four",
+          "fc_child_02_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_07_seven"
+        ],
+        "present_rejected": [
+          "fc_child_01_ten",
+          "fc_child_07_one"
+        ]
+      },
+      "C_gop": {
+        "threshold": -5.728484218232588,
+        "far": 0.9166666666666666,
+        "frr": 0.0625,
+        "absent_accepted": [
+          "fc_child_01_five",
+          "fc_child_01_four",
+          "fc_child_02_four",
+          "fc_child_03_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_06_four",
+          "fc_child_07_eight",
+          "fc_child_07_seven",
+          "fc_child_08_eight",
+          "fc_child_09_five"
+        ],
+        "present_rejected": [
+          "fc_child_07_one"
+        ]
+      }
+    },
+    "frr_lt_3_of_16": {
+      "A_baseline": {
+        "far": 0.4166666666666667,
+        "frr": 0.0625
+      },
+      "B_margin": {
+        "threshold": -0.05283916204241205,
+        "far": 0.4166666666666667,
+        "frr": 0.125,
+        "absent_accepted": [
+          "fc_child_01_four",
+          "fc_child_02_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_07_seven"
+        ],
+        "present_rejected": [
+          "fc_child_01_ten",
+          "fc_child_07_one"
+        ]
+      },
+      "C_gop": {
+        "threshold": -3.424340981043459,
+        "far": 0.6666666666666666,
+        "frr": 0.1875,
+        "absent_accepted": [
+          "fc_child_01_four",
+          "fc_child_02_four",
+          "fc_child_03_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_06_four",
+          "fc_child_07_seven",
+          "fc_child_08_eight"
+        ],
+        "present_rejected": [
+          "fc_child_04_four",
+          "fc_child_06_six",
+          "fc_child_07_one"
+        ]
+      }
+    },
+    "frr_lt_4_of_16": {
+      "A_baseline": {
+        "far": 0.4166666666666667,
+        "frr": 0.0625
+      },
+      "B_margin": {
+        "threshold": -0.01671956786604578,
+        "far": 0.16666666666666666,
+        "frr": 0.25,
+        "absent_accepted": [
+          "fc_child_03_six",
+          "fc_child_07_seven"
+        ],
+        "present_rejected": [
+          "fc_child_01_nine",
+          "fc_child_01_seven",
+          "fc_child_01_ten",
+          "fc_child_07_one"
+        ]
+      },
+      "C_gop": {
+        "threshold": -2.6947972641629963,
+        "far": 0.3333333333333333,
+        "frr": 0.25,
+        "absent_accepted": [
+          "fc_child_02_four",
+          "fc_child_03_six",
+          "fc_child_05_four",
+          "fc_child_07_seven"
+        ],
+        "present_rejected": [
+          "fc_child_01_ten",
+          "fc_child_04_four",
+          "fc_child_06_six",
+          "fc_child_07_one"
+        ]
+      }
+    }
+  },
+  "class_breakdown": {
+    "STOP": {
+      "n": 8,
+      "base_correct": 8,
+      "free_correct": 8,
+      "present": 5,
+      "absent": 3,
+      "base_missed_absent": [],
+      "base_rejected_present": []
+    },
+    "FRICATIVE": {
+      "n": 5,
+      "base_correct": 5,
+      "free_correct": 3,
+      "present": 2,
+      "absent": 3,
+      "base_missed_absent": [],
+      "base_rejected_present": []
+    },
+    "LIQUID": {
+      "n": 6,
+      "base_correct": 2,
+      "free_correct": 5,
+      "present": 1,
+      "absent": 5,
+      "base_missed_absent": [
+        "fc_child_01_four",
+        "fc_child_02_four",
+        "fc_child_03_four",
+        "fc_child_06_four"
+      ],
+      "base_rejected_present": []
+    },
+    "NASAL": {
+      "n": 9,
+      "base_correct": 7,
+      "free_correct": 3,
+      "present": 8,
+      "absent": 1,
+      "base_missed_absent": [
+        "fc_child_07_seven"
+      ],
+      "base_rejected_present": [
+        "fc_child_07_one"
+      ]
+    }
+  },
+  "human_label_distribution": {
+    "FINAL_CONSONANT_CLEARLY_PRESENT": 9,
+    "FINAL_CONSONANT_PROBABLY_ABSENT": 2,
+    "FINAL_CONSONANT_CLEARLY_ABSENT": 10,
+    "FINAL_CONSONANT_PROBABLY_PRESENT": 7
+  },
+  "frr_first_verdict": "No candidate improves FAR over baseline at equal or lower FRR on the 28-token human set; free zero-penalty deletion is FRR-unsafe (7/16 human-present finals rejected).",
+  "baseline_reproduction": "0 mismatches vs archived 1.9.12 match_type on all 65 tokens"
+}

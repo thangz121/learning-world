@@ -1,0 +1,160 @@
+{
+  "phase": "1.9.14",
+  "title": "fidelity/assessability + deletion-aware pronunciation research",
+  "base_head": "b4a140e (local) \u00b7 phase1.9.13 commit 3ab6c01",
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  },
+  "model_used": {
+    "id": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "license": "Apache-2.0 (verified 2026-10-02)",
+    "cache": "D:/speech-lab/models (gitignored)"
+  },
+  "dates": "2026-10-03",
+  "outputs": {
+    "ARCHITECTURE_DELTA.md": {
+      "sha256": "E61043372EB65FD213E989DDA896FB7AD7E9BCEA18DB81DED210E4B7BAA69FAA",
+      "bytes": 8143
+    },
+    "artifacts/p1/p1_cases.csv": {
+      "sha256": "163B70D58449A573CE93B1A726E76F1D689E09A4BAAE97FC72834A4D0AB5A2BF",
+      "bytes": 15089
+    },
+    "artifacts/p1/p1_evidence_table.csv": {
+      "sha256": "A45D1750BDC22ACDB1737DD57FBECDC07AA734EDF7373B3D78274B38D5DEC8F1",
+      "bytes": 26502
+    },
+    "artifacts/p1/p1_state_by_human.csv": {
+      "sha256": "57BC093AEF1DE6DB08C3D21279B84554117CE7F127D0990A5CD41D86E54D6258",
+      "bytes": 223
+    },
+    "artifacts/p1/p1_v1_vs_v2_summary.json": {
+      "sha256": "F88FBC19C87B52A0F8786AF5C3B2F618D5432CAF73E13ECFD05FE42EF7177BD9",
+      "bytes": 4999
+    },
+    "artifacts/p2/p2_baseline_vs_candidates.csv": {
+      "sha256": "139ED8F7FFE4E1F58DFD48B586F6FD6238F1AEB605EA565CEA6C2EB7B436C0C0",
+      "bytes": 10245
+    },
+    "artifacts/p2/p2_class_confusion.csv": {
+      "sha256": "60BAE3C29C74307530D821F558452DF7EA4683CBE493F8DA413D493F79C35662",
+      "bytes": 289
+    },
+    "artifacts/p2/p2_frr_analysis.json": {
+      "sha256": "83855FD92D1A0BF0EA243A10CB499A7D31721C1EEEC6E87C68D9C25C9C78CBEA",
+      "bytes": 8860
+    },
+    "artifacts/p2/p2_mismatches.csv": {
+      "sha256": "1B36789589DF3A97E9994A7ABB946B582B711735B631416554CCAFCC130A8F4F",
+      "bytes": 1930
+    },
+    "artifacts/p2/p2_summary.json": {
+      "sha256": "222577237B9143A57289674EB3B9FD2FDEBE695C1EDFDBC1B78C8E1C9FEBCE70",
+      "bytes": 2430
+    },
+    "artifacts/p2/p2_threshold_sweep.csv": {
+      "sha256": "63500A9C5F8B3669FAA899C1881A9D7500AD8620554DC9FAFC06EFFE8892D908",
+      "bytes": 3964
+    },
+    "artifacts/p2/p2_tokens.csv": {
+      "sha256": "F100514932F36A7328A538A158AFF0267B0AA73E5E1BA814309935DD2FDBF64E",
+      "bytes": 22136
+    },
+    "artifacts/siak/siak_metadata.json": {
+      "sha256": "9B0A935BECBFD9F4B66E625530BF5DE7842D534AC978146A6DE9419A97C5B9E4",
+      "bytes": 3241
+    },
+    "artifacts/siak/siak_scored.csv": {
+      "sha256": "E2996F49DCFF5487E21C3724547D2D1C6DB916150E0B65AF0568E1706DAAF3B3",
+      "bytes": 130236
+    },
+    "artifacts/siak/siak_speakers.csv": {
+      "sha256": "542D1ACBCBDF06B20D473293879F6D5FF9C19E32B6E2FC1FC2125AAA585FFC89",
+      "bytes": 6953
+    },
+    "artifacts/siak/siak_summary_ages4-5-6-7-8-9-10.json": {
+      "sha256": "8111BAD06E14FCC8C181ADC23A2D96CFA1592208CC108FFA893180E901969748",
+      "bytes": 10003
+    },
+    "CURRICULUM_AND_UX_RESEARCH.md": {
+      "sha256": "FC1A0B8B012559F706BCF27E7062A617A908006AC20AD7F9592646D2BDDA18DF",
+      "bytes": 6466
+    },
+    "DELETION_AWARE_RESULTS.md": {
+      "sha256": "175C951B5F5644552E37A251C7AA795A428BB58F304FB7D3F774923B7A415B44",
+      "bytes": 6432
+    },
+    "experiments/build_manifest.py": {
+      "sha256": "B675336E3B7562973F83B83C21002888A5297B09B2C551CFDC4E12FFF9B9251F",
+      "bytes": 2746
+    },
+    "experiments/p1_fidelity_assessability.py": {
+      "sha256": "1528BE16EEFEF2560A4D7972427349399BAD54821E595B910844C35D07C45363",
+      "bytes": 19360
+    },
+    "experiments/p2_compare.py": {
+      "sha256": "F1AD008AC3CD1CE10EA2C8A5611B776E115464E2B8AB3DD89E9798FFEEC8CDC6",
+      "bytes": 7814
+    },
+    "experiments/p2_deletion_aware.py": {
+      "sha256": "5667AB829EF4285FDD7C6F9C5023FA6C4841BD7A60C795C38F43AC91B4185737",
+      "bytes": 21379
+    },
+    "experiments/siak_calibration.py": {
+      "sha256": "24DDBA99063B3E90BA95E8A01143C4DE5BEF986E0B65ABF8244D69BCEAC4E505",
+      "bytes": 9641
+    },
+    "experiments/siak_metadata.py": {
+      "sha256": "4D71263B3310AA0E63D137E32874F840717439F5EDDB2D44B6E2236A54CBE4E5",
+      "bytes": 7146
+    },
+    "FIDELITY_ASSESSABILITY_RESULTS.md": {
+      "sha256": "E691D780C1FDC2D014C60DAD831D114E7F66773C5E6CAE9776204BACFAC62BB4",
+      "bytes": 6776
+    },
+    "FRR_ANALYSIS.md": {
+      "sha256": "E91425A0FF79E8AC5996E905A702EDA868C8B90D4E75AEAA6C2FD460B71AAF3E",
+      "bytes": 4425
+    },
+    "LICENSE_AND_DATA_NOTES.md": {
+      "sha256": "12BECCA3671B0BE7414893B3382B6C56C62A1EEDC1C80796837EF142EC3B9A6A",
+      "bytes": 2890
+    },
+    "manifests/p1_provenance.json": {
+      "sha256": "ACF9646F0B931EE0E862CF8FD6A48011AF0E1E8FD42E6000FF6E8AB2CD345573",
+      "bytes": 1737
+    },
+    "manifests/p2_provenance.json": {
+      "sha256": "C7C357CB5C1F72BE92C973B6106A263F90025CA63B412331D29A898F1269FF72",
+      "bytes": 727
+    },
+    "PHASE_1_9_14_REPORT.md": {
+      "sha256": "478510B85FF42549B8FC7848BBC4C0E73DEEC8B93168945270A05E0105A685E3",
+      "bytes": 13267
+    },
+    "SIAK_CHILD_CALIBRATION.md": {
+      "sha256": "F278EAE858FC6C7347BD9C004CB1F99D2407FFBAC54876B8D11B00D5C0DD8FAA",
+      "bytes": 5396
+    }
+  },
+  "frozen_inputs": {
+    "Research/Speech/Phase1_9_12/Results/final_consonant_human_vs_model.csv": "2740176975B25AA5FB9AF6C1CFB7320E8B0B0F90950CF9523C1DD87D4261DF6B",
+    "Research/Speech/Phase1_9_12/Results/final_consonant_human_review.csv": "7D069F720BB321D04BF3CA9E24C6D0A5C1B44173B432D630FA2C576808554F68",
+    "Research/Speech/Phase1_9_12/Results/phase_1_9_12_master.json": "D055F140CA3BD15EAF6BEE85FD9F8ACD957FE449A5ED708B7A6211A04C32AA9F",
+    "Research/Speech/Phase1_9_11/Results/scorer_miss_human_review.csv": "4FD789CDACF537EDD33F65C4121F5889CB568A842E22CB3C92F1AD4D7EB9EF2D",
+    "Research/Speech/Phase1_9_11/Results/window_human_spot_check.csv": "D94E178D337284B81FE0C2AB916D00282023B914EA19A82E1A0FAB8203F95523",
+    "Research/Speech/Phase1_9_10/Results/human_second_pass.csv": "98956F51798817998D1628BDB4253CA5CBA9423F783C4D2C11EFA266EB2C5F05",
+    "Research/Speech/Phase1_9_9/Results/human_review_results.csv": "8EB9FFE0432F18E26FB96FE5C3F4673B54B88C75F77C94CB397C1A01CA0E420B",
+    "Research/Speech/Phase1_9_9/Results/asr_phone_conflicts.csv": "C51F9D5F2DFAD5C4589D701201587C8CC14C41610773AFDB3E68064DD6565A4B",
+    "Research/Speech/Phase1_9_8/Results/pronunciation_results.csv": "8B493EA533F38F81337240A11A9C51366F18E549AB31478210030BCD990BD165",
+    "Research/Speech/Phase1_9_8/Results/vad_results.csv": "8F844D2E07F978A0F19B6208C69B43CF7EDAD2BBEEDC3F14DD867A0CB4B76472",
+    "Research/Speech/Phase1_9_8/Results/recording_inventory.csv": "E8E435088C53944952C6788EA85CD0147E2AFC9B7743520D62ADA66BECBB4723",
+    "Research/Speech/ExternalData/SIAK/train.csv": "0EE4F498E52947AF84587AD60600419E9F57BA3C4CECFD4DEC08763665D8A812",
+    "Research/Speech/ExternalData/SIAK/test.csv": "AB98C9AD972536041336C846259A55753050E26D09CBB333ECAF7B70D156AF39",
+    "Research/Speech/ExternalData/SIAK/README.md": "E2E38FF8DE3B7ADC599481846A8103ECE604918E4D5DDDCD0102E9A9BA6E3513"
+  }
+}

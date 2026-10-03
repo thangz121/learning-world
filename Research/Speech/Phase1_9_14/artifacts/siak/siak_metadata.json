@@ -1,0 +1,111 @@
+{
+  "release": {
+    "path": "D:\\Vscode\\little-world-english\\Research\\Speech\\ExternalData\\SIAK",
+    "source": "Kaggle mirror of SIAK (Say It Again, Kid!) with identifying metadata removed",
+    "license": "CC-BY-ND-4.0 (commercial building/evaluation of speech technology models not prohibited)",
+    "files": {
+      "train_csv": 12308,
+      "test_csv": 4000,
+      "flac_indexed": 16308
+    }
+  },
+  "annotation": {
+    "fields": [
+      "file",
+      "utterance",
+      "score"
+    ],
+    "score": "single expert annotator, 0-100 (paper maps to 0-5 stars)",
+    "utterance": "single word or short phrase (dashes for spaces)",
+    "metadata_in_filename": [
+      "split",
+      "speaker",
+      "L1",
+      "age_years",
+      "sample_no",
+      "seconds_since_first"
+    ],
+    "age_is_2_digit_years": true
+  },
+  "counts": {
+    "total": 16308,
+    "by_split": {
+      "train": 12308,
+      "test": 4000
+    },
+    "by_l1": {
+      "fifi": 13161,
+      "enuk": 2434,
+      "othr": 713
+    },
+    "by_age": {
+      "4": 44,
+      "5": 420,
+      "6": 130,
+      "7": 1198,
+      "8": 3973,
+      "9": 6360,
+      "10": 2647,
+      "11": 1284,
+      "12": 252
+    },
+    "speakers_total": 172,
+    "unique_utterances": 320,
+    "score_bands": {
+      "zero": 0,
+      "1_19": 1338,
+      "20_49": 3117,
+      "50_79": 5221,
+      "80_100": 6632
+    },
+    "score_min": 1,
+    "score_max": 100,
+    "score_zero_n": 0
+  },
+  "age_4_6": {
+    "n": 594,
+    "speakers": {
+      "train001_fifi": 420,
+      "train070_othr": 44,
+      "train110_fifi": 19,
+      "test143_enuk": 89,
+      "test160_fifi": 22
+    },
+    "split": {
+      "train": 483,
+      "test": 111
+    },
+    "unique_targets": 222,
+    "score_bands": {
+      "1_19": 111,
+      "20_49": 166,
+      "50_79": 154,
+      "80_100": 163
+    }
+  },
+  "rejected_class_investigation": {
+    "documented_externally": "SLATE 2023 paper (E2): 1,489 items rejected before scoring (silence, interrupted, wrong word, spoken noise, lack of effort)",
+    "observable_in_downloaded_release": false,
+    "evidence": "score minimum is 1; zero-rating rows = 0; rejected items are not present as a labeled class",
+    "score_1_items": {
+      "n": 198,
+      "by_age": {
+        "4": 3,
+        "5": 11,
+        "6": 2,
+        "7": 19,
+        "8": 69,
+        "9": 57,
+        "10": 20,
+        "11": 17
+      },
+      "interpretation": "rating 1 of 100 = scored as very poor pronunciation, not an explicit rejection; must not be conflated with the paper's rejected class"
+    },
+    "conclusion": "SIAK provides documented (paper-level) support for a pre-scoring rejection gate, but the released data cannot empirically verify an assessability classifier: no rejected rows, no rejection reason, no zero ratings."
+  },
+  "speaker_leakage": {
+    "official_splits": "filenames encode train/test; speaker numbers are disjoint across splits",
+    "within_split_repeats": "each speaker contributes many repetitions of the same targets (e.g., train001 has 420 items over months); any future fine-tuning must hold out speakers, not utterances",
+    "cross_split_speaker_ids": []
+  }
+}

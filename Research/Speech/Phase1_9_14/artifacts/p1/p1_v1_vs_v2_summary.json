@@ -1,0 +1,185 @@
+{
+  "phase": "1.9.14",
+  "experiment": "P1 fidelity/assessability rules v1 vs v2",
+  "thresholds": {
+    "VAD_RATIO_FLOOR": 0.05,
+    "MIN_DUR_S": 0.15,
+    "RMS_NOISE_FLOOR": 0.002,
+    "RMS_ENERGY_PRESENT": 0.01,
+    "CONF_VALID": 0.05,
+    "CONF_POSSIBLE": 0.005
+  },
+  "n_labeled": 49,
+  "v1": {
+    "matrix": [
+      {
+        "fidelity_state": "NO_SPEECH",
+        "HUMAN_CORRECT": 0,
+        "HUMAN_INCORRECT": 0,
+        "HUMAN_UNCERTAIN": 0,
+        "total": 0
+      },
+      {
+        "fidelity_state": "UNINTELLIGIBLE",
+        "HUMAN_CORRECT": 4,
+        "HUMAN_INCORRECT": 3,
+        "HUMAN_UNCERTAIN": 3,
+        "total": 10
+      },
+      {
+        "fidelity_state": "INCOMPLETE",
+        "HUMAN_CORRECT": 0,
+        "HUMAN_INCORRECT": 0,
+        "HUMAN_UNCERTAIN": 0,
+        "total": 0
+      },
+      {
+        "fidelity_state": "FREE_SPEAK",
+        "HUMAN_CORRECT": 4,
+        "HUMAN_INCORRECT": 3,
+        "HUMAN_UNCERTAIN": 2,
+        "total": 9
+      },
+      {
+        "fidelity_state": "POSSIBLE_ATTEMPT",
+        "HUMAN_CORRECT": 13,
+        "HUMAN_INCORRECT": 5,
+        "HUMAN_UNCERTAIN": 0,
+        "total": 18
+      },
+      {
+        "fidelity_state": "VALID_ATTEMPT",
+        "HUMAN_CORRECT": 7,
+        "HUMAN_INCORRECT": 2,
+        "HUMAN_UNCERTAIN": 0,
+        "total": 9
+      },
+      {
+        "fidelity_state": "ASSESSABLE",
+        "HUMAN_CORRECT": 2,
+        "HUMAN_INCORRECT": 0,
+        "HUMAN_UNCERTAIN": 1,
+        "total": 3
+      }
+    ],
+    "n_human_correct": 30,
+    "n_human_incorrect": 13,
+    "n_human_uncertain": 6,
+    "false_gate_on_human_correct": 8,
+    "false_gate_ids": [
+      "child_01_seven",
+      "child_02_eight",
+      "child_03_eight",
+      "child_04_three",
+      "child_06_six",
+      "child_06_two",
+      "child_07_one",
+      "child_09_six"
+    ],
+    "low_score_correct_n": 9,
+    "low_score_correct_free_speak_n": 2,
+    "asr_empty_human_correct_n": 16,
+    "asr_empty_human_correct_states": {
+      "POSSIBLE_ATTEMPT": 8,
+      "VALID_ATTEMPT": 4,
+      "UNINTELLIGIBLE": 4
+    },
+    "asr_empty_human_correct_never_free_speak": true,
+    "scorer_miss_deletion_states": {
+      "FREE_SPEAK": 1,
+      "UNINTELLIGIBLE": 2,
+      "VALID_ATTEMPT": 2,
+      "POSSIBLE_ATTEMPT": 1
+    },
+    "scorer_miss_deletion_valid_attempt_or_better": 2,
+    "human_uncertain_refused": 5
+  },
+  "v2": {
+    "matrix": [
+      {
+        "fidelity_state": "NO_SPEECH",
+        "HUMAN_CORRECT": 0,
+        "HUMAN_INCORRECT": 0,
+        "HUMAN_UNCERTAIN": 0,
+        "total": 0
+      },
+      {
+        "fidelity_state": "UNINTELLIGIBLE",
+        "HUMAN_CORRECT": 0,
+        "HUMAN_INCORRECT": 0,
+        "HUMAN_UNCERTAIN": 0,
+        "total": 0
+      },
+      {
+        "fidelity_state": "INCOMPLETE",
+        "HUMAN_CORRECT": 0,
+        "HUMAN_INCORRECT": 0,
+        "HUMAN_UNCERTAIN": 0,
+        "total": 0
+      },
+      {
+        "fidelity_state": "FREE_SPEAK",
+        "HUMAN_CORRECT": 0,
+        "HUMAN_INCORRECT": 0,
+        "HUMAN_UNCERTAIN": 0,
+        "total": 0
+      },
+      {
+        "fidelity_state": "POSSIBLE_ATTEMPT",
+        "HUMAN_CORRECT": 8,
+        "HUMAN_INCORRECT": 9,
+        "HUMAN_UNCERTAIN": 4,
+        "total": 21
+      },
+      {
+        "fidelity_state": "VALID_ATTEMPT",
+        "HUMAN_CORRECT": 20,
+        "HUMAN_INCORRECT": 4,
+        "HUMAN_UNCERTAIN": 1,
+        "total": 25
+      },
+      {
+        "fidelity_state": "ASSESSABLE",
+        "HUMAN_CORRECT": 2,
+        "HUMAN_INCORRECT": 0,
+        "HUMAN_UNCERTAIN": 1,
+        "total": 3
+      }
+    ],
+    "n_human_correct": 30,
+    "n_human_incorrect": 13,
+    "n_human_uncertain": 6,
+    "false_gate_on_human_correct": 0,
+    "false_gate_ids": [],
+    "low_score_correct_n": 9,
+    "low_score_correct_free_speak_n": 0,
+    "asr_empty_human_correct_n": 16,
+    "asr_empty_human_correct_states": {
+      "VALID_ATTEMPT": 12,
+      "POSSIBLE_ATTEMPT": 4
+    },
+    "asr_empty_human_correct_never_free_speak": true,
+    "scorer_miss_deletion_states": {
+      "POSSIBLE_ATTEMPT": 3,
+      "VALID_ATTEMPT": 3
+    },
+    "scorer_miss_deletion_valid_attempt_or_better": 3,
+    "human_uncertain_refused": 0
+  },
+  "img_stress": {
+    "state_v1": "POSSIBLE_ATTEMPT",
+    "state_v2": "POSSIBLE_ATTEMPT",
+    "reasons_v2": "VAD_NO_SEGMENT;VAD_LOW_SPEECH_RATIO;ENERGY_PRESENT_DESPITE_VAD",
+    "human": "1.9.6_round2_28/28_SPEECH"
+  },
+  "states_not_emitted_v2": [
+    "INCOMPLETE",
+    "FREE_SPEAK"
+  ],
+  "states_not_emitted_note": "No confirmed free-speech/incomplete-attempt recordings exist in the labeled child corpus; emitting those states from the current signal set would be fabrication, so they remain defined but unused.",
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "scorer_modified": false,
+  "production_window_locked": false
+}

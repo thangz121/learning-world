@@ -1,0 +1,98 @@
+{
+  "phase": "1.9.14",
+  "experiment": "P2 deletion-aware final consonants",
+  "n_tokens_scored": 65,
+  "n_human_labeled": 28,
+  "n_present": 16,
+  "n_absent": 12,
+  "baseline_operating_points": [
+    {
+      "method": "A_softv2_phone_presence",
+      "frr": 0.0625,
+      "far": 0.4166666666666667,
+      "tp": 15,
+      "fp": 5,
+      "tn": 7,
+      "fn": 1
+    },
+    {
+      "method": "B_dalign_free_presence",
+      "frr": 0.4375,
+      "far": 0.16666666666666666,
+      "tp": 9,
+      "fp": 2,
+      "tn": 10,
+      "fn": 7
+    }
+  ],
+  "auc": [
+    {
+      "method": "A_softv2_phone_presence",
+      "n": 28,
+      "auc_present": 0.7604166666666666
+    },
+    {
+      "method": "B_dalign_free_presence",
+      "n": 28,
+      "auc_present": 0.6979166666666666
+    },
+    {
+      "method": "B_dalign_margin_per_frame",
+      "n": 28,
+      "auc_present": 0.8385416666666666
+    },
+    {
+      "method": "C_gop_ratio",
+      "n": 28,
+      "auc_present": 0.7395833333333334
+    },
+    {
+      "method": "C_gop_expected",
+      "n": 28,
+      "auc_present": 0.75
+    }
+  ],
+  "by_class": {
+    "STOP": {
+      "n": 8,
+      "present": 5,
+      "absent": 3,
+      "base_correct": 8,
+      "free_correct": 8
+    },
+    "FRICATIVE": {
+      "n": 5,
+      "present": 2,
+      "absent": 3,
+      "base_correct": 5,
+      "free_correct": 3
+    },
+    "LIQUID": {
+      "n": 6,
+      "present": 1,
+      "absent": 5,
+      "base_correct": 2,
+      "free_correct": 5
+    },
+    "NASAL": {
+      "n": 9,
+      "present": 8,
+      "absent": 1,
+      "base_correct": 7,
+      "free_correct": 3
+    }
+  },
+  "method_notes": {
+    "A_softv2_phone_presence": "archived 1.9.12 soft-v2 final phone match exact|soft = present",
+    "B_dalign_free_presence": "blank-interleaved (2L+1) Viterbi, final phone visited with zero skip penalty",
+    "B_dalign_margin_per_frame": "score(forced present) - score(forced absent), per frame; higher = more present evidence",
+    "C_gop_ratio": "log mean-p(expected final) - log mean-p(best competing phone class or blank) over forced-present span",
+    "C_gop_expected": "mean posterior of expected final phone over forced-present span"
+  },
+  "runtime_s": 39.5,
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "scorer_modified": false,
+  "production_window_locked": false
+}

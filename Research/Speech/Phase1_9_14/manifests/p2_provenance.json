@@ -1,0 +1,12 @@
+{
+  "script": "p2_deletion_aware.py",
+  "inputs": {
+    "tokens": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_12\\Results\\final_consonant_human_vs_model.csv",
+    "tokens_sha256": "2740176975B25AA5FB9AF6C1CFB7320E8B0B0F90950CF9523C1DD87D4261DF6B",
+    "human_labels": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_12\\Results\\final_consonant_human_review.csv",
+    "human_labels_sha256": "7D069F720BB321D04BF3CA9E24C6D0A5C1B44173B432D630FA2C576808554F68"
+  },
+  "model": "facebook/wav2vec2-xlsr-53-espeak-cv-ft (frozen, via PhoneEvidenceV2@1.4.0)",
+  "baseline_repro_included": true,
+  "python": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]"
+}

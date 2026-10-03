@@ -1,0 +1,5 @@
+class,n,present,absent,baseline_correct,dalign_free_correct,baseline_missed_absent,baseline_rejected_present
+FRICATIVE,5,2,3,5,3,,
+LIQUID,6,1,5,2,5,fc_child_01_four;fc_child_02_four;fc_child_03_four;fc_child_06_four,
+NASAL,9,8,1,7,3,fc_child_07_seven,fc_child_07_one
+STOP,8,5,3,8,8,,

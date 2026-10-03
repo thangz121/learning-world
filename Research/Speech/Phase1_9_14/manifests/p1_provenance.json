@@ -1,0 +1,15 @@
+{
+  "script": "p1_fidelity_assessability.py",
+  "inputs": {
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_8\\Results\\pronunciation_results.csv": "8B493EA533F38F81337240A11A9C51366F18E549AB31478210030BCD990BD165",
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_8\\Results\\vad_results.csv": "8F844D2E07F978A0F19B6208C69B43CF7EDAD2BBEEDC3F14DD867A0CB4B76472",
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_8\\Results\\recording_inventory.csv": "E8E435088C53944952C6788EA85CD0147E2AFC9B7743520D62ADA66BECBB4723",
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_9\\Results\\human_review_results.csv": "8EB9FFE0432F18E26FB96FE5C3F4673B54B88C75F77C94CB397C1A01CA0E420B",
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_9\\Results\\asr_phone_conflicts.csv": "C51F9D5F2DFAD5C4589D701201587C8CC14C41610773AFDB3E68064DD6565A4B",
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_10\\Results\\human_second_pass.csv": "98956F51798817998D1628BDB4253CA5CBA9423F783C4D2C11EFA266EB2C5F05",
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_11\\Results\\scorer_miss_human_review.csv": "4FD789CDACF537EDD33F65C4121F5889CB568A842E22CB3C92F1AD4D7EB9EF2D",
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_11\\Results\\window_human_spot_check.csv": "D94E178D337284B81FE0C2AB916D00282023B914EA19A82E1A0FAB8203F95523",
+    "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_12\\Results\\final_consonant_human_review.csv": "7D069F720BB321D04BF3CA9E24C6D0A5C1B44173B432D630FA2C576808554F68"
+  },
+  "python": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]"
+}
