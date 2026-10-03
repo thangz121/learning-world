@@ -1,0 +1,6 @@
+SOURCE (E2): arXiv 2511.20107 'Mispronunciation Detection and Diagnosis Without Model Training:
+A Retrieval-Based Approach' (Vietnamese author group; Nov 2025)
+- PER-MDD: HuBERT-large-ls960-ft frame embeddings; pool of 500 files; cosine top-k=10 thr=0.7;
+  frame label=mode; collapse duplicates -> predicted phones -> align canonical.
+- L2-ARCTIC: F1 69.60%, FRR 4.43% (best), FAR 32.44%, DA 91.57%; insertion-heavy PER 104.08.
+- Principle: 'FRR is regarded as the most critical metric in MDD' (avoid frustrating learners).
