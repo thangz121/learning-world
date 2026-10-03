@@ -1,0 +1,8 @@
+speaker_id,n_phone_model_errors,targets,mean_full_score,boundary_rescues,root_causes
+child_01,2,five;seven,26.75,1,BOUNDARY_ERROR;PHONE_MODEL_GENERALIZATION_FAILURE
+child_03,2,eight;three,19.6,0,CTC_ALIGNMENT_ERROR;PHONEME_REALIZATION_VARIATION
+child_04,1,three,11.7,1,BOUNDARY_ERROR
+child_06,2,six;two,12.5,2,BOUNDARY_ERROR
+child_07,2,eight;one,0.0,0,CTC_ALIGNMENT_ERROR
+child_08,2,eight;five,19.6,0,PHONEME_REALIZATION_VARIATION;PHONE_MODEL_GENERALIZATION_FAILURE
+child_09,1,five,33.4,0,PHONE_MODEL_GENERALIZATION_FAILURE

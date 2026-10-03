@@ -1,0 +1,23 @@
+{
+  "PME_f0_median_mean": 281.51194320094356,
+  "PME_f0_median_n": 12,
+  "PME_f0_range_mean": 279.6899592540279,
+  "PME_f0_range_n": 12,
+  "PME_f1_median_mean": 947.9260310694227,
+  "PME_f1_median_n": 12,
+  "PME_f2_median_mean": 2452.0673082635594,
+  "PME_f2_median_n": 12,
+  "PME_duration_s_mean": 0.9243593749999999,
+  "PME_duration_s_n": 12,
+  "OK_f0_median_mean": 280.74938196928224,
+  "OK_f0_median_n": 17,
+  "OK_f0_range_mean": 281.33971206785105,
+  "OK_f0_range_n": 17,
+  "OK_f1_median_mean": 900.5398521952382,
+  "OK_f1_median_n": 17,
+  "OK_f2_median_mean": 2298.061414054825,
+  "OK_f2_median_n": 17,
+  "OK_duration_s_mean": 1.0620919117647059,
+  "OK_duration_s_n": 17,
+  "note": "Descriptive only. n(PME)=12, n(OK) from 1.9.9 AGREEMENT_OK; no statistical test claimed. F0/F1/F2 from parselmouth same method."
+}

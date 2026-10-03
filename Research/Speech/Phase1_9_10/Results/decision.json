@@ -1,0 +1,15 @@
+{
+  "decision": "B. ROOT_CAUSE_PARTIALLY_IDENTIFIED",
+  "note": "Multiple measurable mechanisms found (boundary rescue, full-file alignment inversion, attractor collapse, documented child-realization substitutions); human second-pass review pending; no scorer change justified",
+  "root_cause_distribution": {
+    "CTC_ALIGNMENT_ERROR": 3,
+    "BOUNDARY_ERROR": 4,
+    "PHONE_MODEL_GENERALIZATION_FAILURE": 3,
+    "PHONEME_REALIZATION_VARIATION": 2
+  },
+  "boundary_rescue_rate": 0.3333333333333333,
+  "scorer_modified": false,
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false
+}

@@ -1,0 +1,129 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>1.9.10 Second-pass blind</title><style>
+:root{--tap:44px}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;margin:0 auto;max-width:760px;padding:12px 12px 96px;line-height:1.45;background:#f7f7f8}
+.banner{background:#fff3cd;border:1px solid #e6d089;border-radius:12px;padding:14px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;margin:0 0 16px}
+.card h2{font-size:1.05rem;margin:0 0 6px}
+.meta{font-size:.85rem;color:#444}
+.target{display:inline-block;background:#111;color:#fff;font-size:1.2rem;font-weight:700;padding:6px 12px;border-radius:8px;margin:4px 0 8px}
+.audio-block{margin:8px 0}.lbl{font-size:.8rem;font-weight:600;color:#333;margin-bottom:4px}
+audio{width:100%}
+fieldset{border:1px solid #ccc;border-radius:10px;margin:12px 0 0;padding:10px;background:#fafafa}
+legend{font-weight:700;font-size:.95rem;padding:0 6px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.opts label{display:flex;align-items:center;gap:10px;min-height:var(--tap);padding:10px 12px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:.95rem}
+.opts input{width:20px;height:20px;flex-shrink:0}
+.opts label:has(input:checked){border-color:#0b5fff;background:#e8f0ff}
+.notes{width:100%;min-height:44px;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:10px;margin-top:8px}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:#111;color:#fff;padding:12px 14px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:50}
+.sticky button{flex:1;min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff}
+.sticky .count{align-self:center;font-size:.85rem;white-space:nowrap}
+pre{white-space:pre-wrap;font-size:.78rem;background:#eee;padding:8px;border-radius:8px}
+</style></head><body>
+<div class="banner"><h1>1.9.10 — Second pass (mù)</h1>
+<p>12 ca phone-model-error. Nghe trước, chấm phát âm. <b>Ẩn</b> điểm/phone/acoustics.</p></div>
+<section class="card" id="a_pme_01">
+<h2>pme_01 — EIGHT</h2>
+<p class="meta">speaker=child_03 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_01_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_01_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_01" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_01" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_01" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_01" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_01" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_01" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_02">
+<h2>pme_02 — TWO</h2>
+<p class="meta">speaker=child_06 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_02_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_02_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_02" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_02" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_02" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_02" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_02" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_02" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_03">
+<h2>pme_03 — EIGHT</h2>
+<p class="meta">speaker=child_07 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_03_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_03_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_03" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_03" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_03" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_03" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_03" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_03" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_04">
+<h2>pme_04 — ONE</h2>
+<p class="meta">speaker=child_07 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_04_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_04_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_04" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_04" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_04" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_04" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_04" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_04" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_05">
+<h2>pme_05 — EIGHT</h2>
+<p class="meta">speaker=child_08 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_05_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_05_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_05" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_05" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_05" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_05" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_05" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_05" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_06">
+<h2>pme_06 — THREE</h2>
+<p class="meta">speaker=child_04 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_06_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_06_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_06" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_06" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_06" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_06" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_06" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_06" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_07">
+<h2>pme_07 — SEVEN</h2>
+<p class="meta">speaker=child_01 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_07_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_07_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_07" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_07" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_07" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_07" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_07" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_07" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_08">
+<h2>pme_08 — SIX</h2>
+<p class="meta">speaker=child_06 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_08_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_08_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_08" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_08" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_08" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_08" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_08" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_08" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_09">
+<h2>pme_09 — FIVE</h2>
+<p class="meta">speaker=child_09 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_09_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_09_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_09" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_09" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_09" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_09" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_09" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_09" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_10">
+<h2>pme_10 — FIVE</h2>
+<p class="meta">speaker=child_01 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_10_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_10_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_10" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_10" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_10" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_10" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_10" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_10" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_11">
+<h2>pme_11 — THREE</h2>
+<p class="meta">speaker=child_03 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_11_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_11_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_11" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_11" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_11" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_11" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_11" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_11" placeholder="ghi chú (tuỳ chọn)">
+</section><section class="card" id="a_pme_12">
+<h2>pme_12 — FIVE</h2>
+<p class="meta">speaker=child_08 · dataset_mean_M=4.9y; individual UNKNOWN</p>
+<div class="audio-block"><div class="lbl">LISTEN</div><audio controls preload="none" src="clips/pme_12_LISTEN.wav"></audio></div>
+<div class="audio-block"><div class="lbl">FULL</div><audio controls preload="none" src="clips/pme_12_FULL.wav"></audio></div>
+<fieldset><legend>Nghe và chấm phát âm (ẩn điểm)</legend><div class="opts"><label><input type="radio" name="p_pme_12" value="CLEAR_CORRECT"><span>Rõ — đúng</span></label><label><input type="radio" name="p_pme_12" value="PROBABLY_CORRECT"><span>Có lẽ đúng</span></label><label><input type="radio" name="p_pme_12" value="AMBIGUOUS"><span>Không chắc</span></label><label><input type="radio" name="p_pme_12" value="PROBABLY_INCORRECT"><span>Có lẽ sai</span></label><label><input type="radio" name="p_pme_12" value="CLEAR_INCORRECT"><span>Rõ — sai</span></label></div></fieldset>
+<input class="notes" name="n_pme_12" placeholder="ghi chú (tuỳ chọn)">
+</section>
+<div class="sticky"><span class="count" id="prog">0/12</span><button id="exp">Xuất CSV Stage A</button></div>
+<script>
+const ids=["pme_01", "pme_02", "pme_03", "pme_04", "pme_05", "pme_06", "pme_07", "pme_08", "pme_09", "pme_10", "pme_11", "pme_12"];
+function v(p,id){const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}
+function upd(){let n=0;for(const id of ids)if(v('p',id))n++;document.getElementById('prog').textContent=n+'/'+ids.length;}
+document.body.addEventListener('change',upd);upd();
+document.getElementById('exp').onclick=()=>{
+ let lines=['case_id,stage_a_pronunciation,notes'];
+ for(const id of ids){
+  const notes=(document.querySelector('input[name="n_'+id+'"]')||{value:''}).value.replace(/,/g,';');
+  lines.push([id,v('p',id),notes].join(','));
+ }
+ const t=lines.join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
+ a.download='Human_SecondPass_StageA_Filled.csv';a.click();
+};
+</script></body></html>

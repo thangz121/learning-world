@@ -1,0 +1,160 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.9.10 reveal</title><style>
+:root{--tap:44px}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;margin:0 auto;max-width:760px;padding:12px 12px 96px;line-height:1.45;background:#f7f7f8}
+.banner{background:#fff3cd;border:1px solid #e6d089;border-radius:12px;padding:14px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;margin:0 0 16px}
+.card h2{font-size:1.05rem;margin:0 0 6px}
+.meta{font-size:.85rem;color:#444}
+.target{display:inline-block;background:#111;color:#fff;font-size:1.2rem;font-weight:700;padding:6px 12px;border-radius:8px;margin:4px 0 8px}
+.audio-block{margin:8px 0}.lbl{font-size:.8rem;font-weight:600;color:#333;margin-bottom:4px}
+audio{width:100%}
+fieldset{border:1px solid #ccc;border-radius:10px;margin:12px 0 0;padding:10px;background:#fafafa}
+legend{font-weight:700;font-size:.95rem;padding:0 6px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.opts label{display:flex;align-items:center;gap:10px;min-height:var(--tap);padding:10px 12px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:.95rem}
+.opts input{width:20px;height:20px;flex-shrink:0}
+.opts label:has(input:checked){border-color:#0b5fff;background:#e8f0ff}
+.notes{width:100%;min-height:44px;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:10px;margin-top:8px}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:#111;color:#fff;padding:12px 14px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:50}
+.sticky button{flex:1;min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff}
+.sticky .count{align-self:center;font-size:.85rem;white-space:nowrap}
+pre{white-space:pre-wrap;font-size:.78rem;background:#eee;padding:8px;border-radius:8px}
+</style></head><body>
+<h1>1.9.10 — Stage B (hiện evidence)</h1>
+<p>Dùng sau khi Stage A đã chấm mù.</p>
+<section class="card">
+<h2>pme_01 — EIGHT</h2>
+<audio controls preload="none" src="clips/pme_01_FULL.wav"></audio>
+<pre>full_score=0.0  raw_score=50.0  best_pad(pad_100)=0.0
+canonical=EY1 T
+observed =d æ
+mismatch =eɪ->d@initial;t->æ@final
+boundary_rescue=False  asr=ASR_EMPTY
+f0_median=299.6717032908075  f1=858.9619580108434  f2=2374.402073610446  duration=0.7769375</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_01" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_01" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_01" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_01" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_01" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_01" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_02 — TWO</h2>
+<audio controls preload="none" src="clips/pme_02_FULL.wav"></audio>
+<pre>full_score=0.0  raw_score=0.0  best_pad(pad_100)=50.0
+canonical=T UW1
+observed =ts. ŋ
+mismatch =t->ts.@initial;uː->ŋ@final
+boundary_rescue=True  asr=ASR_EMPTY
+f0_median=246.13751949307283  f1=916.9658899446488  f2=2560.919685246404  duration=0.561625</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_02" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_02" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_02" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_02" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_02" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_02" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_03 — EIGHT</h2>
+<audio controls preload="none" src="clips/pme_03_FULL.wav"></audio>
+<pre>full_score=0.0  raw_score=0.1  best_pad(pad_100)=0.0
+canonical=EY1 T
+observed =l p
+mismatch =eɪ->l@initial;t->p@final
+boundary_rescue=False  asr=ASR_WRONG
+f0_median=253.13164379240715  f1=891.1871790431026  f2=2428.987461286023  duration=0.6340625</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_03" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_03" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_03" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_03" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_03" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_03" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_04 — ONE</h2>
+<audio controls preload="none" src="clips/pme_04_FULL.wav"></audio>
+<pre>full_score=0.0  raw_score=72.5  best_pad(pad_200)=72.5
+canonical=W AH1 N
+observed =k k l
+mismatch =w->k@initial;ə->k@medial;n->l@final
+boundary_rescue=False  asr=ASR_WRONG
+f0_median=265.2097807310224  f1=719.9089823325462  f2=2330.628324237964  duration=0.880625</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_04" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_04" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_04" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_04" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_04" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_04" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_05 — EIGHT</h2>
+<audio controls preload="none" src="clips/pme_05_FULL.wav"></audio>
+<pre>full_score=0.0  raw_score=0.0  best_pad(pad_100)=0.0
+canonical=EY1 T
+observed =n n
+mismatch =eɪ->n@initial;t->n@final
+boundary_rescue=False  asr=ASR_EMPTY
+f0_median=331.71085000754715  f1=772.1450066858883  f2=2654.036868767099  duration=0.7220625</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_05" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_05" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_05" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_05" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_05" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_05" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_06 — THREE</h2>
+<audio controls preload="none" src="clips/pme_06_FULL.wav"></audio>
+<pre>full_score=11.7  raw_score=6.7  best_pad(pad_300)=39.2
+canonical=TH R IY1
+observed =t w l
+mismatch =θ->t@initial;ɹ->w@medial;iː->l@final
+boundary_rescue=True  asr=ASR_EMPTY
+f0_median=245.34245821497706  f1=827.0260254868774  f2=2317.9695317929645  duration=2.2699375</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_06" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_06" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_06" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_06" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_06" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_06" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_07 — SEVEN</h2>
+<audio controls preload="none" src="clips/pme_07_FULL.wav"></audio>
+<pre>full_score=20.0  raw_score=40.1  best_pad(pad_250)=44.1
+canonical=S EH1 V AH0 N
+observed =l l l j n
+mismatch =s->l@initial;ɛ->l@medial;v->l@medial;ə->j@medial
+boundary_rescue=False  asr=ASR_EMPTY
+f0_median=154.14669750304265  f1=1079.7997081061744  f2=2694.3600209202245  duration=1.02725</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_07" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_07" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_07" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_07" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_07" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_07" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_08 — SIX</h2>
+<audio controls preload="none" src="clips/pme_08_FULL.wav"></audio>
+<pre>full_score=25.0  raw_score=0.0  best_pad(pad_100)=25.1
+canonical=S IH1 K S
+observed =l l ɹ s
+mismatch =s->l@initial;ɪ->l@medial;k->ɹ@medial
+boundary_rescue=True  asr=ASR_WRONG
+f0_median=430.99016845760775  f1=1421.7280250389074  f2=2738.660859547187  duration=0.821875</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_08" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_08" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_08" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_08" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_08" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_08" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_09 — FIVE</h2>
+<audio controls preload="none" src="clips/pme_09_FULL.wav"></audio>
+<pre>full_score=33.4  raw_score=33.4  best_pad(pad_100)=33.4
+canonical=F AY1 V
+observed =l aɪ n
+mismatch =f->l@initial;v->n@final
+boundary_rescue=False  asr=ASR_EMPTY
+f0_median=286.65283088400975  f1=1030.8558637433557  f2=2600.069916709206  duration=0.6830625</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_09" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_09" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_09" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_09" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_09" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_09" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_10 — FIVE</h2>
+<audio controls preload="none" src="clips/pme_10_FULL.wav"></audio>
+<pre>full_score=33.5  raw_score=39.2  best_pad(pad_100)=66.7
+canonical=F AY1 V
+observed =p aɪ ɑ
+mismatch =f->p@initial;v->ɑ@final
+boundary_rescue=True  asr=ASR_WRONG
+f0_median=280.08021783957963  f1=828.8039397819781  f2=1917.8119303945732  duration=0.919125</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_10" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_10" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_10" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_10" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_10" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_10" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_11 — THREE</h2>
+<audio controls preload="none" src="clips/pme_11_FULL.wav"></audio>
+<pre>full_score=39.2  raw_score=39.2  best_pad(pad_100)=39.2
+canonical=TH R IY1
+observed =t ɹ t
+mismatch =θ->t@initial;iː->t@final
+boundary_rescue=False  asr=ASR_EMPTY
+f0_median=298.45490469045683  f1=974.2034472022333  f2=2405.4194584656843  duration=1.0239375</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_11" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_11" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_11" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_11" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_11" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_11" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section><section class="card">
+<h2>pme_12 — FIVE</h2>
+<audio controls preload="none" src="clips/pme_12_FULL.wav"></audio>
+<pre>full_score=39.2  raw_score=39.2  best_pad(pad_100)=39.2
+canonical=F AY1 V
+observed =v aɪ t
+mismatch =f->v@initial;v->t@final
+boundary_rescue=False  asr=ASR_EMPTY
+f0_median=286.6145435067914  f1=1053.5263474565174  f2=2401.541568184941  duration=0.7718125</pre>
+<fieldset><legend>Theo bạn, yếu tố nào chịu trách nhiệm chính cho điểm thấp?</legend><div class="opts"><label><input type="radio" name="s_pme_12" value="BOUNDARY"><span>Cắt biên</span></label><label><input type="radio" name="s_pme_12" value="PHONE_MODEL"><span>Phone model</span></label><label><input type="radio" name="s_pme_12" value="AUDIO"><span>Chất lượng audio</span></label><label><input type="radio" name="s_pme_12" value="CHILD_ACOUSTICS"><span>Đặc điểm giọng trẻ</span></label><label><input type="radio" name="s_pme_12" value="TRUE_PRONUNCIATION_ERROR"><span>Trẻ phát âm sai thật</span></label><label><input type="radio" name="s_pme_12" value="UNCERTAIN"><span>Không rõ</span></label></div></fieldset>
+</section>
+<p><button id="expb" style="min-height:48px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:#0b5fff;color:#fff;padding:0 16px">Xuất CSV Stage B</button></p>
+<script>
+const ids=["pme_01", "pme_02", "pme_03", "pme_04", "pme_05", "pme_06", "pme_07", "pme_08", "pme_09", "pme_10", "pme_11", "pme_12"];
+function v(p,id){const e=document.querySelector('input[name="'+p+'_'+id+'"]:checked');return e?e.value:'';}
+document.getElementById('expb').onclick=()=>{
+ let lines=['case_id,stage_b_most_responsible'];
+ for(const id of ids)lines.push([id,v('s',id)].join(','));
+ const t=lines.join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
+ a.download='Human_SecondPass_StageB_Filled.csv';a.click();
+};
+</script></body></html>

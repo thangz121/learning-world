@@ -1,0 +1,1922 @@
+{
+  "phase": "1.9.10",
+  "n_cases": 12,
+  "root_cause_distribution": {
+    "CTC_ALIGNMENT_ERROR": 3,
+    "BOUNDARY_ERROR": 4,
+    "PHONE_MODEL_GENERALIZATION_FAILURE": 3,
+    "PHONEME_REALIZATION_VARIATION": 2
+  },
+  "secondary_cause_distribution": {
+    "CTC_ALIGNMENT_ERROR": 2,
+    "PHONEME_REALIZATION_VARIATION": 2
+  },
+  "boundary_rescue_rate": 0.3333333333333333,
+  "boundary_rescue_to_usable_rate": 0.16666666666666666,
+  "crop_beats_full_count": 2,
+  "phone_model_error_human_correct_rate": 1.0,
+  "adult_exact_rate_mean": 0.5555555555555556,
+  "child_exact_rate_mean": 0.1486111111111111,
+  "adult_exact_rate_note": "adult comparison uses different words (diagnostic only); blue/dog/big also fail for adult",
+  "pitch_causality": "NOT_ESTABLISHED",
+  "formant_causality": "NOT_ESTABLISHED",
+  "child_specific_phone_failure": "PARTIAL",
+  "scorer_modification_justified": "NO",
+  "decision": "B. ROOT_CAUSE_PARTIALLY_IDENTIFIED",
+  "decision_note": "Multiple measurable mechanisms found (boundary rescue, full-file alignment inversion, attractor collapse, documented child-realization substitutions); human second-pass review pending; no scorer change justified",
+  "production_vad": false,
+  "router_locked": false,
+  "unity_integrated": false,
+  "scorer_modified": false,
+  "cases": [
+    {
+      "case_id": "pme_01",
+      "review_id": "child_03_eight_00",
+      "speaker_id": "child_03",
+      "recording_id": null,
+      "target": "eight",
+      "human_judgment": "PROBABLY_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "EY1",
+        "T"
+      ],
+      "observed_phones_full": [
+        "d",
+        "\u00e6"
+      ],
+      "observed_phones_raw": [
+        "e\u026a",
+        "l"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "e\u026a",
+          "observed": "d",
+          "match_type": "miss",
+          "sim": 6.246048656066705e-07,
+          "posterior": 1.249209731213341e-06,
+          "start_s": 0.0,
+          "end_s": 0.020445723684210524,
+          "duration_s": 0.020445723684210524,
+          "topk": [
+            [
+              "t",
+              0.00020937151566613466
+            ],
+            [
+              "n",
+              7.717788685113192e-05
+            ],
+            [
+              "i\u02d0",
+              7.111384184099734e-05
+            ],
+            [
+              "d",
+              5.497573874890804e-05
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 1,
+          "position": "final",
+          "expected": "t",
+          "observed": "\u00e6",
+          "match_type": "miss",
+          "sim": 0.0001627155434107408,
+          "posterior": 0.0003254310868214816,
+          "start_s": 0.020445723684210524,
+          "end_s": 0.7769375,
+          "duration_s": 0.7564917763157895,
+          "topk": [
+            [
+              "e\u026a",
+              0.00923500582575798
+            ],
+            [
+              "n",
+              0.007265601772814989
+            ],
+            [
+              "a\u026a",
+              0.005634632892906666
+            ],
+            [
+              "\u00e6",
+              0.001786441425792873
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 0.0,
+      "raw_score": 50.0,
+      "pad_scores": {
+        "pad_0": 50.0,
+        "pad_100": 0.0,
+        "pad_200": 0.0,
+        "pad_250": 0.0,
+        "pad_300": 0.0,
+        "pad_500": 0.0
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 0.0,
+      "boundary_rescue": false,
+      "boundary_label_human": "BOUNDARY_UNCLEAR",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.3,
+          0.7769
+        ],
+        "file_duration_s": 0.7769
+      },
+      "acoustic_features": {
+        "f0_median": 299.6717032908075,
+        "f0_min": 267.8804793442963,
+        "f0_max": 581.6789280879166,
+        "f0_range": 313.79844874362027,
+        "f1_median": 858.9619580108434,
+        "f2_median": 2374.402073610446,
+        "rms_mean": 0.12212294434507688,
+        "rms_p20": 0.055553328990936277,
+        "rms_p90": 0.26036325097084045,
+        "snr_proxy_db": 13.41739193602492,
+        "centroid": 1688.6204806318533,
+        "flatness": 0.384618422834633,
+        "duration_s": 0.7769375,
+        "speaker_id": "child_03",
+        "target": "eight",
+        "human_judgment": "PROBABLY_CORRECT",
+        "full_score": 0.0,
+        "n_expected_phones": 2,
+        "phones_per_second": 2.5742096371973293
+      },
+      "asr_status": "ASR_EMPTY",
+      "asr_text": "",
+      "human_second_pass": "",
+      "root_cause": "CTC_ALIGNMENT_ERROR",
+      "root_cause_confidence": "MEDIUM",
+      "evidence": [
+        "VAD crop raw_score=50.0 >=50 while full-file score=0.0<50; full-file alignment fails, crop restores expected evidence",
+        "canonical=EY1 T",
+        "observed_full=d \u00e6",
+        "f0_median=299.6717032908075 f1=858.9619580108434 f2=2374.402073610446",
+        "asr_status=ASR_EMPTY"
+      ],
+      "secondary_cause": ""
+    },
+    {
+      "case_id": "pme_02",
+      "review_id": "child_06_two_02",
+      "speaker_id": "child_06",
+      "recording_id": null,
+      "target": "two",
+      "human_judgment": "CLEAR_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "T",
+        "UW1"
+      ],
+      "observed_phones_full": [
+        "ts.",
+        "\u014b"
+      ],
+      "observed_phones_raw": [
+        "\u0268",
+        "w"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "t",
+          "observed": "ts.",
+          "match_type": "miss",
+          "sim": 0.0003846527251880616,
+          "posterior": 0.0007693054503761232,
+          "start_s": 0.0,
+          "end_s": 0.5408240740740741,
+          "duration_s": 0.5408240740740741,
+          "topk": [
+            [
+              "ts",
+              0.008929895237088203
+            ],
+            [
+              "i\u025b5",
+              0.004360219929367304
+            ],
+            [
+              "th",
+              0.004081408493220806
+            ],
+            [
+              "ts.",
+              0.004061291925609112
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 1,
+          "position": "final",
+          "expected": "u\u02d0",
+          "observed": "\u014b",
+          "match_type": "miss",
+          "sim": 3.890901552949799e-06,
+          "posterior": 7.781803105899598e-06,
+          "start_s": 0.5408240740740741,
+          "end_s": 0.561625,
+          "duration_s": 0.020800925925925973,
+          "topk": [
+            [
+              "t",
+              0.0003365380398463458
+            ],
+            [
+              "n",
+              0.0002618440194055438
+            ],
+            [
+              "w",
+              0.00013644897262565792
+            ],
+            [
+              "\u014b",
+              9.053108806256205e-05
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 0.0,
+      "raw_score": 0.0,
+      "pad_scores": {
+        "pad_0": 0.0,
+        "pad_100": 50.0,
+        "pad_200": 0.0,
+        "pad_250": 0.0,
+        "pad_300": 0.0,
+        "pad_500": 0.0
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 50.0,
+      "boundary_rescue": true,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.2,
+          0.5616
+        ],
+        "file_duration_s": 0.5616
+      },
+      "acoustic_features": {
+        "f0_median": 246.13751949307283,
+        "f0_min": 228.84325140754214,
+        "f0_max": 568.2276448909347,
+        "f0_range": 339.38439348339256,
+        "f1_median": 916.9658899446488,
+        "f2_median": 2560.919685246404,
+        "rms_mean": 0.17116565872856881,
+        "rms_p20": 0.08313115984201432,
+        "rms_p90": 0.350735267996788,
+        "snr_proxy_db": 12.504311970435202,
+        "centroid": 1983.6923257821966,
+        "flatness": 0.4864817232787636,
+        "duration_s": 0.561625,
+        "speaker_id": "child_06",
+        "target": "two",
+        "human_judgment": "CLEAR_CORRECT",
+        "full_score": 0.0,
+        "n_expected_phones": 2,
+        "phones_per_second": 3.5610950367237924
+      },
+      "asr_status": "ASR_EMPTY",
+      "asr_text": "",
+      "human_second_pass": "",
+      "root_cause": "BOUNDARY_ERROR",
+      "root_cause_confidence": "HIGH",
+      "evidence": [
+        "raw_score=0.0 -> best_pad(pad_100)=50.0",
+        "canonical=T UW1",
+        "observed_full=ts. \u014b",
+        "f0_median=246.13751949307283 f1=916.9658899446488 f2=2560.919685246404",
+        "asr_status=ASR_EMPTY"
+      ],
+      "secondary_cause": ""
+    },
+    {
+      "case_id": "pme_03",
+      "review_id": "child_07_eight_03",
+      "speaker_id": "child_07",
+      "recording_id": null,
+      "target": "eight",
+      "human_judgment": "PROBABLY_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "EY1",
+        "T"
+      ],
+      "observed_phones_full": [
+        "l",
+        "p"
+      ],
+      "observed_phones_raw": [
+        "\u00e6",
+        "\u00f0"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "e\u026a",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 7.17785042070318e-06,
+          "posterior": 1.435570084140636e-05,
+          "start_s": 0.0,
+          "end_s": 0.020453629032258065,
+          "duration_s": 0.020453629032258065,
+          "topk": [
+            [
+              "n",
+              0.0053664520382881165
+            ],
+            [
+              "d",
+              0.004528572782874107
+            ],
+            [
+              "t",
+              0.0039239306934177876
+            ],
+            [
+              "l",
+              0.0020656848791986704
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 1,
+          "position": "final",
+          "expected": "t",
+          "observed": "p",
+          "match_type": "miss",
+          "sim": 0.00040946720400825143,
+          "posterior": 0.0008189344080165029,
+          "start_s": 0.020453629032258065,
+          "end_s": 0.6340625,
+          "duration_s": 0.6136088709677419,
+          "topk": [
+            [
+              "a\u026a",
+              0.023324472829699516
+            ],
+            [
+              "n",
+              0.022404754534363747
+            ],
+            [
+              "b",
+              0.0034749661572277546
+            ],
+            [
+              "p",
+              0.0014831350417807698
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 0.0,
+      "raw_score": 0.1,
+      "pad_scores": {
+        "pad_0": 0.1,
+        "pad_100": 0.0,
+        "pad_200": 0.0,
+        "pad_250": 0.0,
+        "pad_300": 0.0,
+        "pad_500": 0.0
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 0.0,
+      "boundary_rescue": false,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.2,
+          0.6
+        ],
+        "file_duration_s": 0.6341
+      },
+      "acoustic_features": {
+        "f0_median": 253.13164379240715,
+        "f0_min": 229.31559216195836,
+        "f0_max": 553.6756377810112,
+        "f0_range": 324.36004561905287,
+        "f1_median": 891.1871790431026,
+        "f2_median": 2428.987461286023,
+        "rms_mean": 0.1910233181275305,
+        "rms_p20": 0.09514366090297699,
+        "rms_p90": 0.31424036622047424,
+        "snr_proxy_db": 10.377642284154941,
+        "centroid": 2142.735144050192,
+        "flatness": 0.5436311938142924,
+        "duration_s": 0.6340625,
+        "speaker_id": "child_07",
+        "target": "eight",
+        "human_judgment": "PROBABLY_CORRECT",
+        "full_score": 0.0,
+        "n_expected_phones": 2,
+        "phones_per_second": 3.1542631838344013
+      },
+      "asr_status": "ASR_WRONG",
+      "asr_text": "I",
+      "human_second_pass": "",
+      "root_cause": "CTC_ALIGNMENT_ERROR",
+      "root_cause_confidence": "LOW",
+      "evidence": [
+        "1 mismatched phone spans <50ms",
+        "canonical=EY1 T",
+        "observed_full=l p",
+        "f0_median=253.13164379240715 f1=891.1871790431026 f2=2428.987461286023",
+        "asr_status=ASR_WRONG"
+      ],
+      "secondary_cause": ""
+    },
+    {
+      "case_id": "pme_04",
+      "review_id": "child_07_one_04",
+      "speaker_id": "child_07",
+      "recording_id": null,
+      "target": "one",
+      "human_judgment": "CLEAR_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "W",
+        "AH1",
+        "N"
+      ],
+      "observed_phones_full": [
+        "k",
+        "k",
+        "l"
+      ],
+      "observed_phones_raw": [
+        "w",
+        "\u0251",
+        "n"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "w",
+          "observed": "k",
+          "match_type": "miss",
+          "sim": 5.868795597052667e-06,
+          "posterior": 1.1737591194105335e-05,
+          "start_s": 0.0,
+          "end_s": 0.0204796511627907,
+          "duration_s": 0.0204796511627907,
+          "topk": [
+            [
+              "n",
+              4.7796816943446174e-05
+            ],
+            [
+              "t",
+              3.70097259292379e-05
+            ],
+            [
+              "d",
+              1.9933439034502953e-05
+            ],
+            [
+              "k",
+              1.5229591554088984e-05
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 1,
+          "position": "medial",
+          "expected": "\u0259",
+          "observed": "k",
+          "match_type": "miss",
+          "sim": 1.203419174089504e-06,
+          "posterior": 2.406838348179008e-06,
+          "start_s": 0.0204796511627907,
+          "end_s": 0.0409593023255814,
+          "duration_s": 0.0204796511627907,
+          "topk": [
+            [
+              "n",
+              3.1446714274352416e-05
+            ],
+            [
+              "t",
+              2.517841858207248e-05
+            ],
+            [
+              "d",
+              1.200752467411803e-05
+            ],
+            [
+              "k",
+              9.436622349312529e-06
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 2,
+          "position": "final",
+          "expected": "n",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 0.0005336196627467871,
+          "posterior": 0.0010672393254935741,
+          "start_s": 0.0409593023255814,
+          "end_s": 0.8806250000000001,
+          "duration_s": 0.8396656976744187,
+          "topk": [
+            [
+              "v",
+              0.021682631224393845
+            ],
+            [
+              "a\u026a",
+              0.01778997853398323
+            ],
+            [
+              "\u00f0",
+              0.0027660494670271873
+            ],
+            [
+              "l",
+              0.0014831862645223737
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 0.0,
+      "raw_score": 72.5,
+      "pad_scores": {
+        "pad_0": 72.5,
+        "pad_100": 45.9,
+        "pad_200": 72.5,
+        "pad_250": 0.0,
+        "pad_300": 0.0,
+        "pad_500": 0.0
+      },
+      "best_pad": "pad_200",
+      "best_pad_score": 72.5,
+      "boundary_rescue": false,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.3,
+          0.8806
+        ],
+        "file_duration_s": 0.8806
+      },
+      "acoustic_features": {
+        "f0_median": 265.2097807310224,
+        "f0_min": 247.1925409883204,
+        "f0_max": 361.0758008065345,
+        "f0_range": 113.88325981821413,
+        "f1_median": 719.9089823325462,
+        "f2_median": 2330.628324237964,
+        "rms_mean": 0.17521173498311707,
+        "rms_p20": 0.1036393865942955,
+        "rms_p90": 0.3329750746488571,
+        "snr_proxy_db": 10.13773782139154,
+        "centroid": 955.3128494715968,
+        "flatness": 0.20817512482321884,
+        "duration_s": 0.880625,
+        "speaker_id": "child_07",
+        "target": "one",
+        "human_judgment": "CLEAR_CORRECT",
+        "full_score": 0.0,
+        "n_expected_phones": 3,
+        "phones_per_second": 3.4066713981547196
+      },
+      "asr_status": "ASR_WRONG",
+      "asr_text": "Right",
+      "human_second_pass": "",
+      "root_cause": "CTC_ALIGNMENT_ERROR",
+      "root_cause_confidence": "MEDIUM",
+      "evidence": [
+        "VAD crop raw_score=72.5 >=50 while full-file score=0.0<50; full-file alignment fails, crop restores expected evidence",
+        "canonical=W AH1 N",
+        "observed_full=k k l",
+        "f0_median=265.2097807310224 f1=719.9089823325462 f2=2330.628324237964",
+        "asr_status=ASR_WRONG"
+      ],
+      "secondary_cause": ""
+    },
+    {
+      "case_id": "pme_05",
+      "review_id": "child_08_eight_05",
+      "speaker_id": "child_08",
+      "recording_id": null,
+      "target": "eight",
+      "human_judgment": "PROBABLY_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "EY1",
+        "T"
+      ],
+      "observed_phones_full": [
+        "n",
+        "n"
+      ],
+      "observed_phones_raw": [
+        "\u0251",
+        "n"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "e\u026a",
+          "observed": "n",
+          "match_type": "miss",
+          "sim": 2.396368245172198e-06,
+          "posterior": 4.792736490344396e-06,
+          "start_s": 0.0,
+          "end_s": 0.020630357142857145,
+          "duration_s": 0.020630357142857145,
+          "topk": [
+            [
+              "\u00e6",
+              0.0014075362123548985
+            ],
+            [
+              "t",
+              0.001330830156803131
+            ],
+            [
+              "d",
+              0.0010117125930264592
+            ],
+            [
+              "n",
+              0.00047168615856207907
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 1,
+          "position": "final",
+          "expected": "t",
+          "observed": "n",
+          "match_type": "miss",
+          "sim": 0.0007340814918279648,
+          "posterior": 0.0014681629836559296,
+          "start_s": 0.020630357142857145,
+          "end_s": 0.7220625,
+          "duration_s": 0.701432142857143,
+          "topk": [
+            [
+              "\u00e6",
+              0.026153871789574623
+            ],
+            [
+              "l",
+              0.024784918874502182
+            ],
+            [
+              "\u0251",
+              0.002823786810040474
+            ],
+            [
+              "n",
+              0.0019224901916459203
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 0.0,
+      "raw_score": 0.0,
+      "pad_scores": {
+        "pad_0": 0.0,
+        "pad_100": 0.0,
+        "pad_200": 0.0,
+        "pad_250": 0.0,
+        "pad_300": 0.0,
+        "pad_500": 0.0
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 0.0,
+      "boundary_rescue": false,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.1,
+          0.7
+        ],
+        "file_duration_s": 0.7221
+      },
+      "acoustic_features": {
+        "f0_median": 331.71085000754715,
+        "f0_min": 273.90087993056386,
+        "f0_max": 599.8232684537631,
+        "f0_range": 325.9223885231993,
+        "f1_median": 772.1450066858883,
+        "f2_median": 2654.036868767099,
+        "rms_mean": 0.25001376920512747,
+        "rms_p20": 0.1100961446762085,
+        "rms_p90": 0.48857647180557257,
+        "snr_proxy_db": 12.943208755527797,
+        "centroid": 1128.9146006913795,
+        "flatness": 0.2801516706673323,
+        "duration_s": 0.7220625,
+        "speaker_id": "child_08",
+        "target": "eight",
+        "human_judgment": "PROBABLY_CORRECT",
+        "full_score": 0.0,
+        "n_expected_phones": 2,
+        "phones_per_second": 2.769843330736605
+      },
+      "asr_status": "ASR_EMPTY",
+      "asr_text": "",
+      "human_second_pass": "",
+      "root_cause": "PHONE_MODEL_GENERALIZATION_FAILURE",
+      "root_cause_confidence": "MEDIUM",
+      "evidence": [
+        "attractor collapse: observed phone 'n' repeated 2x across mismatches (observed full=n n)",
+        "canonical=EY1 T",
+        "observed_full=n n",
+        "f0_median=331.71085000754715 f1=772.1450066858883 f2=2654.036868767099",
+        "asr_status=ASR_EMPTY"
+      ],
+      "secondary_cause": "CTC_ALIGNMENT_ERROR"
+    },
+    {
+      "case_id": "pme_06",
+      "review_id": "child_04_three_07",
+      "speaker_id": "child_04",
+      "recording_id": null,
+      "target": "three",
+      "human_judgment": "CLEAR_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "TH",
+        "R",
+        "IY1"
+      ],
+      "observed_phones_full": [
+        "t",
+        "w",
+        "l"
+      ],
+      "observed_phones_raw": [
+        "s",
+        "\u0259",
+        "l"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "\u03b8",
+          "observed": "t",
+          "match_type": "soft",
+          "sim": 0.17500003261556854,
+          "posterior": 1.8637467746884795e-07,
+          "start_s": 0.0,
+          "end_s": 0.020087942477876108,
+          "duration_s": 0.020087942477876108,
+          "topk": [
+            [
+              "t",
+              1.225626328960061e-05
+            ],
+            [
+              "n",
+              1.1560409802768845e-05
+            ],
+            [
+              "w",
+              7.160006589401746e-06
+            ],
+            [
+              "p",
+              6.310993285296718e-06
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 1,
+          "position": "medial",
+          "expected": "\u0279",
+          "observed": "w",
+          "match_type": "soft",
+          "sim": 0.1750005514669965,
+          "posterior": 3.151239980070386e-06,
+          "start_s": 0.020087942477876108,
+          "end_s": 0.040175884955752215,
+          "duration_s": 0.020087942477876108,
+          "topk": [
+            [
+              "t",
+              1.2203755431983154e-05
+            ],
+            [
+              "n",
+              1.1676497706503142e-05
+            ],
+            [
+              "w",
+              8.34056845633313e-06
+            ],
+            [
+              "p",
+              6.075194050936261e-06
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 2,
+          "position": "final",
+          "expected": "i\u02d0",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 0.0012454838724806905,
+          "posterior": 0.002490967744961381,
+          "start_s": 0.040175884955752215,
+          "end_s": 2.2699375,
+          "duration_s": 2.229761615044248,
+          "topk": [
+            [
+              "s",
+              0.010128469206392765
+            ],
+            [
+              "m",
+              0.009277204982936382
+            ],
+            [
+              "j",
+              0.003985528368502855
+            ],
+            [
+              "l",
+              0.003124163020402193
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 11.7,
+      "raw_score": 6.7,
+      "pad_scores": {
+        "pad_0": 6.7,
+        "pad_100": 5.8,
+        "pad_200": 11.7,
+        "pad_250": 5.9,
+        "pad_300": 39.2,
+        "pad_500": 11.7
+      },
+      "best_pad": "pad_300",
+      "best_pad_score": 39.2,
+      "boundary_rescue": true,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.4,
+          1.9
+        ],
+        "file_duration_s": 2.2699
+      },
+      "acoustic_features": {
+        "f0_median": 245.34245821497706,
+        "f0_min": 100.73801256134631,
+        "f0_max": 554.8502813744714,
+        "f0_range": 454.11226881312507,
+        "f1_median": 827.0260254868774,
+        "f2_median": 2317.9695317929645,
+        "rms_mean": 0.14259147008747927,
+        "rms_p20": 0.06207960993051529,
+        "rms_p90": 0.2656090527772905,
+        "snr_proxy_db": 12.625877872346972,
+        "centroid": 2163.39090585453,
+        "flatness": 0.5008400042781694,
+        "duration_s": 2.2699375,
+        "speaker_id": "child_04",
+        "target": "three",
+        "human_judgment": "CLEAR_CORRECT",
+        "full_score": 11.7,
+        "n_expected_phones": 3,
+        "phones_per_second": 1.3216222913626476
+      },
+      "asr_status": "ASR_EMPTY",
+      "asr_text": "",
+      "human_second_pass": "",
+      "root_cause": "BOUNDARY_ERROR",
+      "root_cause_confidence": "MEDIUM",
+      "evidence": [
+        "raw_score=6.7 -> best_pad(pad_300)=39.2",
+        "secondary: 2/3 mismatches are documented child-realization pairs (\u03b8->t;\u0279->w)",
+        "canonical=TH R IY1",
+        "observed_full=t w l",
+        "f0_median=245.34245821497706 f1=827.0260254868774 f2=2317.9695317929645",
+        "asr_status=ASR_EMPTY"
+      ],
+      "secondary_cause": "PHONEME_REALIZATION_VARIATION"
+    },
+    {
+      "case_id": "pme_07",
+      "review_id": "child_01_seven_08",
+      "speaker_id": "child_01",
+      "recording_id": null,
+      "target": "seven",
+      "human_judgment": "CLEAR_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "S",
+        "EH1",
+        "V",
+        "AH0",
+        "N"
+      ],
+      "observed_phones_full": [
+        "l",
+        "l",
+        "l",
+        "j",
+        "n"
+      ],
+      "observed_phones_raw": [
+        "s",
+        "\u00f0",
+        "\u0279",
+        "\u025b",
+        "n"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "s",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 1.0716150882217335e-06,
+          "posterior": 2.143230176443467e-06,
+          "start_s": 0.0,
+          "end_s": 0.0201421568627451,
+          "duration_s": 0.0201421568627451,
+          "topk": [
+            [
+              "n",
+              2.764177588687744e-05
+            ],
+            [
+              "t",
+              2.185937592003029e-05
+            ],
+            [
+              "d",
+              1.2974876881344244e-05
+            ],
+            [
+              "l",
+              7.5375223786977585e-06
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 1,
+          "position": "medial",
+          "expected": "\u025b",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 5.866085643901897e-07,
+          "posterior": 1.1732171287803794e-06,
+          "start_s": 0.0201421568627451,
+          "end_s": 0.0402843137254902,
+          "duration_s": 0.0201421568627451,
+          "topk": [
+            [
+              "n",
+              2.2488973627332598e-05
+            ],
+            [
+              "t",
+              1.909750426420942e-05
+            ],
+            [
+              "d",
+              1.1004963198502082e-05
+            ],
+            [
+              "l",
+              6.5979766077362e-06
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 2,
+          "position": "medial",
+          "expected": "v",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 5.719837758988433e-07,
+          "posterior": 1.1439675517976866e-06,
+          "start_s": 0.0402843137254902,
+          "end_s": 0.0604264705882353,
+          "duration_s": 0.0201421568627451,
+          "topk": [
+            [
+              "t",
+              3.536155782057904e-05
+            ],
+            [
+              "n",
+              2.5476145310676657e-05
+            ],
+            [
+              "d",
+              1.3707967809750699e-05
+            ],
+            [
+              "l",
+              7.998494766070507e-06
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 3,
+          "position": "medial",
+          "expected": "\u0259",
+          "observed": "j",
+          "match_type": "miss",
+          "sim": 9.471133921579167e-07,
+          "posterior": 1.8942267843158334e-06,
+          "start_s": 0.0604264705882353,
+          "end_s": 0.0805686274509804,
+          "duration_s": 0.0201421568627451,
+          "topk": [
+            [
+              "t",
+              1.61419520736672e-05
+            ],
+            [
+              "n",
+              1.4065075447433628e-05
+            ],
+            [
+              "d",
+              6.8506465140671935e-06
+            ],
+            [
+              "j",
+              5.042368684371468e-06
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 20.0,
+      "raw_score": 40.1,
+      "pad_scores": {
+        "pad_0": 40.1,
+        "pad_100": 43.5,
+        "pad_200": 43.5,
+        "pad_250": 44.1,
+        "pad_300": 44.0,
+        "pad_500": 20.0
+      },
+      "best_pad": "pad_250",
+      "best_pad_score": 44.1,
+      "boundary_rescue": false,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.4,
+          1.0
+        ],
+        "file_duration_s": 1.0272
+      },
+      "acoustic_features": {
+        "f0_median": 154.14669750304265,
+        "f0_min": 136.4342008071086,
+        "f0_max": 210.3267045014048,
+        "f0_range": 73.89250369429621,
+        "f1_median": 1079.7997081061744,
+        "f2_median": 2694.3600209202245,
+        "rms_mean": 0.23458720922470092,
+        "rms_p20": 0.17381345629692077,
+        "rms_p90": 0.32700622379779815,
+        "snr_proxy_db": 5.48945245750129,
+        "centroid": 2717.7828793892504,
+        "flatness": 0.5675733898313848,
+        "duration_s": 1.02725,
+        "speaker_id": "child_01",
+        "target": "seven",
+        "human_judgment": "CLEAR_CORRECT",
+        "full_score": 20.0,
+        "n_expected_phones": 5,
+        "phones_per_second": 4.867364322219518
+      },
+      "asr_status": "ASR_EMPTY",
+      "asr_text": "",
+      "human_second_pass": "",
+      "root_cause": "PHONE_MODEL_GENERALIZATION_FAILURE",
+      "root_cause_confidence": "MEDIUM",
+      "evidence": [
+        "attractor collapse: observed phone 'l' repeated 3x across mismatches (observed full=l l l j n)",
+        "canonical=S EH1 V AH0 N",
+        "observed_full=l l l j n",
+        "f0_median=154.14669750304265 f1=1079.7997081061744 f2=2694.3600209202245",
+        "asr_status=ASR_EMPTY"
+      ],
+      "secondary_cause": "CTC_ALIGNMENT_ERROR"
+    },
+    {
+      "case_id": "pme_08",
+      "review_id": "child_06_six_10",
+      "speaker_id": "child_06",
+      "recording_id": null,
+      "target": "six",
+      "human_judgment": "CLEAR_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "S",
+        "IH1",
+        "K",
+        "S"
+      ],
+      "observed_phones_full": [
+        "l",
+        "l",
+        "\u0279",
+        "s"
+      ],
+      "observed_phones_raw": [
+        "t",
+        "l",
+        "\u0283",
+        "k"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "s",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 2.3050306481309235e-06,
+          "posterior": 4.610061296261847e-06,
+          "start_s": 0.0,
+          "end_s": 0.020546875,
+          "duration_s": 0.020546875,
+          "topk": [
+            [
+              "t",
+              4.240487396600656e-05
+            ],
+            [
+              "n",
+              3.596651731641032e-05
+            ],
+            [
+              "d",
+              3.053961700061336e-05
+            ],
+            [
+              "l",
+              1.4574187844118569e-05
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 1,
+          "position": "medial",
+          "expected": "\u026a",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 1.7983227280637948e-06,
+          "posterior": 3.5966454561275896e-06,
+          "start_s": 0.020546875,
+          "end_s": 0.04109375,
+          "duration_s": 0.020546875,
+          "topk": [
+            [
+              "n",
+              3.1279163522413e-05
+            ],
+            [
+              "t",
+              3.088551966357045e-05
+            ],
+            [
+              "d",
+              1.840642471506726e-05
+            ],
+            [
+              "l",
+              1.0016269698098768e-05
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 2,
+          "position": "medial",
+          "expected": "k",
+          "observed": "\u0279",
+          "match_type": "miss",
+          "sim": 0.00034729851176962256,
+          "posterior": 0.0006945970235392451,
+          "start_s": 0.04109375,
+          "end_s": 0.78078125,
+          "duration_s": 0.7396874999999999,
+          "topk": [
+            [
+              "f",
+              0.027387024834752083
+            ],
+            [
+              "\u025b",
+              0.021845100447535515
+            ],
+            [
+              "t",
+              0.02063637040555477
+            ],
+            [
+              "\u0279",
+              0.009101648814976215
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 25.0,
+      "raw_score": 0.0,
+      "pad_scores": {
+        "pad_0": 0.0,
+        "pad_100": 25.1,
+        "pad_200": 25.0,
+        "pad_250": 25.0,
+        "pad_300": 25.0,
+        "pad_500": 25.0
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 25.1,
+      "boundary_rescue": true,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.2,
+          0.8
+        ],
+        "file_duration_s": 0.8219
+      },
+      "acoustic_features": {
+        "f0_median": 430.99016845760775,
+        "f0_min": 197.13062036312309,
+        "f0_max": 579.9939114274183,
+        "f0_range": 382.86329106429525,
+        "f1_median": 1421.7280250389074,
+        "f2_median": 2738.660859547187,
+        "rms_mean": 0.17214312301948667,
+        "rms_p20": 0.11450762152671815,
+        "rms_p90": 0.28603087663650534,
+        "snr_proxy_db": 7.951570464944644,
+        "centroid": 2219.127533224003,
+        "flatness": 0.5328815714349034,
+        "duration_s": 0.821875,
+        "speaker_id": "child_06",
+        "target": "six",
+        "human_judgment": "CLEAR_CORRECT",
+        "full_score": 25.0,
+        "n_expected_phones": 4,
+        "phones_per_second": 4.866920152091255
+      },
+      "asr_status": "ASR_WRONG",
+      "asr_text": "Fitch.",
+      "human_second_pass": "",
+      "root_cause": "BOUNDARY_ERROR",
+      "root_cause_confidence": "MEDIUM",
+      "evidence": [
+        "raw_score=0.0 -> best_pad(pad_100)=25.1",
+        "canonical=S IH1 K S",
+        "observed_full=l l \u0279 s",
+        "f0_median=430.99016845760775 f1=1421.7280250389074 f2=2738.660859547187",
+        "asr_status=ASR_WRONG"
+      ],
+      "secondary_cause": ""
+    },
+    {
+      "case_id": "pme_09",
+      "review_id": "child_09_five_11",
+      "speaker_id": "child_09",
+      "recording_id": null,
+      "target": "five",
+      "human_judgment": "CLEAR_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "F",
+        "AY1",
+        "V"
+      ],
+      "observed_phones_full": [
+        "l",
+        "a\u026a",
+        "n"
+      ],
+      "observed_phones_raw": [
+        "l",
+        "a\u026a",
+        "n"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "f",
+          "observed": "l",
+          "match_type": "miss",
+          "sim": 0.00015282769163604826,
+          "posterior": 0.0003056553832720965,
+          "start_s": 0.0,
+          "end_s": 0.06209659090909091,
+          "duration_s": 0.06209659090909091,
+          "topk": [
+            [
+              "m",
+              0.00504335667937994
+            ],
+            [
+              "n",
+              0.004174951929599047
+            ],
+            [
+              "w",
+              0.004008266609162092
+            ],
+            [
+              "l",
+              0.003651255974546075
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 2,
+          "position": "final",
+          "expected": "v",
+          "observed": "n",
+          "match_type": "miss",
+          "sim": 0.00042059560655616224,
+          "posterior": 0.0008411912131123245,
+          "start_s": 0.3932784090909091,
+          "end_s": 0.6830625,
+          "duration_s": 0.2897840909090909,
+          "topk": [
+            [
+              "s",
+              0.00986176822334528
+            ],
+            [
+              "t",
+              0.002446709433570504
+            ],
+            [
+              "z",
+              0.0021933855023235083
+            ],
+            [
+              "n",
+              0.002032086718827486
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 33.4,
+      "raw_score": 33.4,
+      "pad_scores": {
+        "pad_0": 33.4,
+        "pad_100": 33.4,
+        "pad_200": 33.4,
+        "pad_250": 33.4,
+        "pad_300": 33.4,
+        "pad_500": 33.4
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 33.4,
+      "boundary_rescue": false,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 0,
+        "raw_window": [
+          0.0,
+          0.6831
+        ],
+        "file_duration_s": 0.6831
+      },
+      "acoustic_features": {
+        "f0_median": 286.65283088400975,
+        "f0_min": 103.43006855400547,
+        "f0_max": 597.6998287386375,
+        "f0_range": 494.26976018463205,
+        "f1_median": 1030.8558637433557,
+        "f2_median": 2600.069916709206,
+        "rms_mean": 0.21766189350323242,
+        "rms_p20": 0.12937651574611664,
+        "rms_p90": 0.3375300318002701,
+        "snr_proxy_db": 8.329139387861321,
+        "centroid": 1196.4096436706184,
+        "flatness": 0.29416712759994795,
+        "duration_s": 0.6830625,
+        "speaker_id": "child_09",
+        "target": "five",
+        "human_judgment": "CLEAR_CORRECT",
+        "full_score": 33.4,
+        "n_expected_phones": 3,
+        "phones_per_second": 4.391984628053802
+      },
+      "asr_status": "ASR_EMPTY",
+      "asr_text": "",
+      "human_second_pass": "",
+      "root_cause": "PHONE_MODEL_GENERALIZATION_FAILURE",
+      "root_cause_confidence": "LOW",
+      "evidence": [
+        "all variants fail (raw=33.4, best_pad=33.4, full=33.4); no documented realization pairs; no attractor collapse",
+        "canonical=F AY1 V",
+        "observed_full=l a\u026a n",
+        "f0_median=286.65283088400975 f1=1030.8558637433557 f2=2600.069916709206",
+        "asr_status=ASR_EMPTY"
+      ],
+      "secondary_cause": ""
+    },
+    {
+      "case_id": "pme_10",
+      "review_id": "child_01_five_12",
+      "speaker_id": "child_01",
+      "recording_id": null,
+      "target": "five",
+      "human_judgment": "PROBABLY_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "F",
+        "AY1",
+        "V"
+      ],
+      "observed_phones_full": [
+        "p",
+        "a\u026a",
+        "\u0251"
+      ],
+      "observed_phones_raw": [
+        "v",
+        "a\u026a",
+        "s"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "f",
+          "observed": "p",
+          "match_type": "miss",
+          "sim": 0.0057281809858977795,
+          "posterior": 0.011456361971795559,
+          "start_s": 0.0,
+          "end_s": 0.12254999999999999,
+          "duration_s": 0.12254999999999999,
+          "topk": [
+            [
+              "\u0279",
+              0.08920127898454666
+            ],
+            [
+              "t",
+              0.05778905376791954
+            ],
+            [
+              "k",
+              0.05046116188168526
+            ],
+            [
+              "p",
+              0.015780633315443993
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 2,
+          "position": "final",
+          "expected": "v",
+          "observed": "\u0251",
+          "match_type": "miss",
+          "sim": 0.0003593240980990231,
+          "posterior": 0.0007186481961980462,
+          "start_s": 0.4085,
+          "end_s": 0.919125,
+          "duration_s": 0.510625,
+          "topk": [
+            [
+              "s",
+              0.03403643146157265
+            ],
+            [
+              "\u028c",
+              0.009313901886343956
+            ],
+            [
+              "\u00e6",
+              0.005871661938726902
+            ],
+            [
+              "\u0251",
+              0.004659541416913271
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 33.5,
+      "raw_score": 39.2,
+      "pad_scores": {
+        "pad_0": 39.2,
+        "pad_100": 66.7,
+        "pad_200": 66.7,
+        "pad_250": 66.7,
+        "pad_300": 66.7,
+        "pad_500": 33.5
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 66.7,
+      "boundary_rescue": true,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.1,
+          0.5
+        ],
+        "file_duration_s": 0.9191
+      },
+      "acoustic_features": {
+        "f0_median": 280.08021783957963,
+        "f0_min": 143.12183015515907,
+        "f0_max": 310.22256323180045,
+        "f0_range": 167.10073307664138,
+        "f1_median": 828.8039397819781,
+        "f2_median": 1917.8119303945732,
+        "rms_mean": 0.18732828538069565,
+        "rms_p20": 0.13209388256072999,
+        "rms_p90": 0.28116816878318784,
+        "snr_proxy_db": 6.5616689410356885,
+        "centroid": 1368.2212787996766,
+        "flatness": 0.36604769616376465,
+        "duration_s": 0.919125,
+        "speaker_id": "child_01",
+        "target": "five",
+        "human_judgment": "PROBABLY_CORRECT",
+        "full_score": 33.5,
+        "n_expected_phones": 3,
+        "phones_per_second": 3.2639738882088944
+      },
+      "asr_status": "ASR_WRONG",
+      "asr_text": "Right",
+      "human_second_pass": "",
+      "root_cause": "BOUNDARY_ERROR",
+      "root_cause_confidence": "HIGH",
+      "evidence": [
+        "raw_score=39.2 -> best_pad(pad_100)=66.7",
+        "secondary: 1/2 mismatches are documented child-realization pairs (f->p)",
+        "canonical=F AY1 V",
+        "observed_full=p a\u026a \u0251",
+        "f0_median=280.08021783957963 f1=828.8039397819781 f2=1917.8119303945732",
+        "asr_status=ASR_WRONG"
+      ],
+      "secondary_cause": "PHONEME_REALIZATION_VARIATION"
+    },
+    {
+      "case_id": "pme_11",
+      "review_id": "child_03_three_15",
+      "speaker_id": "child_03",
+      "recording_id": null,
+      "target": "three",
+      "human_judgment": "CLEAR_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "TH",
+        "R",
+        "IY1"
+      ],
+      "observed_phones_full": [
+        "t",
+        "\u0279",
+        "t"
+      ],
+      "observed_phones_raw": [
+        "t",
+        "\u0279",
+        "\u025b"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "\u03b8",
+          "observed": "t",
+          "match_type": "soft",
+          "sim": 0.17500006003178611,
+          "posterior": 3.4303877782804193e-07,
+          "start_s": 0.0,
+          "end_s": 0.02047875,
+          "duration_s": 0.02047875,
+          "topk": [
+            [
+              "n",
+              1.5721390809630975e-05
+            ],
+            [
+              "t",
+              1.4622941307607107e-05
+            ],
+            [
+              "d",
+              7.500766969315009e-06
+            ],
+            [
+              "j",
+              7.114470008673379e-06
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 2,
+          "position": "final",
+          "expected": "i\u02d0",
+          "observed": "t",
+          "match_type": "miss",
+          "sim": 0.0009119333699345589,
+          "posterior": 0.0018238667398691177,
+          "start_s": 0.51196875,
+          "end_s": 1.0239375,
+          "duration_s": 0.51196875,
+          "topk": [
+            [
+              "k",
+              0.01418348029255867
+            ],
+            [
+              "a\u026a",
+              0.010441507212817669
+            ],
+            [
+              "e\u026a",
+              0.01028553768992424
+            ],
+            [
+              "t",
+              0.006730872206389904
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 39.2,
+      "raw_score": 39.2,
+      "pad_scores": {
+        "pad_0": 39.2,
+        "pad_100": 39.2,
+        "pad_200": 39.2,
+        "pad_250": 39.2,
+        "pad_300": 39.2,
+        "pad_500": 39.2
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 39.2,
+      "boundary_rescue": false,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.3,
+          1.0
+        ],
+        "file_duration_s": 1.0239
+      },
+      "acoustic_features": {
+        "f0_median": 298.45490469045683,
+        "f0_min": 233.48065591310535,
+        "f0_max": 554.8338951286619,
+        "f0_range": 321.3532392155565,
+        "f1_median": 974.2034472022333,
+        "f2_median": 2405.4194584656843,
+        "rms_mean": 0.1872405869141221,
+        "rms_p20": 0.08447991907596589,
+        "rms_p90": 0.4143208354711533,
+        "snr_proxy_db": 13.811665691575165,
+        "centroid": 1352.8548826113115,
+        "flatness": 0.31229558525622086,
+        "duration_s": 1.0239375,
+        "speaker_id": "child_03",
+        "target": "three",
+        "human_judgment": "CLEAR_CORRECT",
+        "full_score": 39.2,
+        "n_expected_phones": 3,
+        "phones_per_second": 2.9298663248489287
+      },
+      "asr_status": "ASR_EMPTY",
+      "asr_text": "",
+      "human_second_pass": "",
+      "root_cause": "PHONEME_REALIZATION_VARIATION",
+      "root_cause_confidence": "LOW",
+      "evidence": [
+        "1/2 mismatches are documented child-realization pairs; remaining: i\u02d0->t",
+        "canonical=TH R IY1",
+        "observed_full=t \u0279 t",
+        "f0_median=298.45490469045683 f1=974.2034472022333 f2=2405.4194584656843",
+        "asr_status=ASR_EMPTY"
+      ],
+      "secondary_cause": ""
+    },
+    {
+      "case_id": "pme_12",
+      "review_id": "child_08_five_16",
+      "speaker_id": "child_08",
+      "recording_id": null,
+      "target": "five",
+      "human_judgment": "CLEAR_CORRECT",
+      "doc_diagnostic": "PHONE_MODEL_ERROR",
+      "canonical_phones": [
+        "F",
+        "AY1",
+        "V"
+      ],
+      "observed_phones_full": [
+        "v",
+        "a\u026a",
+        "t"
+      ],
+      "observed_phones_raw": [
+        "v",
+        "a\u026a",
+        "t"
+      ],
+      "phone_mismatch": [
+        {
+          "index": 0,
+          "position": "initial",
+          "expected": "f",
+          "observed": "v",
+          "match_type": "soft",
+          "sim": 0.17542137383134104,
+          "posterior": 0.0024078504648059607,
+          "start_s": 0.0,
+          "end_s": 0.06093256578947368,
+          "duration_s": 0.06093256578947368,
+          "topk": [
+            [
+              "b",
+              0.131437286734581
+            ],
+            [
+              "v",
+              0.05672214552760124
+            ],
+            [
+              "\u0279",
+              0.0486399382352829
+            ],
+            [
+              "w",
+              0.014239816926419735
+            ]
+          ],
+          "expected_in_top3": false
+        },
+        {
+          "index": 2,
+          "position": "final",
+          "expected": "v",
+          "observed": "t",
+          "match_type": "miss",
+          "sim": 9.018902346724644e-05,
+          "posterior": 0.00018037804693449289,
+          "start_s": 0.3046628289473684,
+          "end_s": 0.7718125,
+          "duration_s": 0.4671496710526316,
+          "topk": [
+            [
+              "d",
+              0.03902554139494896
+            ],
+            [
+              "s",
+              0.0262018833309412
+            ],
+            [
+              "\u0283",
+              0.010019439272582531
+            ],
+            [
+              "t",
+              0.0022851519752293825
+            ]
+          ],
+          "expected_in_top3": false
+        }
+      ],
+      "full_file_score": 39.2,
+      "raw_score": 39.2,
+      "pad_scores": {
+        "pad_0": 39.2,
+        "pad_100": 39.2,
+        "pad_200": 39.2,
+        "pad_250": 39.2,
+        "pad_300": 39.2,
+        "pad_500": 39.2
+      },
+      "best_pad": "pad_100",
+      "best_pad_score": 39.2,
+      "boundary_rescue": false,
+      "boundary_label_human": "BOUNDARY_OK",
+      "vad_status": {
+        "silero_n_segs": 1,
+        "raw_window": [
+          0.0,
+          0.7718
+        ],
+        "file_duration_s": 0.7718
+      },
+      "acoustic_features": {
+        "f0_median": 286.6145435067914,
+        "f0_min": 263.747927061502,
+        "f0_max": 309.0871058738106,
+        "f0_range": 45.339178812308546,
+        "f1_median": 1053.5263474565174,
+        "f2_median": 2401.541568184941,
+        "rms_mean": 0.21255158344904582,
+        "rms_p20": 0.1275540679693222,
+        "rms_p90": 0.3435453534126282,
+        "snr_proxy_db": 8.605795303436178,
+        "centroid": 1510.9504409814574,
+        "flatness": 0.3609935467750169,
+        "duration_s": 0.7718125,
+        "speaker_id": "child_08",
+        "target": "five",
+        "human_judgment": "CLEAR_CORRECT",
+        "full_score": 39.2,
+        "n_expected_phones": 3,
+        "phones_per_second": 3.886954409263908
+      },
+      "asr_status": "ASR_EMPTY",
+      "asr_text": "",
+      "human_second_pass": "",
+      "root_cause": "PHONEME_REALIZATION_VARIATION",
+      "root_cause_confidence": "LOW",
+      "evidence": [
+        "1/2 mismatches are documented child-realization pairs; remaining: v->t",
+        "canonical=F AY1 V",
+        "observed_full=v a\u026a t",
+        "f0_median=286.6145435067914 f1=1053.5263474565174 f2=2401.541568184941",
+        "asr_status=ASR_EMPTY"
+      ],
+      "secondary_cause": ""
+    }
+  ],
+  "limitations": [
+    "human second-pass review not yet filled",
+    "adult comparison uses different words (diagnostic only)",
+    "F0/F1/F2 single-pass measurements, no normalization applied",
+    "n=12, single recording session per child",
+    "child-realization pair table is documented but not externally validated for these speakers"
+  ]
+}

@@ -1,0 +1,8 @@
+word,n_phone_model_error,speakers,mean_full_score,human_correct
+eight,3,child_03;child_07;child_08,0.0,3
+five,3,child_01;child_08;child_09,35.36666666666667,3
+one,1,child_07,0.0,1
+seven,1,child_01,20.0,1
+six,1,child_06,25.0,1
+three,2,child_03;child_04,25.450000000000003,2
+two,1,child_06,0.0,1
