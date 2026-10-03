@@ -24,7 +24,7 @@ E5 product observed · E6 product + controlled audio
 | 04 Microsoft PA | BLOCKED (Azure key) — E1 full schema captured |
 | 05 Speechace | BLOCKED (key by request) — E1 fidelity taxonomy captured |
 | 06 OpenPronounce | **RAN LOCALLY (E4/E6)** — 16 cases, raw JSON archived |
-| 07 speak-better-than-ai | next |
-| 08 ALFreeD | pending |
-| 09 additional child system | pending |
-| 10 additional open research | pending |
+| 07 speak-better-than-ai | SOURCE AUDIT (E3, MIT) |
+| 08 ALFreeD | NOT FOUND; alignment-free line + VoxTutor RAN (E4) |
+| 09 SIAK child system | DATASET ACQUIRED (E4, 16,308 utt) |
+| 10 slip (GOP-CTC) | SOURCE AUDIT (E3, no license) |
