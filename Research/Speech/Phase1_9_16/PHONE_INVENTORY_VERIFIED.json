@@ -1,0 +1,146 @@
+{
+  "inventory_version": "phone-inventory-v1.4.0",
+  "model_vocab_size": 392,
+  "mapped_symbols": 389,
+  "unmapped_empty_symbols": 3,
+  "unmapped_list": [
+    {
+      "source": "</s>",
+      "canon": ""
+    },
+    {
+      "source": "<pad>",
+      "canon": ""
+    },
+    {
+      "source": "<s>",
+      "canon": ""
+    }
+  ],
+  "control_words": {
+    "red": {
+      "arpa": [
+        "R",
+        "EH1",
+        "D"
+      ],
+      "canon": [
+        "ɹ",
+        "ɛ",
+        "d"
+      ],
+      "covered": true
+    },
+    "cat": {
+      "arpa": [
+        "K",
+        "AE1",
+        "T"
+      ],
+      "canon": [
+        "k",
+        "æ",
+        "t"
+      ],
+      "covered": true
+    },
+    "apple": {
+      "arpa": [
+        "AE1",
+        "P",
+        "AH0",
+        "L"
+      ],
+      "canon": [
+        "æ",
+        "p",
+        "ə",
+        "l"
+      ],
+      "covered": true
+    },
+    "blue": {
+      "arpa": [
+        "B",
+        "L",
+        "UW1"
+      ],
+      "canon": [
+        "b",
+        "l",
+        "uː"
+      ],
+      "covered": true
+    },
+    "big": {
+      "arpa": [
+        "B",
+        "IH1",
+        "G"
+      ],
+      "canon": [
+        "b",
+        "ɪ",
+        "ɡ"
+      ],
+      "covered": true
+    },
+    "book": {
+      "arpa": [
+        "B",
+        "UH1",
+        "K"
+      ],
+      "canon": [
+        "b",
+        "ʊ",
+        "k"
+      ],
+      "covered": true
+    },
+    "dog": {
+      "arpa": [
+        "D",
+        "AO1",
+        "G"
+      ],
+      "canon": [
+        "d",
+        "ɔ",
+        "ɡ"
+      ],
+      "covered": true
+    },
+    "red apple": {
+      "arpa": [
+        [
+          "R",
+          "EH1",
+          "D"
+        ],
+        [
+          "AE1",
+          "P",
+          "AH0",
+          "L"
+        ]
+      ],
+      "canon": [
+        [
+          "ɹ",
+          "ɛ",
+          "d"
+        ],
+        [
+          "æ",
+          "p",
+          "ə",
+          "l"
+        ]
+      ],
+      "covered": true
+    }
+  },
+  "all_control_covered": true,
+  "status": "VERIFIED_COMPLETE"
+}
