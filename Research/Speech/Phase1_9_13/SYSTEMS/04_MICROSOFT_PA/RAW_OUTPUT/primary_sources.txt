@@ -1,0 +1,9 @@
+SOURCE (E1): https://learn.microsoft.com/en-us/azure/ai-services/speech-service/how-to-pronunciation-assessment
+- Scores: Accuracy/Fluency/Completeness/Prosody/PronScore
+- ErrorType: None|Omission|Insertion|Mispronunciation|UnexpectedBreak|MissingBreak|Monotone
+- NBestPhonemes example (hello): expected 'e' (IPA ?) AccuracyScore 47;
+  candidates: ?=100, l=52, ?=47, h=17, æ=2
+- Offsets/Durations in 100-nanosecond units
+- EnableMiscue -> Omission/Insertion at word level
+- Continuous mode >30s: miscue unsupported
+BLOCKED: Azure key required (payment method) — no E6.
