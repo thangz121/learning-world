@@ -1,0 +1,11 @@
+SOURCE (E1): https://www.chivox.com/en/solutions/scenarios/young-learners
+- dedicated young-learner engine; higher pitch/longer pauses/repetitions/omissions as child patterns;
+- audio quality gate before pronunciation feedback; never low score as judgment about a child;
+- age/level calibration: thresholds, feedback language, retry length.
+SOURCE (E1): https://www.chivox.com/en/docs/coreEn/en.word.score
+- 'adaptive to children and adults'; gop_adjust [-1,1]; voiced; accent; rank 4/100.
+SOURCE (E1): https://www.chivox.com/en/docs/apiDoc/http
+- eval.cloud.chivox.com; init/feed/fetch/release; appKey+sig(sha256(appKey+timestamp+secretKey)).
+- 'post proc failed' => audio not recorded or no valid voice => re-record.
+SOURCE (E1): MCP https://api-account.cloud.chivox.com/en/docs - apiKey sk-... required.
+BLOCKED: no anonymous/pilot-free path without sales contact.
