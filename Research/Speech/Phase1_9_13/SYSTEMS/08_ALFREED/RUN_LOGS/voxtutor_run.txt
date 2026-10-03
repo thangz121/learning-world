@@ -1,0 +1,8 @@
+VoxTutor harness run (2026-10-03, Windows, venv op13):
+  python -m evals.harness  -> evals/RESULTS.md
+  random      0.491 0.509 0.508
+  naive       1.000 0.620 0.730
+  aligned     1.000 1.000 0.728
+  normalized  1.000 0.662 0.999
+  gop         1.000 1.000 0.999
+GOP-AF: arXiv 2507.16838 (E2, CMU Kids + SpeechOcean762)
