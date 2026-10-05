@@ -1,1 +1,181 @@
-{"action_taken":{"moonshine_asr":"not downloaded; not needed for phone adaptation","no_gold_child_phone_labels":"documented as MISSING with path forward; no silent substitution","raw_zenodo_clips":"not re-acquired; committed derivatives cover replay needs","siak":"downloaded from HF rkarhila/SIAK via experiments/download_materials.py; byte-identical to ASUS inputs (3/3 provenance hashes)","wav2vec2_snapshot":"downloaded pinned revision 2c73378 via experiments/download_materials.py; forward smoke passed"},"asus_loss_boundary":{"artifacts_lost":"any unpushed 1.9.16 ASUS-local work (none verifiable; treated as LOST, never reconstructed)","data_lost":"ASUS-local SIAK copy + D:\\speech-lab model cache (both rebuilt on MAYNODE, SIAK byte-identical)","recovered":"full 1.9.15 chain + baseline definition + failure forensics (RECOVERED FROM GIT)"},"download_warnings":["Hugging Face access was ANONYMOUS (no HF_TOKEN in environment); rate limits did not block completion","huggingface_hub symlink warning on D:\\speech-lab\\models (no Developer Mode); cache works in degraded copy mode, extra disk use only"],"environment":{"cpu":"Intel Xeon E5-2678 v3 @ 2.50GHz","cuda_available":false,"disk_free_gb":{"C":8.7,"D":37.8,"E":31.0},"gpu":"AMD Radeon RX 6500 XT (unusable for PyTorch CUDA; all compute is CPU)","hf_token":"NOT SET (anonymous)","kaggle_credentials":"NOT PRESENT (not needed; SIAK sourced from HF)","python":"3.13.2","pytorch":"2.14.1+cpu","ram_gb":16.0,"site_packages":["transformers 5.18.0","huggingface_hub 1.33.0","scikit-learn 1.9.1","scipy 1.18.1","librosa 1.0.0","soundfile 0.14.0","numpy 2.5.3","torch 2.14.1+cpu"]},"gate":{"ADAPTATION_TRAINING_READY":false,"BASELINE_READY":true,"blockers":["GOLD_CHILD_PHONE_LABELS missing: no corpus with reliable phone-level labels is available on MAYNODE or public HF (SIAK ratings are pronunciation scores, not phoneme labels; MyST/PF-STAR require restricted access)","SIAK_LICENSE_FOR_TRAINING unresolved: CC-BY-ND-4.0; 1.9.14 logged commercial/training use as open legal blocker; fine-tuning on ND data may constitute a derivative"],"next_allowed":"frozen baseline reproduction (no training) + DATA_AUDIT + pseudo-label vs external-corpus design decision; NO adaptation training until blockers cleared"},"materials":[{"action_taken":"downloaded pinned revision; forward smoke passed","actual_count":"8 files (config, pytorch_model.bin 1263535127 B, vocab 392, tokenizer, preprocessor)","actual_size":"~1.27 GB","age_range":"n/a (adult-trained)","expected_count":"8 files","expected_size":"~1.27 GB","hash_sha256_prefix32":"pytorch_model.bin 04366b6c8d24099ef313cf02f0e58d26; config.json 4609fb49b7e1d28aecb2840da1926c40","labels":"n/a","language":"multilingual espeak-phoneme CTC","license":"Apache-2.0 (cardData verified 2026-10-02)","local_path":"D:\\speech-lab\\models\\models--facebook--wav2vec2-xlsr-53-espeak-cv-ft\\snapshots\\2c733782da5604684829819a5eb744c193fe9398","material":"base_phone_model","revision":"2c733782da5604684829819a5eb744c193fe9398","source":"Hugging Face facebook/wav2vec2-xlsr-53-espeak-cv-ft (anonymous)","speakers":"n/a","status":"VERIFIED_COMPLETE","verification_timestamp":"2026-10-03T21:40Z (load 4.1 s CPU; forward [1,99,392]; head train-step + checkpoint roundtrip OK)"},{"action_taken":"none needed; present in git; inventory cross-check passed","actual_count":"phone_evidence_v2.py (289 lines) + inventory.py v1.4.0 + paths.py + soft-v2/CTC code paths","expected_count":"same","labels":"n/a","license":"project-internal research code","local_path":"E:\\LWW\\learning-world\\Research\\Speech\\Phase1_4\\{SoftMatching,PhoneInventory} + Phase1_2\\Adapters","material":"lwe_phone_pipeline_code","revision":"git 3f62ef4 (verified base)","source":"repository (RECOVERED FROM GIT)","status":"VERIFIED_COMPLETE","verification_timestamp":"2026-10-03"},{"action_taken":"downloaded from HF; hashes match ASUS inputs exactly","actual_count":"train.csv 12308 + test.csv 4000 rows; flac 16308; speakers 172 (train 129/test 43, overlap [])","actual_size":"278.0 MB flac","age_range":"4-12 years (filename metadata; 4-6: 5 speakers)","expected_count":"12308 + 4000 rows; 16308 flac; 172 speakers","expected_size":"~279 MB","hash_sha256_prefix32":"train.csv/provenance 0EE4F498...MATCH; test.csv AB98C9AD...MATCH; README E2E38FF8...MATCH","labels":"single-expert pronunciation rating 0-100 (NOT phone labels)","language":"L1 fifi/enuk/othr; L2 English utterances","license":"CC-BY-ND-4.0 (training use: BLOCKED pending legal review)","local_path":"E:\\LWW\\learning-world\\Research\\Speech\\ExternalData\\SIAK","material":"siak_full_release","source":"Hugging Face rkarhila/SIAK (anonymous; ASUS used same source)","speakers":"172 (split-disjoint by filename ID)","status":"VERIFIED_COMPLETE","verification_timestamp":"2026-10-03 (experiments/verify_siak.py: 0 missing refs, 0 dupes, 0 missing scores, 21/21 flac decode probe OK)"},{"action_taken":"downloaded from upstream cmudict master","actual_count":"~134k entries","actual_size":"3618488 B","hash_sha256_prefix32":"81917843c7f44ce2b094ac63873c2c7a","labels":"n/a","license":"BSD-like (CMUdict; per Phase 1.1 registry)","local_path":"D:\\speech-lab\\models\\cmudict.dict","material":"cmudict_arpa_targets","source":"https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict","status":"VERIFIED_COMPLETE","verification_timestamp":"2026-10-03 (size + content probe 'bout B AW1 T' OK)"},{"action_taken":"none; committed in git","actual_count":"fidelity 115 clips + 1.9.9 HumanReview 210 clips + StageA/Phase CSVs + lwe_sapi_* control-word artifacts (12 files)","labels":"human verdicts (correct/incorrect/uncertain), 12 PHONE_MODEL_ERROR + 6 SCORER_MISS (evaluation answer key; NEVER train)","local_path":"E:\\LWW\\learning-world\\Research\\Speech\\Phase1_9_{9,12,15}\\ (committed)","material":"lwe_committed_derivatives","source":"repository (RECOVERED FROM GIT)","status":"VERIFIED_COMPLETE","verification_timestamp":"2026-10-03"},{"action_taken":"not re-acquired (gitignored raw; committed derivatives suffice for replay)","expected_count":"unknown (ASUS-local only)","labels":"n/a","local_path":"Research/Speech/ExternalData/zenodo_200495 (absent)","material":"lwe_raw_child_audio","source":"ASUS-local (unreachable)","status":"OPTIONAL","verification_timestamp":"2026-10-03 (EXTERNAL_LWE_AUDIO_UNAVAILABLE for raw; replay experiments use committed derivatives)"},{"action_taken":"none (must not fabricate)","expected_count":"unknown","labels":"REQUIRED phone-level labels: none exist","local_path":"n/a","material":"gold_child_phone_labels","source":"none available (HF search: no MyST/PF-STAR public mirror; SIAK has ratings only)","status":"MISSING","verification_timestamp":"2026-10-03"},{"action_taken":"none (restricted-access corpora, no MAYNODE path)","labels":"word transcripts (not gold phones)","local_path":"n/a","material":"myst_pfstar_external","source":"institutional access only","status":"BLOCKED_ACCESS","verification_timestamp":"2026-10-03"},{"action_taken":"none (not needed for phone adaptation)","local_path":"n/a (ASUS had D:\\speech-lab\\models\\sherpa-onnx-moonshine-tiny-en-int8)","material":"moonshine_asr","source":"deferred","status":"OPTIONAL","verification_timestamp":"2026-10-03"},{"action_taken":"none (ND clause interpretation open since 1.9.14)","local_path":"n/a","material":"siak_training_license","source":"CC-BY-ND-4.0 README note (building/evaluating speech-tech models not prohibited; unrelated derivatives barred)","status":"BLOCKED_LICENSE","verification_timestamp":"2026-10-03"}],"phase":"1.9.16","scope_note":"Per user rule, every REQUIRED missing/incomplete item was downloaded/rebuilt again. Already-verified-complete datasets were not deleted or re-downloaded. No second copies were made (model reused from D:\\speech-lab hub layout; SIAK single copy under ExternalData).","training_readiness_note":"MAYNODE_TRAINING_READY (adaptation) = FALSE. DO NOT launch child phone model training. BASELINE_READY = TRUE: frozen baseline reproduction may proceed."}
+{
+  "phase": "1.9.16",
+  "phase_title": "MAYNODE full material recovery + mandatory rebuild (updated 2026-10-04)",
+  "machine": "MAYNODE",
+  "branch": "phase1-9-16-recovery",
+  "verified_at": "2026-10-05",
+  "previously_verified_at": "2026-10-04",
+  "reverified_2026_10_05": {
+    "method": "fresh re-run of scripts + on-disk probes; prior docs not trusted",
+    "results": {
+      "verify_siak.py": "VERIFIED_COMPLETE (3/3 hashes, 16308 flac, 172 spk, 0 missing/dupes/corrupt)",
+      "smoke_model.py": "VERIFIED_COMPLETE (forward [1,99,392], ckpt roundtrip, load 2.9s)",
+      "verify_phone_inventory.py": "VERIFIED_COMPLETE (389/392 mapped, 8/8 control targets)",
+      "build_splits.py": "VERIFIED_COMPLETE (overlap [], 0 dup ids, 0 missing)",
+      "verify_external_materials.py": "VERIFIED_COMPLETE (SO762 5000/250/122 + phone tier; Zenodo MD5 match + 671 wav; model snapshot all required files)"
+    },
+    "downloads_needed": 0,
+    "note": "stale empty second model snapshot 3e836924 present alongside pinned 2c73378 (harmless, pin wins); SIAK dir also has 16312 HF Xet .metadata sidecars (why raw file count is 32627, not 16308)"
+  },
+  "rule_applied": "every REQUIRED missing/incomplete item downloaded/rebuilt again (user-authorized); nothing verified-complete deleted or duplicated; file counts never trusted alone",
+  "materials": {
+    "A_base_phone_model": {
+      "material": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+      "source": "Hugging Face (anonymous; no HF_TOKEN in env)",
+      "local_path": "D:\\speech-lab\\models\\models--facebook--wav2vec2-xlsr-53-espeak-cv-ft\\snapshots\\2c733782da5604684829819a5eb744c193fe9398",
+      "revision": "2c733782da5604684829819a5eb744c193fe9398",
+      "files": 8,
+      "sha256": {
+        "pytorch_model.bin": "04366b6c8d24099ef313cf02f0e58d26f5ddddfa16edbfc8eb2c713d94a9f551",
+        "config.json": "4609fb49b7e1d28aecb2840da1926c40bd915bc6f1120a940afacf7159bbfb13",
+        "vocab.json": "d732ab2456c0c017930001dc9af0b41b3b93d25b2eb9740bf9d925508d7d87d0",
+        "preprocessor_config.json": "a2254a5b58f72cd4de3632f8eee64f3f098b7c1402128d2f419e7d00ae13e335"
+      },
+      "license": "Apache-2.0",
+      "status": "VERIFIED_COMPLETE",
+      "action_taken": "REUSED (already complete on MAYNODE); supersedes ASUS loss",
+      "verification": "smoke_model.py: load 2.7s, forward [1,99,392], 392 phones, head train-step + checkpoint roundtrip OK; cuda_available=false"
+    },
+    "B_lwe_pipeline_code": {
+      "material": "PhoneEvidenceV2@1.4.0 + phoneme-inventory-v1.4.0 + CmuDictTargetAdapter",
+      "source": "git (Research/Speech/Phase1_2, Phase1_4)",
+      "local_path": "Research/Speech/Phase1_4, Research/Speech/Phase1_2",
+      "status": "VERIFIED_COMPLETE",
+      "action_taken": "REUSED from git",
+      "verification": "PHONE_INVENTORY_VERIFIED.json: 389/392 mapped (3 expected structural drops), all 7 control words covered; status VERIFIED_COMPLETE"
+    },
+    "C_siak": {
+      "material": "SIAK (rkarhila/SIAK)",
+      "source": "Hugging Face (anonymous)",
+      "local_path": "Research/Speech/ExternalData/SIAK",
+      "revision": "pinned via snapshot",
+      "expected_count_utterances": 16308,
+      "actual_count_flac": 16308,
+      "train_rows": 12308,
+      "test_rows": 4000,
+      "total_bytes": 277954460,
+      "speakers_total": 172,
+      "speakers_train": 129,
+      "speakers_test": 43,
+      "split_speaker_overlap": [],
+      "duplicate_file_ids": 0,
+      "missing_audio_refs": 0,
+      "missing_scores": 0,
+      "probe_corrupt": [],
+      "license": "CC-BY-ND-4.0",
+      "status": "VERIFIED_COMPLETE",
+      "action_taken": "REUSED (byte-identical to ASUS inputs; 3/3 provenance hashes)",
+      "verification": "verify_siak.py ALL PASSED"
+    },
+    "C2_cmudict": {
+      "material": "cmudict.dict",
+      "source": "CMUdict master (BSD-like)",
+      "local_path": "D:\\speech-lab\\models\\cmudict.dict",
+      "bytes": 3618488,
+      "sha256": "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22",
+      "status": "VERIFIED_COMPLETE",
+      "action_taken": "REUSED"
+    },
+    "E_child_phone_tier_SO762": {
+      "material": "mispeech/speechocean762 (mirror of OpenSLR SLR101)",
+      "source": "Hugging Face (anonymous)",
+      "local_path": "C:\\Users\\PC\\.cache\\huggingface\\hub\\datasets--mispeech--speechocean762\\snapshots\\06385584fad212b26134c656fdd3ccf9f093f33e",
+      "revision": "06385584fad212b26134c656fdd3ccf9f093f33e",
+      "expected_rows": 5000,
+      "actual_rows": 5000,
+      "child_rows_le15": 2440,
+      "distinct_speakers": 250,
+      "child_speakers_le15": 122,
+      "age_range_child": "6-15 (no ages 4-5)",
+      "language_l1": "Mandarin",
+      "labels": "5-expert per-phone 0/1/2 + sparse observed sub/del/unk (<0.5 only)",
+      "total_bytes": 644394705,
+      "parquet_sha256_train": "b06fe00f49d2c02c7239677714c68502706e914e029bc01d8e8c6c52416326a7",
+      "license": "OpenSLR states CC BY 4.0 (free commercial); HF card front-matter declares apache-2.0 -- DISCREPANCY RECORDED, not resolved; neither is ND",
+      "status": "VERIFIED_COMPLETE",
+      "action_taken": "DOWNLOADED (snapshot fully materialized this session; was previously stream-only)",
+      "verification": "parquet row/speaker/age counts recomputed offline; matches 1.9.17 audit (5000 rows, 250 spk, 2440 child)"
+    },
+    "D_lwe_real_child_audio_zenodo200495": {
+      "material": "Zenodo 200495 'Children speech recording (English)'",
+      "source": "Zenodo DOI 10.5281/zenodo.200495 (Plymouth University)",
+      "url": "https://zenodo.org/api/records/200495/files/english_children.zip/content",
+      "local_path": "Research/Speech/ExternalData/zenodo_200495/english_children",
+      "license": "CC-BY-4.0 (access_right=open)",
+      "revision": "record 200495; file english_children.zip",
+      "expected_bytes": 607539935,
+      "actual_zip_bytes": 607608488,
+      "zip_md5_expected": "1a4fd6116554593324a0a493e44a1eea",
+      "zip_md5_actual": "1a4fd6116554593324a0a493e44a1eea",
+      "population": "11 children, age M=4.9y (5F/6M), English (native + non-native)",
+      "wav_count_total": 671,
+      "wav_words_sentences": 417,
+      "wav_free_speech": 254,
+      "content": "numbers 1-10 + 5 predefined sentences + free speech; studio_mic + port_mic (+ NAO for free speech)",
+      "status": "VERIFIED_COMPLETE",
+      "action_taken": "DOWNLOADED + MD5-VERIFIED this session (was unavailable before; closes the age-4 English child gap for evaluation)",
+      "note": "raw audio gitignored (.gitignore:131 Research/Speech/ExternalData/); never committed; committed derivatives unchanged"
+    },
+    "D0_lwe_raw_child_audio": {
+      "material": "raw LWE real-child recordings (IMG sources)",
+      "source": "privacy-sensitive; never committed",
+      "local_path": "absent (searched working tree + clones D:\\Vscode\\little-world-english, E:\\lw, E:\\lw2, E:\\LearningWorld, D:\\LearningWorld)",
+      "license": "private/consented, not redistributable",
+      "status": "EXTERNAL_LWE_AUDIO_UNAVAILABLE",
+      "action_taken": "not fabricated; not re-downloadable (no source)",
+      "derivatives_available": "1.9.9-1.9.12 blind/window review clips + labels, Phase1_2 lwe_* control words, Phase1_9_5 hybrid IMG clips (git-tracked)",
+      "blocks": "re-VAD / re-segmentation from raw full-length sources; any recording without a committed derivative",
+      "note": "does NOT block material completeness; SIAK+SO762+Zenodo-200495 cover evaluation/replay"
+    },
+    "F_moonshine_asr": {
+      "material": "sherpa-onnx-moonshine-tiny-en-int8",
+      "status": "OPTIONAL",
+      "action_taken": "not downloaded; not required for phone adaptation"
+    },
+    "G_license_posture": {
+      "model": "Apache-2.0 CLEAR",
+      "cmudict": "BSD-like CLEAR",
+      "siak": "CC-BY-ND-4.0 BLOCKED_PENDING_LICENSE_REVIEW (training use open since 1.9.14)",
+      "so762": "OpenSLR CC BY 4.0 / HF card apache-2.0 DISCREPANCY (permissive both ways; unresolved which governs)",
+      "status": "MIXED"
+    }
+  },
+  "gate": {
+    "BASELINE_READY": true,
+    "MATERIAL_MANIFEST": "VERIFIED_COMPLETE",
+    "MAYNODE_TRAINING_READY": false,
+    "external_lwe_audio": "EXTERNAL_LWE_AUDIO_UNAVAILABLE (raw only; committed derivatives present)",
+    "material_blockers": [],
+    "blockers": [
+      "SIAK_LICENSE_FOR_TRAINING unresolved (CC-BY-ND-4.0): fine-tuning on ND material may be a derivative",
+      "Gold phone labels exist (SO762) but SO762 is Mandarin-L1 ages 6-15, NOT the LWE target (Vietnamese-L1 ~age 4); 1.9.18 already showed head-only B1 on SO762 REGRESSES FRR (0.227 -> 0.299)",
+      "B2 not justified by 1.9.18 evidence",
+      "NOTE: Zenodo-200495 (age ~4.9y English children) is now ON DISK and CC-BY-4.0 -> the age-4 child EVALUATION gap is closed; a transfer/Failure-replay evaluation over it is now technically possible without new downloads"
+    ]
+  },
+  "download_warnings": [
+    "Hugging Face access was ANONYMOUS (no HF_TOKEN in environment); rate limits did not block completion",
+    "huggingface_hub symlink warning (no Developer Mode): cache works in degraded copy mode (extra disk use only)"
+  ],
+  "environment": {
+    "python": "3.13.2",
+    "pytorch": "2.14.1+cpu",
+    "transformers": "5.18.0",
+    "datasets": "5.0.1",
+    "huggingface_hub": "1.33.0",
+    "numpy": "2.5.3",
+    "scikit_learn": "1.9.1",
+    "soundfile": "0.14.0",
+    "librosa": "1.0.0",
+    "cuda_available": false,
+    "gpu": "AMD Radeon RX 6500 XT (unusable for PyTorch CUDA; all compute CPU)",
+    "ram_gb": 16.0
+  },
+  "action_summary": {
+    "DOWNLOADED": ["SO762 snapshot (parquet + README) this session", "base model snapshot (prior recovery)", "SIAK full release (prior recovery)", "CMUdict (prior recovery)"],
+    "REUSED": ["pipeline code", "inventory", "committed LWE derivatives", "SIAK (byte-identical)"],
+    "REDOWNLOADED": ["SO762 (materialized this session)"],
+    "MISSING": ["raw LWE/Zenodo child audio (privacy, gitignored)", "MyST/PF-STAR (restricted access)", "Moonshine (optional)"],
+    "BLOCKED": ["SIAK training license", "SO762 license declaration ambiguity"]
+  }
+}
