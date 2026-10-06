@@ -1,0 +1,10 @@
+case_id,old_class,new_class,fixed,partial,regressed,evidence,reason
+child_01_eight,ALIGNMENT,NOT_ALIGNMENT,0,0,0,old_span_max=0.5924 outside=0.0 new_max=0.5924 displacement_ms=285.7,no evidence outside the production span
+child_01_nine,ALIGNMENT,INCONCLUSIVE,0,0,0,old_span_max=0.0155 outside=0.9793 new_max=0.0 displacement_ms=,evidence existed within monotone region outside production span
+child_02_eight,ALIGNMENT,NOT_ALIGNMENT,0,0,0,old_span_max=0.9179 outside=0.0002 new_max=0.9179 displacement_ms=-103.8,no evidence outside the production span
+child_02_five,ALIGNMENT,NOT_ALIGNMENT,0,0,0,old_span_max=0.7322 outside=0.0052 new_max=0.7322 displacement_ms=-91.8,no evidence outside the production span
+child_02_one,ALIGNMENT,NOT_ALIGNMENT,0,0,0,old_span_max=0.9571 outside=0.0 new_max=0.9571 displacement_ms=72.6,no evidence outside the production span
+child_02_seven,ALIGNMENT,NOT_ALIGNMENT,0,0,0,old_span_max=0.4907 outside=0.0097 new_max=0.4907 displacement_ms=-85.7,no evidence outside the production span
+child_04_eight,ALIGNMENT,NOT_ALIGNMENT,0,0,0,old_span_max=0.9588 outside=0.0 new_max=0.9588 displacement_ms=125.0,no evidence outside the production span
+child_05_eight,ALIGNMENT,NOT_ALIGNMENT,0,0,0,old_span_max=0.7582 outside=0.006 new_max=0.7582 displacement_ms=362.1,no evidence outside the production span
+child_06_eight,ALIGNMENT,NOT_ALIGNMENT,0,0,0,old_span_max=0.9387 outside=0.0006 new_max=0.9387 displacement_ms=136.4,no evidence outside the production span

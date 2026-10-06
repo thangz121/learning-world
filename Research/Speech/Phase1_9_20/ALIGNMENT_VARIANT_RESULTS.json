@@ -1,0 +1,236 @@
+{
+  "phase": "1.9.20",
+  "recompute_note": "no frame-level logits cached in 1.9.17-19; frozen encoder re-run for the exact 1.9.19 evaluation sets only (80 LWE + 214 so762 utt)",
+  "variants": {
+    "A_current": "production ctc_align",
+    "B_blank": "2L+1 blank-aware, no skips",
+    "C_skip_d*": "blank-aware + deletion skips, penalty delta (normalized emissions)",
+    "D_evid_l*": "C + lambda * GOP(target vs competitor)",
+    "E_cons": "C d=1 + conservative support rule (0.5 present)"
+  },
+  "selection_on_dev": {
+    "A_current": {
+      "recovery": 0.0,
+      "n_alignable": 55,
+      "n_recovered": 0,
+      "false_recovery_rate": 0.4118,
+      "n_absent": 17,
+      "n_false_recovered": 7
+    },
+    "B_blank": {
+      "recovery": 0.5818,
+      "n_alignable": 55,
+      "n_recovered": 32,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    },
+    "C_skip_d0.0": {
+      "recovery": 0.5818,
+      "n_alignable": 55,
+      "n_recovered": 32,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    },
+    "C_skip_d0.5": {
+      "recovery": 0.5818,
+      "n_alignable": 55,
+      "n_recovered": 32,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    },
+    "C_skip_d1.0": {
+      "recovery": 0.6364,
+      "n_alignable": 55,
+      "n_recovered": 35,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    },
+    "C_skip_d2.0": {
+      "recovery": 0.5818,
+      "n_alignable": 55,
+      "n_recovered": 32,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    },
+    "C_skip_d4.0": {
+      "recovery": 0.5818,
+      "n_alignable": 55,
+      "n_recovered": 32,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    },
+    "D_evid_l0.5": {
+      "recovery": 0.6364,
+      "n_alignable": 55,
+      "n_recovered": 35,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    },
+    "D_evid_l1.0": {
+      "recovery": 0.6364,
+      "n_alignable": 55,
+      "n_recovered": 35,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    },
+    "E_cons": {
+      "recovery": 0.6364,
+      "n_alignable": 55,
+      "n_recovered": 35,
+      "false_recovery_rate": 0.5882,
+      "n_absent": 17,
+      "n_false_recovered": 10
+    }
+  },
+  "selected_variant": "C_skip_d1.0",
+  "lwe_old_production": {
+    "present_recall": 0.9375,
+    "absent_false_present": 0.4167
+  },
+  "lwe_new_selected": {
+    "present_recall": 0.5625,
+    "absent_false_present": 0.0833,
+    "unsupported_present": null,
+    "uncertain_rate": 0.0,
+    "coverage": 1.0
+  },
+  "lwe_new_A_current": {
+    "present_recall": 0.5625,
+    "absent_false_present": 0.0833,
+    "unsupported_present": null,
+    "uncertain_rate": 0.0,
+    "coverage": 1.0
+  },
+  "so762_test_selected": {
+    "present_recall": 0.7093,
+    "absent_false_present": null,
+    "unsupported_present": null,
+    "uncertain_rate": 0.0,
+    "coverage": 1.0
+  },
+  "so762_test_current": {
+    "present_recall": 0.5286,
+    "absent_false_present": null,
+    "unsupported_present": null,
+    "uncertain_rate": 0.0,
+    "coverage": 1.0
+  },
+  "negative_control": {
+    "n_absent": 29,
+    "old_false": 8,
+    "new_false": 11
+  },
+  "reclassification": {
+    "n_alignment_cases": 9,
+    "FIXED_ALIGNMENT": 0,
+    "PARTIALLY_FIXED": 0,
+    "NOT_ALIGNMENT": 8,
+    "rows": [
+      {
+        "case_id": "child_01_eight",
+        "old_class": "ALIGNMENT",
+        "new_class": "NOT_ALIGNMENT",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.5924 outside=0.0 new_max=0.5924 displacement_ms=285.7",
+        "reason": "no evidence outside the production span"
+      },
+      {
+        "case_id": "child_01_nine",
+        "old_class": "ALIGNMENT",
+        "new_class": "INCONCLUSIVE",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.0155 outside=0.9793 new_max=0.0 displacement_ms=",
+        "reason": "evidence existed within monotone region outside production span"
+      },
+      {
+        "case_id": "child_02_eight",
+        "old_class": "ALIGNMENT",
+        "new_class": "NOT_ALIGNMENT",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.9179 outside=0.0002 new_max=0.9179 displacement_ms=-103.8",
+        "reason": "no evidence outside the production span"
+      },
+      {
+        "case_id": "child_02_five",
+        "old_class": "ALIGNMENT",
+        "new_class": "NOT_ALIGNMENT",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.7322 outside=0.0052 new_max=0.7322 displacement_ms=-91.8",
+        "reason": "no evidence outside the production span"
+      },
+      {
+        "case_id": "child_02_one",
+        "old_class": "ALIGNMENT",
+        "new_class": "NOT_ALIGNMENT",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.9571 outside=0.0 new_max=0.9571 displacement_ms=72.6",
+        "reason": "no evidence outside the production span"
+      },
+      {
+        "case_id": "child_02_seven",
+        "old_class": "ALIGNMENT",
+        "new_class": "NOT_ALIGNMENT",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.4907 outside=0.0097 new_max=0.4907 displacement_ms=-85.7",
+        "reason": "no evidence outside the production span"
+      },
+      {
+        "case_id": "child_04_eight",
+        "old_class": "ALIGNMENT",
+        "new_class": "NOT_ALIGNMENT",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.9588 outside=0.0 new_max=0.9588 displacement_ms=125.0",
+        "reason": "no evidence outside the production span"
+      },
+      {
+        "case_id": "child_05_eight",
+        "old_class": "ALIGNMENT",
+        "new_class": "NOT_ALIGNMENT",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.7582 outside=0.006 new_max=0.7582 displacement_ms=362.1",
+        "reason": "no evidence outside the production span"
+      },
+      {
+        "case_id": "child_06_eight",
+        "old_class": "ALIGNMENT",
+        "new_class": "NOT_ALIGNMENT",
+        "fixed": 0,
+        "partial": 0,
+        "regressed": 0,
+        "evidence": "old_span_max=0.9387 outside=0.0006 new_max=0.9387 displacement_ms=136.4",
+        "reason": "no evidence outside the production span"
+      }
+    ]
+  },
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  }
+}

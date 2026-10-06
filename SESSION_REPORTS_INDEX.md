@@ -19,6 +19,9 @@
   8. Open items / next steps.
 - Never include secrets (HF tokens, keys) or raw child audio in these files.
 - Update this index when a new session report is added.
+- **Standing instruction (from WP-1.9.20):** on completing a work package, commit and push
+  automatically to the working branch and `main` (fast-forward), including the new
+  `SESSION_REPORT_<ID>.md` and this index update — do not ask first.
 
 ## Reports
 
@@ -29,7 +32,8 @@
 | 1.9.16 | 2026-10-03 | Child phone model adaptation research (B1) | B = ADAPTATION_PROMISING_BUT_INSUFFICIENT | `e8d96da` |
 | 1.9.17 | 2026-10-03 | Deletion / alignment diagnostic | GATE A (alignment/deletion primary); `SPEECH_RESEARCH_REQUIRES_ALIGNMENT_WORK` | `c611724` |
 | 1.9.18 | 2026-10-03 | Deletion-aware evidence & decision layer | ALIGNMENT_DELETION_GATE_FAIL | `c611724` |
-| 1.9.19 | 2026-10-03 | Boundary / window causality audit | MIXED_WINDOW_AND_ACOUSTIC; B2 NOT YET | (uncommitted) |
+| 1.9.19 | 2026-10-03 | Boundary / window causality audit | MIXED_WINDOW_AND_ACOUSTIC; B2 NOT YET | `6fc7158` |
+| 1.9.20 | 2026-10-03 | Alignment representation audit & counterfactual realignment | ALIGNMENT_REPRESENTATION_FAIL; B2 NOT YET | (this commit) |
 
 ## Current speech-research status
 
