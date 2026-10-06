@@ -1,0 +1,26 @@
+{
+  "phase": "1.9.16",
+  "questions": {
+    "1_child_datasets_available": "speechocean762 (SLR101, CC BY 4.0, 250 spk/5000 utt, 122 children), SIAK (172 spk/16308 utt, rating-only), Zenodo 200495 (11 children, test-only)",
+    "2_phoneme_labels": "speechocean762: per-phone human accuracy 0/1/2 + canonical ARPAbet. SIAK/Zenodo: none",
+    "3_language_accent": "so762 non-native English (Mandarin L1); SIAK Finnish/UK/other; LWE target = Vietnamese-L1 children (no matching corpus)",
+    "4_age_metadata": "so762 ages 6-15 children; SIAK 4-12; Zenodo ~4-5",
+    "5_speaker_counts": "so762 child train 58 / child test 64 (disjoint); SIAK 172; Zenodo 11",
+    "6_target_vocabulary": "so762 read sentences; SIAK 320 single words; LWE numbers/words",
+    "7_label_reliability": "so762: 5 independent experts, 96.4% of phone judgments are score 2, explicit notation for 1/0/insertion; reliable enough for quality-filtered targets, NOT for phone transcription",
+    "8_label_levels": "so762 phone+word+sentence; SIAK utterance rating; Zenodo word",
+    "9_training_license": "so762 CC BY 4.0 allows training and commercial use; SIAK CC-BY-ND allows model building/evaluation per README (legal review open)",
+    "10_enough_for_finetune": "Enough for SMALL head-only adaptation on frozen encoder (1,160 child utterances / 58 speakers) on CPU; NOT enough for full fine-tuning within local CPU constraints",
+    "11_speaker_disjoint_test": "yes: so762 official child test (64 spk) + SIAK test (27 spk) + LWE external (never trained)",
+    "12_local_runtime": "head-only adaptation: model stays XLSR-53 large 1.26 GB; head < 10 MB; CPU inference unchanged (head adds <5 ms/frame batch)"
+  },
+  "conclusion": {
+    "supervised_phone_transcription_training": false,
+    "reason": "no dataset provides human phone TRANSCRIPTIONS of what the child actually said; so762 gives scores on canonical phones, SIAK/Zenodo give none",
+    "quality_filtered_head_adaptation_B1": true,
+    "plan": "freeze encoder (facebook/wav2vec2-xlsr-53-espeak-cv-ft); train a small Conv1d CTC head on so762 TRAIN children; canonical targets; per-utterance weight = mean human phone score/2; mask utterances with mean < 0.5; evaluate speaker-disjoint on so762 test children + SIAK test speakers + LWE external (test only)",
+    "stop_conditions": [
+      "if B1 does not improve down-stream human-anchored metrics under FRR-first, report falsified and recommend dataset acquisition"
+    ]
+  }
+}

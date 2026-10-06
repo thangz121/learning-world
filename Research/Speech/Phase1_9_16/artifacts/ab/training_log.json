@@ -1,0 +1,103 @@
+{
+  "config": {
+    "smoke": false,
+    "epochs": 15,
+    "batch": 8,
+    "lr": 0.001,
+    "val_speakers": 10
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 15.2618,
+      "val_loss": 16.942,
+      "sec": 56.1
+    },
+    {
+      "epoch": 2,
+      "train_loss": 7.4105,
+      "val_loss": 16.3739,
+      "sec": 49.9
+    },
+    {
+      "epoch": 3,
+      "train_loss": 6.6805,
+      "val_loss": 16.6825,
+      "sec": 46.3
+    },
+    {
+      "epoch": 4,
+      "train_loss": 6.1818,
+      "val_loss": 17.0814,
+      "sec": 46.9
+    },
+    {
+      "epoch": 5,
+      "train_loss": 5.7248,
+      "val_loss": 17.2339,
+      "sec": 56.7
+    },
+    {
+      "epoch": 6,
+      "train_loss": 5.2586,
+      "val_loss": 18.1433,
+      "sec": 57.3
+    },
+    {
+      "epoch": 7,
+      "train_loss": 4.9267,
+      "val_loss": 18.1261,
+      "sec": 56.0
+    },
+    {
+      "epoch": 8,
+      "train_loss": 4.5905,
+      "val_loss": 18.9479,
+      "sec": 57.5
+    },
+    {
+      "epoch": 9,
+      "train_loss": 4.2552,
+      "val_loss": 18.6027,
+      "sec": 58.0
+    },
+    {
+      "epoch": 10,
+      "train_loss": 4.0682,
+      "val_loss": 20.3565,
+      "sec": 56.8
+    },
+    {
+      "epoch": 11,
+      "train_loss": 3.7856,
+      "val_loss": 20.7281,
+      "sec": 57.3
+    },
+    {
+      "epoch": 12,
+      "train_loss": 3.6008,
+      "val_loss": 23.3266,
+      "sec": 59.8
+    },
+    {
+      "epoch": 13,
+      "train_loss": 3.3806,
+      "val_loss": 23.4461,
+      "sec": 55.5
+    },
+    {
+      "epoch": 14,
+      "train_loss": 3.2315,
+      "val_loss": 23.2491,
+      "sec": 55.7
+    },
+    {
+      "epoch": 15,
+      "train_loss": 3.0824,
+      "val_loss": 24.1824,
+      "sec": 55.7
+    }
+  ],
+  "n_fit": 2317,
+  "n_val": 200
+}

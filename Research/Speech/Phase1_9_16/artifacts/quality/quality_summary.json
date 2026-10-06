@@ -1,0 +1,188 @@
+{
+  "summaries": [
+    {
+      "dataset": "so762_all",
+      "n": 5000,
+      "n_errors": 0,
+      "sample_rates": {
+        "16000": 5000
+      },
+      "dur_s": {
+        "p5": 2.404,
+        "median": 3.5255,
+        "p95": 7.432,
+        "max": 20.41
+      },
+      "rms": {
+        "p5": 0.0192,
+        "median": 0.054,
+        "p95": 0.1259
+      },
+      "clipping_gt_0.985_mean": 0.0,
+      "clipped_gt_1pct_frames_n": 0,
+      "silence_ratio_median": 0.3664,
+      "speakers": 250,
+      "top_speaker_share": 0.004,
+      "age_counts": {
+        "6": 500,
+        "7": 440,
+        "8": 160,
+        "9": 380,
+        "10": 120,
+        "11": 260,
+        "12": 220,
+        "13": 60,
+        "14": 40,
+        "15": 260,
+        "19": 200,
+        "20": 520,
+        "21": 540,
+        "22": 180,
+        "23": 120,
+        "24": 120,
+        "25": 180,
+        "26": 100,
+        "27": 40,
+        "28": 120,
+        "29": 80,
+        "30": 80,
+        "31": 40,
+        "32": 40,
+        "33": 60,
+        "35": 40,
+        "37": 60,
+        "38": 20,
+        "43": 20
+      }
+    },
+    {
+      "dataset": "so762_children",
+      "n": 2440,
+      "n_errors": 0,
+      "sample_rates": {
+        "16000": 2440
+      },
+      "dur_s": {
+        "p5": 2.31,
+        "median": 3.335,
+        "p95": 5.53,
+        "max": 11.12
+      },
+      "rms": {
+        "p5": 0.0193,
+        "median": 0.0584,
+        "p95": 0.1211
+      },
+      "clipping_gt_0.985_mean": 0.0,
+      "clipped_gt_1pct_frames_n": 0,
+      "silence_ratio_median": 0.3639,
+      "speakers": 122,
+      "top_speaker_share": 0.008,
+      "age_counts": {
+        "6": 500,
+        "7": 440,
+        "8": 160,
+        "9": 380,
+        "10": 120,
+        "11": 260,
+        "12": 220,
+        "13": 60,
+        "14": 40,
+        "15": 260
+      }
+    },
+    {
+      "dataset": "so762_adults",
+      "n": 2560,
+      "n_errors": 0,
+      "sample_rates": {
+        "16000": 2560
+      },
+      "dur_s": {
+        "p5": 2.51,
+        "median": 3.762,
+        "p95": 8.6861,
+        "max": 20.41
+      },
+      "rms": {
+        "p5": 0.019,
+        "median": 0.0489,
+        "p95": 0.1306
+      },
+      "clipping_gt_0.985_mean": 0.0,
+      "clipped_gt_1pct_frames_n": 0,
+      "silence_ratio_median": 0.3682,
+      "speakers": 128,
+      "top_speaker_share": 0.008,
+      "age_counts": null
+    },
+    {
+      "dataset": "siak_3168",
+      "n": 3168,
+      "n_errors": 0,
+      "sample_rates": {
+        "16000": 3168
+      },
+      "dur_s": {
+        "p5": 0.5,
+        "median": 0.85,
+        "p95": 1.46,
+        "max": 3.86
+      },
+      "rms": {
+        "p5": 0.0135,
+        "median": 0.043,
+        "p95": 0.2062
+      },
+      "clipping_gt_0.985_mean": 0.00178,
+      "clipped_gt_1pct_frames_n": 94,
+      "silence_ratio_median": 0.3279,
+      "speakers": 172,
+      "top_speaker_share": 0.006,
+      "age_counts": {
+        "4": 20,
+        "5": 20,
+        "6": 59,
+        "7": 200,
+        "8": 587,
+        "9": 1090,
+        "10": 703,
+        "11": 440,
+        "12": 49
+      },
+      "score_ge80_share": 0.403
+    },
+    {
+      "dataset": "zenodo_200495",
+      "n": 671,
+      "n_errors": 0,
+      "sample_rates": {
+        "44100": 670,
+        "48000": 1
+      },
+      "dur_s": {
+        "p5": 0.5818,
+        "median": 2.379,
+        "p95": 10.4638,
+        "max": 244.31
+      },
+      "rms": {
+        "p5": 0.0427,
+        "median": 0.1265,
+        "p95": 0.2365
+      },
+      "clipping_gt_0.985_mean": 2e-05,
+      "clipped_gt_1pct_frames_n": 0,
+      "silence_ratio_median": 0.0,
+      "speakers": 11,
+      "top_speaker_share": 0.131
+    }
+  ],
+  "domination_checks": {
+    "adults_share_so762": 0.512,
+    "child_age6_share_of_children": 0.205,
+    "siak_score_lt50_share": 0.274,
+    "siak_age_le6_share": 0.031,
+    "clipping_risk": "none material (see clipped_gt_1pct_frames_n per dataset)"
+  }
+}

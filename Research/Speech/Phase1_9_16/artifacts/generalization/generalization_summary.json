@@ -1,0 +1,92 @@
+{
+  "lwe_speakers_improved_final_recall": 0,
+  "lwe_speakers_degraded_final_recall": 3,
+  "siak_speakers_pearson_up": 12,
+  "siak_speakers_pearson_down": 12,
+  "so762_child_speakers_exact_up": 37,
+  "so762_child_speakers_exact_down": 27,
+  "worst_so762_delta": [
+    {
+      "speaker_id": "0149",
+      "age": "7",
+      "n_phones": 295,
+      "baseline_exact": 0.793,
+      "adapted_exact": 0.671,
+      "delta": -0.122
+    },
+    {
+      "speaker_id": "1469",
+      "age": "6",
+      "n_phones": 354,
+      "baseline_exact": 0.836,
+      "adapted_exact": 0.74,
+      "delta": -0.096
+    },
+    {
+      "speaker_id": "3412",
+      "age": "9",
+      "n_phones": 267,
+      "baseline_exact": 0.745,
+      "adapted_exact": 0.652,
+      "delta": -0.094
+    },
+    {
+      "speaker_id": "9553",
+      "age": "15",
+      "n_phones": 418,
+      "baseline_exact": 0.833,
+      "adapted_exact": 0.758,
+      "delta": -0.074
+    },
+    {
+      "speaker_id": "0093",
+      "age": "6",
+      "n_phones": 271,
+      "baseline_exact": 0.804,
+      "adapted_exact": 0.734,
+      "delta": -0.07
+    }
+  ],
+  "best_so762_delta": [
+    {
+      "speaker_id": "1503",
+      "age": "7",
+      "n_phones": 329,
+      "baseline_exact": 0.711,
+      "adapted_exact": 0.818,
+      "delta": 0.106
+    },
+    {
+      "speaker_id": "0113",
+      "age": "6",
+      "n_phones": 271,
+      "baseline_exact": 0.675,
+      "adapted_exact": 0.786,
+      "delta": 0.111
+    },
+    {
+      "speaker_id": "1046",
+      "age": "7",
+      "n_phones": 289,
+      "baseline_exact": 0.595,
+      "adapted_exact": 0.709,
+      "delta": 0.114
+    },
+    {
+      "speaker_id": "1061",
+      "age": "7",
+      "n_phones": 295,
+      "baseline_exact": 0.624,
+      "adapted_exact": 0.749,
+      "delta": 0.125
+    },
+    {
+      "speaker_id": "1050",
+      "age": "8",
+      "n_phones": 311,
+      "baseline_exact": 0.678,
+      "adapted_exact": 0.833,
+      "delta": 0.154
+    }
+  ]
+}

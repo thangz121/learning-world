@@ -1,0 +1,30 @@
+{
+  "n_runnable_items": 94,
+  "human_valid_attempts": {
+    "baseline_soft": {
+      "n": 87,
+      "mean": 68.08,
+      "conf_ge_0.05": 0.299
+    },
+    "adapted_soft": {
+      "n": 87,
+      "mean": 71.77,
+      "conf_ge_0.05": 0.299
+    }
+  },
+  "human_not_assessable": {
+    "baseline_soft": {
+      "n": 5,
+      "mean": 57.18,
+      "conf_ge_0.05": 0.4
+    },
+    "adapted_soft": {
+      "n": 5,
+      "mean": 77.32,
+      "conf_ge_0.05": 0.4
+    }
+  },
+  "adapted_confident_evidence_on_not_assessable_n": 2,
+  "baseline_confident_evidence_on_not_assessable_n": 2,
+  "note": "free-speech items have no canonical target and are excluded from H"
+}

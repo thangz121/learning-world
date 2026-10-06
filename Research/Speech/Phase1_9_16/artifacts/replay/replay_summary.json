@@ -1,0 +1,23 @@
+{
+  "n": 18,
+  "outcomes": {
+    "UNCHANGED": 8,
+    "FIXED": 5,
+    "PARTIALLY_FIXED": 2,
+    "PARTIALLY_REGRESSED": 1,
+    "REGRESSED": 2
+  },
+  "by_group": {
+    "PHONE_MODEL_ERROR": {
+      "UNCHANGED": 3,
+      "FIXED": 5,
+      "PARTIALLY_FIXED": 2,
+      "PARTIALLY_REGRESSED": 1,
+      "REGRESSED": 1
+    },
+    "SCORER_MISS": {
+      "UNCHANGED": 5,
+      "REGRESSED": 1
+    }
+  }
+}

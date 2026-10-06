@@ -1,0 +1,59 @@
+{
+  "note": "synthetic perturbations; stress only, not real-child validation",
+  "conditions": {
+    "clean": {
+      "n": 24,
+      "baseline_mean": 67.1,
+      "adapted_mean": 76.2,
+      "baseline_mean_delta_vs_clean": 0.0,
+      "baseline_final_recall": 0.75,
+      "adapted_final_recall": 0.667,
+      "adapted_mean_delta_vs_clean": 0.0
+    },
+    "gain_-12db": {
+      "n": 24,
+      "baseline_mean": 67.1,
+      "adapted_mean": 76.2,
+      "baseline_mean_delta_vs_clean": 0.0,
+      "baseline_final_recall": 0.75,
+      "adapted_final_recall": 0.667,
+      "adapted_mean_delta_vs_clean": 0.0
+    },
+    "gain_6db": {
+      "n": 24,
+      "baseline_mean": 61.2,
+      "adapted_mean": 71.0,
+      "baseline_mean_delta_vs_clean": -5.9,
+      "baseline_final_recall": 0.625,
+      "adapted_final_recall": 0.667,
+      "adapted_mean_delta_vs_clean": -5.2
+    },
+    "noise_snr10": {
+      "n": 24,
+      "baseline_mean": 50.5,
+      "adapted_mean": 57.8,
+      "baseline_mean_delta_vs_clean": -16.6,
+      "baseline_final_recall": 0.708,
+      "adapted_final_recall": 0.75,
+      "adapted_mean_delta_vs_clean": -18.4
+    },
+    "noise_snr20": {
+      "n": 24,
+      "baseline_mean": 61.3,
+      "adapted_mean": 68.6,
+      "baseline_mean_delta_vs_clean": -5.8,
+      "baseline_final_recall": 0.625,
+      "adapted_final_recall": 0.583,
+      "adapted_mean_delta_vs_clean": -7.6
+    },
+    "telephone_band": {
+      "n": 24,
+      "baseline_mean": 53.5,
+      "adapted_mean": 61.4,
+      "baseline_mean_delta_vs_clean": -13.6,
+      "baseline_final_recall": 0.542,
+      "adapted_final_recall": 0.5,
+      "adapted_mean_delta_vs_clean": -14.8
+    }
+  }
+}

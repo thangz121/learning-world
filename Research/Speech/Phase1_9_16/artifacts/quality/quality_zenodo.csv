@@ -1,0 +1,672 @@
+sr,dur,rms,peak,clip,silence,recording_id,speaker_id,target,task,mic
+44100,1.1354195011337869,0.24229657649993896,0.999969482421875,1.997124141236619e-05,0.0,child_01_studio_mic_eight,child_01,eight,number_counting,studio_mic
+44100,0.9191609977324263,0.19891908764839172,0.999969482421875,4.934007647711854e-05,0.0,child_01_studio_mic_five,child_01,five,number_counting,studio_mic
+44100,0.8921088435374149,0.21672137081623077,0.999969482421875,7.625438462711606e-05,0.0,child_01_studio_mic_four,child_01,four,number_counting,studio_mic
+44100,0.8650793650793651,0.19859522581100464,0.999969482421875,0.0001834862385321101,0.0,child_01_studio_mic_nine,child_01,nine,number_counting,studio_mic
+44100,1.027278911564626,0.18025672435760498,0.999969482421875,0.00011036796680131558,0.0,child_01_studio_mic_one,child_01,one,number_counting,studio_mic
+44100,1.027278911564626,0.2443476915359497,0.999969482421875,2.207359336026312e-05,0.0,child_01_studio_mic_seven,child_01,seven,number_counting,studio_mic
+44100,1.0273015873015874,0.15062186121940613,0.999969482421875,2.207310612749426e-05,0.0,child_01_studio_mic_ten,child_01,ten,number_counting,studio_mic
+44100,1.324671201814059,0.24810880422592163,0.999969482421875,0.00013694409257420658,0.0,child_01_studio_mic_three,child_01,three,number_counting,studio_mic
+44100,1.0002721088435373,0.16797788441181183,0.999969482421875,6.800870511425463e-05,0.0,child_01_studio_mic_two,child_01,two,number_counting,studio_mic
+44100,2.378979591836735,0.164621502161026,0.99993896484375,3.812682889632362e-05,0.0,child_01_studio_mic_the_dog_is_in_front_of_the_horse,child_01,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,2.892630385487528,0.24496319890022278,0.999969482421875,3.919570415082507e-05,0.0,child_01_studio_mic_the_dog_is_on_top_of_the_shed,child_01,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,2.6493197278911564,0.17537909746170044,0.999969482421875,4.2795395215474814e-05,0.0,child_01_studio_mic_the_fish_is_in_the_pond,child_01,the fish is in the pond,predefined_sentence,studio_mic
+44100,2.2708390022675737,0.17846858501434326,0.999969482421875,9.985620706183096e-06,0.0,child_01_studio_mic_the_horse_is_behind_the_car,child_01,the horse is behind the car,predefined_sentence,studio_mic
+44100,2.5952380952380953,0.21525311470031738,0.99993896484375,2.621231979030144e-05,0.0,child_01_studio_mic_the_horse_is_next_to_the_stable,child_01,the horse is next to the stable,predefined_sentence,studio_mic
+44100,1.1354195011337869,0.2421206831932068,0.999969482421875,1.997124141236619e-05,0.0,child_01_port_mic_eight,child_01,eight,number_counting,port_mic
+44100,0.9191609977324263,0.1987212598323822,1.0,4.934007647711854e-05,0.0,child_01_port_mic_five,child_01,five,number_counting,port_mic
+44100,0.8921088435374149,0.21657951176166534,1.0,7.625438462711606e-05,0.0,child_01_port_mic_four,child_01,four,number_counting,port_mic
+44100,0.8650793650793651,0.19812247157096863,0.999969482421875,0.0001834862385321101,0.0,child_01_port_mic_nine,child_01,nine,number_counting,port_mic
+44100,1.027278911564626,0.1803116500377655,0.999969482421875,0.00011036796680131558,0.0,child_01_port_mic_one,child_01,one,number_counting,port_mic
+44100,1.027278911564626,0.24453099071979523,0.999969482421875,2.207359336026312e-05,0.0,child_01_port_mic_seven,child_01,seven,number_counting,port_mic
+44100,1.0273015873015874,0.15086664259433746,0.999969482421875,2.207310612749426e-05,0.0,child_01_port_mic_ten,child_01,ten,number_counting,port_mic
+44100,1.324671201814059,0.24800683557987213,0.99993896484375,0.00013694409257420658,0.0,child_01_port_mic_three,child_01,three,number_counting,port_mic
+44100,1.0002721088435373,0.1679779589176178,0.999969482421875,6.800870511425463e-05,0.0,child_01_port_mic_two,child_01,two,number_counting,port_mic
+44100,2.378979591836735,0.16456060111522675,0.999969482421875,3.812682889632362e-05,0.0,child_01_port_mic_the_dog_is_in_front_of_the_horse,child_01,the dog is in front of the horse,predefined_sentence,port_mic
+44100,2.892630385487528,0.24535393714904785,0.999969482421875,3.919570415082507e-05,0.0,child_01_port_mic_the_dog_is_on_top_of_the_shed,child_01,the dog is on top of the shed,predefined_sentence,port_mic
+44100,2.6493197278911564,0.17519323527812958,0.999969482421875,2.567723712928489e-05,0.0,child_01_port_mic_the_fish_is_in_the_pond,child_01,the fish is in the pond,predefined_sentence,port_mic
+44100,2.2708390022675737,0.17835776507854462,0.999969482421875,9.985620706183096e-06,0.0,child_01_port_mic_the_horse_is_behind_the_car,child_01,the horse is behind the car,predefined_sentence,port_mic
+44100,2.5952380952380953,0.2155473679304123,0.99993896484375,2.621231979030144e-05,0.0,child_01_port_mic_the_horse_is_next_to_the_stable,child_01,the horse is next to the stable,predefined_sentence,port_mic
+44100,1.0702947845804989,0.16670535504817963,0.999969482421875,6.35593220338983e-05,0.0,child_02_studio_mic_eight,child_02,eight,number_counting,studio_mic
+44100,1.0034013605442176,0.18219485878944397,1.0,9.03954802259887e-05,0.0,child_02_studio_mic_five,child_02,five,number_counting,studio_mic
+44100,1.337891156462585,0.15603233873844147,0.99993896484375,5.084659582040982e-05,0.0,child_02_studio_mic_four,child_02,four,number_counting,studio_mic
+44100,1.2486848072562358,0.1453579217195511,0.999969482421875,5.447908910963009e-05,0.0,child_02_studio_mic_one,child_02,one,number_counting,studio_mic
+44100,0.7246938775510204,0.21715420484542847,0.999969482421875,9.387027128508402e-05,0.0,child_02_studio_mic_seven,child_02,seven,number_counting,studio_mic
+44100,1.1594784580498867,0.12091028690338135,1.0,1.955684196116011e-05,0.0,child_02_studio_mic_six,child_02,six,number_counting,studio_mic
+44100,1.1817913832199547,0.25970491766929626,0.999969482421875,1.9187597137210505e-05,0.0,child_02_studio_mic_ten,child_02,ten,number_counting,studio_mic
+44100,1.0926077097505669,0.15192264318466187,0.999969482421875,0.0001245226631246887,0.0,child_02_studio_mic_three,child_02,three,number_counting,studio_mic
+44100,1.0034013605442176,0.19617284834384918,0.999969482421875,2.2598870056497175e-05,0.0,child_02_studio_mic_two,child_02,two,number_counting,studio_mic
+44100,3.9021315192743766,0.16069091856479645,0.999969482421875,1.1622231003463425e-05,0.0,child_02_studio_mic_the_dog_is_in_front_of_the_horse,child_02,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,3.366984126984127,0.12278597056865692,0.999969482421875,4.0408394170415664e-05,0.0,child_02_studio_mic_the_dog_is_on_top_of_the_shed,child_02,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,3.3224036281179137,0.1258099228143692,1.0,2.0475299963144462e-05,0.0,child_02_studio_mic_the_fish_is_in_the_pond,child_02,the fish is in the pond,predefined_sentence,studio_mic
+44100,3.0324943310657595,0.1805606186389923,0.999969482421875,2.9910343744625486e-05,0.0,child_02_studio_mic_the_horse_is_behind_the_car,child_02,the horse is behind the car,predefined_sentence,studio_mic
+44100,3.511904761904762,0.12565448880195618,0.999969482421875,1.9370460048426152e-05,0.0,child_02_studio_mic_the_horse_is_next_to_the_stable,child_02,the horse is next to the stable,predefined_sentence,studio_mic
+44100,1.0702947845804989,0.13559997081756592,0.9121246337890625,0.0,0.0,child_02_port_mic_eight,child_02,eight,number_counting,port_mic
+44100,1.0034013605442176,0.16496014595031738,0.895050048828125,0.0,0.0,child_02_port_mic_five,child_02,five,number_counting,port_mic
+44100,1.337891156462585,0.14214982092380524,0.84515380859375,0.0,0.0,child_02_port_mic_four,child_02,four,number_counting,port_mic
+44100,1.2486848072562358,0.1369936615228653,0.90435791015625,0.0,0.0,child_02_port_mic_one,child_02,one,number_counting,port_mic
+44100,0.7246938775510204,0.17084383964538574,0.9486083984375,0.0,0.0,child_02_port_mic_seven,child_02,seven,number_counting,port_mic
+44100,1.1594784580498867,0.11726976186037064,0.9435577392578125,0.0,0.0,child_02_port_mic_six,child_02,six,number_counting,port_mic
+44100,1.1817913832199547,0.13038067519664764,0.88555908203125,0.0,0.0,child_02_port_mic_ten,child_02,ten,number_counting,port_mic
+44100,1.0926077097505669,0.15773482620716095,0.88116455078125,0.0,0.0,child_02_port_mic_three,child_02,three,number_counting,port_mic
+44100,1.0034013605442176,0.19913853704929352,0.973419189453125,0.0,0.0,child_02_port_mic_two,child_02,two,number_counting,port_mic
+44100,3.9021315192743766,0.1233501210808754,0.908843994140625,0.0,0.0,child_02_port_mic_the_dog_is_in_front_of_the_horse,child_02,the dog is in front of the horse,predefined_sentence,port_mic
+44100,3.366984126984127,0.11262846738100052,0.966552734375,0.0,0.0,child_02_port_mic_the_dog_is_on_top_of_the_shed,child_02,the dog is on top of the shed,predefined_sentence,port_mic
+44100,3.3224036281179137,0.11673976480960846,0.9614105224609375,0.0,0.0,child_02_port_mic_the_fish_is_in_the_pond,child_02,the fish is in the pond,predefined_sentence,port_mic
+44100,3.0324943310657595,0.09739140421152115,0.8170013427734375,0.0,0.0,child_02_port_mic_the_horse_is_behind_the_car,child_02,the horse is behind the car,predefined_sentence,port_mic
+44100,3.511904761904762,0.1184392049908638,0.9624481201171875,0.0,0.0,child_02_port_mic_the_horse_is_next_to_the_stable,child_02,the horse is next to the stable,predefined_sentence,port_mic
+44100,1.0703174603174603,0.08998999744653702,0.9885406494140625,2.1185991822207156e-05,0.0,child_02_nao_mic_eight,child_02,eight,number_counting,nao_mic
+44100,1.0034013605442176,0.16540654003620148,0.986236572265625,2.2598870056497175e-05,0.0,child_02_nao_mic_five,child_02,five,number_counting,nao_mic
+44100,1.3378684807256236,0.14249667525291443,0.9837646484375,0.0,0.0,child_02_nao_mic_four,child_02,four,number_counting,nao_mic
+44100,1.2486848072562358,0.10282536596059799,0.96978759765625,0.0,0.0,child_02_nao_mic_one,child_02,one,number_counting,nao_mic
+44100,0.7246938775510204,0.13018058240413666,0.98773193359375,3.129009042836134e-05,0.0,child_02_nao_mic_seven,child_02,seven,number_counting,nao_mic
+44100,1.1595011337868482,0.14107739925384521,0.951568603515625,0.0,0.0,child_02_nao_mic_six,child_02,six,number_counting,nao_mic
+44100,1.1817913832199547,0.0759454220533371,0.9615936279296875,0.0,0.0,child_02_nao_mic_ten,child_02,ten,number_counting,nao_mic
+44100,1.0926077097505669,0.15509337186813354,0.9738922119140625,0.0,0.0,child_02_nao_mic_three,child_02,three,number_counting,nao_mic
+44100,1.0034013605442176,0.07194599509239197,0.9739837646484375,0.0,0.0,child_02_nao_mic_two,child_02,two,number_counting,nao_mic
+44100,3.902154195011338,0.10143115371465683,0.9716033935546875,0.0,0.0,child_02_nao_mic_the_dog_is_in_front_of_the_horse,child_02,the dog is in front of the horse,predefined_sentence,nao_mic
+44100,3.366984126984127,0.09017578512430191,0.9632110595703125,0.0,0.0,child_02_nao_mic_the_dog_is_on_top_of_the_shed,child_02,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,3.322380952380952,0.10825279355049133,0.94573974609375,0.0,0.0,child_02_nao_mic_the_fish_is_in_the_pond,child_02,the fish is in the pond,predefined_sentence,nao_mic
+44100,3.032517006802721,0.12622851133346558,0.9853973388671875,7.477530022283039e-06,0.0,child_02_nao_mic_the_horse_is_behind_the_car,child_02,the horse is behind the car,predefined_sentence,nao_mic
+44100,3.5119274376417233,0.09574652463197708,0.9238433837890625,0.0,0.0,child_02_nao_mic_the_horse_is_next_to_the_stable,child_02,the horse is next to the stable,predefined_sentence,nao_mic
+44100,0.7769614512471655,0.15224793553352356,0.999969482421875,2.9185150595377073e-05,0.0,child_03_studio_mic_eight,child_03,eight,number_counting,studio_mic
+44100,0.8664172335600907,0.1827695518732071,1.0,5.234368865973985e-05,0.0,child_03_studio_mic_five,child_03,five,number_counting,studio_mic
+44100,0.9114285714285715,0.18668611347675323,0.99993896484375,2.487933522416281e-05,0.0,child_03_studio_mic_four,child_03,four,number_counting,studio_mic
+44100,0.6531065759637188,0.22532054781913757,0.99993896484375,3.471981112422748e-05,0.0,child_03_studio_mic_nine,child_03,nine,number_counting,studio_mic
+44100,0.9458730158730159,0.1630648523569107,0.99993896484375,4.794668328818354e-05,0.0,child_03_studio_mic_seven,child_03,seven,number_counting,studio_mic
+44100,0.7539002267573696,0.16492414474487305,0.999969482421875,3.0077901765572835e-05,0.0,child_03_studio_mic_six,child_03,six,number_counting,studio_mic
+44100,0.5742857142857143,0.17450153827667236,0.999969482421875,7.897022822395957e-05,0.0,child_03_studio_mic_ten,child_03,ten,number_counting,studio_mic
+44100,1.023968253968254,0.22571568191051483,0.999969482421875,4.4289921828287974e-05,0.0,child_03_studio_mic_three,child_03,three,number_counting,studio_mic
+44100,0.8889115646258503,0.19466321170330048,0.999969482421875,5.101910665544246e-05,0.0,child_03_studio_mic_two,child_03,two,number_counting,studio_mic
+44100,3.1979591836734693,0.16630999743938446,0.999969482421875,2.8362759696518472e-05,0.0,child_03_studio_mic_the_dog_is_in_front_of_the_horse,child_03,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,2.69124716553288,0.1414233297109604,0.999969482421875,1.685147113342995e-05,0.0,child_03_studio_mic_the_dog_is_on_top_of_the_shed,child_03,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,2.770090702947846,0.14201214909553528,0.999969482421875,8.185918582853774e-06,0.0,child_03_studio_mic_the_fish_is_in_the_pond,child_03,the fish is in the pond,predefined_sentence,studio_mic
+44100,2.6462131519274377,0.22333231568336487,0.999969482421875,6.855301718966906e-05,0.0,child_03_studio_mic_the_horse_is_behind_the_car,child_03,the horse is behind the car,predefined_sentence,studio_mic
+44100,2.8263718820861676,0.18786726891994476,0.999969482421875,8.022913440786887e-06,0.0,child_03_studio_mic_the_horse_is_next_to_the_stable,child_03,the horse is next to the stable,predefined_sentence,studio_mic
+44100,0.7769614512471655,0.11531119048595428,0.9430084228515625,0.0,0.0,child_03_port_mic_eight,child_03,eight,number_counting,port_mic
+44100,0.8664172335600907,0.16636984050273895,0.8936004638671875,0.0,0.0,child_03_port_mic_five,child_03,five,number_counting,port_mic
+44100,0.9114285714285715,0.1819501668214798,0.886322021484375,0.0,0.0,child_03_port_mic_four,child_03,four,number_counting,port_mic
+44100,0.6531065759637188,0.23514819145202637,0.8704833984375,0.0,0.0,child_03_port_mic_nine,child_03,nine,number_counting,port_mic
+44100,0.9458730158730159,0.1805596500635147,0.847442626953125,0.0,0.0,child_03_port_mic_seven,child_03,seven,number_counting,port_mic
+44100,0.7539002267573696,0.15068553388118744,0.8757476806640625,0.0,0.0,child_03_port_mic_six,child_03,six,number_counting,port_mic
+44100,0.5742857142857143,0.15828578174114227,0.9283294677734375,0.0,0.0,child_03_port_mic_ten,child_03,ten,number_counting,port_mic
+44100,1.023968253968254,0.18454237282276154,0.914581298828125,0.0,0.0,child_03_port_mic_three,child_03,three,number_counting,port_mic
+44100,0.8889115646258503,0.16525299847126007,0.8853912353515625,0.0,0.0,child_03_port_mic_two,child_03,two,number_counting,port_mic
+44100,3.1979591836734693,0.1087096706032753,0.854827880859375,0.0,0.0,child_03_port_mic_the_dog_is_in_front_of_the_horse,child_03,the dog is in front of the horse,predefined_sentence,port_mic
+44100,2.69124716553288,0.09379323571920395,0.8290252685546875,0.0,0.029850746268656716,child_03_port_mic_the_dog_is_on_top_of_the_shed,child_03,the dog is on top of the shed,predefined_sentence,port_mic
+44100,2.770090702947846,0.11753271520137787,0.8073272705078125,0.0,0.0,child_03_port_mic_the_fish_is_in_the_pond,child_03,the fish is in the pond,predefined_sentence,port_mic
+44100,2.6462131519274377,0.17046119272708893,0.904693603515625,0.0,0.0,child_03_port_mic_the_horse_is_behind_the_car,child_03,the horse is behind the car,predefined_sentence,port_mic
+44100,2.8263718820861676,0.13188190758228302,0.8564453125,0.0,0.0,child_03_port_mic_the_horse_is_next_to_the_stable,child_03,the horse is next to the stable,predefined_sentence,port_mic
+44100,0.776984126984127,0.10596372187137604,0.9482574462890625,0.0,0.0,child_03_nao_mic_eight,child_03,eight,number_counting,nao_mic
+44100,0.8664172335600907,0.14362327754497528,0.9366455078125,0.0,0.0,child_03_nao_mic_five,child_03,five,number_counting,nao_mic
+44100,0.9114285714285715,0.17466270923614502,0.99365234375,2.487933522416281e-05,0.0,child_03_nao_mic_four,child_03,four,number_counting,nao_mic
+44100,0.6531065759637188,0.12045258283615112,0.9189605712890625,0.0,0.0,child_03_nao_mic_nine,child_03,nine,number_counting,nao_mic
+44100,0.9458730158730159,0.1574314385652542,0.9028472900390625,0.0,0.0,child_03_nao_mic_seven,child_03,seven,number_counting,nao_mic
+44100,0.7539002267573696,0.12237925082445145,0.9852447509765625,3.0077901765572835e-05,0.0,child_03_nao_mic_six,child_03,six,number_counting,nao_mic
+44100,0.5742857142857143,0.1281823068857193,0.9571533203125,0.0,0.0,child_03_nao_mic_ten,child_03,ten,number_counting,nao_mic
+44100,1.0239455782312925,0.17063629627227783,0.982208251953125,0.0,0.0,child_03_nao_mic_three,child_03,three,number_counting,nao_mic
+44100,0.8889115646258503,0.15405288338661194,0.987823486328125,2.550955332772123e-05,0.0,child_03_nao_mic_two,child_03,two,number_counting,nao_mic
+44100,3.1979591836734693,0.13338817656040192,0.9871368408203125,7.090689924129618e-06,0.0,child_03_nao_mic_the_dog_is_in_front_of_the_horse,child_03,the dog is in front of the horse,predefined_sentence,nao_mic
+44100,2.6912244897959186,0.08142469823360443,0.8645782470703125,0.0,0.0,child_03_nao_mic_the_dog_is_on_top_of_the_shed,child_03,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,2.770090702947846,0.1273420751094818,0.9915313720703125,8.185918582853774e-06,0.0,child_03_nao_mic_the_fish_is_in_the_pond,child_03,the fish is in the pond,predefined_sentence,nao_mic
+44100,2.6462131519274377,0.1159583106637001,0.90765380859375,0.0,0.0,child_03_nao_mic_the_horse_is_behind_the_car,child_03,the horse is behind the car,predefined_sentence,nao_mic
+44100,2.8263718820861676,0.12143599987030029,0.946075439453125,0.0,0.0,child_03_nao_mic_the_horse_is_next_to_the_stable,child_03,the horse is next to the stable,predefined_sentence,nao_mic
+44100,2.245578231292517,0.08411169797182083,0.999969482421875,1.0097950116126427e-05,0.0,child_04_studio_mic_eight,child_04,eight,number_counting,studio_mic
+44100,2.392018140589569,0.1451534926891327,0.999969482421875,1.895950250265433e-05,0.0,child_04_studio_mic_five,child_04,five,number_counting,studio_mic
+44100,2.2699773242630386,0.15842415392398834,1.0,2.9968233672307356e-05,0.0,child_04_studio_mic_four,child_04,four,number_counting,studio_mic
+44100,2.318798185941043,0.15093429386615753,0.999969482421875,1.955818069803147e-05,0.0,child_04_studio_mic_nine,child_04,nine,number_counting,studio_mic
+44100,2.0014965986394557,0.082524374127388,0.999969482421875,1.1329390705367866e-05,0.0,child_04_studio_mic_seven,child_04,seven,number_counting,studio_mic
+44100,2.3920408163265305,0.12671633064746857,0.999969482421875,1.8959322772990548e-05,0.0,child_04_studio_mic_six,child_04,six,number_counting,studio_mic
+44100,1.7085714285714286,0.13626740872859955,0.999969482421875,1.3271752402187185e-05,0.0,child_04_studio_mic_ten,child_04,ten,number_counting,studio_mic
+44100,2.2699773242630386,0.16942159831523895,0.999969482421875,2.9968233672307356e-05,0.0,child_04_studio_mic_three,child_04,three,number_counting,studio_mic
+44100,1.2936507936507937,0.2537373900413513,0.999969482421875,5.258545135845749e-05,0.0,child_04_studio_mic_two,child_04,two,number_counting,studio_mic
+44100,3.4660090702947848,0.167101189494133,0.999969482421875,2.6169275961557333e-05,0.0,child_04_studio_mic_the_dog_is_in_front_of_the_horse,child_04,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,3.0998639455782313,0.193250834941864,0.999969482421875,1.4630149812734083e-05,0.0,child_04_studio_mic_the_dog_is_on_top_of_the_shed,child_04,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,3.3439455782312923,0.11822564899921417,0.999969482421875,1.356226435565682e-05,0.0,child_04_studio_mic_the_fish_is_in_the_pond,child_04,the fish is in the pond,predefined_sentence,studio_mic
+44100,2.6849206349206347,0.14347989857196808,0.999969482421875,2.5336767872978336e-05,0.0,child_04_studio_mic_the_horse_is_behind_the_car,child_04,the horse is behind the car,predefined_sentence,studio_mic
+44100,3.270702947845805,0.1610398143529892,0.999969482421875,2.079895727894175e-05,0.0,child_04_studio_mic_the_horse_is_next_to_the_stable,child_04,the horse is next to the stable,predefined_sentence,studio_mic
+44100,2.245578231292517,0.07016687840223312,0.9603424072265625,0.0,0.0,child_04_port_mic_eight,child_04,eight,number_counting,port_mic
+44100,2.392018140589569,0.08973903208971024,0.8925933837890625,0.0,0.0,child_04_port_mic_five,child_04,five,number_counting,port_mic
+44100,2.2699773242630386,0.15380144119262695,0.902191162109375,0.0,0.0,child_04_port_mic_four,child_04,four,number_counting,port_mic
+44100,2.318798185941043,0.14628669619560242,0.8415069580078125,0.0,0.0,child_04_port_mic_nine,child_04,nine,number_counting,port_mic
+44100,2.0014965986394557,0.09948892891407013,0.6815338134765625,0.0,0.0,child_04_port_mic_seven,child_04,seven,number_counting,port_mic
+44100,2.3920408163265305,0.10359792411327362,0.9295196533203125,0.0,0.0,child_04_port_mic_six,child_04,six,number_counting,port_mic
+44100,1.7085714285714286,0.1144370436668396,0.8972625732421875,0.0,0.0,child_04_port_mic_ten,child_04,ten,number_counting,port_mic
+44100,2.2699773242630386,0.14289014041423798,0.865264892578125,0.0,0.0,child_04_port_mic_three,child_04,three,number_counting,port_mic
+44100,1.2936507936507937,0.22015464305877686,0.8144989013671875,0.0,0.0,child_04_port_mic_two,child_04,two,number_counting,port_mic
+44100,3.4660090702947848,0.1312282830476761,0.8671722412109375,0.0,0.0,child_04_port_mic_the_dog_is_in_front_of_the_horse,child_04,the dog is in front of the horse,predefined_sentence,port_mic
+44100,3.0998639455782313,0.0823756754398346,0.7687835693359375,0.0,0.0,child_04_port_mic_the_dog_is_on_top_of_the_shed,child_04,the dog is on top of the shed,predefined_sentence,port_mic
+44100,3.3439455782312923,0.10671006888151169,0.9897918701171875,6.78113217782841e-06,0.0,child_04_port_mic_the_fish_is_in_the_pond,child_04,the fish is in the pond,predefined_sentence,port_mic
+44100,2.6849206349206347,0.12908558547496796,0.9922332763671875,1.689117858198556e-05,0.0,child_04_port_mic_the_horse_is_behind_the_car,child_04,the horse is behind the car,predefined_sentence,port_mic
+44100,3.270702947845805,0.12363134324550629,0.9392547607421875,0.0,0.0,child_04_port_mic_the_horse_is_next_to_the_stable,child_04,the horse is next to the stable,predefined_sentence,port_mic
+44100,2.2455555555555557,0.06663049757480621,0.9999542236328125,2.0196104171505316e-05,0.0,child_04_nao_mic_eight,child_04,eight,number_counting,nao_mic
+44100,2.392018140589569,0.1075453907251358,0.9877166748046875,9.479751251327165e-06,0.0,child_04_nao_mic_five,child_04,five,number_counting,nao_mic
+44100,2.2699773242630386,0.17896845936775208,0.9909515380859375,9.98941122410245e-06,0.0,child_04_nao_mic_four,child_04,four,number_counting,nao_mic
+44100,2.318798185941043,0.14095261693000793,0.9954071044921875,1.955818069803147e-05,0.0,child_04_nao_mic_nine,child_04,nine,number_counting,nao_mic
+44100,2.0014965986394557,0.06442690640687943,0.999969482421875,2.265878141073573e-05,0.0,child_04_nao_mic_seven,child_04,seven,number_counting,nao_mic
+44100,2.392018140589569,0.10640537738800049,0.99688720703125,1.895950250265433e-05,0.0,child_04_nao_mic_six,child_04,six,number_counting,nao_mic
+44100,1.70859410430839,0.10114341974258423,0.9867706298828125,1.3271576265113008e-05,0.0,child_04_nao_mic_ten,child_04,ten,number_counting,nao_mic
+44100,2.2699773242630386,0.1323508769273758,0.8414459228515625,0.0,0.0,child_04_nao_mic_three,child_04,three,number_counting,nao_mic
+44100,1.2936507936507937,0.2371441125869751,0.9833526611328125,0.0,0.0,child_04_nao_mic_two,child_04,two,number_counting,nao_mic
+44100,3.4660090702947848,0.12935903668403625,0.9810791015625,0.0,0.0,child_04_nao_mic_the_dog_is_in_front_of_the_horse,child_04,the dog is in front of the horse,predefined_sentence,nao_mic
+44100,3.0998639455782313,0.14431403577327728,0.880859375,0.0,0.0,child_04_nao_mic_the_dog_is_on_top_of_the_shed,child_04,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,3.3439455782312923,0.09208330512046814,0.9862518310546875,6.78113217782841e-06,0.0,child_04_nao_mic_the_fish_is_in_the_pond,child_04,the fish is in the pond,predefined_sentence,nao_mic
+44100,2.6849206349206347,0.14554038643836975,0.9999847412109375,0.0005489633039145307,0.0,child_04_nao_mic_the_horse_is_behind_the_car,child_04,the horse is behind the car,predefined_sentence,nao_mic
+44100,3.2707256235827664,0.13900932669639587,0.98199462890625,0.0,0.0,child_04_nao_mic_the_horse_is_next_to_the_stable,child_04,the horse is next to the stable,predefined_sentence,nao_mic
+44100,0.5892743764172336,0.16112226247787476,0.999969482421875,7.696155770192789e-05,0.0,child_05_studio_mic_eight,child_05,eight,number_counting,studio_mic
+44100,0.5545804988662132,0.22724483907222748,0.999969482421875,8.177617859917406e-05,0.0,child_05_studio_mic_five,child_05,five,number_counting,studio_mic
+44100,0.693265306122449,0.22724278271198273,0.999969482421875,0.00022896019363490661,0.0,child_05_studio_mic_four,child_05,four,number_counting,studio_mic
+44100,0.7625850340136054,0.21988359093666077,0.999969482421875,8.920606601248885e-05,0.0,child_05_studio_mic_nine,child_05,nine,number_counting,studio_mic
+44100,0.3928344671201814,0.2654280364513397,0.999969482421875,0.00028861694758716233,0.0,child_05_studio_mic_one,child_05,one,number_counting,studio_mic
+44100,0.8319047619047619,0.20514129102230072,0.999969482421875,0.00013628805844031946,0.0,child_05_studio_mic_seven,child_05,seven,number_counting,studio_mic
+44100,0.6470294784580499,0.18345268070697784,1.0,0.00010513773042685918,0.0,child_05_studio_mic_ten,child_05,ten,number_counting,studio_mic
+44100,0.6701587301587302,0.295632928609848,0.999969482421875,0.00010150910198281112,0.0,child_05_studio_mic_three,child_05,three,number_counting,studio_mic
+44100,2.2415192743764174,0.07990890741348267,0.999969482421875,1.0116235546428463e-05,0.0,child_05_studio_mic_the_dog_is_in_front_of_the_horse,child_05,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,2.7961224489795917,0.09889452904462814,0.999969482421875,0.00017841357889529557,0.0,child_05_studio_mic_the_dog_is_on_top_of_the_shed,child_05,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,2.079750566893424,0.159169003367424,0.999969482421875,2.1806208227482363e-05,0.0,child_05_studio_mic_the_fish_is_in_the_pond,child_05,the fish is in the pond,predefined_sentence,studio_mic
+44100,2.010453514739229,0.17256289720535278,0.999969482421875,1.1278916321719809e-05,0.0,child_05_studio_mic_the_horse_is_behind_the_car,child_05,the horse is behind the car,predefined_sentence,studio_mic
+44100,2.9578684807256237,0.1399373561143875,0.999969482421875,1.533248493583355e-05,0.0,child_05_studio_mic_the_horse_is_next_to_the_stable,child_05,the horse is next to the stable,predefined_sentence,studio_mic
+44100,0.5892743764172336,0.14893023669719696,0.93487548828125,0.0,0.0,child_05_port_mic_eight,child_05,eight,number_counting,port_mic
+44100,0.5545804988662132,0.21005550026893616,0.9708404541015625,0.0,0.0,child_05_port_mic_five,child_05,five,number_counting,port_mic
+44100,0.693265306122449,0.19949837028980255,0.890289306640625,0.0,0.0,child_05_port_mic_four,child_05,four,number_counting,port_mic
+44100,0.7625850340136054,0.2136208713054657,0.9321746826171875,0.0,0.0,child_05_port_mic_nine,child_05,nine,number_counting,port_mic
+44100,0.3928344671201814,0.2441144436597824,0.9196929931640625,0.0,0.0,child_05_port_mic_one,child_05,one,number_counting,port_mic
+44100,0.8319047619047619,0.18140840530395508,0.934234619140625,0.0,0.0,child_05_port_mic_seven,child_05,seven,number_counting,port_mic
+44100,0.6470294784580499,0.16019216179847717,0.9147186279296875,0.0,0.0,child_05_port_mic_ten,child_05,ten,number_counting,port_mic
+44100,0.6701587301587302,0.24693162739276886,0.8795318603515625,0.0,0.0,child_05_port_mic_three,child_05,three,number_counting,port_mic
+44100,2.2415192743764174,0.08407715708017349,0.8148193359375,0.0,0.0,child_05_port_mic_the_dog_is_in_front_of_the_horse,child_05,the dog is in front of the horse,predefined_sentence,port_mic
+44100,2.7961224489795917,0.041982252150774,0.7447052001953125,0.0,0.0,child_05_port_mic_the_dog_is_on_top_of_the_shed,child_05,the dog is on top of the shed,predefined_sentence,port_mic
+44100,2.079750566893424,0.1618330329656601,0.9182586669921875,0.0,0.0,child_05_port_mic_the_fish_is_in_the_pond,child_05,the fish is in the pond,predefined_sentence,port_mic
+44100,2.010453514739229,0.15417134761810303,0.83056640625,0.0,0.0,child_05_port_mic_the_horse_is_behind_the_car,child_05,the horse is behind the car,predefined_sentence,port_mic
+44100,2.9578684807256237,0.12897264957427979,0.919464111328125,0.0,0.0,child_05_port_mic_the_horse_is_next_to_the_stable,child_05,the horse is next to the stable,predefined_sentence,port_mic
+44100,0.5892517006802721,0.1439550518989563,0.9700775146484375,0.0,0.0,child_05_nao_mic_eight,child_05,eight,number_counting,nao_mic
+44100,0.5546031746031747,0.20193539559841156,0.9923553466796875,4.088641753209584e-05,0.0,child_05_nao_mic_five,child_05,five,number_counting,nao_mic
+44100,0.693265306122449,0.2028961032629013,0.97625732421875,0.0,0.0,child_05_nao_mic_four,child_05,four,number_counting,nao_mic
+44100,0.7625850340136054,0.18273641169071198,0.9758148193359375,0.0,0.0,child_05_nao_mic_nine,child_05,nine,number_counting,nao_mic
+44100,0.3928344671201814,0.24384398758411407,0.9138336181640625,0.0,0.0,child_05_nao_mic_one,child_05,one,number_counting,nao_mic
+44100,0.8319274376417234,0.13818825781345367,0.983642578125,0.0,0.0,child_05_nao_mic_seven,child_05,seven,number_counting,nao_mic
+44100,0.6470294784580499,0.1343231052160263,0.9617462158203125,0.0,0.0,child_05_nao_mic_ten,child_05,ten,number_counting,nao_mic
+44100,0.6701360544217687,0.21642856299877167,0.99273681640625,3.3837512266098194e-05,0.0,child_05_nao_mic_three,child_05,three,number_counting,nao_mic
+44100,2.2415192743764174,0.0896994099020958,0.9999847412109375,0.00028325459529999694,0.0,child_05_nao_mic_the_dog_is_in_front_of_the_horse,child_05,the dog is in front of the horse,predefined_sentence,nao_mic
+44100,2.7961224489795917,0.09314615279436111,0.9639892578125,0.0,0.0,child_05_nao_mic_the_dog_is_on_top_of_the_shed,child_05,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,2.0797732426303854,0.16156728565692902,0.968505859375,0.0,0.0,child_05_nao_mic_the_fish_is_in_the_pond,child_05,the fish is in the pond,predefined_sentence,nao_mic
+44100,2.0104308390022676,0.11139819771051407,0.877227783203125,0.0,0.0,child_05_nao_mic_the_horse_is_behind_the_car,child_05,the horse is behind the car,predefined_sentence,nao_mic
+44100,2.9578684807256237,0.15781503915786743,0.9546356201171875,0.0,0.0,child_05_nao_mic_the_horse_is_next_to_the_stable,child_05,the horse is next to the stable,predefined_sentence,nao_mic
+44100,0.4520408163265306,0.20514225959777832,0.999969482421875,5.016302984700276e-05,0.0,child_06_studio_mic_eight,child_06,eight,number_counting,studio_mic
+44100,0.6849206349206349,0.14455349743366241,0.999969482421875,3.3107101473266015e-05,0.0,child_06_studio_mic_five,child_06,five,number_counting,studio_mic
+44100,0.6164172335600907,0.17355132102966309,1.0,0.00014714537963507945,0.0,child_06_studio_mic_four,child_06,four,number_counting,studio_mic
+44100,0.4383446712018141,0.21786652505397797,0.99993896484375,0.00010346076250581966,0.0,child_06_studio_mic_nine,child_06,nine,number_counting,studio_mic
+44100,0.46573696145124716,0.26117053627967834,0.999969482421875,9.737572423194897e-05,0.0,child_06_studio_mic_seven,child_06,seven,number_counting,studio_mic
+44100,0.8218820861678005,0.1902020424604416,0.999969482421875,2.7590012415505586e-05,0.0,child_06_studio_mic_six,child_06,six,number_counting,studio_mic
+44100,0.5068253968253968,0.26899203658103943,0.999969482421875,0.00013422218245268667,0.0,child_06_studio_mic_ten,child_06,ten,number_counting,studio_mic
+44100,0.4383446712018141,0.22492630779743195,0.999969482421875,0.00010346076250581966,0.0,child_06_studio_mic_three,child_06,three,number_counting,studio_mic
+44100,0.5616326530612245,0.20392203330993652,0.999969482421875,4.037467700258398e-05,0.10714285714285714,child_06_studio_mic_two,child_06,two,number_counting,studio_mic
+44100,2.2739002267573696,0.1741136908531189,0.999969482421875,9.972177624427847e-06,0.0,child_06_studio_mic_the_dog_is_in_front_of_the_horse,child_06,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,2.027324263038549,0.22905327379703522,0.999969482421875,3.3555170292489236e-05,0.0,child_06_studio_mic_the_dog_is_on_top_of_the_shed,child_06,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,2.123219954648526,0.19714638590812683,0.999969482421875,4.271952495888246e-05,0.0,child_06_studio_mic_the_fish_is_in_the_pond,child_06,the fish is in the pond,predefined_sentence,studio_mic
+44100,1.69859410430839,0.16320835053920746,0.999969482421875,2.6699417952688632e-05,0.0,child_06_studio_mic_the_horse_is_behind_the_car,child_06,the horse is behind the car,predefined_sentence,studio_mic
+44100,2.3424036281179137,0.18030531704425812,0.99993896484375,3.872216844143272e-05,0.0,child_06_studio_mic_the_horse_is_next_to_the_stable,child_06,the horse is next to the stable,predefined_sentence,studio_mic
+44100,0.4520408163265306,0.14796988666057587,0.8553924560546875,0.0,0.0,child_06_port_mic_eight,child_06,eight,number_counting,port_mic
+44100,0.6849206349206349,0.15484583377838135,0.952056884765625,0.0,0.0,child_06_port_mic_five,child_06,five,number_counting,port_mic
+44100,0.6164172335600907,0.12979307770729065,0.9440765380859375,0.0,0.0,child_06_port_mic_four,child_06,four,number_counting,port_mic
+44100,0.4383446712018141,0.11847008019685745,0.7450103759765625,0.0,0.0,child_06_port_mic_nine,child_06,nine,number_counting,port_mic
+44100,0.46573696145124716,0.12998634576797485,0.85577392578125,0.0,0.0,child_06_port_mic_seven,child_06,seven,number_counting,port_mic
+44100,0.8218820861678005,0.08434126526117325,0.808990478515625,0.0,0.0,child_06_port_mic_six,child_06,six,number_counting,port_mic
+44100,0.5068253968253968,0.10803607851266861,0.7597503662109375,0.0,0.0,child_06_port_mic_ten,child_06,ten,number_counting,port_mic
+44100,0.4383446712018141,0.21547040343284607,0.9928131103515625,5.173038125290983e-05,0.0,child_06_port_mic_three,child_06,three,number_counting,port_mic
+44100,0.5616326530612245,0.1940585821866989,0.9001922607421875,0.0,0.07142857142857142,child_06_port_mic_two,child_06,two,number_counting,port_mic
+44100,2.2739002267573696,0.13599729537963867,0.9959869384765625,9.972177624427847e-06,0.0,child_06_port_mic_the_dog_is_in_front_of_the_horse,child_06,the dog is in front of the horse,predefined_sentence,port_mic
+44100,2.027324263038549,0.1847182959318161,0.9899444580078125,2.2370113528326155e-05,0.0,child_06_port_mic_the_dog_is_on_top_of_the_shed,child_06,the dog is on top of the shed,predefined_sentence,port_mic
+44100,2.123219954648526,0.14270436763763428,0.754364013671875,0.0,0.0,child_06_port_mic_the_fish_is_in_the_pond,child_06,the fish is in the pond,predefined_sentence,port_mic
+44100,1.69859410430839,0.10686430335044861,0.7245941162109375,0.0,0.0,child_06_port_mic_the_horse_is_behind_the_car,child_06,the horse is behind the car,predefined_sentence,port_mic
+44100,2.3424036281179137,0.050038792192935944,0.7410125732421875,0.0,0.0,child_06_port_mic_the_horse_is_next_to_the_stable,child_06,the horse is next to the stable,predefined_sentence,port_mic
+44100,0.4520408163265306,0.11874640733003616,0.98834228515625,5.016302984700276e-05,0.0,child_06_nao_mic_eight,child_06,eight,number_counting,nao_mic
+44100,0.6848979591836735,0.11782597005367279,0.9690704345703125,0.0,0.0,child_06_nao_mic_five,child_06,five,number_counting,nao_mic
+44100,0.6164399092970522,0.18260467052459717,0.9716339111328125,0.0,0.0,child_06_nao_mic_four,child_06,four,number_counting,nao_mic
+44100,0.4383446712018141,0.09745845198631287,0.993438720703125,0.00010346076250581966,0.0,child_06_nao_mic_nine,child_06,nine,number_counting,nao_mic
+44100,0.4657596371882086,0.16364651918411255,0.9931793212890625,4.868549172346641e-05,0.0,child_06_nao_mic_seven,child_06,seven,number_counting,nao_mic
+44100,0.8219047619047619,0.13015669584274292,0.9920806884765625,5.517850245544336e-05,0.0,child_06_nao_mic_six,child_06,six,number_counting,nao_mic
+44100,0.5068253968253968,0.10303407162427902,0.96319580078125,0.0,0.0,child_06_nao_mic_ten,child_06,ten,number_counting,nao_mic
+44100,0.4383446712018141,0.22073401510715485,0.96728515625,0.0,0.0,child_06_nao_mic_three,child_06,three,number_counting,nao_mic
+44100,0.5616326530612245,0.17702217400074005,0.9859771728515625,4.037467700258398e-05,0.0,child_06_nao_mic_two,child_06,two,number_counting,nao_mic
+44100,2.273922902494331,0.0804564356803894,0.7987213134765625,0.0,0.0,child_06_nao_mic_the_dog_is_in_front_of_the_horse,child_06,the dog is in front of the horse,predefined_sentence,nao_mic
+44100,2.027324263038549,0.12997789680957794,0.9890289306640625,1.1185056764163078e-05,0.0,child_06_nao_mic_the_dog_is_on_top_of_the_shed,child_06,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,2.1231972789115647,0.1544099748134613,0.9969024658203125,2.1359990601604136e-05,0.0,child_06_nao_mic_the_fish_is_in_the_pond,child_06,the fish is in the pond,predefined_sentence,nao_mic
+44100,1.69859410430839,0.11805979162454605,0.857208251953125,0.0,0.0,child_06_nao_mic_the_horse_is_behind_the_car,child_06,the horse is behind the car,predefined_sentence,nao_mic
+44100,2.342426303854875,0.11126270145177841,0.968292236328125,0.0,0.0,child_06_nao_mic_the_horse_is_next_to_the_stable,child_06,the horse is next to the stable,predefined_sentence,nao_mic
+44100,0.6340816326530613,0.20956967771053314,0.999969482421875,3.576154203769266e-05,0.0,child_07_studio_mic_eight,child_07,eight,number_counting,studio_mic
+44100,0.5049206349206349,0.24928025901317596,0.999969482421875,8.98190146854089e-05,0.0,child_07_studio_mic_five,child_07,five,number_counting,studio_mic
+44100,0.6340816326530613,0.22378891706466675,0.999969482421875,3.576154203769266e-05,0.0,child_07_studio_mic_four,child_07,four,number_counting,studio_mic
+44100,0.7045351473922903,0.27174314856529236,0.999969482421875,6.43707756678468e-05,0.0,child_07_studio_mic_nine,child_07,nine,number_counting,studio_mic
+44100,0.8806575963718821,0.1999935656785965,0.999969482421875,0.00012874320879573603,0.0,child_07_studio_mic_one,child_07,one,number_counting,studio_mic
+44100,0.9863492063492063,0.18425044417381287,0.999969482421875,4.597912547703343e-05,0.0,child_07_studio_mic_seven,child_07,seven,number_counting,studio_mic
+44100,1.0568027210884354,0.12434570491313934,0.999969482421875,4.29138504452312e-05,0.0,child_07_studio_mic_six,child_07,six,number_counting,studio_mic
+44100,0.5401360544217687,0.21938905119895935,0.999969482421875,4.1981528127623844e-05,0.0,child_07_studio_mic_ten,child_07,ten,number_counting,studio_mic
+44100,0.85718820861678,0.22661952674388885,0.999969482421875,7.936088037669964e-05,0.0,child_07_studio_mic_three,child_07,three,number_counting,studio_mic
+44100,0.7984807256235827,0.17717821896076202,0.999969482421875,2.8398602788742794e-05,0.0,child_07_studio_mic_two,child_07,two,number_counting,studio_mic
+44100,3.0999319727891157,0.17624808847904205,1.0,2.1944743136781585e-05,0.0,child_07_studio_mic_the_dog_is_in_front_of_the_horse,child_07,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,4.779047619047619,0.120195172727108,0.999969482421875,4.744823397673139e-06,0.0,child_07_studio_mic_the_dog_is_on_top_of_the_shed,child_07,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,2.465827664399093,0.21351855993270874,0.999969482421875,1.8391988449831253e-05,0.0,child_07_studio_mic_the_fish_is_in_the_pond,child_07,the fish is in the pond,predefined_sentence,studio_mic
+44100,2.4071201814058956,0.14050094783306122,0.999969482421875,2.8260828607494773e-05,0.0,child_07_studio_mic_the_horse_is_behind_the_car,child_07,the horse is behind the car,predefined_sentence,studio_mic
+44100,2.9120408163265306,0.16527797281742096,0.999969482421875,1.557377687449872e-05,0.0,child_07_studio_mic_the_horse_is_next_to_the_stable,child_07,the horse is next to the stable,predefined_sentence,studio_mic
+44100,0.6340816326530613,0.24028201401233673,0.829376220703125,0.0,0.0,child_07_port_mic_eight,child_07,eight,number_counting,port_mic
+44100,0.5049206349206349,0.22403651475906372,0.7505950927734375,0.0,0.0,child_07_port_mic_five,child_07,five,number_counting,port_mic
+44100,0.6340816326530613,0.23146957159042358,0.9389495849609375,0.0,0.0,child_07_port_mic_four,child_07,four,number_counting,port_mic
+44100,0.7045351473922903,0.23354099690914154,0.8225860595703125,0.0,0.0,child_07_port_mic_nine,child_07,nine,number_counting,port_mic
+44100,0.8806575963718821,0.18092191219329834,0.8835906982421875,0.0,0.0,child_07_port_mic_one,child_07,one,number_counting,port_mic
+44100,0.9863492063492063,0.1701543629169464,0.9541473388671875,0.0,0.0,child_07_port_mic_seven,child_07,seven,number_counting,port_mic
+44100,1.0568027210884354,0.10258010029792786,0.721923828125,0.0,0.0,child_07_port_mic_six,child_07,six,number_counting,port_mic
+44100,0.5401360544217687,0.08125993609428406,0.6597900390625,0.0,0.0,child_07_port_mic_ten,child_07,ten,number_counting,port_mic
+44100,0.85718820861678,0.2053905725479126,0.82696533203125,0.0,0.0,child_07_port_mic_three,child_07,three,number_counting,port_mic
+44100,0.7984807256235827,0.14862126111984253,0.827117919921875,0.0,0.0,child_07_port_mic_two,child_07,two,number_counting,port_mic
+44100,3.0999319727891157,0.1422155648469925,0.934234619140625,0.0,0.0,child_07_port_mic_the_dog_is_in_front_of_the_horse,child_07,the dog is in front of the horse,predefined_sentence,port_mic
+44100,4.779047619047619,0.08864155411720276,0.7763519287109375,0.0,0.0,child_07_port_mic_the_dog_is_on_top_of_the_shed,child_07,the dog is on top of the shed,predefined_sentence,port_mic
+44100,2.465827664399093,0.09811674058437347,0.5957489013671875,0.0,0.0,child_07_port_mic_the_fish_is_in_the_pond,child_07,the fish is in the pond,predefined_sentence,port_mic
+44100,2.4071201814058956,0.12452573329210281,0.98193359375,0.0,0.0,child_07_port_mic_the_horse_is_behind_the_car,child_07,the horse is behind the car,predefined_sentence,port_mic
+44100,2.9120408163265306,0.12806496024131775,0.9178314208984375,0.0,0.0,child_07_port_mic_the_horse_is_next_to_the_stable,child_07,the horse is next to the stable,predefined_sentence,port_mic
+44100,0.6340589569160998,0.13883742690086365,0.8443756103515625,0.0,0.0,child_07_nao_mic_eight,child_07,eight,number_counting,nao_mic
+44100,0.5049206349206349,0.2210409939289093,0.9181671142578125,0.0,0.0,child_07_nao_mic_five,child_07,five,number_counting,nao_mic
+44100,0.6340589569160998,0.21619504690170288,0.9550018310546875,0.0,0.0,child_07_nao_mic_four,child_07,four,number_counting,nao_mic
+44100,0.7045124716553288,0.1659117192029953,0.97857666015625,0.0,0.0,child_07_nao_mic_nine,child_07,nine,number_counting,nao_mic
+44100,0.8806575963718821,0.2111680954694748,0.9822998046875,0.0,0.0,child_07_nao_mic_one,child_07,one,number_counting,nao_mic
+44100,0.9863265306122448,0.12237007915973663,0.956268310546875,0.0,0.0,child_07_nao_mic_seven,child_07,seven,number_counting,nao_mic
+44100,1.0568027210884354,0.09991513937711716,0.9863739013671875,2.14569252226156e-05,0.0,child_07_nao_mic_six,child_07,six,number_counting,nao_mic
+44100,0.5401360544217687,0.10108867287635803,0.946441650390625,0.0,0.0,child_07_nao_mic_ten,child_07,ten,number_counting,nao_mic
+44100,0.8571655328798186,0.21332867443561554,0.9519195556640625,0.0,0.0,child_07_nao_mic_three,child_07,three,number_counting,nao_mic
+44100,0.7984580498866213,0.14441388845443726,0.9915771484375,5.6798818584573444e-05,0.0,child_07_nao_mic_two,child_07,two,number_counting,nao_mic
+44100,3.0999092970521542,0.12319501489400864,0.97979736328125,0.0,0.0,child_07_nao_mic_the_dog_is_in_front_of_the_horse,child_07,the dog is in front of the horse,predefined_sentence,nao_mic
+44100,4.779047619047619,0.09107453376054764,0.91650390625,0.0,0.0,child_07_nao_mic_the_dog_is_on_top_of_the_shed,child_07,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,2.4658503401360545,0.14011242985725403,0.910003662109375,0.0,0.0,child_07_nao_mic_the_fish_is_in_the_pond,child_07,the fish is in the pond,predefined_sentence,nao_mic
+44100,2.4071201814058956,0.10916408896446228,0.94580078125,0.0,0.0,child_07_nao_mic_the_horse_is_behind_the_car,child_07,the horse is behind the car,predefined_sentence,nao_mic
+44100,2.9120408163265306,0.1475367695093155,0.98345947265625,0.0,0.0,child_07_nao_mic_the_horse_is_next_to_the_stable,child_07,the horse is next to the stable,predefined_sentence,nao_mic
+44100,0.7220634920634921,0.2912662923336029,0.999969482421875,9.42122287472914e-05,0.0,child_08_studio_mic_eight,child_08,eight,number_counting,studio_mic
+44100,0.771859410430839,0.23397672176361084,0.999969482421875,5.875613267134757e-05,0.0,child_08_studio_mic_five,child_08,five,number_counting,studio_mic
+44100,0.6224716553287982,0.11446443945169449,0.999969482421875,7.28570908163637e-05,0.0,child_08_studio_mic_four,child_08,four,number_counting,studio_mic
+44100,1.0208390022675737,0.26425236463546753,0.999969482421875,0.00017770274772873674,0.0,child_08_studio_mic_nine,child_08,nine,number_counting,studio_mic
+44100,0.8465532879818594,0.2710423469543457,0.999969482421875,2.6785953446012912e-05,0.0,child_08_studio_mic_seven,child_08,seven,number_counting,studio_mic
+44100,1.070657596371882,0.164241760969162,0.99993896484375,2.1179261267366996e-05,0.0,child_08_studio_mic_six,child_08,six,number_counting,studio_mic
+44100,1.045736961451247,0.20926834642887115,0.999969482421875,4.336795541774183e-05,0.0,child_08_studio_mic_ten,child_08,ten,number_counting,studio_mic
+44100,1.0208390022675737,0.06975506246089935,0.999969482421875,8.885137386436837e-05,0.0,child_08_studio_mic_three,child_08,three,number_counting,studio_mic
+44100,0.7220634920634921,0.2710149586200714,0.999969482421875,9.42122287472914e-05,0.0,child_08_studio_mic_two,child_08,two,number_counting,studio_mic
+44100,0.7220634920634921,0.17131422460079193,0.86175537109375,0.0,0.0,child_08_port_mic_eight,child_08,eight,number_counting,port_mic
+44100,0.771859410430839,0.1614646166563034,0.8822021484375,0.0,0.0,child_08_port_mic_five,child_08,five,number_counting,port_mic
+44100,0.6224716553287982,0.21458521485328674,0.9153594970703125,0.0,0.0,child_08_port_mic_four,child_08,four,number_counting,port_mic
+44100,1.0208390022675737,0.2186567187309265,0.8623504638671875,0.0,0.0,child_08_port_mic_nine,child_08,nine,number_counting,port_mic
+44100,0.8465532879818594,0.17718760669231415,0.8828125,0.0,0.0,child_08_port_mic_seven,child_08,seven,number_counting,port_mic
+44100,1.070657596371882,0.11958787590265274,0.8365936279296875,0.0,0.0,child_08_port_mic_six,child_08,six,number_counting,port_mic
+44100,1.045736961451247,0.15522029995918274,0.8969268798828125,0.0,0.0,child_08_port_mic_ten,child_08,ten,number_counting,port_mic
+44100,1.0208390022675737,0.060928843915462494,0.9872283935546875,2.2212843466092093e-05,0.0,child_08_port_mic_three,child_08,three,number_counting,port_mic
+44100,0.7220634920634921,0.15450675785541534,0.8988189697265625,0.0,0.0,child_08_port_mic_two,child_08,two,number_counting,port_mic
+44100,0.9026757369614512,0.23592205345630646,1.0,0.00010048231511254019,0.0,child_09_studio_mic_eight,child_09,eight,number_counting,studio_mic
+44100,0.6831065759637188,0.2453317940235138,0.999969482421875,0.0002987551867219917,0.0,child_09_studio_mic_five,child_09,five,number_counting,studio_mic
+44100,0.8782766439909298,0.237871453166008,1.0,0.0001290922234844573,0.0,child_09_studio_mic_four,child_09,four,number_counting,studio_mic
+44100,1.049047619047619,0.2660980522632599,0.999969482421875,8.646218360244689e-05,0.0,child_09_studio_mic_nine,child_09,nine,number_counting,studio_mic
+44100,0.9758730158730159,0.24402892589569092,0.99993896484375,0.00011618180128264709,0.0,child_09_studio_mic_one,child_09,one,number_counting,studio_mic
+44100,0.9026757369614512,0.2876068651676178,1.0,0.0001507234726688103,0.0,child_09_studio_mic_seven,child_09,seven,number_counting,studio_mic
+44100,0.9026757369614512,0.23254840075969696,0.999969482421875,2.5120578778135048e-05,0.0,child_09_studio_mic_six,child_09,six,number_counting,studio_mic
+44100,0.8050793650793651,0.21012189984321594,0.999969482421875,5.633168093735917e-05,0.0,child_09_studio_mic_ten,child_09,ten,number_counting,studio_mic
+44100,1.0734467120181406,0.23118922114372253,0.99993896484375,8.449692642430131e-05,0.0,child_09_studio_mic_three,child_09,three,number_counting,studio_mic
+44100,1.1222448979591837,0.20294927060604095,0.99993896484375,0.00022226263361015133,0.0,child_09_studio_mic_two,child_09,two,number_counting,studio_mic
+44100,4.0010430839002264,0.14384686946868896,0.999969482421875,1.133491266449792e-05,0.0,child_09_studio_mic_the_dog_is_in_front_of_the_horse,child_09,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,4.293809523809524,0.1177779883146286,0.999969482421875,1.0562060024187118e-05,0.0,child_09_studio_mic_the_dog_is_on_top_of_the_shed,child_09,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,3.3179591836734694,0.1727992594242096,0.999969482421875,2.0502726862672737e-05,0.0,child_09_studio_mic_the_fish_is_in_the_pond,child_09,the fish is in the pond,predefined_sentence,studio_mic
+44100,3.6107256235827663,0.18167732656002045,0.999969482421875,1.2560210509128133e-05,0.0,child_09_studio_mic_the_horse_is_behind_the_car,child_09,the horse is behind the car,predefined_sentence,studio_mic
+44100,4.293832199546485,0.13359467685222626,0.999969482421875,2.1124008491851414e-05,0.0,child_09_studio_mic_the_horse_is_next_to_the_stable,child_09,the horse is next to the stable,predefined_sentence,studio_mic
+44100,0.9026757369614512,0.18274731934070587,0.83831787109375,0.0,0.0,child_09_port_mic_eight,child_09,eight,number_counting,port_mic
+44100,0.6831065759637188,0.20725160837173462,0.93316650390625,0.0,0.0,child_09_port_mic_five,child_09,five,number_counting,port_mic
+44100,0.8782766439909298,0.1904565840959549,0.865142822265625,0.0,0.0,child_09_port_mic_four,child_09,four,number_counting,port_mic
+44100,1.049047619047619,0.23414282500743866,0.9284515380859375,0.0,0.0,child_09_port_mic_nine,child_09,nine,number_counting,port_mic
+44100,0.9758730158730159,0.2211489975452423,0.9163055419921875,0.0,0.0,child_09_port_mic_one,child_09,one,number_counting,port_mic
+44100,0.9026757369614512,0.23752672970294952,0.87689208984375,0.0,0.0,child_09_port_mic_seven,child_09,seven,number_counting,port_mic
+44100,0.9026757369614512,0.20879843831062317,0.8972930908203125,0.0,0.0,child_09_port_mic_six,child_09,six,number_counting,port_mic
+44100,0.8050793650793651,0.1328718215227127,0.9207763671875,0.0,0.0,child_09_port_mic_ten,child_09,ten,number_counting,port_mic
+44100,1.0734467120181406,0.19439361989498138,0.8919830322265625,0.0,0.0,child_09_port_mic_three,child_09,three,number_counting,port_mic
+44100,1.1222448979591837,0.21451346576213837,0.92529296875,0.0,0.0,child_09_port_mic_two,child_09,two,number_counting,port_mic
+44100,4.0010430839002264,0.1448596715927124,0.9528045654296875,0.0,0.0,child_09_port_mic_the_dog_is_in_front_of_the_horse,child_09,the dog is in front of the horse,predefined_sentence,port_mic
+44100,4.293809523809524,0.12992334365844727,0.920745849609375,0.0,0.0,child_09_port_mic_the_dog_is_on_top_of_the_shed,child_09,the dog is on top of the shed,predefined_sentence,port_mic
+44100,3.3179591836734694,0.11153438687324524,0.983856201171875,0.0,0.0,child_09_port_mic_the_fish_is_in_the_pond,child_09,the fish is in the pond,predefined_sentence,port_mic
+44100,3.6107256235827663,0.1351148933172226,0.94464111328125,0.0,0.0,child_09_port_mic_the_horse_is_behind_the_car,child_09,the horse is behind the car,predefined_sentence,port_mic
+44100,4.293832199546485,0.11217287927865982,0.9546966552734375,0.0,0.0,child_09_port_mic_the_horse_is_next_to_the_stable,child_09,the horse is next to the stable,predefined_sentence,port_mic
+44100,0.9026984126984127,0.19828659296035767,0.98681640625,2.511994775050868e-05,0.0,child_09_nao_mic_eight,child_09,eight,number_counting,nao_mic
+44100,0.6831065759637188,0.22209493815898895,0.953521728515625,0.0,0.0,child_09_nao_mic_five,child_09,five,number_counting,nao_mic
+44100,0.8782993197278911,0.1803039014339447,0.955413818359375,0.0,0.0,child_09_nao_mic_four,child_09,four,number_counting,nao_mic
+44100,1.0490702947845805,0.16210110485553741,0.9684295654296875,0.0,0.0,child_09_nao_mic_nine,child_09,nine,number_counting,nao_mic
+44100,0.9758730158730159,0.16862903535366058,0.95257568359375,0.0,0.0,child_09_nao_mic_one,child_09,one,number_counting,nao_mic
+44100,0.9026757369614512,0.19400319457054138,0.9594573974609375,0.0,0.0,child_09_nao_mic_seven,child_09,seven,number_counting,nao_mic
+44100,0.9026757369614512,0.18696363270282745,0.9594268798828125,0.0,0.0,child_09_nao_mic_six,child_09,six,number_counting,nao_mic
+44100,0.8050793650793651,0.13626953959465027,0.99365234375,2.8165840468679586e-05,0.0,child_09_nao_mic_ten,child_09,ten,number_counting,nao_mic
+44100,1.0734467120181406,0.04726371541619301,0.8862152099609375,0.0,0.0,child_09_nao_mic_three,child_09,three,number_counting,nao_mic
+44100,1.1222448979591837,0.15677767992019653,0.984283447265625,0.0,0.0,child_09_nao_mic_two,child_09,two,number_counting,nao_mic
+44100,4.001065759637188,0.11015599220991135,0.96435546875,0.0,0.0,child_09_nao_mic_the_dog_is_in_front_of_the_horse,child_09,the dog is in front of the horse,predefined_sentence,nao_mic
+44100,4.293809523809524,0.1474391520023346,0.9678955078125,0.0,0.0,child_09_nao_mic_the_dog_is_on_top_of_the_shed,child_09,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,3.317936507936508,0.12048906087875366,0.9784698486328125,0.0,0.0,child_09_nao_mic_the_fish_is_in_the_pond,child_09,the fish is in the pond,predefined_sentence,nao_mic
+44100,3.6107256235827663,0.15861189365386963,0.9530792236328125,0.0,0.0,child_09_nao_mic_the_horse_is_behind_the_car,child_09,the horse is behind the car,predefined_sentence,nao_mic
+44100,4.293832199546485,0.11396211385726929,0.9774169921875,0.0,0.0,child_09_nao_mic_the_horse_is_next_to_the_stable,child_09,the horse is next to the stable,predefined_sentence,nao_mic
+44100,0.8540362811791383,0.1398145854473114,0.999969482421875,2.6551257202028515e-05,0.0,child_10_studio_mic_eight,child_10,eight,number_counting,studio_mic
+44100,1.0338321995464852,0.22153188288211823,0.99993896484375,0.0001535357080189507,0.0,child_10_studio_mic_five,child_10,five,number_counting,studio_mic
+44100,0.8989795918367347,0.21098153293132782,0.999969482421875,0.0001261193088661874,0.0,child_10_studio_mic_four,child_10,four,number_counting,studio_mic
+44100,0.9888888888888889,0.2651573717594147,0.999969482421875,9.172208209126347e-05,0.0,child_10_studio_mic_nine,child_10,nine,number_counting,studio_mic
+44100,0.9326984126984127,0.1712985783815384,0.999969482421875,7.293591364387825e-05,0.0,child_10_studio_mic_one,child_10,one,number_counting,studio_mic
+44100,1.045079365079365,0.1717224270105362,0.999969482421875,6.509286582190592e-05,0.0,child_10_studio_mic_seven,child_10,seven,number_counting,studio_mic
+44100,0.9776417233560091,0.1731378734111786,0.999969482421875,2.3194322029967063e-05,0.0,child_10_studio_mic_six,child_10,six,number_counting,studio_mic
+44100,0.9326984126984127,0.1681012213230133,0.999969482421875,2.431197121462608e-05,0.0,child_10_studio_mic_ten,child_10,ten,number_counting,studio_mic
+44100,1.0900226757369615,0.1918589025735855,1.0,4.160599126274184e-05,0.0,child_10_studio_mic_three,child_10,three,number_counting,studio_mic
+44100,0.9663945578231292,0.1893124133348465,0.999969482421875,9.385705570416256e-05,0.0,child_10_studio_mic_two,child_10,two,number_counting,studio_mic
+44100,2.76437641723356,0.16248764097690582,0.999969482421875,0.0005906044672665677,0.0,child_10_studio_mic_the_dog_is_on_top_of_the_shed,child_10,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,2.191292517006803,0.17470750212669373,0.999969482421875,1.0348110435034562e-05,0.0,child_10_studio_mic_the_fish_is_in_the_pond,child_10,the fish is in the pond,predefined_sentence,studio_mic
+44100,2.5733560090702947,0.15321651101112366,0.999969482421875,2.6435211701987046e-05,0.0,child_10_studio_mic_the_horse_is_behind_the_car,child_10,the horse is behind the car,predefined_sentence,studio_mic
+44100,3.1689115646258506,0.189928337931633,0.999969482421875,0.00016458078412010104,0.0,child_10_studio_mic_the_horse_is_next_to_the_stable,child_10,the horse is next to the stable,predefined_sentence,studio_mic
+44100,0.8540362811791383,0.10150565952062607,0.7935791015625,0.0,0.0,child_10_port_mic_eight,child_10,eight,number_counting,port_mic
+44100,1.0338321995464852,0.15925662219524384,0.8596038818359375,0.0,0.0,child_10_port_mic_five,child_10,five,number_counting,port_mic
+44100,0.8989795918367347,0.1897606998682022,0.843536376953125,0.0,0.0,child_10_port_mic_four,child_10,four,number_counting,port_mic
+44100,0.9888888888888889,0.21951772272586823,0.7899627685546875,0.0,0.0,child_10_port_mic_nine,child_10,nine,number_counting,port_mic
+44100,0.9326984126984127,0.1956896334886551,0.877410888671875,0.0,0.0,child_10_port_mic_one,child_10,one,number_counting,port_mic
+44100,1.045079365079365,0.13244858384132385,0.85992431640625,0.0,0.0,child_10_port_mic_seven,child_10,seven,number_counting,port_mic
+44100,0.9776417233560091,0.09700946509838104,0.7592926025390625,0.0,0.0,child_10_port_mic_six,child_10,six,number_counting,port_mic
+44100,0.9326984126984127,0.06872878968715668,0.7612762451171875,0.0,0.0,child_10_port_mic_ten,child_10,ten,number_counting,port_mic
+44100,1.0900226757369615,0.1867789924144745,0.9064178466796875,0.0,0.0,child_10_port_mic_three,child_10,three,number_counting,port_mic
+44100,0.9663945578231292,0.2120938003063202,0.9166412353515625,0.0,0.0,child_10_port_mic_two,child_10,two,number_counting,port_mic
+44100,2.76437641723356,0.06334482878446579,0.7874755859375,0.0,0.0,child_10_port_mic_the_dog_is_on_top_of_the_shed,child_10,the dog is on top of the shed,predefined_sentence,port_mic
+44100,2.191292517006803,0.13609573245048523,0.888427734375,0.0,0.0,child_10_port_mic_the_fish_is_in_the_pond,child_10,the fish is in the pond,predefined_sentence,port_mic
+44100,2.5733560090702947,0.1334332823753357,0.8672943115234375,0.0,0.0,child_10_port_mic_the_horse_is_behind_the_car,child_10,the horse is behind the car,predefined_sentence,port_mic
+44100,3.1689115646258506,0.14574643969535828,0.8902740478515625,0.0,0.0,child_10_port_mic_the_horse_is_next_to_the_stable,child_10,the horse is next to the stable,predefined_sentence,port_mic
+44100,0.8540136054421769,0.10834202915430069,0.91448974609375,0.0,0.0,child_10_nao_mic_eight,child_10,eight,number_counting,nao_mic
+44100,1.0338321995464852,0.1925932615995407,0.9810333251953125,0.0,0.0,child_10_nao_mic_five,child_10,five,number_counting,nao_mic
+44100,0.8989795918367347,0.20544369518756866,0.9637908935546875,0.0,0.0,child_10_nao_mic_four,child_10,four,number_counting,nao_mic
+44100,0.9888662131519275,0.22850783169269562,0.9995880126953125,2.2931046343644662e-05,0.0,child_10_nao_mic_nine,child_10,nine,number_counting,nao_mic
+44100,0.9326984126984127,0.1612398773431778,0.99249267578125,4.862394242925216e-05,0.043478260869565216,child_10_nao_mic_one,child_10,one,number_counting,nao_mic
+44100,1.0450566893424036,0.1523752063512802,0.9676666259765625,0.0,0.0,child_10_nao_mic_seven,child_10,seven,number_counting,nao_mic
+44100,0.9776417233560091,0.12481148540973663,0.8866119384765625,0.0,0.0,child_10_nao_mic_six,child_10,six,number_counting,nao_mic
+44100,0.9326984126984127,0.0742102637887001,0.948516845703125,0.0,0.0,child_10_nao_mic_ten,child_10,ten,number_counting,nao_mic
+44100,1.0900226757369615,0.19650880992412567,0.9935760498046875,4.160599126274184e-05,0.0,child_10_nao_mic_three,child_10,three,number_counting,nao_mic
+44100,0.9664172335600907,0.19003374874591827,0.995574951171875,2.3463713367277507e-05,0.0,child_10_nao_mic_two,child_10,two,number_counting,nao_mic
+44100,2.76437641723356,0.11255621910095215,0.9364471435546875,0.0,0.0,child_10_nao_mic_the_dog_is_on_top_of_the_shed,child_10,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,2.1912698412698415,0.12894807755947113,0.8856048583984375,0.0,0.0,child_10_nao_mic_the_fish_is_in_the_pond,child_10,the fish is in the pond,predefined_sentence,nao_mic
+44100,2.5733333333333333,0.1532629430294037,0.9502105712890625,0.0,0.0,child_10_nao_mic_the_horse_is_behind_the_car,child_10,the horse is behind the car,predefined_sentence,nao_mic
+44100,3.1689115646258506,0.12253933399915695,0.9861907958984375,7.15568626609135e-06,0.0,child_10_nao_mic_the_horse_is_next_to_the_stable,child_10,the horse is next to the stable,predefined_sentence,nao_mic
+44100,0.9214285714285714,0.16968528926372528,1.0,9.843730773963332e-05,0.0,child_11_studio_mic_eight,child_11,eight,number_counting,studio_mic
+44100,0.900952380952381,0.19544893503189087,0.999969482421875,7.550588945937783e-05,0.0,child_11_studio_mic_five,child_11,five,number_counting,studio_mic
+44100,0.8599773242630385,0.21333031356334686,1.0,5.2735662491760055e-05,0.0,child_11_studio_mic_four,child_11,four,number_counting,studio_mic
+44100,0.8395011337868481,0.24764540791511536,0.999969482421875,8.103289935713899e-05,0.0,child_11_studio_mic_nine,child_11,nine,number_counting,studio_mic
+44100,0.8190249433106576,0.16774101555347443,0.99993896484375,2.7686259309504694e-05,0.0,child_11_studio_mic_six,child_11,six,number_counting,studio_mic
+44100,0.7576190476190476,0.2694651484489441,0.999969482421875,2.9930262488402023e-05,0.0,child_11_studio_mic_ten,child_11,ten,number_counting,studio_mic
+44100,0.7780952380952381,0.2252453863620758,1.0,0.00014571312000932564,0.0,child_11_studio_mic_three,child_11,three,number_counting,studio_mic
+44100,0.92140589569161,0.2201225459575653,0.999969482421875,0.0001230496628439238,0.0,child_11_studio_mic_two,child_11,two,number_counting,studio_mic
+44100,2.907573696145125,0.09868025034666061,0.999969482421875,2.339655602695283e-05,0.0,child_11_studio_mic_the_dog_is_in_front_of_the_horse,child_11,the dog is in front of the horse,predefined_sentence,studio_mic
+44100,2.5799773242630386,0.22727733850479126,0.999969482421875,7.910210323703385e-05,0.0,child_11_studio_mic_the_dog_is_in_front_of_the_house,child_11,the dog is in front of the house,predefined_sentence,studio_mic
+44100,2.8666439909297052,0.16189655661582947,0.999969482421875,3.164081348531471e-05,0.0,child_11_studio_mic_the_dog_is_on_top_of_the_shed,child_11,the dog is on top of the shed,predefined_sentence,studio_mic
+44100,2.682358276643991,0.19231855869293213,1.0,5.072194231224428e-05,0.0,child_11_studio_mic_the_fish_is_in_the_pond,child_11,the fish is in the pond,predefined_sentence,studio_mic
+44100,2.6004308390022675,0.1633150577545166,0.999969482421875,1.7439984652813505e-05,0.0,child_11_studio_mic_the_horse_is_behind_the_car,child_11,the horse is behind the car,predefined_sentence,studio_mic
+44100,2.70281179138322,0.1864383965730667,0.999969482421875,2.5169052133496653e-05,0.0,child_11_studio_mic_the_horse_is_next_to_the_stable,child_11,the horse is next to the stable,predefined_sentence,studio_mic
+44100,0.9214285714285714,0.14891280233860016,0.8365478515625,0.0,0.0,child_11_port_mic_eight,child_11,eight,number_counting,port_mic
+44100,0.900952380952381,0.17870038747787476,0.744293212890625,0.0,0.0,child_11_port_mic_five,child_11,five,number_counting,port_mic
+44100,0.8599773242630385,0.17793090641498566,0.794036865234375,0.0,0.0,child_11_port_mic_four,child_11,four,number_counting,port_mic
+44100,0.8395011337868481,0.20685823261737823,0.9868316650390625,5.402193290475933e-05,0.0,child_11_port_mic_nine,child_11,nine,number_counting,port_mic
+44100,0.9009297052154195,0.21906106173992157,0.819915771484375,0.0,0.0,child_11_port_mic_one,child_11,one,number_counting,port_mic
+44100,0.8395011337868481,0.16513583064079285,0.82440185546875,0.0,0.0,child_11_port_mic_seven,child_11,seven,number_counting,port_mic
+44100,0.8190249433106576,0.13431186974048615,0.8418121337890625,0.0,0.0,child_11_port_mic_six,child_11,six,number_counting,port_mic
+44100,0.7576190476190476,0.11561629176139832,0.6441650390625,0.0,0.0,child_11_port_mic_ten,child_11,ten,number_counting,port_mic
+44100,0.7780952380952381,0.18925172090530396,0.907562255859375,0.0,0.0,child_11_port_mic_three,child_11,three,number_counting,port_mic
+44100,0.92140589569161,0.1736517995595932,0.8318939208984375,0.0,0.0,child_11_port_mic_two,child_11,two,number_counting,port_mic
+44100,2.907573696145125,0.10208778828382492,0.976776123046875,0.0,0.0,child_11_port_mic_the_dog_is_in_front_of_the_horse,child_11,the dog is in front of the horse,predefined_sentence,port_mic
+44100,2.5799773242630386,0.1610308289527893,0.949188232421875,0.0,0.0,child_11_port_mic_the_dog_is_in_front_of_the_house,child_11,the dog is in front of the house,predefined_sentence,port_mic
+44100,2.8666439909297052,0.1199326291680336,0.9137420654296875,0.0,0.0,child_11_port_mic_the_dog_is_on_top_of_the_shed,child_11,the dog is on top of the shed,predefined_sentence,port_mic
+44100,2.682358276643991,0.1289423257112503,0.8909454345703125,0.0,0.0,child_11_port_mic_the_fish_is_in_the_pond,child_11,the fish is in the pond,predefined_sentence,port_mic
+44100,2.6004308390022675,0.1656622290611267,0.9278411865234375,0.0,0.0,child_11_port_mic_the_horse_is_behind_the_car,child_11,the horse is behind the car,predefined_sentence,port_mic
+44100,2.70281179138322,0.161482572555542,0.7854156494140625,0.0,0.0,child_11_port_mic_the_horse_is_next_to_the_stable,child_11,the horse is next to the stable,predefined_sentence,port_mic
+44100,2.8666439909297052,0.126534566283226,0.977691650390625,0.0,0.0,child_11_nao_mic_the_dog_is_on_top_of_the_shed,child_11,the dog is on top of the shed,predefined_sentence,nao_mic
+44100,2.70281179138322,0.16350534558296204,0.989105224609375,8.389684044498884e-06,0.0,child_11_nao_mic_the_horse_is_next_to_the_stable,child_11,the horse is next to the stable,predefined_sentence,nao_mic
+44100,3.6868707482993197,0.1220550388097763,0.79571533203125,0.0,0.0,child_01_free_f398802c,child_01,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.287278911564626,0.05054708570241928,0.401947021484375,0.0,0.0,child_01_free_9b878683,child_01,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.8539909297052155,0.09795946627855301,0.999908447265625,5.883702731803179e-06,0.0,child_01_free_f02e0537,child_01,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.3682086167800454,0.06809733808040619,0.3505859375,0.0,0.0,child_01_free_5348ed2d,child_01,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.3264399092970522,0.11074376851320267,0.709075927734375,0.0,0.0,child_01_free_9f0244d3,child_01,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.6397732426303855,0.07863768935203552,0.333099365234375,0.0,0.0,child_01_free_8131266a,child_01,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.4935374149659864,0.10919197648763657,0.395233154296875,0.0,0.0,child_01_free_6bf5e8b3,child_01,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.8277777777777777,0.12174585461616516,0.552764892578125,0.0,0.0,child_01_free_c5b6d43e,child_01,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.9344444444444444,0.18215423822402954,0.852752685546875,0.0,0.0,child_02_free_0525c683,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.713219954648526,0.1170952245593071,0.7264404296875,0.0,0.0,child_02_free_d3ec25d9,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.0258503401360546,0.09613602608442307,0.530303955078125,0.0,0.0,child_02_free_3acf0e7d,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.116598639455782,0.08022510260343552,0.53118896484375,0.0,0.0,child_02_free_cd48a54f,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.978707482993197,0.1268017441034317,0.9866943359375,3.7927490224189394e-06,0.0,child_02_free_44a1184c,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.6423809523809525,0.11368944495916367,0.99993896484375,1.2451051802601025e-05,0.0,child_02_free_8cf53e91,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.59,0.09212855249643326,0.54425048828125,0.0,0.0,child_02_free_c543dbd1,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.28546485260771,0.06108471378684044,0.418365478515625,0.0,0.0,child_02_free_43e90297,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.7987301587301587,0.12556669116020203,0.724761962890625,0.0,0.0,child_02_free_a0366a02,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.4823356009070294,0.08959172666072845,0.453887939453125,0.0,0.0,child_02_free_1b2b9a30,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.5715873015873014,0.11589360237121582,0.669189453125,0.0,0.0,child_02_free_73660bb3,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.1151020408163266,0.0942489355802536,0.559906005859375,0.0,0.0,child_02_free_6dc805e9,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.38718820861678,0.06253881752490997,0.32806396484375,0.0,0.0,child_02_free_013fe58c,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.36875283446712,0.21573469042778015,0.891387939453125,0.0,0.0,child_02_free_6c4c449c,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.3222902494331066,0.07215721905231476,0.349609375,0.0,0.0,child_02_free_7870a955,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.019954648526077,0.15126469731330872,0.883819580078125,0.0,0.0,child_02_free_f2d09a7e,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.4034013605442177,0.12380912154912949,0.70745849609375,0.0,0.0,child_02_free_24e69037,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.6925850340136055,0.12307432293891907,0.696624755859375,0.0,0.0,child_02_free_2d398fa3,child_02,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.8555555555555556,0.04191650450229645,0.263519287109375,0.0,0.020833333333333332,child_03_free_ce301f6d,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.9665079365079365,0.05635901167988777,0.34368896484375,0.0,0.006756756756756757,child_03_free_63b74795,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,7.030702947845805,0.04586475342512131,0.37353515625,0.0,0.002849002849002849,child_03_free_03261d37,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.1660997732426304,0.050853028893470764,0.4017333984375,0.0,0.006329113924050633,child_03_free_6e445dc1,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.9009297052154195,0.044364817440509796,0.369537353515625,0.0,0.0,child_03_free_32c9d808,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.8234467120181406,0.04374377429485321,0.258056640625,0.0,0.0,child_03_free_07dd10f4,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.7508616780045352,0.05459402874112129,0.445159912109375,0.0,0.0,child_03_free_dfe4f9d0,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.450113378684807,0.06570763885974884,0.572113037109375,0.0,0.003105590062111801,child_03_free_aeef7ba9,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.828344671201814,0.03666311502456665,0.18719482421875,0.0,0.005235602094240838,child_03_free_3848ef7c,child_03,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.247165532879819,0.06465484946966171,0.3658447265625,0.0,0.006172839506172839,child_04_free_d0954f14,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.800634920634921,0.05674475431442261,0.43212890625,0.0,0.0,child_04_free_a95c9661,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.387346938775511,0.10166804492473602,1.0,1.2627219233780336e-05,0.0,child_04_free_e5a7acf5,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.1733786848072563,0.05736764147877693,0.32354736328125,0.0,0.0,child_04_free_3c046a43,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.542358276643991,0.06965196132659912,0.68096923828125,0.0,0.0,child_04_free_b7234935,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.671519274376417,0.044114284217357635,0.25433349609375,0.0,0.0,child_04_free_a942f96d,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.088480725623583,0.06406745314598083,0.422454833984375,0.0,0.0,child_04_free_726a171c,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.0848072562358277,0.04896602779626846,0.297637939453125,0.0,0.0,child_04_free_b5ff2236,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.2028798185941043,0.08617950975894928,0.75421142578125,0.0,0.0,child_04_free_50271da2,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.642018140589569,0.06338045746088028,0.440887451171875,0.0,0.0,child_04_free_9a9ec82f,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.859750566893424,0.07777003943920135,0.583343505859375,0.0,0.0,child_04_free_853316f2,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.287777777777778,0.07202137261629105,0.5284423828125,0.0,0.0,child_04_free_29eb0ef9,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.3061904761904763,0.0704861506819725,0.4031982421875,0.0,0.0,child_04_free_337e1def,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.19546485260771,0.07433930039405823,0.478302001953125,0.0,0.0,child_04_free_35ca7a1e,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.708390022675737,0.09619346261024475,0.7554931640625,0.0,0.0,child_04_free_4474b922,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.033106575963719,0.07713408023118973,0.725616455078125,0.0,0.0,child_04_free_94f971d2,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.9040136054421768,0.11352160573005676,0.896881103515625,0.0,0.0,child_04_free_02a8469d,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.25827664399093,0.08660885691642761,0.3802490234375,0.0,0.0,child_04_free_f2094c78,child_04,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.7865986394557822,0.039396073669195175,0.327789306640625,0.0,0.0,child_05_free_d86979cd,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.536077097505669,0.02867107465863228,0.131103515625,0.0,0.0,child_05_free_6886c820,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.549614512471655,0.028522435575723648,0.558746337890625,0.0,0.021406727828746176,child_05_free_33df54bd,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.712879818594104,0.02992534637451172,0.190765380859375,0.0,0.0,child_05_free_1d8fa0fe,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.822380952380952,0.03253373131155968,0.184051513671875,0.0,0.0,child_05_free_b6d6c0d7,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.8009297052154194,0.03733261674642563,0.25390625,0.0,0.0,child_05_free_a4c6ef38,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.8775283446712017,0.047654181718826294,0.29339599609375,0.0,0.013986013986013986,child_05_free_d0a20a9e,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.795895691609977,0.032262880355119705,0.228729248046875,0.0,0.008368200836820083,child_05_free_dd8dc99e,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.017777777777778,0.03322092816233635,0.205322265625,0.0,0.0,child_05_free_4fbf5b07,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.992063492063492,0.0654202476143837,0.400726318359375,0.0,0.013422818791946308,child_05_free_aad33d36,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.602630385487529,0.026820607483386993,0.1822509765625,0.0,0.004347826086956522,child_05_free_fa7a0501,child_05,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.716825396825397,0.07754607498645782,0.400146484375,0.0,0.0,child_06_free_61a50632,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.328231292517007,0.06475697457790375,0.757843017578125,0.0,0.006024096385542169,child_06_free_c9e4dcba,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.21,0.06712941080331802,0.466949462890625,0.0,0.0,child_06_free_1c3500c7,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.1677551020408163,0.05281484127044678,0.232696533203125,0.0,0.0,child_06_free_459d80d2,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.1190929705215416,0.04914456978440285,0.281585693359375,0.0,0.0,child_06_free_8a1bec8e,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.703151927437642,0.06275937706232071,0.3377685546875,0.0,0.007407407407407408,child_06_free_986e4481,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.148843537414966,0.03943769633769989,0.17236328125,0.0,0.0,child_06_free_c09a7684,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.0949433106575963,0.0774339810013771,0.369720458984375,0.0,0.0,child_06_free_aa618612,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.365260770975057,0.07399501651525497,0.452911376953125,0.0,0.0,child_06_free_f929210d,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.7707256235827664,0.04223867878317833,0.309967041015625,0.0,0.0,child_06_free_05d3ca1e,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.365260770975057,0.06985442340373993,0.368408203125,0.0,0.0,child_06_free_2b9abb58,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.7908390022675738,0.0548599436879158,0.225341796875,0.0,0.0,child_06_free_8b30947f,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.196326530612245,0.06666050106287003,0.325592041015625,0.0,0.0,child_06_free_6dba5438,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.753832199546485,0.04203645884990692,0.268829345703125,0.0,0.0,child_06_free_52c7fd99,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.131950113378685,0.11645304411649704,0.59661865234375,0.0,0.0,child_06_free_d40cb5fe,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.747414965986395,0.08203407377004623,0.714324951171875,0.0,0.0,child_06_free_aec390b9,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.838299319727891,0.058325331658124924,0.335784912109375,0.0,0.0,child_06_free_e62ab3a8,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.652471655328798,0.04685449227690697,0.24200439453125,0.0,0.0,child_06_free_ace49876,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.9533560090702946,0.06683547794818878,0.442596435546875,0.0,0.0,child_06_free_6cd339fa,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.0611337868480724,0.06275725364685059,0.318634033203125,0.0,0.0,child_06_free_591aa440,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.4022448979591837,0.04295343533158302,0.249786376953125,0.0,0.0,child_06_free_566e8c90,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.82140589569161,0.07682516425848007,0.5106201171875,0.0,0.0,child_06_free_4cfafbca,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.6049886621315193,0.12481441348791122,0.623199462890625,0.0,0.0,child_06_free_3dc1fa63,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.7707256235827664,0.0646115392446518,0.32421875,0.0,0.0,child_06_free_ccd1bce1,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.9428798185941043,0.055121541023254395,0.2490234375,0.0,0.0,child_06_free_c871da89,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.480294784580499,0.08332275599241257,0.4637451171875,0.0,0.0,child_06_free_63bc29c0,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.17297052154195,0.0617072768509388,0.359954833984375,0.0,0.004807692307692308,child_06_free_2a325a1e,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.4127437641723355,0.06013965979218483,0.348175048828125,0.0,0.0,child_06_free_d71e921b,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.544671201814059,0.06275749951601028,0.34857177734375,0.0,0.004405286343612335,child_06_free_b8a923c6,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.8889795918367347,0.07275014370679855,0.3931884765625,0.0,0.0,child_06_free_ba6c80f5,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.639614512471655,0.049555934965610504,0.39959716796875,0.0,0.0,child_06_free_b2430bcf,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.304920634920635,0.06008874252438545,0.43475341796875,0.0,0.01509433962264151,child_06_free_c56d24a3,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.456984126984127,0.05440055578947067,0.291717529296875,0.0,0.003676470588235294,child_06_free_937028de,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.493968253968254,0.04829937964677811,0.27606201171875,0.0,0.0,child_06_free_fbd3b844,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.297687074829932,0.08039582520723343,0.309234619140625,0.0,0.0,child_06_free_8880f856,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.504444444444444,0.0778840109705925,0.5008544921875,0.0,0.003076923076923077,child_06_free_acf50ff0,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.750612244897959,0.06686640530824661,0.394744873046875,0.0,0.0,child_06_free_f7dfabb0,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.6355555555555554,0.04782518744468689,0.22064208984375,0.0,0.0,child_06_free_0b9d4516,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.720045351473923,0.06356555968523026,0.61322021484375,0.0,0.0,child_06_free_ac62691f,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.034625850340136,0.15503008663654327,0.999969482421875,4.503956725983777e-06,0.0,child_06_free_39fc5eba,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.172993197278911,0.053508367389440536,0.350921630859375,0.0,0.0,child_06_free_db2d51d5,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.7876190476190477,0.09677097946405411,0.45269775390625,0.0,0.007194244604316547,child_06_free_53af0a02,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.973469387755102,0.04189873859286308,0.229705810546875,0.0,0.0,child_06_free_e8f8b184,child_06,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.830362811791383,0.04271043837070465,0.212799072265625,0.0,0.0,child_07_free_0bf2533a,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.870748299319728,0.052034441381692886,0.278564453125,0.0,0.0,child_07_free_9439ea2c,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.512766439909297,0.045781031250953674,0.23779296875,0.0,0.0,child_07_free_da8f1eb1,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.9689342403628118,0.0704035833477974,0.33294677734375,0.0,0.0,child_07_free_dd1ea45d,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.5935600907029475,0.054908573627471924,0.31634521484375,0.0,0.0,child_07_free_fab9207e,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.0298639455782315,0.0942455530166626,1.0,3.7605719077757347e-06,0.0,child_07_free_15dafdea,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.3561451247165532,0.051484160125255585,0.29229736328125,0.0,0.0,child_07_free_2b4a1547,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,9.520249433106576,0.05299900844693184,0.510284423828125,0.0,0.0,child_07_free_0ed03455,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.967097505668934,0.05018562451004982,0.27398681640625,0.0,0.0,child_07_free_1f86b257,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.016167800453514,0.04422299191355705,0.28753662109375,0.0,0.0,child_07_free_52be9f2e,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.5711791383219955,0.04301122575998306,0.353912353515625,0.0,0.0,child_07_free_db95bb61,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.9646031746031745,0.09108142554759979,0.605072021484375,0.0,0.0,child_07_free_d182f540,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.6401587301587304,0.08251891285181046,0.475982666015625,0.0,0.0,child_07_free_3c5e6898,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,8.25609977324263,0.05785100907087326,0.43646240234375,0.0,0.0048543689320388345,child_07_free_308091b8,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.609092970521542,0.05550403892993927,0.269500732421875,0.0,0.004347826086956522,child_07_free_84029b1a,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.1771655328798185,0.03567132726311684,0.20953369140625,0.0,0.0,child_07_free_2f493eab,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.904308390022676,0.045196037739515305,0.259857177734375,0.0,0.0,child_07_free_628fc3bf,child_07,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.150884353741497,0.04995286092162132,0.329010009765625,0.0,0.0,child_08_free_79151b39,child_08,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.078231292517007,0.040840961039066315,0.27532958984375,0.0,0.0,child_08_free_5ad7b997,child_08,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.3133333333333335,0.06856010854244232,0.456329345703125,0.0,0.0,child_08_free_16de3289,child_08,,spontaneous_retell_segment,unknown_or_mixed
+44100,10.616689342403628,0.04753253608942032,0.36785888671875,0.0,0.0,child_08_free_c2f82dce,child_08,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.479546485260771,0.06581354141235352,0.36700439453125,0.0,0.0,child_08_free_1256c311,child_08,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.6320181405895693,0.056901294738054276,0.3367919921875,0.0,0.0,child_08_free_3be96320,child_08,,spontaneous_retell_segment,unknown_or_mixed
+44100,7.224126984126984,0.04261806607246399,0.4422607421875,0.0,0.0,child_08_free_3051db81,child_08,,spontaneous_retell_segment,unknown_or_mixed
+44100,8.54124716553288,0.04646900296211243,0.37054443359375,0.0,0.0,child_08_free_b0c8c7f2,child_08,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.750566893424036,0.10245706140995026,0.5701904296875,0.0,0.0,child_09_free_14a69e09,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,7.272290249433107,0.11055175215005875,0.87213134765625,0.0,0.0,child_09_free_a0b6f669,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.538843537414966,0.12764956057071686,0.646209716796875,0.0,0.0,child_09_free_90fba8a9,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.9496145124716553,0.11275499314069748,0.52593994140625,0.0,0.0,child_09_free_c6404bdd,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.640544217687075,0.09449480473995209,0.524749755859375,0.0,0.0,child_09_free_5a4e4289,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.487981859410431,0.11029491573572159,0.522369384765625,0.0,0.0,child_09_free_b265648e,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.0131746031746034,0.12884537875652313,0.568450927734375,0.0,0.0,child_09_free_025f87db,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.3818820861678005,0.1316204071044922,0.66644287109375,0.0,0.0,child_09_free_01961753,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.4581632653061223,0.08905777335166931,0.47845458984375,0.0,0.0,child_09_free_d212b3c6,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,13.0062358276644,0.08151717483997345,0.81927490234375,0.0,0.0,child_09_free_1e38e03f,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.873786848072562,0.12368366122245789,0.61871337890625,0.0,0.0,child_09_free_fcb4d967,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.8733333333333335,0.11406075209379196,0.58062744140625,0.0,0.0,child_09_free_72921043,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.6615646258503403,0.14064444601535797,0.79522705078125,0.0,0.0,child_09_free_fcde1faf,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.166213151927438,0.09408373385667801,0.519073486328125,0.0,0.0,child_09_free_afeef2bc,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,8.543673469387755,0.09785818308591843,0.76739501953125,0.0,0.0,child_09_free_a97227c1,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.678684807256236,0.10988376289606094,0.519287109375,0.0,0.0,child_09_free_65428cf0,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.903605442176871,0.11656302958726883,0.719635009765625,0.0,0.0,child_09_free_e4b2b3e2,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.7378684807256235,0.11046450585126877,0.7725830078125,0.0,0.0,child_09_free_b54079b2,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.085532879818594,0.10183665156364441,0.55621337890625,0.0,0.0,child_09_free_24f08b80,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.894807256235827,0.13198214769363403,0.851837158203125,0.0,0.0,child_09_free_d8b40aa0,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.852766439909297,0.09597902745008469,0.619140625,0.0,0.0,child_09_free_8b70b9f2,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.594081632653062,0.12059641629457474,0.865936279296875,0.0,0.0,child_09_free_b53792ca,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,8.11140589569161,0.11364691704511642,0.618408203125,0.0,0.0,child_09_free_8c3f4eb9,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.711201814058957,0.1101270467042923,0.506195068359375,0.0,0.0,child_09_free_2f8c3506,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,7.272290249433107,0.10336670279502869,0.82171630859375,0.0,0.0,child_09_free_6ed979ff,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,11.900136054421768,0.10362273454666138,0.862579345703125,0.0,0.0,child_09_free_af244e56,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,8.441972789115646,0.1174512654542923,0.730224609375,0.0,0.0,child_09_free_e29c6309,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.606802721088435,0.12228354811668396,0.8170166015625,0.0,0.0,child_09_free_9c0bec79,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,10.310907029478457,0.10159225016832352,0.57965087890625,0.0,0.0,child_09_free_b31701ec,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,9.459070294784581,0.08873122185468674,0.638671875,0.0,0.0,child_09_free_b6045e9a,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.128049886621315,0.10446123033761978,0.576385498046875,0.0,0.0,child_09_free_5a44e895,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,7.984263038548753,0.11308947950601578,0.70196533203125,0.0,0.0,child_09_free_d9d721b3,child_09,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.589977324263039,0.08786632120609283,0.8033447265625,0.0,0.0,child_10_free_9e9b00aa,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.59578231292517,0.04026421159505844,0.263916015625,0.0,0.0,child_10_free_d8d0b9e5,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.675079365079365,0.04199425131082535,0.458831787109375,0.0,0.0,child_10_free_79e899a5,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,7.562902494331066,0.04988446459174156,0.3199462890625,0.0,0.0026455026455026454,child_10_free_9b818f62,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.441043083900227,0.07692501693964005,0.99993896484375,4.928709734201725e-05,0.0,child_10_free_4b89884d,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,8.201201814058956,0.036279693245887756,0.2232666015625,0.0,0.0,child_10_free_9c928856,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.758253968253968,0.044770997017621994,0.2772216796875,0.0,0.0,child_10_free_27942cf3,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.1315646258503405,0.04622368514537811,0.407196044921875,0.0,0.0032679738562091504,child_10_free_7461bad8,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.874308390022676,0.05174298956990242,0.5399169921875,0.0,0.0,child_10_free_59568868,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.655736961451247,0.04847221076488495,0.41845703125,0.0,0.0,child_10_free_07f775bb,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.183786848072562,0.04728320986032486,0.3018798828125,0.0,0.0,child_10_free_53eb3389,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.37140589569161,0.04608173668384552,0.35650634765625,0.0,0.0,child_10_free_788b76a1,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.036780045351474,0.04270212724804878,0.24163818359375,0.0,0.0,child_10_free_24e079b5,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.321111111111111,0.047629427164793015,0.30767822265625,0.0,0.0,child_10_free_60854417,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,8.278571428571428,0.04542498663067818,0.345123291015625,0.0,0.0,child_10_free_ce3c5f47,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.539659863945578,0.0385318249464035,0.297332763671875,0.0,0.0,child_10_free_4763a132,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.758253968253968,0.0522463284432888,0.550018310546875,0.0,0.0,child_10_free_32d37324,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,7.330793650793651,0.05684058368206024,0.414337158203125,0.0,0.0,child_10_free_941f4da3,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.5145351473922903,0.0799148678779602,0.5438232421875,0.0,0.008,child_10_free_f8ed5743,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.114126984126984,0.05432341992855072,0.378021240234375,0.0,0.0,child_10_free_54310843,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.7137641723356007,0.035634785890579224,0.26422119140625,0.0,0.0,child_10_free_c3a520c0,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.4996598639455785,0.03629608452320099,0.259490966796875,0.0,0.0,child_10_free_753c2729,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.1315646258503405,0.0721239522099495,0.4464111328125,0.0,0.0,child_10_free_cfe888df,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.029047619047619,0.0655871331691742,0.374420166015625,0.0,0.0,child_10_free_7e9132b5,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,9.149002267573696,0.04993884265422821,0.5667724609375,0.0,0.0,child_10_free_52419389,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.106417233560091,0.056157276034355164,0.363433837890625,0.0,0.0,child_10_free_96e22ef5,child_10,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.232517006802721,0.09927019476890564,0.798370361328125,0.0,0.0,child_11_free_00672592,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.9094104308390023,0.1945544332265854,0.917816162109375,0.0,0.0,child_11_free_f01e6695,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.313922902494331,0.13029007613658905,0.744293212890625,0.0,0.0,child_11_free_bd15702c,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.4234920634920636,0.11496061086654663,0.50244140625,0.0,0.0,child_11_free_a7b3c732,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.415510204081633,0.09537521004676819,0.535125732421875,0.0,0.0,child_11_free_1ed877da,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.753968253968254,0.1335875689983368,0.761444091796875,0.0,0.0,child_11_free_ba0d2daf,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.0293650793650793,0.13175839185714722,0.5357666015625,0.0,0.0,child_11_free_0d872f91,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,1.9920408163265306,0.12273687869310379,0.53204345703125,0.0,0.0,child_11_free_b8765776,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.8860090702947847,0.13559134304523468,0.584564208984375,0.0,0.0,child_11_free_69a80151,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.2514285714285713,0.1313091218471527,0.695465087890625,0.0,0.0,child_11_free_ffcb90cd,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.8096371882086166,0.13588140904903412,0.7437744140625,0.0,0.0,child_11_free_67ffc857,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.65297052154195,0.15881945192813873,0.768280029296875,0.0,0.0,child_11_free_addf325b,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.4418367346938776,0.13195964694023132,0.5780029296875,0.0,0.0,child_11_free_11d8179d,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.810249433106576,0.09584475308656693,0.68756103515625,0.0,0.0,child_11_free_d374ae53,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,8.794308390022676,0.09671737253665924,0.652252197265625,0.0,0.0,child_11_free_b840ef43,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.781496598639456,0.118802011013031,0.720001220703125,0.0,0.0,child_11_free_64ba071f,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.4697278911564626,0.10282047092914581,0.507293701171875,0.0,0.0,child_11_free_6d3ed8f9,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.4424489795918367,0.11460337042808533,0.5947265625,0.0,0.0,child_11_free_4edddb37,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.965079365079365,0.08169365674257278,0.4189453125,0.0,0.0,child_11_free_e53fd351,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.1946031746031744,0.13493238389492035,0.705535888671875,0.0,0.0,child_11_free_b101393d,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,2.313310657596372,0.06696704775094986,0.453521728515625,0.0,0.0,child_11_free_2ffa13f6,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,7.9681179138322,0.13796502351760864,0.754974365234375,0.0,0.0,child_11_free_de1de1a3,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.297392290249433,0.10250791162252426,0.794036865234375,0.0,0.0,child_11_free_af629863,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.1217460317460315,0.09799586981534958,0.5489501953125,0.0,0.0,child_11_free_cd97f4b9,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.544625850340136,0.07365073263645172,0.775848388671875,0.0,0.0,child_11_free_d3d696fd,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,4.479773242630386,0.08119754493236542,0.537139892578125,0.0,0.0,child_11_free_84b77388,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.3322902494331066,0.11063087731599808,0.55633544921875,0.0,0.0,child_11_free_848ba3fa,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.517097505668934,0.09016621112823486,0.67840576171875,0.0,0.0,child_11_free_49f13487,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,3.5893197278911564,0.12038566917181015,0.62762451171875,0.0,0.0,child_11_free_40314be8,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.352471655328798,0.12047704309225082,0.694061279296875,0.0,0.0,child_11_free_2d6d1ab7,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,5.361043083900227,0.11706726253032684,0.624359130859375,0.0,0.0,child_11_free_17348a3d,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,6.462607709750567,0.11120408773422241,0.698455810546875,0.0,0.0,child_11_free_9fd9bbc0,child_11,,spontaneous_retell_segment,unknown_or_mixed
+44100,25.087414965986394,0.02810058929026127,0.7867584228515625,0.0,0.30063795853269537,child_01_freefull_port_01_M_native,child_01,,spontaneous_retell_full,port
+44100,25.087414965986394,0.09084247052669525,0.999969482421875,9.03869011302882e-07,0.0,child_01_freefull_studio_01_M_native,child_01,,spontaneous_retell_full,studio
+44100,77.94222222222223,0.07734831422567368,0.98345947265625,0.0,0.0,child_02_freefull_nao_02_M_nonNative,child_02,,spontaneous_retell_full,nao
+44100,77.94222222222223,0.09213954955339432,0.940185546875,0.0,0.0,child_02_freefull_port_02_M_nonNative,child_02,,spontaneous_retell_full,port
+44100,77.94222222222223,0.11243594437837601,0.999969482421875,8.727902405759019e-07,0.0,child_02_freefull_studio_02_M_nonNative,child_02,,spontaneous_retell_full,studio
+44100,43.581383219954645,0.07049846649169922,0.9920806884765625,5.20307876576728e-07,0.0,child_03_freefull_nao_03_F_native,child_03,,spontaneous_retell_full,nao
+44100,43.58136054421769,0.05982343852519989,0.7960205078125,0.0,0.19091326296466268,child_03_freefull_port_03_F_native,child_03,,spontaneous_retell_full,port
+44100,43.58136054421769,0.0473656989634037,0.999969482421875,3.1218488837829315e-06,0.004589261128958238,child_03_freefull_studio_03_F_native,child_03,,spontaneous_retell_full,studio
+48000,0.0,0.0,0.0,0.0,1.0,child_03_freefull_test_recording_03_F_native,child_03,,spontaneous_retell_full,test_recording
+44100,70.9063492063492,0.10849305987358093,1.0,0.0006178505070403617,0.0,child_04_freefull_nao_04_M_nonNative,child_04,,spontaneous_retell_full,nao
+44100,70.9063492063492,0.05496218055486679,0.82940673828125,0.0,0.2959097320169252,child_04_freefull_port_04_M_nonNative,child_04,,spontaneous_retell_full,port
+44100,70.9063492063492,0.07221938669681549,1.0,9.593951972676424e-07,0.0005641748942172073,child_04_freefull_studio_04_M_nonNative,child_04,,spontaneous_retell_full,studio
+44100,69.87990929705215,0.07030875235795975,0.9999847412109375,5.321731094225792e-05,0.0,child_05_freefull_nao_05_F_native,child_05,,spontaneous_retell_full,nao
+44100,69.87993197278911,0.023067865520715714,0.9999847412109375,1.0059366487058301e-05,0.4855425135986258,child_05_freefull_port_05_F_native,child_05,,spontaneous_retell_full,port
+44100,69.87993197278911,0.03349603712558746,0.999969482421875,3.2449569313091293e-07,0.00858860578299456,child_05_freefull_studio_05_F_native,child_05,,spontaneous_retell_full,studio
+44100,162.32396825396825,0.08724880963563919,1.0,9.652877765930146e-05,0.0,child_06_freefull_nao_06_M_native,child_06,,spontaneous_retell_full,nao
+44100,162.32399092970522,0.04145144671201706,0.84039306640625,0.0,0.21586988664366683,child_06_freefull_port_06_M_native,child_06,,spontaneous_retell_full,port
+44100,162.32399092970522,0.06643880903720856,0.999969482421875,1.3969430416031988e-07,0.0014785608674223755,child_06_freefull_studio_06_M_native,child_06,,spontaneous_retell_full,studio
+44100,107.48598639455783,0.05287078768014908,0.7134857177734375,0.0,0.0,child_07_freefull_nao_07_F_native,child_07,,spontaneous_retell_full,nao
+44100,107.48598639455783,0.016110528260469437,0.9999847412109375,7.5947252101840205e-06,0.5375883885374023,child_07_freefull_port_07_F_native,child_07,,spontaneous_retell_full,port
+44100,107.48598639455783,0.05404281988739967,0.999969482421875,2.1096458917177834e-07,0.0005582433941198362,child_07_freefull_studio_07_F_native,child_07,,spontaneous_retell_full,studio
+44100,93.2460544217687,0.04543339088559151,0.7298126220703125,0.0,0.0,child_08_freefull_port_08_F_nonNative,child_08,,spontaneous_retell_full,port
+44100,93.2460544217687,0.07512319833040237,1.0,2.431817314101549e-07,0.0,child_08_freefull_studio_08_F_nonNative,child_08,,spontaneous_retell_full,studio
+44100,244.30879818594104,0.0737418457865715,0.9463653564453125,0.0,0.0,child_09_freefull_nao_09_F_nonNative,child_09,,spontaneous_retell_full,nao
+44100,244.30879818594104,0.030018139630556107,0.7694244384765625,0.0,0.2468276708964388,child_09_freefull_port_09_F_nonNative,child_09,,spontaneous_retell_full,port
+44100,244.30879818594104,0.09907957911491394,0.99993896484375,4.6407941772512353e-07,0.0,child_09_freefull_studio_09_F_nonNative,child_09,,spontaneous_retell_full,studio
+44100,185.84249433106575,0.05740020424127579,0.9301605224609375,0.0,0.0,child_10_freefull_nao_10_M_nonNative,child_10,,spontaneous_retell_full,nao
+44100,185.84251700680272,0.011596256867051125,0.999969482421875,1.2201587304492442e-06,0.6529272492466638,child_10_freefull_port_10_M_nonNative,child_10,,spontaneous_retell_full,port
+44100,185.84251700680272,0.05100049823522568,0.999969482421875,1.7082222226289418e-06,0.00021523891519586742,child_10_freefull_studio_10_M_nonNative,child_10,,spontaneous_retell_full,studio
+44100,176.40009070294784,0.07425455749034882,0.989776611328125,1.285471955886716e-07,0.0,child_11_freefull_nao_11_M_native,child_11,,spontaneous_retell_full,nao
+44100,176.4000680272109,0.06421719491481781,0.751861572265625,0.0,0.0,child_11_freefull_port_11_M_native,child_11,,spontaneous_retell_full,port
+44100,176.4000680272109,0.10520362108945847,1.0,1.2854721211305523e-07,0.0,child_11_freefull_studio_11_M_native,child_11,,spontaneous_retell_full,studio

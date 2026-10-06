@@ -1,0 +1,35 @@
+{
+  "phase": "1.9.16",
+  "base": "3f62ef4 (1.9.15)",
+  "model_revision": "facebook/wav2vec2-xlsr-53-espeak-cv-ft snapshot 2c733782da5604684829819a5eb744c193fe9398 (Apache-2.0)",
+  "training": "B1 frozen encoder + Conv1d CTC head; seed 1516; so762 train children + SIAK train ratings>=60; LWE never trained",
+  "inputs": {
+    "D:/speech-lab/data/speechocean762/README.md": "56C13C6F53FFE4F62DEC8BF1320214F2A35A7C63DE36A7F45B41A91F6DF3D95E",
+    "D:/speech-lab/data/speechocean762/resource/scores-detail.json": "8A90FF40558FE8032D9BFA919429DCAE267C0EC3FBDEDF1DCA30C0515EA989E1",
+    "D:/speech-lab/data/speechocean762/train/utt2spk": "E83546F91FA7444547B8C690EF004AD514EEE1F7066D38EC87F7A6C847C84737",
+    "D:/speech-lab/data/speechocean762/test/utt2spk": "061291F397F8C281FF1BF6BF388E875AB9C4CC0DE66F37D8559E690AF08964BE",
+    "Research/Speech/ExternalData/SIAK/README.md": "E2E38FF8DE3B7ADC599481846A8103ECE604918E4D5DDDCD0102E9A9BA6E3513",
+    "Research/Speech/Phase1_9_15/artifacts/siak/calibration_train.csv": "DC25F9D10E08D482C107764743F0EBA5286A18AAA36AE95EE218D66726414194",
+    "Research/Speech/Phase1_9_15/artifacts/siak/calibration_test.csv": "B9E2B03DB117A3908C915718034EC0A4ECD7A53DC67B15526237B404FB8C7FF4",
+    "Research/Speech/Phase1_9_14/artifacts/p1/p1_evidence_table.csv": "A45D1750BDC22ACDB1737DD57FBECDC07AA734EDF7373B3D78274B38D5DEC8F1",
+    "Research/Speech/Phase1_9_12/Results/final_consonant_human_review.csv": "7D069F720BB321D04BF3CA9E24C6D0A5C1B44173B432D630FA2C576808554F68"
+  },
+  "outputs": {
+    "Research/Speech/Phase1_9_16/artifacts/audit/so762_manifest.csv": "DA087F6239AF8686A6473AE0B2C2BF3377D6A4D3B74BBE91DFB401C1B1DCF2B2",
+    "Research/Speech/Phase1_9_16/artifacts/inventory/phone_mapping.csv": "B9F0E9067EAA0721A3262D7C0CFAC3FBCF512F8393099FF9A2F4B7EBFDDF1D93",
+    "Research/Speech/Phase1_9_16/artifacts/quality/quality_summary.json": "C893A7CE2A9ED67573D8CBF96E00E521B051D47CEB5816208CC270F6A30010CE",
+    "Research/Speech/Phase1_9_16/artifacts/zeroshot/zeroshot_summary.json": "61470B93DFD6CA462C1AFDD0C9A3A8AC55DDA4EC2BE94E1ECAB51EC97E58407A",
+    "Research/Speech/Phase1_9_16/artifacts/zeroshot/so762_test_phone_hits.csv": "E21457F89958F3FB1474412740252A7F7498DE4B3A3A8D797F6483971F994D2C",
+    "Research/Speech/Phase1_9_16/artifacts/ab/head.pt": "B3E213755A17353D75157820B385009634DC8BB6B9266B6531F548B63F4BC1A8",
+    "Research/Speech/Phase1_9_16/artifacts/ab/training_log.json": "DB632EA156F6F052477C1B79C9963ED93F453D71E4EAA8CB411B88DBF22145DF",
+    "Research/Speech/Phase1_9_16/artifacts/ab/ab_metrics.json": "C30EAF48B378A19FA580EDF029F11A55A8CA4B08A6CD856D6E4A4BCECE11C76C",
+    "Research/Speech/Phase1_9_16/artifacts/ab/lwe_ab_tokens.csv": "5BCDD5F1B4D15164CFB4C7DAD2EB7550A6DDC10A5EE7EFBCE211E3AA6287DC37",
+    "Research/Speech/Phase1_9_16/artifacts/ab/siak_test_ab.csv": "05C5165560D8C1F1AF91162245FFDACC47C91A4E4434F182A612799EF72F243E",
+    "Research/Speech/Phase1_9_16/artifacts/ab/siak_46_ab.csv": "087B413D1C3D443AF611F2C7C1485BD1D28DFCC89DE1F941CD378BEA5CC3FCCC",
+    "Research/Speech/Phase1_9_16/artifacts/ab/so762_phone_ab.csv": "3048BC2F23BE0E1BB72E105FCD9429D8474BF9CBF5BF94EF6FFC7DBC95FEA136",
+    "Research/Speech/Phase1_9_16/artifacts/replay/failure_replay.csv": "20A5125CB2925315C5A3772637F18025F3D8830C128070278F00FAAF3B020E0B",
+    "Research/Speech/Phase1_9_16/artifacts/generalization/generalization_summary.json": "93BF230C094B8ABB6E5551DECB5F24A06ADD650A43FAD728820C945147BC8326",
+    "Research/Speech/Phase1_9_16/artifacts/stress/stress_summary.json": "04A9CCC6D816FB08B8D7068CBEB70E11514C4B216946ABF96B7E3F4B63CC4C29",
+    "Research/Speech/Phase1_9_16/artifacts/runtime/runtime_license.json": "B70CDD7D3544A6C39E56B83E8829CEB21DBF1ADD00C52AA832FBCC8F98CE531F"
+  }
+}

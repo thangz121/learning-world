@@ -1,0 +1,58 @@
+{
+  "phase": "1.9.16",
+  "runtime": {
+    "cold_load_s": 13.6,
+    "warm_soft_match_s_short_word": 0.585,
+    "peak_working_set_mb_after_one_inference": 1754.0,
+    "cpu_only": true,
+    "torch": "2.14.1+cpu",
+    "note": "ASUS Windows; single process; model+torch overhead included"
+  },
+  "sizes": {
+    "pytorch_model_bin_bytes": 1263535127,
+    "model_safetensors_bytes": 1263414648,
+    "head_state_bytes": 14505983,
+    "head_params_estimate": "2xConv1d(1024->512, 512->392, k=5) ~3.6M"
+  },
+  "model_revision": {
+    "id": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "local_snapshot_sha": "2c733782da5604684829819a5eb744c193fe9398"
+  },
+  "licenses": {
+    "wav2vec2-xlsr-53-espeak-cv-ft": {
+      "license": "Apache-2.0 (verified via HF model_info 2026-10-02)",
+      "training_use": "allowed",
+      "commercial": "allowed"
+    },
+    "speechocean762 (SLR101)": {
+      "license": "CC BY 4.0 (openslr.org/101, fetched 2026-10-03)",
+      "training_use": "allowed",
+      "commercial": "allowed",
+      "redistribution": "allowed with attribution"
+    },
+    "SIAK": {
+      "license": "CC-BY-ND-4.0",
+      "training_use": "dataset README: commercial use for building/evaluating speech technology models not prohibited; no unrelated derivatives",
+      "commercial": "nuanced (legal review open)",
+      "note": "used only as auxiliary acoustic data in B1 (weights from ratings)"
+    },
+    "Zenodo 200495": {
+      "license": "CC-BY-4.0",
+      "training_use": "NOT USED (test only)",
+      "commercial": "allowed",
+      "note": "LWE external evaluation only"
+    },
+    "Moonshine-tiny (ASR, supporting only)": {
+      "license": "MIT (per Phase 1.1 registry)",
+      "training_use": "n/a",
+      "commercial": "allowed"
+    }
+  },
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  }
+}

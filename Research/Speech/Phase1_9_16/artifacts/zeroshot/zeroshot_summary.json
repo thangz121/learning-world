@@ -1,0 +1,249 @@
+{
+  "phase": "1.9.16",
+  "model": "wav2vec2-xlsr-53-espeak-cv-ft (frozen)",
+  "alignment": "ctc_forced_v1",
+  "corpora": {
+    "so762_test_children": {
+      "n_utt": 1280,
+      "n_phones": 21617,
+      "n_scored_phones": 21617,
+      "runtime_s": 0.0,
+      "sec_per_utt": 0.0,
+      "canonical": {
+        "n": 21617,
+        "exact": 0.7538048757922006,
+        "exact_or_soft": 0.8189387981681084,
+        "miss": 0.18106120183189156,
+        "mean_posterior": 0.10156482282462875,
+        "mean_sim": 0.7664806217328953
+      },
+      "human_score_counts": {
+        "2": 20423,
+        "1": 793,
+        "0": 401
+      },
+      "evidence_by_human_score": {
+        "score2": {
+          "n": 20423,
+          "exact": 0.776918180482789,
+          "exact_or_soft": 0.8371933604269696,
+          "miss": 0.1628066395730304,
+          "mean_posterior": 0.10602458948244628,
+          "mean_sim": 0.788630137589972
+        },
+        "score1": {
+          "n": 793,
+          "exact": 0.41866330390920553,
+          "exact_or_soft": 0.5662042875157629,
+          "miss": 0.4337957124842371,
+          "mean_posterior": 0.03221593820933165,
+          "mean_sim": 0.44765081967213116
+        },
+        "score0": {
+          "n": 401,
+          "exact": 0.23940149625935161,
+          "exact_or_soft": 0.38902743142144636,
+          "miss": 0.6109725685785536,
+          "mean_posterior": 0.011569438902743142,
+          "mean_sim": 0.26890573566084786
+        }
+      },
+      "auc_posterior_score2_vs_score0": 0.8251919532803891,
+      "auc_sim_score2_vs_score0": 0.774833713346756,
+      "deletion_like_rate_on_score0": 0.6109725685785536,
+      "deletion_like_rate_on_score2": 0.1628066395730304,
+      "word_final": {
+        "n": 7266,
+        "exact": 0.7642444260941371,
+        "exact_or_soft": 0.8086980456922653,
+        "miss": 0.19130195430773467,
+        "mean_posterior": 0.07825134338012661,
+        "mean_sim": 0.7732157996146435
+      },
+      "word_final_consonant": {
+        "n": 4326,
+        "exact": 0.8562182154415164,
+        "exact_or_soft": 0.9054553860379103,
+        "miss": 0.09454461396208969,
+        "mean_posterior": 0.08039857859454462,
+        "mean_sim": 0.8659601248266298
+      },
+      "word_final_consonant_by_human": {
+        "score2": {
+          "n": 4115,
+          "exact": 0.8726609963547995,
+          "exact_or_soft": 0.9183475091130012,
+          "miss": 0.08165249088699879,
+          "mean_posterior": 0.08336734410692588,
+          "mean_sim": 0.8817648602673147
+        },
+        "score1": {
+          "n": 145,
+          "exact": 0.6275862068965518,
+          "exact_or_soft": 0.7241379310344828,
+          "miss": 0.27586206896551724,
+          "mean_posterior": 0.03022837931034483,
+          "mean_sim": 0.6455537931034483
+        },
+        "score0": {
+          "n": 66,
+          "exact": 0.3333333333333333,
+          "exact_or_soft": 0.5,
+          "miss": 0.5,
+          "mean_posterior": 0.005522954545454546,
+          "mean_sim": 0.36478484848484843
+        }
+      },
+      "top_confusions_expected_observed": [
+        {
+          "expected": "t",
+          "observed": "t",
+          "n": 1559
+        },
+        {
+          "expected": "n",
+          "observed": "n",
+          "n": 1405
+        },
+        {
+          "expected": "\u026a",
+          "observed": "\u026a",
+          "n": 913
+        },
+        {
+          "expected": "s",
+          "observed": "s",
+          "n": 910
+        },
+        {
+          "expected": "l",
+          "observed": "l",
+          "n": 817
+        },
+        {
+          "expected": "d",
+          "observed": "d",
+          "n": 769
+        },
+        {
+          "expected": "\u0259",
+          "observed": "\u0259",
+          "n": 764
+        },
+        {
+          "expected": "i\u02d0",
+          "observed": "i\u02d0",
+          "n": 740
+        },
+        {
+          "expected": "w",
+          "observed": "w",
+          "n": 628
+        },
+        {
+          "expected": "k",
+          "observed": "k",
+          "n": 607
+        },
+        {
+          "expected": "m",
+          "observed": "m",
+          "n": 597
+        },
+        {
+          "expected": "\u00e6",
+          "observed": "\u00e6",
+          "n": 539
+        },
+        {
+          "expected": "z",
+          "observed": "z",
+          "n": 515
+        },
+        {
+          "expected": "\u0279",
+          "observed": "\u0279",
+          "n": 467
+        },
+        {
+          "expected": "\u025b",
+          "observed": "\u025b",
+          "n": 424
+        },
+        {
+          "expected": "\u0259",
+          "observed": "\u0251",
+          "n": 414
+        },
+        {
+          "expected": "h",
+          "observed": "h",
+          "n": 410
+        },
+        {
+          "expected": "u\u02d0",
+          "observed": "u\u02d0",
+          "n": 402
+        },
+        {
+          "expected": "\u00f0",
+          "observed": "\u00f0",
+          "n": 343
+        },
+        {
+          "expected": "a\u026a",
+          "observed": "a\u026a",
+          "n": 333
+        },
+        {
+          "expected": "f",
+          "observed": "f",
+          "n": 300
+        },
+        {
+          "expected": "v",
+          "observed": "v",
+          "n": 297
+        },
+        {
+          "expected": "j",
+          "observed": "j",
+          "n": 270
+        },
+        {
+          "expected": "b",
+          "observed": "b",
+          "n": 244
+        },
+        {
+          "expected": "\u0254",
+          "observed": "\u0254",
+          "n": 233
+        }
+      ]
+    },
+    "siak_test_speakers": {
+      "n_utt": 481,
+      "n_phones": 1758,
+      "runtime_s": 154.0,
+      "sec_per_utt": 0.32,
+      "canonical": {
+        "n": 1758,
+        "exact": 0.6911262798634812,
+        "exact_or_soft": 0.7599544937428896,
+        "miss": 0.24004550625711035,
+        "mean_posterior": 0.05596482707622298,
+        "mean_sim": 0.7052953924914676
+      },
+      "word_final": {
+        "n": 481,
+        "exact": 0.6507276507276507,
+        "exact_or_soft": 0.7234927234927235,
+        "miss": 0.2765072765072765,
+        "mean_posterior": 0.025937948024948025,
+        "mean_sim": 0.6650615384615384
+      },
+      "pearson_soft_vs_siak": 0.3121764916710746
+    }
+  }
+}
