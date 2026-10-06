@@ -1,0 +1,1233 @@
+{
+  "phase": "1.9.17",
+  "objective": "word-final deletion/alignment/scoring diagnosis",
+  "model": {
+    "id": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "revision": "2c733782da5604684829819a5eb744c193fe9398",
+    "pipeline": "PhoneEvidenceV2@1.4.0 ctc_forced_v1 + soft_match (frozen)"
+  },
+  "counts": {
+    "tokens_analyzed": 80,
+    "human_final_labels": 28,
+    "pme": 12,
+    "scorer_miss": 6
+  },
+  "counterfactual": {
+    "n_labeled_consonant_finals": 28,
+    "n_present": 16,
+    "n_absent": 12,
+    "baseline": {
+      "present_recall": 0.9375,
+      "absent_detection": 0.5833333333333334
+    },
+    "deletion_aware_free_presence": {
+      "present_recall": 0.5625,
+      "absent_detection": 0.8333333333333334,
+      "tp": 9,
+      "fn": 7,
+      "fp": 2,
+      "tn": 10
+    },
+    "cf_tail_post_best_balanced": {
+      "threshold": 0.04,
+      "present_recall": 0.3125,
+      "absent_detection": 0.9166666666666666,
+      "tp": 5,
+      "fn": 11,
+      "fp": 1,
+      "tn": 11
+    },
+    "cf_margin_best_balanced": {
+      "threshold": -0.02,
+      "present_recall": 0.75,
+      "absent_detection": 0.8333333333333334,
+      "tp": 12,
+      "fn": 4,
+      "fp": 2,
+      "tn": 10
+    },
+    "cf_hybrid_best_balanced": {
+      "threshold": 0.25,
+      "present_recall": 0.625,
+      "absent_detection": 0.9166666666666666,
+      "tp": 10,
+      "fn": 6,
+      "fp": 1,
+      "tn": 11
+    },
+    "sweeps": {
+      "cf_tail_post": [
+        {
+          "threshold": 0.02,
+          "present_recall": 0.3125,
+          "absent_detection": 0.75,
+          "tp": 5,
+          "fn": 11,
+          "fp": 3,
+          "tn": 9
+        },
+        {
+          "threshold": 0.04,
+          "present_recall": 0.3125,
+          "absent_detection": 0.9166666666666666,
+          "tp": 5,
+          "fn": 11,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.06,
+          "present_recall": 0.25,
+          "absent_detection": 0.9166666666666666,
+          "tp": 4,
+          "fn": 12,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.08,
+          "present_recall": 0.25,
+          "absent_detection": 0.9166666666666666,
+          "tp": 4,
+          "fn": 12,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.1,
+          "present_recall": 0.25,
+          "absent_detection": 0.9166666666666666,
+          "tp": 4,
+          "fn": 12,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.12,
+          "present_recall": 0.25,
+          "absent_detection": 0.9166666666666666,
+          "tp": 4,
+          "fn": 12,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.14,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.16,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.18,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.2,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.22,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.24,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.26,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.28,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.3,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.32,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.34,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.36,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.38,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.4,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.42,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.44,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.46,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.48,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.5,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.52,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.54,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.56,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.58,
+          "present_recall": 0.1875,
+          "absent_detection": 0.9166666666666666,
+          "tp": 3,
+          "fn": 13,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.6,
+          "present_recall": 0.125,
+          "absent_detection": 0.9166666666666666,
+          "tp": 2,
+          "fn": 14,
+          "fp": 1,
+          "tn": 11
+        }
+      ],
+      "cf_margin_per_frame": [
+        {
+          "threshold": -0.1,
+          "present_recall": 1.0,
+          "absent_detection": 0.3333333333333333,
+          "tp": 16,
+          "fn": 0,
+          "fp": 8,
+          "tn": 4
+        },
+        {
+          "threshold": -0.09,
+          "present_recall": 1.0,
+          "absent_detection": 0.4166666666666667,
+          "tp": 16,
+          "fn": 0,
+          "fp": 7,
+          "tn": 5
+        },
+        {
+          "threshold": -0.08,
+          "present_recall": 1.0,
+          "absent_detection": 0.5,
+          "tp": 16,
+          "fn": 0,
+          "fp": 6,
+          "tn": 6
+        },
+        {
+          "threshold": -0.07,
+          "present_recall": 1.0,
+          "absent_detection": 0.5,
+          "tp": 16,
+          "fn": 0,
+          "fp": 6,
+          "tn": 6
+        },
+        {
+          "threshold": -0.06,
+          "present_recall": 0.875,
+          "absent_detection": 0.5833333333333334,
+          "tp": 14,
+          "fn": 2,
+          "fp": 5,
+          "tn": 7
+        },
+        {
+          "threshold": -0.05,
+          "present_recall": 0.8125,
+          "absent_detection": 0.5833333333333334,
+          "tp": 13,
+          "fn": 3,
+          "fp": 5,
+          "tn": 7
+        },
+        {
+          "threshold": -0.04,
+          "present_recall": 0.75,
+          "absent_detection": 0.6666666666666666,
+          "tp": 12,
+          "fn": 4,
+          "fp": 4,
+          "tn": 8
+        },
+        {
+          "threshold": -0.03,
+          "present_recall": 0.75,
+          "absent_detection": 0.75,
+          "tp": 12,
+          "fn": 4,
+          "fp": 3,
+          "tn": 9
+        },
+        {
+          "threshold": -0.02,
+          "present_recall": 0.75,
+          "absent_detection": 0.8333333333333334,
+          "tp": 12,
+          "fn": 4,
+          "fp": 2,
+          "tn": 10
+        },
+        {
+          "threshold": -0.01,
+          "present_recall": 0.5625,
+          "absent_detection": 0.8333333333333334,
+          "tp": 9,
+          "fn": 7,
+          "fp": 2,
+          "tn": 10
+        },
+        {
+          "threshold": -0.0,
+          "present_recall": 0.5625,
+          "absent_detection": 0.8333333333333334,
+          "tp": 9,
+          "fn": 7,
+          "fp": 2,
+          "tn": 10
+        },
+        {
+          "threshold": 0.01,
+          "present_recall": 0.5,
+          "absent_detection": 0.9166666666666666,
+          "tp": 8,
+          "fn": 8,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.02,
+          "present_recall": 0.5,
+          "absent_detection": 0.9166666666666666,
+          "tp": 8,
+          "fn": 8,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.03,
+          "present_recall": 0.375,
+          "absent_detection": 0.9166666666666666,
+          "tp": 6,
+          "fn": 10,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.04,
+          "present_recall": 0.3125,
+          "absent_detection": 1.0,
+          "tp": 5,
+          "fn": 11,
+          "fp": 0,
+          "tn": 12
+        },
+        {
+          "threshold": 0.05,
+          "present_recall": 0.25,
+          "absent_detection": 1.0,
+          "tp": 4,
+          "fn": 12,
+          "fp": 0,
+          "tn": 12
+        },
+        {
+          "threshold": 0.06,
+          "present_recall": 0.125,
+          "absent_detection": 1.0,
+          "tp": 2,
+          "fn": 14,
+          "fp": 0,
+          "tn": 12
+        },
+        {
+          "threshold": 0.07,
+          "present_recall": 0.0625,
+          "absent_detection": 1.0,
+          "tp": 1,
+          "fn": 15,
+          "fp": 0,
+          "tn": 12
+        },
+        {
+          "threshold": 0.08,
+          "present_recall": 0.0625,
+          "absent_detection": 1.0,
+          "tp": 1,
+          "fn": 15,
+          "fp": 0,
+          "tn": 12
+        },
+        {
+          "threshold": 0.09,
+          "present_recall": 0.0625,
+          "absent_detection": 1.0,
+          "tp": 1,
+          "fn": 15,
+          "fp": 0,
+          "tn": 12
+        },
+        {
+          "threshold": 0.1,
+          "present_recall": 0.0625,
+          "absent_detection": 1.0,
+          "tp": 1,
+          "fn": 15,
+          "fp": 0,
+          "tn": 12
+        }
+      ],
+      "cf_hybrid": [
+        {
+          "threshold": 0.05,
+          "present_recall": 0.6875,
+          "absent_detection": 0.75,
+          "tp": 11,
+          "fn": 5,
+          "fp": 3,
+          "tn": 9
+        },
+        {
+          "threshold": 0.1,
+          "present_recall": 0.625,
+          "absent_detection": 0.75,
+          "tp": 10,
+          "fn": 6,
+          "fp": 3,
+          "tn": 9
+        },
+        {
+          "threshold": 0.15,
+          "present_recall": 0.625,
+          "absent_detection": 0.75,
+          "tp": 10,
+          "fn": 6,
+          "fp": 3,
+          "tn": 9
+        },
+        {
+          "threshold": 0.2,
+          "present_recall": 0.625,
+          "absent_detection": 0.8333333333333334,
+          "tp": 10,
+          "fn": 6,
+          "fp": 2,
+          "tn": 10
+        },
+        {
+          "threshold": 0.25,
+          "present_recall": 0.625,
+          "absent_detection": 0.9166666666666666,
+          "tp": 10,
+          "fn": 6,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.3,
+          "present_recall": 0.625,
+          "absent_detection": 0.9166666666666666,
+          "tp": 10,
+          "fn": 6,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.35,
+          "present_recall": 0.625,
+          "absent_detection": 0.9166666666666666,
+          "tp": 10,
+          "fn": 6,
+          "fp": 1,
+          "tn": 11
+        },
+        {
+          "threshold": 0.4,
+          "present_recall": 0.625,
+          "absent_detection": 0.9166666666666666,
+          "tp": 10,
+          "fn": 6,
+          "fp": 1,
+          "tn": 11
+        }
+      ]
+    }
+  },
+  "aggregation": {
+    "by_phone": {
+      "t": {
+        "n": 8,
+        "present": 5,
+        "absent": 3,
+        "base_recall": 1.0,
+        "base_absent_det": 1.0,
+        "da_free_present": 5,
+        "da_free_present_rate": 1.0
+      },
+      "v": {
+        "n": 3,
+        "present": 1,
+        "absent": 2,
+        "base_recall": 1.0,
+        "base_absent_det": 1.0,
+        "da_free_present": 1,
+        "da_free_present_rate": 1.0
+      },
+      "\u0279": {
+        "n": 6,
+        "present": 1,
+        "absent": 5,
+        "base_recall": 1.0,
+        "base_absent_det": 0.2,
+        "da_free_present": 0,
+        "da_free_present_rate": 0.0
+      },
+      "n": {
+        "n": 9,
+        "present": 8,
+        "absent": 1,
+        "base_recall": 0.875,
+        "base_absent_det": 0.0,
+        "da_free_present": 3,
+        "da_free_present_rate": 0.375
+      },
+      "s": {
+        "n": 2,
+        "present": 1,
+        "absent": 1,
+        "base_recall": 1.0,
+        "base_absent_det": 1.0,
+        "da_free_present": 0,
+        "da_free_present_rate": 0.0
+      }
+    },
+    "by_word": {
+      "eight": {
+        "n": 8,
+        "present": 5,
+        "absent": 3,
+        "base_recall": 1.0,
+        "base_absent_det": 1.0,
+        "da_free_present": 5,
+        "da_free_present_rate": 1.0
+      },
+      "five": {
+        "n": 3,
+        "present": 1,
+        "absent": 2,
+        "base_recall": 1.0,
+        "base_absent_det": 1.0,
+        "da_free_present": 1,
+        "da_free_present_rate": 1.0
+      },
+      "four": {
+        "n": 6,
+        "present": 1,
+        "absent": 5,
+        "base_recall": 1.0,
+        "base_absent_det": 0.2,
+        "da_free_present": 0,
+        "da_free_present_rate": 0.0
+      },
+      "nine": {
+        "n": 1,
+        "present": 1,
+        "absent": 0,
+        "base_recall": 1.0,
+        "base_absent_det": null,
+        "da_free_present": 0,
+        "da_free_present_rate": 0.0
+      },
+      "seven": {
+        "n": 4,
+        "present": 3,
+        "absent": 1,
+        "base_recall": 1.0,
+        "base_absent_det": 0.0,
+        "da_free_present": 2,
+        "da_free_present_rate": 0.667
+      },
+      "ten": {
+        "n": 2,
+        "present": 2,
+        "absent": 0,
+        "base_recall": 1.0,
+        "base_absent_det": null,
+        "da_free_present": 0,
+        "da_free_present_rate": 0.0
+      },
+      "one": {
+        "n": 2,
+        "present": 2,
+        "absent": 0,
+        "base_recall": 0.5,
+        "base_absent_det": null,
+        "da_free_present": 1,
+        "da_free_present_rate": 0.5
+      },
+      "six": {
+        "n": 2,
+        "present": 1,
+        "absent": 1,
+        "base_recall": 1.0,
+        "base_absent_det": 1.0,
+        "da_free_present": 0,
+        "da_free_present_rate": 0.0
+      }
+    },
+    "note": "subgroups with n<5 are reported but must not be used for claims"
+  },
+  "root_cause": {
+    "n_failures": 6,
+    "distribution": {
+      "DELETION": 3,
+      "ALIGNMENT": 1,
+      "ACOUSTIC": 1,
+      "MIXED": 1
+    },
+    "percentages": {
+      "DELETION": 50.0,
+      "ALIGNMENT": 16.7,
+      "ACOUSTIC": 16.7,
+      "MIXED": 16.7
+    },
+    "assessability": {
+      "n": 5,
+      "ids": [
+        "child_01_five",
+        "child_02_one",
+        "child_03_six",
+        "child_03_two",
+        "child_04_eight"
+      ]
+    },
+    "by_group": {
+      "PME": {
+        "ACOUSTIC": 1
+      },
+      "SCORER_MISS": {
+        "DELETION": 1
+      }
+    }
+  },
+  "window_dependence": {
+    "n": 21,
+    "cases": [
+      {
+        "case_id": "child_01_nine",
+        "full": "100.0",
+        "raw": "33.8",
+        "pad250": "100.0"
+      },
+      {
+        "case_id": "child_01_two",
+        "full": "50.0",
+        "raw": "0.1",
+        "pad250": "50.0"
+      },
+      {
+        "case_id": "child_02_four",
+        "full": "73.5",
+        "raw": "40.1",
+        "pad250": "73.5"
+      },
+      {
+        "case_id": "child_02_two",
+        "full": "50.0",
+        "raw": "0.0",
+        "pad250": "50.0"
+      },
+      {
+        "case_id": "child_03_eight",
+        "full": "0.0",
+        "raw": "50.0",
+        "pad250": "0.0"
+      },
+      {
+        "case_id": "child_03_seven",
+        "full": "63.5",
+        "raw": "40.0",
+        "pad250": "63.5"
+      },
+      {
+        "case_id": "child_03_six",
+        "full": "50.0",
+        "raw": "25.1",
+        "pad250": "50.0"
+      },
+      {
+        "case_id": "child_03_two",
+        "full": "50.0",
+        "raw": "0.0",
+        "pad250": "50.0"
+      },
+      {
+        "case_id": "child_04_five",
+        "full": "100.0",
+        "raw": "45.0",
+        "pad250": "100.0"
+      },
+      {
+        "case_id": "child_04_four",
+        "full": "66.7",
+        "raw": "33.4",
+        "pad250": "33.3"
+      },
+      {
+        "case_id": "child_04_seven",
+        "full": "60.1",
+        "raw": "27.6",
+        "pad250": "60.1"
+      },
+      {
+        "case_id": "child_05_four",
+        "full": "66.8",
+        "raw": "45.1",
+        "pad250": "66.8"
+      },
+      {
+        "case_id": "child_05_ten",
+        "full": "47.7",
+        "raw": "75.1",
+        "pad250": "47.7"
+      },
+      {
+        "case_id": "child_05_three",
+        "full": "72.5",
+        "raw": "33.4",
+        "pad250": "45.1"
+      },
+      {
+        "case_id": "child_07_four",
+        "full": "100.0",
+        "raw": "6.0",
+        "pad250": "100.0"
+      },
+      {
+        "case_id": "child_07_one",
+        "full": "0.0",
+        "raw": "72.5",
+        "pad250": "0.0"
+      },
+      {
+        "case_id": "child_08_ten",
+        "full": "75.1",
+        "raw": "41.7",
+        "pad250": "75.1"
+      },
+      {
+        "case_id": "child_08_three",
+        "full": "39.2",
+        "raw": "66.7",
+        "pad250": "40.0"
+      },
+      {
+        "case_id": "child_08_two",
+        "full": "50.0",
+        "raw": "0.1",
+        "pad250": "50.0"
+      },
+      {
+        "case_id": "child_09_four",
+        "full": "66.8",
+        "raw": "6.1",
+        "pad250": "66.8"
+      },
+      {
+        "case_id": "child_09_six",
+        "full": "75.0",
+        "raw": "0.0",
+        "pad250": "75.0"
+      }
+    ]
+  },
+  "assessability": {
+    "refusal_states_in_corpus": [],
+    "independent_review_note": "failure tokens are disjoint from the 1.9.15 115-item independent review"
+  },
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  },
+  "classification_v2": {
+    "primary_final_labels": {
+      "n": 11,
+      "distribution": {
+        "DELETION": 3,
+        "OK_UNSUPPORTED": 5,
+        "MIXED": 2,
+        "ALIGNMENT": 1
+      },
+      "percentages": {
+        "DELETION": 27.3,
+        "OK_UNSUPPORTED": 45.5,
+        "MIXED": 18.2,
+        "ALIGNMENT": 9.1
+      }
+    },
+    "primary_decision_failures_only": {
+      "n": 6,
+      "distribution": {
+        "DELETION": 3,
+        "MIXED": 2,
+        "ALIGNMENT": 1
+      },
+      "percentages": {
+        "DELETION": 50.0,
+        "MIXED": 33.3,
+        "ALIGNMENT": 16.7
+      }
+    },
+    "inferred_from_word_verdict": {
+      "n": 4,
+      "distribution": {
+        "ALIGNMENT": 1,
+        "DELETION": 2,
+        "ACOUSTIC": 1
+      },
+      "percentages": {
+        "ALIGNMENT": 25.0,
+        "DELETION": 50.0,
+        "ACOUSTIC": 25.0
+      }
+    },
+    "ok_unsupported_acceptance": {
+      "n": 5,
+      "distribution": {
+        "OK_UNSUPPORTED": 5
+      },
+      "percentages": {
+        "OK_UNSUPPORTED": 100.0
+      }
+    },
+    "ok_unsupported_ids": [
+      "child_01_seven",
+      "child_01_ten",
+      "child_02_ten",
+      "child_04_four",
+      "child_06_six"
+    ],
+    "assessability_failures": [],
+    "human_uncertain_kept_separate": [
+      "child_02_six",
+      "child_03_five",
+      "child_03_nine",
+      "child_03_ten",
+      "child_04_nine",
+      "child_04_six",
+      "child_04_ten",
+      "child_05_five",
+      "child_05_nine",
+      "child_05_one",
+      "child_05_ten",
+      "child_06_five",
+      "child_06_nine",
+      "child_06_ten",
+      "child_07_five",
+      "child_08_ten",
+      "child_09_eight",
+      "child_09_one",
+      "child_09_ten"
+    ]
+  },
+  "alignment_mechanisms": {
+    "window_inversion_n": 21,
+    "window_inversion_ids": [
+      "child_01_nine",
+      "child_01_two",
+      "child_02_four",
+      "child_02_two",
+      "child_03_eight",
+      "child_03_seven",
+      "child_03_six",
+      "child_03_two",
+      "child_04_five",
+      "child_04_four",
+      "child_04_seven",
+      "child_05_four",
+      "child_05_ten",
+      "child_05_three",
+      "child_07_four",
+      "child_07_one",
+      "child_08_ten",
+      "child_08_three",
+      "child_08_two",
+      "child_09_four",
+      "child_09_six"
+    ],
+    "span_mismatch_n": 1,
+    "span_mismatch_ids": [
+      "child_01_nine"
+    ],
+    "unsupported_acceptance_n": 14,
+    "unsupported_acceptance_ids": [
+      "child_01_four",
+      "child_01_seven",
+      "child_01_ten",
+      "child_02_ten",
+      "child_03_four",
+      "child_04_four",
+      "child_05_ten",
+      "child_06_four",
+      "child_06_six",
+      "child_06_ten",
+      "child_07_five",
+      "child_07_four",
+      "child_08_four",
+      "child_08_ten"
+    ],
+    "da_vs_base_disagreement_n": 25,
+    "greedy_has_final_but_base_miss_ids": [
+      "child_04_three"
+    ]
+  },
+  "root_cause_v2": {
+    "primary_failure_distribution": {
+      "DELETION": 3,
+      "MIXED": 2,
+      "ALIGNMENT": 1
+    },
+    "primary_failure_percentages": {
+      "DELETION": 50.0,
+      "MIXED": 33.3,
+      "ALIGNMENT": 16.7
+    },
+    "by_phone_primary": {
+      "\u0279:DELETION": 3,
+      "\u0279:MIXED": 1,
+      "n:ALIGNMENT": 1,
+      "n:MIXED": 1
+    },
+    "note": "deletion+alignment mechanisms are process-level and reported separately from human-labeled failure classification"
+  },
+  "evidence_floor_counterfactual": {
+    "baseline": {
+      "present_recall": 0.9375,
+      "absent_detection": 0.5833,
+      "n_present": 16,
+      "n_absent": 12
+    },
+    "span_post_floor_sweep": [
+      {
+        "threshold": 0.01,
+        "present_recall": 0.9375,
+        "absent_detection": 0.25,
+        "tp": 15,
+        "fn": 1,
+        "fp": 9,
+        "tn": 3
+      },
+      {
+        "threshold": 0.02,
+        "present_recall": 0.8125,
+        "absent_detection": 0.4167,
+        "tp": 13,
+        "fn": 3,
+        "fp": 7,
+        "tn": 5
+      },
+      {
+        "threshold": 0.05,
+        "present_recall": 0.75,
+        "absent_detection": 0.75,
+        "tp": 12,
+        "fn": 4,
+        "fp": 3,
+        "tn": 9
+      },
+      {
+        "threshold": 0.08,
+        "present_recall": 0.625,
+        "absent_detection": 0.8333,
+        "tp": 10,
+        "fn": 6,
+        "fp": 2,
+        "tn": 10
+      },
+      {
+        "threshold": 0.1,
+        "present_recall": 0.5625,
+        "absent_detection": 0.8333,
+        "tp": 9,
+        "fn": 7,
+        "fp": 2,
+        "tn": 10
+      },
+      {
+        "threshold": 0.15,
+        "present_recall": 0.5625,
+        "absent_detection": 0.8333,
+        "tp": 9,
+        "fn": 7,
+        "fp": 2,
+        "tn": 10
+      },
+      {
+        "threshold": 0.2,
+        "present_recall": 0.5625,
+        "absent_detection": 0.9167,
+        "tp": 9,
+        "fn": 7,
+        "fp": 1,
+        "tn": 11
+      },
+      {
+        "threshold": 0.3,
+        "present_recall": 0.5625,
+        "absent_detection": 0.9167,
+        "tp": 9,
+        "fn": 7,
+        "fp": 1,
+        "tn": 11
+      },
+      {
+        "threshold": 0.5,
+        "present_recall": 0.5,
+        "absent_detection": 0.9167,
+        "tp": 8,
+        "fn": 8,
+        "fp": 1,
+        "tn": 11
+      }
+    ],
+    "da_span_post_floor_sweep": [
+      {
+        "threshold": 0.01,
+        "present_recall": 0.8125,
+        "absent_detection": 0.1667,
+        "tp": 13,
+        "fn": 3,
+        "fp": 10,
+        "tn": 2
+      },
+      {
+        "threshold": 0.02,
+        "present_recall": 0.8125,
+        "absent_detection": 0.3333,
+        "tp": 13,
+        "fn": 3,
+        "fp": 8,
+        "tn": 4
+      },
+      {
+        "threshold": 0.05,
+        "present_recall": 0.75,
+        "absent_detection": 0.6667,
+        "tp": 12,
+        "fn": 4,
+        "fp": 4,
+        "tn": 8
+      },
+      {
+        "threshold": 0.1,
+        "present_recall": 0.625,
+        "absent_detection": 0.75,
+        "tp": 10,
+        "fn": 6,
+        "fp": 3,
+        "tn": 9
+      },
+      {
+        "threshold": 0.15,
+        "present_recall": 0.625,
+        "absent_detection": 0.75,
+        "tp": 10,
+        "fn": 6,
+        "fp": 3,
+        "tn": 9
+      },
+      {
+        "threshold": 0.2,
+        "present_recall": 0.625,
+        "absent_detection": 0.8333,
+        "tp": 10,
+        "fn": 6,
+        "fp": 2,
+        "tn": 10
+      },
+      {
+        "threshold": 0.3,
+        "present_recall": 0.625,
+        "absent_detection": 0.9167,
+        "tp": 10,
+        "fn": 6,
+        "fp": 1,
+        "tn": 11
+      },
+      {
+        "threshold": 0.5,
+        "present_recall": 0.5625,
+        "absent_detection": 0.9167,
+        "tp": 9,
+        "fn": 7,
+        "fp": 1,
+        "tn": 11
+      },
+      {
+        "threshold": 0.8,
+        "present_recall": 0.375,
+        "absent_detection": 1.0,
+        "tp": 6,
+        "fn": 10,
+        "fp": 0,
+        "tn": 12
+      }
+    ],
+    "best_span_floor_at_baseline_recall": {
+      "threshold": 0.01,
+      "present_recall": 0.9375,
+      "absent_detection": 0.25,
+      "tp": 15,
+      "fn": 1,
+      "fp": 9,
+      "tn": 3
+    },
+    "best_da_floor_at_baseline_recall": null,
+    "interpretation": "a scoring-only posterior floor is viable if it keeps baseline recall while raising absent detection"
+  }
+}
