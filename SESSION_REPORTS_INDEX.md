@@ -39,33 +39,42 @@
 | 1.9.23 | 2026-10-07 | Acceptance rule redesign + falsification + label pack | ACCEPTANCE_RULE_AND_ENCODER_BOTH_LIMITING; next gate LABEL_EXPANSION_AND_ENCODER_DESIGN_REQUIRED; B2 NOT READY | `6770de9` |
 | 1.9.24 | 2026-10-07 | Human label expansion + encoder evidence design audit | LABELS_INSUFFICIENT_ENCODER_HYPOTHESIS_SUPPORTED; next gate LABEL_COLLECTION_AND_DATA_LICENSE_GATE; B2 NO TRAINING / DESIGN NOT READY | `59b6afe` |
 | 1.9.25 | 2026-10-07 | Label collection + data/license gate | LABELS_INSUFFICIENT_DATA_LICENSE_BLOCKED; B2 TRAINING NO; next gate LABEL_COLLECTION_AND_DATA_ACQUISITION | `8ba65d2` |
-| 1.9.26 | 2026-10-07 | Research blocker breakout: label pipeline, encoder audit, data/license discovery | LABEL_COLLECTION_READY_DATA_BLOCKED; next gate HUMAN_REVIEW_ROUND_AND_LOCAL_PILOT; B2 TRAINING NO | (this commit) |
+| 1.9.26 | 2026-10-07 | Research blocker breakout: label pipeline, encoder audit, data/license discovery | LABEL_COLLECTION_READY_DATA_BLOCKED; next gate HUMAN_REVIEW_ROUND_AND_LOCAL_PILOT; B2 TRAINING NO | `5dfdc6c` |
+| 1.9.27 | 2026-10-07 | Human review execution pipeline + local child-speech pilot + B2-D/B2-E readiness | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | (this commit) |
 
 ## Current speech-research status
 
 ```
 Speech Research: NOT COMPLETE
-Last gate:       HUMAN_REVIEW_ROUND_AND_LOCAL_PILOT (WP-1.9.26)
-Final gate:      LABEL_COLLECTION_READY_DATA_BLOCKED
-Next:            2 reviewers on the 276-candidate blind pack (60P+60A minimum,
-                 15+15 /r/, 4 TYPE-B) -> local pilot (B2-E + B2-D, FRR-first,
-                 frozen success criteria); parallel: TalkBank registration,
-                 MyST commercial quote, counsel questions
+Last gate:       HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION (WP-1.9.27)
+Final gate:      HUMAN_REVIEW_PENDING_PILOT_READY
+Next:            2 reviewers on Pack R (276 candidates: 60P+60A minimum, 15+15 /r/,
+                 4 TYPE-B) AND Pack P (546 pilot tokens, 60P+60A) -> import CSV ->
+                 pilot evaluation (B2-D/B2-E, FRR-first, frozen criteria);
+                 parallel: TalkBank registration, PERCEPT-R request, MyST quote,
+                 counsel questions, JIBO license confirmation
 Production:      untouched (production_vad=false, router_locked=false,
                  unity_integrated=false, scorer_modified=false,
                  production_window_locked=false)
 Frame cache:     CREATED — Research/Speech/Phase1_9_21/artifacts/frame_cache
                  (2,436 token-windows / 117,128 frames, reusable)
-B2:              TRAINING NO; PILOT DESIGN READY (frozen criteria). Dominant
-                 blocker is now phone-level labels at scale, not raw child speech.
-Labels:          NEW_LABELS_COLLECTED = 0; pipeline validated (server + 276
-                 candidates / 49 speakers / 15 pools); 28 historical LWE listening
-                 labels (single reviewer); /r/ = 1 PRESENT LOW
-Data:            28 datasets audited; NEW age-4-6 public corpora: OCSC 303 spk
-                 4-9 (TalkBank), JIBO 110 spk 4-7 (public, license unverified),
-                 AusKidTalk 136.6h; MyST paid commercial route verified (470h,
-                 lexicon); speechocean762 CC BY 4.0; SIAK ND legal review open;
-                 no public Vietnamese-L1 child corpus
+Pilot:           DATA+FEATURES READY — 10 frozen speaker-disjoint speakers (6/2/2,
+                 seed 1927), 200 utts, 546 final-consonant tokens, 0.196 h,
+                 QC 200/200 PASS, leakage PASS; features extracted for production
+                 (200 s) and alternative (169 s) encoders; runner hard-disables
+                 training; eval awaits Pack P labels
+B2:              TRAINING NO; B2-D/B2-E DESIGNS + SUCCESS/FAILURE/KILL CRITERIA
+                 FROZEN before results. Dominant blocker remains human labels;
+                 data blocker unchanged (phone labels at scale).
+Labels:          NEW_LABELS_COLLECTED = 0; two blind packs ready (R 276 / P 546);
+                 pipeline validated (test PASS); 28 historical LWE listening labels
+                 (single reviewer); /r/ = 1 PRESENT LOW
+Data:            28 datasets audited; age-4-7 research routes OCSC 303/JIBO 110/
+                 AusKidTalk 620/CAPIL 30; MyST paid commercial route (DO_NOT_BUY
+                 until pilot positive + quote); speechocean762 CC BY 4.0; SIAK ND
+                 legal review open; no public Vietnamese-L1 child corpus
 Encoder:         609-token comparison: missing 16.5% vs 18.8%; false 17.2% vs
                  13.8%; agreement 82.8% (no aggregate winner; diagnostic only)
+Resource:        CPU-only ASUS sufficient for pilot (venv 1.94 GB; HF cache
+                 10.50 GB; SO762 0.67 GB; frame cache 16.6 MB)
 ```

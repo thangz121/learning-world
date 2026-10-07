@@ -1,0 +1,17 @@
+{
+  "candidates": 546,
+  "speakers": 10,
+  "by_split": {
+    "train": 337,
+    "dev": 110,
+    "test": 99
+  },
+  "by_class": {
+    "fricative": 166,
+    "stop": 193,
+    "nasal": 150,
+    "affricate": 3,
+    "liquid": 34
+  },
+  "r_tokens": 8
+}

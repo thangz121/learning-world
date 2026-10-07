@@ -1,0 +1,17 @@
+feature,description,unit,source,used_in
+production_max_A,max target-class posterior in the production span,posterior,pilot_features.csv / R_CASES.csv,R gate + B2-D
+production_mean_A,mean target-class posterior in the production span,posterior,pilot_features.csv,B2-D
+temporal_support,peak posterior x capped cluster width,posterior,pilot_features.csv,B2-E temporal ablation
+isolated_peak,cluster width == 1 flag,flag,R_CASES.csv,R analysis
+span_ms,production span duration,ms,pilot_features.csv,R analysis
+rms_ratio,span RMS / utterance RMS,ratio,R_CASES.csv,R analysis
+voiced_fraction,voiced frame fraction (parselmouth pitch),fraction,R_CASES.csv,R analysis
+f1_median,median F1 in span,Hz,R_CASES.csv,R analysis
+f2_median,median F2 in span,Hz,R_CASES.csv,R analysis
+f3_median,median F3 in span,Hz,R_CASES.csv,rhoticity hypothesis
+f3_f2_ratio,F3 / F2 in span,ratio,R_CASES.csv,rhoticity hypothesis
+f3_minus_f2,F3 - F2 in span,Hz,R_CASES.csv,rhoticity hypothesis
+alt_max_A,alternative-encoder max target posterior,posterior,R_CASES.csv / pilot_features.csv,B2-D
+alt_delta,alt_max_A - production max_A,posterior,pilot_features.csv,B2-D
+transition_evidence,preceding-vowel-to-final transition cue (research-only; to define in B2-E),feature,pending,B2-E
+[r] label,human listening label PRESENT/ABSENT/UNCERTAIN,HUMAN-LISTENING,review pipeline,R gate (authority)

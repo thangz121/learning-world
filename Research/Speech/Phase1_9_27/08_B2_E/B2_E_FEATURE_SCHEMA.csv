@@ -1,0 +1,26 @@
+feature,group,source_column,normalization,notes
+target_mean,encoder,target_mean,none,span mean posterior
+target_max,encoder,target_max,none,span peak posterior
+top1_post,encoder,top1_post,none,top-1 posterior at peak
+target_rank,encoder,target_rank,none,-1 outside top5
+margin_mean,encoder,margin_mean,none,target - competitor mean
+peak_margin,encoder,peak_margin,none,peak target - best competitor
+alt_max,encoder_alt,alt_max,none,alternative encoder peak
+alt_mean,encoder_alt,alt_mean,none,alternative encoder mean
+alt_delta,encoder_alt,alt_delta,none,representation dependence
+cluster_width,temporal,cluster_width,none,frames >= 50% of peak
+longest_run_05,temporal,longest_run_05,none,contiguous support frames
+temporal_support,temporal,temporal_support,none,peak x capped width
+span_ms,temporal,span_ms,per-speaker z,alignment duration
+rms_span,energy,rms_span,per-speaker z,span energy
+rms_ratio,energy,rms_ratio,none,relative energy
+f1_median,formant,f1_median,per-speaker z,may be empty for short spans
+f2_median,formant,f2_median,per-speaker z,may be empty for short spans
+f3_median,formant,f3_median,per-speaker z,/r/ rhoticity hypothesis
+f3_minus_f2,formant_derived,f3_median-f2_median,none,derived; empty if formants missing
+f3_f2_ratio,formant_derived,f3_median/f2_median,none,derived; empty if formants missing
+competitor_post,confusion,competitor_post,none,strongest competing class
+blank_mean,blank,blank_mean,none,blank domination
+blank_at_peak,blank,blank_at_peak,none,blank at target peak
+phone_class,context,phone_class,none,categorical; never a per-phone threshold without penalty
+age,context,age,none,reporting/robustness only

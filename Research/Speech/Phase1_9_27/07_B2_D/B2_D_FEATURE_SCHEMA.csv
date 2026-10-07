@@ -1,0 +1,22 @@
+feature,role,source_column,unit,notes
+target_mean,production span mean posterior,target_mean,posterior,baseline evidence
+target_max,production span peak posterior,target_max,posterior,reported with mean
+target_rank,rank of target class within span,target_rank,rank,-1 = outside top5
+top1_post,top-1 posterior at target peak,top1_post,posterior,identity strength
+competitor_post,strongest competitor posterior,competitor_post,posterior,confusion pressure
+margin_mean,mean target - competitor,margin_mean,posterior,identity margin
+peak_margin,peak target - best competitor,peak_margin,posterior,peak identity margin
+blank_mean,mean blank posterior in span,blank_mean,posterior,blank domination
+blank_at_peak,blank posterior at target peak,blank_at_peak,posterior,blank at peak
+cluster_width,frames >= 50% of span peak,cluster_width,frames,spikiness
+longest_run_05,longest run >= 0.05,longest_run_05,frames,temporal support
+temporal_support,peak x capped cluster width,temporal_support,posterior,temporal support
+span_ms,span duration,span_ms,ms,alignment
+rms_span,span RMS,rms_span,amplitude,energy
+rms_ratio,span/utterance RMS,rms_ratio,ratio,relative energy
+f1_median,f1 median in span,f1_median,Hz,acoustic
+f2_median,f2 median in span,f2_median,Hz,acoustic
+f3_median,f3 median in span,f3_median,Hz,acoustic
+alt_max,alt encoder span peak,alt_max,posterior,B2-D primary
+alt_mean,alt encoder span mean,alt_mean,posterior,B2-D secondary
+alt_delta,alt_max - target_max,alt_delta,posterior,representation dependence

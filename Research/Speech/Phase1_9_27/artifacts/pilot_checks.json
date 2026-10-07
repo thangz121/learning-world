@@ -1,0 +1,44 @@
+{
+  "leakage_checks": {
+    "train_dev_overlap": 0,
+    "train_test_overlap": 0,
+    "dev_test_overlap": 0,
+    "duplicate_audio_paths": 0,
+    "duplicate_speaker_text_pairs": 0,
+    "utt_overlap_train_test": 0,
+    "label_fields_in_manifest": [],
+    "machine_score_fields_in_manifest": [],
+    "manifest_rows": 200,
+    "manifest_pass": 200,
+    "leakage_pass": true
+  },
+  "pool": {
+    "child_speakers_total": 122,
+    "used_in_192x": 45,
+    "clean_unused_speakers": 86,
+    "clean_unused_hours": 1.712,
+    "pilot_labeled_subset_speakers": 10,
+    "pilot_labeled_subset_hours": 0.196,
+    "pilot_final_consonant_tokens": 546,
+    "pilot_r_tokens": 8
+  },
+  "power_audit": {
+    "n60_p0.8_ci": [
+      0.682,
+      0.882
+    ],
+    "n60_p0.5_ci": [
+      0.377,
+      0.623
+    ],
+    "n15_p0.8_ci": [
+      0.548,
+      0.93
+    ],
+    "n15_p0.5_ci": [
+      0.301,
+      0.752
+    ],
+    "note": "95% Wilson intervals: n=60 -> +/-0.10 around p=0.8; n=15 -> +/-0.20. The pilot can detect large effects only; it is a GO/NO-GO test, not production validation."
+  }
+}

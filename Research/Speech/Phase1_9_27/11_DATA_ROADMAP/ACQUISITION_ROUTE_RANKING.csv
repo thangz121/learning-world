@@ -1,0 +1,10 @@
+rank,route,score,probability_of_access,effort,legal_risk,scientific_value,label_quality,speaker_diversity,age_relevance,removes_blockers,notes
+1,Human label round Pack R (276) + Pack P (546 pilot),9.2,high (needs 2 reviewers),low-medium,none,high,human listening,49 + 10,4-15,A/B/C/pilot,pipeline built+validated; only human availability missing
+2,Local pilot after labels (B2-D/B2-E, CPU),9.0,high after label round,low,none,high,human listening,10,6-7,pilot GO/NO-GO,features extracted; runner ready; frozen criteria
+3,OCSC TalkBank research registration,8.1,high,low,medium (research terms),high,generated+verified,303,4-9,D/E/F,best public age+scale match
+4,MyST commercial license,7.4,medium (paid),medium,low-medium,high,generated+verified,1371,8-11,D/H,only verified commercial-scale route; DO_NOT_BUY until pilot positive + quote
+5,PERCEPT-R research benchmark,7.2,high,low,medium (non-commercial),high,rhotic labels,280,6-17,B,/r/ diagnostics only
+6,Vietnamese-L1 local collection,8.5,medium (partnership),high,low with consent,highest,human phone labels,30-50 target,4-6,I/G/F,long-term; solves all blockers
+7,SIAK legal review,5.0,medium (counsel needed),low,high (ND),medium,score-derived,172,4-12,H,ND interpretation unresolved
+8,CSLU/PF-STAR/CMU/AusKidTalk inquiries,5.0-5.5,medium,medium,medium,medium,word-level,76-1100,K-G10/4-14,D/E,restricted/unverified; word-level only
+9,JIBO Kids,6.5,high (download),low,high (no license),medium,generated+verified,110,4-7,D/E/F,license must be confirmed with authors

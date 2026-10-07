@@ -1,0 +1,12 @@
+{
+  "n_reviewers": 0,
+  "n_labelled_cases": 0,
+  "typeb_consensus_cases": 0,
+  "typeb_required": 4,
+  "LABELS_SUFFICIENT_FOR_TYPE_B": false,
+  "r_consensus_present": 0,
+  "r_consensus_absent": 0,
+  "r_speakers": 0,
+  "R_LABELS_SUFFICIENT": false,
+  "rationale": "TYPE-B gate: all 4 decisive cases need >=2 independent reviewer labels with a non-UNCERTAIN consensus. R gate: >=15 PRESENT and >=15 ABSENT /r/ consensus labels across >=10 speakers (15/side gives ~+/-0.20 95% CI around p=0.8; 10 speakers prevents single-speaker dominance)."
+}

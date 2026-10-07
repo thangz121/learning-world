@@ -1,0 +1,28 @@
+# REVIEW SYSTEM QA — WP-1.9.27
+
+Automated QA of `experiments/serve_review_1927.py` + the 276-candidate pack.
+Result: **21/21 PASS** (QA submissions deleted; no labels created).
+
+| # | check | result | detail |
+|---:|---|---|---|
+| 1 | candidate_count_276 | PASS | n=276 |
+| 2 | unique_candidate_ids | PASS | unique=276 |
+| 3 | audio_references_resolve | PASS | unique_files=197; missing=0 (SO762 candidates share utterance files by design) |
+| 4 | speaker_metadata | PASS | speakers=49 |
+| 5 | pool_metadata | PASS | pools=15 |
+| 6 | diagnostic_balanced_random_classification | PASS | ['balanced', 'broad_pool', 'consistency_control', 'diagnostic', 'random_control'] |
+| 7 | blind_payload_no_model_prediction | PASS | ['blind_id', 'target_phone', 'word'] |
+| 8 | reviewer_cannot_see_another_reviewer | PASS | fresh reviewer progress empty |
+| 9 | reviewer_cannot_see_previous_labels | PASS | no label field in payload |
+| 10 | labels_available | PASS | PRESENT/ABSENT/UNCERTAIN in UI |
+| 11 | confidence_available | PASS | HIGH/MEDIUM/LOW in UI |
+| 12 | notes_available | PASS | note textarea present |
+| 13 | submit_works | PASS | status=200 |
+| 14 | resume_works | PASS | progress returns submitted id |
+| 15 | export_works | PASS | rows=1 |
+| 16 | duplicate_submission_409 | PASS | status=409 |
+| 17 | incomplete_review_handling | PASS | pack returns all; progress returns submitted only |
+| 18 | reviewer_isolation | PASS | other reviewer sees nothing |
+| 19 | randomization_reproducible | PASS | same reviewer stable; different reviewer different order |
+| 21 | no_machine_leakage_in_html | PASS | audio_bytes=94220 |
+| 20 | qa_submissions_deleted | PASS | QA files removed; no labels fabricated |
