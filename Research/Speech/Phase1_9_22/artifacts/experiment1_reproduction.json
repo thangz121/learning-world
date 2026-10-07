@@ -1,0 +1,30 @@
+{
+  "lwe": {
+    "utterances": 80,
+    "encodings": 80,
+    "tokens": 80,
+    "cache_mismatches": 0,
+    "mismatch_details": []
+  },
+  "so762_dev": {
+    "utterances": 94,
+    "encodings": 94,
+    "tokens": 234,
+    "cache_mismatches": 0,
+    "mismatch_details": []
+  },
+  "so762_test": {
+    "utterances": 93,
+    "encodings": 93,
+    "tokens": 227,
+    "cache_mismatches": 0,
+    "mismatch_details": []
+  },
+  "so762_absent_dev": {
+    "utterances": 22,
+    "encodings": 22,
+    "tokens": 68,
+    "cache_mismatches": 0,
+    "mismatch_details": []
+  }
+}

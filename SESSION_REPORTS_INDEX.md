@@ -34,18 +34,23 @@
 | 1.9.18 | 2026-10-03 | Deletion-aware evidence & decision layer | ALIGNMENT_DELETION_GATE_FAIL | `c611724` |
 | 1.9.19 | 2026-10-03 | Boundary / window causality audit | MIXED_WINDOW_AND_ACOUSTIC; B2 NOT YET | `6fc7158` |
 | 1.9.20 | 2026-10-03 | Alignment representation audit & counterfactual realignment | ALIGNMENT_REPRESENTATION_FAIL; B2 NOT YET | `39df310` |
-| 1.9.21 | 2026-10-07 | Temporally plausible support aggregation + label sufficiency audit | SUPPORT_AGGREGATION_FAIL; B2 NOT YET | (this commit) |
+| 1.9.21 | 2026-10-07 | Temporally plausible support aggregation + label sufficiency audit | SUPPORT_AGGREGATION_FAIL; B2 NOT YET | `60a55ab` |
+| 1.9.22 | 2026-10-07 | Acceptance / identity decision audit | ACCEPTANCE_LOGIC_AND_ENCODER_BOTH_REQUIRED; next gate ACCEPTANCE_RULE_REDESIGN_REQUIRED; B2 NOT READY | (this commit) |
 
 ## Current speech-research status
 
 ```
 Speech Research: NOT COMPLETE
-Last gate:       SUPPORT_AGGREGATION_FAIL (WP-1.9.21)
-Next:            acceptance/identity audit (research-only) + human review of the
-                 20-item label candidate pack (esp. /r/), then re-assess B2
+Last gate:       ACCEPTANCE_RULE_REDESIGN_REQUIRED (WP-1.9.22)
+Final status:    ACCEPTANCE_LOGIC_AND_ENCODER_BOTH_REQUIRED
+Next:            research-only acceptance-rule redesign (rank/margin/blank-aware,
+                 UNCERTAIN, FRR-first) + human review of the 20-item label
+                 candidate pack (esp. /r/, rank-2-5 identity tokens), then re-assess B2
 Production:      untouched (production_vad=false, router_locked=false,
                  unity_integrated=false, scorer_modified=false,
                  production_window_locked=false)
 Frame cache:     CREATED — Research/Speech/Phase1_9_21/artifacts/frame_cache
                  (2,436 token-windows / 117,128 frames, reusable)
+B2:              NOT READY (identity removal destroys FRR-first; acceptance defect
+                 unresolved; labels insufficient)
 ```
