@@ -1,0 +1,79 @@
+{
+  "model": "facebook/wav2vec2-lv-60-espeak-cv-ft",
+  "local_files_only": true,
+  "note": "second espeak-phoneme encoder; small diagnostic subset; evidence = max target-class posterior in the production span",
+  "summary": {
+    "TYPE_B": {
+      "n": 4,
+      "primary_max_median": 0.75116,
+      "alt_max_median": 0.65921,
+      "primary_finds_evidence_rate": 1.0,
+      "alt_finds_evidence_rate": 1.0,
+      "persists_rate": 1.0,
+      "lost_rate": 0.0,
+      "gained_rate": 0.0
+    },
+    "lwe_labeled": {
+      "n": 28,
+      "primary_max_median": 0.05775,
+      "alt_max_median": 0.01864,
+      "primary_finds_evidence_rate": 0.3929,
+      "alt_finds_evidence_rate": 0.4286,
+      "persists_rate": 0.3214,
+      "lost_rate": 0.0714,
+      "gained_rate": 0.1071
+    },
+    "so762_no_evidence_present": {
+      "n": 10,
+      "primary_max_median": 0.00019,
+      "alt_max_median": 0.0278,
+      "primary_finds_evidence_rate": 0.0,
+      "alt_finds_evidence_rate": 0.3,
+      "persists_rate": 0.0,
+      "lost_rate": 0.0,
+      "gained_rate": 0.3
+    },
+    "so762_strong_present": {
+      "n": 5,
+      "primary_max_median": 0.90318,
+      "alt_max_median": 0.98045,
+      "primary_finds_evidence_rate": 1.0,
+      "alt_finds_evidence_rate": 1.0,
+      "persists_rate": 1.0,
+      "lost_rate": 0.0,
+      "gained_rate": 0.0
+    },
+    "so762_absent": {
+      "n": 5,
+      "primary_max_median": 0.28288,
+      "alt_max_median": 0.06926,
+      "primary_finds_evidence_rate": 0.6,
+      "alt_finds_evidence_rate": 0.4,
+      "persists_rate": 0.4,
+      "lost_rate": 0.2,
+      "gained_rate": 0.0
+    }
+  },
+  "type_b_rows": [
+    {
+      "token_id": "child_07_seven",
+      "primary": 0.629415,
+      "alt": 0.93989
+    },
+    {
+      "token_id": "014180143_15",
+      "primary": 0.682061,
+      "alt": 0.24823
+    },
+    {
+      "token_id": "014190172_7",
+      "primary": 0.82025,
+      "alt": 0.40862
+    },
+    {
+      "token_id": "014350146_16",
+      "primary": 0.955777,
+      "alt": 0.90981
+    }
+  ]
+}

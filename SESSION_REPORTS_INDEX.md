@@ -36,23 +36,27 @@
 | 1.9.20 | 2026-10-03 | Alignment representation audit & counterfactual realignment | ALIGNMENT_REPRESENTATION_FAIL; B2 NOT YET | `39df310` |
 | 1.9.21 | 2026-10-07 | Temporally plausible support aggregation + label sufficiency audit | SUPPORT_AGGREGATION_FAIL; B2 NOT YET | `60a55ab` |
 | 1.9.22 | 2026-10-07 | Acceptance / identity decision audit | ACCEPTANCE_LOGIC_AND_ENCODER_BOTH_REQUIRED; next gate ACCEPTANCE_RULE_REDESIGN_REQUIRED; B2 NOT READY | `d7ef0ff` |
-| 1.9.23 | 2026-10-07 | Acceptance rule redesign + falsification + label pack | ACCEPTANCE_RULE_AND_ENCODER_BOTH_LIMITING; next gate LABEL_EXPANSION_AND_ENCODER_DESIGN_REQUIRED; B2 NOT READY | (this commit) |
+| 1.9.23 | 2026-10-07 | Acceptance rule redesign + falsification + label pack | ACCEPTANCE_RULE_AND_ENCODER_BOTH_LIMITING; next gate LABEL_EXPANSION_AND_ENCODER_DESIGN_REQUIRED; B2 NOT READY | `6770de9` |
+| 1.9.24 | 2026-10-07 | Human label expansion + encoder evidence design audit | LABELS_INSUFFICIENT_ENCODER_HYPOTHESIS_SUPPORTED; next gate LABEL_COLLECTION_AND_DATA_LICENSE_GATE; B2 NO TRAINING / DESIGN NOT READY | (this commit) |
 
 ## Current speech-research status
 
 ```
 Speech Research: NOT COMPLETE
-Last gate:       LABEL_EXPANSION_AND_ENCODER_DESIGN_REQUIRED (WP-1.9.23)
-Final status:    ACCEPTANCE_RULE_AND_ENCODER_BOTH_LIMITING
-Next:            human review of the 23-candidate label pack (10-20 confident
-                 PRESENT finals, /r/ first) + design-only encoder-evidence study
-                 (weak finals, strong false peaks); no B2 training
+Last gate:       LABEL_COLLECTION_AND_DATA_LICENSE_GATE (WP-1.9.24)
+Final gate:      LABELS_INSUFFICIENT_ENCODER_HYPOTHESIS_SUPPORTED
+Next:            collect human labels (pack L01-L23, /r/ first, TYPE-B ABSENT,
+                 rank-2..5 identity) + resolve child-data licensing (SIAK legal
+                 review, MyST audit); research-only B2-E/B2-D design study
 Production:      untouched (production_vad=false, router_locked=false,
                  unity_integrated=false, scorer_modified=false,
                  production_window_locked=false)
 Frame cache:     CREATED — Research/Speech/Phase1_9_21/artifacts/frame_cache
                  (2,436 token-windows / 117,128 frames, reusable)
-B2:              NOT READY (0/68 acceptance rules FRR-first safe; weak false accepts
-                 not materially reduced; labels insufficient; no training)
-Labels:          NEW_LABELS_COLLECTED = 0; 23-candidate pack READY_FOR_HUMAN_REVIEW
+B2:              NO TRAINING; DESIGN NOT READY (labels + licensed child data +
+                 GPU missing). Target: missing evidence for weak child finals
+                 (liquids /r/, /l/ first). TYPE-B false-evidence UNCONFIRMED (0/4).
+Labels:          NEW_LABELS_COLLECTED = 0; 23-candidate blinded pack ready
+Encoder:         limitation supported on the missing-evidence side (87/528 labeled
+                 presents max_A<0.02; alt encoder recovers 3/10 so762 + 3/28 LWE)
 ```

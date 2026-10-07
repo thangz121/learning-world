@@ -1,0 +1,853 @@
+{
+  "by_class": {
+    "stop": {
+      "n": 130,
+      "present": 122,
+      "absent": 8,
+      "median_max_A": 0.9199,
+      "one_frame_rate": 0.8,
+      "median_longest_run": 1.0,
+      "median_blank": 0.93262,
+      "median_margin": 0.01255,
+      "window_sensitive_rate": 0.1
+    },
+    "fricative": {
+      "n": 198,
+      "present": 192,
+      "absent": 6,
+      "median_max_A": 0.75331,
+      "one_frame_rate": 0.6414,
+      "median_longest_run": 1.0,
+      "median_blank": 0.89793,
+      "median_margin": 0.04955,
+      "window_sensitive_rate": 0.1465
+    },
+    "nasal": {
+      "n": 197,
+      "present": 191,
+      "absent": 6,
+      "median_max_A": 0.68117,
+      "one_frame_rate": 0.4315,
+      "median_longest_run": 2,
+      "median_blank": 0.92278,
+      "median_margin": 0.01364,
+      "window_sensitive_rate": 0.1015
+    },
+    "liquid": {
+      "n": 28,
+      "present": 21,
+      "absent": 7,
+      "median_max_A": 0.10895,
+      "one_frame_rate": 0.5714,
+      "median_longest_run": 1.0,
+      "median_blank": 0.9599,
+      "median_margin": 0.00215,
+      "window_sensitive_rate": 0.0357
+    },
+    "affricate": {
+      "n": 4,
+      "present": 2,
+      "absent": 2,
+      "median_max_A": 0.00053,
+      "one_frame_rate": 1.0,
+      "median_longest_run": 0.0,
+      "median_blank": 0.81284,
+      "median_margin": -0.0,
+      "window_sensitive_rate": 0.25
+    }
+  },
+  "weak_present": {
+    "n": 138,
+    "production_recall": 0.6304,
+    "median_max_A": 0.00689,
+    "one_frame_rate": 0.9493
+  },
+  "no_evidence_present": {
+    "n": 87,
+    "tokens": [
+      {
+        "token_id": "000010075_5",
+        "word": "HATES",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 1.9e-05,
+        "peak_D": 0.45592,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000010095_12",
+        "word": "PANTS",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.76227,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000030054_4",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 4e-06,
+        "peak_D": 0.01255,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000050003_14",
+        "word": "ONE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.002212,
+        "peak_D": 0.00221,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000050040_8",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.001305,
+        "peak_D": 0.00131,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000060031_2",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.95451,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000060056_13",
+        "word": "TICKETS",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.32631,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000060077_11",
+        "word": "DOG",
+        "target_phone": "ɡ",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000060077_3",
+        "word": "ATE",
+        "target_phone": "t",
+        "human_label": "",
+        "max_A": 0.011337,
+        "peak_D": 0.01134,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000060077_8",
+        "word": "LITTLE",
+        "target_phone": "l",
+        "human_label": "",
+        "max_A": 0.000369,
+        "peak_D": 0.00102,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000260050_5",
+        "word": "EIGHT",
+        "target_phone": "t",
+        "human_label": "",
+        "max_A": 0.001773,
+        "peak_D": 0.00177,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000440005_11",
+        "word": "BROWN",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.000969,
+        "peak_D": 0.00256,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000440032_11",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.001156,
+        "peak_D": 0.00116,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000440062_13",
+        "word": "GROUND",
+        "target_phone": "d",
+        "human_label": "",
+        "max_A": 2e-06,
+        "peak_D": 0.93862,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000440062_4",
+        "word": "GLOVES",
+        "target_phone": "z",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.00054,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000480023_8",
+        "word": "FROM",
+        "target_phone": "m",
+        "human_label": "",
+        "max_A": 0.011933,
+        "peak_D": 0.01193,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000480045_2",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.3803,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000480045_5",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.019377,
+        "peak_D": 0.01975,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000480045_9",
+        "word": "SIX",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 8e-06,
+        "peak_D": 0.88309,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000490047_4",
+        "word": "EIGHT",
+        "target_phone": "t",
+        "human_label": "",
+        "max_A": 6.3e-05,
+        "peak_D": 0.31692,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000490047_7",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.004431,
+        "peak_D": 0.00443,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000490052_10",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000490087_10",
+        "word": "TOM'S",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 0.01257,
+        "peak_D": 0.01257,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000490087_3",
+        "word": "LET'S",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.80876,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000490088_9",
+        "word": "TEDDY'S",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 2e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000530003_2",
+        "word": "MIKE",
+        "target_phone": "k",
+        "human_label": "",
+        "max_A": 6e-06,
+        "peak_D": 0.97907,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000530006_14",
+        "word": "PEACH",
+        "target_phone": "tʃ",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.40808,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000540014_13",
+        "word": "DOG",
+        "target_phone": "ɡ",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000540014_6",
+        "word": "CAN",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.007249,
+        "peak_D": 0.00725,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000540031_3",
+        "word": "SIX",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000560058_13",
+        "word": "MUTTON",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.006171,
+        "peak_D": 0.00617,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000560058_6",
+        "word": "HOCK",
+        "target_phone": "k",
+        "human_label": "",
+        "max_A": 4e-06,
+        "peak_D": 9e-05,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000560058_9",
+        "word": "SONG",
+        "target_phone": "ŋ",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 5e-05,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000700015_16",
+        "word": "PIG",
+        "target_phone": "ɡ",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000750029_2",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000750045_2",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0019,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000920074_13",
+        "word": "RUNNING",
+        "target_phone": "ŋ",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000930035_2",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.007393,
+        "peak_D": 0.00739,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000930050_6",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.012507,
+        "peak_D": 0.01251,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000940021_8",
+        "word": "LIVES",
+        "target_phone": "z",
+        "human_label": "",
+        "max_A": 0.011993,
+        "peak_D": 0.01199,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000940049_2",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000940067_15",
+        "word": "TENNIS",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 2e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000960040_11",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.00175,
+        "peak_D": 0.00175,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000960043_8",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "000960046_6",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.012281,
+        "peak_D": 0.01228,
+        "production_decision": 1
+      },
+      {
+        "token_id": "000960048_10",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001030032_4",
+        "word": "ONE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.003502,
+        "peak_D": 0.0035,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001030048_6",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 8.3e-05,
+        "peak_D": 0.00025,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001030060_13",
+        "word": "S",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001040038_11",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001040038_4",
+        "word": "FIVE",
+        "target_phone": "v",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001040062_3",
+        "word": "CARDS",
+        "target_phone": "z",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.00107,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001040067_15",
+        "word": "SURFING",
+        "target_phone": "ŋ",
+        "human_label": "",
+        "max_A": 0.012156,
+        "peak_D": 0.01216,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001040071_12",
+        "word": "RUNNING",
+        "target_phone": "ŋ",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.0,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001110009_2",
+        "word": "IT'S",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 4e-06,
+        "peak_D": 0.00076,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001110009_5",
+        "word": "ANN'S",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 0.007938,
+        "peak_D": 0.00794,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001110023_7",
+        "word": "FROM",
+        "target_phone": "m",
+        "human_label": "",
+        "max_A": 2e-06,
+        "peak_D": 0.00038,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001110039_6",
+        "word": "SIX",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 1.3e-05,
+        "peak_D": 0.0013,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001120010_8",
+        "word": "FISH",
+        "target_phone": "ʃ",
+        "human_label": "",
+        "max_A": 0.0,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001120031_6",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.001247,
+        "peak_D": 0.00125,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001130021_8",
+        "word": "IN",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.001786,
+        "peak_D": 0.00179,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001130023_12",
+        "word": "LAOS",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 2e-06,
+        "peak_D": 0.0,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001130023_5",
+        "word": "IS",
+        "target_phone": "z",
+        "human_label": "",
+        "max_A": 1.8e-05,
+        "peak_D": 0.00594,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001130024_2",
+        "word": "JOHN",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.011136,
+        "peak_D": 0.01114,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001130047_14",
+        "word": "SEVEN",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.004204,
+        "peak_D": 0.0042,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001140059_12",
+        "word": "MUSHROOM",
+        "target_phone": "m",
+        "human_label": "",
+        "max_A": 9e-06,
+        "peak_D": 0.00017,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001140059_3",
+        "word": "JEANS",
+        "target_phone": "z",
+        "human_label": "",
+        "max_A": 4.5e-05,
+        "peak_D": 0.01178,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001220013_10",
+        "word": "WOLF",
+        "target_phone": "f",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.79541,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001220013_4",
+        "word": "AT",
+        "target_phone": "t",
+        "human_label": "",
+        "max_A": 0.001958,
+        "peak_D": 0.05224,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001220015_8",
+        "word": "GOING",
+        "target_phone": "ŋ",
+        "human_label": "",
+        "max_A": 0.019289,
+        "peak_D": 0.01929,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001220031_13",
+        "word": "SIX",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.44765,
+        "production_decision": 0
+      },
+      {
+        "token_id": "001220038_10",
+        "word": "ONE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.008242,
+        "peak_D": 0.00824,
+        "production_decision": 1
+      },
+      {
+        "token_id": "001220051_2",
+        "word": "NINE",
+        "target_phone": "n",
+        "human_label": "",
+        "max_A": 0.001096,
+        "peak_D": 0.0011,
+        "production_decision": 0
+      },
+      {
+        "token_id": "014180143_20",
+        "word": "SIXTH",
+        "target_phone": "θ",
+        "human_label": "",
+        "max_A": 3e-06,
+        "peak_D": 0.00986,
+        "production_decision": 1
+      },
+      {
+        "token_id": "014180143_6",
+        "word": "WILL",
+        "target_phone": "l",
+        "human_label": "",
+        "max_A": 0.001283,
+        "peak_D": 0.00356,
+        "production_decision": 1
+      },
+      {
+        "token_id": "014350146_26",
+        "word": "SCHOOL",
+        "target_phone": "l",
+        "human_label": "",
+        "max_A": 0.001501,
+        "peak_D": 0.00205,
+        "production_decision": 0
+      },
+      {
+        "token_id": "014350146_7",
+        "word": "LIKES",
+        "target_phone": "s",
+        "human_label": "",
+        "max_A": 0.008072,
+        "peak_D": 0.03224,
+        "production_decision": 1
+      },
+      {
+        "token_id": "014390076_6",
+        "word": "HAS",
+        "target_phone": "z",
+        "human_label": "",
+        "max_A": 2.4e-05,
+        "peak_D": 0.00127,
+        "production_decision": 0
+      },
+      {
+        "token_id": "014390134_10",
+        "word": "DRAWING",
+        "target_phone": "ŋ",
+        "human_label": "",
+        "max_A": 0.012217,
+        "peak_D": 0.01222,
+        "production_decision": 1
+      },
+      {
+        "token_id": "014390134_17",
+        "word": "CHINESE",
+        "target_phone": "z",
+        "human_label": "",
+        "max_A": 0.006533,
+        "peak_D": 0.00653,
+        "production_decision": 1
+      },
+      {
+        "token_id": "021790169_10",
+        "word": "BUT",
+        "target_phone": "t",
+        "human_label": "",
+        "max_A": 1.5e-05,
+        "peak_D": 0.00072,
+        "production_decision": 0
+      },
+      {
+        "token_id": "069120014_6",
+        "word": "ENTERED",
+        "target_phone": "d",
+        "human_label": "",
+        "max_A": 0.000175,
+        "peak_D": 0.00931,
+        "production_decision": 1
+      },
+      {
+        "token_id": "085850042_22",
+        "word": "SALES",
+        "target_phone": "z",
+        "human_label": "",
+        "max_A": 1e-06,
+        "peak_D": 0.12003,
+        "production_decision": 0
+      },
+      {
+        "token_id": "085850042_6",
+        "word": "SOME",
+        "target_phone": "m",
+        "human_label": "",
+        "max_A": 3.1e-05,
+        "peak_D": 0.30775,
+        "production_decision": 1
+      },
+      {
+        "token_id": "child_01_nine",
+        "word": "nine",
+        "target_phone": "n",
+        "human_label": "FINAL_CONSONANT_PROBABLY_PRESENT",
+        "max_A": 0.01552,
+        "peak_D": 0.01552,
+        "production_decision": 1
+      },
+      {
+        "token_id": "child_06_six",
+        "word": "six",
+        "target_phone": "s",
+        "human_label": "FINAL_CONSONANT_PROBABLY_PRESENT",
+        "max_A": 0.000696,
+        "peak_D": 0.0007,
+        "production_decision": 1
+      },
+      {
+        "token_id": "child_07_one",
+        "word": "one",
+        "target_phone": "n",
+        "human_label": "FINAL_CONSONANT_CLEARLY_PRESENT",
+        "max_A": 0.012971,
+        "peak_D": 0.01297,
+        "production_decision": 0
+      }
+    ]
+  }
+}
