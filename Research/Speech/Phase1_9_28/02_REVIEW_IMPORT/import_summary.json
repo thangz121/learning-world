@@ -1,0 +1,19 @@
+{
+  "status": "NO_REVIEW_DATA",
+  "packs": [
+    "Research\\Speech\\Phase1_9_26\\01_HUMAN_LABEL_ACQUISITION\\REVIEW_CANDIDATES.csv",
+    "Research\\Speech\\Phase1_9_27\\06_PILOT_DATA\\PILOT_REVIEW_CANDIDATES.csv"
+  ],
+  "candidates_total": 822,
+  "candidates_covered": 0,
+  "reviewers": [],
+  "records_valid": 0,
+  "records_rejected": 0,
+  "rejected_reasons": {},
+  "label_counts": {
+    "ABSENT": 0,
+    "NOT_ASSESSABLE": 0,
+    "PRESENT": 0,
+    "UNCERTAIN": 0
+  }
+}

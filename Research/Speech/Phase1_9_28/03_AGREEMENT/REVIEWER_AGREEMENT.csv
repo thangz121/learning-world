@@ -1,0 +1,2 @@
+scope,reviewer_count,n_common,raw_agreement,cohens_kappa,weighted_kappa,fleiss_kappa,confidence_stratified_agreement,notes
+no_agreement,0,0,,,,,,NO_REVIEWER_AVAILABLE

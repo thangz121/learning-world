@@ -1,0 +1,14 @@
+{
+  "status": "NOT_EXECUTED",
+  "reason": "No human listening labels exist for Pack P (pilot test split 0/99 covered). The frozen pilot evaluation must not run without valid HUMAN-LISTENING labels.",
+  "required_before_execution": [
+    "Pack P labels: valid human labels for the 99-token test split (speakers 1075, 1076)",
+    "at least 60 PRESENT + 60 ABSENT across the 546 pilot tokens with >=2 reviewers (or explicit single-reviewer limitation)",
+    "pilot integrity PASS (already verified: true)",
+    "freeze verification PASS (already verified: true)"
+  ],
+  "frozen_baseline_definition": "production frozen decision path re-expressed at the frozen operating point; no modification of production code",
+  "planned_metrics": ["FRR", "FAR", "AUC where n>=30/side", "final-consonant recall/rejection", "/r/", "per-speaker", "assessability"],
+  "wp": "WP-1.9.28",
+  "date": "2026-10-07"
+}

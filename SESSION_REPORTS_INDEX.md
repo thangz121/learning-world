@@ -40,29 +40,34 @@
 | 1.9.24 | 2026-10-07 | Human label expansion + encoder evidence design audit | LABELS_INSUFFICIENT_ENCODER_HYPOTHESIS_SUPPORTED; next gate LABEL_COLLECTION_AND_DATA_LICENSE_GATE; B2 NO TRAINING / DESIGN NOT READY | `59b6afe` |
 | 1.9.25 | 2026-10-07 | Label collection + data/license gate | LABELS_INSUFFICIENT_DATA_LICENSE_BLOCKED; B2 TRAINING NO; next gate LABEL_COLLECTION_AND_DATA_ACQUISITION | `8ba65d2` |
 | 1.9.26 | 2026-10-07 | Research blocker breakout: label pipeline, encoder audit, data/license discovery | LABEL_COLLECTION_READY_DATA_BLOCKED; next gate HUMAN_REVIEW_ROUND_AND_LOCAL_PILOT; B2 TRAINING NO | `5dfdc6c` |
-| 1.9.27 | 2026-10-07 | Human review execution pipeline + local child-speech pilot + B2-D/B2-E readiness | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | (this commit) |
+| 1.9.27 | 2026-10-07 | Human review execution pipeline + local child-speech pilot + B2-D/B2-E readiness | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `dfdb82d` |
+| 1.9.28 | 2026-10-07 | Human review gate + frozen pilot execution attempt (PATH A: no review data) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | (this commit) |
 
 ## Current speech-research status
 
 ```
 Speech Research: NOT COMPLETE
-Last gate:       HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION (WP-1.9.27)
+Last gate:       HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION (WP-1.9.28)
 Final gate:      HUMAN_REVIEW_PENDING_PILOT_READY
 Next:            2 reviewers on Pack R (276 candidates: 60P+60A minimum, 15+15 /r/,
-                 4 TYPE-B) AND Pack P (546 pilot tokens, 60P+60A) -> import CSV ->
-                 pilot evaluation (B2-D/B2-E, FRR-first, frozen criteria);
-                 parallel: TalkBank registration, PERCEPT-R request, MyST quote,
+                 4 TYPE-B) AND Pack P (546 pilot tokens, 60P+60A; test split
+                 99 tokens first) -> import validator -> label_analysis (combined
+                 pack) -> frozen pilot (B2-D/B2-E, FRR-first, one run per config) ->
+                 kill switch -> GO/NO-GO (A/B/C/D). No evaluation ran in 1.9.28:
+                 0 genuine labels; analysis outputs are NOT_EXECUTED schemas.
+                 Parallel: TalkBank registration, PERCEPT-R request, MyST quote,
                  counsel questions, JIBO license confirmation
 Production:      untouched (production_vad=false, router_locked=false,
                  unity_integrated=false, scorer_modified=false,
                  production_window_locked=false)
 Frame cache:     CREATED — Research/Speech/Phase1_9_21/artifacts/frame_cache
                  (2,436 token-windows / 117,128 frames, reusable)
-Pilot:           DATA+FEATURES READY — 10 frozen speaker-disjoint speakers (6/2/2,
-                 seed 1927), 200 utts, 546 final-consonant tokens, 0.196 h,
-                 QC 200/200 PASS, leakage PASS; features extracted for production
-                 (200 s) and alternative (169 s) encoders; runner hard-disables
-                 training; eval awaits Pack P labels
+Pilot:           DATA+FEATURES READY + INTEGRITY PASS (WP-1.9.28: split/leakage/
+                 546-546 token match/audio all PASS; freeze hashes recorded).
+                 10 speakers ages 6-7 (NOT 4-6), 200 utts, 546 tokens, 0.196 h.
+                 Pack P review + import validator + 822-candidate
+                 NEXT_REVIEW_BATCH.csv ready; eval awaits Pack P labels
+                 (all 1.9.28 evaluation outputs are NOT_EXECUTED schemas)
 B2:              TRAINING NO; B2-D/B2-E DESIGNS + SUCCESS/FAILURE/KILL CRITERIA
                  FROZEN before results. Dominant blocker remains human labels;
                  data blocker unchanged (phone labels at scale).

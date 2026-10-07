@@ -1,0 +1,9 @@
+{
+  "status": "NOT_EXECUTED",
+  "reason": "No human labels for the frozen pilot test split; B2-D runs only after baseline per the frozen order.",
+  "prerequisites": ["baseline executed", "pilot integrity PASS (already true)", "freeze PASS (already true)", "Pack P test labels valid"],
+  "frozen_variants": ["D0 production mean (baseline)", "D1 production max", "D3 alt max", "D4 alt mean", "D5 both encoders (OR/AND) — primary set"],
+  "frozen_design": "Research/Speech/Phase1_9_27/07_B2_D/B2_D_DESIGN.md",
+  "wp": "WP-1.9.28",
+  "date": "2026-10-07"
+}

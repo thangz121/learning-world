@@ -1,0 +1,11 @@
+{
+  "status": "NOT_EXECUTED",
+  "reason": "No human labels for the frozen pilot test split; B2-E runs only after baseline and B2-D per the frozen order.",
+  "prerequisites": ["baseline executed", "B2-D executed", "Pack P test labels valid", "fitting only if >=60P+60A in train+dev"],
+  "frozen_primary_variants": ["BASE (production reference)", "E_ENC", "E_ACO", "E_TMP", "E_ENC_ACO"],
+  "frozen_secondary": ["E_ENC_TMP", "E_ENC_PHO", "FULL"],
+  "frozen_design": "Research/Speech/Phase1_9_27/08_B2_E/B2_E_DESIGN.md",
+  "training_status": "NOT PERMITTED — low-capacity research fit only if prerequisites met; no fine-tuning",
+  "wp": "WP-1.9.28",
+  "date": "2026-10-07"
+}

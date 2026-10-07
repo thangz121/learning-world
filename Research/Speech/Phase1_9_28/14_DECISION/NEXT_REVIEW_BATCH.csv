@@ -1,0 +1,823 @@
+priority,pack,group,blind_id,token_id,word,target_phone,speaker_id,rationale
+P0,PILOT_REVIEW_CANDIDATES,test,P27-383,010750002_4,DAVID,d,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-384,010750002_7,CAN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-385,010750002_14,CAT,t,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-386,010750003_2,TIM,m,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-387,010750003_5,CAN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-388,010750003_13,WHALE,l,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-389,010750010_3,LIKE,k,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-390,010750011_6,CAN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-391,010750011_14,EAGLE,l,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-392,010750024_8,LOVES,z,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-393,010750026_7,LOVES,z,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-394,010750026_12,JAPAN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-395,010750035_2,ITS,s,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-396,010750035_10,ONE,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-397,010750043_8,ONE,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-398,010750043_12,SEVEN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-399,010750060_7,LET'S,s,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-400,010750060_12,LITTLE,l,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-401,010750060_15,TELL,l,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-402,010750062_7,GOATS,s,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-403,010750062_10,SOME,m,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-404,010750062_14,PORK,k,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-405,010750072_2,LOOK,k,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-406,010750072_4,AT,t,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-407,010750072_7,ELLS,z,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-408,010750072_10,NOSE,z,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-409,010750094_2,LOOK,k,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-410,010750094_4,AT,t,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-411,010750094_7,THAT,t,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-412,010750094_12,TINA'S,s,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-413,010750094_18,SANDALS,z,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-414,010750097_6,GOT,t,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-415,010750097_8,ON,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-416,010750097_14,TRAIN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-417,010750099_2,AND,d,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-418,010750099_5,CAN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-419,010750099_12,VAN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-420,010750102_3,SAND,d,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-421,010750102_6,GOT,t,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-422,010750102_8,ON,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-423,010750102_13,CAR,ɹ,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-424,010750104_2,SOME,m,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-425,010750104_8,WITH,ð,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-426,010750104_10,ON,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-427,010750104_17,TEACHER'S,s,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-428,010750104_21,OFFICE,s,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-429,010750117_6,COME,m,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-430,010750117_15,GARDEN,n,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-431,010750163_6,HAVE,v,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-432,010750163_8,IT,t,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-433,010750168_6,THANK,k,1075,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-434,010760001_8,LIKES,s,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-435,010760001_13,ORANGE,dʒ,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-436,010760002_6,THAN,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-437,010760002_10,POINT,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-438,010760013_6,CAN,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-439,010760013_14,DUCK,k,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-440,010760032_6,NINE,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-441,010760032_10,SEVEN,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-442,010760032_12,EIGHT,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-443,010760038_2,NINE,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-444,010760038_5,NINE,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-445,010760038_7,EIGHT,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-446,010760060_2,DOES,z,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-447,010760060_5,JUNE,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-448,010760060_8,LIKE,k,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-449,010760060_15,NOODLES,z,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-450,010760062_4,LOCKING,ŋ,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-451,010760062_7,LIKE,k,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-452,010760062_10,FISH,ʃ,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-453,010760067_5,AT,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-454,010760067_10,LITTLE,l,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-455,010760067_14,MUTTON,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-456,010760076_3,LET'S,s,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-457,010760076_11,LILLY'S,s,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-458,010760076_15,HAND,d,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-459,010760079_2,LESS,s,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-460,010760079_10,JAYME'S,z,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-461,010760079_13,MOUTH,θ,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-462,010760089_7,GOT,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-463,010760089_12,SHIRT,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-464,010760097_6,IS,z,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-465,010760097_12,CLEANING,ŋ,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-466,010760108_9,WENT,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-467,010760108_19,POST,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-468,010760108_23,OFFICE,s,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-469,010760111_6,CAN,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-470,010760111_16,MUSIC,k,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-471,010760111_19,ROOM,m,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-472,010760116_8,WHAT'S,s,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-473,010760116_13,WALKING,ŋ,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-474,010760116_22,CARD,d,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-475,010760136_7,MIND,d,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-476,010760136_12,PEN,n,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-477,010760151_8,SCHOOL,l,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-478,010760162_8,AM,m,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-479,010760169_1,IS,z,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-480,010760169_3,IT,t,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,PILOT_REVIEW_CANDIDATES,test,P27-481,010760169_8,GIRL,l,1076,pilot evaluation set (frozen test split; 99 tokens)
+P0,REVIEW_CANDIDATES,F_typeb_strong_false,R036,child_07_seven,seven,n,child_07,TYPE-B decisive: 4 unresolved encoder-vs-label cases
+P0,REVIEW_CANDIDATES,F_typeb_strong_false,R062,014180143_15,JUNE,n,1418,TYPE-B decisive: 4 unresolved encoder-vs-label cases
+P0,REVIEW_CANDIDATES,F_typeb_strong_false,R151,014190172_7,NAME,m,1419,TYPE-B decisive: 4 unresolved encoder-vs-label cases
+P0,REVIEW_CANDIDATES,F_typeb_strong_false,R162,014350146_16,EDUCATION,n,1435,TYPE-B decisive: 4 unresolved encoder-vs-label cases
+P0,REVIEW_CANDIDATES,F_typeb_strong_false,R270,014470150_3,IT,t,1447,TYPE-B decisive: 4 unresolved encoder-vs-label cases
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-273,010460017_3,SAND,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-274,010460017_6,RAN,n,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-275,010460017_13,FROM,m,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-276,010460020_6,CAN,n,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-277,010460030_9,SIX,s,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-278,010460034_2,ONE,n,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-279,010460034_4,EIGHT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-280,010460041_9,ONE,n,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-281,010460050_2,TIM,m,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-282,010460050_4,IS,z,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-283,010460050_7,GOOD,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-284,010460050_9,AT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-285,010460050_14,MOUNTAIN,n,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-286,010460050_18,BANK,k,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-287,010460053_3,LIKE,k,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-288,010460053_5,ICE,s,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-289,010460053_11,SKATING,ŋ,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-290,010460061_7,SMALL,l,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-291,010460061_12,FRIEND,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-292,010460061_15,RICE,s,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-293,010460066_2,DOES,z,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-294,010460066_10,LIKES,s,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-295,010460066_15,FOOD,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-296,010460066_19,FRIES,z,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-297,010460079_2,JIM,m,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-298,010460079_5,HAS,z,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-299,010460079_9,BIG,ɡ,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-300,010460079_12,HAD,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-301,010460088_6,GOT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-302,010460111_6,WAS,z,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-303,010460111_11,WALKING,ŋ,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-304,010460111_19,BATHROOM,m,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-305,010460114_5,LAND,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-306,010460114_9,WENT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-307,010460114_18,FAT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-308,010460120_7,LOVES,z,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-309,010460120_10,PEARL,l,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-310,010460149_2,AND,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-311,010460149_6,FROM,m,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-312,010460149_9,AND,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-313,010460152_5,LOT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-314,010460152_9,DOG,ɡ,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-315,010460153_4,RELIES,z,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-316,010460153_7,COME,m,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-317,010460155_4,WHAT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-318,010460155_8,GOOD,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-319,010460158_2,BUT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-320,010460158_5,IT'S,s,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-321,010460158_8,NOT,t,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-322,010460162_5,GOOD,d,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-323,010460162_8,HAVE,v,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-324,010460162_11,COME,m,1046,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-325,010610015_6,CAN,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-326,010610017_2,AND,d,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-327,010610017_5,THERE,ɹ,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-328,010610017_8,WAS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-329,010610017_11,DUCK,k,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-330,010610024_5,IS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-331,010610024_9,FROM,m,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-332,010610025_7,LOVES,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-333,010610035_2,FIVE,v,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-334,010610035_8,NINE,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-335,010610035_10,EIGHT,t,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-336,010610057_2,DOES,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-337,010610057_9,LIKE,k,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-338,010610057_15,STEAK,k,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-339,010610067_8,SMELLS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-340,010610067_12,FRESH,ʃ,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-341,010610069_6,ATE,t,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-342,010610069_11,LITTLE,l,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-343,010610069_15,PORK,k,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-344,010610073_7,HAS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-345,010610073_11,BIG,ɡ,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-346,010610080_5,TIM'S,s,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-347,010610080_8,TOOTH,θ,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-348,010610087_7,NEEDS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-349,010610087_13,CAP,p,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-350,010610094_7,LIKES,s,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-351,010610094_13,RED,d,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-352,010610094_18,GLOVES,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-353,010610099_3,LOWEN,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-354,010610099_6,GOT,t,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-355,010610099_8,ON,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-356,010610099_13,BUS,s,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-357,010610102_4,STEVEN,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-358,010610102_7,CAN,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-359,010610102_14,VAN,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-360,010610113_6,CAN,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-361,010610113_14,POST,t,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-362,010610113_18,OFFICE,s,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-363,010610114_9,WENT,t,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-364,010610114_11,ON,n,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-365,010610114_20,ROOM,m,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-366,010610129_4,DAVID,d,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-367,010610129_7,THIS,s,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-368,010610129_9,IS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-369,010610129_14,GARLIC,k,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-370,010610151_2,WHERE,ɹ,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-371,010610151_4,IS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-372,010610151_7,HIS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-373,010610151_10,HOME,m,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-374,010610165_2,AND,d,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-375,010610165_5,THIS,s,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-376,010610165_7,IS,z,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-377,010610165_10,HAIR,ɹ,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-378,010610165_13,BOOK,k,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-379,010610171_2,WHAT,t,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-380,010610171_5,AM,m,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-381,010610171_10,DOING,ŋ,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,PILOT_REVIEW_CANDIDATES,dev,P27-382,010610171_12,IT,t,1061,pilot sufficiency/fitting set (frozen dev split; 110 tokens)
+P1,REVIEW_CANDIDATES,C_r_uncertain,R001,child_09_four,four,ɹ,child_09,/r/ gate: unlabelled /r/ cases
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R002,001040062_3,CARDS,z,0104,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,A_r_present,R008,000050038_2,FOUR,ɹ,0005,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R015,014180143_6,WILL,l,1418,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,A_r_present,R017,000530030_6,FOUR,ɹ,0053,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R022,000940067_15,TENNIS,s,0094,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R023,021790169_10,BUT,t,2179,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R028,069120014_6,ENTERED,d,6912,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R048,000480015_21,ELEPHANT,t,0048,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R051,001030054_2,ONE,n,0103,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R054,000060077_3,ATE,t,0006,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R055,000010075_5,HATES,s,0001,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,B_r_absent,R063,child_03_four,four,ɹ,child_03,/r/ gate: ABSENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R068,001140049_3,SIX,s,0114,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R070,000530003_2,MIKE,k,0053,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R080,014390076_6,HAS,z,1439,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,A_r_present,R086,001040050_5,FOUR,ɹ,0104,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,A_r_present,R088,000060031_7,FOUR,ɹ,0006,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,B_r_absent,R091,child_01_four,four,ɹ,child_01,/r/ gate: ABSENT side (15 required)
+P1,REVIEW_CANDIDATES,A_r_present,R093,001110047_2,FOUR,ɹ,0111,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R101,000560058_13,MUTTON,n,0056,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,D_weak_present,R105,014350146_26,SCHOOL,l,1435,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,B_r_absent,R107,child_06_four,four,ɹ,child_06,/r/ gate: ABSENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R110,001130023_12,LAOS,s,0113,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,B_r_absent,R111,child_02_four,four,ɹ,child_02,/r/ gate: ABSENT side (15 required)
+P1,REVIEW_CANDIDATES,A_r_present,R116,child_04_four,four,ɹ,child_04,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,A_r_present,R117,001110039_9,FOUR,ɹ,0111,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,C_r_uncertain,R127,child_07_four,four,ɹ,child_07,/r/ gate: unlabelled /r/ cases
+P1,REVIEW_CANDIDATES,D_weak_present,R130,001130023_5,IS,z,0113,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R132,000930035_2,NINE,n,0093,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,C_r_uncertain,R134,child_08_four,four,ɹ,child_08,/r/ gate: unlabelled /r/ cases
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R144,001220038_10,ONE,n,0122,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,A_r_present,R147,001140049_10,FOUR,ɹ,0114,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R155,000920009_5,ALICE,s,0092,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R161,000260015_2,JOHN,n,0026,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R165,000060077_8,LITTLE,l,0006,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,A_r_present,R167,000030047_9,FOUR,ɹ,0003,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R168,000480045_2,FIVE,v,0048,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R173,001120010_8,FISH,ʃ,0112,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,D_weak_present,R177,000700012_3,THANK,k,0070,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R188,014180143_20,SIXTH,θ,1418,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,A_r_present,R189,000050038_8,FOUR,ɹ,0005,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,B_r_absent,R191,child_05_four,four,ɹ,child_05,/r/ gate: ABSENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R197,000530006_14,PEACH,tʃ,0053,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,A_r_present,R200,000030040_8,FOUR,ɹ,0003,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,B_r_absent,R201,014470149_5,WHERE,ɹ,1447,/r/ gate: ABSENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R205,000560033_12,ONE,n,0056,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R210,000260050_5,EIGHT,t,0026,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R213,000700015_16,PIG,ɡ,0070,"missing-evidence mechanism (low evidence, true present)"
+P1,REVIEW_CANDIDATES,A_r_present,R218,001140054_5,FOUR,ɹ,0114,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R245,001040038_11,FIVE,v,0104,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R248,000960002_11,BROWN,n,0096,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,A_r_present,R249,001030053_4,FOUR,ɹ,0103,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R252,001030048_6,NINE,n,0103,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,D_weak_present,R256,001110023_7,FROM,m,0111,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,A_r_present,R262,001040050_2,FOUR,ɹ,0104,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,A_r_present,R263,001120031_9,FOUR,ɹ,0112,/r/ gate: PRESENT side (15 required)
+P1,REVIEW_CANDIDATES,D_weak_present,R266,001220013_4,AT,t,0122,weak-PRESENT separation (weak true vs weak false)
+P1,REVIEW_CANDIDATES,L_low_score_true_present,R269,000440005_11,BROWN,n,0044,"missing-evidence mechanism (low evidence, true present)"
+P2,PILOT_REVIEW_CANDIDATES,train,P27-001,001310020_8,LOVES,z,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-002,001310022_7,LOVES,z,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-003,001310023_7,LIVED,d,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-004,001310023_9,IN,n,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-005,001310061_2,DOES,z,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-006,001310061_5,MIKE,k,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-007,001310061_8,LIKE,k,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-008,001310061_13,BEEF,f,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-009,001310062_7,LIKES,s,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-010,001310062_10,MEAT,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-011,001310076_3,PLEASE,z,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-012,001310076_7,CLOSE,z,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-013,001310076_17,SHIRT,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-014,001310078_2,MIKE,k,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-015,001310078_6,LIKES,s,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-016,001310078_15,JEANS,z,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-017,001310081_6,GOT,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-018,001310081_12,SKIRT,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-019,001310096_2,JIM,m,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-020,001310096_5,CAN,n,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-021,001310096_16,ROOM,m,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-022,001310122_7,WENT,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-023,001310122_14,MATCH,tʃ,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-024,001310122_18,CLASS,s,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-025,001310123_7,LIKES,s,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-026,001310123_14,SCIENCE,s,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-027,001310123_18,CLASS,s,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-028,001310123_20,AT,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-029,001310123_24,SCHOOL,l,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-030,001310129_4,DID,d,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-031,001310129_9,COME,m,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-032,001310144_8,FRIEND,d,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-033,001310152_1,IT,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-034,001310152_3,IS,z,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-035,001310152_7,LONG,ŋ,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-036,001310154_2,THEN,n,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-037,001310155_5,ASKED,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-038,001310162_3,STEP,p,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-039,001310162_5,UP,p,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-040,001310165_3,GOAT,t,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-041,001310165_5,UP,p,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-042,001310165_8,THIS,s,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-043,001310165_13,MORNING,ŋ,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-044,001310168_2,COME,m,0131,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-045,001330002_7,LIKES,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-046,001330027_2,NINE,n,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-047,001330033_6,SIX,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-048,001330033_9,NINE,n,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-049,001330033_11,EIGHT,t,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-050,001330057_2,JACK,k,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-051,001330057_6,LIKES,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-052,001330057_9,HOT,t,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-053,001330057_12,DOG,ɡ,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-054,001330067_6,BILLY'S,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-055,001330067_9,MOUTH,θ,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-056,001330068_8,STEVEN'S,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-057,001330068_11,KING,ŋ,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-058,001330075_7,LIKES,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-059,001330075_12,RED,d,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-060,001330075_16,CLOUD,d,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-061,001330097_7,CAN,n,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-062,001330097_10,SEEN,n,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-063,001330097_16,GARDEN,n,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-064,001330099_5,IS,z,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-065,001330099_8,WAS,z,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-066,001330099_13,WALKING,ŋ,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-067,001330112_4,DAVID,d,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-068,001330112_7,THIS,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-069,001330112_9,IS,z,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-070,001330115_5,IS,z,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-071,001330115_8,NOT,t,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-072,001330115_13,REAL,l,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-073,001330115_16,NURSE,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-074,001330118_8,WANTS,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-075,001330118_16,GOOD,d,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-076,001330126_4,STEVEN,n,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-077,001330126_8,LIKES,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-078,001330128_5,LIKES,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-079,001330129_3,CAN,n,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-080,001330129_7,SMELL,l,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-081,001330129_12,SOAP,p,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-082,001330143_3,WILL,l,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-083,001330143_6,HAVE,v,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-084,001330143_14,REVENGE,dʒ,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-085,001330146_2,AND,d,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-086,001330146_9,MAKE,k,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-087,001330146_15,CUPS,s,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-088,001330155_9,PRINTERS,z,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-089,001330170_4,CUB,b,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-090,001330170_6,IS,z,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-091,001330170_9,MINE,n,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-092,001330172_4,CAN'T,t,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-093,001330172_9,BELIEVE,v,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-094,001330172_12,THAT,t,0133,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-095,001490002_7,LIKES,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-096,001490002_16,BALLON,ŋ,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-097,001490016_2,JACK,k,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-098,001490016_6,WENT,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-099,001490024_4,DAVID,d,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-100,001490024_8,LIVES,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-101,001490024_10,IN,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-102,001490024_15,JAPAN,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-103,001490032_2,FOUR,ɹ,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-104,001490032_8,SIX,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-105,001490032_12,SIX,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-106,001490039_3,SEVEN,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-107,001490039_9,NINE,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-108,001490039_12,NINE,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-109,001490045_6,IS,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-110,001490045_9,GOOD,d,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-111,001490045_11,AT,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-112,001490045_14,ROCK,k,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-113,001490045_20,CLIMBING,ŋ,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-114,001490052_5,IS,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-115,001490052_8,GOOD,d,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-116,001490052_10,AT,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-117,001490052_15,RUNNING,ŋ,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-118,001490056_6,LATE,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-119,001490056_11,LITTLE,l,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-120,001490056_14,RICE,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-121,001490077_7,LIKES,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-122,001490077_11,LIKES,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-123,001490077_16,RED,d,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-124,001490077_21,GLOVES,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-125,001490080_7,LIKES,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-126,001490080_16,BOOTS,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-127,001490093_6,CAN,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-128,001490093_17,CLASSROOM,m,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-129,001490101_2,WHEN,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-130,001490101_10,WALKED,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-131,001490109_2,MIKE,k,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-132,001490109_5,GOT,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-133,001490109_10,PEN,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-134,001490127_7,LIVES,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-135,001490127_9,IN,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-136,001490131_4,ASKED,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-137,001490131_9,MOON,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-138,001490138_2,DAD,d,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-139,001490138_5,GOT,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-140,001490138_12,PAINTS,s,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-141,001490153_1,AT,t,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-142,001490153_5,SCHOOL,l,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-143,001490153_8,BEN,n,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-144,001490153_11,WAS,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-145,001490153_16,PLAYING,ŋ,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-146,001490155_2,WELL,l,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-147,001490161_4,IS,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-148,001490161_9,CHEESE,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-149,001490171_3,PLEASE,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-150,001490171_7,PLEASE,z,0149,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-151,010420022_7,LIVED,d,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-152,010420022_9,IN,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-153,010420022_13,FANS,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-154,010420023_2,JACK,k,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-155,010420023_4,IS,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-156,010420023_8,FROM,m,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-157,010420025_6,IS,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-158,010420025_10,FROM,m,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-159,010420034_2,ONE,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-160,010420034_6,SEVEN,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-161,010420034_9,FIVE,v,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-162,010420034_12,FIVE,v,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-163,010420040_2,NINE,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-164,010420040_6,SIX,s,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-165,010420040_11,ONE,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-166,010420047_6,NINE,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-167,010420059_3,LOVES,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-168,010420059_7,SMELL,l,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-169,010420059_11,FRESH,ʃ,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-170,010420059_14,BUFF,f,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-171,010420060_6,GOT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-172,010420060_9,SOME,m,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-173,010420064_4,DAVID,d,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-174,010420064_7,GOT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-175,010420064_10,SOME,m,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-176,010420064_13,LAMB,m,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-177,010420102_7,GOT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-178,010420102_9,ON,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-179,010420102_17,CARES,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-180,010420105_2,JACK,k,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-181,010420105_5,WAS,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-182,010420105_10,WALKING,ŋ,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-183,010420105_15,FAT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-184,010420107_9,WHEN,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-185,010420107_11,ON,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-186,010420129_5,LOVES,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-187,010420129_8,BACK,k,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-188,010420129_14,MUSHROOM,m,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-189,010420133_4,DAVID,d,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-190,010420133_7,THIS,s,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-191,010420133_9,IS,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-192,010420134_6,GOT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-193,010420134_15,EGGPLANT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-194,010420143_3,ALICE,s,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-195,010420143_6,WILL,l,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-196,010420143_10,ARRIVE,v,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-197,010420143_12,IN,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-198,010420143_24,SIXTH,θ,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-199,010420151_2,THAT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-200,010420151_4,IS,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-201,010420151_9,NAME,m,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-202,010420157_6,BEAUTIFUL,l,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-203,010420157_11,NAME,m,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-204,010420157_13,IS,z,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-205,010420167_3,HAVE,v,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-206,010420167_8,ONE,n,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-207,010420167_11,BUT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-208,010420175_6,LIKE,k,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-209,010420175_8,IT,t,1042,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-210,010440006_6,IS,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-211,010440006_10,GOING,ŋ,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-212,010440006_17,SHARK,k,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-213,010440008_4,DAVID,d,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-214,010440008_7,CAN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-215,010440008_11,PAINT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-216,010440012_6,RAN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-217,010440012_13,FROM,m,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-218,010440012_20,SQUID,d,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-219,010440017_2,TIM,m,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-220,010440017_6,WENT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-221,010440038_3,SEVEN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-222,010440038_6,FOUR,ɹ,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-223,010440038_9,ONE,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-224,010440039_6,SIX,s,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-225,010440039_9,FOUR,ɹ,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-226,010440039_13,SEVEN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-227,010440053_4,DAVID,d,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-228,010440053_6,IS,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-229,010440053_8,AN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-230,010440053_14,EXPERT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-231,010440053_16,AT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-232,010440053_24,AMERICAN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-233,010440053_30,FOOTBALL,l,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-234,010440064_2,DOES,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-235,010440064_5,NEIL,l,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-236,010440064_8,LIKE,k,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-237,010440064_15,NOODLES,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-238,010440077_3,LET'S,s,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-239,010440077_10,JACK'S,s,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-240,010440077_12,ARM,m,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-241,010440093_4,IS,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-242,010440093_9,LAYLA'S,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-243,010440093_13,CLOTH,θ,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-244,010440099_2,WHAT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-245,010440099_4,OUT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-246,010440099_9,CAR,ɹ,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-247,010440106_4,NEIL,l,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-248,010440106_8,WENT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-249,010440106_10,ON,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-250,010440107_2,THEN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-251,010440107_10,WALKED,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-252,010440107_15,THEM,m,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-253,010440107_18,PARK,k,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-254,010440117_2,THEN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-255,010440117_7,DAVID,d,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-256,010440117_11,WALKED,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-257,010440117_16,PARK,k,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-258,010440119_5,IS,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-259,010440119_10,DRAWING,ŋ,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-260,010440119_18,MUSHROOM,m,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-261,010440120_7,LOVES,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-262,010440127_3,LOWEN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-263,010440127_6,THIS,s,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-264,010440127_8,IS,z,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-265,010440127_13,CARROT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-266,010440149_2,CAN,n,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-267,010440150_2,LOOK,k,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-268,010440150_4,AT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-269,010440150_9,OLD,d,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-270,010440150_12,HOUSE,s,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-271,010440154_5,NOT,t,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-272,010440154_9,GOING,ŋ,1044,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-482,014690004_3,RAN,n,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-483,014690004_10,FROM,m,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-484,014690004_15,GOAT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-485,014690006_5,IS,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-486,014690006_9,GOING,ŋ,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-487,014690006_16,CAT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-488,014690018_3,LOWEN,n,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-489,014690018_5,IS,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-490,014690018_9,GOING,ŋ,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-491,014690018_16,MOUSE,s,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-492,014690020_9,WENT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-493,014690020_15,FIND,d,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-494,014690047_3,SEVEN,n,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-495,014690047_7,SEVEN,n,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-496,014690047_9,EIGHT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-497,014690047_13,SIX,s,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-498,014690048_5,IS,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-499,014690048_8,NOT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-500,014690048_15,GOOD,d,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-501,014690048_17,AT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-502,014690050_6,IS,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-503,014690050_9,NOT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-504,014690050_16,GOOD,d,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-505,014690050_18,AT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-506,014690050_25,VOLLEYBALL,l,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-507,014690055_6,IS,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-508,014690055_9,NOT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-509,014690055_16,GOOD,d,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-510,014690055_18,AT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-511,014690055_23,TENNIS,s,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-512,014690062_2,DOES,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-513,014690062_6,LOWEN,n,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-514,014690062_9,LIKE,k,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-515,014690062_15,STEAK,k,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-516,014690067_6,ATE,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-517,014690067_11,LITTLE,l,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-518,014690067_14,MEAT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-519,014690074_6,HAS,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-520,014690074_10,BIG,ɡ,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-521,014690082_2,TIM,m,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-522,014690082_6,LOVES,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-523,014690110_4,JACK,k,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-524,014690110_8,WENT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-525,014690110_21,CLASSROOM,m,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-526,014690113_4,MIKE,k,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-527,014690113_8,WENT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-528,014690113_19,LIVING,ŋ,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-529,014690113_22,ROOM,m,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-530,014690121_7,WASHED,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-531,014690125_2,JACK,k,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-532,014690125_5,THIS,s,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-533,014690125_7,IS,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-534,014690125_12,CARROT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-535,014690136_6,THIS,s,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-536,014690136_8,IS,z,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-537,014690136_14,GARLIC,k,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-538,014690144_6,WILL,l,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-539,014690144_10,ARRIVE,v,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-540,014690144_12,IN,n,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-541,014690150_2,AND,d,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-542,014690150_8,IT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-543,014690167_5,NOT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-544,014690167_10,THAT,t,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-545,014690167_14,CAN,n,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,PILOT_REVIEW_CANDIDATES,train,P27-546,014690167_18,HELP,p,1469,pilot sufficiency/fitting set (frozen train split; 337 tokens)
+P2,REVIEW_CANDIDATES,G_isolated_peak,R004,000260048_8,EIGHT,t,0026,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,G_isolated_peak,R006,001030013_14,HORSE,s,0103,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R007,001140054_11,NINE,n,0114,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R010,000530055_3,BOOTS,s,0053,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R013,000010011_4,CALL,l,0001,representation-dependence check
+P2,REVIEW_CANDIDATES,K_balanced_review,R014,000260011_6,CAN,n,0026,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R016,child_02_five,five,v,child_02,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R019,000030040_10,EIGHT,t,0003,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,G_isolated_peak,R020,000260039_9,SIX,s,0026,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R024,000490047_9,EIGHT,t,0049,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R025,010920125_21,CARROT,t,1092,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,E_weak_absent,R026,child_01_five,five,v,child_01,weak-ABSENT control
+P2,REVIEW_CANDIDATES,K_balanced_review,R029,000050049_4,FIVE,v,0005,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R030,000050010_2,ITS,s,0005,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R033,000490088_9,TEDDY'S,s,0049,final-consonant failure replay
+P2,REVIEW_CANDIDATES,K_balanced_review,R034,000960019_5,CAN,n,0096,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,E_weak_absent,R035,020340162_8,BAN,n,2034,weak-ABSENT control
+P2,REVIEW_CANDIDATES,G_isolated_peak,R039,000060020_8,COME,m,0006,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R041,000960002_7,LIKES,s,0096,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R044,001130039_7,ONE,n,0113,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R046,001130047_10,NINE,n,0113,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R049,000560068_10,TOES,z,0056,representation-dependence check
+P2,REVIEW_CANDIDATES,K_balanced_review,R050,000940042_6,ONE,n,0094,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R052,000490088_4,AT,t,0049,representation-dependence check
+P2,REVIEW_CANDIDATES,K_balanced_review,R053,000260032_5,ONE,n,0026,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,E_weak_absent,R057,child_09_five,five,v,child_09,weak-ABSENT control
+P2,REVIEW_CANDIDATES,K_balanced_review,R058,000440005_7,LIKES,s,0044,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,G_isolated_peak,R059,001030032_1,EIGHT,t,0103,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R060,001110067_10,AT,t,0111,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R067,000930026_8,SIX,s,0093,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R071,001220051_2,NINE,n,0122,final-consonant failure replay
+P2,REVIEW_CANDIDATES,J_high_score_false_accept,R073,014350158_8,COME,m,1435,false-accept mechanism
+P2,REVIEW_CANDIDATES,J_high_score_false_accept,R075,014350103_6,GOT,t,1435,false-accept mechanism
+P2,REVIEW_CANDIDATES,G_isolated_peak,R081,001140046_9,SIX,s,0114,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R082,000920040_2,FIVE,v,0092,representation-dependence check
+P2,REVIEW_CANDIDATES,G_isolated_peak,R083,001220034_10,SEVEN,n,0122,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R087,000060020_12,FROM,m,0006,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R089,000930048_2,NINE,n,0093,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R094,000940067_8,GOOD,d,0094,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R096,000930014_13,GOAT,t,0093,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R097,000060029_10,SIX,s,0006,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R099,000010089_11,BIG,ɡ,0001,representation-dependence check
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R104,000940021_8,LIVES,z,0094,representation-dependence check
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R106,000480014_2,JOHN,n,0048,representation-dependence check
+P2,REVIEW_CANDIDATES,E_weak_absent,R108,014390134_22,CABBAGE,dʒ,1439,weak-ABSENT control
+P2,REVIEW_CANDIDATES,K_balanced_review,R109,000920074_8,LIKES,s,0092,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R112,000930048_12,SIX,s,0093,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R113,000920025_3,SIX,s,0092,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R114,001140056_7,PURPLE,l,0114,representation-dependence check
+P2,REVIEW_CANDIDATES,G_isolated_peak,R118,000960048_1,EIGHT,t,0096,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R120,001220038_3,SEVEN,n,0122,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R122,000960043_8,FIVE,v,0096,final-consonant failure replay
+P2,REVIEW_CANDIDATES,G_isolated_peak,R123,001030053_8,SEVEN,n,0103,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R124,001220031_3,SIX,s,0122,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R125,001130021_6,LIVES,z,0113,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R133,001130039_10,ONE,n,0113,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R135,000540031_5,EIGHT,t,0054,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R138,069120170_11,LOST,t,6912,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R139,000490002_6,LIKES,s,0049,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R143,000930035_10,SEEK,k,0093,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R145,000540001_2,MIKE,k,0054,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,G_isolated_peak,R150,000750005_6,LIKES,s,0075,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R157,000750005_2,BORN,n,0075,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R158,014390057_16,FRIES,z,1439,representation-dependence check
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R163,085850042_14,CLOTHES,z,8585,representation-dependence check
+P2,REVIEW_CANDIDATES,K_balanced_review,R166,001140008_8,GOT,t,0114,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R169,001030061_5,DRESSING,ŋ,0103,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R171,000010063_7,ELEPHANTS,s,0001,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R172,000940015_5,IS,z,0094,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R174,000490002_2,MADE,d,0049,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R176,001110039_6,SIX,s,0111,final-consonant failure replay
+P2,REVIEW_CANDIDATES,E_weak_absent,R178,child_08_eight,eight,t,child_08,weak-ABSENT control
+P2,REVIEW_CANDIDATES,K_balanced_review,R179,000490052_7,EIGHT,t,0049,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R181,000490047_4,EIGHT,t,0049,final-consonant failure replay
+P2,REVIEW_CANDIDATES,J_high_score_false_accept,R182,001450109_7,WASHED,t,0145,false-accept mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R185,000260011_13,HEN,n,0026,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R186,000010063_12,GOOSE,s,0001,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R187,000540014_13,DOG,ɡ,0054,final-consonant failure replay
+P2,REVIEW_CANDIDATES,K_balanced_review,R190,000930040_7,FIVE,v,0093,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R193,000060031_11,SEVEN,n,0006,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R194,000750026_2,FIVE,v,0075,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R195,000030024_2,KATE,t,0003,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R196,000440062_8,PLAN,n,0044,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,J_high_score_false_accept,R198,021790169_3,WOULD,d,2179,false-accept mechanism
+P2,REVIEW_CANDIDATES,E_weak_absent,R209,069120170_7,HAVE,v,6912,weak-ABSENT control
+P2,REVIEW_CANDIDATES,K_balanced_review,R211,000490088_2,LOOK,k,0049,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R214,001220031_9,FIVE,v,0122,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R216,001130047_14,SEVEN,n,0113,final-consonant failure replay
+P2,REVIEW_CANDIDATES,K_balanced_review,R220,000030024_6,LOVES,z,0003,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R221,000490002_9,WHITE,t,0049,representation-dependence check
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R223,001120038_9,ONE,n,0112,representation-dependence check
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R226,000530006_4,CAN,n,0053,representation-dependence check
+P2,REVIEW_CANDIDATES,K_balanced_review,R227,000700008_2,KATE,t,0070,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R228,000050028_9,SEVEN,n,0005,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,E_weak_absent,R229,014390057_12,FRENCH,tʃ,1439,weak-ABSENT control
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R230,000050040_8,NINE,n,0005,final-consonant failure replay
+P2,REVIEW_CANDIDATES,G_isolated_peak,R231,000540054_5,FIVE,v,0054,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,G_isolated_peak,R232,000530003_13,ORANGE,dʒ,0053,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R236,001130002_2,BOB,b,0113,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,K_balanced_review,R241,000050038_12,SEVEN,n,0005,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,E_weak_absent,R244,child_03_six,six,s,child_03,weak-ABSENT control
+P2,REVIEW_CANDIDATES,J_high_score_false_accept,R246,014350017_18,WHALE,l,1435,false-accept mechanism
+P2,REVIEW_CANDIDATES,G_isolated_peak,R247,000030047_3,SEVEN,n,0003,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,G_isolated_peak,R250,000940032_1,EIGHT,t,0094,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R251,000490017_6,CAN,n,0049,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,I_final_consonant_failure,R253,000440032_11,NINE,n,0044,final-consonant failure replay
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R254,000010075_10,SHOOTING,ŋ,0001,representation-dependence check
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R257,000920009_8,OWNED,d,0092,representation-dependence check
+P2,REVIEW_CANDIDATES,K_balanced_review,R258,000930018_4,IS,z,0093,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,G_isolated_peak,R260,000960008_14,GRAPE,p,0096,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R261,000030012_20,ELEPHANT,t,0003,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,G_isolated_peak,R267,000030054_7,NINE,n,0003,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,K_balanced_review,R271,000480016_4,CAN,n,0048,balanced phone-class x truth baseline
+P2,REVIEW_CANDIDATES,G_isolated_peak,R272,000050047_3,SIX,s,0005,isolated-peak mechanism
+P2,REVIEW_CANDIDATES,H_encoder_disagreement,R276,000700015_9,GOING,ŋ,0070,representation-dependence check
+P3,REVIEW_CANDIDATES,M_random_control,R003,014350146_22,AT,t,1435,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R005,000750029_2,FIVE,v,0075,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R009,001110009_5,ANN'S,s,0111,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R011,siak_train110_train110fifi06_011_t00000237_baseball,baseball,l,train110,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R012,069120170_2,BUT,t,6912,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R018,siak_test143_test143enuk06_094_t00001156_run,run,n,test143,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R021,siak_test160_test160fifi06_019_t00000689_friend,friend,d,test160,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R027,000940067_5,IS,z,0094,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R031,000920025_6,FIVE,v,0092,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R032,000060020_17,JAPAN,n,0006,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R037,000530019_6,CAN,n,0053,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R038,014470150_1,IS,z,1447,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R040,000700010_12,ELEPHANT,t,0070,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R042,000750068_12,TENNIS,s,0075,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R043,siak_train001_train001fifi05_292_t08738174_cap,cap,p,train001,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R045,001040038_4,FIVE,v,0104,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,N_consistency_control,R047,child_02_ten,ten,n,child_02,reliability control (historical labels re-inserted)
+P3,REVIEW_CANDIDATES,M_random_control,R056,001120031_13,SIX,s,0112,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R061,000940042_10,SEVEN,n,0094,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R064,000920010_3,IS,z,0092,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R065,siak_test160_test160fifi06_010_t00000349_school,school,l,test160,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R066,000030049_3,EIGHT,t,0003,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R069,000540031_3,SIX,s,0054,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R072,000940015_16,BIRD,d,0094,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R074,001040022_10,IN,n,0104,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R076,000530003_16,ONE,n,0053,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R077,siak_train001_train001fifi05_363_t08966500_it,it,t,train001,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R078,000700037_11,SEVEN,n,0070,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R079,001220031_6,NINE,n,0122,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R084,000930050_12,SIX,s,0093,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R085,001130019_6,CAN,n,0113,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R090,000530030_9,FIVE,v,0053,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,N_consistency_control,R092,child_01_eight,eight,t,child_01,reliability control (historical labels re-inserted)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R095,siak_test143_test143enuk06_066_t00000834_face,face,s,test143,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R098,001040067_10,AT,t,0104,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R100,000030051_2,ONE,n,0003,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R102,siak_test143_test143enuk06_002_t00000017_school,school,l,test143,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R103,000700015_5,IS,z,0070,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,N_consistency_control,R115,child_09_seven,seven,n,child_09,reliability control (historical labels re-inserted)
+P3,REVIEW_CANDIDATES,M_random_control,R119,014350146_20,CLASS,s,1435,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R121,siak_test143_test143enuk06_019_t00000196_hard,hard,d,test143,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R126,000480015_6,IS,z,0048,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R128,siak_test160_test160fifi06_045_t00001376_sun,sun,n,test160,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R129,000540014_6,CAN,n,0054,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R131,001040062_6,BIRD,d,0104,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R136,siak_train110_train110fifi06_021_t00086244_children,children,n,train110,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R137,siak_train070_train070othr04_029_t00000387_quiet,quiet,t,train070,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R140,000060031_2,FIVE,v,0006,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R141,siak_test143_test143enuk06_034_t00000385_cake,cake,k,test143,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R142,000920055_14,LANTERN,n,0092,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R146,000750015_8,GOING,ŋ,0075,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R148,siak_test143_test143enuk06_053_t00000631_pet,pet,t,test143,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R149,000940042_14,SIX,s,0094,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R152,siak_train001_train001fifi05_403_t09066694_leaf,leaf,f,train001,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R153,siak_train070_train070othr04_031_t00000406_cool,cool,l,train070,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R154,000490017_13,SHEEP,p,0049,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R156,001140046_13,SIX,s,0114,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,N_consistency_control,R159,child_07_one,one,n,child_07,reliability control (historical labels re-inserted)
+P3,REVIEW_CANDIDATES,M_random_control,R160,000940015_9,GOING,ŋ,0094,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R164,000260039_1,EIGHT,t,0026,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R170,siak_train110_train110fifi06_014_t00086103_chicken,chicken,n,train110,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R175,siak_test160_test160fifi06_066_t00002083_sun,sun,n,test160,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R180,000050010_5,NAME,m,0005,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R183,001220015_2,TIM,m,0122,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R184,siak_train110_train110fifi06_001_t00000079_plate,plate,t,train110,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R192,siak_train110_train110fifi06_013_t00086095_duck,duck,k,train110,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R199,siak_test143_test143enuk06_012_t00000124_sun,sun,n,test143,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R202,siak_test160_test160fifi06_029_t00001023_read,read,d,test160,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R203,000560068_7,DAVID'S,s,0056,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,N_consistency_control,R204,child_02_one,one,n,child_02,reliability control (historical labels re-inserted)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R206,siak_train001_train001fifi05_422_t09067775_carrot,carrot,t,train001,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R207,000480023_8,FROM,m,0048,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R208,000540055_7,PAST,t,0054,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R212,siak_train110_train110fifi06_023_t00086263_young,young,ŋ,train110,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R215,000480045_5,NINE,n,0048,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R217,001040067_15,SURFING,ŋ,0104,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R219,000490047_7,NINE,n,0049,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R222,child_03_eight,eight,t,child_03,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R224,000530054_2,ONE,n,0053,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R225,000060015_9,GOING,ŋ,0006,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,N_consistency_control,R233,child_01_seven,seven,n,child_01,reliability control (historical labels re-inserted)
+P3,REVIEW_CANDIDATES,M_random_control,R234,000530006_9,HAVE,v,0053,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R235,siak_train001_train001fifi05_368_t08966714_cheek,cheek,k,train001,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R237,000030040_5,SIX,s,0003,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R238,014470026_12,FRANCE,s,1447,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R239,siak_train001_train001fifi05_291_t08738157_shop,shop,p,train001,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R240,siak_test143_test143enuk06_025_t00000267_dog,dog,ɡ,test143,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R242,siak_train001_train001fifi05_372_t08966989_smell,smell,l,train001,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,M_random_control,R243,000960048_10,FIVE,v,0096,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R255,014350103_13,YACHT,t,1435,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R259,000490032_5,SIX,s,0049,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,N_consistency_control,R264,child_06_six,six,s,child_06,reliability control (historical labels re-inserted)
+P3,REVIEW_CANDIDATES,M_random_control,R265,010920125_11,LIKE,k,1092,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R268,000530055_10,MOUNTAINS,s,0053,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,M_random_control,R273,001140008_16,LONGAN,n,0114,random control: representativeness vs diagnostics
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R274,siak_test160_test160fifi06_004_t00000037_speak,speak,k,test160,SIAK age 4-6 broad pool (score-only data)
+P3,REVIEW_CANDIDATES,O_siak_age46_broad,R275,siak_train001_train001fifi05_269_t08658490_wash,wash,ʃ,train001,SIAK age 4-6 broad pool (score-only data)
