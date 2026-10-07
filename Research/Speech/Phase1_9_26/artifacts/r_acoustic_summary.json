@@ -1,0 +1,23 @@
+{
+  "n": 24,
+  "has_parselmouth": true,
+  "by_corpus": {
+    "so762_test": 7,
+    "so762_dev": 7,
+    "so762_absent_dev": 1,
+    "lwe": 9
+  },
+  "span_ms_median": 487.0,
+  "rms_ratio_median": 1.125,
+  "f3_median_median": 2812.0,
+  "f3_f2_ratio_median": 1.843,
+  "isolated_peak_n": 20,
+  "label_status": {
+    "score=1.8": 3,
+    "score=2.0": 11,
+    "score=0.0": 1,
+    "FINAL_CONSONANT_CLEARLY_ABSENT": 5,
+    "FINAL_CONSONANT_PROBABLY_PRESENT": 1,
+    "(unlabelled)": 3
+  }
+}

@@ -1,0 +1,16 @@
+dataset,age_relevance,l1_relevance,task_relevance,microphone_relevance,phonetic_coverage,annotation_quality,speaker_diversity,child_speech,commercial_usability,domain_relevance_score,annotation_relevance_score,license_usability_score,scale_score,speaker_diversity_score,rank_notes
+speechocean762,medium (6-15; no 4-6),low (Mandarin-L1),high (read words/sentences),medium,high (all phones),high (5 experts phone scores),high (250),yes,high,3,5,5,2,4,annotation+license strong; scale/age weak
+MyST,medium (8-11),medium (US English),medium (spontaneous tutor dialogue),medium,medium (lexicon+transcripts),medium (word-level),high (1371),yes,medium (paid),4,3,3,5,5,scale champion; annotation gap
+Ohio Child Speech Corpus (OCSC),high (4-9),medium (US English),medium (7 elicitation tasks),high (lapel mic),medium (orthographic),medium,high (303),yes,low (non-commercial),4,2,1,4,5,best public age+scale; no phone labels
+JIBO Kids Corpus,high (4-7),medium (US English),medium (letter/digit + discourse),medium,medium (word-level),medium,high (110),yes,unverified,4,2,2,3,4,excellent age match; license unclear
+SIAK,medium (mostly 8-10; 594 utts 4-6),medium (mixed L1),high (single words),medium,medium (word score),medium,high (172),yes,legal review,3,3,2,3,4,local; ND unresolved
+PERCEPT-R,low-medium (6-17),high (US English),high (/r/ clinical),high,low (rhotics only),high (rhotic labels),high (280),yes,low (non-commercial),4,4,1,4,5,/r/ benchmark; non-commercial
+PERCEPT-GFTA,low-medium (6-17),high (US English),medium (GFTA items),high,medium (GFTA phones),high,high (350),yes,low,3,3,1,4,5,broader phones; non-commercial
+CSLU Kids/OGI,medium (K-G10),high (US English),high (prompted words),medium,medium (phonetically balanced prompts),medium,high (1100),yes,low (research),3,3,1,4,5,restricted
+CMU Kids,medium (6-11),high (US English),high (read sentences),medium,medium,medium,medium (76),yes,low,3,2,1,2,3,restricted
+Providence,low (1-4),high (US English),low (naturalistic),medium,high (broad phonemic),high,low (6),yes,low,2,4,1,4,1,phonemic transcription but 6 speakers
+CAPIL,high (5-6),high (US English),low (spontaneous),medium,medium (transcribed),medium,low (30),yes,low,3,2,1,2,2,TalkBank research
+AusKidTalk,high (3-12),medium (Australian English),high (single words + narrative),high,medium (orthographic),medium,high (620),yes,unverified,4,2,2,5,5,large; terms unverified
+Storiza (2026),high (6-9),high (US English),high (oral reading),medium,high (IPA phonemic + errors),high,medium (63),yes,unknown,4,5,1,2,3,promising if released
+SingaKids-Mandarin,medium (7-12),low (Mandarin),high (read),medium,high (phone-level),high,high (255),yes,unknown,2,5,1,4,4,phone labels but wrong language
+LWE,high (4-6),medium (mixed),high (numbers/sentences),high (3 mics),low (10 words),high (listening labels on 28),low (11),yes,high (CC BY 4.0),5,4,5,1,1,test-only by project rule

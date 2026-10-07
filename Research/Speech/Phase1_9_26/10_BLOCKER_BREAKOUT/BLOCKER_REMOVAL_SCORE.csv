@@ -1,0 +1,11 @@
+route,probability_of_access,effort,legal_risk,scientific_value,label_quality,speaker_diversity,age_relevance,removes_blockers,score,notes
+Human label round on 276-candidate pack,high (needs 2 reviewers),low-medium,none,high,high,49,4-15,A/B/C,9.2,pipeline built+validated; only human availability missing
+OCSC TalkBank registration,high,low,medium (research terms),high,generated+verified,303,4-9,D/E/F,8.1,best public age+scale match
+JIBO Kids public download,high,low,high (no license),medium,generated+verified,110,4-7,D/E/F,6.5,license must be confirmed with authors
+MyST commercial license,medium (paid),medium,low-medium,high,generated+verified,1371,8-11,D/H,7.4,only verified commercial-scale route
+PERCEPT-R research benchmark,high,low,medium (non-commercial),high,high (rhotic),280,6-17,B,7.2,research-only /r/ benchmark
+SIAK legal review,medium,low,high,medium,score-derived,172,4-12,H,5.0,ND interpretation unresolved
+CSLU Kids LDC research,medium,medium,medium,medium,word-level,1100,K-G10,D/E,5.5,restricted; commercial via OHSU
+PF-STAR/CMU Kids inquiries,medium,medium,medium,medium,word-level,611/76,4-14/6-11,D/E,5.0,license unverified
+Vietnamese-L1 local collection,medium (partnership),high,low with consent,highest,human phone labels,30-50 target,4-6,I/G/F,8.5,long-term; solves all blockers
+Local pilot with existing labels,high (after label round),low,none,high,human listening,8-10,4-15,J,9.0,immediate next scientific step

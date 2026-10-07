@@ -1,0 +1,37 @@
+{
+  "phase": "1.9.26",
+  "starting_gate": "LABELS_INSUFFICIENT_DATA_LICENSE_BLOCKED",
+  "known_evidence": {
+    "production_reconstruction": "609/609 cache; 65/65 archived",
+    "acceptance_census": "527/609 accepted; identity 501 (104 rank>0); similarity 26; posterior 0",
+    "acceptance_rules": "0/68 FRR-first safe; best D2 removes 3/10 TYPE-A",
+    "type_b": "4 cases; 0 confirmed; 2 LABEL_LIMITED + 2 MIXED",
+    "missing_evidence": "87/528 labeled presents max_A<0.02 (16.5%)",
+    "representation_dependence": "alt gains 50 / loses 55 at 0.10; agreement 82.8%",
+    "r_phoneme": "24 cases; 20 isolated peaks; LWE median max_A 0.041",
+    "labels": "28 LWE listening (single reviewer); so762/SIAK score-derived",
+    "frame_cache": "2,436 token-windows / 117,128 frames"
+  },
+  "unresolved_evidence": ["TYPE-B verdicts", "r/ limitation", "rank-2..5 correctness",
+                          "window-sensitive identity"],
+  "contradictory_evidence": ["child_07_seven persists across encoders (0.63->0.94) but 014180143_15 collapses (0.68->0.25)",
+                             "alt encoder lower false-evidence but higher missing-evidence"],
+  "dependent_on_human_labels": ["TYPE-B", "r/", "rank-2..5", "weak-present vs weak-false"],
+  "dependent_on_dataset_availability": ["full-scale B2", "age-4-6 phone labels", "Vietnamese-L1"],
+  "obtainable_without_new_labels": ["encoder comparison (done)", "r/ acoustics (done)",
+                                    "acceptance/identity audits (done)", "phone confusion (done)"],
+  "requires_external_data": ["child adaptation", "speaker-diverse validation beyond 45"],
+  "requires_legal_permission": ["SIAK ND", "MyST commercial", "PERCEPT-R", "CSLU/CMU", "OCSC/JIBO terms"],
+  "new_in_1926": {
+    "label_pipeline": "validated (server + 276 candidates + protocol)",
+    "new_labels": 0,
+    "encoder_comparison_tokens": 609,
+    "r_acoustic_cases": 24,
+    "datasets_audited": 28,
+    "new_age46_corpora": ["OCSC 303 spk 4-9", "JIBO 110 spk 4-7", "CAPIL 30 spk 5-6"],
+    "final_gate": "LABEL_COLLECTION_READY_DATA_BLOCKED"
+  },
+  "flags": {"production_vad": false, "router_locked": false, "unity_integrated": false,
+            "scorer_modified": false, "production_window_locked": false,
+            "b2_training": false, "encoder_finetuning": false}
+}

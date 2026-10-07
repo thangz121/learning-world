@@ -1,0 +1,5 @@
+tier,hours,speakers,ages,phone_counts,r_count,final_consonant_count,labels_train,labels_dev,labels_test,annotation_confidence,license,gpu,expected_use
+B2_MINIMUM,2-4,8-10,4-11 (mixed),>=30/class in eval,8+8,120,60P+60A speaker-disjoint,>=20 labelled,>=20 labelled,HUMAN-LISTENING HIGH/MEDIUM,local (CC BY 4.0 + SIAK review),none for eval; CPU head possible,decide whether full B2 is worth pursuing
+B2_ROBUST,20-40,100+,4-9,generated alignments all,50+,300,200P+150A,>=50,>=50,HUMAN-LISTENING subset + AUTOMATIC separate,TalkBank/PhonBank research (non-commercial),GPU required,research-grade adaptation + generalization
+B2_IDEAL,10-30,30-50,4-6 Vietnamese-L1,target-balanced oversampled,50P+40A,200,200P+150A double-reviewed,>=40,>=40,two reviewers + adjudication,own corpus consent or commercial license,GPU required (cloud),production-grade B2
+current_local_pilot,2-4,8-10 (from 45 local),4-11,mixed,8-15 (pack A-C),120 (pack D/L/M),0 (needs review round),-, -,HUMAN-LISTENING pending,local,CPU,immediate next step (no licensing)

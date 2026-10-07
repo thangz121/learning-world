@@ -1,0 +1,6 @@
+strategy,label_type,cost_per_hour,reliability,scalability,expected_error,speaker_leakage,r_reliability,final_consonant_reliability,recommended_use
+A_human_phone_labels,HUMAN-LISTENING,very high,highest for audible phones,low,reviewer-dependent,none if speaker-disjoint,medium,high,validation subset (minimum label set)
+B_forced_alignment_verified,EXPERT+alignment,high,high boundaries; needs verification,medium,alignment errors on deleted/weak phones,none if splits fixed,low,medium,training targets + timing for large corpora
+C_automatic_audited,AUTOMATIC,low,variable,high,high on weak finals and /r/,none if splits fixed,low,medium-low,large-scale pre-annotation + audit sampling
+local_pilot_listening,HUMAN-LISTENING,medium (local recordings),high for the reviewed subset,low-medium,none if protocol followed,pack has 49 speakers,medium (15+15 needed),high,pilot de-risking before full B2
+score_derived,EXPERT,zero (existing),medium,existing,score not phone presence,none,n/a,medium,auxiliary evidence only

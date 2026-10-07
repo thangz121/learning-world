@@ -1,0 +1,10 @@
+{
+  "n": 4,
+  "classifications": {
+    "MIXED": 2,
+    "LABEL_LIMITED": 2
+  },
+  "isolated_peak": 2,
+  "label_limited": 3,
+  "representation_dependent": 3
+}

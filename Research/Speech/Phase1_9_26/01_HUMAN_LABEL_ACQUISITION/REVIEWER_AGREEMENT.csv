@@ -1,0 +1,4 @@
+scope,reviewer_count,agreement_computable,raw_agreement,cohens_kappa,fleiss_kappa,confidence_stratified,r_specific,typeb_specific,disagreements_preserved,notes
+WP-1.9.26 review pack (276 candidates),0,no,,,,,,,n/a,NO_REVIEWER_AVAILABLE; pipeline validated with a deleted TEST-TOOL submission; no labels fabricated
+Historical LWE labels (28),1,no,,,,,,,n/a,SINGLE_REVIEWER_LIMITATION = TRUE (human_mobile 2026-10-03)
+SO762 per-phone expert scores,unknown (5 experts per corpus paper),no (score-derived),,,,,,,n/a,score-derived; not listening labels

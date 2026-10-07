@@ -1,0 +1,16 @@
+pool,n
+A_r_present,15
+B_r_absent,6
+C_r_uncertain,3
+D_weak_present,25
+E_weak_absent,8
+F_typeb_strong_false,5
+G_isolated_peak,17
+H_encoder_disagreement,16
+I_final_consonant_failure,9
+J_high_score_false_accept,5
+K_balanced_review,60
+L_low_score_true_present,10
+M_random_control,60
+N_consistency_control,7
+O_siak_age46_broad,30

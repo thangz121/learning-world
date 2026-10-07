@@ -1,0 +1,6 @@
+set_type,present_labels,absent_labels,uncertain_allowed,r_present,r_absent,speakers_min,speaker_disjoint,ages,phone_distribution,difficulty_mix,purpose,notes
+MINIMUM,60,60,yes,15,15,20,yes,any child 4-8 preferred,liquids r/l + fricatives s/z/v + stops t/k/p/d + nasals n/m,weak present >= 30; isolated peak >= 20,distinguish major failure hypotheses and validate one B2-E/B2-D design FRR-first,>=3 labels per speaker are not independent; speaker-disjoint train/dev/test
+IDEAL,200,150,yes,50,40,40,yes,4-6 preferred,balanced final consonants,liquids + weak frication overrepresented,stable B2 training/dev/test with per-phone subgroup power,requires licensed corpus or funded annotation round
+R_MINIMUM,15,15,yes,15,15,15,yes,4-8,rhotic only,include weak and isolated peaks,settle whether /r/ is encoder-limited or data-limited,current LWE /r/: 1 PRESENT LOW / 5 ABSENT / 3 unlabelled
+TYPE_B,0,4,yes,0,0,4 (one per case),not applicable,any,4 x n/m/l,strong evidence cases,resolve the 4 unresolved TYPE-B cases (pack pool F),3/4 score-0 only; child_07_seven PROBABLY_ABSENT HIGH
+CONSISTENCY,0,0,yes,0,0,1,not applicable,any,7 historical labels,hidden controls,measure reviewer consistency vs the historical single reviewer,pool N in REVIEW_CANDIDATES.csv

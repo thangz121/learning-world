@@ -1,0 +1,20 @@
+{
+  "overall": {
+    "n": 609,
+    "present": 528,
+    "absent": 29,
+    "prod_missing_evidence_present_rate": 0.1648,
+    "alt_missing_evidence_present_rate": 0.1875,
+    "prod_false_evidence_absent_rate": 0.1724,
+    "alt_false_evidence_absent_rate": 0.1379,
+    "prod_median_max_A_present": 0.7919,
+    "alt_median_max_A_present": 0.7923
+  },
+  "agreement_at_0.10": 0.8276,
+  "alt_gains_evidence": 50,
+  "alt_loses_evidence": 55,
+  "speakers": 45,
+  "prod_speaker_median_spread": 0.98053,
+  "alt_speaker_median_spread": 0.97429,
+  "isolated_peak_present_prod": 0.8258
+}
