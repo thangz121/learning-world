@@ -1,0 +1,301 @@
+{
+  "phase": "1.9.21",
+  "purpose": "reusable frame-level evidence cache for final-consonant support aggregation",
+  "created": "2026-10-07T09:23:34",
+  "machine": "ASUS",
+  "model": {
+    "id": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "snapshot": "2c733782da5604684829819a5eb744c193fe9398",
+    "snapshots_present": [
+      "2c733782da5604684829819a5eb744c193fe9398",
+      "3e836924cfd3b858a0bbdbc1f7ef412105d00446"
+    ],
+    "file_hashes": {
+      "preprocessor_config.json": "A2254A5B58F72CD4DE3632F8EEE64F3F098B7C1402128D2F419E7D00AE13E335",
+      "vocab.json": "D732AB2456C0C017930001DC9AF0B41B3B93D25B2EB9740BF9D925508D7D87D0",
+      "config.json": "4609FB49B7E1D28AECB2840DA1926C40BD915BC6F1120A940AFACF7159BBFB13"
+    },
+    "phone_evidence_v2_version": "1.4.0",
+    "phone_inventory_version": "phone-inventory-v1.4.0"
+  },
+  "preprocessing": {
+    "resample_to": 16000,
+    "mono_mixdown": true,
+    "feature_extractor": "Wav2Vec2FeatureExtractor (model snapshot preprocessor_config.json)",
+    "write_format": "WAV via soundfile default subtype (same as WP-1.9.19/1.9.20)"
+  },
+  "windows": [
+    "full",
+    "raw",
+    "pad100",
+    "pad250"
+  ],
+  "candidate_regions": {
+    "A": "production ctc_align span (PhoneEvidenceV2.ctc_align, read-only)",
+    "B": "production span +/- 5 frames (100 ms), minus earlier same-class spans",
+    "C": "final tail after the preceding phone's acoustic boundary (last frame inside the preceding span with preceding-class posterior >= 50% of its span max), extending at most 5 frames into the following phone's span, minus earlier same-class spans",
+    "D": "conservative union B | C",
+    "position_masking": "earlier same-class spans (same canonical phone, earlier index) are removed from every region and reported separately as WRONG_OCCURRENCE candidates"
+  },
+  "aggregation_constants": {
+    "TOPK": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "WIDTHS": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "TS_MARGIN_SCALE": 0.25,
+    "TS_COHERENCE_WIDTH": 2,
+    "TS_HALF_FRAC": 0.5,
+    "TS_FLOOR": 0.05
+  },
+  "cache_format": {
+    "frames_csv": [
+      "corpus",
+      "token_id",
+      "speaker_id",
+      "word",
+      "target_phone",
+      "frame",
+      "time_ms",
+      "target_posterior",
+      "top1_phone",
+      "top1_posterior",
+      "best_competitor_posterior",
+      "blank_posterior",
+      "target_vs_competitor_margin",
+      "window_type",
+      "window_start",
+      "window_end",
+      "target_word_position",
+      "target_phone_position",
+      "n_frames",
+      "frame_s",
+      "in_current_span",
+      "in_region_B",
+      "in_region_C",
+      "in_region_D",
+      "in_earlier_same_class",
+      "in_prev_phone",
+      "in_next_phone",
+      "prev_phone_posterior",
+      "next_phone_posterior"
+    ],
+    "summary_csv": [
+      "corpus",
+      "token_id",
+      "speaker_id",
+      "age",
+      "word",
+      "target_phone",
+      "is_final_consonant",
+      "human_label",
+      "human_present",
+      "human_score",
+      "human_verdict",
+      "window_type",
+      "n_frames",
+      "frame_s",
+      "dur_s",
+      "audio_start",
+      "audio_end",
+      "vad_start",
+      "vad_end",
+      "target_word_position",
+      "target_phone_position",
+      "target_phone_index_utt",
+      "span_A_start",
+      "span_A_end",
+      "prev_span",
+      "next_span",
+      "earlier_same_spans",
+      "n_earlier_same",
+      "region_C0",
+      "region_C1",
+      "n_frames_D",
+      "mean_A",
+      "max_A",
+      "region_top3_A",
+      "mean_B",
+      "max_B",
+      "region_top3_B",
+      "mean_C",
+      "max_C",
+      "region_top3_C",
+      "mean_D",
+      "max_D",
+      "region_top3_D",
+      "top1_D",
+      "top2_D",
+      "top3_D",
+      "top5_D",
+      "width1_D",
+      "width2_D",
+      "width3_D",
+      "width5_D",
+      "peak",
+      "peak_frame",
+      "cluster_width",
+      "cluster_mean",
+      "neighbor_support",
+      "comp_peak",
+      "blank_peak",
+      "prom_comp",
+      "prom_blank",
+      "prom_neighbor",
+      "temporal_support",
+      "max_global",
+      "argmax_global",
+      "max_masked_earlier",
+      "argmax_masked_earlier",
+      "max_later_same",
+      "argmax_later_same",
+      "top1_at_global",
+      "top1_post_at_global",
+      "comp_at_global",
+      "blank_at_global",
+      "baseline_match",
+      "baseline_present",
+      "baseline_span_post",
+      "baseline_best_obs",
+      "baseline_sim",
+      "da_span",
+      "da_max",
+      "da_frame",
+      "da_free_present",
+      "da_margin_per_frame"
+    ],
+    "note": "frames stored from preceding-phone span start (or span-100ms) to following-phone span end (or span+100ms) plus earlier same-class spans; raw child audio is never stored"
+  },
+  "inputs": {
+    "window_rows_lwe": {
+      "path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_19\\artifacts\\window_rows_lwe.csv",
+      "sha256": "363676AA6CB9BE2053299699150BCDBF860E422E4657E5648EF1AAA23211913C"
+    },
+    "window_rows_so762_dev": {
+      "path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_19\\artifacts\\window_rows_so762_dev.csv",
+      "sha256": "2A58519E137A1DED54C1C2E1580E3A7FD8D79E5D00997737709D768015EA6695"
+    },
+    "window_rows_so762_test": {
+      "path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_19\\artifacts\\window_rows_so762_test.csv",
+      "sha256": "15382D24FF525A6E39F8980C133FEED663C56B6101496ADACFBDA4AE6C3CF187"
+    },
+    "window_rows_so762_absent_dev": {
+      "path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_19\\artifacts\\window_rows_so762_absent_dev.csv",
+      "sha256": "F7A56AB76257C5CBA6F19CD9DB68D3111F6AE5D76D37A9AC698E6D490D9C5F65"
+    },
+    "final_consonant_human_review": {
+      "path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_12\\Results\\final_consonant_human_review.csv",
+      "sha256": "7D069F720BB321D04BF3CA9E24C6D0A5C1B44173B432D630FA2C576808554F68"
+    },
+    "p1_evidence_table": {
+      "path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_14\\artifacts\\p1\\p1_evidence_table.csv",
+      "sha256": "A45D1750BDC22ACDB1737DD57FBECDC07AA734EDF7373B3D78274B38D5DEC8F1"
+    },
+    "so762_manifest": {
+      "path": "D:\\Vscode\\little-world-english\\Research\\Speech\\Phase1_9_16\\artifacts\\audit\\so762_manifest.csv",
+      "sha256": "DA087F6239AF8686A6473AE0B2C2BF3377D6A4D3B74BBE91DFB401C1B1DCF2B2"
+    },
+    "so762_scores_detail": {
+      "path": "D:\\speech-lab\\data\\speechocean762\\resource\\scores-detail.json",
+      "sha256": "8A90FF40558FE8032D9BFA919429DCAE267C0EC3FBDEDF1DCA30C0515EA989E1"
+    }
+  },
+  "outputs": {
+    "frames_lwe.csv": {
+      "sha256": "3930B7C4301DF4448AA0BF0E2B0A86FEC8C8EF67BF89E9A2BA6CB65DDEC02ECB",
+      "rows_incl_header": 11345,
+      "bytes": 1543594
+    },
+    "frames_so762_absent_dev.csv": {
+      "sha256": "C3CC73C891EAC8C2FAF7D0A9FA447C36A2544224CD5BA6BBA016DDB1D6BBFC01",
+      "rows_incl_header": 16493,
+      "bytes": 2410662
+    },
+    "frames_so762_dev.csv": {
+      "sha256": "7974163DA12814A89DE738C4A10FCB90E745B08AC7C9E4D956DDD09A22A91C63",
+      "rows_incl_header": 42203,
+      "bytes": 5821423
+    },
+    "frames_so762_test.csv": {
+      "sha256": "92D76B07A6A42585A2311B0E49614F210913BD144E4CC6F5205A264A5EFBD881",
+      "rows_incl_header": 47091,
+      "bytes": 6540382
+    },
+    "token_evidence_lwe.csv": {
+      "sha256": "1B9EC693EE1EC042D38CF753550EDE1EA047ADD0DE50074961BCFF2D472D6216",
+      "rows_incl_header": 321,
+      "bytes": 148212
+    },
+    "token_evidence_so762_absent_dev.csv": {
+      "sha256": "AC68E54F4B377F03D21B06884BB3BD3DD7DC22F347F3B37A5083D4C076D34B86",
+      "rows_incl_header": 273,
+      "bytes": 126437
+    },
+    "token_evidence_so762_dev.csv": {
+      "sha256": "CDE97BFA7D68AC57498C5B9BDA0359C92875FC8BE9C2C1FE5B1135B5865F3AED",
+      "rows_incl_header": 937,
+      "bytes": 424597
+    },
+    "token_evidence_so762_test.csv": {
+      "sha256": "7355DD5799CE33C4C43E695A129BA1B69F95BCD650262D93BA34BCDEB1F72411",
+      "rows_incl_header": 909,
+      "bytes": 414351
+    }
+  },
+  "run_stats": {
+    "lwe": {
+      "utterances": 80,
+      "encodings": 320,
+      "token_rows": 320,
+      "frame_rows": 11344,
+      "skipped": 0,
+      "determinism_mismatch_vs_1919": 19,
+      "frames_csv": "frames_lwe.csv",
+      "summary_csv": "token_evidence_lwe.csv"
+    },
+    "so762_dev": {
+      "utterances": 94,
+      "encodings": 376,
+      "token_rows": 936,
+      "frame_rows": 42202,
+      "skipped": 0,
+      "determinism_mismatch_vs_1919": 22,
+      "frames_csv": "frames_so762_dev.csv",
+      "summary_csv": "token_evidence_so762_dev.csv"
+    },
+    "so762_test": {
+      "utterances": 93,
+      "encodings": 372,
+      "token_rows": 908,
+      "frame_rows": 47090,
+      "skipped": 0,
+      "determinism_mismatch_vs_1919": 30,
+      "frames_csv": "frames_so762_test.csv",
+      "summary_csv": "token_evidence_so762_test.csv"
+    },
+    "so762_absent_dev": {
+      "utterances": 22,
+      "encodings": 88,
+      "token_rows": 272,
+      "frame_rows": 16492,
+      "skipped": 0,
+      "determinism_mismatch_vs_1919": 7,
+      "frames_csv": "frames_so762_absent_dev.csv",
+      "summary_csv": "token_evidence_so762_absent_dev.csv"
+    }
+  },
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  }
+}

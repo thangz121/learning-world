@@ -1,0 +1,6256 @@
+{
+  "phase": "1.9.21",
+  "primary_window": "full",
+  "primary_window_rationale": "production_vad=false -> the production construction scores the full recording; raw/pad100/pad250 are the WP-1.9.19 stability windows",
+  "datasets": {
+    "dev": {
+      "source": "so762 train children (dev12) + absent-enriched train children",
+      "tokens": 302,
+      "present": 285,
+      "absent": 17
+    },
+    "test": {
+      "source": "so762 test children (speaker-disjoint)",
+      "tokens": 227,
+      "present": 227,
+      "absent": 0,
+      "ground_truth_note": "so762 score 0 can mean incorrect OR missed; test set here is present-heavy"
+    },
+    "lwe": {
+      "source": "LWE blind final-consonant labels (WP-1.9.12)",
+      "labeled": 28,
+      "present": 16,
+      "absent": 12,
+      "human_uncertain_ambiguous": 2,
+      "unlabeled_no_verdict": 50
+    }
+  },
+  "flags": {
+    "production_vad": false,
+    "router_locked": false,
+    "unity_integrated": false,
+    "scorer_modified": false,
+    "production_window_locked": false
+  },
+  "current_mean": {
+    "definition": "production soft_match decision on the production span (exact|soft via span mean + top-1 identity); NOT a mean-posterior threshold - its recall is top-1-identity driven",
+    "dev": {
+      "n": 302,
+      "present": 285,
+      "absent": 17,
+      "present_recall": 0.9088,
+      "frr": 0.0912,
+      "absent_detection": 0.4706,
+      "far": 0.5294,
+      "unsupported_present": 68,
+      "unsupported_present_rate": 0.2252,
+      "false_support": 53,
+      "false_support_rate": 0.1755,
+      "wrong_occurrence": 69,
+      "wrong_occurrence_rate": 0.2285,
+      "uncertain": 0,
+      "uncertain_rate": 0.0,
+      "decision_coverage": 1.0
+    },
+    "lwe_external": {
+      "n": 28,
+      "present": 16,
+      "absent": 12,
+      "present_recall": 0.9375,
+      "frr": 0.0625,
+      "absent_detection": 0.5833,
+      "far": 0.4167,
+      "unsupported_present": 9,
+      "unsupported_present_rate": 0.3214,
+      "false_support": 3,
+      "false_support_rate": 0.1071,
+      "wrong_occurrence": 1,
+      "wrong_occurrence_rate": 0.0357,
+      "uncertain": 0,
+      "uncertain_rate": 0.0,
+      "decision_coverage": 1.0
+    },
+    "test_speaker_disjoint": {
+      "n": 227,
+      "present": 227,
+      "absent": 0,
+      "present_recall": 0.8943,
+      "frr": 0.1057,
+      "absent_detection": null,
+      "far": null,
+      "unsupported_present": 40,
+      "unsupported_present_rate": 0.1762,
+      "false_support": 28,
+      "false_support_rate": 0.1233,
+      "wrong_occurrence": 73,
+      "wrong_occurrence_rate": 0.3216,
+      "uncertain": 0,
+      "uncertain_rate": 0.0,
+      "decision_coverage": 1.0
+    },
+    "recall_floor_for_selection": 0.9088
+  },
+  "mean_a_control": {
+    "tau0.02": {
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.5,
+        "frr": 0.5,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6877,
+        "frr": 0.3123,
+        "absent_detection": 0.8824,
+        "far": 0.1176,
+        "unsupported_present": 17,
+        "unsupported_present_rate": 0.0563,
+        "false_support": 16,
+        "false_support_rate": 0.053,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    },
+    "tau0.05": {
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.0625,
+        "frr": 0.9375,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.4632,
+        "frr": 0.5368,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 9,
+        "unsupported_present_rate": 0.0298,
+        "false_support": 9,
+        "false_support_rate": 0.0298,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    },
+    "tau0.1": {
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.0,
+        "frr": 1.0,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.2526,
+        "frr": 0.7474,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 1,
+        "unsupported_present_rate": 0.0033,
+        "false_support": 1,
+        "false_support_rate": 0.0033,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    },
+    "tau0.15": {
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.0,
+        "frr": 1.0,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1018,
+        "frr": 0.8982,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    },
+    "tau0.2": {
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.0,
+        "frr": 1.0,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.0421,
+        "frr": 0.9579,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    },
+    "tau0.3": {
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.0,
+        "frr": 1.0,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.007,
+        "frr": 0.993,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    }
+  },
+  "dev_grids": {
+    "MAX": [
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.01
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.9018,
+        "frr": 0.0982,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 55,
+        "unsupported_present_rate": 0.1821,
+        "false_support": 42,
+        "false_support_rate": 0.1391,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.02
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8842,
+        "frr": 0.1158,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 50,
+        "unsupported_present_rate": 0.1656,
+        "false_support": 38,
+        "false_support_rate": 0.1258,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8456,
+        "frr": 0.1544,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 38,
+        "unsupported_present_rate": 0.1258,
+        "false_support": 31,
+        "false_support_rate": 0.1026,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.1
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8105,
+        "frr": 0.1895,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 28,
+        "unsupported_present_rate": 0.0927,
+        "false_support": 23,
+        "false_support_rate": 0.0762,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.15
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7789,
+        "frr": 0.2211,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 19,
+        "unsupported_present_rate": 0.0629,
+        "false_support": 19,
+        "false_support_rate": 0.0629,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.2
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7614,
+        "frr": 0.2386,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 15,
+        "unsupported_present_rate": 0.0497,
+        "false_support": 15,
+        "false_support_rate": 0.0497,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.3
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7263,
+        "frr": 0.2737,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 9,
+        "unsupported_present_rate": 0.0298,
+        "false_support": 9,
+        "false_support_rate": 0.0298,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.4
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6947,
+        "frr": 0.3053,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 6,
+        "unsupported_present_rate": 0.0199,
+        "false_support": 6,
+        "false_support_rate": 0.0199,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.5
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6456,
+        "frr": 0.3544,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "MAX",
+        "setting": "max",
+        "params": {
+          "tau": 0.6
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6,
+        "frr": 0.4,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    ],
+    "TOP2": [
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.01
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8877,
+        "frr": 0.1123,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 51,
+        "unsupported_present_rate": 0.1689,
+        "false_support": 38,
+        "false_support_rate": 0.1258,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.02
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8702,
+        "frr": 0.1298,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 46,
+        "unsupported_present_rate": 0.1523,
+        "false_support": 36,
+        "false_support_rate": 0.1192,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8281,
+        "frr": 0.1719,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 33,
+        "unsupported_present_rate": 0.1093,
+        "false_support": 26,
+        "false_support_rate": 0.0861,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.1
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7825,
+        "frr": 0.2175,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 20,
+        "unsupported_present_rate": 0.0662,
+        "false_support": 18,
+        "false_support_rate": 0.0596,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.15
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7439,
+        "frr": 0.2561,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 12,
+        "unsupported_present_rate": 0.0397,
+        "false_support": 12,
+        "false_support_rate": 0.0397,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.2
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7088,
+        "frr": 0.2912,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 6,
+        "unsupported_present_rate": 0.0199,
+        "false_support": 6,
+        "false_support_rate": 0.0199,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.3
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6456,
+        "frr": 0.3544,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.4
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.5825,
+        "frr": 0.4175,
+        "absent_detection": 0.8235,
+        "far": 0.1765,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP2",
+        "setting": "top2",
+        "params": {
+          "tau": 0.5
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.3509,
+        "frr": 0.6491,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    ],
+    "TOP3": [
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.01
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8842,
+        "frr": 0.1158,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 50,
+        "unsupported_present_rate": 0.1656,
+        "false_support": 37,
+        "false_support_rate": 0.1225,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.02
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8632,
+        "frr": 0.1368,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 43,
+        "unsupported_present_rate": 0.1424,
+        "false_support": 34,
+        "false_support_rate": 0.1126,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.807,
+        "frr": 0.193,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 27,
+        "unsupported_present_rate": 0.0894,
+        "false_support": 21,
+        "false_support_rate": 0.0695,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.1
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7509,
+        "frr": 0.2491,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 13,
+        "unsupported_present_rate": 0.043,
+        "false_support": 13,
+        "false_support_rate": 0.043,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.15
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6982,
+        "frr": 0.3018,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 5,
+        "unsupported_present_rate": 0.0166,
+        "false_support": 5,
+        "false_support_rate": 0.0166,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.2
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6526,
+        "frr": 0.3474,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.3
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.5509,
+        "frr": 0.4491,
+        "absent_detection": 0.8824,
+        "far": 0.1176,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.4
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.2,
+        "frr": 0.8,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP3",
+        "setting": "top3",
+        "params": {
+          "tau": 0.5
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1228,
+        "frr": 0.8772,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    ],
+    "TOP5": [
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.01
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8772,
+        "frr": 0.1228,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 48,
+        "unsupported_present_rate": 0.1589,
+        "false_support": 35,
+        "false_support_rate": 0.1159,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.02
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8386,
+        "frr": 0.1614,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 36,
+        "unsupported_present_rate": 0.1192,
+        "false_support": 28,
+        "false_support_rate": 0.0927,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7754,
+        "frr": 0.2246,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 18,
+        "unsupported_present_rate": 0.0596,
+        "false_support": 15,
+        "false_support_rate": 0.0497,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.1
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6807,
+        "frr": 0.3193,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.15
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6175,
+        "frr": 0.3825,
+        "absent_detection": 0.8235,
+        "far": 0.1765,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.2
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.3789,
+        "frr": 0.6211,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.3
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1228,
+        "frr": 0.8772,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.4
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.0281,
+        "frr": 0.9719,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TOP5",
+        "setting": "top5",
+        "params": {
+          "tau": 0.5
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.0035,
+        "frr": 0.9965,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    ],
+    "LOCAL_CLUSTER": [
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 1,
+          "tn": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7614,
+        "frr": 0.2386,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 15,
+        "unsupported_present_rate": 0.0497,
+        "false_support": 15,
+        "false_support_rate": 0.0497,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 1,
+          "tn": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1439,
+        "frr": 0.8561,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 2,
+          "tn": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1439,
+        "frr": 0.8561,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 2,
+          "tn": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1439,
+        "frr": 0.8561,
+        "absent_detection": 0.9412,
+        "far": 0.0588,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.3,
+          "w": 1,
+          "tn": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7263,
+        "frr": 0.2737,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 9,
+        "unsupported_present_rate": 0.0298,
+        "false_support": 9,
+        "false_support_rate": 0.0298,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.3,
+          "w": 1,
+          "tn": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1439,
+        "frr": 0.8561,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.3,
+          "w": 2,
+          "tn": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1439,
+        "frr": 0.8561,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.3,
+          "w": 2,
+          "tn": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1439,
+        "frr": 0.8561,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.4,
+          "w": 1,
+          "tn": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6947,
+        "frr": 0.3053,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 6,
+        "unsupported_present_rate": 0.0199,
+        "false_support": 6,
+        "false_support_rate": 0.0199,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.4,
+          "w": 1,
+          "tn": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1333,
+        "frr": 0.8667,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.4,
+          "w": 2,
+          "tn": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1333,
+        "frr": 0.8667,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.4,
+          "w": 2,
+          "tn": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1333,
+        "frr": 0.8667,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.5,
+          "w": 1,
+          "tn": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6456,
+        "frr": 0.3544,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.5,
+          "w": 1,
+          "tn": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1298,
+        "frr": 0.8702,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.5,
+          "w": 2,
+          "tn": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1298,
+        "frr": 0.8702,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "LOCAL_CLUSTER",
+        "setting": "cluster",
+        "params": {
+          "tp": 0.5,
+          "w": 2,
+          "tn": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.1298,
+        "frr": 0.8702,
+        "absent_detection": 1.0,
+        "far": 0.0,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    ],
+    "PEAK_PROMINENCE": [
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.15,
+          "tm": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7123,
+        "frr": 0.2877,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.15,
+          "tm": 0.1
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7053,
+        "frr": 0.2947,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.15,
+          "tm": 0.2
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6877,
+        "frr": 0.3123,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.25,
+          "tm": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7018,
+        "frr": 0.2982,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.25,
+          "tm": 0.1
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6982,
+        "frr": 0.3018,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.25,
+          "tm": 0.2
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6807,
+        "frr": 0.3193,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.35,
+          "tm": 0.0
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6807,
+        "frr": 0.3193,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.35,
+          "tm": 0.1
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6772,
+        "frr": 0.3228,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "PEAK_PROMINENCE",
+        "setting": "prom",
+        "params": {
+          "tp": 0.35,
+          "tm": 0.2
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6596,
+        "frr": 0.3404,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    ],
+    "TEMPORAL_SUPPORT": [
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.01
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7368,
+        "frr": 0.2632,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 7,
+        "unsupported_present_rate": 0.0232,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.02
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7333,
+        "frr": 0.2667,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 6,
+        "unsupported_present_rate": 0.0199,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.05
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7088,
+        "frr": 0.2912,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 1,
+        "unsupported_present_rate": 0.0033,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.1
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7018,
+        "frr": 0.2982,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.15
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6842,
+        "frr": 0.3158,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.2
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6632,
+        "frr": 0.3368,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.25
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6491,
+        "frr": 0.3509,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.3
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.6281,
+        "frr": 0.3719,
+        "absent_detection": 0.7647,
+        "far": 0.2353,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      {
+        "family": "TEMPORAL_SUPPORT",
+        "setting": "ts",
+        "params": {
+          "tau": 0.4
+        },
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.5579,
+        "frr": 0.4421,
+        "absent_detection": 0.8824,
+        "far": 0.1176,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    ],
+    "CONSERVATIVE_SUPPORT": [
+      {
+        "family": "CONSERVATIVE_SUPPORT",
+        "setting": "cons",
+        "params": {
+          "thi": 0.15,
+          "tlo": 0.05
+        },
+        "n": 302,
+        "present": 278,
+        "absent": 17,
+        "present_recall": 0.7014,
+        "frr": 0.2986,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 68,
+        "wrong_occurrence_rate": 0.2252,
+        "uncertain": 7,
+        "uncertain_rate": 0.0232,
+        "decision_coverage": 0.9768
+      },
+      {
+        "family": "CONSERVATIVE_SUPPORT",
+        "setting": "cons",
+        "params": {
+          "thi": 0.15,
+          "tlo": 0.1
+        },
+        "n": 302,
+        "present": 280,
+        "absent": 17,
+        "present_recall": 0.6964,
+        "frr": 0.3036,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 5,
+        "uncertain_rate": 0.0166,
+        "decision_coverage": 0.9834
+      },
+      {
+        "family": "CONSERVATIVE_SUPPORT",
+        "setting": "cons",
+        "params": {
+          "thi": 0.2,
+          "tlo": 0.05
+        },
+        "n": 302,
+        "present": 272,
+        "absent": 17,
+        "present_recall": 0.6949,
+        "frr": 0.3051,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 68,
+        "wrong_occurrence_rate": 0.2252,
+        "uncertain": 13,
+        "uncertain_rate": 0.043,
+        "decision_coverage": 0.957
+      },
+      {
+        "family": "CONSERVATIVE_SUPPORT",
+        "setting": "cons",
+        "params": {
+          "thi": 0.2,
+          "tlo": 0.1
+        },
+        "n": 302,
+        "present": 274,
+        "absent": 17,
+        "present_recall": 0.6898,
+        "frr": 0.3102,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 11,
+        "uncertain_rate": 0.0364,
+        "decision_coverage": 0.9636
+      },
+      {
+        "family": "CONSERVATIVE_SUPPORT",
+        "setting": "cons",
+        "params": {
+          "thi": 0.25,
+          "tlo": 0.05
+        },
+        "n": 302,
+        "present": 268,
+        "absent": 17,
+        "present_recall": 0.6903,
+        "frr": 0.3097,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 68,
+        "wrong_occurrence_rate": 0.2252,
+        "uncertain": 17,
+        "uncertain_rate": 0.0563,
+        "decision_coverage": 0.9437
+      },
+      {
+        "family": "CONSERVATIVE_SUPPORT",
+        "setting": "cons",
+        "params": {
+          "thi": 0.25,
+          "tlo": 0.1
+        },
+        "n": 302,
+        "present": 270,
+        "absent": 17,
+        "present_recall": 0.6852,
+        "frr": 0.3148,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 15,
+        "uncertain_rate": 0.0497,
+        "decision_coverage": 0.9503
+      },
+      {
+        "family": "CONSERVATIVE_SUPPORT",
+        "setting": "cons",
+        "params": {
+          "thi": 0.3,
+          "tlo": 0.05
+        },
+        "n": 302,
+        "present": 262,
+        "absent": 16,
+        "present_recall": 0.6832,
+        "frr": 0.3168,
+        "absent_detection": 0.75,
+        "far": 0.25,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 64,
+        "wrong_occurrence_rate": 0.2119,
+        "uncertain": 24,
+        "uncertain_rate": 0.0795,
+        "decision_coverage": 0.9205
+      },
+      {
+        "family": "CONSERVATIVE_SUPPORT",
+        "setting": "cons",
+        "params": {
+          "thi": 0.3,
+          "tlo": 0.1
+        },
+        "n": 302,
+        "present": 264,
+        "absent": 16,
+        "present_recall": 0.678,
+        "frr": 0.322,
+        "absent_detection": 0.75,
+        "far": 0.25,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 65,
+        "wrong_occurrence_rate": 0.2152,
+        "uncertain": 22,
+        "uncertain_rate": 0.0728,
+        "decision_coverage": 0.9272
+      }
+    ]
+  },
+  "dev_selection": {
+    "rule": "pre-declared small grids; FRR-first: require dev present recall >= 0.9088 (the production dev recall - no FRR increase); then maximise absent detection, then coverage; settings that cannot reach the floor fall back to their max-recall point (flagged in dev_grids)",
+    "selected_family": "MAX",
+    "selected_setting": {
+      "setting": "max",
+      "params": {
+        "tau": 0.01
+      },
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.9018,
+        "frr": 0.0982,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 55,
+        "unsupported_present_rate": 0.1821,
+        "false_support": 42,
+        "false_support_rate": 0.1391,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    },
+    "per_family_selected": {
+      "MAX": {
+        "setting": "max",
+        "params": {
+          "tau": 0.01
+        },
+        "dev": {
+          "n": 302,
+          "present": 285,
+          "absent": 17,
+          "present_recall": 0.9018,
+          "frr": 0.0982,
+          "absent_detection": 0.6471,
+          "far": 0.3529,
+          "unsupported_present": 55,
+          "unsupported_present_rate": 0.1821,
+          "false_support": 42,
+          "false_support_rate": 0.1391,
+          "wrong_occurrence": 69,
+          "wrong_occurrence_rate": 0.2285,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        }
+      },
+      "TOP2": {
+        "setting": "top2",
+        "params": {
+          "tau": 0.01
+        },
+        "dev": {
+          "n": 302,
+          "present": 285,
+          "absent": 17,
+          "present_recall": 0.8877,
+          "frr": 0.1123,
+          "absent_detection": 0.6471,
+          "far": 0.3529,
+          "unsupported_present": 51,
+          "unsupported_present_rate": 0.1689,
+          "false_support": 38,
+          "false_support_rate": 0.1258,
+          "wrong_occurrence": 69,
+          "wrong_occurrence_rate": 0.2285,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        }
+      },
+      "TOP3": {
+        "setting": "top3",
+        "params": {
+          "tau": 0.01
+        },
+        "dev": {
+          "n": 302,
+          "present": 285,
+          "absent": 17,
+          "present_recall": 0.8842,
+          "frr": 0.1158,
+          "absent_detection": 0.6471,
+          "far": 0.3529,
+          "unsupported_present": 50,
+          "unsupported_present_rate": 0.1656,
+          "false_support": 37,
+          "false_support_rate": 0.1225,
+          "wrong_occurrence": 69,
+          "wrong_occurrence_rate": 0.2285,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        }
+      },
+      "TOP5": {
+        "setting": "top5",
+        "params": {
+          "tau": 0.01
+        },
+        "dev": {
+          "n": 302,
+          "present": 285,
+          "absent": 17,
+          "present_recall": 0.8772,
+          "frr": 0.1228,
+          "absent_detection": 0.6471,
+          "far": 0.3529,
+          "unsupported_present": 48,
+          "unsupported_present_rate": 0.1589,
+          "false_support": 35,
+          "false_support_rate": 0.1159,
+          "wrong_occurrence": 69,
+          "wrong_occurrence_rate": 0.2285,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        }
+      },
+      "LOCAL_CLUSTER": {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 1,
+          "tn": 0.0
+        },
+        "dev": {
+          "n": 302,
+          "present": 285,
+          "absent": 17,
+          "present_recall": 0.7614,
+          "frr": 0.2386,
+          "absent_detection": 0.7059,
+          "far": 0.2941,
+          "unsupported_present": 15,
+          "unsupported_present_rate": 0.0497,
+          "false_support": 15,
+          "false_support_rate": 0.0497,
+          "wrong_occurrence": 69,
+          "wrong_occurrence_rate": 0.2285,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        }
+      },
+      "PEAK_PROMINENCE": {
+        "setting": "prom",
+        "params": {
+          "tp": 0.15,
+          "tm": 0.0
+        },
+        "dev": {
+          "n": 302,
+          "present": 285,
+          "absent": 17,
+          "present_recall": 0.7123,
+          "frr": 0.2877,
+          "absent_detection": 0.7059,
+          "far": 0.2941,
+          "unsupported_present": 0,
+          "unsupported_present_rate": 0.0,
+          "false_support": 0,
+          "false_support_rate": 0.0,
+          "wrong_occurrence": 69,
+          "wrong_occurrence_rate": 0.2285,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        }
+      },
+      "TEMPORAL_SUPPORT": {
+        "setting": "ts",
+        "params": {
+          "tau": 0.01
+        },
+        "dev": {
+          "n": 302,
+          "present": 285,
+          "absent": 17,
+          "present_recall": 0.7368,
+          "frr": 0.2632,
+          "absent_detection": 0.7059,
+          "far": 0.2941,
+          "unsupported_present": 7,
+          "unsupported_present_rate": 0.0232,
+          "false_support": 0,
+          "false_support_rate": 0.0,
+          "wrong_occurrence": 69,
+          "wrong_occurrence_rate": 0.2285,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        }
+      },
+      "CONSERVATIVE_SUPPORT": {
+        "setting": "cons",
+        "params": {
+          "thi": 0.15,
+          "tlo": 0.05
+        },
+        "dev": {
+          "n": 302,
+          "present": 278,
+          "absent": 17,
+          "present_recall": 0.7014,
+          "frr": 0.2986,
+          "absent_detection": 0.7059,
+          "far": 0.2941,
+          "unsupported_present": 0,
+          "unsupported_present_rate": 0.0,
+          "false_support": 0,
+          "false_support_rate": 0.0,
+          "wrong_occurrence": 68,
+          "wrong_occurrence_rate": 0.2252,
+          "uncertain": 7,
+          "uncertain_rate": 0.0232,
+          "decision_coverage": 0.9768
+        }
+      }
+    }
+  },
+  "variants": {
+    "MAX": {
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.9018,
+        "frr": 0.0982,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 55,
+        "unsupported_present_rate": 0.1821,
+        "false_support": 42,
+        "false_support_rate": 0.1391,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.9375,
+        "frr": 0.0625,
+        "absent_detection": 0.25,
+        "far": 0.75,
+        "unsupported_present": 13,
+        "unsupported_present_rate": 0.4643,
+        "false_support": 6,
+        "false_support_rate": 0.2143,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "test_speaker_disjoint": {
+        "n": 227,
+        "present": 227,
+        "absent": 0,
+        "present_recall": 0.8855,
+        "frr": 0.1145,
+        "absent_detection": null,
+        "far": null,
+        "unsupported_present": 34,
+        "unsupported_present_rate": 0.1498,
+        "false_support": 22,
+        "false_support_rate": 0.0969,
+        "wrong_occurrence": 73,
+        "wrong_occurrence_rate": 0.3216,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "decisions_lwe": [
+        {
+          "token_id": "child_01_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_five",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_nine",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_ten",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_five",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_02_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_ten",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_03_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_six",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_04_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_04_four",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_06_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_six",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_eight",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_07_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_seven",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_08_eight",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        }
+      ]
+    },
+    "TOP2": {
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8877,
+        "frr": 0.1123,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 51,
+        "unsupported_present_rate": 0.1689,
+        "false_support": 38,
+        "false_support_rate": 0.1258,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.875,
+        "frr": 0.125,
+        "absent_detection": 0.3333,
+        "far": 0.6667,
+        "unsupported_present": 11,
+        "unsupported_present_rate": 0.3929,
+        "false_support": 5,
+        "false_support_rate": 0.1786,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "test_speaker_disjoint": {
+        "n": 227,
+        "present": 227,
+        "absent": 0,
+        "present_recall": 0.859,
+        "frr": 0.141,
+        "absent_detection": null,
+        "far": null,
+        "unsupported_present": 28,
+        "unsupported_present_rate": 0.1233,
+        "false_support": 18,
+        "false_support_rate": 0.0793,
+        "wrong_occurrence": 73,
+        "wrong_occurrence_rate": 0.3216,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "decisions_lwe": [
+        {
+          "token_id": "child_01_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_nine",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_ten",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_five",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_02_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_ten",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_03_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_six",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_04_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_04_four",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_06_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_six",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_eight",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_07_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_seven",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_08_eight",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        }
+      ]
+    },
+    "TOP3": {
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8842,
+        "frr": 0.1158,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 50,
+        "unsupported_present_rate": 0.1656,
+        "false_support": 37,
+        "false_support_rate": 0.1225,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.8125,
+        "frr": 0.1875,
+        "absent_detection": 0.4167,
+        "far": 0.5833,
+        "unsupported_present": 9,
+        "unsupported_present_rate": 0.3214,
+        "false_support": 3,
+        "false_support_rate": 0.1071,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "test_speaker_disjoint": {
+        "n": 227,
+        "present": 227,
+        "absent": 0,
+        "present_recall": 0.8546,
+        "frr": 0.1454,
+        "absent_detection": null,
+        "far": null,
+        "unsupported_present": 27,
+        "unsupported_present_rate": 0.1189,
+        "false_support": 17,
+        "false_support_rate": 0.0749,
+        "wrong_occurrence": 73,
+        "wrong_occurrence_rate": 0.3216,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "decisions_lwe": [
+        {
+          "token_id": "child_01_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_nine",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_ten",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_five",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_02_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_ten",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_03_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_six",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_04_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_04_four",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_06_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_six",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_07_one",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_seven",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_08_eight",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        }
+      ]
+    },
+    "TOP5": {
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.8772,
+        "frr": 0.1228,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 48,
+        "unsupported_present_rate": 0.1589,
+        "false_support": 35,
+        "false_support_rate": 0.1159,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.8125,
+        "frr": 0.1875,
+        "absent_detection": 0.5,
+        "far": 0.5,
+        "unsupported_present": 8,
+        "unsupported_present_rate": 0.2857,
+        "false_support": 2,
+        "false_support_rate": 0.0714,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "test_speaker_disjoint": {
+        "n": 227,
+        "present": 227,
+        "absent": 0,
+        "present_recall": 0.8458,
+        "frr": 0.1542,
+        "absent_detection": null,
+        "far": null,
+        "unsupported_present": 25,
+        "unsupported_present_rate": 0.1101,
+        "false_support": 16,
+        "false_support_rate": 0.0705,
+        "wrong_occurrence": 73,
+        "wrong_occurrence_rate": 0.3216,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "decisions_lwe": [
+        {
+          "token_id": "child_01_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_nine",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_ten",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_five",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_02_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_ten",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_03_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_six",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_04_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_04_four",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_06_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_six",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_07_one",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_seven",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_08_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        }
+      ]
+    },
+    "LOCAL_CLUSTER": {
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7614,
+        "frr": 0.2386,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 15,
+        "unsupported_present_rate": 0.0497,
+        "false_support": 15,
+        "false_support_rate": 0.0497,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.5625,
+        "frr": 0.4375,
+        "absent_detection": 0.9167,
+        "far": 0.0833,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "test_speaker_disjoint": {
+        "n": 227,
+        "present": 227,
+        "absent": 0,
+        "present_recall": 0.7533,
+        "frr": 0.2467,
+        "absent_detection": null,
+        "far": null,
+        "unsupported_present": 4,
+        "unsupported_present_rate": 0.0176,
+        "false_support": 4,
+        "false_support_rate": 0.0176,
+        "wrong_occurrence": 73,
+        "wrong_occurrence_rate": 0.3216,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "decisions_lwe": [
+        {
+          "token_id": "child_01_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_nine",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_seven",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_ten",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_five",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_02_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_ten",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_03_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_six",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_04_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_04_four",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_06_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_six",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_07_one",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_seven",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_08_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        }
+      ]
+    },
+    "PEAK_PROMINENCE": {
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7123,
+        "frr": 0.2877,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.5625,
+        "frr": 0.4375,
+        "absent_detection": 0.8333,
+        "far": 0.1667,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "test_speaker_disjoint": {
+        "n": 227,
+        "present": 227,
+        "absent": 0,
+        "present_recall": 0.7357,
+        "frr": 0.2643,
+        "absent_detection": null,
+        "far": null,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 73,
+        "wrong_occurrence_rate": 0.3216,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "decisions_lwe": [
+        {
+          "token_id": "child_01_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_nine",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_seven",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_ten",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_five",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_02_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_ten",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_03_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_six",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_04_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_04_four",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_06_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_six",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_07_one",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_seven",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_08_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        }
+      ]
+    },
+    "TEMPORAL_SUPPORT": {
+      "dev": {
+        "n": 302,
+        "present": 285,
+        "absent": 17,
+        "present_recall": 0.7368,
+        "frr": 0.2632,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 7,
+        "unsupported_present_rate": 0.0232,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 69,
+        "wrong_occurrence_rate": 0.2285,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 12,
+        "present_recall": 0.5625,
+        "frr": 0.4375,
+        "absent_detection": 0.8333,
+        "far": 0.1667,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "test_speaker_disjoint": {
+        "n": 227,
+        "present": 227,
+        "absent": 0,
+        "present_recall": 0.7445,
+        "frr": 0.2555,
+        "absent_detection": null,
+        "far": null,
+        "unsupported_present": 6,
+        "unsupported_present_rate": 0.0264,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 73,
+        "wrong_occurrence_rate": 0.3216,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "decisions_lwe": [
+        {
+          "token_id": "child_01_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_nine",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_seven",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_ten",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_five",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_four",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_02_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_ten",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_03_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_six",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_04_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_04_four",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_06_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_six",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_07_one",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_seven",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_08_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        }
+      ]
+    },
+    "CONSERVATIVE_SUPPORT": {
+      "dev": {
+        "n": 302,
+        "present": 278,
+        "absent": 17,
+        "present_recall": 0.7014,
+        "frr": 0.2986,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 68,
+        "wrong_occurrence_rate": 0.2252,
+        "uncertain": 7,
+        "uncertain_rate": 0.0232,
+        "decision_coverage": 0.9768
+      },
+      "lwe_external": {
+        "n": 28,
+        "present": 16,
+        "absent": 11,
+        "present_recall": 0.5625,
+        "frr": 0.4375,
+        "absent_detection": 0.9091,
+        "far": 0.0909,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 1,
+        "wrong_occurrence_rate": 0.0357,
+        "uncertain": 1,
+        "uncertain_rate": 0.0357,
+        "decision_coverage": 0.9643
+      },
+      "test_speaker_disjoint": {
+        "n": 227,
+        "present": 220,
+        "absent": 0,
+        "present_recall": 0.7045,
+        "frr": 0.2955,
+        "absent_detection": null,
+        "far": null,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 72,
+        "wrong_occurrence_rate": 0.3172,
+        "uncertain": 7,
+        "uncertain_rate": 0.0308,
+        "decision_coverage": 0.9692
+      },
+      "decisions_lwe": [
+        {
+          "token_id": "child_01_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_01_nine",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_seven",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_01_ten",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_five",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_four",
+          "decision": "UNCERTAIN",
+          "truth": 0
+        },
+        {
+          "token_id": "child_02_one",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_02_ten",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_03_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_03_six",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_04_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_04_four",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_05_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_eight",
+          "decision": "PRESENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_06_four",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_06_six",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_07_one",
+          "decision": "ABSENT",
+          "truth": 1
+        },
+        {
+          "token_id": "child_07_seven",
+          "decision": "PRESENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_08_eight",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_five",
+          "decision": "ABSENT",
+          "truth": 0
+        },
+        {
+          "token_id": "child_09_seven",
+          "decision": "PRESENT",
+          "truth": 1
+        }
+      ]
+    }
+  },
+  "variant_auc": {
+    "CURRENT_MEAN": {
+      "dev": 0.8151,
+      "lwe_external": 0.7604
+    },
+    "MAX": {
+      "dev": 0.8193,
+      "lwe_external": 0.7812
+    },
+    "TOP3": {
+      "dev": 0.7998,
+      "lwe_external": 0.7917
+    },
+    "TOP5": {
+      "dev": 0.794,
+      "lwe_external": 0.776
+    },
+    "LOCAL_CLUSTER": {
+      "dev": 0.8193,
+      "lwe_external": 0.7812
+    },
+    "TEMPORAL_SUPPORT": {
+      "dev": 0.7767,
+      "lwe_external": 0.7552
+    }
+  },
+  "lwe_threshold_curves": {
+    "MAX": [
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.01
+        },
+        "present_recall": 0.9375,
+        "far": 0.75,
+        "uncertain_rate": 0.0,
+        "false_support": 6,
+        "unsupported_present": 13
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.02
+        },
+        "present_recall": 0.8125,
+        "far": 0.5833,
+        "uncertain_rate": 0.0,
+        "false_support": 3,
+        "unsupported_present": 9
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.05
+        },
+        "present_recall": 0.75,
+        "far": 0.25,
+        "uncertain_rate": 0.0,
+        "false_support": 1,
+        "unsupported_present": 4
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.15
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.2
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.3
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.4
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.5
+        },
+        "present_recall": 0.5,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "max",
+        "params": {
+          "tau": 0.6
+        },
+        "present_recall": 0.4375,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      }
+    ],
+    "TOP2": [
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.01
+        },
+        "present_recall": 0.875,
+        "far": 0.6667,
+        "uncertain_rate": 0.0,
+        "false_support": 5,
+        "unsupported_present": 11
+      },
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.02
+        },
+        "present_recall": 0.8125,
+        "far": 0.5,
+        "uncertain_rate": 0.0,
+        "false_support": 2,
+        "unsupported_present": 8
+      },
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.05
+        },
+        "present_recall": 0.6875,
+        "far": 0.25,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 3
+      },
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.15
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.2
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.3
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.4
+        },
+        "present_recall": 0.375,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top2",
+        "params": {
+          "tau": 0.5
+        },
+        "present_recall": 0.25,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      }
+    ],
+    "TOP3": [
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.01
+        },
+        "present_recall": 0.8125,
+        "far": 0.5833,
+        "uncertain_rate": 0.0,
+        "false_support": 3,
+        "unsupported_present": 9
+      },
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.02
+        },
+        "present_recall": 0.8125,
+        "far": 0.5,
+        "uncertain_rate": 0.0,
+        "false_support": 2,
+        "unsupported_present": 8
+      },
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.05
+        },
+        "present_recall": 0.625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 1
+      },
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.15
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.2
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.3
+        },
+        "present_recall": 0.375,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.4
+        },
+        "present_recall": 0.125,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top3",
+        "params": {
+          "tau": 0.5
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      }
+    ],
+    "TOP5": [
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.01
+        },
+        "present_recall": 0.8125,
+        "far": 0.5,
+        "uncertain_rate": 0.0,
+        "false_support": 2,
+        "unsupported_present": 8
+      },
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.02
+        },
+        "present_recall": 0.75,
+        "far": 0.5,
+        "uncertain_rate": 0.0,
+        "false_support": 2,
+        "unsupported_present": 7
+      },
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.05
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.15
+        },
+        "present_recall": 0.5,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.2
+        },
+        "present_recall": 0.3125,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.3
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.4
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "top5",
+        "params": {
+          "tau": 0.5
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      }
+    ],
+    "LOCAL_CLUSTER": [
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 1,
+          "tn": 0.0
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 1,
+          "tn": 0.05
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 2,
+          "tn": 0.0
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.2,
+          "w": 2,
+          "tn": 0.05
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.3,
+          "w": 1,
+          "tn": 0.0
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.3,
+          "w": 1,
+          "tn": 0.05
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.3,
+          "w": 2,
+          "tn": 0.0
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.3,
+          "w": 2,
+          "tn": 0.05
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.4,
+          "w": 1,
+          "tn": 0.0
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.4,
+          "w": 1,
+          "tn": 0.05
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.4,
+          "w": 2,
+          "tn": 0.0
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.4,
+          "w": 2,
+          "tn": 0.05
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.5,
+          "w": 1,
+          "tn": 0.0
+        },
+        "present_recall": 0.5,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.5,
+          "w": 1,
+          "tn": 0.05
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.5,
+          "w": 2,
+          "tn": 0.0
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cluster",
+        "params": {
+          "tp": 0.5,
+          "w": 2,
+          "tn": 0.05
+        },
+        "present_recall": 0.0,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      }
+    ],
+    "PEAK_PROMINENCE": [
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.15,
+          "tm": 0.0
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.15,
+          "tm": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.15,
+          "tm": 0.2
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.25,
+          "tm": 0.0
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.25,
+          "tm": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.25,
+          "tm": 0.2
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.35,
+          "tm": 0.0
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.35,
+          "tm": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "prom",
+        "params": {
+          "tp": 0.35,
+          "tm": 0.2
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      }
+    ],
+    "TEMPORAL_SUPPORT": [
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.01
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.02
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.05
+        },
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.15
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.2
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.25
+        },
+        "present_recall": 0.5,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.3
+        },
+        "present_recall": 0.4375,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "ts",
+        "params": {
+          "tau": 0.4
+        },
+        "present_recall": 0.3125,
+        "far": 0.0,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      }
+    ],
+    "CONSERVATIVE_SUPPORT": [
+      {
+        "setting": "cons",
+        "params": {
+          "thi": 0.15,
+          "tlo": 0.05
+        },
+        "present_recall": 0.5625,
+        "far": 0.0909,
+        "uncertain_rate": 0.0357,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cons",
+        "params": {
+          "thi": 0.15,
+          "tlo": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cons",
+        "params": {
+          "thi": 0.2,
+          "tlo": 0.05
+        },
+        "present_recall": 0.5625,
+        "far": 0.0909,
+        "uncertain_rate": 0.0357,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cons",
+        "params": {
+          "thi": 0.2,
+          "tlo": 0.1
+        },
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "uncertain_rate": 0.0,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cons",
+        "params": {
+          "thi": 0.25,
+          "tlo": 0.05
+        },
+        "present_recall": 0.5333,
+        "far": 0.0909,
+        "uncertain_rate": 0.0714,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cons",
+        "params": {
+          "thi": 0.25,
+          "tlo": 0.1
+        },
+        "present_recall": 0.5333,
+        "far": 0.0833,
+        "uncertain_rate": 0.0357,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cons",
+        "params": {
+          "thi": 0.3,
+          "tlo": 0.05
+        },
+        "present_recall": 0.5,
+        "far": 0.0909,
+        "uncertain_rate": 0.1071,
+        "false_support": 0,
+        "unsupported_present": 0
+      },
+      {
+        "setting": "cons",
+        "params": {
+          "thi": 0.3,
+          "tlo": 0.1
+        },
+        "present_recall": 0.5,
+        "far": 0.0833,
+        "uncertain_rate": 0.0714,
+        "false_support": 0,
+        "unsupported_present": 0
+      }
+    ]
+  },
+  "matched_recall_max": {
+    "production_lwe_recall": 0.9375,
+    "production_lwe_far": 0.4167,
+    "points": [
+      {
+        "tau": 0.005,
+        "present_recall": 0.9375,
+        "far": 0.9167,
+        "unsupported_present": 15
+      },
+      {
+        "tau": 0.01,
+        "present_recall": 0.9375,
+        "far": 0.75,
+        "unsupported_present": 13
+      },
+      {
+        "tau": 0.015,
+        "present_recall": 0.875,
+        "far": 0.6667,
+        "unsupported_present": 11
+      },
+      {
+        "tau": 0.02,
+        "present_recall": 0.8125,
+        "far": 0.5833,
+        "unsupported_present": 9
+      },
+      {
+        "tau": 0.03,
+        "present_recall": 0.75,
+        "far": 0.5,
+        "unsupported_present": 7
+      },
+      {
+        "tau": 0.05,
+        "present_recall": 0.75,
+        "far": 0.25,
+        "unsupported_present": 4
+      },
+      {
+        "tau": 0.075,
+        "present_recall": 0.625,
+        "far": 0.1667,
+        "unsupported_present": 1
+      },
+      {
+        "tau": 0.1,
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "unsupported_present": 0
+      },
+      {
+        "tau": 0.15,
+        "present_recall": 0.5625,
+        "far": 0.1667,
+        "unsupported_present": 0
+      },
+      {
+        "tau": 0.2,
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "unsupported_present": 0
+      },
+      {
+        "tau": 0.3,
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "unsupported_present": 0
+      },
+      {
+        "tau": 0.4,
+        "present_recall": 0.5625,
+        "far": 0.0833,
+        "unsupported_present": 0
+      },
+      {
+        "tau": 0.5,
+        "present_recall": 0.5,
+        "far": 0.0833,
+        "unsupported_present": 0
+      },
+      {
+        "tau": 0.6,
+        "present_recall": 0.4375,
+        "far": 0.0833,
+        "unsupported_present": 0
+      }
+    ],
+    "best_at_matched_recall": {
+      "tau": 0.01,
+      "present_recall": 0.9375,
+      "far": 0.75,
+      "unsupported_present": 13
+    }
+  },
+  "negative_controls": {
+    "lwe_absent": {
+      "MAX": {
+        "n": 12,
+        "present": 0,
+        "absent": 12,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.25,
+        "far": 0.75,
+        "unsupported_present": 7,
+        "unsupported_present_rate": 0.5833,
+        "false_support": 4,
+        "false_support_rate": 0.3333,
+        "wrong_occurrence": 0,
+        "wrong_occurrence_rate": 0.0,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "TOP2": {
+        "n": 12,
+        "present": 0,
+        "absent": 12,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.3333,
+        "far": 0.6667,
+        "unsupported_present": 6,
+        "unsupported_present_rate": 0.5,
+        "false_support": 3,
+        "false_support_rate": 0.25,
+        "wrong_occurrence": 0,
+        "wrong_occurrence_rate": 0.0,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "TOP3": {
+        "n": 12,
+        "present": 0,
+        "absent": 12,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.4167,
+        "far": 0.5833,
+        "unsupported_present": 5,
+        "unsupported_present_rate": 0.4167,
+        "false_support": 2,
+        "false_support_rate": 0.1667,
+        "wrong_occurrence": 0,
+        "wrong_occurrence_rate": 0.0,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "TOP5": {
+        "n": 12,
+        "present": 0,
+        "absent": 12,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.5,
+        "far": 0.5,
+        "unsupported_present": 4,
+        "unsupported_present_rate": 0.3333,
+        "false_support": 1,
+        "false_support_rate": 0.0833,
+        "wrong_occurrence": 0,
+        "wrong_occurrence_rate": 0.0,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "LOCAL_CLUSTER": {
+        "n": 12,
+        "present": 0,
+        "absent": 12,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.9167,
+        "far": 0.0833,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 0,
+        "wrong_occurrence_rate": 0.0,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "PEAK_PROMINENCE": {
+        "n": 12,
+        "present": 0,
+        "absent": 12,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.8333,
+        "far": 0.1667,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 0,
+        "wrong_occurrence_rate": 0.0,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "TEMPORAL_SUPPORT": {
+        "n": 12,
+        "present": 0,
+        "absent": 12,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.8333,
+        "far": 0.1667,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 0,
+        "wrong_occurrence_rate": 0.0,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "CONSERVATIVE_SUPPORT": {
+        "n": 12,
+        "present": 0,
+        "absent": 11,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.9091,
+        "far": 0.0909,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 0,
+        "wrong_occurrence_rate": 0.0,
+        "uncertain": 1,
+        "uncertain_rate": 0.0833,
+        "decision_coverage": 0.9167
+      }
+    },
+    "so762_absent_enriched": {
+      "MAX": {
+        "n": 17,
+        "present": 0,
+        "absent": 17,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 1,
+        "unsupported_present_rate": 0.0588,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 3,
+        "wrong_occurrence_rate": 0.1765,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "TOP2": {
+        "n": 17,
+        "present": 0,
+        "absent": 17,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 1,
+        "unsupported_present_rate": 0.0588,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 3,
+        "wrong_occurrence_rate": 0.1765,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "TOP3": {
+        "n": 17,
+        "present": 0,
+        "absent": 17,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 1,
+        "unsupported_present_rate": 0.0588,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 3,
+        "wrong_occurrence_rate": 0.1765,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "TOP5": {
+        "n": 17,
+        "present": 0,
+        "absent": 17,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.6471,
+        "far": 0.3529,
+        "unsupported_present": 1,
+        "unsupported_present_rate": 0.0588,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 3,
+        "wrong_occurrence_rate": 0.1765,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "LOCAL_CLUSTER": {
+        "n": 17,
+        "present": 0,
+        "absent": 17,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 3,
+        "wrong_occurrence_rate": 0.1765,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "PEAK_PROMINENCE": {
+        "n": 17,
+        "present": 0,
+        "absent": 17,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 3,
+        "wrong_occurrence_rate": 0.1765,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "TEMPORAL_SUPPORT": {
+        "n": 17,
+        "present": 0,
+        "absent": 17,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 3,
+        "wrong_occurrence_rate": 0.1765,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      },
+      "CONSERVATIVE_SUPPORT": {
+        "n": 17,
+        "present": 0,
+        "absent": 17,
+        "present_recall": null,
+        "frr": null,
+        "absent_detection": 0.7059,
+        "far": 0.2941,
+        "unsupported_present": 0,
+        "unsupported_present_rate": 0.0,
+        "false_support": 0,
+        "false_support_rate": 0.0,
+        "wrong_occurrence": 3,
+        "wrong_occurrence_rate": 0.1765,
+        "uncertain": 0,
+        "uncertain_rate": 0.0,
+        "decision_coverage": 1.0
+      }
+    },
+    "unmasked_control": {
+      "MAX_GLOBAL_TAU0.2": {
+        "lwe_absent": {
+          "n": 12,
+          "present": 0,
+          "absent": 12,
+          "present_recall": null,
+          "frr": null,
+          "absent_detection": 0.8333,
+          "far": 0.1667,
+          "unsupported_present": 1,
+          "unsupported_present_rate": 0.0833,
+          "false_support": 1,
+          "false_support_rate": 0.0833,
+          "wrong_occurrence": 0,
+          "wrong_occurrence_rate": 0.0,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        },
+        "lwe_labeled": {
+          "n": 28,
+          "present": 16,
+          "absent": 12,
+          "present_recall": 0.625,
+          "frr": 0.375,
+          "absent_detection": 0.8333,
+          "far": 0.1667,
+          "unsupported_present": 2,
+          "unsupported_present_rate": 0.0714,
+          "false_support": 1,
+          "false_support_rate": 0.0357,
+          "wrong_occurrence": 1,
+          "wrong_occurrence_rate": 0.0357,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        },
+        "wrong_occurrence_cases": [
+          "child_01_nine"
+        ]
+      },
+      "MAX_GLOBAL_TAU0.3": {
+        "lwe_absent": {
+          "n": 12,
+          "present": 0,
+          "absent": 12,
+          "present_recall": null,
+          "frr": null,
+          "absent_detection": 0.9167,
+          "far": 0.0833,
+          "unsupported_present": 0,
+          "unsupported_present_rate": 0.0,
+          "false_support": 0,
+          "false_support_rate": 0.0,
+          "wrong_occurrence": 0,
+          "wrong_occurrence_rate": 0.0,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        },
+        "lwe_labeled": {
+          "n": 28,
+          "present": 16,
+          "absent": 12,
+          "present_recall": 0.625,
+          "frr": 0.375,
+          "absent_detection": 0.9167,
+          "far": 0.0833,
+          "unsupported_present": 1,
+          "unsupported_present_rate": 0.0357,
+          "false_support": 0,
+          "false_support_rate": 0.0,
+          "wrong_occurrence": 1,
+          "wrong_occurrence_rate": 0.0357,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        },
+        "wrong_occurrence_cases": [
+          "child_01_nine"
+        ]
+      },
+      "MAX_GLOBAL_TAU0.5": {
+        "lwe_absent": {
+          "n": 12,
+          "present": 0,
+          "absent": 12,
+          "present_recall": null,
+          "frr": null,
+          "absent_detection": 0.9167,
+          "far": 0.0833,
+          "unsupported_present": 0,
+          "unsupported_present_rate": 0.0,
+          "false_support": 0,
+          "false_support_rate": 0.0,
+          "wrong_occurrence": 0,
+          "wrong_occurrence_rate": 0.0,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        },
+        "lwe_labeled": {
+          "n": 28,
+          "present": 16,
+          "absent": 12,
+          "present_recall": 0.5625,
+          "frr": 0.4375,
+          "absent_detection": 0.9167,
+          "far": 0.0833,
+          "unsupported_present": 1,
+          "unsupported_present_rate": 0.0357,
+          "false_support": 0,
+          "false_support_rate": 0.0,
+          "wrong_occurrence": 1,
+          "wrong_occurrence_rate": 0.0357,
+          "uncertain": 0,
+          "uncertain_rate": 0.0,
+          "decision_coverage": 1.0
+        },
+        "wrong_occurrence_cases": [
+          "child_01_nine"
+        ]
+      }
+    }
+  },
+  "window_stability": {
+    "lwe_external": {
+      "MAX": {
+        "n": 28,
+        "stable_present": 19,
+        "window_sensitive": 5,
+        "stable_absent": 4,
+        "flips": 5,
+        "flip_rate": 0.1786,
+        "support_std_median": 0.0023
+      },
+      "TOP2": {
+        "n": 28,
+        "stable_present": 19,
+        "stable_absent": 6,
+        "window_sensitive": 3,
+        "flips": 3,
+        "flip_rate": 0.1071,
+        "support_std_median": 0.0023
+      },
+      "TOP3": {
+        "n": 28,
+        "stable_present": 19,
+        "stable_absent": 7,
+        "window_sensitive": 2,
+        "flips": 2,
+        "flip_rate": 0.0714,
+        "support_std_median": 0.0023
+      },
+      "TOP5": {
+        "n": 28,
+        "stable_present": 18,
+        "stable_absent": 8,
+        "window_sensitive": 2,
+        "flips": 2,
+        "flip_rate": 0.0714,
+        "support_std_median": 0.0023
+      },
+      "LOCAL_CLUSTER": {
+        "n": 28,
+        "window_sensitive": 5,
+        "stable_absent": 15,
+        "stable_present": 8,
+        "flips": 5,
+        "flip_rate": 0.1786,
+        "support_std_median": 0.0023
+      },
+      "PEAK_PROMINENCE": {
+        "n": 28,
+        "window_sensitive": 7,
+        "stable_absent": 14,
+        "stable_present": 7,
+        "flips": 7,
+        "flip_rate": 0.25,
+        "support_std_median": 0.0023
+      },
+      "TEMPORAL_SUPPORT": {
+        "n": 28,
+        "window_sensitive": 7,
+        "stable_absent": 14,
+        "stable_present": 7,
+        "flips": 7,
+        "flip_rate": 0.25,
+        "support_std_median": 0.0023
+      },
+      "CONSERVATIVE_SUPPORT": {
+        "n": 28,
+        "window_sensitive": 5,
+        "stable_absent": 14,
+        "stable_present": 7,
+        "uncertain_mixed": 2,
+        "flips": 7,
+        "flip_rate": 0.25,
+        "support_std_median": 0.0023
+      }
+    },
+    "so762_test": {
+      "MAX": {
+        "n": 227,
+        "stable_present": 191,
+        "window_sensitive": 24,
+        "stable_absent": 12,
+        "flips": 24,
+        "flip_rate": 0.1057,
+        "support_std_median": 0.0367
+      },
+      "TOP2": {
+        "n": 227,
+        "stable_present": 187,
+        "window_sensitive": 26,
+        "stable_absent": 14,
+        "flips": 26,
+        "flip_rate": 0.1145,
+        "support_std_median": 0.0367
+      },
+      "TOP3": {
+        "n": 227,
+        "stable_present": 186,
+        "window_sensitive": 24,
+        "stable_absent": 17,
+        "flips": 24,
+        "flip_rate": 0.1057,
+        "support_std_median": 0.0367
+      },
+      "TOP5": {
+        "n": 227,
+        "stable_present": 185,
+        "stable_absent": 24,
+        "window_sensitive": 18,
+        "flips": 18,
+        "flip_rate": 0.0793,
+        "support_std_median": 0.0367
+      },
+      "LOCAL_CLUSTER": {
+        "n": 227,
+        "stable_present": 162,
+        "stable_absent": 43,
+        "window_sensitive": 22,
+        "flips": 22,
+        "flip_rate": 0.0969,
+        "support_std_median": 0.0367
+      },
+      "PEAK_PROMINENCE": {
+        "n": 227,
+        "stable_present": 153,
+        "window_sensitive": 29,
+        "stable_absent": 45,
+        "flips": 29,
+        "flip_rate": 0.1278,
+        "support_std_median": 0.0367
+      },
+      "TEMPORAL_SUPPORT": {
+        "n": 227,
+        "stable_present": 153,
+        "window_sensitive": 35,
+        "stable_absent": 39,
+        "flips": 35,
+        "flip_rate": 0.1542,
+        "support_std_median": 0.0367
+      },
+      "CONSERVATIVE_SUPPORT": {
+        "n": 227,
+        "stable_present": 140,
+        "window_sensitive": 24,
+        "uncertain_mixed": 16,
+        "stable_absent": 47,
+        "flips": 40,
+        "flip_rate": 0.1762,
+        "support_std_median": 0.0367
+      }
+    },
+    "so762_dev": {
+      "MAX": {
+        "n": 302,
+        "stable_present": 249,
+        "window_sensitive": 28,
+        "stable_absent": 25,
+        "flips": 28,
+        "flip_rate": 0.0927,
+        "support_std_median": 0.0214
+      },
+      "TOP2": {
+        "n": 302,
+        "stable_present": 244,
+        "window_sensitive": 29,
+        "stable_absent": 29,
+        "flips": 29,
+        "flip_rate": 0.096,
+        "support_std_median": 0.0214
+      },
+      "TOP3": {
+        "n": 302,
+        "stable_present": 243,
+        "window_sensitive": 29,
+        "stable_absent": 30,
+        "flips": 29,
+        "flip_rate": 0.096,
+        "support_std_median": 0.0214
+      },
+      "TOP5": {
+        "n": 302,
+        "stable_present": 240,
+        "stable_absent": 38,
+        "window_sensitive": 24,
+        "flips": 24,
+        "flip_rate": 0.0795,
+        "support_std_median": 0.0214
+      },
+      "LOCAL_CLUSTER": {
+        "n": 302,
+        "stable_present": 198,
+        "stable_absent": 66,
+        "window_sensitive": 38,
+        "flips": 38,
+        "flip_rate": 0.1258,
+        "support_std_median": 0.0214
+      },
+      "PEAK_PROMINENCE": {
+        "n": 302,
+        "stable_present": 188,
+        "stable_absent": 75,
+        "window_sensitive": 39,
+        "flips": 39,
+        "flip_rate": 0.1291,
+        "support_std_median": 0.0214
+      },
+      "TEMPORAL_SUPPORT": {
+        "n": 302,
+        "stable_present": 195,
+        "stable_absent": 72,
+        "window_sensitive": 35,
+        "flips": 35,
+        "flip_rate": 0.1159,
+        "support_std_median": 0.0214
+      },
+      "CONSERVATIVE_SUPPORT": {
+        "n": 302,
+        "stable_present": 178,
+        "stable_absent": 77,
+        "window_sensitive": 20,
+        "uncertain_mixed": 27,
+        "flips": 45,
+        "flip_rate": 0.149,
+        "support_std_median": 0.0214
+      }
+    }
+  },
+  "sparse_peak": {
+    "dev_present": {
+      "n": 285,
+      "width_1": 238,
+      "width_2": 46,
+      "width_ge3": 1,
+      "width_median": 1,
+      "peak_median": 0.8291,
+      "ts_median": 0.4476
+    },
+    "dev_absent": {
+      "n": 17,
+      "width_1": 16,
+      "width_2": 1,
+      "width_ge3": 0,
+      "width_median": 1,
+      "peak_median": 0.0049,
+      "ts_median": 0.0
+    },
+    "lwe_present": {
+      "n": 16,
+      "width_1": 16,
+      "width_2": 0,
+      "width_ge3": 0,
+      "width_median": 1.0,
+      "peak_median": 0.5415,
+      "ts_median": 0.2708
+    },
+    "lwe_absent": {
+      "n": 12,
+      "width_1": 11,
+      "width_2": 1,
+      "width_ge3": 0,
+      "width_median": 1.0,
+      "peak_median": 0.0275,
+      "ts_median": 0.0
+    },
+    "auc_width_scores_dev": {
+      "width1_D": 0.8193,
+      "width2_D": 0.8066,
+      "width3_D": 0.8068,
+      "width5_D": 0.809
+    },
+    "auc_width_scores_lwe": {
+      "width1_D": 0.7812,
+      "width2_D": 0.7865,
+      "width3_D": 0.8021,
+      "width5_D": 0.7969
+    }
+  },
+  "human_uncertain": {
+    "n_ambiguous": 2,
+    "tokens": [
+      "child_03_two",
+      "child_06_five"
+    ],
+    "decisions": {
+      "MAX": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      },
+      "TOP2": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      },
+      "TOP3": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      },
+      "TOP5": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      },
+      "LOCAL_CLUSTER": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      },
+      "PEAK_PROMINENCE": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      },
+      "TEMPORAL_SUPPORT": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      },
+      "CONSERVATIVE_SUPPORT": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      },
+      "CURRENT_MEAN": {
+        "ABSENT": 1,
+        "PRESENT": 1
+      }
+    },
+    "unlabeled_no_verdict_n": 50,
+    "unlabeled_decisions": {
+      "PRESENT": 41,
+      "ABSENT": 9
+    },
+    "note": "human word-level AMBIGUOUS is never used as binary ground truth; the system is not rewarded for confident decisions here"
+  },
+  "known_cases": {
+    "n": 13,
+    "fixed": 1,
+    "regressed": 1,
+    "rows": [
+      {
+        "case_id": "child_01_nine",
+        "speaker_id": "child_01",
+        "word": "nine",
+        "target_phone": "n",
+        "human_label": "FINAL_CONSONANT_PROBABLY_PRESENT",
+        "candidate_region_start": 14,
+        "candidate_region_end": 42,
+        "current_mean": 0.00111,
+        "max_peak": 0.01552,
+        "top2_mean": 0.00921,
+        "top3_mean": 0.00706,
+        "top5_mean": 0.00492,
+        "cluster_peak": 0.01552,
+        "cluster_width": 1,
+        "peak_prominence": 0.01463,
+        "competitor_peak": 0.00089,
+        "blank_peak": 0.97675,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.00045,
+        "window_stability": "WINDOW_SENSITIVE",
+        "wrong_occurrence": 1,
+        "false_support": 0,
+        "support_class": "NO_SUPPORT",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "INCONCLUSIVE",
+        "notes": "baseline=exact; da_1919=0.9793; earlier_same=0-13; masked_earlier_max=0.9793; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_07_one",
+        "speaker_id": "child_07",
+        "word": "one",
+        "target_phone": "n",
+        "human_label": "FINAL_CONSONANT_CLEARLY_PRESENT",
+        "candidate_region_start": 0,
+        "candidate_region_end": 42,
+        "current_mean": 0.00107,
+        "max_peak": 0.01297,
+        "top2_mean": 0.01193,
+        "top3_mean": 0.00927,
+        "top5_mean": 0.00667,
+        "cluster_peak": 0.01297,
+        "cluster_width": 1,
+        "peak_prominence": -0.00136,
+        "competitor_peak": 0.01433,
+        "blank_peak": 0.94753,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.0,
+        "window_stability": "WINDOW_SENSITIVE",
+        "wrong_occurrence": 0,
+        "false_support": 1,
+        "support_class": "NO_SUPPORT",
+        "current_decision": "ABSENT",
+        "research_decision": "PRESENT",
+        "fixed": 1,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=miss; da_1919=0.0005; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_01_seven",
+        "speaker_id": "child_01",
+        "word": "seven",
+        "target_phone": "n",
+        "human_label": "FINAL_CONSONANT_PROBABLY_PRESENT",
+        "candidate_region_start": 0,
+        "candidate_region_end": 50,
+        "current_mean": 0.00547,
+        "max_peak": 0.05924,
+        "top2_mean": 0.05034,
+        "top3_mean": 0.0472,
+        "top5_mean": 0.04227,
+        "cluster_peak": 0.05924,
+        "cluster_width": 1,
+        "peak_prominence": 0.03464,
+        "competitor_peak": 0.02461,
+        "blank_peak": 0.87694,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.0041,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 0,
+        "support_class": "WEAK_SPARSE",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.0592; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_02_ten",
+        "speaker_id": "child_02",
+        "word": "ten",
+        "target_phone": "n",
+        "human_label": "FINAL_CONSONANT_CLEARLY_PRESENT",
+        "candidate_region_start": 22,
+        "candidate_region_end": 57,
+        "current_mean": 0.00366,
+        "max_peak": 0.06618,
+        "top2_mean": 0.04601,
+        "top3_mean": 0.03301,
+        "top5_mean": 0.02104,
+        "cluster_peak": 0.06618,
+        "cluster_width": 1,
+        "peak_prominence": -0.54421,
+        "competitor_peak": 0.61039,
+        "blank_peak": 0.16039,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.0,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 1,
+        "support_class": "COMPETITOR_DOMINATED",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.0662; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_04_four",
+        "speaker_id": "child_04",
+        "word": "four",
+        "target_phone": "ɹ",
+        "human_label": "FINAL_CONSONANT_PROBABLY_PRESENT",
+        "candidate_region_start": 22,
+        "candidate_region_end": 112,
+        "current_mean": 0.00301,
+        "max_peak": 0.09036,
+        "top2_mean": 0.08373,
+        "top3_mean": 0.07034,
+        "top5_mean": 0.04732,
+        "cluster_peak": 0.09036,
+        "cluster_width": 1,
+        "peak_prominence": 0.00712,
+        "competitor_peak": 0.08324,
+        "blank_peak": 0.73807,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.00129,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 0,
+        "support_class": "WEAK_SPARSE",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.0033; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_01_ten",
+        "speaker_id": "child_01",
+        "word": "ten",
+        "target_phone": "n",
+        "human_label": "FINAL_CONSONANT_CLEARLY_PRESENT",
+        "candidate_region_start": 21,
+        "candidate_region_end": 50,
+        "current_mean": 0.00433,
+        "max_peak": 0.0294,
+        "top2_mean": 0.02747,
+        "top3_mean": 0.02262,
+        "top5_mean": 0.01759,
+        "cluster_peak": 0.0294,
+        "cluster_width": 1,
+        "peak_prominence": 0.0077,
+        "competitor_peak": 0.0217,
+        "blank_peak": 0.90233,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.00045,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 0,
+        "support_class": "NO_SUPPORT",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.0294; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_06_six",
+        "speaker_id": "child_06",
+        "word": "six",
+        "target_phone": "s",
+        "human_label": "FINAL_CONSONANT_PROBABLY_PRESENT",
+        "candidate_region_start": 22,
+        "candidate_region_end": 39,
+        "current_mean": 0.00035,
+        "max_peak": 0.0007,
+        "top2_mean": 0.00063,
+        "top3_mean": 0.00044,
+        "top5_mean": 0.00028,
+        "cluster_peak": 0.0007,
+        "cluster_width": 1,
+        "peak_prominence": -0.03975,
+        "competitor_peak": 0.04045,
+        "blank_peak": 0.9487,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.0,
+        "window_stability": "STABLE_ABSENT",
+        "wrong_occurrence": 0,
+        "false_support": 1,
+        "support_class": "NO_SUPPORT",
+        "current_decision": "PRESENT",
+        "research_decision": "ABSENT",
+        "fixed": 0,
+        "regressed": 1,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.0032; earlier_same=0-0; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_01_four",
+        "speaker_id": "child_01",
+        "word": "four",
+        "target_phone": "ɹ",
+        "human_label": "FINAL_CONSONANT_CLEARLY_ABSENT",
+        "candidate_region_start": 8,
+        "candidate_region_end": 43,
+        "current_mean": 0.00398,
+        "max_peak": 0.0362,
+        "top2_mean": 0.03044,
+        "top3_mean": 0.02761,
+        "top5_mean": 0.0226,
+        "cluster_peak": 0.0362,
+        "cluster_width": 1,
+        "peak_prominence": 0.01809,
+        "competitor_peak": 0.01811,
+        "blank_peak": 0.90201,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.00131,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 0,
+        "support_class": "NO_SUPPORT",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=soft; da_1919=0.0220; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_03_four",
+        "speaker_id": "child_03",
+        "word": "four",
+        "target_phone": "ɹ",
+        "human_label": "FINAL_CONSONANT_CLEARLY_ABSENT",
+        "candidate_region_start": 12,
+        "candidate_region_end": 44,
+        "current_mean": 0.00481,
+        "max_peak": 0.05626,
+        "top2_mean": 0.052,
+        "top3_mean": 0.03799,
+        "top5_mean": 0.02524,
+        "cluster_peak": 0.05626,
+        "cluster_width": 1,
+        "peak_prominence": 0.04498,
+        "competitor_peak": 0.01128,
+        "blank_peak": 0.90305,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.00506,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 0,
+        "support_class": "WEAK_SPARSE",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.0563; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_06_four",
+        "speaker_id": "child_06",
+        "word": "four",
+        "target_phone": "ɹ",
+        "human_label": "FINAL_CONSONANT_CLEARLY_ABSENT",
+        "candidate_region_start": 2,
+        "candidate_region_end": 29,
+        "current_mean": 0.00473,
+        "max_peak": 0.04137,
+        "top2_mean": 0.03877,
+        "top3_mean": 0.03154,
+        "top5_mean": 0.02182,
+        "cluster_peak": 0.04137,
+        "cluster_width": 1,
+        "peak_prominence": -0.02142,
+        "competitor_peak": 0.06279,
+        "blank_peak": 0.86742,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.0,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 1,
+        "support_class": "NO_SUPPORT",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.0414; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_02_four",
+        "speaker_id": "child_02",
+        "word": "four",
+        "target_phone": "ɹ",
+        "human_label": "FINAL_CONSONANT_CLEARLY_ABSENT",
+        "candidate_region_start": 22,
+        "candidate_region_end": 65,
+        "current_mean": 0.0093,
+        "max_peak": 0.15358,
+        "top2_mean": 0.12857,
+        "top3_mean": 0.10065,
+        "top5_mean": 0.06811,
+        "cluster_peak": 0.15358,
+        "cluster_width": 2,
+        "peak_prominence": 0.14282,
+        "competitor_peak": 0.01076,
+        "blank_peak": 0.80615,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.08773,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 0,
+        "support_class": "WEAK_COHERENT",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.1536; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=ABSENT"
+      },
+      {
+        "case_id": "child_07_seven",
+        "speaker_id": "child_07",
+        "word": "seven",
+        "target_phone": "n",
+        "human_label": "FINAL_CONSONANT_PROBABLY_ABSENT",
+        "candidate_region_start": 0,
+        "candidate_region_end": 48,
+        "current_mean": 0.01538,
+        "max_peak": 0.62942,
+        "top2_mean": 0.32688,
+        "top3_mean": 0.22004,
+        "top5_mean": 0.13395,
+        "cluster_peak": 0.62942,
+        "cluster_width": 1,
+        "peak_prominence": 0.38663,
+        "competitor_peak": 0.24278,
+        "blank_peak": 0.09214,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.31471,
+        "window_stability": "STABLE_PRESENT",
+        "wrong_occurrence": 0,
+        "false_support": 0,
+        "support_class": "STRONG_SPARSE",
+        "current_decision": "PRESENT",
+        "research_decision": "PRESENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=exact; da_1919=0.6294; earlier_same=; masked_earlier_max=0.0000; plateau_MAX_tau0.3=PRESENT"
+      },
+      {
+        "case_id": "child_03_six",
+        "speaker_id": "child_03",
+        "word": "six",
+        "target_phone": "s",
+        "human_label": "FINAL_CONSONANT_CLEARLY_ABSENT",
+        "candidate_region_start": 24,
+        "candidate_region_end": 36,
+        "current_mean": 0.0,
+        "max_peak": 2e-05,
+        "top2_mean": 1e-05,
+        "top3_mean": 1e-05,
+        "top5_mean": 1e-05,
+        "cluster_peak": 2e-05,
+        "cluster_width": 1,
+        "peak_prominence": -0.00187,
+        "competitor_peak": 0.00189,
+        "blank_peak": 0.99429,
+        "final_position_score": 1,
+        "temporal_plausibility": 0.0,
+        "window_stability": "STABLE_ABSENT",
+        "wrong_occurrence": 0,
+        "false_support": 1,
+        "support_class": "NO_SUPPORT",
+        "current_decision": "ABSENT",
+        "research_decision": "ABSENT",
+        "fixed": 0,
+        "regressed": 0,
+        "uncertain": 0,
+        "root_cause": "NOT_ALIGNMENT",
+        "notes": "baseline=miss; da_1919=0.2148; earlier_same=0-8; masked_earlier_max=0.2148; plateau_MAX_tau0.3=ABSENT"
+      }
+    ]
+  },
+  "label_audit": {
+    "existing_blind_labels": 28,
+    "new_confident_present_labels_collected": 0,
+    "reviewer_count": 0,
+    "candidate_pack": 20,
+    "r_present_labels_existing": 1,
+    "r_absent_labels_existing": 5,
+    "note": "no additional human final-consonant labels exist in the repo beyond the 28 blind LWE labels; other human reviews (1.9.12 window clarity, 1.9.14 p1 word verdicts, 1.9.15 assessability) are not final-consonant presence labels and were not converted. Review tooling: Research/Speech/Phase1_9_15/experiments/serve_review.py; candidate list written to LABEL_CANDIDATES.csv (no audio copied into the repo)."
+  }
+}
