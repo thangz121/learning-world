@@ -1,0 +1,4 @@
+scope,reviewer_count,agreement_computable,agreement_rate,present_agreement,absent_agreement,uncertain_agreement,disagreements_preserved,new_labels,notes
+WP-1.9.25 new review pack (L01-L23),0,no,n/a,n/a,n/a,n/a,n/a,0,NO_REVIEWER_AVAILABLE_IN_SESSION; pack kept READY_FOR_HUMAN_REVIEW; no labels fabricated
+Historical LWE blind labels (28),1,no,n/a,n/a,n/a,n/a,n/a,28,"single reviewer human_mobile 2026-10-03; SINGLE_REVIEWER_LIMITATION = TRUE; no independent second review exists"
+SO762 per-phone expert scores,unknown (five experts per speechocean762 paper),no (score-derived),n/a,n/a,n/a,n/a,n/a,n/a,"not listening labels for final-consonant presence; must not be treated as equivalent"

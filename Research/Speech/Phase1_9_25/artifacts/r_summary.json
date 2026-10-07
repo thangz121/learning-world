@@ -1,0 +1,33 @@
+{
+  "n_total": 24,
+  "n_lwe": 9,
+  "n_so762": 15,
+  "lwe_speakers": 9,
+  "so762_speakers": 10,
+  "so762_ages": {
+    "": 15
+  },
+  "label_status": {
+    "lwe_present_listening": 1,
+    "lwe_absent_listening": 5,
+    "lwe_unlabelled": 3,
+    "lwe_confidence": {
+      "HIGH": 5,
+      "LOW": 1,
+      "": 3
+    },
+    "so762_score_2": 11,
+    "so762_score_1": 0,
+    "so762_score_0": 1
+  },
+  "max_A_median_lwe": 0.04137,
+  "max_A_median_so762": 0.20564,
+  "max_A_ge_0.3_lwe": 0,
+  "max_A_lt_0.1_lwe": 8,
+  "isolated_peak_lwe": 8,
+  "isolated_peak_so762": 12,
+  "production_accepted_lwe": 7,
+  "alt_covered_lwe": 6,
+  "alt_median_lwe": 0.01502,
+  "window_sensitive": 3
+}

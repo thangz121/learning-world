@@ -37,26 +37,31 @@
 | 1.9.21 | 2026-10-07 | Temporally plausible support aggregation + label sufficiency audit | SUPPORT_AGGREGATION_FAIL; B2 NOT YET | `60a55ab` |
 | 1.9.22 | 2026-10-07 | Acceptance / identity decision audit | ACCEPTANCE_LOGIC_AND_ENCODER_BOTH_REQUIRED; next gate ACCEPTANCE_RULE_REDESIGN_REQUIRED; B2 NOT READY | `d7ef0ff` |
 | 1.9.23 | 2026-10-07 | Acceptance rule redesign + falsification + label pack | ACCEPTANCE_RULE_AND_ENCODER_BOTH_LIMITING; next gate LABEL_EXPANSION_AND_ENCODER_DESIGN_REQUIRED; B2 NOT READY | `6770de9` |
-| 1.9.24 | 2026-10-07 | Human label expansion + encoder evidence design audit | LABELS_INSUFFICIENT_ENCODER_HYPOTHESIS_SUPPORTED; next gate LABEL_COLLECTION_AND_DATA_LICENSE_GATE; B2 NO TRAINING / DESIGN NOT READY | (this commit) |
+| 1.9.24 | 2026-10-07 | Human label expansion + encoder evidence design audit | LABELS_INSUFFICIENT_ENCODER_HYPOTHESIS_SUPPORTED; next gate LABEL_COLLECTION_AND_DATA_LICENSE_GATE; B2 NO TRAINING / DESIGN NOT READY | `59b6afe` |
+| 1.9.25 | 2026-10-07 | Label collection + data/license gate | LABELS_INSUFFICIENT_DATA_LICENSE_BLOCKED; B2 TRAINING NO; next gate LABEL_COLLECTION_AND_DATA_ACQUISITION | (this commit) |
 
 ## Current speech-research status
 
 ```
 Speech Research: NOT COMPLETE
-Last gate:       LABEL_COLLECTION_AND_DATA_LICENSE_GATE (WP-1.9.24)
-Final gate:      LABELS_INSUFFICIENT_ENCODER_HYPOTHESIS_SUPPORTED
-Next:            collect human labels (pack L01-L23, /r/ first, TYPE-B ABSENT,
-                 rank-2..5 identity) + resolve child-data licensing (SIAK legal
-                 review, MyST audit); research-only B2-E/B2-D design study
+Last gate:       LABEL_COLLECTION_AND_DATA_ACQUISITION (WP-1.9.25)
+Final gate:      LABELS_INSUFFICIENT_DATA_LICENSE_BLOCKED
+Next:            run the human review pack L01-L23 (P0 TYPE-B, /r/ P1) and resolve
+                 the MyST commercial license / SIAK CC-BY-ND legal review before
+                 any scale B2; research-only B2-E/B2-D evaluation possible meanwhile
 Production:      untouched (production_vad=false, router_locked=false,
                  unity_integrated=false, scorer_modified=false,
                  production_window_locked=false)
 Frame cache:     CREATED — Research/Speech/Phase1_9_21/artifacts/frame_cache
                  (2,436 token-windows / 117,128 frames, reusable)
-B2:              NO TRAINING; DESIGN NOT READY (labels + licensed child data +
-                 GPU missing). Target: missing evidence for weak child finals
-                 (liquids /r/, /l/ first). TYPE-B false-evidence UNCONFIRMED (0/4).
-Labels:          NEW_LABELS_COLLECTED = 0; 23-candidate blinded pack ready
-Encoder:         limitation supported on the missing-evidence side (87/528 labeled
-                 presents max_A<0.02; alt encoder recovers 3/10 so762 + 3/28 LWE)
+B2:              TRAINING NO; DESIGN NOT READY. No dataset meets 10-30 h +
+                 30-50+ speakers + phone labels + ages 4-6 + commercial license.
+                 TYPE-B false evidence unresolved (2 LABEL_LIMITED, 2 MIXED).
+Labels:          NEW_LABELS_COLLECTED = 0; 28 historical LWE listening labels
+                 (single reviewer); /r/ = 1 PRESENT LOW / 5 ABSENT / 3 unlabelled
+Data:            18 datasets audited; CLEAR 1 (speechocean762 2.41 h child),
+                 CLEAR_WITH_CONDITIONS 2 (LWE test-only; MyST paid commercial),
+                 REQUIRES_LEGAL_REVIEW 1 (SIAK CC-BY-ND), RESTRICTED 5,
+                 LICENSE_UNVERIFIED 6, NOT_SUITABLE 3; no public Vietnamese-L1
+                 child corpus identified
 ```

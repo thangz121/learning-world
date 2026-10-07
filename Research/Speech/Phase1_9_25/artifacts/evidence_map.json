@@ -1,0 +1,109 @@
+{
+  "phase": "1.9.25",
+  "r_cases": {
+    "n_total": 24,
+    "n_lwe": 9,
+    "n_so762": 15,
+    "lwe_speakers": 9,
+    "so762_speakers": 10,
+    "lwe_labeled_present": 1,
+    "lwe_labeled_absent": 5,
+    "lwe_unlabelled": 3,
+    "alt_covered": 6,
+    "isolated_peak_n": 20
+  },
+  "so762_child_subset": {
+    "child_speakers": 122,
+    "child_utterances_manifest": 2440,
+    "files_found": 2440,
+    "approx_hours": 2.41,
+    "age_counts": {
+      "6": 500,
+      "7": 440,
+      "8": 160,
+      "9": 380,
+      "10": 120,
+      "12": 220,
+      "11": 260,
+      "13": 60,
+      "14": 40,
+      "15": 260
+    },
+    "split_counts": {
+      "train": 1160,
+      "test": 1280
+    },
+    "phone_level_scores": "yes (expert per-phone 0/1/2 in scores-detail.json)",
+    "ages_4_6_utterances": 500,
+    "ages_4_6_speakers": 25
+  },
+  "siak": {
+    "release": "Kaggle mirror of SIAK (Say It Again, Kid!) with identifying metadata removed",
+    "license": "CC-BY-ND-4.0 (commercial building/evaluation of speech technology models not prohibited)",
+    "total": 16308,
+    "speakers_total": 172,
+    "by_l1": {
+      "fifi": 13161,
+      "enuk": 2434,
+      "othr": 713
+    },
+    "by_age": {
+      "4": 44,
+      "5": 420,
+      "6": 130,
+      "7": 1198,
+      "8": 3973,
+      "9": 6360,
+      "10": 2647,
+      "11": 1284,
+      "12": 252
+    },
+    "age_4_6": 594,
+    "annotation": {
+      "fields": [
+        "file",
+        "utterance",
+        "score"
+      ],
+      "score": "single expert annotator, 0-100 (paper maps to 0-5 stars)",
+      "utterance": "single word or short phrase (dashes for spaces)",
+      "metadata_in_filename": [
+        "split",
+        "speaker",
+        "L1",
+        "age_years",
+        "sample_no",
+        "seconds_since_first"
+      ],
+      "age_is_2_digit_years": true
+    }
+  },
+  "lwe": {
+    "title": "Children speech recording (English, spontaneous speech + pre-defined sentences)",
+    "license": "cc-by-4.0",
+    "access": "open",
+    "creators": [
+      "Kennedy, James",
+      "Lemaignan, Séverin",
+      "Montassier, Caroline",
+      "Lavalade, Pauline",
+      "Irfan, Bahar"
+    ],
+    "local": "Research/Speech/ExternalData/zenodo_200495"
+  },
+  "existing_labels": {
+    "lwe_blind_labels": 28,
+    "lwe_present": 16,
+    "lwe_absent": 12,
+    "lwe_confidence": {
+      "HIGH": 23,
+      "MEDIUM": 3,
+      "LOW": 2
+    },
+    "lwe_reviewer": {
+      "human_mobile": 28
+    },
+    "so762_expert_scores": "per-phone 0/1/2 expert scores (not listening labels)",
+    "new_labels_this_wp": 0
+  }
+}

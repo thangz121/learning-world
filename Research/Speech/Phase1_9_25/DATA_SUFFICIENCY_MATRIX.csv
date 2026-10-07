@@ -1,0 +1,10 @@
+dataset,usable_hours,usable_speakers,usable_age_range,age_4_6_hours,phone_label_coverage,speaker_disjoint_feasibility,expected_split,vietnamese_l1,license_suitability,meets_b2_minimum,blocker
+speechocean762,2.41 child (6 total),122 children (250 total),6-15,none,phone-level expert scores (0/1/2) for every phone,yes (125/125 speaker split),125 train / 125 test speakers,no (Mandarin-L1),CLEAR (CC BY 4.0 free commercial),NO (hours + age + L1),too small and wrong age/L1 domain; no 4-6
+LWE Zenodo 200495,~5-6 total,11,mixed mean 4.9y,most of it,no (no phone labels),no defined split,test-only by project rule,partial (mixed L1),CLEAR_WITH_CONDITIONS (CC BY 4.0 but project test-only),NO,11 speakers only; no phone labels; held as test set
+SIAK,not measured (16308 short utts),172,4-12 (594 utts age 4-6),small (about 594 utts),word score only (no phone labels),yes (train/test),train 12308 / test 4000,no,REQUIRES_LEGAL_REVIEW (CC-BY-ND),NO (phone labels + age + legal),ND clause unresolved; ages mostly 8-10
+MyST,393-448,1371,grades 3-5 (about 8-11),none,no (word-level transcripts only),yes per release,official train/dev/test,no,commercial license route (Boulder Learning),NO (phone labels + age),no phone-level labels; ages 8-11
+CSLU Kids (OGI),about 75-150,1100,K-G10 (partly K-G2),not quantified,no (word-level only),not verified,not verified,no,RESTRICTED (research only; commercial via OHSU),NO,license restricted and no phone labels
+CMU Kids,about 9,76,6-11,none,no (word-level only),no,not verified,no,RESTRICTED,NO,restricted; tiny; no phone labels
+PERCEPT-R (PhonBank),about 32.5,280,6-17,none,rhotic/derhotic /r/ labels only,per participant,not verified,no,RESTRICTED (non-commercial only),NO (license + age),non-commercial; /r/ only; ages 6-17
+Providence (PhonBank),364,6,1-4 (to 4;0),partial,no (broad phonemic transcription),no,not applicable,no,RESTRICTED (research),NO,6 speakers; ages below target
+B2 minimum target,10-30,30-50+,4-6 preferred,most hours,phone-level required,yes required,defined train/dev/test,Vietnamese-L1 ideal,commercial use required,reference target,-
