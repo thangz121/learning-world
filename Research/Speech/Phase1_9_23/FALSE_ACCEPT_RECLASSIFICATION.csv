@@ -1,0 +1,15 @@
+token_id,corpus,target_phone,human_label,match_type,identity_rank,target_max_A,peak_D,blank_mean_span,identity_margin_mean,acceptance_subtype,failure_type,removed_by_best_rule,removed_by_rank1_only,removed_by_margin0,removed_by_blank90,notes
+child_01_four,lwe,ɹ,FINAL_CONSONANT_CLEARLY_ABSENT,soft,-1,0.036201,0.0362,0.92588,-0.013226,SOFT_SIMILARITY,TYPE_A_ACCEPTANCE,1,1,1,1,rank=-1 post=0.00398 maxA=0.03620 blank=0.9259 margin=-0.01323 peakMargin=0.01809
+child_02_four,lwe,ɹ,FINAL_CONSONANT_CLEARLY_ABSENT,exact,0,0.153575,0.15358,0.984181,0.008444,IDENTITY_WEAK,TYPE_A_ACCEPTANCE,0,0,0,1,rank=0 post=0.00930 maxA=0.15357 blank=0.9842 margin=0.00844 peakMargin=0.14282
+child_03_four,lwe,ɹ,FINAL_CONSONANT_CLEARLY_ABSENT,exact,0,0.056261,0.05626,0.990426,0.003702,IDENTITY_WEAK,TYPE_A_ACCEPTANCE,0,0,0,1,rank=0 post=0.00481 maxA=0.05626 blank=0.9904 margin=0.00370 peakMargin=0.04498
+child_06_four,lwe,ɹ,FINAL_CONSONANT_CLEARLY_ABSENT,exact,1,0.041371,0.04137,0.985306,-0.000134,IDENTITY_WEAK,TYPE_A_ACCEPTANCE,0,1,1,1,rank=1 post=0.00473 maxA=0.04137 blank=0.9853 margin=-0.00013 peakMargin=-0.02142
+child_07_seven,lwe,n,FINAL_CONSONANT_PROBABLY_ABSENT,exact,1,0.629415,0.62942,0.883186,-0.008864,IDENTITY_STRONG,TYPE_B_ENCODER,0,1,1,0,rank=1 post=0.01538 maxA=0.62941 blank=0.8832 margin=-0.00886 peakMargin=0.38663
+001450109_7,so762_absent_dev,t,,exact,3,0.282881,0.28288,0.977544,-0.002806,IDENTITY_WEAK,TYPE_A_ACCEPTANCE,0,1,1,1,rank=3 post=0.00334 maxA=0.28288 blank=0.9775 margin=-0.00281 peakMargin=0.24640
+014180143_15,so762_absent_dev,n,,exact,1,0.682061,0.68206,0.927378,-0.005859,IDENTITY_STRONG,TYPE_B_ENCODER,0,1,1,1,rank=1 post=0.02130 maxA=0.68206 blank=0.9274 margin=-0.00586 peakMargin=0.65985
+014190172_7,so762_absent_dev,m,,exact,0,0.82025,0.82025,0.737954,0.17505,IDENTITY_STRONG,TYPE_B_ENCODER,0,0,0,0,rank=0 post=0.21254 maxA=0.82025 blank=0.7380 margin=0.17505 peakMargin=0.67701
+014350017_18,so762_absent_dev,l,,soft,-1,0.004903,0.0049,0.961431,-0.017421,SOFT_SIMILARITY,TYPE_A_ACCEPTANCE,1,1,1,1,rank=-1 post=0.00045 maxA=0.00490 blank=0.9614 margin=-0.01742 peakMargin=-0.48335
+014350103_6,so762_absent_dev,t,,exact,3,0.001401,0.0014,0.992848,-0.002755,IDENTITY_WEAK,TYPE_A_ACCEPTANCE,0,1,1,1,rank=3 post=0.00028 maxA=0.00140 blank=0.9928 margin=-0.00276 peakMargin=0.00059
+014350146_16,so762_absent_dev,n,,exact,0,0.955777,0.95578,0.934911,0.009527,IDENTITY_STRONG,TYPE_B_ENCODER,0,0,0,1,rank=0 post=0.01991 maxA=0.95578 blank=0.9349 margin=0.00953 peakMargin=0.95300
+014350158_8,so762_absent_dev,m,,exact,3,0.006488,0.00649,0.906088,-0.050327,IDENTITY_WEAK,TYPE_A_ACCEPTANCE,0,1,1,1,rank=3 post=0.00315 maxA=0.00649 blank=0.9061 margin=-0.05033 peakMargin=-0.09067
+014470149_5,so762_absent_dev,ɹ,,soft,-1,0.03993,0.03993,0.938741,-0.024611,SOFT_SIMILARITY,TYPE_A_ACCEPTANCE,1,1,1,1,rank=-1 post=0.00216 maxA=0.03993 blank=0.9387 margin=-0.02461 peakMargin=0.03791
+021790169_3,so762_absent_dev,d,,exact,2,0.000745,0.00516,0.996213,-0.000529,IDENTITY_WEAK,TYPE_A_ACCEPTANCE,0,1,1,1,rank=2 post=0.00032 maxA=0.00075 blank=0.9962 margin=-0.00053 peakMargin=0.00030
