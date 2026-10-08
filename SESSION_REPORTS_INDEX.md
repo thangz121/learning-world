@@ -42,23 +42,25 @@
 | 1.9.26 | 2026-10-07 | Research blocker breakout: label pipeline, encoder audit, data/license discovery | LABEL_COLLECTION_READY_DATA_BLOCKED; next gate HUMAN_REVIEW_ROUND_AND_LOCAL_PILOT; B2 TRAINING NO | `5dfdc6c` |
 | 1.9.27 | 2026-10-07 | Human review execution pipeline + local child-speech pilot + B2-D/B2-E readiness | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `dfdb82d` |
 | 1.9.28 | 2026-10-07 | Human review gate + frozen pilot execution attempt (PATH A: no review data) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `e53aa30` |
-| 1.9.29 | 2026-10-07 | Human review execution -> frozen pilot -> B2 GO/NO-GO (PATH B: still no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | (this commit) |
+| 1.9.29 | 2026-10-07 | Human review execution -> frozen pilot -> B2 GO/NO-GO (PATH B: still no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `3c0d811` |
+| 1.9.30 | 2026-10-07 | Human label import -> agreement -> freeze -> frozen pilot -> B2 decision (PATH C: no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | (this commit) |
 
 ## Current speech-research status
 
 ```
 Speech Research: NOT COMPLETE
-Last gate:       HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION (WP-1.9.29)
+Last gate:       HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION (WP-1.9.30)
 Final gate:      HUMAN_REVIEW_PENDING_PILOT_READY
 Next:            2 genuine reviewers on Pack R (276 candidates: 60P+60A minimum,
                  15+15 /r/, 4 TYPE-B) AND Pack P (546 pilot tokens, 60P+60A; test
                  split 99 tokens first) -> import validator -> label_analysis
                  (combined pack) -> PILOT_LABEL_FREEZE -> frozen pilot
                  (B2-D/B2-E, FRR-first, one run per config) -> kill switch ->
-                 GO/NO-GO. WP-1.9.29 re-verified infrastructure (19/19 hashes,
-                 Pack R QA 21/21, Pack P blind 546, mapping 546/546, pilot
-                 integrity PASS) but 0 genuine labels exist: all evaluation
-                 outputs remain NOT_EXECUTED.
+                 GO/NO-GO. WP-1.9.30 discovery found 0 genuine reviewer records
+                 (historical StageA file schema-mismatched); infrastructure
+                 re-verified (19/19 hashes, Pack R QA 21/21, Pack P blind 546,
+                 mapping 546/546, pilot integrity PASS): all evaluation outputs
+                 remain NOT_EXECUTED.
                  Parallel: TalkBank registration, PERCEPT-R request, MyST quote,
                  counsel questions, JIBO license confirmation NOT downloaded
 Production:      untouched (production_vad=false, router_locked=false,
