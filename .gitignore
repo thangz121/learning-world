@@ -77,6 +77,14 @@ Research/Speech/**/models/
 *.bin
 !Research/**/*.md
 
+# Archives / migration bundles / full-drive backups — never commit, never push.
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+
 # Real human audio (privacy-sensitive) — never commit.
 IMG_0639.mp3
 IMG_*.mp3
