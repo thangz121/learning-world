@@ -1,0 +1,22 @@
+{
+  "pack": "PILOT_DEV_TRAIN_447.csv",
+  "source": "Research\\Speech\\Phase1_9_27\\06_PILOT_DATA\\PILOT_REVIEW_CANDIDATES.csv",
+  "selection_rule": "split in {'dev','train'} from the frozen Pack P",
+  "candidates": 447,
+  "by_split": {
+    "dev": 110,
+    "train": 337
+  },
+  "speakers": [
+    "0131",
+    "0133",
+    "0149",
+    "1042",
+    "1044",
+    "1046",
+    "1061",
+    "1469"
+  ],
+  "sha256": "A1E85D50E9F5AEB2A68BB11EE9902E1150D5BB0C3591ED7888B28B5EB0366420",
+  "why": "criterion-consistent completion of Pack P (the 65 previously lenient-labeled dev/train cases are re-presented under the same careful pass); deterministic split-based subset"
+}

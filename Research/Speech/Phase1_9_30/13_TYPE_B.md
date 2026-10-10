@@ -1,14 +1,17 @@
-# 13 - TYPE-B (WP-1.9.30 Part 20)
+# 13 - TYPE-B (WP-1.9.30 Part 20) — UPDATED AFTER SESSION 1
 
-**NOT EXECUTED — TYPE_B_LABEL_GATE_FAIL**
+**TYPE_B_LABEL_GATE_FAIL (pending REV-B)**
 
-- **REASON:** the four predefined TYPE-B cases have no new genuine labels with >=2-reviewer
-  decisive evidence (0/4).
-- **REQUIRED GATE:** Pack R pool F review (P0) with decisive human evidence.
-- **CURRENT STATUS:** the four cases are frozen and traceable; no new case was added and none was
-  replaced: `child_07_seven`, `014180143_15`, `014190172_7`, `014350146_16`.
-
-Planned classification per case: FIXED / PARTIAL / UNCHANGED / REGRESSED / LABEL_LIMITED /
-INCONCLUSIVE, with human label + agreement, production decision, baseline, B2-D, B2-E, original and
-alternative encoder evidence, acoustic and temporal evidence. A model-side change never overrides a
-human-label disagreement; a disagreement never automatically proves encoder failure.
+- **SESSION 1 (REV-A, Pack R, single reviewer, all HIGH confidence):**
+  | case | REV-A label | historical status |
+  |---|---|---|
+  | child_07_seven | PRESENT | PROBABLY_ABSENT (historical single reviewer) |
+  | 014180143_15 | ABSENT | score-0 only |
+  | 014190172_7 | PRESENT | score-0 only |
+  | 014350146_16 | ABSENT | score-0 only |
+- **GATE:** requires >=2 independent reviewers with decisive consensus → 0/4 until REV-B labels the
+  same four cases. Single-reviewer labels (even HIGH) do not satisfy the frozen gate.
+- **NOTE:** the `child_07_seven` PRESENT vs historical PROBABLY_ABSENT disagreement is exactly the
+  ambiguity the second reviewer must resolve; no reconciliation is attempted.
+- **CLASSIFICATION/RREPLAY:** NOT EXECUTED — requires the pilot readouts (baseline/B2-D/B2-E) and
+  two-reviewer consensus. Cases unchanged; no new TYPE-B case added; no case replaced.

@@ -173,6 +173,21 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _snapshot_export(self, rev, rows):
+        """Auto-delivery: every non-QA Export is also saved server-side."""
+        if not rows or rev.upper().startswith("QA-"):
+            return
+        exp = REVIEWS / "exports"
+        exp.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        p = exp / f"{safe(rev)}_{ts}.csv"
+        with open(p, "w", newline="", encoding="utf-8") as fh:
+            fh.write("blind_id,label,confidence,assessable,note,ts\n")
+            for r in rows:
+                fh.write(f"{r['blind_id']},{r['label']},{r['confidence']},"
+                         f"{r.get('assessable', 'ASSESSABLE')},"
+                         f"\"{str(r.get('note', '')).replace(chr(34), '')}\",{r['ts']}\n")
+
     def do_GET(self):  # noqa: N802
         u = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(u.query)
@@ -198,6 +213,7 @@ class Handler(BaseHTTPRequestHandler):
             f = REVIEWS / f"{safe(rev)}.jsonl"
             rows = [json.loads(x) for x in f.read_text(encoding="utf-8").splitlines()
                     if x.strip()] if f.exists() else []
+            self._snapshot_export(rev, rows)
             if fmt == "csv":
                 out = "blind_id,label,confidence,assessable,note,ts\n" + "\n".join(
                     f"{r['blind_id']},{r['label']},{r['confidence']},"

@@ -1,0 +1,12 @@
+{
+  "pack": "PILOT_TEST_SPLIT_99.csv",
+  "source": "Research\\Speech\\Phase1_9_27\\06_PILOT_DATA\\PILOT_REVIEW_CANDIDATES.csv",
+  "selection_rule": "split == 'test' from the frozen Pack P (speakers 1075, 1076)",
+  "candidates": 99,
+  "speakers": [
+    "1075",
+    "1076"
+  ],
+  "sha256": "747DBFFFA2E6DC30062429E99DB2E6FB8EECA003C4FEEEE65AE5F6AC2BC54DE2",
+  "why": "coverage of the frozen evaluation split for a short, quality-focused session; deterministic, not score/difficulty-selected; all prior review data preserved"
+}

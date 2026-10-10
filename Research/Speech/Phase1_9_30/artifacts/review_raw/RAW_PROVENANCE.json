@@ -1,0 +1,44 @@
+{
+  "session": "human-review-1",
+  "reviewer_id": "REV-A",
+  "pack": "Pack R (276)",
+  "date": "2026-10-08",
+  "machine": "ASUS",
+  "first_submission_ts": "2026-10-08T03:48:55.051Z",
+  "last_submission_ts": "2026-10-08T05:33:51.669Z",
+  "submissions": 276,
+  "unique_candidates": 276,
+  "duplicates": 0,
+  "labels": {
+    "PRESENT": 243,
+    "ABSENT": 17,
+    "UNCERTAIN": 16
+  },
+  "confidence": {
+    "HIGH": 253,
+    "MEDIUM": 18,
+    "LOW": 5
+  },
+  "assessability": {
+    "ASSESSABLE": 273,
+    "NOT_ASSESSABLE": 3
+  },
+  "raw_files": {
+    "server_raw_jsonl": {
+      "path": "Research\\Speech\\Phase1_9_27\\artifacts\\reviews\\REV-A.jsonl",
+      "bytes": 44770,
+      "sha256": "4D702308A86641BEE6B3F8BF84080B7F244C4E3D14E46D4D4AB8D5B345E5BB11"
+    },
+    "export_snapshot_csv": {
+      "path": "Research\\Speech\\Phase1_9_27\\artifacts\\reviews\\exports\\REV-A_20261008T053356Z.csv",
+      "bytes": 15835,
+      "sha256": "7E15054729DF544CDE6D8E3A80086A09641AD2EC3DD37FD7AF3042307C962474"
+    },
+    "root_copy_csv": {
+      "path": "export.csv",
+      "bytes": 15834,
+      "sha256": "7DDA7784BD2F6161A65E03722EB9B1B39E883C2BB32EBFA10CEDA02125B546F4"
+    }
+  },
+  "recorded_at": "2026-10-08T05:55:34.726484+00:00"
+}

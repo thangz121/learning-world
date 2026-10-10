@@ -1,12 +1,16 @@
-# 12 - /R/ ANALYSIS (WP-1.9.30 Part 19)
+# 12 - /R/ ANALYSIS (WP-1.9.30 Part 19) — UPDATED AFTER SESSION 1
 
-**R_INCONCLUSIVE**
+**R_INCONCLUSIVE** (gate unmet; single reviewer)
 
-- **REASON:** 0 genuinely labeled /r/ tokens (0 PRESENT / 0 ABSENT / 0 UNCERTAIN). No /r/ claim is
-  possible.
-- **REQUIRED GATE:** >=15 PRESENT + >=15 ABSENT /r/ consensus labels across >=10 speakers.
-- **CURRENT STATUS:** local /r/ supply = 32 candidates (Pack R 24 + Pack P 8) vs 30 labels required;
-  supply risk documented. No /r/ label was manufactured; no other phone substituted for /r/.
+- **SESSION 1 (REV-A, Pack R, single reviewer):** /r/ target-phone candidates = 24:
+  **22 PRESENT / 1 ABSENT / 1 UNCERTAIN**, across 18-19 speakers.
+- **PRESENT side:** met (22 >= 15).
+- **ABSENT side:** not met (1 vs 15). The local /r/ supply (24 Pack R + 8 Pack P = 32) makes the
+  15-ABSENT side likely unreachable even with full coverage, given this reviewer's criterion.
+- **REQUIRED GATE:** >=15 PRESENT + >=15 ABSENT consensus labels across >=10 speakers, from >=2
+  independent reviewers (still pending REV-B).
+- **STATUS:** no /r/ claim; gate not weakened; no other phone substituted; no label reclassified.
+  PERCEPT-R (research-only) remains the documented external option if the local supply proves
+  insufficient.
 
-Planned report when labels exist: PRESENT/ABSENT/UNCERTAIN n, speaker count, reviewer agreement,
-baseline/B2-D/B2-E outcomes, false accepts/rejects, encoder/acoustic/temporal evidence.
+No model comparison has been run for /r/ (baseline/B2-D/B2-E remain NOT EXECUTED).

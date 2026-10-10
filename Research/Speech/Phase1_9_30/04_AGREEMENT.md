@@ -1,20 +1,29 @@
-# 04 - AGREEMENT (WP-1.9.30 Part 10)
+# 04 - AGREEMENT (WP-1.9.30 Part 10) — UPDATED AFTER SESSION 1
 
-**NOT ESTIMABLE**
+> **Tóm tắt (VI):** Chỉ có 1 reviewer thật (REV-A) → không tính được inter-rater. Pipeline đã chạy
+> và ghi đúng `SINGLE_REVIEWER_LIMITATION`. Không tạo kappa giả.
 
-- **REASON:** Genuine labels: 0; genuine reviewers: 0. Agreement statistics require >=2 independent
-  genuine reviewers over a common candidate set.
-- **REQUIRED GATE:** two genuine reviewer exports (Pack R and/or Pack P).
-- **CURRENT STATUS:** frozen agreement implementation ready and previously validated
-  (`label_analysis.py`; WP-1.9.27 synthetic test PASS, deleted; WP-1.9.29 dry-run
-  `no_agreement / NO_REVIEWER_AVAILABLE`).
+## Status
 
-## Planned statistics (frozen, unchanged)
+| item | value |
+|---|---|
+| genuine reviewers | 1 (REV-A) |
+| labelled candidates | 276 (all Pack R) |
+| raw agreement / Cohen / weighted / Fleiss | NOT ESTIMABLE |
+| agreement row written | `no_agreement,1,0,,...,SINGLE_REVIEWER_LIMITATION` |
+| adjudication candidates | 16 (UNCERTAIN cases, awaiting second reviewer then adjudication) |
 
-raw agreement; Cohen's kappa (2 raters); weighted kappa (ordinal ABSENT<UNCERTAIN<PRESENT);
-Fleiss' kappa (>=3); PRESENT/ABSENT/UNCERTAIN confusion; assessability agreement; per-phone, /r/,
-TYPE-B, confidence agreement.
+Outputs: `artifacts/agreement/` (HUMAN_LABEL_RESULTS.csv 276 rows, REVIEWER_AGREEMENT.csv,
+ADJUDICATION_RESULTS.csv 16 rows, label_sufficiency.json).
 
-Rules: single-reviewer candidates are marked `SINGLE_REVIEWER` (no fake consensus); disagreements
-are preserved as raw labels and marked `UNRESOLVED` when the frozen consensus protocol cannot
-resolve them; no majority vote; UNCERTAIN never collapsed into ABSENT.
+## Gate effects (single reviewer)
+
+- TYPE-B gate: **not met** — requires >=2 independent reviewers; REV-A alone cannot make the 4
+  decisive cases count, even at HIGH confidence.
+- /r/ gate: PRESENT side met (22 vs 15), ABSENT side not (1 vs 15).
+- No consensus/majority claims are made from one reviewer; UNCERTAIN preserved (16).
+
+## Next
+
+REV-B reviews Pack R (same 276) independently; then agreement (Cohen's kappa, weighted kappa,
+per-subset) runs on the two genuine reviewers with the frozen implementation.
