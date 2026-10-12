@@ -477,6 +477,18 @@ public class SelectionYardBuilder : MonoBehaviour {
       Box(kit.transform, "Garage", new Vector3(0.4f, 0.25f, 0f), new Vector3(0.5f, 0.5f, 0.4f), Gold);
       Ball(kit.transform, "Pet", new Vector3(-0.4f, 0.62f, 0f), 0.14f, Coral);
       Box(kit.transform, "Cartoy", new Vector3(0.4f, 0.55f, 0f), new Vector3(0.24f, 0.12f, 0.14f), Blue);
+    } else if (gameId == "listen_garden") {
+      GameObject kit = new GameObject("SYPreview_listen_garden");
+      kit.transform.SetParent(parent, false);
+      kit.transform.localPosition = p;
+      Ignore(kit);
+      // A golden bell on a post + two picture cards: the listening motif, no words.
+      Box(kit.transform, "Post", new Vector3(-0.42f, 0.3f, 0f), new Vector3(0.09f, 0.6f, 0.09f), Wood);
+      Ball(kit.transform, "Bell", new Vector3(-0.42f, 0.68f, 0f), 0.19f, Gold);
+      Ball(kit.transform, "Clapper", new Vector3(-0.42f, 0.52f, 0f), 0.06f, Cream);
+      Ball(kit.transform, "AppleCard", new Vector3(0.04f, 0.2f, 0f), 0.2f, Coral);
+      GameObject banana = Ball(kit.transform, "BananaCard", new Vector3(0.48f, 0.24f, 0f), 0.16f, Gold);
+      banana.transform.localScale = new Vector3(0.14f, 0.3f, 0.14f);
     }
     // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: preview rút cùng catalog (mở lại thì khôi
     // phục nhánh SYPreview_ordering_station ở đây).

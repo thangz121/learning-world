@@ -11,7 +11,8 @@ from pathlib import Path
 
 ALLOWED_VOICES = {"milo_v1", "learning_v1", "mia_v1",
     "npc_female_01", "npc_female_02", "npc_female_03",
-    "npc_male_01", "npc_male_02", "npc_male_03"}
+    "npc_male_01", "npc_male_02", "npc_male_03",
+    "listen_v1"}
 # Part D: npc/voice compatibility
 NPC_VOICE_RULES = {"milo": {"milo_v1"}, "mia": {"mia_v1"}}
 FEMALE = {f"npc_female_0{i}" for i in (1, 2, 3)}

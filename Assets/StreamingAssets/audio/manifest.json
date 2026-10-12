@@ -131,6 +131,182 @@
       "style": "Clear",
       "format": "Mp3_44100",
       "file": "ok_05.mp3"
+    },
+    {
+      "id": "listen_apple_normal",
+      "text": "apple",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_apple_normal.mp3"
+    },
+    {
+      "id": "listen_apple_slow",
+      "text": "apple",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_apple_slow.mp3"
+    },
+    {
+      "id": "listen_ball_normal",
+      "text": "ball",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_ball_normal.mp3"
+    },
+    {
+      "id": "listen_ball_slow",
+      "text": "ball",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_ball_slow.mp3"
+    },
+    {
+      "id": "listen_banana_normal",
+      "text": "banana",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_banana_normal.mp3"
+    },
+    {
+      "id": "listen_banana_slow",
+      "text": "banana",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_banana_slow.mp3"
+    },
+    {
+      "id": "listen_orange_normal",
+      "text": "orange",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_orange_normal.mp3"
+    },
+    {
+      "id": "listen_orange_slow",
+      "text": "orange",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_orange_slow.mp3"
+    },
+    {
+      "id": "listen_carrot_normal",
+      "text": "carrot",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_carrot_normal.mp3"
+    },
+    {
+      "id": "listen_carrot_slow",
+      "text": "carrot",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_carrot_slow.mp3"
+    },
+    {
+      "id": "listen_tomato_normal",
+      "text": "tomato",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_tomato_normal.mp3"
+    },
+    {
+      "id": "listen_tomato_slow",
+      "text": "tomato",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_tomato_slow.mp3"
+    },
+    {
+      "id": "listen_watermelon_normal",
+      "text": "watermelon",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_watermelon_normal.mp3"
+    },
+    {
+      "id": "listen_watermelon_slow",
+      "text": "watermelon",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_watermelon_slow.mp3"
+    },
+    {
+      "id": "listen_grape_normal",
+      "text": "grapes",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.85,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_grape_normal.mp3"
+    },
+    {
+      "id": "listen_grape_slow",
+      "text": "grapes",
+      "voice": "listen_v1",
+      "lang": "en-US",
+      "rate": 0.7,
+      "pitch": 0.0,
+      "style": "Clear",
+      "format": "Mp3_44100",
+      "file": "listen_grape_slow.mp3"
     }
   ]
 }

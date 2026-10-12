@@ -261,6 +261,13 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   public ClassificationCity CityGame { get; private set; }
   public void BindCityGame(ClassificationCity game) { CityGame = game; }
 
+  // WP-1.9.32: English -> Listening ("Vườn Tai Thính"), mirroring the market
+  // lifecycle (one visit plays through the levels; re-entries adopt as done).
+  public ActivityLifecycle ListeningLifecycle { get; private set; } =
+    new ActivityLifecycle("listen_garden", "SelectionYardArea");
+  public ListeningGarden ListeningGame { get; private set; }
+  public void BindListeningGame(ListeningGarden game) { ListeningGame = game; }
+
   // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: rút lifecycle + binding trạm (mở lại thì khôi
   // phục StationLifecycle / StationGame / BindStationGame ở đây + wiring
   // BuildOrderingStationPlayScene trong GameInstaller).

@@ -44,7 +44,8 @@
 | 1.9.28 | 2026-10-07 | Human review gate + frozen pilot execution attempt (PATH A: no review data) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `e53aa30` |
 | 1.9.29 | 2026-10-07 | Human review execution -> frozen pilot -> B2 GO/NO-GO (PATH B: still no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `3c0d811` |
 | 1.9.30 | 2026-10-07 | Human label import -> agreement -> freeze -> frozen pilot -> B2 decision (PATH C: no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `c8ad68a` |
-| 1.9.31 | 2026-10-12 | External child standard (SO762 5-expert panel + Zenodo native kids, CC BY 4.0) replaces REV-B; BENCH 8,149 tokens; B2-D readout | B2_PILOT_PROMISING_DATA_REQUIRED (D5_or passes frozen c1–c4); B2 TRAINING NO | this commit |
+| 1.9.31 | 2026-10-12 | External child standard (SO762 5-expert panel + Zenodo native kids, CC BY 4.0) replaces REV-B; BENCH 8,149 tokens; B2-D readout | B2_PILOT_PROMISING_DATA_REQUIRED (D5_or passes frozen c1–c4); B2 TRAINING NO | `fcd4725` |
+| 1.9.32 | 2026-10-12 | Free TTS pipeline (Piper + LibriTTS-R, self-checked 16/16) + English→Listening game foundation "Vườn Tai Thính" (`listen_garden`) | IMPLEMENTED (not accepted); suite 739/734/0/5; build Succeeded errors=0; offline audio pinned | this commit |
 
 ## Current speech-research status
 
@@ -75,4 +76,10 @@ Next:            (1) data/license decision for full B2 — the ONLY thing this g
 Production:      untouched (production_vad=false, router_locked=false, unity_integrated=false,
                  scorer_modified=false, production_window_locked=false)
 Training:        NO (kill switch intact; positive result authorizes data/license decision only)
+Product (English→Listening): FOUNDATION IMPLEMENTED (WP-1.9.32) — game `listen_garden`
+                 "Vườn Tai Thính": LV1→LV4 (12 rounds/visit), 8 starter words, voice-first,
+                 bell replay, wrong→slow replay; audio offline 100% (16 local Piper masters,
+                 voice listen_v1, keys pinned by CT-S21F); suite 739/734/0/5; build errors=0.
+                 Next: human/visual QA + journey driver + content phase 2 (add words via
+                 Content/listening/listen_garden.json + tools/pregen_listen.py).
 ```

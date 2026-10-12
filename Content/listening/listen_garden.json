@@ -1,0 +1,26 @@
+{
+  "id": "listen_garden",
+  "title": "Vườn Tai Thính",
+  "skill": "english_listening",
+  "voice": "listen_v1",
+  "lang": "en-US",
+  "audioRateNormal": 0.85,
+  "audioRateSlow": 0.7,
+  "words": [
+    { "id": "apple", "en": "apple", "vi": "quả táo", "prop": "apple" },
+    { "id": "ball", "en": "ball", "vi": "quả bóng", "prop": "ball" },
+    { "id": "banana", "en": "banana", "vi": "quả chuối", "prop": "banana" },
+    { "id": "orange", "en": "orange", "vi": "quả cam", "prop": "orange" },
+    { "id": "carrot", "en": "carrot", "vi": "củ cà rốt", "prop": "carrot" },
+    { "id": "tomato", "en": "tomato", "vi": "quả cà chua", "prop": "tomato" },
+    { "id": "watermelon", "en": "watermelon", "vi": "quả dưa hấu", "prop": "watermelon" },
+    { "id": "grape", "en": "grapes", "vi": "chùm nho", "prop": "grapes" }
+  ],
+  "levels": [
+    { "level": 1, "pool": ["apple", "ball"], "choices": 2, "rounds": 2 },
+    { "level": 2, "pool": ["apple", "ball", "banana"], "choices": 3, "rounds": 3 },
+    { "level": 3, "pool": ["apple", "ball", "banana", "orange"], "choices": 4, "rounds": 3 },
+    { "level": 4, "pool": ["apple", "ball", "banana", "orange", "carrot", "tomato", "watermelon", "grape"],
+      "choices": 4, "rounds": 4 }
+  ]
+}

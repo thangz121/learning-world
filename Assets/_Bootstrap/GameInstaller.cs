@@ -170,6 +170,10 @@ public class GameInstaller : MonoBehaviour {
       BuildClassificationCityPlayScene(scene);
       return;
     }
+    if (scene.name == ListeningGardenBuilder.SceneName) {
+      BuildListeningGardenPlayScene(scene);
+      return;
+    }
     // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: không build scene trạm (mở lại thì khôi phục
     // nhánh OrderingStationBuilder.SceneName + BuildOrderingStationPlayScene).
     // COUNTING GARDEN CLEANUP (product decision): Build Yard / Delivery /
@@ -604,6 +608,54 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] ClassificationCityPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  // WP-1.9.32: English -> Listening foundation ("Vườn Tai Thính"). Same build
+  // contract as the other reset-era arenas; the item audio ships as pregen
+  // masters (voice 'listen_v1') so every prompt plays offline.
+  void BuildListeningGardenPlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "ListeningGardenWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] ListeningGardenPlayScene has no ListeningGardenWorld root.", this);
+        return;
+      }
+      root.transform.position = ListeningGardenBuilder.WorldOffset;
+      ListeningGardenBuilder builder = root.GetComponent<ListeningGardenBuilder>();
+      if (builder == null) builder = root.AddComponent<ListeningGardenBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = ListeningGardenBuilder.WorldOffset + ListeningGardenBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, ListeningGardenBuilder.WorldOffset,
+          ListeningGardenBuilder.BoundX, ListeningGardenBuilder.BoundZ, ListeningGardenBuilder.FollowOffset,
+          DialogueLang.T(ListeningGardenBuilder.ObjectiveEn, ListeningGardenBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        ListeningGarden game = root.GetComponent<ListeningGarden>();
+        if (game == null) game = root.AddComponent<ListeningGarden>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle listeningLife = _yardArea != null ? _yardArea.ListeningLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, listeningLife);
+        if (_yardArea != null) _yardArea.BindListeningGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Listening garden wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Listening Garden scene built entry="
+          + (ListeningGardenBuilder.WorldOffset + ListeningGardenBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] ListeningGardenPlayScene build failed: " + e.Message, this);
     }
   }
 
