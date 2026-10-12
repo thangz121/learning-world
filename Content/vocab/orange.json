@@ -20,8 +20,17 @@
     ]
   },
   "speech": {
-    "expectedForms": [],
-    "phonetic": ""
+    "expectedForms": [
+      "orange"
+    ],
+    "phonetic": "",
+    "phonemes": [
+      "AO",
+      "R",
+      "AH",
+      "N",
+      "JH"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Orange",

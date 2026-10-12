@@ -100,6 +100,8 @@ public static class LearningMap {
   public const string OrderingStationGame = "ordering_station";
   // English -> Listening foundation (WP-1.9.32, IMPLEMENTED, not accepted).
   public const string ListeningGardenGame = "listen_garden";
+  // English -> Speaking foundation (WP-1.9.33, IMPLEMENTED, not accepted).
+  public const string SpeakingStageGame = "speaking_stage";
 
   public static readonly SkillEntry[] MathSkills = {
     new SkillEntry(MathCounting, MathId, "Đếm"),
@@ -150,6 +152,7 @@ public static class LearningMap {
   public const string ClassificationCityScene = "ClassificationCityPlayScene";
   public const string OrderingStationScene = "OrderingStationPlayScene";
   public const string ListeningGardenScene = "ListeningGardenPlayScene";
+  public const string SpeakingStageScene = "SpeakingStagePlayScene";
 
   // Counting games stay HUMAN_ACCEPTED. Geometry is IMPLEMENTED only.
   public static readonly GameEntry[] Games = {
@@ -166,6 +169,9 @@ public static class LearningMap {
     // English -> Listening: the first English game (foundation, WP-1.9.32).
     new GameEntry(ListeningGardenGame, EnglishListening, "Vườn Tai Thính",
       ListeningGardenScene, GameStatus.Implemented),
+    // English -> Speaking: hear the word, say it; backend grades 4 levels (WP-1.9.33).
+    new GameEntry(SpeakingStageGame, EnglishSpeaking, "Sân Khấu Nhí",
+      SpeakingStageScene, GameStatus.Implemented),
     // Ga Thứ Tự (ordering_station) TẠM ĐÓNG 2026-10-02: gameplay chưa rõ ràng.
     // Code + scene giữ nguyên để mở lại; chỉ rút khỏi catalog nên sân Thứ tự
     // tự thành sân trống (placeholder CHƯA CÓ TRÒ CHƠI), cổng Thứ tự tắt sáng.

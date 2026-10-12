@@ -30,7 +30,15 @@
     "expectedForms": [
       "banana"
     ],
-    "phonetic": "bəˈnænə"
+    "phonetic": "bəˈnænə",
+    "phonemes": [
+      "B",
+      "AH",
+      "N",
+      "AE",
+      "N",
+      "AH"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Banana",

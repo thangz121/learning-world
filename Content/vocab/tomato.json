@@ -20,8 +20,18 @@
     ]
   },
   "speech": {
-    "expectedForms": [],
-    "phonetic": ""
+    "expectedForms": [
+      "tomato"
+    ],
+    "phonetic": "",
+    "phonemes": [
+      "T",
+      "AH",
+      "M",
+      "EY",
+      "T",
+      "OW"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Tomato",

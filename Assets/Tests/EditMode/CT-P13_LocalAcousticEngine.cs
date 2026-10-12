@@ -1064,7 +1064,9 @@ public class CT_P13_M5_StagedBeat {
     foreach (string path in files)
       entries.Add(ContentDatabase.ParseVocab(File.ReadAllText(path)));
     var catalog = new TargetPronunciationCatalog(entries);
-    Assert.AreEqual(6, catalog.Count(), "benchmark pronunciation coverage (ball/apple/red/one/please/teddy)");
+    // 6 benchmark words + the 6 listening-pack words patched in WP-1.9.33
+    // (banana/orange/carrot/tomato/watermelon/grape) = 12.
+    Assert.AreEqual(12, catalog.Count(), "pronunciation coverage after the listening pack words");
     return catalog;
   }
 

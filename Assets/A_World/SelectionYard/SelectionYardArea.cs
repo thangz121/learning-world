@@ -268,6 +268,12 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   public ListeningGarden ListeningGame { get; private set; }
   public void BindListeningGame(ListeningGarden game) { ListeningGame = game; }
 
+  // WP-1.9.33: English -> Speaking ("Sân Khấu Nhí"), same adopt-on-complete rule.
+  public ActivityLifecycle SpeakingLifecycle { get; private set; } =
+    new ActivityLifecycle("speaking_stage", "SelectionYardArea");
+  public SpeakingStage SpeakingGame { get; private set; }
+  public void BindSpeakingStage(SpeakingStage game) { SpeakingGame = game; }
+
   // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: rút lifecycle + binding trạm (mở lại thì khôi
   // phục StationLifecycle / StationGame / BindStationGame ở đây + wiring
   // BuildOrderingStationPlayScene trong GameInstaller).

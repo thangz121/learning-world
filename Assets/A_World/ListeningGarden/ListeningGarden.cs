@@ -217,14 +217,7 @@ public class ListeningGarden : MonoBehaviour {
   // a cache miss would fall back to the worker, same as every other line.
   void PlayWord(bool slow) {
     if (_audio == null || string.IsNullOrEmpty(TargetWord)) return;
-    try {
-      var voice = new VoiceProfileId(ListeningWords.VoiceId);
-      var lang = new LanguageCode(ListeningWords.Lang);
-      float rate = slow ? ListeningWords.RateSlow : ListeningWords.RateNormal;
-      var req = new DialogueRequest(ListeningWords.TextEn(TargetWord), voice, lang,
-        rate, 0f, SpeechStyle.Clear, AudioFormat.Mp3_44100, AudioPriority.P1_Pronunciation);
-      _audio.SpeakAsync(req);
-    } catch (Exception) { }
+    ListenPackAudio.Play(_audio, TargetWord, slow);
   }
 
   static string Capitalize(string s) {

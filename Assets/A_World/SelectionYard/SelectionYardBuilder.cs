@@ -489,6 +489,18 @@ public class SelectionYardBuilder : MonoBehaviour {
       Ball(kit.transform, "AppleCard", new Vector3(0.04f, 0.2f, 0f), 0.2f, Coral);
       GameObject banana = Ball(kit.transform, "BananaCard", new Vector3(0.48f, 0.24f, 0f), 0.16f, Gold);
       banana.transform.localScale = new Vector3(0.14f, 0.3f, 0.14f);
+    } else if (gameId == "speaking_stage") {
+      GameObject kit = new GameObject("SYPreview_speaking_stage");
+      kit.transform.SetParent(parent, false);
+      kit.transform.localPosition = p;
+      Ignore(kit);
+      // Golden mic on its ring + two stars: the speaking motif, no words.
+      Box(kit.transform, "MicPost", new Vector3(-0.3f, 0.28f, 0f), new Vector3(0.09f, 0.56f, 0.09f), Wood);
+      Ball(kit.transform, "MicHead", new Vector3(-0.3f, 0.66f, 0f), 0.18f, Gold);
+      Ball(kit.transform, "MicTip", new Vector3(-0.3f, 0.5f, 0f), 0.06f, Cream);
+      Ball(kit.transform, "Star1", new Vector3(0.22f, 0.34f, 0.05f), 0.14f, Gold);
+      Ball(kit.transform, "Star2", new Vector3(0.52f, 0.2f, -0.06f), 0.1f, Coral);
+      Pad(kit.transform, "Ring", new Vector3(-0.3f, 0.012f, 0f), 0.9f, Cream);
     }
     // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: preview rút cùng catalog (mở lại thì khôi
     // phục nhánh SYPreview_ordering_station ở đây).

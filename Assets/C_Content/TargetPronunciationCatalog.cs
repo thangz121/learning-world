@@ -34,6 +34,15 @@ public sealed class TargetPronunciationCatalog : ITargetPronunciationProvider {
     return _byWord.TryGetValue(word.Value, out pronunciation);
   }
 
+  // Additive (WP-1.9.33): register one word's pronunciation data directly.
+  // Used by the runtime mirror (SpeakingPack) so the engine cohort matches the
+  // content files without a JSON loader in the build.
+  public void Register(string word, IList<string> phonemeIds) {
+    if (string.IsNullOrEmpty(word) || phonemeIds == null) return;
+    TargetPronunciation pron = PhonemeTable.FromIds(new WordId(word), phonemeIds);
+    if (pron != null && pron.IsUsable()) _byWord[word] = pron;
+  }
+
   public string[] KnownWords() {
     string[] keys = new string[_byWord.Count];
     _byWord.Keys.CopyTo(keys, 0);

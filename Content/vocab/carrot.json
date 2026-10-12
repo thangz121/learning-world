@@ -20,8 +20,17 @@
     ]
   },
   "speech": {
-    "expectedForms": [],
-    "phonetic": ""
+    "expectedForms": [
+      "carrot"
+    ],
+    "phonetic": "",
+    "phonemes": [
+      "K",
+      "AE",
+      "R",
+      "AH",
+      "T"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Carrot",

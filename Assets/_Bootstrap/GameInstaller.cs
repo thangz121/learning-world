@@ -42,6 +42,11 @@ public class GameInstaller : MonoBehaviour {
   public PhoneMicrophoneDevice PhoneMic { get; private set; }
   public CompositeMicrophoneDevice SpeechMic { get; private set; }
   public MicSetupGate MicGate { get; private set; }
+  // WP-1.9.33 speaking foundation: the offline acoustic engine + the local
+  // whisper service compose into ONE game-facing recognizer (4-level verdicts).
+  public TargetPronunciationCatalog PronunciationCatalog { get; private set; }
+  public ISpeechRecognizer Speech { get; private set; }
+  LocalAssessServiceClient _assessClient;
 
   SpeechProviderRouter _speechRouter;
 
@@ -101,6 +106,26 @@ public class GameInstaller : MonoBehaviour {
     PhoneMic = new PhoneMicrophoneDevice();             // Application, link-gated (NoDevice until probed)
     SpeechMic = new CompositeMicrophoneDevice(LocalMic, PhoneMic); // local wins, phone fallback
     MicGate = new MicSetupGate(LocalMic, PhoneMic);     // startup offer + exercise-entry policy
+    // WP-1.9.33: the speaking stack — offline acoustic engine (always) + the
+    // local speak-assess service (transcript when running; graceful without it).
+    try {
+      PronunciationCatalog = new TargetPronunciationCatalog();
+      SpeakingPack.Apply((word, phonemes) => PronunciationCatalog.Register(word, phonemes));
+      var speakingPolicy = SpeakingPassPolicy.Default();
+      var acousticProvider = new LocalAcousticProvider(PronunciationCatalog);
+      _assessClient = new LocalAssessServiceClient(LocalAssessServiceLauncher.DefaultPort);
+      var serviceProvider = new LocalServiceAssessmentProvider(_assessClient);
+      var hybrid = new HybridSpeechAssessmentProvider(acousticProvider, serviceProvider, speakingPolicy);
+      var localCapture = new UnityMicrophoneCapture(LocalMic);
+      var phoneCapture = new NetworkMicrophoneCapture(
+        new TcpPhoneAudioTransport(PhoneMicProtocol.LoopbackHost, PhoneMicProtocol.DefaultBridgePort));
+      var gateCapture = new GateSpeechCapture(localCapture, phoneCapture, MicGate);
+      Speech = new SpeechRecognizer(SpeechMic, gateCapture, hybrid, speakingPolicy,
+        EventBus, 5f, 1.5f, 12f);
+    } catch (System.Exception ex) {
+      Debug.LogWarning("[GameInstaller] speaking stack init failed (speaking stays off): " + ex.Message, this);
+      Speech = null;
+    }
     Milo.Bind(EventBus, Quests, Learning, Hints, Audio);
     Mia.Bind(Audio); // shopkeeper voice (name readout + gentle retry)
     PregenSeeder.SeedFromStreamingAssets();           // D: offline L2 seeding before first audio use
@@ -172,6 +197,10 @@ public class GameInstaller : MonoBehaviour {
     }
     if (scene.name == ListeningGardenBuilder.SceneName) {
       BuildListeningGardenPlayScene(scene);
+      return;
+    }
+    if (scene.name == SpeakingStageBuilder.SceneName) {
+      BuildSpeakingStagePlayScene(scene);
       return;
     }
     // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: không build scene trạm (mở lại thì khôi phục
@@ -657,6 +686,73 @@ public class GameInstaller : MonoBehaviour {
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] ListeningGardenPlayScene build failed: " + e.Message, this);
     }
+  }
+
+  // WP-1.9.33: English -> Speaking foundation ("Sân Khấu Nhí"). The arena gets
+  // the ONE game-facing recognizer (Speech); the local assess service is warmed
+  // in the background when playing (best-effort, the game works without it).
+  void BuildSpeakingStagePlayScene(Scene scene) {
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "SpeakingStageWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] SpeakingStagePlayScene has no SpeakingStageWorld root.", this);
+        return;
+      }
+      root.transform.position = SpeakingStageBuilder.WorldOffset;
+      SpeakingStageBuilder builder = root.GetComponent<SpeakingStageBuilder>();
+      if (builder == null) builder = root.AddComponent<SpeakingStageBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = SpeakingStageBuilder.WorldOffset + SpeakingStageBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, SpeakingStageBuilder.WorldOffset,
+          SpeakingStageBuilder.BoundX, SpeakingStageBuilder.BoundZ, SpeakingStageBuilder.FollowOffset,
+          DialogueLang.T(SpeakingStageBuilder.ObjectiveEn, SpeakingStageBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        SpeakingStage game = root.GetComponent<SpeakingStage>();
+        if (game == null) game = root.AddComponent<SpeakingStage>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle speakingLife = _yardArea != null ? _yardArea.SpeakingLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, speakingLife,
+          Speech, MicGate);
+        if (_yardArea != null) _yardArea.BindSpeakingStage(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Speaking stage wiring failed: " + e.Message, this);
+      }
+      WarmAssessService();
+      try {
+        Debug.Log("[GameInstaller] Speaking Stage scene built entry="
+          + (SpeakingStageBuilder.WorldOffset + SpeakingStageBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] SpeakingStagePlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  // Best-effort background warm-up of tools/speak_assess_server.py (never blocks
+  // gameplay; the hybrid falls back to acoustic-only when it is absent).
+  void WarmAssessService() {
+    try {
+      if (!Application.isPlaying) return;
+      string toolsDir = System.IO.Path.Combine(
+        System.IO.Directory.GetParent(Application.dataPath).FullName, "tools");
+      int port = LocalAssessServiceLauncher.DefaultPort;
+      System.Threading.Tasks.Task.Run(() => {
+        try {
+          bool ok = LocalAssessServiceLauncher.EnsureRunning(port, toolsDir);
+          Debug.Log("[GameInstaller] speak-assess service " + (ok ? "ready" : "unavailable (acoustic-only)"));
+        } catch (System.Exception) { }
+      });
+    } catch (System.Exception) { }
   }
 
   // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: toàn bộ BuildOrderingStationPlayScene đã rút

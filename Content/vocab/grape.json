@@ -20,8 +20,17 @@
     ]
   },
   "speech": {
-    "expectedForms": [],
-    "phonetic": ""
+    "expectedForms": [
+      "grapes"
+    ],
+    "phonetic": "",
+    "phonemes": [
+      "G",
+      "R",
+      "EY",
+      "P",
+      "S"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Grape",

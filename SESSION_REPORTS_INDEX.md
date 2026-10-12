@@ -45,7 +45,8 @@
 | 1.9.29 | 2026-10-07 | Human review execution -> frozen pilot -> B2 GO/NO-GO (PATH B: still no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `3c0d811` |
 | 1.9.30 | 2026-10-07 | Human label import -> agreement -> freeze -> frozen pilot -> B2 decision (PATH C: no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `c8ad68a` |
 | 1.9.31 | 2026-10-12 | External child standard (SO762 5-expert panel + Zenodo native kids, CC BY 4.0) replaces REV-B; BENCH 8,149 tokens; B2-D readout | B2_PILOT_PROMISING_DATA_REQUIRED (D5_or passes frozen c1–c4); B2 TRAINING NO | `fcd4725` |
-| 1.9.32 | 2026-10-12 | Free TTS pipeline (Piper + LibriTTS-R, self-checked 16/16) + English→Listening game foundation "Vườn Tai Thính" (`listen_garden`) | IMPLEMENTED (not accepted); suite 739/734/0/5; build Succeeded errors=0; offline audio pinned | this commit |
+| 1.9.32 | 2026-10-12 | Free TTS pipeline (Piper + LibriTTS-R, self-checked 16/16) + English→Listening game foundation "Vườn Tai Thính" (`listen_garden`) | IMPLEMENTED (not accepted); suite 739/734/0/5; build Succeeded errors=0; offline audio pinned | `ab77bb5` |
+| 1.9.33 | 2026-10-12 | Speaking foundation: hybrid backend (offline acoustic + local whisper service) + "Sân Khấu Nhí" (`speaking_stage`); 4 levels Xuất sắc/Đúng rồi/Gần đúng rồi/Thử lại | IMPLEMENTED (not accepted); suite 751/746/0/5; build Succeeded errors=0 warnings=0; service smoke PASS on real child WAV | this commit |
 
 ## Current speech-research status
 
@@ -82,4 +83,12 @@ Product (English→Listening): FOUNDATION IMPLEMENTED (WP-1.9.32) — game `list
                  voice listen_v1, keys pinned by CT-S21F); suite 739/734/0/5; build errors=0.
                  Next: human/visual QA + journey driver + content phase 2 (add words via
                  Content/listening/listen_garden.json + tools/pregen_listen.py).
+Product (English→Speaking): FOUNDATION IMPLEMENTED (WP-1.9.33) — game `speaking_stage`
+                 "Sân Khấu Nhí": child speaks -> hybrid backend (offline acoustic engine +
+                 local faster-whisper service on 127.0.0.1:8470, MIT/free, graceful without it)
+                 -> 4 levels Xuất sắc/Đúng rồi/Gần đúng rồi/Thử lại nhé; 8 words × 2 levels,
+                 3 tries/word; environment failures never fail the child; % is dev-log/property
+                 only. Suite 751/746/0/5; build Succeeded errors=0 warnings=0; service smoke
+                 PASS on real child WAV (423ms/clip; silence transcript gated). Next: human QA
+                 with a real mic/phone-mic; optional mic-setup dialog wiring; sentence level.
 ```

@@ -20,8 +20,21 @@
     ]
   },
   "speech": {
-    "expectedForms": [],
-    "phonetic": ""
+    "expectedForms": [
+      "watermelon"
+    ],
+    "phonetic": "",
+    "phonemes": [
+      "W",
+      "AO",
+      "T",
+      "ER",
+      "M",
+      "EH",
+      "L",
+      "AH",
+      "N"
+    ]
   },
   "assets": {
     "prefab": "Addressables/Market/Watermelon",
