@@ -1,0 +1,190 @@
+{
+  "scores_detail_sha256": "8A90FF40558FE8032D9BFA919429DCAE267C0EC3FBDEDF1DCA30C0515EA989E1",
+  "pilot": {
+    "tokens": 546,
+    "malformed": 0,
+    "labels": {
+      "PRESENT": 541,
+      "ABSENT": 5
+    }
+  },
+  "pilot_r_tokens": 8,
+  "bench_train": {
+    "utterances": 1160,
+    "tokens": 3823,
+    "malformed": 0,
+    "labels": {
+      "PRESENT": 3789,
+      "ABSENT": 34
+    },
+    "per_phone": {
+      "t": {
+        "PRESENT": 838,
+        "ABSENT": 5
+      },
+      "n": {
+        "PRESENT": 518,
+        "ABSENT": 4
+      },
+      "z": {
+        "PRESENT": 445,
+        "ABSENT": 3
+      },
+      "d": {
+        "PRESENT": 387,
+        "ABSENT": 2
+      },
+      "s": {
+        "PRESENT": 316,
+        "ABSENT": 3
+      },
+      "m": {
+        "PRESENT": 262,
+        "ABSENT": 3
+      },
+      "l": {
+        "PRESENT": 220,
+        "ABSENT": 3
+      },
+      "k": {
+        "PRESENT": 193,
+        "ABSENT": 1
+      },
+      "v": {
+        "PRESENT": 171,
+        "ABSENT": 2
+      },
+      "ŋ": {
+        "PRESENT": 133,
+        "ABSENT": 1
+      },
+      "ɹ": {
+        "PRESENT": 101,
+        "ABSENT": 3
+      },
+      "p": {
+        "PRESENT": 39,
+        "ABSENT": 2
+      },
+      "f": {
+        "PRESENT": 34
+      },
+      "ð": {
+        "PRESENT": 33
+      },
+      "tʃ": {
+        "PRESENT": 30,
+        "ABSENT": 1
+      },
+      "θ": {
+        "PRESENT": 20
+      },
+      "ɡ": {
+        "PRESENT": 19
+      },
+      "ʃ": {
+        "PRESENT": 16
+      },
+      "dʒ": {
+        "PRESENT": 8,
+        "ABSENT": 1
+      },
+      "b": {
+        "PRESENT": 6
+      }
+    },
+    "r_strict": {
+      "strict_not": 5,
+      "strict_present": 99
+    }
+  },
+  "bench_test": {
+    "utterances": 1280,
+    "tokens": 4326,
+    "malformed": 0,
+    "labels": {
+      "PRESENT": 4232,
+      "ABSENT": 94
+    },
+    "per_phone": {
+      "t": {
+        "PRESENT": 926,
+        "ABSENT": 15
+      },
+      "z": {
+        "PRESENT": 560,
+        "ABSENT": 16
+      },
+      "n": {
+        "PRESENT": 537,
+        "ABSENT": 7
+      },
+      "d": {
+        "PRESENT": 453,
+        "ABSENT": 10
+      },
+      "s": {
+        "PRESENT": 357,
+        "ABSENT": 17
+      },
+      "m": {
+        "PRESENT": 249,
+        "ABSENT": 4
+      },
+      "l": {
+        "PRESENT": 238,
+        "ABSENT": 10
+      },
+      "k": {
+        "PRESENT": 197,
+        "ABSENT": 1
+      },
+      "v": {
+        "PRESENT": 186
+      },
+      "ŋ": {
+        "PRESENT": 171,
+        "ABSENT": 4
+      },
+      "ɹ": {
+        "PRESENT": 119,
+        "ABSENT": 1
+      },
+      "p": {
+        "PRESENT": 49,
+        "ABSENT": 3
+      },
+      "f": {
+        "PRESENT": 46,
+        "ABSENT": 2
+      },
+      "tʃ": {
+        "ABSENT": 3,
+        "PRESENT": 41
+      },
+      "ɡ": {
+        "PRESENT": 30
+      },
+      "θ": {
+        "PRESENT": 24
+      },
+      "ʃ": {
+        "PRESENT": 18,
+        "ABSENT": 1
+      },
+      "ð": {
+        "PRESENT": 16
+      },
+      "dʒ": {
+        "PRESENT": 12
+      },
+      "b": {
+        "PRESENT": 3
+      }
+    },
+    "r_strict": {
+      "strict_present": 119,
+      "strict_not": 1
+    }
+  }
+}

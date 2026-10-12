@@ -1,0 +1,89 @@
+{
+  "pilot": {
+    "tokens": 546,
+    "three_way": {
+      "raw_agreement_mean": 0.8886,
+      "raw_agreement_min": 0.8168,
+      "cohen_kappa_mean": 0.1729,
+      "fleiss_kappa": 0.1585
+    },
+    "binary": {
+      "raw_agreement_mean": 0.9634,
+      "raw_agreement_min": 0.9487,
+      "cohen_kappa_mean": 0.1987,
+      "fleiss_kappa": 0.212
+    },
+    "pattern_count": 13,
+    "top_patterns": {
+      "2+2+2+2+2": 416,
+      "1+2+2+2+2": 63,
+      "0+2+2+2+2": 25,
+      "1+1+2+2+2": 20,
+      "0+1+2+2+2": 7,
+      "0+0+2+2+2": 4,
+      "0+0+0+0+2": 3,
+      "0+0+1+2+2": 2,
+      "0+1+1+1+1": 2,
+      "0+0+0+1+2": 1
+    },
+    "unanimous": 0.7619
+  },
+  "bench_train": {
+    "tokens": 3823,
+    "three_way": {
+      "raw_agreement_mean": 0.8959,
+      "raw_agreement_min": 0.8276,
+      "cohen_kappa_mean": 0.1682,
+      "fleiss_kappa": 0.1585
+    },
+    "binary": {
+      "raw_agreement_mean": 0.966,
+      "raw_agreement_min": 0.9513,
+      "cohen_kappa_mean": 0.2491,
+      "fleiss_kappa": 0.2451
+    },
+    "pattern_count": 18,
+    "top_patterns": {
+      "2+2+2+2+2": 2974,
+      "1+2+2+2+2": 405,
+      "0+2+2+2+2": 171,
+      "1+1+2+2+2": 127,
+      "0+1+2+2+2": 37,
+      "0+0+2+2+2": 27,
+      "0+0+1+2+2": 16,
+      "1+1+1+2+2": 15,
+      "0+0+0+0+2": 13,
+      "0+1+1+2+2": 11
+    },
+    "unanimous": 0.7795
+  },
+  "bench_test": {
+    "tokens": 4326,
+    "three_way": {
+      "raw_agreement_mean": 0.8991,
+      "raw_agreement_min": 0.8292,
+      "cohen_kappa_mean": 0.2917,
+      "fleiss_kappa": 0.2549
+    },
+    "binary": {
+      "raw_agreement_mean": 0.9627,
+      "raw_agreement_min": 0.9478,
+      "cohen_kappa_mean": 0.4542,
+      "fleiss_kappa": 0.4469
+    },
+    "pattern_count": 16,
+    "top_patterns": {
+      "2+2+2+2+2": 3341,
+      "1+2+2+2+2": 469,
+      "0+2+2+2+2": 199,
+      "1+1+2+2+2": 106,
+      "0+1+2+2+2": 45,
+      "0+0+0+0+0": 42,
+      "0+0+2+2+2": 40,
+      "0+0+0+2+2": 23,
+      "0+0+0+0+2": 23,
+      "0+0+1+2+2": 14
+    },
+    "unanimous": 0.782
+  }
+}

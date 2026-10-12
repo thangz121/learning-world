@@ -1,0 +1,85 @@
+{
+  "tokens": 107,
+  "speakers": 6,
+  "accepted": 94,
+  "FRR_directional": 0.1215,
+  "missing_evidence": 0.215,
+  "median_target_max": 0.5194,
+  "per_phone": {
+    "d": {
+      "n": 12,
+      "accepted": 11,
+      "median_target_max": 0.0408
+    },
+    "l": {
+      "n": 6,
+      "accepted": 5,
+      "median_target_max": 0.158
+    },
+    "n": {
+      "n": 22,
+      "accepted": 21,
+      "median_target_max": 0.6754
+    },
+    "p": {
+      "n": 6,
+      "accepted": 5,
+      "median_target_max": 0.88
+    },
+    "s": {
+      "n": 23,
+      "accepted": 22,
+      "median_target_max": 0.6038
+    },
+    "t": {
+      "n": 13,
+      "accepted": 11,
+      "median_target_max": 0.6997
+    },
+    "v": {
+      "n": 6,
+      "accepted": 3,
+      "median_target_max": 0.2266
+    },
+    "ɡ": {
+      "n": 13,
+      "accepted": 11,
+      "median_target_max": 0.6312
+    },
+    "ʃ": {
+      "n": 6,
+      "accepted": 5,
+      "median_target_max": 0.4185
+    }
+  },
+  "errors": [
+    {
+      "speaker": "01_M_native",
+      "kind": "numbers",
+      "word": "six",
+      "mic": "",
+      "err": "audio_missing"
+    },
+    {
+      "speaker": "03_F_native",
+      "kind": "numbers",
+      "word": "one",
+      "mic": "",
+      "err": "audio_missing"
+    },
+    {
+      "speaker": "05_F_native",
+      "kind": "numbers",
+      "word": "six",
+      "mic": "",
+      "err": "audio_missing"
+    },
+    {
+      "speaker": "06_M_native",
+      "kind": "numbers",
+      "word": "one",
+      "mic": "",
+      "err": "audio_missing"
+    }
+  ]
+}

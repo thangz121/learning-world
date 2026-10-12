@@ -1,0 +1,152 @@
+{
+  "pilot": {
+    "tokens": 546,
+    "labels": {
+      "PRESENT": 541,
+      "ABSENT": 5
+    },
+    "any_zero": 46,
+    "strict_correct": 535,
+    "speakers": 10,
+    "train": {
+      "tokens": 337,
+      "labels": {
+        "PRESENT": 333,
+        "ABSENT": 4
+      },
+      "any_zero": 23,
+      "strict_correct": 330,
+      "speakers": 6
+    },
+    "dev": {
+      "tokens": 110,
+      "labels": {
+        "PRESENT": 110
+      },
+      "any_zero": 6,
+      "strict_correct": 109,
+      "speakers": 2
+    },
+    "test": {
+      "tokens": 99,
+      "labels": {
+        "PRESENT": 98,
+        "ABSENT": 1
+      },
+      "any_zero": 17,
+      "strict_correct": 96,
+      "speakers": 2
+    }
+  },
+  "r_all": {
+    "tokens": 224,
+    "produced": {
+      "PRESENT": 220,
+      "ABSENT": 4
+    },
+    "strict": {
+      "strict_not": 6,
+      "strict_ok": 218
+    },
+    "speakers": 91,
+    "gate_produced": {
+      "present": 220,
+      "absent": 4,
+      "speakers": 91,
+      "met": false
+    },
+    "gate_strict": {
+      "ok": 218,
+      "not": 6,
+      "met": false
+    },
+    "train": {
+      "labels": {
+        "PRESENT": 101,
+        "ABSENT": 3
+      },
+      "strict_not": 5
+    },
+    "test": {
+      "labels": {
+        "PRESENT": 119,
+        "ABSENT": 1
+      },
+      "strict_not": 1
+    }
+  },
+  "type_b": {
+    "child_07_seven": {
+      "status": "NO_EXPERT_LABELS",
+      "reason": "zenodo 'lwe' corpus has no phone labels"
+    },
+    "014180143_15": {
+      "status": "LABELED",
+      "word": "JUNE",
+      "phone": "n",
+      "marks": [
+        "0",
+        "0",
+        "2",
+        "0",
+        "0"
+      ],
+      "label": "ABSENT",
+      "P2": 1,
+      "P1": 0,
+      "A0": 4
+    },
+    "014190172_7": {
+      "status": "LABELED",
+      "word": "NAME",
+      "phone": "m",
+      "marks": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "2"
+      ],
+      "label": "ABSENT",
+      "P2": 1,
+      "P1": 0,
+      "A0": 4
+    },
+    "014350146_16": {
+      "status": "LABELED",
+      "word": "EDUCATION",
+      "phone": "n",
+      "marks": [
+        "2",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "label": "ABSENT",
+      "P2": 1,
+      "P1": 0,
+      "A0": 4
+    }
+  },
+  "bench_train": {
+    "tokens": 3823,
+    "labels": {
+      "PRESENT": 3789,
+      "ABSENT": 34
+    },
+    "any_zero": 301,
+    "strict_correct": 3741,
+    "speakers": 58
+  },
+  "bench_test": {
+    "tokens": 4326,
+    "labels": {
+      "PRESENT": 4232,
+      "ABSENT": 94
+    },
+    "any_zero": 403,
+    "strict_correct": 4200,
+    "speakers": 64
+  }
+}

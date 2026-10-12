@@ -43,49 +43,36 @@
 | 1.9.27 | 2026-10-07 | Human review execution pipeline + local child-speech pilot + B2-D/B2-E readiness | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `dfdb82d` |
 | 1.9.28 | 2026-10-07 | Human review gate + frozen pilot execution attempt (PATH A: no review data) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `e53aa30` |
 | 1.9.29 | 2026-10-07 | Human review execution -> frozen pilot -> B2 GO/NO-GO (PATH B: still no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `3c0d811` |
-| 1.9.30 | 2026-10-07 | Human label import -> agreement -> freeze -> frozen pilot -> B2 decision (PATH C: no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | (this commit) |
+| 1.9.30 | 2026-10-07 | Human label import -> agreement -> freeze -> frozen pilot -> B2 decision (PATH C: no genuine labels) | HUMAN_REVIEW_PENDING_PILOT_READY; next gate HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION; B2 TRAINING NO | `c8ad68a` |
+| 1.9.31 | 2026-10-12 | External child standard (SO762 5-expert panel + Zenodo native kids, CC BY 4.0) replaces REV-B; BENCH 8,149 tokens; B2-D readout | B2_PILOT_PROMISING_DATA_REQUIRED (D5_or passes frozen c1–c4); B2 TRAINING NO | this commit |
 
 ## Current speech-research status
 
 ```
-Speech Research: NOT COMPLETE
-Last gate:       HUMAN_REVIEW_ROUND_AND_PILOT_EVALUATION (WP-1.9.30)
-Final gate:      HUMAN_REVIEW_PENDING_PILOT_READY
-Next:            2 genuine reviewers on Pack R (276 candidates: 60P+60A minimum,
-                 15+15 /r/, 4 TYPE-B) AND Pack P (546 pilot tokens, 60P+60A; test
-                 split 99 tokens first) -> import validator -> label_analysis
-                 (combined pack) -> PILOT_LABEL_FREEZE -> frozen pilot
-                 (B2-D/B2-E, FRR-first, one run per config) -> kill switch ->
-                 GO/NO-GO. WP-1.9.30 discovery found 0 genuine reviewer records
-                 (historical StageA file schema-mismatched); infrastructure
-                 re-verified (19/19 hashes, Pack R QA 21/21, Pack P blind 546,
-                 mapping 546/546, pilot integrity PASS): all evaluation outputs
-                 remain NOT_EXECUTED.
-                 Parallel: TalkBank registration, PERCEPT-R request, MyST quote,
-                 counsel questions, JIBO license confirmation NOT downloaded
-Production:      untouched (production_vad=false, router_locked=false,
-                 unity_integrated=false, scorer_modified=false,
-                 production_window_locked=false)
-Frame cache:     CREATED — Research/Speech/Phase1_9_21/artifacts/frame_cache
-                 (2,436 token-windows / 117,128 frames, reusable)
-Pilot:           DATA+FEATURES READY + INTEGRITY PASS (WP-1.9.28: split/leakage/
-                 546-546 token match/audio all PASS; freeze hashes recorded).
-                 10 speakers ages 6-7 (NOT 4-6), 200 utts, 546 tokens, 0.196 h.
-                 Pack P review + import validator + 822-candidate
-                 NEXT_REVIEW_BATCH.csv ready; eval awaits Pack P labels
-                 (all 1.9.28 evaluation outputs are NOT_EXECUTED schemas)
-B2:              TRAINING NO; B2-D/B2-E DESIGNS + SUCCESS/FAILURE/KILL CRITERIA
-                 FROZEN before results. Dominant blocker remains human labels;
-                 data blocker unchanged (phone labels at scale).
-Labels:          NEW_LABELS_COLLECTED = 0; two blind packs ready (R 276 / P 546);
-                 pipeline validated (test PASS); 28 historical LWE listening labels
-                 (single reviewer); /r/ = 1 PRESENT LOW
-Data:            28 datasets audited; age-4-7 research routes OCSC 303/JIBO 110/
-                 AusKidTalk 620/CAPIL 30; MyST paid commercial route (DO_NOT_BUY
-                 until pilot positive + quote); speechocean762 CC BY 4.0; SIAK ND
-                 legal review open; no public Vietnamese-L1 child corpus
-Encoder:         609-token comparison: missing 16.5% vs 18.8%; false 17.2% vs
-                 13.8%; agreement 82.8% (no aggregate winner; diagnostic only)
-Resource:        CPU-only ASUS sufficient for pilot (venv 1.94 GB; HF cache
-                 10.50 GB; SO762 0.67 GB; frame cache 16.6 MB)
+Speech Research: EXTERNAL-STANDARD PILOT READOUT COMPLETE (WP-1.9.31)
+Last gate:       B2_PILOT_PROMISING_DATA_REQUIRED (WP-1.9.31)
+Label source:    EXTERNAL CHILD STANDARD per PO directive 2026-10-12 — SO762 five-expert panel
+                 (per-phone 2/{ }/( ), CC BY 4.0; children 6-15) + Zenodo 200495 native children
+                 (~age 4.9, CC BY 4.0), all local, zero downloads. REV-B round superseded;
+                 REV-A sessions + frozen 1.9.27-1.9.30 artifacts archived unchanged.
+BENCH:           test 4,326 tokens / 64 children (4,232P / 94A); train 3,823 (3,789P / 34A);
+                 mapping 0/8,695 malformed; agreement raw 88.9-89.9% (binary 96.3-96.6%),
+                 unanimous 5/5 76-78%.
+Baseline:        production decision FRR 8.65% · missing-evidence 16.54% · FAR 54.26% ·
+                 false-evidence 13.83% (BENCH test) — over-acceptance is the central issue.
+Best variant:    D5_or_max (prod/alt span-max OR): FRR 7.68% · missing 12.19% (-26.3% rel) ·
+                 FAR 42.55% · AUC 0.8546; frozen criteria c1-c4 PASS (both pilot test speakers
+                 improve: 15.7->7.8%, 29.8->23.4%). Thresholds hit grid floor 0.001 (baseline FAR
+                 too high) — disclosed; full-train calibration sensitivity identical.
+Native ref:      6 native children ~4.9y: 94/107 accepted (FRR-directional 12.15%); /v/ 3/6.
+Pilot:           546 continuity readout (541P/5A): test 98P/1A D0 FRR 22.45% -> D5or 15.31%.
+Type-B:          3/4 SO762 cases expert-labeled (014180143_15 ABSENT, 014190172_7 ABSENT vs REV-A
+                 PRESENT divergence, 014350146_16 ABSENT); child_07_seven (Zenodo) label-limited.
+/r/:             produced 220P/4A/91spk (absent-side gate unreachable); strict rhotic 218/6.
+Next:            (1) data/license decision for full B2 — the ONLY thing this gate authorizes;
+                 (2) acceptance-rule / operating-point redesign (lock target FAR first, minimize FRR;
+                 D5 OR-evidence family is the best candidate); (3) PERCEPT-R route for /r/ absent side.
+Production:      untouched (production_vad=false, router_locked=false, unity_integrated=false,
+                 scorer_modified=false, production_window_locked=false)
+Training:        NO (kill switch intact; positive result authorizes data/license decision only)
 ```
