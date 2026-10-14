@@ -24,9 +24,24 @@ public class ListeningGardenChoice : MonoBehaviour, IClickTarget {
     }
   }
 
+  bool _isFlyingUp = false;
+  float _flyUpT = 0f;
+
   void Update() {
     float dt = Time.deltaTime;
     if (dt <= 0f || _propTransform == null) return;
+
+    if (_isFlyingUp) {
+      _flyUpT += dt;
+      // Elegant arc fly-up: rises 1.2m, scales up smoothly, and gently spins
+      float t = Mathf.Clamp01(_flyUpT / 0.85f);
+      float easeOut = Mathf.Sin(t * Mathf.PI * 0.5f);
+      float yOffset = easeOut * 1.2f;
+      _propTransform.localPosition = _basePropLocalPos + new Vector3(0f, yOffset, 0f);
+      _propTransform.localRotation = Quaternion.Euler(0f, easeOut * 360f, 0f);
+      return;
+    }
+
     _animTime += dt;
     // Gentle idle breathing floating effect
     float hover = Mathf.Sin(_animTime * 2.5f + _floatOffset) * 0.035f;
@@ -34,13 +49,15 @@ public class ListeningGardenChoice : MonoBehaviour, IClickTarget {
   }
 
   public void PlayCorrectFx() {
+    _isFlyingUp = true;
+    _flyUpT = 0f;
     if (_propTransform != null) {
-      GameJuice.Pop(_propTransform, 0.32f, 0.45f);
-      MagicJuice.FairySparkleBurst(transform, _basePropLocalPos + new Vector3(0f, 0.3f, 0f), 16);
-      MagicJuice.MagicHaloRing(transform, Vector3.zero, MagicJuice.MagicPink, 1.8f);
+      GameJuice.Pop(_propTransform, 0.35f, 0.5f);
+      MagicJuice.FairySparkleBurst(transform, _basePropLocalPos + new Vector3(0f, 0.4f, 0f), 20);
+      MagicJuice.MagicHaloRing(transform, Vector3.zero, MagicJuice.MagicGold, 2.0f);
     } else {
-      GameJuice.Pop(transform, 0.22f, 0.35f);
-      MagicJuice.FairySparkleBurst(transform, new Vector3(0f, 0.5f, 0f), 12);
+      GameJuice.Pop(transform, 0.25f, 0.4f);
+      MagicJuice.FairySparkleBurst(transform, new Vector3(0f, 0.5f, 0f), 14);
     }
   }
 

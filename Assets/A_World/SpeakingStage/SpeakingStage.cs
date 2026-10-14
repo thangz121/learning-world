@@ -244,6 +244,7 @@ public class SpeakingStage : MonoBehaviour {
         + " score=" + LastPercent + "% attempt=" + (AttemptsUsed + 1)
         + " evidence={" + (assessment.Evidence ?? "") + "}");
     } catch (Exception) { }
+    if (_builder != null) _builder.UpdatePhonemeFeedback(assessment);
     string en; string vi;
     SpeakingFeedback.PhraseFor(level, out en, out vi);
     Say(en, vi);

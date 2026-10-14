@@ -249,8 +249,99 @@ public class SpeakingStageBuilder : MonoBehaviour {
       if (prop == null) prop = Ball(PictureRoot, "PicFallback", new Vector3(0f, 1.0f, 0f), 0.3f, Coral);
     }
     CurrentProp = prop;
+    BuildWordAndIpaLabel(wordId);
     if (CurrentProp != null) {
       GameJuice.Pop(CurrentProp.transform, 0.2f, 0.4f);
+    }
+  }
+
+  public TextMesh WordText { get; private set; }
+  public TextMesh IpaText { get; private set; }
+  public GameObject WordCardGo { get; private set; }
+
+  void BuildWordAndIpaLabel(string wordId) {
+    if (PictureRoot == null) return;
+    GameObject card = new GameObject("SSWordCard");
+    card.transform.SetParent(PictureRoot, false);
+    card.transform.localPosition = new Vector3(0f, 1.85f, 0f);
+    card.transform.localRotation = Quaternion.Euler(15f, 0f, 0f); // Tilted towards camera
+    WordCardGo = card;
+
+    // Small translucent backing pill
+    GameObject pill = Box(card.transform, "CardPill", new Vector3(0f, 0f, 0.05f), new Vector3(1.8f, 0.75f, 0.05f), new Color(0.98f, 0.95f, 1.0f, 0.85f));
+    Ignore(pill);
+
+    // Large main word label
+    GameObject wordGo = new GameObject("WordText");
+    wordGo.transform.SetParent(card.transform, false);
+    wordGo.transform.localPosition = new Vector3(0f, 0.12f, 0f);
+    WordText = wordGo.AddComponent<TextMesh>();
+    WordText.text = ListeningWords.TextEn(wordId);
+    WordText.fontSize = 48;
+    WordText.characterSize = 0.07f;
+    WordText.fontStyle = FontStyle.Bold;
+    WordText.anchor = TextAnchor.MiddleCenter;
+    WordText.alignment = TextAlignment.Center;
+    WordText.color = new Color(0.2f, 0.15f, 0.35f);
+
+    // Secondary phoneme / IPA guidance label
+    GameObject ipaGo = new GameObject("IpaText");
+    ipaGo.transform.SetParent(card.transform, false);
+    ipaGo.transform.localPosition = new Vector3(0f, -0.18f, 0f);
+    IpaText = ipaGo.AddComponent<TextMesh>();
+    IpaText.text = string.Empty; // honest: filled only when real fusion IPA arrives (UpdatePhonemeFeedback)
+    IpaText.fontSize = 32;
+    IpaText.characterSize = 0.055f;
+    IpaText.anchor = TextAnchor.MiddleCenter;
+    IpaText.alignment = TextAlignment.Center;
+    IpaText.color = new Color(0.45f, 0.40f, 0.55f);
+  }
+
+  // Backlog #11 Speaking UI: word-level color by the Phase 4.1 normative decision; the syllable
+  // breakdown only drives the IPA string. Per-syllable coloring = future work (TextMesh is single-color).
+  public void UpdatePhonemeFeedback(SpeakingAssessment assessment) {
+    if (WordText == null || IpaText == null) return;
+    if (assessment.Pronunciation.HasFusionPayload) {
+      var fusion = assessment.Pronunciation.FusionPayload;
+      if (fusion.syllable_by_syllable_breakdown != null && fusion.syllable_by_syllable_breakdown.Count > 0) {
+        var sbIpa = new System.Text.StringBuilder();
+        sbIpa.Append("/");
+        for (int i = 0; i < fusion.syllable_by_syllable_breakdown.Count; i++) {
+          var s = fusion.syllable_by_syllable_breakdown[i];
+          if (i > 0) sbIpa.Append(".");
+          sbIpa.Append(s.syllable_ipa);
+        }
+        sbIpa.Append("/");
+        IpaText.text = sbIpa.ToString();
+
+        // Color code according to overall result
+        if (fusion.normative_decision == "StrongPass") {
+          WordText.color = new Color(0.12f, 0.65f, 0.28f); // GREEN
+          IpaText.color = new Color(0.12f, 0.65f, 0.28f);
+        } else if (fusion.normative_decision == "Pass") {
+          WordText.color = new Color(0.20f, 0.55f, 0.85f); // BLUE / PASS
+          IpaText.color = new Color(0.20f, 0.55f, 0.85f);
+        } else if (fusion.normative_decision == "Partial") {
+          WordText.color = new Color(0.92f, 0.60f, 0.12f); // YELLOW / PARTIAL
+          IpaText.color = new Color(0.92f, 0.60f, 0.12f);
+        } else {
+          WordText.color = new Color(0.85f, 0.25f, 0.25f); // RED / RETRY
+          IpaText.color = new Color(0.85f, 0.25f, 0.25f);
+        }
+        return;
+      }
+    }
+
+    // Fallback standard feedback
+    if (assessment.Decision == SpeakingDecision.StrongPass || assessment.Decision == SpeakingDecision.Pass) {
+      WordText.color = new Color(0.12f, 0.65f, 0.28f);
+      IpaText.color = new Color(0.12f, 0.65f, 0.28f);
+    } else if (assessment.Decision == SpeakingDecision.Partial || assessment.Decision == SpeakingDecision.PossibleAttempt) {
+      WordText.color = new Color(0.92f, 0.60f, 0.12f);
+      IpaText.color = new Color(0.92f, 0.60f, 0.12f);
+    } else {
+      WordText.color = new Color(0.85f, 0.25f, 0.25f);
+      IpaText.color = new Color(0.85f, 0.25f, 0.25f);
     }
   }
 

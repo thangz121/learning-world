@@ -111,6 +111,14 @@ public struct PronunciationEvidence {
   public bool HasPhoneticPayload;
   public EnglishPhoneticPayload PhoneticPayload;
 
+  // --- Version 4.1 Cross-Validation & Pedagogical Payload ---
+  public bool HasFusionPayload;
+  public CrossValidationFusionPayload FusionPayload;
+
+  // --- Version 5.0 Multi-Turn Session Orchestration Payload ---
+  public bool HasSessionPayload;
+  public SessionAdaptiveOrchestrationPayload SessionPayload;
+
   public static PronunciationEvidence None() {
     return new PronunciationEvidence {
       HasPhonemeData = false, Source = "none",
@@ -202,6 +210,7 @@ public struct SpeakingAssessment {
   public long ProviderLatencyMs;
   public string ProviderId;
   public DateTime AtUtc;
+  public PronunciationEvidence Pronunciation;
 
   // Quest-facing convenience: which legacy SpeechLevel this maps to.
   // Frozen QuestManager.AdvanceOnSpoken advances Speak ONLY on Perfect/Great,
@@ -354,6 +363,7 @@ public sealed class SpeakingPassPolicy {
     assessment.RecognitionConfidence = result.RecognitionConfidence;
     assessment.HasPronunciationEvidence =
       result.Pronunciation.HasPhonemeData && !float.IsNaN(result.Pronunciation.AccuracyScore);
+    assessment.Pronunciation = result.Pronunciation;
 
     // --- Environment failures are NEVER child failures (§14/§90). ---
     if (result.IsError) {

@@ -125,7 +125,14 @@ public class GameInstaller : MonoBehaviour {
       PronunciationCatalog = new TargetPronunciationCatalog();
       SpeakingPack.Apply((word, phonemes) => PronunciationCatalog.Register(word, phonemes));
       var speakingPolicy = SpeakingPassPolicy.Default();
-      var acousticProvider = new LocalAcousticProvider(PronunciationCatalog);
+      ISpeechAssessmentProvider acousticProvider = new LocalAcousticProvider(PronunciationCatalog);
+      // WP A seam (INERT without the flag): "-speak-maxspec" swaps the offline acoustic
+      // slot to the max-spec chain (frontend -> DSP -> resilience -> fusion -> session).
+      // Default production behavior is unchanged until the owner opts in.
+      if (!string.IsNullOrEmpty(CLIFlag("-speak-maxspec"))) {
+        acousticProvider = new MaxSpecAdaptiveSpeechProvider(PronunciationCatalog);
+        Debug.Log("[GameInstaller] speaking acoustic slot = MaxSpecAdaptiveSpeechProvider (offline max-spec chain)", this);
+      }
       _assessClient = new LocalAssessServiceClient(LocalAssessServiceLauncher.DefaultPort);
       var serviceProvider = new LocalServiceAssessmentProvider(_assessClient);
 
