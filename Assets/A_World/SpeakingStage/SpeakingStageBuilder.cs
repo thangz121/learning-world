@@ -297,40 +297,26 @@ public class SpeakingStageBuilder : MonoBehaviour {
     IpaText.color = new Color(0.45f, 0.40f, 0.55f);
   }
 
-  // Backlog #11 Speaking UI: word-level color by the Phase 4.1 normative decision; the syllable
-  // breakdown only drives the IPA string. Per-syllable coloring = future work (TextMesh is single-color).
+  readonly System.Collections.Generic.List<GameObject> _wordSegs = new System.Collections.Generic.List<GameObject>();
+  readonly System.Collections.Generic.List<GameObject> _ipaSegs = new System.Collections.Generic.List<GameObject>();
+
+  // Backlog #11 Speaking UI: PER-SYLLABLE coloring from the Phase 4.1 breakdown
+  // (paints each syllable word/IPA segment with its own syllable_ui_color). Falls back to
+  // whole-word colors by decision when no fusion payload exists (non-MaxSpec providers).
   public void UpdatePhonemeFeedback(SpeakingAssessment assessment) {
     if (WordText == null || IpaText == null) return;
     if (assessment.Pronunciation.HasFusionPayload) {
       var fusion = assessment.Pronunciation.FusionPayload;
-      if (fusion.syllable_by_syllable_breakdown != null && fusion.syllable_by_syllable_breakdown.Count > 0) {
-        var sbIpa = new System.Text.StringBuilder();
-        sbIpa.Append("/");
-        for (int i = 0; i < fusion.syllable_by_syllable_breakdown.Count; i++) {
-          var s = fusion.syllable_by_syllable_breakdown[i];
-          if (i > 0) sbIpa.Append(".");
-          sbIpa.Append(s.syllable_ipa);
-        }
-        sbIpa.Append("/");
-        IpaText.text = sbIpa.ToString();
-
-        // Color code according to overall result
-        if (fusion.normative_decision == "StrongPass") {
-          WordText.color = new Color(0.12f, 0.65f, 0.28f); // GREEN
-          IpaText.color = new Color(0.12f, 0.65f, 0.28f);
-        } else if (fusion.normative_decision == "Pass") {
-          WordText.color = new Color(0.20f, 0.55f, 0.85f); // BLUE / PASS
-          IpaText.color = new Color(0.20f, 0.55f, 0.85f);
-        } else if (fusion.normative_decision == "Partial") {
-          WordText.color = new Color(0.92f, 0.60f, 0.12f); // YELLOW / PARTIAL
-          IpaText.color = new Color(0.92f, 0.60f, 0.12f);
-        } else {
-          WordText.color = new Color(0.85f, 0.25f, 0.25f); // RED / RETRY
-          IpaText.color = new Color(0.85f, 0.25f, 0.25f);
-        }
+      var syls = fusion.syllable_by_syllable_breakdown;
+      if (syls != null && syls.Count > 0) {
+        BuildSyllableRows(syls);
         return;
       }
     }
+
+    ClearSyllableRows();
+    WordText.gameObject.SetActive(true);
+    IpaText.gameObject.SetActive(true);
 
     // Fallback standard feedback
     if (assessment.Decision == SpeakingDecision.StrongPass || assessment.Decision == SpeakingDecision.Pass) {
@@ -342,6 +328,87 @@ public class SpeakingStageBuilder : MonoBehaviour {
     } else {
       WordText.color = new Color(0.85f, 0.25f, 0.25f);
       IpaText.color = new Color(0.85f, 0.25f, 0.25f);
+    }
+  }
+
+  // One TextMesh per syllable on two rows (word letters + IPA), each tinted by the
+  // payload's own syllable_ui_color ("GREEN" | "YELLOW" | "RED"). Rows replace the
+  // single TextMesh labels while a fusion breakdown is on screen.
+  void BuildSyllableRows(System.Collections.Generic.List<SyllableBreakdownItem> syls) {
+    ClearSyllableRows();
+    WordText.gameObject.SetActive(false);
+    IpaText.gameObject.SetActive(false);
+
+    const float gap = 0.05f;
+    var widths = new float[syls.Count];
+    float total = 0f;
+    for (int i = 0; i < syls.Count; i++) {
+      float ww = SegmentWidth(syls[i].syllable_text, 0.07f);
+      float wi = SegmentWidth(syls[i].syllable_ipa, 0.055f);
+      widths[i] = ww > wi ? ww : wi;
+      total += widths[i];
+    }
+    total += gap * (syls.Count - 1);
+
+    float x = -total * 0.5f;
+    for (int i = 0; i < syls.Count; i++) {
+      var s = syls[i];
+      Color c = UiColorToColor(s.syllable_ui_color);
+      float cx = x + widths[i] * 0.5f;
+
+      GameObject wGo = new GameObject("SylWord" + i);
+      wGo.transform.SetParent(WordText.transform.parent, false);
+      wGo.transform.localPosition = new Vector3(cx, WordText.transform.localPosition.y, 0f);
+      TextMesh wt = wGo.AddComponent<TextMesh>();
+      wt.font = WordText.font;
+      wt.text = s.syllable_text;
+      wt.fontSize = 48;
+      wt.characterSize = 0.07f;
+      wt.fontStyle = FontStyle.Bold;
+      wt.anchor = TextAnchor.MiddleCenter;
+      wt.alignment = TextAlignment.Center;
+      wt.color = c;
+      _wordSegs.Add(wGo);
+
+      GameObject iGo = new GameObject("SylIpa" + i);
+      iGo.transform.SetParent(IpaText.transform.parent, false);
+      iGo.transform.localPosition = new Vector3(cx, IpaText.transform.localPosition.y, 0f);
+      TextMesh it = iGo.AddComponent<TextMesh>();
+      it.font = IpaText.font;
+      it.text = s.syllable_ipa;
+      it.fontSize = 32;
+      it.characterSize = 0.055f;
+      it.anchor = TextAnchor.MiddleCenter;
+      it.alignment = TextAlignment.Center;
+      it.color = c;
+      _ipaSegs.Add(iGo);
+
+      x += widths[i] + gap;
+    }
+  }
+
+  void ClearSyllableRows() {
+    for (int i = 0; i < _wordSegs.Count; i++) {
+      if (_wordSegs[i] != null) CharacterPresentation.DestroyNow(_wordSegs[i]);
+    }
+    _wordSegs.Clear();
+    for (int i = 0; i < _ipaSegs.Count; i++) {
+      if (_ipaSegs[i] != null) CharacterPresentation.DestroyNow(_ipaSegs[i]);
+    }
+    _ipaSegs.Clear();
+  }
+
+  static float SegmentWidth(string text, float charSize) {
+    if (string.IsNullOrEmpty(text)) return 0.08f;
+    return Mathf.Max(0.08f, text.Length * charSize * 0.62f);
+  }
+
+  public static Color UiColorToColor(string uiColor) {
+    switch ((uiColor ?? "").Trim().ToUpperInvariant()) {
+      case "GREEN": return new Color(0.12f, 0.65f, 0.28f);
+      case "YELLOW": return new Color(0.92f, 0.60f, 0.12f);
+      case "RED": return new Color(0.85f, 0.25f, 0.25f);
+      default: return new Color(0.45f, 0.40f, 0.55f);
     }
   }
 

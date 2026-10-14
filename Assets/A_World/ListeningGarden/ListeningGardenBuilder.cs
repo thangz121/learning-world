@@ -245,6 +245,10 @@ public class ListeningGardenBuilder : MonoBehaviour {
     BoxCollider box = root.AddComponent<BoxCollider>();
     box.center = new Vector3(0f, 0.85f, 0f);
     box.size = new Vector3(1.2f, 1.5f, 1.2f);
+    box.isTrigger = true; // 10a hardening: click surface ONLY — a trigger collider can never
+                          // depenetrate/pop the player's body up (any push mechanism eliminated);
+                          // ClickRouter uses Physics.RaycastAll with Unity's default
+                          // queriesHitTriggers=true (never overridden in this repo), so taps still hit.
     UnityEngine.AI.NavMeshObstacle obs = root.AddComponent<UnityEngine.AI.NavMeshObstacle>();
     obs.shape = UnityEngine.AI.NavMeshObstacleShape.Box;
     obs.center = new Vector3(0f, 0.5f, 0f);
