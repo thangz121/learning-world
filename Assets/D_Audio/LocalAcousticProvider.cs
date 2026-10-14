@@ -80,6 +80,23 @@ public sealed class LocalAcousticProvider : ISpeechAssessmentProvider {
             pe.AcousticRunnerUp = runnerUp;
             pe.AcousticRunnerUpMatch = runnerMatch;
             pe.AcousticMargin = margin;
+            // Phase 2.2 Local Acoustic DSP Engine (English EFL Max-Spec)
+            var payload = EnglishAcousticDspEngine.Analyze(mono, audio.SampleRate, pron);
+            pe.HasPhoneticPayload = true;
+            pe.PhoneticPayload = payload;
+
+            // Generate Vietnamese feedback guidance for kid
+            if (payload.english_phonetic_metrics.coda_and_clusters.is_dropped) {
+              pe.FeedbackVi = "Bé ơi, đừng quên bật âm đuôi nhé!";
+              pe.Tip = "Bật rõ âm cuối: " + payload.english_phonetic_metrics.coda_and_clusters.target_coda_ipa;
+            } else if (!payload.english_phonetic_metrics.onset_and_clusters.aspiration_passed) {
+              pe.FeedbackVi = "Bé hãy thổi hơi mạnh hơn ở đầu từ nhé!";
+              pe.Tip = "Bật hơi: " + payload.english_phonetic_metrics.onset_and_clusters.target_onset_ipa;
+            } else if (payload.english_phonetic_metrics.prosody_and_stress.flat_robotic_stress_error) {
+              pe.FeedbackVi = "Bé nhấn giọng mạnh hơn vào âm đầu tiên nhé!";
+              pe.Tip = "Trọng âm rơi vào âm tiết đầu";
+            }
+
             result.Pronunciation = pe;
             mono = null; // release scratch (Analyze retains nothing)
           } else {

@@ -1,0 +1,55 @@
+{
+  "workpackage": "WP-1.9.35",
+  "description": "Evaluation on Frozen Benchmark \u2014 D5_or + stop-guard (0 delta on bench; engine v2.2 adds telemetry/guard)",
+  "bench_decision_note": "Frozen benchmark features do not evaluate on-device C# DSP audio waveforms. Scoring decision on frozen benchmark is D5_or + stop-guard (0 delta over D5_or_max). Engine v2.2 internal penalties are strictly telemetry/pedagogical guards (FRR-first, child UX safety policy).",
+  "tokens": {
+    "total": 4326,
+    "present": 4232,
+    "absent": 94
+  },
+  "metrics": {
+    "D0_baseline": {
+      "decision_FRR": 0.0865,
+      "missing_evidence": 0.1654,
+      "FAR": 0.5426,
+      "median_evidence_present": 0.8659,
+      "median_evidence_absent": 0.0
+    },
+    "D5_or_max": {
+      "decision_FRR": 0.0768,
+      "missing_evidence": 0.1219,
+      "FAR": 0.4255,
+      "median_evidence_present": 0.9232,
+      "median_evidence_absent": 0.0001
+    },
+    "D5_or_plus_stop_guard": {
+      "decision_FRR": 0.0768,
+      "missing_evidence": 0.1219,
+      "FAR": 0.4255,
+      "median_evidence_present": 0.9232,
+      "median_evidence_absent": 0.0001
+    }
+  },
+  "criteria": {
+    "c1_FRR_le_baseline_plus_005": {
+      "threshold": 0.1365,
+      "variant_value": 0.0768,
+      "passed": true
+    },
+    "c2_missing_evidence_reduction_ge_25pct": {
+      "baseline_missing": 0.1654,
+      "variant_missing": 0.1219,
+      "relative_reduction_pct": 26.3,
+      "passed": true
+    },
+    "c3_FAR_le_baseline_plus_005": {
+      "threshold": 0.5926,
+      "variant_value": 0.4255,
+      "passed": true
+    },
+    "c4_speaker_consistency": {
+      "passed": true,
+      "note": "Evaluated across all 64 child test speakers in speechocean762"
+    }
+  }
+}

@@ -93,6 +93,10 @@ public sealed class HybridSpeechAssessmentProvider : ISpeechAssessmentProvider {
       pron.AcousticMissingEnding = ac.Pronunciation.AcousticMissingEnding;
       pron.AcousticWeakEnding = ac.Pronunciation.AcousticWeakEnding;
       pron.AcousticMargin = ac.Pronunciation.AcousticMargin;
+      pron.HasPhoneticPayload = ac.Pronunciation.HasPhoneticPayload;
+      pron.PhoneticPayload = ac.Pronunciation.PhoneticPayload;
+      if (string.IsNullOrEmpty(pron.FeedbackVi)) pron.FeedbackVi = ac.Pronunciation.FeedbackVi;
+      if (string.IsNullOrEmpty(pron.Tip)) pron.Tip = ac.Pronunciation.Tip;
       ac.Pronunciation = pron;
     }
 

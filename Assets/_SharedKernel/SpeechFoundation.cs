@@ -107,6 +107,10 @@ public struct PronunciationEvidence {
   public string Tip;
   public string ErrorPhoneme;
 
+  // --- Version 2.2 EFL Acoustic DSP Payload ---
+  public bool HasPhoneticPayload;
+  public EnglishPhoneticPayload PhoneticPayload;
+
   public static PronunciationEvidence None() {
     return new PronunciationEvidence {
       HasPhonemeData = false, Source = "none",
