@@ -470,8 +470,10 @@ public sealed class CloudSpeechResilienceEngine {
     string t = NormalizeIpa(targetPhone);
     string h = NormalizeIpa(heardPhone);
 
-    // Flap-T: US flap /ɾ/ or /t/ vs UK crisp /t/
-    if ((t == "ɾ" || t == "t") && (h == "t" || h == "ɾ")) return true;
+    // Flap-T: US flap /ɾ/ vs UK crisp /t/ — TRUE only when the pair actually differs in flap-ness
+    // (identical t==t is NOT a variant; the penalized-but-identical case is rescued at the call
+    // site via NBest evidence — see the breakdown loop).
+    if ((t == "ɾ" && h == "t") || (t == "t" && h == "ɾ")) return true;
 
     // Bath vowel: US /æ/ vs UK /ɑ/
     if ((t == "æ" && h == "ɑ") || (t == "ɑ" && h == "æ")) return true;
@@ -596,7 +598,7 @@ public sealed class CloudSpeechResilienceEngine {
     // 1. Check Circuit Breaker State
     if (IsCircuitBreakerTripped()) {
       payload.cloud_status = "OFFLINE_AUTONOMOUS";
-      payload.post_eos_latency_ms = 12f; // Local CTC takes ~12ms
+      payload.post_eos_latency_ms = 0f; // not measured: local fallback is a placeholder (no real CTC, no timing)
       BuildLocalFallbackPayload(ref payload, naturalPcmSamples, sampleRate, targetWord, targetIpa, targetPhones);
       return payload;
     }
@@ -679,8 +681,16 @@ public sealed class CloudSpeechResilienceEngine {
 
         string top1 = (azP.NBest != null && azP.NBest.Count > 0) ? azP.NBest[0].ipa : azP.Phoneme;
 
-        // Check dialect allophones (en-GB on en-US)
-        if (IsDialectAccentVariant(tPhone.Ipa, top1)) {
+        // Check dialect allophones (en-GB on en-US).
+        // NBest-evidence rescue: when the recognizer's own top candidate IS the target phoneme and
+        // scores higher than the penalized raw reading (British crisp T on an en-US flap target
+        // normalizes to an identical string), that candidate backs the child — accept it at 88.
+        // This keeps the frozen P18 "water" contract WITHOUT tautologically rescuing every
+        // low-scored /t/ that carries no NBest evidence (the P22 coda-veto cases).
+        bool nbestBacksTarget = azP.NBest != null && azP.NBest.Count > 0
+            && NormalizeIpa(azP.NBest[0].ipa) == NormalizeIpa(tPhone.Ipa)
+            && azP.NBest[0].score > azP.AccuracyScore;
+        if (nbestBacksTarget || IsDialectAccentVariant(tPhone.Ipa, top1)) {
           item.error_tag = "ACCENT_VARIANT_OK";
           item.calibrated_score = Math.Max(item.calibrated_score, 88f);
         } else if (IsL1Transfer(tPhone.Ipa, top1)) {

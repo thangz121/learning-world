@@ -119,6 +119,10 @@ public struct PronunciationEvidence {
   public bool HasSessionPayload;
   public SessionAdaptiveOrchestrationPayload SessionPayload;
 
+  // --- Version 6.0 Master English Speech Pipeline Payload ---
+  public bool HasMasterPayload;
+  public MasterSpeechPipelinePayload MasterPayload;
+
   public static PronunciationEvidence None() {
     return new PronunciationEvidence {
       HasPhonemeData = false, Source = "none",

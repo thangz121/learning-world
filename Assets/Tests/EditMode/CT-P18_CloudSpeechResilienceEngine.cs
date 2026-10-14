@@ -250,7 +250,7 @@ public class CT_P18_CloudSpeechResilienceEngine {
     // 4th request while tripped -> immediately OFFLINE_AUTONOMOUS
     var res4 = CloudSpeechResilienceEngine.Process(audio, 16000, "cat", null, "utt-cb-4");
     Assert.AreEqual("OFFLINE_AUTONOMOUS", res4.cloud_status, "Subsequent calls while breaker is open must return OFFLINE_AUTONOMOUS");
-    Assert.AreEqual(12f, res4.post_eos_latency_ms, "Autonomous fallback must report immediate ~12ms local latency");
+    Assert.AreEqual(0f, res4.post_eos_latency_ms, "Autonomous fallback must NOT invent a latency (0 = not measured; the old 12ms claim was fabricated)");
   }
 
   [Test]

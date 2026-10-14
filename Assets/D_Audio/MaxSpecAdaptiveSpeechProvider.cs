@@ -89,7 +89,8 @@ public sealed class MaxSpecAdaptiveSpeechProvider : ISpeechAssessmentProvider {
         sampleRate: audio.SampleRate,
         targetWord: targetWord,
         azureResult: null, // Autonomous / Fallback mode when online raw azure is absent
-        utteranceId: utteranceId);
+        utteranceId: utteranceId,
+        postEosLatencyMs: 0f); // no external wait is measured here — never an invented latency
 
     // Transcript & confidence (honest): no ASR text exists in this provider — azureResult is
     // never supplied and the local fallback placeholder returns an EMPTY transcript. Echoing
@@ -132,16 +133,33 @@ public sealed class MaxSpecAdaptiveSpeechProvider : ISpeechAssessmentProvider {
         pitchSpanHz: float.NaN,         // not exposed by the DSP payload — no invented value
         echoGuard: echoGuard);
 
-    // 2) Attach advisory payloads ONLY. AccuracyScore / AcousticMatch / margin / fluency
-    //    stay exactly as the LocalAcoustic path produced them (option B; pinned by CT-P21).
+    // --- VERSION 6.0 MASTER UNIFIED PAYLOAD (assembled from THIS run's stage outputs — no re-evaluation,
+    //     no duplicated session updates; external latency estimate = 0/unknown and flagged as such) ---
+    var masterPayload = MasterEnglishSpeechPipelineEngine.AssembleFromPayloads(
+        sessionId: _sessionEngine.SessionId,
+        utteranceId: utteranceId,
+        attemptIndex: attemptIdx,
+        targetWord: targetWord,
+        targetIpa: phase3Payload.lexical_guard_metrics.target_ipa ?? (pron != null ? pron.Word.Value : ""),
+        internalLatencyMs: (float)sw.Elapsed.TotalMilliseconds,
+        externalLatencyEstimateMs: 0f,
+        p1: phase1Meta,
+        p3: phase3Payload,
+        p4: phase4Payload,
+        p5: phase5Payload,
+        sessionEngine: _sessionEngine);
+
+    // 2) Attach advisory payloads.
     pe.Source = "max-spec-adaptive";
     pe.HasFusionPayload = true;
     pe.FusionPayload = phase4Payload;
     pe.HasSessionPayload = true;
     pe.SessionPayload = phase5Payload;
-    if (string.IsNullOrEmpty(pe.FeedbackVi)) pe.FeedbackVi = phase4Payload.pedagogical_feedback_for_4yo.voice_coach_prompt_vi;
-    if (string.IsNullOrEmpty(pe.Tip)) pe.Tip = phase4Payload.pedagogical_feedback_for_4yo.phonetic_sound_effect_cue;
-    if (string.IsNullOrEmpty(pe.ErrorPhoneme)) pe.ErrorPhoneme = phase4Payload.pedagogical_feedback_for_4yo.primary_error_focus;
+    pe.HasMasterPayload = true;
+    pe.MasterPayload = masterPayload;
+    if (string.IsNullOrEmpty(pe.FeedbackVi)) pe.FeedbackVi = masterPayload.pedagogical_coach_action_4yo.coach_voice_prompt_vi;
+    if (string.IsNullOrEmpty(pe.Tip)) pe.Tip = masterPayload.pedagogical_coach_action_4yo.sfx_cue_id;
+    if (string.IsNullOrEmpty(pe.ErrorPhoneme)) pe.ErrorPhoneme = masterPayload.pedagogical_coach_action_4yo.primary_focus_error;
 
     result.Pronunciation = pe;
     result.LatencyMs = Math.Max(result.LatencyMs, sw.ElapsedMilliseconds);

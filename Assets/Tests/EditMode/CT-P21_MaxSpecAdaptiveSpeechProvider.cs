@@ -49,6 +49,11 @@ public class CT_P21_MaxSpecAdaptiveSpeechProvider {
 
     Assert.That(pe1.HasFusionPayload, Is.True, "Fusion payload must be the real Phase 4.1 output (advisory).");
     Assert.That(pe1.HasSessionPayload, Is.True, "Session payload must be the real Phase 5.0 output (advisory).");
+    Assert.That(pe1.HasMasterPayload, Is.True, "V6 master unified payload must be attached.");
+    Assert.That(pe1.MasterPayload.telemetry_and_sla.latency_included_external_estimate, Is.False,
+        "Provider path must not include an invented external latency estimate.");
+    Assert.That(pe1.MasterPayload.telemetry_and_sla.cloud_status, Does.Not.Contain("CTC"),
+        "No CTC relabeling — the local fallback is a placeholder, not a CTC model.");
     Assert.That(float.IsNaN(pe1.AccuracyScore), Is.True,
         "Option-B contract: policy-facing AccuracyScore stays NaN — fusion score must never be written into it.");
     Assert.That(float.IsNaN(pe1.FluencyScore), Is.True, "Fluency stays unavailable (NaN), never a fake value.");

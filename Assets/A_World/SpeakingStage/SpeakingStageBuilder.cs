@@ -305,6 +305,26 @@ public class SpeakingStageBuilder : MonoBehaviour {
   // whole-word colors by decision when no fusion payload exists (non-MaxSpec providers).
   public void UpdatePhonemeFeedback(SpeakingAssessment assessment) {
     if (WordText == null || IpaText == null) return;
+
+    if (assessment.Pronunciation.HasMasterPayload) {
+      var master = assessment.Pronunciation.MasterPayload;
+      var syls = master.syllable_by_syllable_ui_breakdown;
+      if (syls != null && syls.Count > 0) {
+        var fusionItems = new System.Collections.Generic.List<SyllableBreakdownItem>(syls.Count);
+        for (int i = 0; i < syls.Count; i++) {
+          fusionItems.Add(new SyllableBreakdownItem {
+            syllable_index = syls[i].syllable_index,
+            syllable_text = syls[i].syllable_text,
+            syllable_ipa = syls[i].syllable_ipa,
+            is_stressed_target = syls[i].is_stressed,
+            syllable_ui_color = syls[i].ui_color
+          });
+        }
+        BuildSyllableRows(fusionItems);
+        return;
+      }
+    }
+
     if (assessment.Pronunciation.HasFusionPayload) {
       var fusion = assessment.Pronunciation.FusionPayload;
       var syls = fusion.syllable_by_syllable_breakdown;
