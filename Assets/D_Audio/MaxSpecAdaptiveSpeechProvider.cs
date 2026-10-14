@@ -10,7 +10,8 @@
 // Fusion (4.1) and Session (5.0) outputs are ADVISORY payloads: they never rewrite AccuracyScore,
 // AcousticMatch, margin, or any other decision-relevant field — so swapping the acoustic slot is
 // behavior-compatible until calibration (option A) proves a fusion-driven variant is better.
-// Runtime wiring: GameInstaller opt-in flag "-speak-maxspec" (inert by default).
+// Runtime wiring: DEFAULT offline acoustic slot since wp-1.9.42 (GameInstaller);
+// revert with the "-speak-classic-acoustic" escape flag.
 
 using System;
 using System.Collections.Generic;

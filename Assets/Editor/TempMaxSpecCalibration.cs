@@ -37,6 +37,8 @@ public static class TempMaxSpecCalibration {
     var sb = new StringBuilder();
     sb.AppendLine("file,word,base_decision,base_score,base_evidence,max_decision,max_score,max_evidence,fusion_score,parity");
     int total = 0, agree = 0;
+    double baseMsTotal = 0, maxMsTotal = 0;
+    var swMs = new System.Diagnostics.Stopwatch();
     for (int i = 0; i < files.Length && i < maxFiles; i++) {
       string f = files[i];
       string word = WordFromFileName(Path.GetFileNameWithoutExtension(f));
@@ -60,9 +62,13 @@ public static class TempMaxSpecCalibration {
         Error = ""
       };
       var wid = new WordId(word);
+      swMs.Restart();
       var rA = local.RecognizeAsync(cap, wid, CancellationToken.None).Result;
+      baseMsTotal += swMs.Elapsed.TotalMilliseconds;
       var aA = policy.Decide(rA, wid, "calib-a-" + i);
+      swMs.Restart();
       var rB = max.RecognizeAsync(cap, wid, CancellationToken.None).Result;
+      maxMsTotal += swMs.Elapsed.TotalMilliseconds;
       var aB = policy.Decide(rB, wid, "calib-b-" + i);
       float fusion = rB.Pronunciation.HasFusionPayload
         ? rB.Pronunciation.FusionPayload.scores_summary.final_fusion_score
@@ -81,7 +87,9 @@ public static class TempMaxSpecCalibration {
         + " max=" + aB.Decision + "(" + aB.OverallScore.ToString("F3") + ")"
         + " fusion=" + fusion.ToString("F1") + (parity ? " OK" : " DIFF"));
     }
-    Debug.Log("[CALIB] SUMMARY files=" + total + " parity=" + agree + "/" + total);
+    Debug.Log("[CALIB] SUMMARY files=" + total + " parity=" + agree + "/" + total
+      + " baseAvgMs=" + (total > 0 ? (baseMsTotal / total).ToString("F2") : "n/a")
+      + " maxAvgMs=" + (total > 0 ? (maxMsTotal / total).ToString("F2") : "n/a"));
 
     if (!string.IsNullOrEmpty(outCsv)) {
       try {

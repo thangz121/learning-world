@@ -125,13 +125,17 @@ public class GameInstaller : MonoBehaviour {
       PronunciationCatalog = new TargetPronunciationCatalog();
       SpeakingPack.Apply((word, phonemes) => PronunciationCatalog.Register(word, phonemes));
       var speakingPolicy = SpeakingPassPolicy.Default();
-      ISpeechAssessmentProvider acousticProvider = new LocalAcousticProvider(PronunciationCatalog);
-      // WP A seam (INERT without the flag): "-speak-maxspec" swaps the offline acoustic
-      // slot to the max-spec chain (frontend -> DSP -> resilience -> fusion -> session).
-      // Default production behavior is unchanged until the owner opts in.
-      if (!string.IsNullOrEmpty(CLIFlag("-speak-maxspec"))) {
-        acousticProvider = new MaxSpecAdaptiveSpeechProvider(PronunciationCatalog);
-        Debug.Log("[GameInstaller] speaking acoustic slot = MaxSpecAdaptiveSpeechProvider (offline max-spec chain)", this);
+      // WP-1.9.42 (owner-approved default flip): the offline acoustic slot now runs the
+      // max-spec chain (frontend -> DSP -> resilience -> fusion -> session). Its evidence is
+      // POLICY-COMPATIBLE (calibration parity 27/27 — same pass/fail as the classic path),
+      // and it unlocks the per-syllable #11 UI + the age-4 session scaffolding payloads.
+      // Escape hatch: "-speak-classic-acoustic" restores the pre-1.9.42 LocalAcoustic slot.
+      ISpeechAssessmentProvider acousticProvider = new MaxSpecAdaptiveSpeechProvider(PronunciationCatalog);
+      if (!string.IsNullOrEmpty(CLIFlag("-speak-classic-acoustic"))) {
+        acousticProvider = new LocalAcousticProvider(PronunciationCatalog);
+        Debug.Log("[GameInstaller] speaking acoustic slot = LocalAcousticProvider (classic opt-out)", this);
+      } else {
+        Debug.Log("[GameInstaller] speaking acoustic slot = MaxSpecAdaptiveSpeechProvider (default, policy-compatible)", this);
       }
       _assessClient = new LocalAssessServiceClient(LocalAssessServiceLauncher.DefaultPort);
       var serviceProvider = new LocalServiceAssessmentProvider(_assessClient);
