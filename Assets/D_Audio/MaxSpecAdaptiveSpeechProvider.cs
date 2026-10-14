@@ -4,6 +4,12 @@
 // HONEST SCOPE: offline evidence chain (frontend VAD -> DSP -> resilience -> fusion -> session).
 // There is NO ASR text in this provider (Azure not wired; local fallback placeholder returns an
 // EMPTY transcript), so ProvidesTranscript=false and Transcript/Confidence stay empty/0.
+//
+// POLICY-COMPATIBLE ("option B", wp-1.9.41): the policy-facing evidence is produced by the SAME
+// production-default path (LocalAcousticProvider = AcousticAnalysis + cohort margin + DSP payload).
+// Fusion (4.1) and Session (5.0) outputs are ADVISORY payloads: they never rewrite AccuracyScore,
+// AcousticMatch, margin, or any other decision-relevant field — so swapping the acoustic slot is
+// behavior-compatible until calibration (option A) proves a fusion-driven variant is better.
 // Runtime wiring: GameInstaller opt-in flag "-speak-maxspec" (inert by default).
 
 using System;
@@ -15,10 +21,11 @@ using System.Threading.Tasks;
 public sealed class MaxSpecAdaptiveSpeechProvider : ISpeechAssessmentProvider {
   public string ProviderId => "max-spec-adaptive";
   public bool ProvidesTranscript => false; // no ASR text offline (see header)
-  public bool ProvidesPhonemeEvidence => true;
+  public bool ProvidesPhonemeEvidence => false; // policy-facing phoneme scores not claimed; fusion payload is advisory
   public bool RequiresNetwork => false; // fully offline evidence; transcript would require Azure (not bundled)
 
   readonly ITargetPronunciationProvider _targets;
+  readonly LocalAcousticProvider _acousticBase; // policy-compatible evidence base (production default path)
   readonly MultiTurnAdaptiveSessionEngine _sessionEngine;
   readonly float _speechEnergyFloor;
 
@@ -33,71 +40,46 @@ public sealed class MaxSpecAdaptiveSpeechProvider : ISpeechAssessmentProvider {
       float speechEnergyFloor = 0.001f) {
 
     _targets = targets;
-    _sessionEngine = sessionEngine ?? new MultiTurnAdaptiveSessionEngine();
     _speechEnergyFloor = speechEnergyFloor > 0f ? speechEnergyFloor : 0.001f;
+    _acousticBase = new LocalAcousticProvider(targets, _speechEnergyFloor);
+    _sessionEngine = sessionEngine ?? new MultiTurnAdaptiveSessionEngine();
   }
 
   public MultiTurnAdaptiveSessionEngine SessionEngine => _sessionEngine;
 
   public Task<SpeechRecognitionResult> RecognizeAsync(CapturedSpeech audio, WordId target, CancellationToken ct) {
     var sw = Stopwatch.StartNew();
-    var result = new SpeechRecognitionResult {
-      ProviderId = ProviderId,
-      Pronunciation = PronunciationEvidence.None(),
-      ErrorReason = string.Empty,
-      IsError = false
-    };
 
-    if (ct.IsCancellationRequested) {
-      result.IsError = true;
-      result.ErrorReason = SpeechFailureReasons.Cancelled;
-      result.HasSpeech = false;
-      result.LatencyMs = sw.ElapsedMilliseconds;
-      return Task.FromResult(result);
-    }
+    // 1) Policy-compatible base: identical evidence contract to the production default
+    //    (VAD/energy + AcousticAnalysis + cohort margin + DSP payload + VN feedback).
+    var result = _acousticBase.RecognizeAsync(audio, target, ct).Result;
+    result.ProviderId = ProviderId;
 
-    if (!string.IsNullOrEmpty(audio.Error)) {
-      result.IsError = true;
-      result.ErrorReason = audio.Error;
-      result.HasSpeech = false;
-      result.LatencyMs = sw.ElapsedMilliseconds;
-      return Task.FromResult(result);
-    }
-
-    if (audio.Cancelled) {
-      result.IsError = true;
-      result.ErrorReason = SpeechFailureReasons.Cancelled;
-      result.HasSpeech = false;
-      result.LatencyMs = sw.ElapsedMilliseconds;
-      return Task.FromResult(result);
-    }
-
-    float energy = audio.Samples != null ? VoiceActivity.MeanAbsolute(audio.Samples) : audio.MeanEnergy;
-    result.HasSpeech = VoiceActivity.HasSpeech(energy, _speechEnergyFloor) && audio.DurationSec > 0f;
-    result.MeanEnergy = energy;
-    result.AudioDurationSec = audio.DurationSec;
-    result.SpeechDurationSec = audio.VoicedSec;
-    result.Transcript = string.Empty;
-    result.RecognitionConfidence = 0f;
-
-    if (!result.HasSpeech || audio.Samples == null || audio.Samples.Length == 0) {
-      result.LatencyMs = sw.ElapsedMilliseconds;
+    if (result.IsError || !result.HasSpeech || audio.Samples == null || audio.Samples.Length == 0) {
+      result.LatencyMs = Math.Max(result.LatencyMs, sw.ElapsedMilliseconds);
       return Task.FromResult(result);
     }
 
     string targetWord = target.Value ?? string.Empty;
     float[] mono = audio.Channels > 1 ? ToMono(audio.Samples, audio.Channels) : audio.Samples;
+    var pe = result.Pronunciation; // FromAcoustic evidence — POLICY FIELDS MUST STAY AS-IS (option B contract)
 
-    // --- PHASE 1.2: Child Audio Frontend Telemetry (real on-device VAD analysis) ---
-    var phase1Meta = ChildAudioFrontend.AnalyzeChildVAD(mono, audio.SampleRate);
-
-    // --- PHASE 2.2: Local Acoustic DSP Engine ---
     TargetPronunciation pron = null;
     if (_targets != null) {
       _targets.TryGet(target, out pron);
     }
 
-    var phase2Payload = EnglishAcousticDspEngine.Analyze(mono, audio.SampleRate, pron);
+    // --- PHASE 1.2: Child Audio Frontend Telemetry (real on-device VAD analysis) ---
+    var phase1Meta = ChildAudioFrontend.AnalyzeChildVAD(mono, audio.SampleRate);
+
+    // --- PHASE 2.2: Local Acoustic DSP Engine (reuse the payload the base already computed) ---
+    EnglishPhoneticPayload phase2Payload = pe.HasPhoneticPayload
+      ? pe.PhoneticPayload
+      : EnglishAcousticDspEngine.Analyze(mono, audio.SampleRate, pron);
+    if (!pe.HasPhoneticPayload && phase2Payload.utterance_id != null) {
+      pe.HasPhoneticPayload = true;
+      pe.PhoneticPayload = phase2Payload;
+    }
 
     // --- PHASE 3.1: Cloud AI Speech & Resilience Engine ---
     string utteranceId = "utt-" + Guid.NewGuid().ToString("N").Substring(0, 8);
@@ -112,14 +94,14 @@ public sealed class MaxSpecAdaptiveSpeechProvider : ISpeechAssessmentProvider {
     // never supplied and the local fallback placeholder returns an EMPTY transcript. Echoing
     // targetWord as "transcript" or inventing 0.85/0.2 confidence would be a fake readout.
 
-    // --- PHASE 4.1: Cross-Validation & Pedagogical Engine ---
+    // --- PHASE 4.1: Cross-Validation & Pedagogical Engine (advisory) ---
     var phase4Payload = CrossValidationPedagogicalEngine.Fuse(
         targetWord: targetWord,
         phase1: phase1Meta,
         phase2: phase2Payload,
         phase3: phase3Payload);
 
-    // --- PHASE 5.0: Multi-Turn Session Orchestration ---
+    // --- PHASE 5.0: Multi-Turn Session Orchestration (advisory) ---
     int attemptIdx;
     _wordAttempts.TryGetValue(targetWord, out attemptIdx);
     attemptIdx++;
@@ -149,39 +131,19 @@ public sealed class MaxSpecAdaptiveSpeechProvider : ISpeechAssessmentProvider {
         pitchSpanHz: float.NaN,         // not exposed by the DSP payload — no invented value
         echoGuard: echoGuard);
 
-    // Assemble rich PronunciationEvidence
-    var pe = PronunciationEvidence.None();
-    pe.HasPhonemeData = true;
+    // 2) Attach advisory payloads ONLY. AccuracyScore / AcousticMatch / margin / fluency
+    //    stay exactly as the LocalAcoustic path produced them (option B; pinned by CT-P21).
     pe.Source = "max-spec-adaptive";
-    pe.AccuracyScore = phase4Payload.scores_summary.final_fusion_score / 100f;
-    pe.FluencyScore = 0f;      // not measured offline (0 = unavailable; FallbackSpeechProvider convention)
-    pe.CompletenessScore = 0f; // not measured offline
-    pe.WordAccuracy = pe.AccuracyScore;
-    pe.WordErrorType = phase4Payload.normative_decision == "Retry_Blocked" ? "Mispronunciation" : "None";
-
-    // Acoustic block
-    pe.HasAcousticData = true;
-    pe.AcousticMatch = phase2Payload.overall_acoustic_score / 100f;
-    pe.AcousticOnset = phase2Payload.english_phonetic_metrics.onset_and_clusters.score / 100f;
-    pe.AcousticCoda = phase2Payload.english_phonetic_metrics.coda_and_clusters.score / 100f;
-    pe.AcousticMissingEnding = phase2Payload.english_phonetic_metrics.coda_and_clusters.is_dropped;
-    pe.AcousticWeakEnding = !phase2Payload.english_phonetic_metrics.coda_and_clusters.release_burst_detected;
-
-    // Feedback
-    pe.FeedbackVi = phase4Payload.pedagogical_feedback_for_4yo.voice_coach_prompt_vi;
-    pe.Tip = phase4Payload.pedagogical_feedback_for_4yo.phonetic_sound_effect_cue;
-    pe.ErrorPhoneme = phase4Payload.pedagogical_feedback_for_4yo.primary_error_focus;
-
-    // Attach deep Phase 2.2, 4.1 & 5.0 payloads
-    pe.HasPhoneticPayload = true;
-    pe.PhoneticPayload = phase2Payload;
     pe.HasFusionPayload = true;
     pe.FusionPayload = phase4Payload;
     pe.HasSessionPayload = true;
     pe.SessionPayload = phase5Payload;
+    if (string.IsNullOrEmpty(pe.FeedbackVi)) pe.FeedbackVi = phase4Payload.pedagogical_feedback_for_4yo.voice_coach_prompt_vi;
+    if (string.IsNullOrEmpty(pe.Tip)) pe.Tip = phase4Payload.pedagogical_feedback_for_4yo.phonetic_sound_effect_cue;
+    if (string.IsNullOrEmpty(pe.ErrorPhoneme)) pe.ErrorPhoneme = phase4Payload.pedagogical_feedback_for_4yo.primary_error_focus;
 
     result.Pronunciation = pe;
-    result.LatencyMs = sw.ElapsedMilliseconds;
+    result.LatencyMs = Math.Max(result.LatencyMs, sw.ElapsedMilliseconds);
     return Task.FromResult(result);
   }
 

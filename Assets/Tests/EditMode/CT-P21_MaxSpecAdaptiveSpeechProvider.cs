@@ -41,16 +41,17 @@ public class CT_P21_MaxSpecAdaptiveSpeechProvider {
   }
 
   [Test]
-  public void P21_OfflineProvider_AttachesRealFusionAndSessionPayloads() {
+  public void P21_OfflineProvider_AttachesAdvisoryPayloadsWithoutRewritingPolicyFields() {
     var provider = new MaxSpecAdaptiveSpeechProvider(targets: null);
 
     var pe1 = provider.RecognizeAsync(VoicedTone(), new WordId("cat"), CancellationToken.None).Result.Pronunciation;
     var pe2 = provider.RecognizeAsync(VoicedTone(), new WordId("cat"), CancellationToken.None).Result.Pronunciation;
 
-    Assert.That(pe1.HasPhonemeData, Is.True);
-    Assert.That(pe1.HasFusionPayload, Is.True, "Fusion payload must be the real Phase 4.1 output.");
-    Assert.That(pe1.HasSessionPayload, Is.True, "Session payload must be the real Phase 5.0 output.");
-    Assert.That(pe1.FluencyScore, Is.EqualTo(0f), "Fluency must be 0 (unavailable), not a fake 0.9.");
+    Assert.That(pe1.HasFusionPayload, Is.True, "Fusion payload must be the real Phase 4.1 output (advisory).");
+    Assert.That(pe1.HasSessionPayload, Is.True, "Session payload must be the real Phase 5.0 output (advisory).");
+    Assert.That(float.IsNaN(pe1.AccuracyScore), Is.True,
+        "Option-B contract: policy-facing AccuracyScore stays NaN — fusion score must never be written into it.");
+    Assert.That(float.IsNaN(pe1.FluencyScore), Is.True, "Fluency stays unavailable (NaN), never a fake value.");
     Assert.That(pe2.SessionPayload.attempt_index, Is.EqualTo(2), "Attempt index must increment per word.");
   }
 }
