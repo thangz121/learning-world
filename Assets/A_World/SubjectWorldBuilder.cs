@@ -1,13 +1,13 @@
-// A_World/SubjectWorldBuilder.cs — Phase 3.0 WORLD FOUNDATION (Agent A).
-// Code-builds the Learning World extension: 4 roads, 4 subject gates
-// (landmark arches), 4 playgrounds (medallion + landmark core + return arch +
-// boundary ring + tree), 4 signposts, outer hedge at the new bounds.
+// A_World/SubjectWorldBuilder.cs — hub Subject Gate arc (PHASE 5 trimmed).
+// Code-builds the Learning World hub piece: the FIVE subject gates (landmark
+// arches on the arc) + the outer hedge. The old in-world districts (roads,
+// playgrounds, return arches, signposts, boundary rings) are DELETED — subject
+// gates now lead straight to the Selection Yard (A -> B).
 // Split to respect the frozen NavMesh lifecycle (MarketBuilder pattern):
-//   BuildShell  — PRE-bake: walkable ground treatment (roads, medallions) +
-//                 solid landmarks (pillars/cores/trees keep colliders, like the
-//                 stall/crates) so the bake sees them; carves flush afterwards.
-//   BuildCarves — runtime stationary carves (deny feet, never rebake).
-//   BuildDecor  — POST-bake: collider-free dressing (bushes/blooms/pebbles).
+//   BuildShell  — PRE-bake: gate pillars (solid; they keep colliders so the
+//                 bake sees them) + outer hedge shell.
+//   BuildCarves — runtime stationary carves (pillar feet; never rebake).
+//   BuildDecor  — POST-bake: collider-free hedge dressing.
 // Every placement is hand-authored (deterministic, no Random — only a fixed
 // seed for intra-cluster jitter, same convention as MarketBuilder).
 // Visual identities differ in SHAPE LANGUAGE (blocks/gears/books/scrolls),
@@ -26,7 +26,6 @@ public static class SubjectWorldBuilder {
 
   public class BuildResult {
     public readonly List<SubjectGate> EntryGates = new List<SubjectGate>();
-    public readonly List<SubjectGate> ReturnGates = new List<SubjectGate>();
     public readonly List<CarveSpec> Carves = new List<CarveSpec>();
   }
 
@@ -36,8 +35,6 @@ public static class SubjectWorldBuilder {
   public const float OuterHedgeZ = 14.5f;
 
   static readonly Color RoadTan = new Color(0.76f, 0.60f, 0.40f);
-  static readonly Color ReturnGold = new Color(0.95f, 0.75f, 0.30f);
-  static readonly Color ReturnGoldDark = new Color(0.70f, 0.52f, 0.20f);
   static readonly Color LeafA = new Color(0.28f, 0.60f, 0.30f);
   static readonly Color LeafB = new Color(0.22f, 0.52f, 0.28f);
   static readonly Color TrunkC = new Color(0.45f, 0.30f, 0.16f);
@@ -53,22 +50,12 @@ public static class SubjectWorldBuilder {
 
   public static BuildResult BuildShell(Transform parent) {
     BuildResult result = new BuildResult();
+    // PHASE 5 LEGACY PURGE: one entry gate per subject on the hub arc + the
+    // outer hedge. The in-world districts (roads, playgrounds, return arches,
+    // signposts, boundary rings) are DELETED — subject gates now lead straight
+    // to the Selection Yard.
     foreach (SubjectDefinition def in SubjectCatalog.All) {
-      // Additive-scene subjects (Math: SceneName != null) live in their own
-      // scene: the Spatial Hub keeps the entry gate + signpost (the door the
-      // child walks through) but MUST NOT build a dead duplicate district
-      // behind it (audit F9: the dead Math playground + its stray "Về" marker
-      // read as extra gates in the hub). The return slot stays aligned with
-      // SubjectCatalog.All as a null so subject<->gate binding cannot shift.
-      bool additive = !string.IsNullOrEmpty(def.SceneName);
-      if (!additive) BuildRoad(parent, def);
       BuildEntryGate(parent, def, result);
-      if (additive) {
-        result.ReturnGates.Add(null);
-      } else {
-        BuildPlaygroundShell(parent, def, result);
-      }
-      BuildSignpost(parent, def);
     }
     BuildOuterHedgeShell(parent, result);
     return result;
@@ -87,46 +74,14 @@ public static class SubjectWorldBuilder {
 
   public static void BuildDecor(Transform parent) {
     System.Random rng = new System.Random(30300);
-    foreach (SubjectDefinition def in SubjectCatalog.All) {
-      // Additive subjects own no spatial playground: skip its ring/floor decor
-      // (F9), but keep the hub-side road-shoulder dressing (BuildRoadEdges).
-      bool additive = !string.IsNullOrEmpty(def.SceneName);
-      if (!additive) {
-        BuildBoundaryRing(parent, def, rng);
-        BuildPlaygroundDecor(parent, def, rng);
-      }
-      BuildRoadEdges(parent, def, rng);
-    }
+    // PHASE 5: only the outer hedge dressing survives (district rings/floors
+    // and road shoulders are deleted with the districts).
     BuildOuterHedgeDressing(parent, rng);
   }
 
   // ---- roads -----------------------------------------------------------------
   // One flat walkable strip per subject, same warm tan as the main path so all
   // roads read as ONE world. Pre-bake (walkable). Colliders kept (matches Path).
-
-  static void BuildRoad(Transform parent, SubjectDefinition def) {
-    Vector3 gate = def.GatePos;
-    Vector3 center = def.PlaygroundCenter;
-    if (def.Id == SubjectIds.Math) {
-      // East: from inside Main (x 5.6) through the gate to the playground
-      // (PHASE 2 arc: the gate moved to x=14, the strip follows it).
-      Box(parent, "MathRoad", new Vector3(10.1f, 0.015f, gate.z),
-        new Vector3(9.0f, 0.03f, 1.6f), RoadTan, true);
-    } else if (def.Id == SubjectIds.Thinking) {
-      Box(parent, "ThinkingRoad", new Vector3(-10.1f, 0.015f, gate.z),
-        new Vector3(9.0f, 0.03f, 1.6f), RoadTan, true);
-    } else {
-      // North/South along the gate's own x (Vietnamese runs at x=3.5 so the
-      // spawn camera axis x=0 stays clear): from inside Main to the playground.
-      float gx = gate.x;
-      float z0 = center.z < gate.z ? -3.6f : 3.6f;
-      float zMid = (z0 + center.z) * 0.5f;
-      float len = Math.Abs(center.z - z0);
-      string roadName = def.Id == SubjectIds.English ? "EnglishRoad" : "VietnameseRoad";
-      Box(parent, roadName, new Vector3(gx, 0.015f, zMid),
-        new Vector3(1.6f, 0.03f, len), RoadTan, true);
-    }
-  }
 
   // ---- entry gates ------------------------------------------------------------
   // Landmark arch ON the hedge line + subject label + one-way entry trigger
@@ -528,258 +483,6 @@ public static class SubjectWorldBuilder {
   // Medallion + landmark core (carved) + return arch + playground tree.
   // The arrival zone (entry -> center) is kept furniture-free.
 
-  static void BuildPlaygroundShell(Transform parent, SubjectDefinition def, BuildResult result) {
-    string name = def.DisplayName;
-    Vector3 c = def.PlaygroundCenter;
-
-    GameObject med = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    med.name = name + "Medallion";
-    med.transform.SetParent(parent);
-    med.transform.position = c + new Vector3(0f, 0.012f, 0f);
-    med.transform.localScale = new Vector3(6.0f, 0.024f, 6.0f);
-    med.GetComponent<Renderer>().sharedMaterial = Lit(def.GroundTint);
-
-    // Landmark core sits past the center (arrival zone stays open).
-    Vector3 toGate = (def.GatePos - c);
-    toGate.y = 0f;
-    toGate.Normalize();
-    Vector3 corePos = c - toGate * 1.4f;
-    switch (def.Landmark) {
-      case SubjectLandmarkKind.Blocks: BuildAbacus(parent, def, corePos); break;
-      case SubjectLandmarkKind.Gears: BuildGearPair(parent, def, corePos); break;
-      case SubjectLandmarkKind.Books: BuildBookPodium(parent, def, corePos); break;
-      case SubjectLandmarkKind.Scrolls: BuildStele(parent, def, corePos); break;
-    }
-    result.Carves.Add(new CarveSpec { Name = name + "CoreCarve", Pos = corePos + new Vector3(0f, 0.6f, 0f), Size = new Vector3(1.2f, 1.2f, 1.2f) });
-
-    BuildReturnArch(parent, def, result);
-    BuildPlaygroundTree(parent, def, result);
-    AppendPlaygroundCarves(def, result.Carves);
-  }
-
-  // Math core: abacus frame (posts + bars + rods + beads).
-  static void BuildAbacus(Transform parent, SubjectDefinition def, Vector3 p) {
-    Box(parent, "MathAbacusPostL", p + new Vector3(-0.7f, 0.6f, 0f),
-      new Vector3(0.14f, 1.2f, 0.14f), def.Primary, true);
-    Box(parent, "MathAbacusPostR", p + new Vector3(0.7f, 0.6f, 0f),
-      new Vector3(0.14f, 1.2f, 0.14f), def.Primary, true);
-    Box(parent, "MathAbacusBarT", p + new Vector3(0f, 1.15f, 0f),
-      new Vector3(1.55f, 0.12f, 0.12f), def.Primary, true);
-    Box(parent, "MathAbacusBarB", p + new Vector3(0f, 0.15f, 0f),
-      new Vector3(1.55f, 0.12f, 0.12f), def.Primary, true);
-    for (int r = 0; r < 2; r++) {
-      float y = 0.55f + r * 0.35f;
-      GameObject rod = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-      rod.name = "MathAbacusRod" + r;
-      rod.transform.SetParent(parent);
-      rod.transform.position = p + new Vector3(0f, y, 0f);
-      rod.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-      rod.transform.localScale = new Vector3(0.06f, 1.4f, 0.06f);
-      rod.GetComponent<Renderer>().sharedMaterial = Lit(TrunkC);
-      for (int i = 0; i < 3; i++) {
-        Ball(parent, "MathBead" + r + "_" + i, p + new Vector3(-0.35f + i * 0.35f, y, 0f),
-          0.20f, i % 2 == 0 ? def.Secondary : def.Primary, false);
-      }
-    }
-  }
-
-  // Thinking core: two meshing gears on posts + 3 marker studs.
-  static void BuildGearPair(Transform parent, SubjectDefinition def, Vector3 p) {
-    BuildGearPillar(parent, "ThinkingCoreBig", p + new Vector3(-0.45f, -0.3f, 0f), def.Primary);
-    BuildGearPillar(parent, "ThinkingCoreSmall", p + new Vector3(0.55f, -0.3f, 0f), def.Secondary);
-    for (int i = 0; i < 3; i++) {
-      Vector3 s = p + new Vector3(-0.5f + i * 0.5f, 0f, 0.75f);
-      GameObject stud = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-      stud.name = "ThinkingStud" + i;
-      stud.transform.SetParent(parent);
-      stud.transform.position = s + new Vector3(0f, 0.2f, 0f);
-      stud.transform.localScale = new Vector3(0.16f, 0.4f, 0.16f);
-      stud.GetComponent<Renderer>().sharedMaterial = Lit(def.Primary);
-      Ball(parent, "ThinkingStudTop" + i, s + new Vector3(0f, 0.48f, 0f), 0.16f, def.Secondary, false);
-    }
-  }
-
-  // English core: podium + open book + blocks + mini bubble post.
-  static void BuildBookPodium(Transform parent, SubjectDefinition def, Vector3 p) {
-    Box(parent, "EnglishPodium", p + new Vector3(0f, 0.3f, 0f),
-      new Vector3(1.1f, 0.6f, 0.8f), TrunkC, true);
-    GameObject left = Box(parent, "EnglishCorePageL", p + new Vector3(-0.18f, 0.78f, 0f),
-      new Vector3(0.5f, 0.55f, 0.07f), def.Secondary, true);
-    left.transform.localRotation = Quaternion.Euler(0f, 20f, 0f);
-    GameObject right = Box(parent, "EnglishCorePageR", p + new Vector3(0.18f, 0.78f, 0f),
-      new Vector3(0.5f, 0.55f, 0.07f), def.Primary, true);
-    right.transform.localRotation = Quaternion.Euler(0f, -20f, 0f);
-    for (int i = 0; i < 2; i++) {
-      float s = 0.26f + i * 0.1f;
-      GameObject cube = Box(parent, "EnglishCoreBlock" + i,
-        p + new Vector3(0.85f, s * 0.5f, -0.2f + i * 0.45f),
-        new Vector3(s, s, s), i == 0 ? def.Primary : def.Secondary, false);
-      StripCollider(cube);
-    }
-    GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    post.name = "EnglishCorePost";
-    post.transform.SetParent(parent);
-    post.transform.position = p + new Vector3(-0.85f, 0.45f, 0.3f);
-    post.transform.localScale = new Vector3(0.1f, 0.9f, 0.1f);
-    post.GetComponent<Renderer>().sharedMaterial = Lit(TrunkC);
-    Ball(parent, "EnglishCoreBubble", p + new Vector3(-0.85f, 1.1f, 0.3f), 0.32f,
-      new Color(0.98f, 0.98f, 0.97f), false);
-  }
-
-  // Vietnamese core: stele tablet on a base + drum + banner posts.
-  static void BuildStele(Transform parent, SubjectDefinition def, Vector3 p) {
-    Box(parent, "VietnameseBase", p + new Vector3(0f, 0.15f, 0f),
-      new Vector3(1.2f, 0.3f, 0.9f), TrunkC, true);
-    BuildTabletPillar(parent, "VietnameseStele", p, def.Primary, def.Secondary);
-    GameObject drum = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    drum.name = "VietnameseDrum";
-    drum.transform.SetParent(parent);
-    drum.transform.position = p + new Vector3(0.95f, 0.3f, 0.2f);
-    drum.transform.localScale = new Vector3(0.5f, 0.6f, 0.5f);
-    drum.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.80f, 0.42f, 0.25f));
-    for (int i = -1; i <= 1; i += 2) {
-      Vector3 bp = p + new Vector3(i * 0.9f, 0f, -0.55f);
-      GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-      post.name = "VietnameseBannerPost" + i;
-      post.transform.SetParent(parent);
-      post.transform.position = bp + new Vector3(0f, 0.55f, 0f);
-      post.transform.localScale = new Vector3(0.1f, 1.1f, 0.1f);
-      post.GetComponent<Renderer>().sharedMaterial = Lit(TrunkC);
-    }
-    Box(parent, "VietnameseMiniBanner", p + new Vector3(0f, 0.95f, -0.55f),
-      new Vector3(1.8f, 0.35f, 0.1f), def.Secondary, false);
-  }
-
-  // ---- return arches ------------------------------------------------------------
-  // User round (hub declutter): the selection hub IS the main hall, so NO
-  // return arch may appear in the current world: no gold pillars, no lintel,
-  // no disc, no way-home label. The one-way return TRIGGER stays (invisible,
-  // same position/radius): walking back out of a district still returns to
-  // Main exactly as before (mechanics preserved, gate tests green). The full
-  // gold arch returns with the subject worlds.
-
-  static void BuildReturnArch(Transform parent, SubjectDefinition def, BuildResult result) {
-    string name = def.DisplayName;
-    Vector3 rp = def.ReturnPoint;
-    GameObject root = new GameObject(name + "Return");
-    root.transform.SetParent(parent);
-    root.transform.position = rp;
-
-    // 3.0.1.1 way-home marker (user round: the invisible return could neither
-    // be found nor clicked — "no door back"): a flat gold disc + "Về" label.
-    // Still NO arch (pillars/lintel stay removed per the hub-declutter order):
-    // ground treatment + text only, walkable, bake-neutral.
-    GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    disc.name = name + "ReturnDisc";
-    disc.transform.SetParent(parent);
-    disc.transform.position = rp + new Vector3(0f, 0.015f, 0f);
-    disc.transform.localScale = new Vector3(2.0f, 0.03f, 2.0f);
-    disc.GetComponent<Renderer>().sharedMaterial = Lit(ReturnGold);
-    GameObject anchor = new GameObject(name + "ReturnAnchor");
-    anchor.transform.SetParent(parent);
-    anchor.transform.position = rp;
-    GameObject labelGo = new GameObject(name + "ReturnLabel");
-    labelGo.transform.SetParent(parent);
-    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.Setup("Về", anchor.transform, 1.2f);
-    label.Show();
-
-    SubjectGate gate = root.AddComponent<SubjectGate>();
-    gate.fireRadius = 1.3f;
-    result.ReturnGates.Add(gate);
-    // NOTE: Bind order matches EntryGates (SubjectCatalog.All) — MarketBuilder
-    // wires entry[i] -> All[i] as entry, return[i] -> All[i] as return.
-  }
-
-  // ---- playground trees ----------------------------------------------------------
-
-  static void BuildPlaygroundTree(Transform parent, SubjectDefinition def, BuildResult result) {
-    string name = def.DisplayName;
-    Vector3 tp;
-    // (User round: "clear every tree around the Thinking gate" — no Thinking
-    // playground tree at all. Early return skips the tree AND its carve, so no
-    // invisible wall is left behind. Medallion + core + return arch stay.)
-    if (def.Id == SubjectIds.Thinking) return;
-    // Hub beauty round (user: trees covered gates from the yard): district
-    // trees sit deep in-district, off every gate sightline and walkway.
-    if (def.Id == SubjectIds.Math) tp = new Vector3(14.5f, 0f, 4.5f);
-    else if (def.Id == SubjectIds.Thinking) tp = new Vector3(-15f, 0f, 6f); // (user round: was -14.5,4.5, trunk crossed the gate pillars from hub views)
-    else if (def.Id == SubjectIds.English) tp = new Vector3(3.4f, 0f, -12.3f);
-    else tp = new Vector3(0.3f, 0f, 12.4f); // VN district NW corner (off its x=3.5 road)
-    GameObject tree = new GameObject(name + "Tree");
-    tree.transform.SetParent(parent);
-    tree.transform.position = tp;
-    GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    trunk.name = name + "Trunk";
-    trunk.transform.SetParent(tree.transform);
-    trunk.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-    trunk.transform.localScale = new Vector3(0.5f, 1.8f, 0.5f);
-    trunk.GetComponent<Renderer>().sharedMaterial = Lit(TrunkC);
-    Vector3[] canopyAt = {
-      new Vector3(0f, 2.3f, 0f),
-      new Vector3(0.7f, 1.9f, 0.3f),
-      new Vector3(-0.6f, 2.0f, -0.3f),
-    };
-    for (int i = 0; i < canopyAt.Length; i++) {
-      GameObject leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      leaf.name = name + "Canopy";
-      leaf.transform.SetParent(tree.transform);
-      leaf.transform.localPosition = canopyAt[i];
-      leaf.transform.localScale = new Vector3(1.6f, 1.3f, 1.6f);
-      leaf.GetComponent<Renderer>().sharedMaterial = Lit(def.Primary);
-    }
-    result.Carves.Add(new CarveSpec { Name = name + "TreeCarve", Pos = tp + new Vector3(0f, 1f, 0f), Size = new Vector3(1.2f, 2f, 1.2f) });
-  }
-
-  // ---- signposts (main-world side, read the direction) ----------------------------
-
-  static void BuildSignpost(Transform parent, SubjectDefinition def) {
-    string name = def.DisplayName;
-    // Signpost placement (user convention: LEFT of the entrance path, right at
-    // the gate mouth: no outward flip; raw lat is always approach-left. Face 0.9 hub-side of
-    // the gate line, lateral 2.2 just outside the left pillar.)
-    Vector3 face = FaceOf(def);
-    Vector3 lat = new Vector3(-face.z, 0f, face.x);
-    Vector3 sp = def.GatePos + face * 0.9f + lat * 2.2f;
-    // (User round 2: hug the pillar - detached spot projected onto neighbour
-    // gates from plaza views. (Superseded by the LEFT-of-path convention above.)
-    // (Still holds: outside pillar carve/disc, inside plaza veto, clear of roads.)
-    GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    post.name = name + "SignPost";
-    post.transform.SetParent(parent);
-    post.transform.position = sp + new Vector3(0f, 0.55f, 0f);
-    // User round (post covered its own text): the primitive cylinder is 2m
-    // tall, so scale y=1.1 made a 2.2m pole whose tip (1.65m) reached INTO the
-    // name pill (bottom edge 1.36m) at the same XZ — the dark tip crossed the
-    // text from every hub approach. y=0.6 → 1.2m pole, tip at 1.15m: the post
-    // stays behind/below the text from all angles, pill still reads mounted.
-    post.transform.localScale = new Vector3(0.12f, 0.6f, 0.12f);
-    post.GetComponent<Renderer>().sharedMaterial = Lit(TrunkC);
-    // Arrow arm toward the gate (user round: real directional sign) —
-    // rectangular tail + diamond head in subject colour, at hand height.
-    Vector3 toGate = def.GatePos - sp;
-    toGate.y = 0f;
-    toGate.Normalize();
-    float yaw = Mathf.Atan2(toGate.x, toGate.z) * Mathf.Rad2Deg;
-    GameObject tail = Box(parent, name + "SignTail", sp + new Vector3(0f, 0.78f, 0f) - toGate * 0.15f,
-      new Vector3(0.14f, 0.16f, 0.85f), def.Primary, true);
-    tail.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
-    GameObject head = Box(parent, name + "SignHead", sp + new Vector3(0f, 0.78f, 0f) + toGate * 0.42f,
-      new Vector3(0.30f, 0.16f, 0.30f), def.Primary, true);
-    head.transform.localRotation = Quaternion.Euler(0f, yaw + 45f, 0f);
-    // Name pill above the post (same label contract as the gates).
-    GameObject anchor = new GameObject(name + "SignAnchor");
-    anchor.transform.SetParent(parent);
-    anchor.transform.position = sp;
-    GameObject labelGo = new GameObject(name + "SignLabel");
-    labelGo.transform.SetParent(parent);
-    WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-    label.Setup(def.DisplayName, anchor.transform, 1.55f);
-    label.Show();
-  }
-
-  // ---- outer hedge (new world bounds, full rectangle, no gaps) ---------------------
-
   static void BuildOuterHedgeShell(Transform parent, BuildResult result) {
     GameObject hedge = new GameObject("OuterHedge");
     hedge.transform.SetParent(parent);
@@ -810,118 +513,8 @@ public static class SubjectWorldBuilder {
   }
 
   // ---- decor (post-bake) ------------------------------------------------------------
-  // Boundary ring (visual; feet are denied by U-carves flushed pre-play via
-  // BuildCarves — see BuildPlaygroundCarves below, called from BuildShell).
-
-  static void BuildBoundaryRing(Transform parent, SubjectDefinition def, System.Random rng) {
-    Vector3 c = def.PlaygroundCenter;
-    Vector3 toGate = def.GatePos - c;
-    toGate.y = 0f;
-    toGate.Normalize();
-    float gateAng = Mathf.Atan2(toGate.x, toGate.z) * Mathf.Rad2Deg;
-    // Hub round 2 (user: still too many bushes): 12 -> 8 ring bushes.
-    for (int i = 0; i < 8; i++) {
-      float ang = i * 45f;
-      float dAng = Mathf.DeltaAngle(ang, gateAng);
-      if (Math.Abs(dAng) < 20f) continue; // opening toward the entry road
-      Vector3 dir = new Vector3(Mathf.Sin(ang * Mathf.Deg2Rad), 0f, Mathf.Cos(ang * Mathf.Deg2Rad));
-      Vector3 p = c + dir * 3.3f;
-      GameObject bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      bush.name = def.DisplayName + "EdgeBush";
-      bush.transform.SetParent(parent);
-      bush.transform.position = p + new Vector3(0f, 0.28f, 0f);
-      bush.transform.localScale = (i % 2 == 0)
-        ? new Vector3(1.15f, 0.62f, 1.15f)
-        : new Vector3(0.95f, 0.55f, 0.95f);
-      bush.GetComponent<Renderer>().sharedMaterial = Lit(i % 2 == 0 ? LeafA : LeafB);
-      StripCollider(bush);
-      if (i % 4 == 0) {
-        GameObject bloom = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        bloom.name = def.DisplayName + "EdgeBloom";
-        bloom.transform.SetParent(parent);
-        bloom.transform.position = p + new Vector3(0f, 0.62f, 0f);
-        bloom.transform.localScale = new Vector3(0.16f, 0.16f, 0.16f);
-        bloom.GetComponent<Renderer>().sharedMaterial = Lit(PastelBlooms[(i / 3) % PastelBlooms.Length]);
-        StripCollider(bloom);
-      }
-    }
-    // Flowering corner accents just outside the ring.
-    for (int k = 0; k < 2; k++) {
-      float ang = gateAng + 140f + k * 80f;
-      Vector3 dir = new Vector3(Mathf.Sin(ang * Mathf.Deg2Rad), 0f, Mathf.Cos(ang * Mathf.Deg2Rad));
-      AddTinyBloom(parent, c + dir * 4.1f, PastelBlooms[(k + def.DisplayName.Length) % PastelBlooms.Length]);
-    }
-    if (rng != null) { } // seed consumed by callers; hook kept for parity
-  }
-
-  static void BuildPlaygroundDecor(Transform parent, SubjectDefinition def, System.Random rng) {
-    Vector3 c = def.PlaygroundCenter;
-    // Tufts + blooms + pebbles scattered off the arrival axis.
-    // User round (thoáng): 6 -> 4 picks per playground.
-    for (int i = 0; i < 4; i++) {
-      float ang = (float)(rng.NextDouble() * 360.0);
-      float rad = 1.2f + (float)rng.NextDouble() * 1.4f;
-      Vector3 p = c + new Vector3(Mathf.Sin(ang * Mathf.Deg2Rad) * rad, 0f, Mathf.Cos(ang * Mathf.Deg2Rad) * rad);
-      // Keep the arrival corridor (gate -> center) furniture-free.
-      if (DistToSegment(p, def.GatePos, c) < 0.9f) continue;
-      if (Vector3.Distance(new Vector3(p.x, 0f, p.z), new Vector3(def.ReturnPoint.x, 0f, def.ReturnPoint.z)) < 1.0f) continue;
-      int pick = rng.Next(3);
-      if (pick == 0) AddGrassTuft(parent, p, 0.7f + (float)rng.NextDouble() * 0.3f, rng);
-      else if (pick == 1) AddTinyBloom(parent, p, PastelBlooms[rng.Next(PastelBlooms.Length)]);
-      else AddPebble(parent, p, 0.5f + (float)rng.NextDouble() * 0.4f, rng);
-    }
-    // Two ground patches for value breakup.
-    AddGroundPatch(parent, c + new Vector3(-1.8f, 0f, 1.2f), new Vector3(1.2f, 1f, 1.0f), def.GroundTint, rng);
-    AddGroundPatch(parent, c + new Vector3(1.8f, 0f, -1.0f), new Vector3(1.1f, 1f, 0.9f), def.GroundTint, rng);
-  }
-
-  static void BuildRoadEdges(Transform parent, SubjectDefinition def, System.Random rng) {
-    // Pebble/bloom rhythm along both road shoulders (outside feet, inside eyes).
-    // User round (thoáng): fewer + airier (lateral 1.25 -> 1.45).
-    Vector3 a = def.GatePos;
-    Vector3 b = def.PlaygroundCenter;
-    Vector3 dir = b - a;
-    dir.y = 0f;
-    float len = dir.magnitude;
-    dir.Normalize();
-    Vector3 side = new Vector3(-dir.z, 0f, dir.x);
-    // Additive subjects have no district road: dress only the hub-side half.
-    bool additive = !string.IsNullOrEmpty(def.SceneName);
-    for (int i = 0; !additive && i < 3; i++) {
-      float t = 0.2f + i * 0.3f;
-      Vector3 mid = a + dir * (len * t);
-      for (int s = -1; s <= 1; s += 2) {
-        Vector3 p = mid + side * (s * 1.45f);
-        if (rng.Next(2) == 0) AddTinyBloom(parent, p, PastelBlooms[rng.Next(PastelBlooms.Length)]);
-        else AddGrassTuft(parent, p, 0.55f + (float)rng.NextDouble() * 0.2f, rng);
-      }
-    }
-    // Also dress the main-world half of each road (gate -> main edge).
-    Vector3 mainEdge = MainEdgePoint(def);
-    Vector3 dir2 = a - mainEdge;
-    dir2.y = 0f;
-    float len2 = dir2.magnitude;
-    if (len2 > 0.5f) {
-      dir2.Normalize();
-      Vector3 side2 = new Vector3(-dir2.z, 0f, dir2.x);
-      for (int i = 0; i < 2; i++) {
-        float t = 0.3f + i * 0.4f;
-        Vector3 mid = mainEdge + dir2 * (len2 * t);
-        for (int s = -1; s <= 1; s += 2) {
-          Vector3 p = mid + side2 * (s * 1.45f);
-          if (rng.Next(2) == 0) AddTinyBloom(parent, p, PastelBlooms[rng.Next(PastelBlooms.Length)]);
-          else AddGrassTuft(parent, p, 0.55f + (float)rng.NextDouble() * 0.2f, rng);
-        }
-      }
-    }
-  }
-
-  static Vector3 MainEdgePoint(SubjectDefinition def) {
-    if (def.Id == SubjectIds.Math) return new Vector3(5.6f, 0f, def.GatePos.z);
-    if (def.Id == SubjectIds.Thinking) return new Vector3(-5.6f, 0f, def.GatePos.z);
-    if (def.Id == SubjectIds.English) return new Vector3(def.GatePos.x, 0f, -3.6f);
-    return new Vector3(def.GatePos.x, 0f, 3.6f);
-  }
+  // PHASE 5 LEGACY PURGE: district rings/floors and road shoulders are deleted;
+  // only the outer-hedge dressing survives.
 
   static void BuildOuterHedgeDressing(Transform parent, System.Random rng) {
     // Backdrop blobs behind the outer hedge (depth, same language as main).
@@ -934,32 +527,6 @@ public static class SubjectWorldBuilder {
 
   // ---- playground U-carves (feet boundary; opening faces the entry road) -----------
   // Called from BuildShell so carves flush with the rest via BuildCarves.
-
-  public static void AppendPlaygroundCarves(SubjectDefinition def, List<CarveSpec> carves) {
-    Vector3 c = def.PlaygroundCenter;
-    Vector3 toGate = def.GatePos - c;
-    toGate.y = 0f;
-    toGate.Normalize();
-    // Back + two sides; the gate side stays open.
-    Vector3 back = c - toGate * 3.2f;
-    Vector3 side = new Vector3(-toGate.z, 0f, toGate.x);
-    Vector3 sideA = c + side * 3.2f - toGate * 0.4f;
-    Vector3 sideB = c - side * 3.2f - toGate * 0.4f;
-    // Sides run PARALLEL to the entry road; the back runs across it (the gate
-    // side stays open). Swapped once live (P3 survey: sides walled the road).
-    Vector3 alongSize = Math.Abs(toGate.x) > 0.5f
-      ? new Vector3(6.9f, 2f, 0.5f)   // road along X: sides run along X
-      : new Vector3(0.5f, 2f, 6.9f);  // road along Z: sides run along Z
-    Vector3 backSize = Math.Abs(toGate.x) > 0.5f
-      ? new Vector3(0.5f, 2f, 6.9f)   // road along X: back runs along Z
-      : new Vector3(6.9f, 2f, 0.5f);  // road along Z: back runs along X
-    string name = def.DisplayName;
-    carves.Add(new CarveSpec { Name = name + "BoundBack", Pos = back + new Vector3(0f, 0.5f, 0f), Size = backSize });
-    carves.Add(new CarveSpec { Name = name + "BoundSideA", Pos = sideA + new Vector3(0f, 0.5f, 0f), Size = alongSize });
-    carves.Add(new CarveSpec { Name = name + "BoundSideB", Pos = sideB + new Vector3(0f, 0.5f, 0f), Size = alongSize });
-  }
-
-  // ---- small builders (primitive-only, deterministic) -------------------------------
 
   static GameObject Box(Transform parent, string goName, Vector3 pos, Vector3 scale, Color color, bool keepCollider) {
     GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -1008,59 +575,6 @@ public static class SubjectWorldBuilder {
     } catch (Exception) { }
   }
 
-  static void AddGrassTuft(Transform parent, Vector3 pos, float s, System.Random rng) {
-    float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
-    GameObject tuft = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    tuft.name = "SubjectGrassTuft";
-    tuft.transform.SetParent(parent);
-    tuft.transform.position = pos + new Vector3(0f, 0.18f * s, 0f);
-    tuft.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
-    tuft.transform.localScale = new Vector3(0.7f * s, 0.35f * s, 0.7f * s);
-    tuft.GetComponent<Renderer>().sharedMaterial = Lit((rng != null && rng.NextDouble() < 0.5) ? LeafA : LeafB);
-    StripCollider(tuft);
-  }
-
-  static void AddTinyBloom(Transform parent, Vector3 pos, Color bloom) {
-    GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    stem.name = "SubjectSprig";
-    stem.transform.SetParent(parent);
-    stem.transform.position = pos + new Vector3(0f, 0.10f, 0f);
-    stem.transform.localScale = new Vector3(0.03f, 0.10f, 0.03f);
-    stem.GetComponent<Renderer>().sharedMaterial = Lit(LeafA);
-    StripCollider(stem);
-    GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    head.name = "SubjectTinyBloom";
-    head.transform.SetParent(parent);
-    head.transform.position = pos + new Vector3(0f, 0.19f, 0f);
-    head.transform.localScale = new Vector3(0.09f, 0.09f, 0.09f);
-    head.GetComponent<Renderer>().sharedMaterial = Lit(bloom);
-    StripCollider(head);
-  }
-
-  static void AddPebble(Transform parent, Vector3 pos, float s, System.Random rng) {
-    float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
-    GameObject pebble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    pebble.name = "SubjectPebble";
-    pebble.transform.SetParent(parent);
-    pebble.transform.position = pos + new Vector3(0f, 0.06f, 0f);
-    pebble.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
-    pebble.transform.localScale = new Vector3(0.22f * s, 0.12f * s, 0.26f * s);
-    pebble.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.60f, 0.60f, 0.62f));
-    StripCollider(pebble);
-  }
-
-  static void AddGroundPatch(Transform parent, Vector3 pos, Vector3 size, Color color, System.Random rng) {
-    float yaw = rng != null ? (float)(rng.NextDouble() * 360.0) : 0f;
-    GameObject patch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    patch.name = "SubjectPatch";
-    patch.transform.SetParent(parent);
-    patch.transform.position = pos + new Vector3(0f, 0.012f, 0f);
-    patch.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
-    patch.transform.localScale = new Vector3(size.x, 0.012f, size.z);
-    patch.GetComponent<Renderer>().sharedMaterial = Lit(color);
-    StripCollider(patch);
-  }
-
   static void AddBackdropBlob(Transform parent, Vector3 pos, float s) {
     GameObject blob = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     blob.name = "SubjectBackdrop";
@@ -1069,13 +583,6 @@ public static class SubjectWorldBuilder {
     blob.transform.localScale = new Vector3(2.0f * s, 0.7f * s, 2.0f * s);
     blob.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.26f, 0.50f, 0.34f));
     StripCollider(blob);
-  }
-
-  static float DistToSegment(Vector3 p, Vector3 a, Vector3 b) {
-    Vector2 pa = new Vector2(p.x - a.x, p.z - a.z);
-    Vector2 ba = new Vector2(b.x - a.x, b.z - a.z);
-    float t = Mathf.Clamp01((pa.x * ba.x + pa.y * ba.y) / Mathf.Max(0.001f, ba.sqrMagnitude));
-    return new Vector2(pa.x - ba.x * t, pa.y - ba.y * t).magnitude;
   }
 
   static readonly Dictionary<string, Material> _litCache = new Dictionary<string, Material>();

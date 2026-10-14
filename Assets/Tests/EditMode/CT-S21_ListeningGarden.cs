@@ -101,7 +101,7 @@ public class CT_S21_ListeningGarden {
     Assert.AreEqual(4, ListeningRounds.ChoicesFor(3), "LV3 four choices");
     Assert.AreEqual(4, ListeningRounds.ChoicesFor(4), "LV4 four choices");
     Assert.AreEqual(2, ListeningRounds.PoolFor(1).Length, "LV1 pool");
-    Assert.AreEqual(8, ListeningRounds.PoolFor(4).Length, "LV4 pool");
+    Assert.AreEqual(18, ListeningRounds.PoolFor(4).Length, "LV4 pool");
     var seenAnswers = new HashSet<int>();
     for (int level = 1; level <= 4; level++) {
       for (int round = 0; round < ListeningRounds.RoundsFor(level); round++) {

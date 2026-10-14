@@ -63,6 +63,19 @@ public sealed class LocalServiceAssessmentProvider : ISpeechAssessmentProvider {
       result.RecognitionConfidence = reply.confidence;
       result.LatencyMs = sw.ElapsedMilliseconds;
       result.ProviderId = ProviderId + "/" + (reply.engine ?? "?"); // e.g. local-service/base.en
+
+      if (reply.accuracy_percent > 0 || !string.IsNullOrEmpty(reply.feedback_vi)) {
+        var pron = PronunciationEvidence.None();
+        pron.HasPhonemeData = true;
+        pron.Source = "local-service";
+        pron.AccuracyScore = reply.accuracy_percent / 100f;
+        pron.WordAccuracy = pron.AccuracyScore;
+        pron.WordErrorType = reply.error_type ?? string.Empty;
+        pron.FeedbackVi = reply.feedback_vi ?? string.Empty;
+        pron.Tip = reply.tip ?? string.Empty;
+        pron.ErrorPhoneme = reply.error_phoneme ?? string.Empty;
+        result.Pronunciation = pron;
+      }
       return result;
     } catch (OperationCanceledException) {
       throw;

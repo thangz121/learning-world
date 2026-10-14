@@ -64,13 +64,6 @@ public class CT_P55_RabbitGame {
     return Mathf.Sqrt(dx * dx + dz * dz);
   }
 
-  static CountingGardenBuilder BuildGarden(out GameObject garden) {
-    garden = new GameObject("P55GardenWorld");
-    CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
-    builder.BuildContent(garden.transform);
-    return builder;
-  }
-
   static RabbitPlayBuilder BuildArena(out GameObject arena, int target = 3) {
     arena = new GameObject("P55RabbitWorld");
     RabbitPlayBuilder builder = arena.AddComponent<RabbitPlayBuilder>();
@@ -146,36 +139,6 @@ public class CT_P55_RabbitGame {
     Assert.AreEqual(RabbitCarrot.CarrotState.Consumed, c.State, "carrot fed");
   }
 
-  // A. Garden: the carrot patch (zone 0) is the rabbit door — staged with its
-  // own play scene, panel at once (no garden try-run); the stair hill (zone 1)
-  // untouched.
-  [Test] public void P55A_GardenRabbitDoor() {
-    GameObject garden;
-    CountingGardenBuilder builder = BuildGarden(out garden);
-    try {
-      Assert.AreEqual(0, CountingGardenBuilder.RabbitZoneIndex, "the rabbit door is the carrot patch");
-      List<GardenZoneSpot> spots = new List<GardenZoneSpot>(
-        garden.GetComponentsInChildren<GardenZoneSpot>());
-      Assert.AreEqual(CountingGardenBuilder.ZoneCount, spots.Count, "one spot per plot");
-      GardenZoneSpot rabbit = null, stair = null;
-      foreach (GardenZoneSpot s in spots) {
-        if (s.zoneIndex == CountingGardenBuilder.RabbitZoneIndex) rabbit = s;
-        if (s.zoneIndex == CountingGardenBuilder.StairZoneIndex) stair = s;
-      }
-      Assert.IsNotNull(rabbit, "zone-0 spot exists");
-      Assert.IsTrue(rabbit.playEnabled, "the carrot patch opens play");
-      Assert.AreEqual(RabbitPlayBuilder.SceneName, CountingGardenArea.PlaySceneFor(rabbit),
-        "the carrot patch opens RabbitPlayScene");
-      Assert.IsTrue(rabbit.demoGate, "the rabbit panel waits for the garden miniature");
-      Assert.IsNotNull(stair, "zone-1 spot exists");
-      Assert.IsTrue(stair.playEnabled, "the stair hill is untouched");
-      Assert.AreEqual(StairHillBuilder.SceneName, CountingGardenArea.PlaySceneFor(stair),
-        "the stair scene unchanged");
-    } finally { Object.DestroyImmediate(garden); }
-  }
-
-  // B. Arena structure: board + patch + rabbit + bowl + pips + result +
-  // cameras, all child-scale (brief §11: never a meaningless long walk).
   [Test] public void P55B_ArenaStructure() {
     GameObject arena;
     RabbitPlayBuilder builder = BuildArena(out arena);
@@ -496,11 +459,11 @@ public class CT_P55_RabbitGame {
     Assert.IsTrue(t.EnterAsync(ops, math, "MathScene").GetAwaiter().GetResult(), "subject loads");
     Assert.IsFalse(ops.Loaded.Contains(RabbitPlayBuilder.SceneName),
       "the rabbit scene must NOT be loaded at subject entry (lazy)");
-    Assert.IsTrue(t.EnterMicroAsync(ops, CountingGardenBuilder.SceneName).GetAwaiter().GetResult(),
-      "the garden loads first");
+    Assert.IsTrue(t.EnterMicroAsync(ops, GeometryPlayBuilder.SceneName).GetAwaiter().GetResult(),
+      "the geometry arena loads first");
     Assert.IsFalse(t.EnterMicroAsync(ops, RabbitPlayBuilder.SceneName).GetAwaiter().GetResult(),
-      "the rabbit scene cannot stack onto the garden (one micro slot)");
-    Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "garden unloads");
+      "the rabbit scene cannot stack onto it (one micro slot)");
+    Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "the geometry arena unloads");
     Assert.IsTrue(t.EnterMicroAsync(ops, RabbitPlayBuilder.SceneName).GetAwaiter().GetResult(),
       "the rabbit arena loads into the freed slot");
     Assert.IsTrue(ops.Loaded.Contains(RabbitPlayBuilder.SceneName), "it is now the live micro scene");
@@ -522,19 +485,19 @@ public class CT_P55_RabbitGame {
     int[] expect = { 4, 5, 6, 7, 8, 9, 1, 2, 3 };
     int t = 3;
     foreach (int n in expect) {
-      t = CountingGardenArea.NextRabbitTarget(t);
+      t = SelectionYardArea.NextRabbitTarget(t);
       Assert.AreEqual(n, t, "ladder rung");
     }
-    Assert.AreEqual(3, CountingGardenArea.NextRabbitTarget(99), "off-ladder rejoins at 3");
-    Assert.AreEqual(5, CountingGardenArea.ParseRabbitTargetArg(
+    Assert.AreEqual(3, SelectionYardArea.NextRabbitTarget(99), "off-ladder rejoins at 3");
+    Assert.AreEqual(5, SelectionYardArea.ParseRabbitTargetArg(
       new[] { "exe", "-rabbit-target", "5" }, 3), "flag pins a target");
-    Assert.AreEqual(3, CountingGardenArea.ParseRabbitTargetArg(
+    Assert.AreEqual(3, SelectionYardArea.ParseRabbitTargetArg(
       new[] { "exe", "-rabbit-target", "99" }, 3), "out-of-range flag stays inert");
-    Assert.AreEqual(3, CountingGardenArea.ParseRabbitTargetArg(
+    Assert.AreEqual(3, SelectionYardArea.ParseRabbitTargetArg(
       new[] { "exe" }, 3), "no flag keeps the ladder");
     GameObject go = new GameObject("P55AreaLadder");
     try {
-      CountingGardenArea area = go.AddComponent<CountingGardenArea>();
+      SelectionYardArea area = go.AddComponent<SelectionYardArea>();
       area.SetRabbitTargetForTests(3);
       Assert.AreEqual(3, area.RabbitTarget, "ladder starts at the reference 3");
       // Mid-lesson re-entry replays the same target (not Completed: no advance).
@@ -726,7 +689,7 @@ public class CT_P55_RabbitGame {
       // Past the hold + walk timeout + digit swap.
       for (int i = 0; i < 160; i++) game.Tick(0.1f);
       Assert.AreEqual(RabbitFeed.Phase.Feeding, game.Current, "the next round opens for play");
-      Assert.AreEqual(CountingGardenArea.NextRabbitTarget(3), game.Target, "the target advanced");
+      Assert.AreEqual(SelectionYardArea.NextRabbitTarget(3), game.Target, "the target advanced");
       Assert.AreEqual(0, game.Count, "the bowl was cleared after the submit");
       Assert.IsFalse(game.ResultShown, "the result board hid again");
       for (int i = 0; i < game.CarrotCount; i++)

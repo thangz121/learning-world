@@ -73,7 +73,6 @@ public static class LearningMap {
   public const string MathGeometry = "math_geometry";
   public const string MathComparison = "math_comparison";
   public const string MathClassification = "math_classification";
-  public const string MathOrder = "math_order";
   public const string ThinkingPattern = "thinking_pattern";
   public const string ThinkingLogic = "thinking_logic";
   public const string ThinkingProblemSolving = "thinking_problem_solving";
@@ -97,18 +96,20 @@ public static class LearningMap {
   public const string ShapeBuilderGame = "shape_builder";
   public const string ComparisonMarketGame = "comparison_market";
   public const string ClassificationCityGame = "classification_city";
-  public const string OrderingStationGame = "ordering_station";
   // English -> Listening foundation (WP-1.9.32, IMPLEMENTED, not accepted).
   public const string ListeningGardenGame = "listen_garden";
   // English -> Speaking foundation (WP-1.9.33, IMPLEMENTED, not accepted).
   public const string SpeakingStageGame = "speaking_stage";
+  // English -> Vocabulary (Wonder Kitchen).
+  public const string WonderKitchenGame = "wonder_kitchen";
+  // English -> Sentences (Sentence Express for 4-year-olds).
+  public const string SentenceExpressGame = "sentence_express";
 
   public static readonly SkillEntry[] MathSkills = {
     new SkillEntry(MathCounting, MathId, "Đếm"),
     new SkillEntry(MathGeometry, MathId, "Hình học"),
     new SkillEntry(MathComparison, MathId, "So sánh"),
     new SkillEntry(MathClassification, MathId, "Phân loại"),
-    new SkillEntry(MathOrder, MathId, "Thứ tự"),
   };
   public static readonly SkillEntry[] ThinkingSkills = {
     new SkillEntry(ThinkingPattern, ThinkingId, "Quy luật"),
@@ -150,9 +151,10 @@ public static class LearningMap {
   public const string ShapeBuilderScene = "GeometryPlayScene";
   public const string ComparisonMarketScene = "ComparisonMarketPlayScene";
   public const string ClassificationCityScene = "ClassificationCityPlayScene";
-  public const string OrderingStationScene = "OrderingStationPlayScene";
   public const string ListeningGardenScene = "ListeningGardenPlayScene";
   public const string SpeakingStageScene = "SpeakingStagePlayScene";
+  public const string WonderKitchenScene = "WonderKitchenPlayScene";
+  public const string SentenceExpressScene = "SentenceExpressPlayScene";
 
   // Counting games stay HUMAN_ACCEPTED. Geometry is IMPLEMENTED only.
   public static readonly GameEntry[] Games = {
@@ -172,9 +174,16 @@ public static class LearningMap {
     // English -> Speaking: hear the word, say it; backend grades 4 levels (WP-1.9.33).
     new GameEntry(SpeakingStageGame, EnglishSpeaking, "Sân Khấu Nhí",
       SpeakingStageScene, GameStatus.Implemented),
-    // Ga Thứ Tự (ordering_station) TẠM ĐÓNG 2026-10-02: gameplay chưa rõ ràng.
-    // Code + scene giữ nguyên để mở lại; chỉ rút khỏi catalog nên sân Thứ tự
-    // tự thành sân trống (placeholder CHƯA CÓ TRÒ CHƠI), cổng Thứ tự tắt sáng.
+    // English -> Vocabulary: Căn Bếp Thần Kỳ (Wonder Kitchen).
+    new GameEntry(WonderKitchenGame, EnglishVocabulary, "Căn Bếp Thần Kỳ",
+      WonderKitchenScene, GameStatus.Implemented),
+    // English -> Sentences: Đoàn Tàu Ghép Câu (Sentence Express).
+    new GameEntry(SentenceExpressGame, EnglishSentences, "Đoàn Tàu Ghép Câu",
+      SentenceExpressScene, GameStatus.Implemented),
+    // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order: "xóa hoàn
+    // toàn ... cổng thứ tự"): the skill math_order is gone from this map, the
+    // door is gone from every yard, and the code folder/scene/tests are removed.
+    // Math has 4 skills now.
   };
 
   // ---- lookups ------------------------------------------------------------------

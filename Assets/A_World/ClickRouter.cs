@@ -145,6 +145,7 @@ public class ClickRouter : MonoBehaviour {
     Vector3 dest = hit.point; // (b) ground / player / scenery
     Vector3 mouth;
     if (TrySnapToGateMouth(hit.point, out mouth)) dest = mouth; // structure clicks enter
+    else if (SelectionGate.TrySnapSelectionGate(hit.point, out mouth)) dest = mouth; // selection yard gate clicks enter
     else if (TrySnapGateOnRay(ray, hit.point, out mouth)) dest = mouth; // through-opening clicks enter
     _player.MoveTo(dest);
     ClearPending();
@@ -366,6 +367,7 @@ public class ClickRouter : MonoBehaviour {
     Vector3 dest = point;
     Vector3 mouth2;
     if (TrySnapToGateMouth(point, out mouth2)) dest = mouth2;
+    else if (SelectionGate.TrySnapSelectionGate(point, out mouth2)) dest = mouth2;
     _player.MoveTo(dest);
     ClearPending();
   }

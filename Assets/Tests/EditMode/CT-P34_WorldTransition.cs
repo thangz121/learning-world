@@ -105,25 +105,18 @@ public class CT_P34_WorldTransition {
   }
 
   [Test] public void P34G_MathSceneInBuildSettings() {
-    // The subject scene must SHIP in the player (Build Settings), not just
-    // exist as a file. Real file read — no fake.
+    // PHASE 5 LEGACY PURGE: the MathScene is deleted — flip the old ship pin
+    // into an ABSENCE pin (the legacy scene must never come back).
     string text = ReadRepoFile("..", "ProjectSettings", "EditorBuildSettings.asset");
-    StringAssert.Contains("MathScene.unity", text, "MathScene must ship in the player build");
+    Assert.IsFalse(text.Contains("MathScene.unity"), "MathScene is deleted (PHASE 5)");
+    Assert.IsTrue(text.Contains("SelectionYardScene.unity"), "the yard scene ships instead");
   }
 
   [Test] public void P34H_MathShellOwnsOnlyContent() {
-    // S1b ownership: the shell carries world roots/markers and ZERO Core
-    // scripts (no second Player/Camera/GameInstaller/services). Real YAML read.
-    string scene = ReadRepoFile("A_World", "MathWorld", "MathScene.unity");
-    foreach (string root in new string[] {
-      "MathWorld", "EnvironmentRoot", "LobbyRoot", "GameplayAreasRoot",
-      "NpcRoot", "LearningEntryRoot", "ReturnPoint", "EntryPoint" }) {
-      StringAssert.Contains("m_Name: " + root, scene, "shell must carry " + root);
-    }
-    foreach (string banned in new string[] {
-      "MonoBehaviour", "GameInstaller", "MarketBuilder", "MarketBootstrap",
-      "AudioDirector", "QuestManager", "LocalSave" }) {
-      Assert.IsFalse(scene.Contains(banned), "shell must not own Core: " + banned);
-    }
+    // PHASE 5 LEGACY PURGE: the MathScene shell is deleted with the scene;
+    // pin the absence (the old ownership rules died with the pilot world).
+    string path = System.IO.Path.Combine(UnityEngine.Application.dataPath,
+      "A_World", "MathWorld", "MathScene.unity");
+    Assert.IsFalse(System.IO.File.Exists(path), "MathScene.unity is deleted (PHASE 5)");
   }
 }

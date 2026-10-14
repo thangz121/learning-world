@@ -59,4 +59,43 @@ public class SelectionGate : MonoBehaviour {
       _wasInside = false;
     }
   }
+
+  public static readonly System.Collections.Generic.List<SelectionGate> ActiveGates =
+    new System.Collections.Generic.List<SelectionGate>();
+
+  void OnEnable() {
+    if (!ActiveGates.Contains(this)) ActiveGates.Add(this);
+  }
+
+  void OnDisable() {
+    ActiveGates.Remove(this);
+  }
+
+  void OnDestroy() {
+    ActiveGates.Remove(this);
+  }
+
+  // Snaps hit/ray clicks near SelectionGate directly to the gate portal mouth
+  public static bool TrySnapSelectionGate(Vector3 hitPoint, out Vector3 mouth) {
+    mouth = hitPoint;
+    float best2 = 2.4f * 2.4f;
+    bool found = false;
+    Vector3 bestPos = Vector3.zero;
+    for (int i = 0; i < ActiveGates.Count; i++) {
+      SelectionGate g = ActiveGates[i];
+      if (g == null || !g.isActiveAndEnabled) continue;
+      Vector3 p = g.transform.position;
+      float dx = hitPoint.x - p.x;
+      float dz = hitPoint.z - p.z;
+      float d2 = dx * dx + dz * dz;
+      if (d2 < best2) {
+        best2 = d2;
+        bestPos = p;
+        found = true;
+      }
+    }
+    if (!found) return false;
+    mouth = new Vector3(bestPos.x, 0f, bestPos.z);
+    return true;
+  }
 }

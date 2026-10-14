@@ -62,7 +62,7 @@ public class TempS13Journey : MonoBehaviour {
   const float WatchdogSeconds = 720f;
 
   static readonly string[] MathSkillIds = {
-    "math_counting", "math_geometry", "math_comparison", "math_classification", "math_order"
+    "math_counting", "math_geometry", "math_comparison", "math_classification"
   };
   static readonly string[] ExplorationSkillIds = {
     "exploration_nature", "exploration_animals", "exploration_world", "exploration_daily_life"
@@ -408,7 +408,7 @@ public class TempS13Journey : MonoBehaviour {
       string got = i < b.GateTargetIds.Count ? b.GateTargetIds[i] : "missing";
       ok &= Expect(subject + " B door " + i + " = " + want[i], got == want[i], got);
     }
-    ok &= Expect(subject + " B: title board staged", b.TitleBoard != null, "");
+    ok &= Expect(subject + " B: title board removed", FindDeep(b.transform, "SYTitleLabel") == null, "");
     ok &= Expect(subject + " B: no placeholder board", b.PlaceholderBoard == null, "");
     ok &= Expect(subject + " B: back gate bound", b.BackGate != null, "");
     ok &= Expect(subject + " B: single builder (idempotent)", CountBuilders() == 1, "count=" + CountBuilders());
@@ -418,7 +418,11 @@ public class TempS13Journey : MonoBehaviour {
         b.GatePortals[i].Kind.ToString());
     if (subject == "math") {
       int hints = CountHints(b.transform);
-      ok &= Expect("math B: only the live skill glows", hints == 1, "hints=" + hints);
+      int liveSkills = 0;
+      for (int i = 0; i < want.Length; i++)
+        if (LearningMap.GamesOf(want[i]).Length > 0) liveSkills++;
+      ok &= Expect("math B: one glow per live skill", hints == liveSkills,
+        "hints=" + hints + " live=" + liveSkills);
     }
     return ok;
   }
@@ -437,7 +441,7 @@ public class TempS13Journey : MonoBehaviour {
       ok &= Expect("counting C door kind Play " + i, b.GatePortals[i].Kind == SelectionGate.GateKind.Play,
         b.GatePortals[i].Kind.ToString());
     ok &= Expect("counting C: no placeholder", b.PlaceholderBoard == null, "");
-    ok &= Expect("counting C: title board", b.TitleBoard != null, "");
+    ok &= Expect("counting C: no title board", FindDeep(b.transform, "SYTitleLabel") == null, "");
     ok &= Expect("counting C: back gate bound", b.BackGate != null, "");
     return ok;
   }
@@ -450,7 +454,7 @@ public class TempS13Journey : MonoBehaviour {
     ok &= Expect("empty C: ZERO game doors (no fake game)", b.GatePortals.Count == 0,
       "count=" + b.GatePortals.Count);
     ok &= Expect("empty C: placeholder board staged", b.PlaceholderBoard != null, "");
-    ok &= Expect("empty C: title board", b.TitleBoard != null, "");
+    ok &= Expect("empty C: no title board", FindDeep(b.transform, "SYTitleLabel") == null, "");
     ok &= Expect("empty C: back gate bound", b.BackGate != null, "");
     Transform placeholder = FindDeep(b.transform, "SYPlaceholderLabel");
     ok &= Expect("empty C: placeholder label staged", placeholder != null, "");

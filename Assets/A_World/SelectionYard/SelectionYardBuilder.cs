@@ -50,7 +50,6 @@ public class SelectionYardBuilder : MonoBehaviour {
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
   public SelectionGate BackGate { get; private set; }
-  public GameObject TitleBoard { get; private set; }
   public GameObject PlaceholderBoard { get; private set; }
   public readonly List<Transform> GateRoots = new List<Transform>();
   public readonly List<SelectionGate> GatePortals = new List<SelectionGate>();
@@ -76,7 +75,6 @@ public class SelectionYardBuilder : MonoBehaviour {
   public void BuildContent(Transform root) {
     BuildGround(root);
     BuildEntryAndBack(root);
-    BuildOrientation(root);
     BuildGates(root);
     BuildAnchors(root);
     BuildDressing(root);
@@ -155,27 +153,10 @@ public class SelectionYardBuilder : MonoBehaviour {
     WorldBeauty.BlossomCrown(parent, "SYBackCrown", BackLocal + new Vector3(0f, 2.45f, 0f), 0.48f);
   }
 
-  // ---- orientation sign: the yard's single title ---------------------------------
-  // Skill level: "TOÁN HỌC — Chọn kỹ năng"; game level: "Đếm — Chọn trò chơi".
-  void BuildOrientation(Transform parent) {
-    string title = IsGameLevel
-      ? LearningMap.GameYardTitle(SkillId)
-      : LearningMap.SkillYardTitle(SubjectId);
-    Vector3 pos = new Vector3(0f, 0f, 7.6f);
-    Box(parent, "SYTitlePostL", pos + new Vector3(-1.6f, 0.9f, 0f), new Vector3(0.16f, 1.8f, 0.16f), Wood);
-    Box(parent, "SYTitlePostR", pos + new Vector3(1.6f, 0.9f, 0f), new Vector3(0.16f, 1.8f, 0.16f), Wood);
-    GameObject frame = Box(parent, "SYTitleFrame", pos + new Vector3(0f, 2.0f, 0.08f),
-      new Vector3(4.5f, 1.32f, 0.08f), Wood);
-    Ignore(frame);
-    GameObject panel = Box(parent, "SYTitlePanel", pos + new Vector3(0f, 2.0f, 0f), new Vector3(4.15f, 1.08f, 0.12f), Cream);
-    SetMat(panel, Emissive(Cream, 0.2f));
-    Ignore(panel);
-    GameObject stripe = Box(parent, "SYTitleStripe", pos + new Vector3(0f, 2.48f, -0.02f),
-      new Vector3(4.0f, 0.1f, 0.1f), Gold);
-    Ignore(stripe);
-    TitleBoard = panel;
-    StageLabel(parent, "SYTitleLabel", title, pos + new Vector3(0f, 2.02f, -0.2f));
-  }
+  // ---- orientation sign REMOVED 2026-10-13 (owner: "bo cai bang o giua phia sau
+  // hai bang" — the yard's central title board read as clutter behind the gates):
+  // no title board in ANY yard (skill, game, empty). The gates + the way back
+  // name the place; the placeholder board still names an empty game yard.
 
   // ---- the gates -----------------------------------------------------------------
 
@@ -362,13 +343,13 @@ public class SelectionYardBuilder : MonoBehaviour {
 
   // Wordless game previews (primitives only, same visual language as the
   // arenas): rabbit feeding = bunny + carrots on a cream pad; number stairs =
-  // three mini steps + the gold orb. Sits between the child and the door so
-  // the choice is read before any text.
+  // three mini steps + the gold orb. Sits to the side of the door so the central
+  // approach is 100% open and unobstructed.
   void BuildGamePreview(Transform parent, string gameId, float x, float z) {
-    // 2.3m in front of the door: outside the 1.6m trigger radius, so the
-    // child can study the picture WITHOUT entering (walk on = choose).
-    Vector3 p = new Vector3(x, 0f, z - 2.3f);
-    Pad(parent, "SYPreviewPad_" + gameId, p + new Vector3(0f, 0.012f, 0f), 1.6f, Cream);
+    // Placed to the side (-1.55m) and slightly in front (z - 1.2m) of the door
+    // so the walking spine directly toward the gate threshold is completely free.
+    Vector3 p = new Vector3(x - 1.55f, 0f, z - 1.2f);
+    Pad(parent, "SYPreviewPad_" + gameId, p + new Vector3(0f, 0.012f, 0f), 1.4f, Cream);
     if (gameId == "rabbit_feeding") {
       GameObject bunny = new GameObject("SYPreview_rabbit_feeding");
       bunny.transform.SetParent(parent, false);
@@ -501,6 +482,26 @@ public class SelectionYardBuilder : MonoBehaviour {
       Ball(kit.transform, "Star1", new Vector3(0.22f, 0.34f, 0.05f), 0.14f, Gold);
       Ball(kit.transform, "Star2", new Vector3(0.52f, 0.2f, -0.06f), 0.1f, Coral);
       Pad(kit.transform, "Ring", new Vector3(-0.3f, 0.012f, 0f), 0.9f, Cream);
+    } else if (gameId == "wonder_kitchen") {
+      GameObject kit = new GameObject("SYPreview_wonder_kitchen");
+      kit.transform.SetParent(parent, false);
+      kit.transform.localPosition = p;
+      Ignore(kit);
+      // Magical soup cauldron + cute apple: kitchen motif, no words.
+      Ball(kit.transform, "PotBelly", new Vector3(-0.25f, 0.32f, 0f), 0.28f, Gold);
+      Ball(kit.transform, "Soup", new Vector3(-0.25f, 0.44f, 0f), 0.22f, Coral);
+      Ball(kit.transform, "Apple", new Vector3(0.35f, 0.22f, 0f), 0.18f, new Color(0.95f, 0.3f, 0.3f));
+      Pad(kit.transform, "Platter", new Vector3(0.35f, 0.012f, 0f), 0.6f, Cream);
+    } else if (gameId == "sentence_express") {
+      GameObject kit = new GameObject("SYPreview_sentence_express");
+      kit.transform.SetParent(parent, false);
+      kit.transform.localPosition = p;
+      Ignore(kit);
+      // Mini locomotive engine + mini wagon on rail tie: train motif, no words.
+      Box(kit.transform, "Tie", new Vector3(0f, 0.01f, 0f), new Vector3(1.1f, 0.02f, 0.3f), Wood);
+      Box(kit.transform, "Engine", new Vector3(0.25f, 0.26f, 0f), new Vector3(0.42f, 0.32f, 0.25f), Coral);
+      Box(kit.transform, "Wagon", new Vector3(-0.28f, 0.22f, 0f), new Vector3(0.38f, 0.25f, 0.24f), Sky);
+      Ball(kit.transform, "Smoke", new Vector3(0.35f, 0.48f, 0f), 0.11f, Cream);
     }
     // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: preview rút cùng catalog (mở lại thì khôi
     // phục nhánh SYPreview_ordering_station ở đây).
@@ -538,10 +539,20 @@ public class SelectionYardBuilder : MonoBehaviour {
       WorldBeauty.FlowerDrift(d, "SYFlowerDrift" + i, drifts[i], 1.15f + (i % 2) * 0.2f);
     for (int i = 0; i < 8; i++)
       WorldBeauty.PathStone(d, "SYPathStone" + i, new Vector3(0f, 0f, -8.4f + i * 1.15f), 1.55f);
-    WorldBeauty.Lantern(d, "SYLanternL0", new Vector3(-3.5f, 0f, -6.2f));
-    WorldBeauty.Lantern(d, "SYLanternR0", new Vector3(3.5f, 0f, -6.2f));
-    WorldBeauty.Lantern(d, "SYLanternL1", new Vector3(-3.5f, 0f, 0.6f));
-    WorldBeauty.Lantern(d, "SYLanternR1", new Vector3(3.5f, 0f, 0.6f));
+    // USER ORDER 2026-10-13 ("may cai thanh nay dung cho choi ... phai co
+    // trang tri"): every lantern stands on its own petal carpet + flower drift
+    // so it reads as a planted garden lamp, never a bare pole. Same spots.
+    Vector3[] lanterns = {
+      new Vector3(-3.5f, 0f, -6.2f), new Vector3(3.5f, 0f, -6.2f),
+      new Vector3(-3.5f, 0f, 0.6f), new Vector3(3.5f, 0f, 0.6f)
+    };
+    string[] lanternNames = { "SYLanternL0", "SYLanternR0", "SYLanternL1", "SYLanternR1" };
+    for (int i = 0; i < lanterns.Length; i++) {
+      WorldBeauty.Lantern(d, lanternNames[i], lanterns[i]);
+      WorldBeauty.PetalCarpet(d, "SYLanternCarpet" + i, lanterns[i], 1.35f);
+      WorldBeauty.FlowerDrift(d, "SYLanternFlowers" + i,
+        lanterns[i] + new Vector3(0.55f, 0f, 0.42f), 0.72f);
+    }
     WorldBeauty.Butterfly(d, "SYButterfly0", new Vector3(-4.2f, 0f, 2.2f), 1.6f, 0.2f,
       WorldBeauty.BlossomDeep, WorldBeauty.BlossomCream);
     WorldBeauty.Butterfly(d, "SYButterfly1", new Vector3(4.4f, 0f, 6.4f), 1.6f, 0.7f,
@@ -595,6 +606,7 @@ public class SelectionYardBuilder : MonoBehaviour {
     go.transform.localScale = scale;
     go.GetComponent<Renderer>().sharedMaterial = Lit(color);
     Strip(go);
+    Ignore(go);
     return go;
   }
 
@@ -606,6 +618,7 @@ public class SelectionYardBuilder : MonoBehaviour {
     pad.transform.localScale = new Vector3(diameter, 0.01f, diameter);
     pad.GetComponent<Renderer>().sharedMaterial = Lit(color);
     Strip(pad);
+    Ignore(pad);
     return pad;
   }
 

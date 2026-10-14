@@ -1608,6 +1608,7 @@ public class RabbitFeed : MonoBehaviour {
   void TickFeeding(float dt) {
     _phaseT += dt;
     TickFeedProximity();
+    TickSubmitProximity();
     // S3-P2Z22/23: no undershoot hint, no auto-success — the child counts and
     // rings the bell when they think the bowl is right.
     _lastPos = _player != null ? _player.position : Vector3.zero;
@@ -1648,6 +1649,16 @@ public class RabbitFeed : MonoBehaviour {
     // S3-P2Z19: the bowl is the feed target (on the hutch roof), so proximity
     // is measured to the BOWL — standing beside the hutch reaches it.
     if (PlayerNear(BowlWorld(), 1.6f)) TryFeed();
+  }
+
+  // USER ORDER 2026-10-13 ("di vao nop bai khong tu nop"): stepping onto the
+  // submit pad with the RIGHT count submits by itself — same walk-in language
+  // as the bowl. Wrong counts still wait for a deliberate bell ring.
+  void TickSubmitProximity() {
+    if (Current != Phase.Feeding) return;
+    if (Count != Target || Count <= 0) return;
+    if (_player == null || _builder == null || _builder.SubmitAnchor == null) return;
+    if (PlayerNear(BellWorld(), 1.4f)) TrySubmit();
   }
 
   bool IsPlayerMoving() {
@@ -1739,7 +1750,7 @@ public class RabbitFeed : MonoBehaviour {
       SetRound((RoundKind)Mathf.Clamp(ForcedNextKind, 0, 2), ForcedNextA, ForcedNextB);
       ForcedNextKind = -1;
     } else if (ArithmeticEnabled) SetRoundRandom();
-    else SetRound(RoundKind.Plain, CountingGardenArea.NextRabbitTarget(Target), 0);
+      else SetRound(RoundKind.Plain, SelectionYardArea.NextRabbitTarget(Target), 0);
     // S3-P2Z28: the new +/- question must show its first operand on the bowl
     // (the old bug: the next question was staged with an empty bowl).
     if (Kind != RoundKind.Plain) PrefillBowl(OpA);

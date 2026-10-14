@@ -925,7 +925,7 @@ public enum Phase {
     Sparkle(PlayerWorld() + new Vector3(0f, 0.9f, 0f), 10, 93, 0.5f);
     // S3-P2Z33: layered win feedback (ring + sparkle + flash-free camera punch;
     // the last rung gets the big cut).
-    int next = StairHillBuilder.ClampTarget(CountingGardenArea.NextStairTarget(Target));
+      int next = StairHillBuilder.ClampTarget(SelectionYardArea.NextStairTarget(Target));
     bool last;
     if (ArithmeticEnabled) {
       // Live arithmetic is a bounded lesson: a handful of random rounds from the
@@ -1033,7 +1033,7 @@ public enum Phase {
       Log("next question: kind=" + Kind + " a=" + OpA + " b=" + OpB + " target=" + Target);
       return;
     }
-    Target = StairHillBuilder.ClampTarget(CountingGardenArea.NextStairTarget(Target));
+      Target = StairHillBuilder.ClampTarget(SelectionYardArea.NextStairTarget(Target));
     if (_builder != null) _builder.SetTarget(Target);
     _pendingStep = CurrentStep;
     _pendingT = 0f;

@@ -35,6 +35,7 @@ public class CT_S22_SpeakingStage {
 
   sealed class FakeRecognizer : ISpeechRecognizer {
     public readonly Queue<SpeakingAssessment> Script = new Queue<SpeakingAssessment>();
+    public readonly List<string> Targets = new List<string>();
     public int Calls;
     public event Action<SpeechCapability> CapabilityChanged;
     public SpeechCapability Capability {
@@ -42,6 +43,7 @@ public class CT_S22_SpeakingStage {
     }
     public Task<SpeakingAssessment> StartAttemptAsync(WordId target, CancellationToken ct) {
       Calls++;
+      Targets.Add(target.Value);
       SpeakingAssessment a = Script.Count > 0 ? Script.Dequeue() : Make(SpeakingDecision.Unclear, 0.2f);
       return Task.FromResult(a);
     }
@@ -285,13 +287,16 @@ public class CT_S22_SpeakingStage {
       for (int i = 0; i < pack.Length; i++)
         Assert.AreEqual(v.speech.phonemes[i], pack[i], w + " phoneme " + i);
     }
-    // The runtime catalog serves every mirrored word.
+    // The runtime catalog serves every mirrored word + the spoken alias.
     TargetPronunciationCatalog catalog = new TargetPronunciationCatalog();
     SpeakingPack.Apply((word, phonemes) => catalog.Register(word, phonemes));
-    Assert.AreEqual(12, catalog.Count(), "catalog covers all mirrored words");
+    Assert.AreEqual(13, catalog.Count(), "catalog covers 12 words + the grapes alias");
     TargetPronunciation pron;
     Assert.IsTrue(catalog.TryGet(new WordId("watermelon"), out pron), "watermelon resolves");
     Assert.IsTrue(pron.IsUsable(), "watermelon usable");
+    Assert.IsTrue(catalog.TryGet(new WordId("grapes"), out pron),
+      "spoken alias 'grapes' resolves (child hears/says grapes, vocab id is grape)");
+    Assert.IsNotNull(SpeakingPack.PhonemesFor("grapes"), "alias phonemes available");
   }
 
   // ---- D. hybrid merge ----------------------------------------------------------
@@ -400,9 +405,11 @@ public class CT_S22_SpeakingStage {
 
     LocalAssessServiceClient.Reply reply;
     Assert.IsTrue(LocalAssessServiceClient.TryParseReply(
-      "{\"transcript\": \"apple\", \"confidence\": 0.9, \"no_speech\": 0.1, \"latency_ms\": 12, \"engine\": \"base.en\"}",
+      "{\"transcript\": \"apple\", \"confidence\": 0.9, \"no_speech\": 0.1, \"latency_ms\": 12, \"engine\": \"base.en\", \"accuracy_percent\": 100, \"feedback_vi\": \"Xuất sắc!\"}",
       out reply), "valid reply parses");
     Assert.AreEqual("apple", reply.transcript);
+    Assert.AreEqual(100, reply.accuracy_percent);
+    Assert.AreEqual("Xuất sắc!", reply.feedback_vi);
     Assert.IsFalse(LocalAssessServiceClient.TryParseReply("{\"error\": \"boom\"}", out reply),
       "error payload rejected");
     Assert.IsFalse(LocalAssessServiceClient.TryParseReply("", out reply), "empty rejected");
@@ -450,6 +457,8 @@ public class CT_S22_SpeakingStage {
       SpeakingStage game = BuildGame(builder, arena, player, audio, new ActivityLifecycle("speaking_stage", "t"), rec, null);
       PumpTo(game, SpeakingStage.Phase.Listening, 60);
       Assert.AreEqual("apple", game.TargetWord, "LV1 starts with apple");
+      Assert.AreEqual(1, rec.Targets.Count, "one attempt requested");
+      Assert.AreEqual("apple", rec.Targets[0], "attempt target is the spoken word");
       game.Tick(0.1f); // the scripted task completes -> assessment handled
       for (int i = 0; i < 30; i++) game.Tick(0.05f); // let the paced voice submit
       Assert.IsTrue(game.HasLastLevel, "a level was produced");
@@ -521,6 +530,29 @@ public class CT_S22_SpeakingStage {
       Assert.IsFalse(game.Completed, "environment failure never completes the visit");
       Assert.AreNotEqual(ActivityState.Completed, life.State, "lifecycle stays retryable");
       Assert.IsTrue(SaidAny(audio, "Mình quay lại sau nhé!", "Let's come back later!"), "kind stop spoken");
+    } finally {
+      UnityEngine.Object.DestroyImmediate(player);
+      UnityEngine.Object.DestroyImmediate(arena);
+    }
+  }
+
+  [Test] public void S22M_SpokenTargetAlias() {
+    GameObject arena;
+    SpeakingStageBuilder builder = BuildArena(out arena);
+    GameObject player = PlayerAt(SpeakingStageBuilder.PlaySpotLocal);
+    try {
+      FakeAudio audio = new FakeAudio();
+      var rec = new FakeRecognizer();
+      rec.Script.Enqueue(FakeRecognizer.Make(SpeakingDecision.StrongPass, 1f));
+      SpeakingStage game = BuildGame(builder, arena, player, audio,
+        new ActivityLifecycle("speaking_stage", "t"), rec, null);
+      game.SetLevelForTests(2, 3); // LV2 round 3 = "grape"
+      Assert.AreEqual("grape", game.TargetWord, "vocab id is grape");
+      Assert.AreEqual("grapes", game.SpokenTarget, "spoken target is grapes");
+      PumpTo(game, SpeakingStage.Phase.Listening, 60);
+      Assert.AreEqual(1, rec.Targets.Count, "one attempt");
+      Assert.AreEqual("grapes", rec.Targets[0],
+        "the attempt is graded against the SPOKEN word (else grape can never pass)");
     } finally {
       UnityEngine.Object.DestroyImmediate(player);
       UnityEngine.Object.DestroyImmediate(arena);

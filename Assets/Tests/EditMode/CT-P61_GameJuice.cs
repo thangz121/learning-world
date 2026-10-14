@@ -137,7 +137,7 @@ public class CT_P61_GameJuice {
 
   // ---- P3: in-world ActivityGuide --------------------------------------------
 
-  [TearDown] public void TearDownGuide() { ActivityGuide.ResetForTests(); }
+  [TearDown] public void TearDownGuide() { ActivityGuide.ResetForTests(); ActivityGuide.SetHidden(false); }
 
   [Test] public void P61J_GuidePointsThenClears() {
     ActivityGuide.PointAt(new Vector3(3f, 0f, 4f));
@@ -147,6 +147,17 @@ public class CT_P61_GameJuice {
     Assert.AreEqual(4f, g.TargetForTests.z, 0.001f, "guide targets the point (z)");
     ActivityGuide.Clear();
     Assert.IsFalse(g.ActiveForTests, "guide clears");
+  }
+
+  [Test] public void P61J2_GuideHiddenInArenas() {
+    ActivityGuide.SetHidden(true);
+    ActivityGuide.PointAt(new Vector3(3f, 0f, 4f));
+    ActivityGuide g = ActivityGuide.Ensure();
+    Assert.IsFalse(g.ActiveForTests, "hidden guide never shows (arena rule)");
+    ActivityGuide.SetHidden(false);
+    ActivityGuide.PointAt(new Vector3(3f, 0f, 4f));
+    Assert.IsTrue(g.ActiveForTests, "unhidden guide shows again (hubs keep default)");
+    ActivityGuide.Clear();
   }
 
   // ---- P4: objective line ----------------------------------------------------

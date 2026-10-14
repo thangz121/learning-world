@@ -6,8 +6,10 @@
 using System.Collections.Generic;
 
 public static class SpeakingPack {
-  // The spoken word set (same as the listening pack).
-  public static readonly string[] Words = ListeningWords.All;
+  // The spoken word set with calibrated phoneme models.
+  public static readonly string[] Words = {
+    "apple", "ball", "banana", "orange", "carrot", "tomato", "watermelon", "grape"
+  };
 
   static readonly string[] Level1Words = { "apple", "ball", "banana", "orange" };
   static readonly string[] Level2Words = { "carrot", "tomato", "watermelon", "grape" };
@@ -50,18 +52,22 @@ public static class SpeakingPack {
   public static int TotalRounds() { return RoundsPerLevel * LastLevel; }
 
   public static string[] PhonemesFor(string id) {
+    // Spoken-form alias: the child says/hears "grapes" while the vocab id is
+    // "grape" (the listening pack speaks "grapes" too).
+    if (string.Equals(id, "grapes", System.StringComparison.OrdinalIgnoreCase)) id = "grape";
     string[] hit;
     if (id != null && Phonemes.TryGetValue(id, out hit)) return (string[])hit.Clone();
     return null;
   }
 
-  // The runtime engine cohort (12 words with pronunciation data). The caller
-  // (composition root / tests) owns the catalog type; A_World stays free of
-  // C_Content references (asmdef edge kept clean).
+  // The runtime engine cohort (12 words with pronunciation data + the spoken
+  // "grapes" alias = 13 catalog entries). The caller (composition root / tests)
+  // owns the catalog type; A_World stays free of C_Content references.
   public static void Apply(RegisterPhonemes register) {
     if (register == null) return;
     foreach (KeyValuePair<string, string[]> kv in Phonemes)
       register(kv.Key, kv.Value);
+    register("grapes", Phonemes["grape"]);
   }
 
   public delegate void RegisterPhonemes(string word, string[] phonemeIds);

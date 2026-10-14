@@ -14,7 +14,11 @@ public static class ListeningWords {
 
   // Product order; the game pools are subsets of this list.
   public static readonly string[] All = {
-    "apple", "ball", "banana", "orange", "carrot", "tomato", "watermelon", "grape",
+    "chair", "table", "desk", "books",
+    "car", "truck",
+    "tree", "rock", "flower", "mushroom",
+    "apple", "ball", "banana", "orange",
+    "carrot", "tomato", "watermelon", "grape",
   };
 
   public static bool IsKnown(string id) {
@@ -34,6 +38,16 @@ public static class ListeningWords {
   // Vietnamese label used by the praise line (and parent-facing surfaces).
   public static string DisplayVi(string id) {
     switch ((id ?? "").ToLowerInvariant()) {
+      case "chair": return "cái ghế";
+      case "table": return "cái bàn";
+      case "desk": return "bàn học";
+      case "books": return "sách";
+      case "car": return "ô tô";
+      case "truck": return "xe tải";
+      case "tree": return "cây";
+      case "rock": return "hòn đá";
+      case "flower": return "bông hoa";
+      case "mushroom": return "cây nấm";
       case "apple": return "quả táo";
       case "ball": return "quả bóng";
       case "banana": return "quả chuối";
@@ -49,7 +63,15 @@ public static class ListeningWords {
   // PropKit/<name> for the picture pod; "ball" is built from primitives by
   // the builder (no food-kit asset), "grape" uses the 'grapes' bunch.
   public static string PropName(string id) {
-    return string.Equals(id, "grape", StringComparison.OrdinalIgnoreCase) ? "grapes" : id;
+    switch ((id ?? "").ToLowerInvariant()) {
+      case "grape": return "grapes";
+      case "car": return "sedan";
+      case "tree": return "tree_default";
+      case "rock": return "rock_smallA";
+      case "flower": return "flower_yellowA";
+      case "mushroom": return "mushroom_red";
+      default: return id ?? "";
+    }
   }
 
   // Manifest/pregen id for one word and mode ('normal' | 'slow').

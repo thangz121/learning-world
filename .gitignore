@@ -133,3 +133,14 @@ Research/Speech/ExternalData/
 # Phase 1.9.13 external repos (not committed)
 Research/Speech/ExternalData/
 
+
+# Transient root build/test artifacts (never commit)
+/build.log
+/build_*.log
+/BuildLog.txt
+/test.log
+/test_*.log
+/TestLog.txt
+/TestResults.xml
+/test_results.xml
+/test_piper.wav

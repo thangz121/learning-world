@@ -116,12 +116,24 @@ public sealed class UnityMicrophoneCapture : ISpeechAudioCapture {
         if (wsum / window > 0.004f) voicedWindows++;
       }
     }
+    // Run through ChildAudioFrontend Engine:
+    // Bandpass (180Hz-7000Hz), AGC [-18dBFS, -12dBFS], Soft-Knee Limiter,
+    // Child-VAD (250Hz-480Hz F0, 280ms hangover) and Adult Voice Suppression (>120ms adult F0 -> Drop)
+    ChildFrontendMetadata frontendMeta;
+    float[] processedSamples = ChildAudioFrontend.Process(data, _sampleRate, out frontendMeta);
+
+    string captureError = string.Empty;
+    if (frontendMeta.PromptingDetected || frontendMeta.VadState == "DROPPED_ADULT") {
+      captureError = SpeechFailureReasons.AdultPromptingDetected;
+    }
+
     mean /= Math.Max(1, data.Length);
     voiced = totalWindows > 0 ? (float)voicedWindows / totalWindows * ((float)take / _sampleRate) : 0f;
     return new CapturedSpeech {
-      Samples = data, SampleRate = _sampleRate, Channels = clip.channels,
+      Samples = processedSamples, SampleRate = _sampleRate, Channels = clip.channels,
       DurationSec = (float)take / _sampleRate, MeanEnergy = mean, PeakEnergy = peak,
-      VoicedSec = voiced, TimedOut = timedOut, Cancelled = cancelled, Error = string.Empty
+      VoicedSec = voiced, TimedOut = timedOut, Cancelled = cancelled, Error = captureError,
+      Frontend = frontendMeta
     };
   }
 

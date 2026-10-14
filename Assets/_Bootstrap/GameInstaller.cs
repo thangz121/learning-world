@@ -47,6 +47,19 @@ public class GameInstaller : MonoBehaviour {
   public TargetPronunciationCatalog PronunciationCatalog { get; private set; }
   public ISpeechRecognizer Speech { get; private set; }
   LocalAssessServiceClient _assessClient;
+  bool _speakingGateBypass; // dev seam (-speak-wav-dir): capture is scripted
+
+  // Read one value from the command line: -flag <value>. Empty when absent.
+  static string CLIFlag(string flag) {
+    try {
+      string[] args = System.Environment.GetCommandLineArgs();
+      for (int i = 0; i + 1 < args.Length; i++) {
+        if (string.Equals(args[i], flag, System.StringComparison.OrdinalIgnoreCase))
+          return args[i + 1];
+      }
+    } catch (System.Exception) { }
+    return "";
+  }
 
   SpeechProviderRouter _speechRouter;
 
@@ -115,12 +128,34 @@ public class GameInstaller : MonoBehaviour {
       var acousticProvider = new LocalAcousticProvider(PronunciationCatalog);
       _assessClient = new LocalAssessServiceClient(LocalAssessServiceLauncher.DefaultPort);
       var serviceProvider = new LocalServiceAssessmentProvider(_assessClient);
-      var hybrid = new HybridSpeechAssessmentProvider(acousticProvider, serviceProvider, speakingPolicy);
-      var localCapture = new UnityMicrophoneCapture(LocalMic);
-      var phoneCapture = new NetworkMicrophoneCapture(
-        new TcpPhoneAudioTransport(PhoneMicProtocol.LoopbackHost, PhoneMicProtocol.DefaultBridgePort));
-      var gateCapture = new GateSpeechCapture(localCapture, phoneCapture, MicGate);
-      Speech = new SpeechRecognizer(SpeechMic, gateCapture, hybrid, speakingPolicy,
+
+      // Connect Azure Speech Provider when key is configured, fallback to local service
+      ISpeechAssessmentProvider activeCloudOrLocalService = serviceProvider;
+      var azureProvider = new AzureSpeechAssessmentProvider();
+      if (azureProvider.IsConfigured()) {
+        activeCloudOrLocalService = azureProvider;
+        Debug.Log("[GameInstaller] Azure Speech Pronunciation Assessment ENABLED (Region: " + AzureSpeechAssessmentProvider.ReadRegionFromEnvironment() + ")", this);
+      }
+
+      var hybrid = new HybridSpeechAssessmentProvider(acousticProvider, activeCloudOrLocalService, speakingPolicy);
+      ISpeechAudioCapture capture;
+      IMicrophoneDevice speakingDevices = SpeechMic;
+      string wavDir = CLIFlag("-speak-wav-dir");
+      if (!string.IsNullOrEmpty(wavDir)) {
+        // DEV/TEST seam (foreground journeys): replay WAV files instead of mic.
+        // The recognizer gates on the DEVICE capability before it asks the
+        // capture, so the seam must also present a Ready scripted device.
+        capture = new ScriptedWavCapture(wavDir);
+        speakingDevices = new ScriptedWavDevice();
+        _speakingGateBypass = true;
+        Debug.Log("[GameInstaller] speaking capture = ScriptedWavCapture dir=" + wavDir, this);
+      } else {
+        var localCapture = new UnityMicrophoneCapture(LocalMic);
+        var phoneCapture = new NetworkMicrophoneCapture(
+          new TcpPhoneAudioTransport(PhoneMicProtocol.LoopbackHost, PhoneMicProtocol.DefaultBridgePort));
+        capture = new GateSpeechCapture(localCapture, phoneCapture, MicGate);
+      }
+      Speech = new SpeechRecognizer(speakingDevices, capture, hybrid, speakingPolicy,
         EventBus, 5f, 1.5f, 12f);
     } catch (System.Exception ex) {
       Debug.LogWarning("[GameInstaller] speaking stack init failed (speaking stays off): " + ex.Message, this);
@@ -159,22 +194,10 @@ public class GameInstaller : MonoBehaviour {
     BuildFromScene(scene);
   }
 
-  // Phase 3.0.x S2: MathScene arrival. Finds the MathWorld root, applies the
-  // pilot spatial offset, code-builds the world (ground/arch/boundary/pads),
-  // bakes its NavMesh and binds the return gate — all synchronously on the
-  // main thread, BEFORE the loader task completes, so travelers never warp
-  // into an unready world. Any failure leaves MathWorldRoot null and the
-  // Bootstrap travel path cleans up (unload + stay Main) instead of stranding.
-  public Transform MathWorldRoot { get; private set; }
-  public Transform MathEntryPoint { get; private set; }
-  // P1-2: Math presentation registry (null until the scene builds).
-  public ActivityAnchors MathAnchors { get; private set; }
+  // PHASE 5 LEGACY PURGE: MathScene arrival (MathWorldRoot/EntryPoint/Anchors)
+  // is deleted with the scene and its builder.
 
   void OnSubjectSceneLoaded(Scene scene, LoadSceneMode mode) {
-    if (scene.name == CountingGardenBuilder.SceneName) {
-      BuildCountingGardenScene(scene);
-      return;
-    }
     if (scene.name == StairHillBuilder.SceneName) {
       BuildStairPlayScene(scene);
       return;
@@ -203,139 +226,32 @@ public class GameInstaller : MonoBehaviour {
       BuildSpeakingStagePlayScene(scene);
       return;
     }
-    // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: không build scene trạm (mở lại thì khôi phục
-    // nhánh OrderingStationBuilder.SceneName + BuildOrderingStationPlayScene).
-    // COUNTING GARDEN CLEANUP (product decision): Build Yard / Delivery /
-    // Match gameplay scenes were removed; their hub gates stay landmarks.
-    if (scene.name == DiscoveryBuilder.SceneName) {
-      BuildDiscoveryScene(scene);
+    if (scene.name == WonderKitchenBuilder.SceneName) {
+      BuildWonderKitchenPlayScene(scene);
       return;
     }
+    if (scene.name == SentenceExpressBuilder.SceneName) {
+      BuildSentenceExpressPlayScene(scene);
+      return;
+    }
+    // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the whole
+    // arena (code folder, scene, dispatch branch and gate) is removed.
+    // PHASE 5 LEGACY PURGE: Discovery Garden, MathScene and CountingGardenScene
+    // are deleted (scenes, builders, areas, drivers, tests).
     // FULL ARCHITECTURE RESET (PHASE 1 skeleton): the generic selection yard
     // (Skill Yard / Game Yard — one scene, data-driven by the area context).
     if (scene.name == SelectionYardBuilder.SceneName) {
       BuildSelectionYardScene(scene);
-      return;
-    }
-    if (scene.name != "MathScene") return;
-    MathWorldRoot = null;
-    MathEntryPoint = null;
-    MathAnchors = null;
-    try {
-      GameObject root = null;
-      if (scene.IsValid()) {
-        foreach (GameObject go in scene.GetRootGameObjects()) {
-          if (go != null && go.name == "MathWorld") { root = go; break; }
-        }
-      }
-      if (root == null) {
-        Debug.LogError("[GameInstaller] MathScene has no MathWorld root.", this);
-        return;
-      }
-      root.transform.position = MathWorldBuilder.WorldOffset;
-      MathWorldBuilder builder = root.GetComponent<MathWorldBuilder>();
-      if (builder == null) builder = root.AddComponent<MathWorldBuilder>();
-      Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
-        ? _activeBuilder.Player.transform : null;
-      builder.Build(WorldNav, playerT);
-      WireMathContent(root, builder);
-      Transform entry = root.transform.Find("EntryPoint");
-      if (entry == null) {
-        Debug.LogError("[GameInstaller] MathScene has no EntryPoint marker.", this);
-        return;
-      }
-      MathWorldRoot = root.transform;
-      MathEntryPoint = entry;
-      // P1-2/P1-3: expose anchors for the arrival beat, then push live quest
-      // state into every adoptable (re-entry visuals without event replay).
-      // S2: the MAIN world registry is looked up BY NAME — the Counting Garden
-      // added a second ActivityAnchors root earlier in the hierarchy, so a
-      // blind GetComponentInChildren could frame the garden instead of the hub.
-      try {
-        Transform mainAnchors = root.transform.Find("PresentationRoot");
-        MathAnchors = mainAnchors != null ? mainAnchors.GetComponent<ActivityAnchors>() : null;
-        if (MathAnchors == null) MathAnchors = root.GetComponentInChildren<ActivityAnchors>();
-      } catch (System.Exception) { MathAnchors = null; }
-      try {
-        IQuestAdoptable[] adoptables = root.GetComponentsInChildren<IQuestAdoptable>();
-        QuestAdoption.AdoptAll(adoptables, Quests, new QuestId("math_counting"));
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Math adopt-all failed: " + e.Message, this);
-      }
-    } catch (System.Exception e) {
-      Debug.LogError("[GameInstaller] MathScene build failed: " + e.Message, this);
-      MathWorldRoot = null;
-      MathEntryPoint = null;
-      MathAnchors = null;
     }
   }
 
-  // S2 PIONEER MICRO-WORLD: lazy scene arrival for the Counting Garden. Builds
-  // the scene content, then pushes the scene-authored entry + anchors into the
-  // area module (living in MathScene) so the travel beat can warp the child in.
-  void BuildCountingGardenScene(Scene scene) {
-    try {
-      GameObject root = null;
-      if (scene.IsValid()) {
-        foreach (GameObject go in scene.GetRootGameObjects()) {
-          if (go != null && go.name == "CountingGardenWorld") { root = go; break; }
-        }
-      }
-      if (root == null) {
-        Debug.LogError("[GameInstaller] CountingGardenScene has no CountingGardenWorld root.", this);
-        return;
-      }
-      root.transform.position = CountingGardenBuilder.WorldOffset;
-      CountingGardenBuilder builder = root.GetComponent<CountingGardenBuilder>();
-      if (builder == null) builder = root.AddComponent<CountingGardenBuilder>();
-      builder.Build();
-      CountingGardenArea area = _gardenArea;
-      if (area == null) {
-        try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
-      }
-      if (area != null) {
-        Vector3 entry = CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal;
-        area.SetGarden(entry, builder.Anchors, builder.ZoneSpots);
-        if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
-      }
-      Transform playerT2 = _activeBuilder != null && _activeBuilder.Player != null
-        ? _activeBuilder.Player.transform : null;
-      // S3-P2Z12b (user report "NPC dạy trẻ chơi ở đâu?"): the stair hill plot
-      // gets its OWN garden miniature — the two-NPC number lesson — so the plot
-      // never looks empty; it drives the same panel-after-one-pass gate.
-      try {
-        StairLessonDemo stairs = root.AddComponent<StairLessonDemo>();
-        stairs.Build(builder, playerT2, Audio);
-        if (area != null) area.BindDemo(CountingGardenBuilder.StairZoneIndex, stairs);
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] stair garden mini demo wiring failed (plot stays scenery): " + e.Message, this);
-      }
-      // S3-P2Z19 (user: "vườn củ cà rốt ở ngoài chưa có demo ở sân chọn game"):
-      // the carrot patch gets its OWN miniature — the teacher asks the number,
-      // the student answers and demonstrates the pick/feed — and it drives the
-      // same panel-after-one-pass gate. The arena no longer replays any demo.
-      try {
-        GameObject rabbitGo = new GameObject("RabbitLessonDemo");
-        rabbitGo.transform.SetParent(root.transform, false);
-        RabbitLessonDemo rabbitDemo = rabbitGo.AddComponent<RabbitLessonDemo>();
-        rabbitDemo.Build(builder, playerT2, Audio);
-        if (area != null) area.BindDemo(CountingGardenBuilder.RabbitZoneIndex, rabbitDemo);
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] rabbit garden mini demo wiring failed: " + e.Message, this);
-      }
-      try {
-        Debug.Log("[GameInstaller] Counting Garden scene built (lazy) entry=" + (CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal).ToString("F1")
-          + " zones=" + builder.ZoneSpots.Count);
-      } catch (System.Exception) { }
-    } catch (System.Exception e) {
-      Debug.LogError("[GameInstaller] CountingGardenScene build failed: " + e.Message, this);
-    }
-  }
+  // PHASE 5 LEGACY PURGE: BuildCountingGardenScene deleted with the
+  // CountingGardenScene (two-plot garden, mini lessons, zone picker).
 
-  // S3-P2Z12 GAMEPLAY #2 ("Bậc thang con số"): the Counting Garden's sixth plot
-  // opens its OWN lazy scene (StairPlayScene) through the same micro slot as the
-  // reference arena — built here on demand, never at boot, never stacked.
+  // S3-P2Z12 GAMEPLAY #2 ("Bậc thang con số"): the lazy arena scene built here
+  // on demand, never at boot, never stacked.
   void BuildStairPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true); // owner 2026-10-13: no beacon in the arenas
     try {
       GameObject root = null;
       if (scene.IsValid()) {
@@ -350,12 +266,10 @@ public class GameInstaller : MonoBehaviour {
       root.transform.position = StairHillBuilder.WorldOffset;
       StairHillBuilder builder = root.GetComponent<StairHillBuilder>();
       if (builder == null) builder = root.AddComponent<StairHillBuilder>();
-      // The round's mission comes from the ACTIVE area's ladder (PHASE 4: the
-      // Selection Yard owns it; the obsolete garden stays as fallback until
-      // PHASE 5 removes it); the boards stage that digit so the world always
-      // shows the mission.
-      int stairTarget = _yardArea != null ? _yardArea.StairTarget
-        : (_gardenArea != null ? _gardenArea.StairTarget : StairHillBuilder.Target);
+      // The round's mission comes from the Selection Yard's ladder (PHASE 5:
+      // the obsolete garden fallback is deleted); the boards stage that digit
+      // so the world always shows the mission.
+      int stairTarget = _yardArea != null ? _yardArea.StairTarget : StairHillBuilder.Target;
       // PHASE 4b (user order: pre-readers cannot read): the stair arena runs
       // voice-first — no task text, no praise banner (dots + voice carry it).
       ActivityFeedback.TextHidden = true;
@@ -363,27 +277,15 @@ public class GameInstaller : MonoBehaviour {
       builder.Build();
       if (_yardArea != null) {
         // PHASE 4: the arena binds to the Selection Yard (entry/exit + the
-        // re-homed lifecycle); the yard wins over the legacy garden.
+        // re-homed lifecycle).
         Vector3 entry = StairHillBuilder.WorldOffset + StairHillBuilder.EntryLocal;
         _yardArea.SetPlay(entry, builder.Anchors, StairHillBuilder.WorldOffset,
           StairHillBuilder.BoundX, StairHillBuilder.BoundZ, StairHillBuilder.FollowOffset,
           DialogueLang.T(StairHillBuilder.ObjectiveEn, StairHillBuilder.ObjectiveVi));
         if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
-      } else {
-        CountingGardenArea area = _gardenArea;
-        if (area == null) {
-          try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
-        }
-        if (area != null) {
-          Vector3 entry = StairHillBuilder.WorldOffset + StairHillBuilder.EntryLocal;
-          area.SetPlay(entry, builder.Anchors, StairHillBuilder.WorldOffset,
-            StairHillBuilder.BoundX, StairHillBuilder.BoundZ, StairHillBuilder.FollowOffset,
-            DialogueLang.T(StairHillBuilder.ObjectiveEn, StairHillBuilder.ObjectiveVi));
-          if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
-        }
       }
       // The activity (teacher + student + the child's climb). Lifecycle is the
-      // active area's; the game plays its current target (one staircase, many
+      // yard's; the game plays its current target (one staircase, many
       // targets — brief §34).
       try {
         NumberStairs game = root.AddComponent<NumberStairs>();
@@ -392,13 +294,11 @@ public class GameInstaller : MonoBehaviour {
         game.ArithmeticEnabled = true;
         Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
           ? _activeBuilder.Player.transform : null;
-        ActivityLifecycle stairLife = _yardArea != null ? _yardArea.StairLifecycle
-          : (_gardenArea != null ? _gardenArea.StairLifecycle : null);
+        ActivityLifecycle stairLife = _yardArea != null ? _yardArea.StairLifecycle : null;
         game.Build(builder, playerT,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
           stairLife, stairTarget);
         if (_yardArea != null) _yardArea.BindStairGame(game);
-        else if (_gardenArea != null) _gardenArea.BindStairGame(game);
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Number stairs wiring failed (hill stays empty): " + e.Message, this);
       }
@@ -415,6 +315,7 @@ public class GameInstaller : MonoBehaviour {
   // opens its OWN lazy scene (RabbitPlayScene) through the same micro slot as
   // the two earlier arenas — built here on demand, never at boot, never stacked.
   void BuildRabbitPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true); // owner 2026-10-13: no beacon in the arenas
     try {
       GameObject root = null;
       if (scene.IsValid()) {
@@ -429,12 +330,10 @@ public class GameInstaller : MonoBehaviour {
       root.transform.position = RabbitPlayBuilder.WorldOffset;
       RabbitPlayBuilder builder = root.GetComponent<RabbitPlayBuilder>();
       if (builder == null) builder = root.AddComponent<RabbitPlayBuilder>();
-      // The round's mission comes from the ACTIVE area's ladder (PHASE 4: the
-      // Selection Yard owns it; the obsolete garden stays as fallback until
-      // PHASE 5 removes it); the boards stage that digit so the world always
-      // shows the mission.
-      int rabbitTarget = _yardArea != null ? _yardArea.RabbitTarget
-        : (_gardenArea != null ? _gardenArea.RabbitTarget : RabbitPlayBuilder.Target);
+      // The round's mission comes from the Selection Yard's ladder (PHASE 5:
+      // the obsolete garden fallback is deleted); the boards stage that digit
+      // so the world always shows the mission.
+      int rabbitTarget = _yardArea != null ? _yardArea.RabbitTarget : RabbitPlayBuilder.Target;
       // PHASE 4b (user order: pre-readers cannot read): the rabbit arena runs
       // voice-first — no task text, no praise banner (dots + voice carry it).
       ActivityFeedback.TextHidden = true;
@@ -448,21 +347,9 @@ public class GameInstaller : MonoBehaviour {
           RabbitPlayBuilder.BoundX, RabbitPlayBuilder.BoundZ, RabbitPlayBuilder.FollowOffset,
           DialogueLang.T(RabbitPlayBuilder.ObjectiveEn, RabbitPlayBuilder.ObjectiveVi));
         if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
-      } else {
-        CountingGardenArea area = _gardenArea;
-        if (area == null) {
-          try { area = FindObjectOfType<CountingGardenArea>(); } catch (System.Exception) { }
-        }
-        if (area != null) {
-          Vector3 entry = RabbitPlayBuilder.WorldOffset + RabbitPlayBuilder.EntryLocal;
-          area.SetPlay(entry, builder.Anchors, RabbitPlayBuilder.WorldOffset,
-            RabbitPlayBuilder.BoundX, RabbitPlayBuilder.BoundZ, RabbitPlayBuilder.FollowOffset,
-            DialogueLang.T(RabbitPlayBuilder.ObjectiveEn, RabbitPlayBuilder.ObjectiveVi));
-          if (builder.ExitPortal != null) builder.ExitPortal.Area = area;
-        }
       }
       // The activity (teacher + student + the child's feeding). Lifecycle is
-      // the active area's; the game plays its current target (one patch, many
+      // the yard's; the game plays its current target (one patch, many
       // targets — the same ladder discipline as gameplay #2).
       try {
         RabbitFeed game = root.AddComponent<RabbitFeed>();
@@ -480,8 +367,7 @@ public class GameInstaller : MonoBehaviour {
           }
         } catch (System.Exception) { }
         if (hand == null) hand = playerT;
-        ActivityLifecycle rabbitLife = _yardArea != null ? _yardArea.RabbitLifecycle
-          : (_gardenArea != null ? _gardenArea.RabbitLifecycle : null);
+        ActivityLifecycle rabbitLife = _yardArea != null ? _yardArea.RabbitLifecycle : null;
         game.Build(builder, playerT,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
           rabbitLife, rabbitTarget, hand);
@@ -489,7 +375,6 @@ public class GameInstaller : MonoBehaviour {
         RabbitBowlDrag drag = root.AddComponent<RabbitBowlDrag>();
         if (drag != null) drag.Bind(game);
         if (_yardArea != null) _yardArea.BindRabbitGame(game);
-        else if (_gardenArea != null) _gardenArea.BindRabbitGame(game);
         // USER ROUND 2026-09-29 (round 2): the picture-answer boards of the
         // rabbit arena's new question type.
         try { game.BindQuizTiles(builder.QuizTiles); } catch (System.Exception) { }
@@ -506,6 +391,7 @@ public class GameInstaller : MonoBehaviour {
   }
 
   void BuildGeometryPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true); // owner 2026-10-13: no beacon in the arenas
     try {
       GameObject root = null;
       if (scene.IsValid()) {
@@ -551,6 +437,7 @@ public class GameInstaller : MonoBehaviour {
   }
 
   void BuildComparisonMarketPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true); // owner 2026-10-13: no beacon in the arenas
     try {
       GameObject root = null;
       if (scene.IsValid()) {
@@ -596,6 +483,7 @@ public class GameInstaller : MonoBehaviour {
   }
 
   void BuildClassificationCityPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true); // owner 2026-10-13: no beacon in the arenas
     try {
       GameObject root = null;
       if (scene.IsValid()) {
@@ -644,6 +532,7 @@ public class GameInstaller : MonoBehaviour {
   // contract as the other reset-era arenas; the item audio ships as pregen
   // masters (voice 'listen_v1') so every prompt plays offline.
   void BuildListeningGardenPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true); // owner 2026-10-13: no beacon in the arenas
     try {
       GameObject root = null;
       if (scene.IsValid()) {
@@ -692,6 +581,7 @@ public class GameInstaller : MonoBehaviour {
   // the ONE game-facing recognizer (Speech); the local assess service is warmed
   // in the background when playing (best-effort, the game works without it).
   void BuildSpeakingStagePlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true); // owner 2026-10-13: no beacon in the arenas
     try {
       GameObject root = null;
       if (scene.IsValid()) {
@@ -723,7 +613,7 @@ public class GameInstaller : MonoBehaviour {
         ActivityLifecycle speakingLife = _yardArea != null ? _yardArea.SpeakingLifecycle : null;
         game.Build(builder, playerT,
           _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, speakingLife,
-          Speech, MicGate);
+          Speech, _speakingGateBypass ? null : MicGate);
         if (_yardArea != null) _yardArea.BindSpeakingStage(game);
       } catch (System.Exception e) {
         Debug.LogWarning("[GameInstaller] Speaking stage wiring failed: " + e.Message, this);
@@ -735,6 +625,98 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] SpeakingStagePlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildWonderKitchenPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true);
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "WonderKitchenWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] WonderKitchenPlayScene has no WonderKitchenWorld root.", this);
+        return;
+      }
+      root.transform.position = WonderKitchenBuilder.WorldOffset;
+      WonderKitchenBuilder builder = root.GetComponent<WonderKitchenBuilder>();
+      if (builder == null) builder = root.AddComponent<WonderKitchenBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = WonderKitchenBuilder.WorldOffset + WonderKitchenBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, WonderKitchenBuilder.WorldOffset,
+          WonderKitchenBuilder.BoundX, WonderKitchenBuilder.BoundZ, WonderKitchenBuilder.FollowOffset,
+          DialogueLang.T(WonderKitchenBuilder.ObjectiveEn, WonderKitchenBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        WonderKitchen game = root.GetComponent<WonderKitchen>();
+        if (game == null) game = root.AddComponent<WonderKitchen>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle kitchenLife = _yardArea != null ? _yardArea.KitchenLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, kitchenLife);
+        if (_yardArea != null) _yardArea.BindKitchenGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Wonder kitchen wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Wonder Kitchen scene built entry="
+          + (WonderKitchenBuilder.WorldOffset + WonderKitchenBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] WonderKitchenPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildSentenceExpressPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true);
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "SentenceExpressWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] SentenceExpressPlayScene has no SentenceExpressWorld root.", this);
+        return;
+      }
+      root.transform.position = SentenceExpressBuilder.WorldOffset;
+      SentenceExpressBuilder builder = root.GetComponent<SentenceExpressBuilder>();
+      if (builder == null) builder = root.AddComponent<SentenceExpressBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = SentenceExpressBuilder.WorldOffset + SentenceExpressBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, SentenceExpressBuilder.WorldOffset,
+          SentenceExpressBuilder.BoundX, SentenceExpressBuilder.BoundZ, SentenceExpressBuilder.FollowOffset,
+          DialogueLang.T(SentenceExpressBuilder.ObjectiveEn, SentenceExpressBuilder.ObjectiveVi));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        SentenceExpress game = root.GetComponent<SentenceExpress>();
+        if (game == null) game = root.AddComponent<SentenceExpress>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle sentenceLife = _yardArea != null ? _yardArea.SentenceLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, sentenceLife);
+        if (_yardArea != null) _yardArea.BindSentenceGame(game);
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] Sentence express wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Sentence Express scene built entry="
+          + (SentenceExpressBuilder.WorldOffset + SentenceExpressBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] SentenceExpressPlayScene build failed: " + e.Message, this);
     }
   }
 
@@ -755,8 +737,8 @@ public class GameInstaller : MonoBehaviour {
     } catch (System.Exception) { }
   }
 
-  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: toàn bộ BuildOrderingStationPlayScene đã rút
-  // (code + scene giữ nguyên để mở lại). Sân Thứ tự giờ là sân trống.
+  // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the arena
+  // builder, scene and every wiring are gone; there is no station scene.
 
   // COUNTING GARDEN CLEANUP (product decision): the match_meadow gameplay
   // (scene build + wiring) was removed. Its hub gate remains a LANDMARK.
@@ -811,206 +793,18 @@ public class GameInstaller : MonoBehaviour {
     }
   }
 
-  // GAMEPLAY #7 ("Vườn Khám Phá"): the Math Hub's discovery_garden gate opens
-  // its OWN lazy scene (DiscoveryScene) through the same micro slot as the
-  // other hub worlds — built on demand, never at boot, never stacked. Travel
-  // beats are owned by DiscoveryArea (MathScene); this method builds the world
-  // + wires the activity, same best-effort discipline as #4-#6.
-  void BuildDiscoveryScene(Scene scene) {
-    try {
-      GameObject root = null;
-      if (scene.IsValid()) {
-        foreach (GameObject go in scene.GetRootGameObjects()) {
-          if (go != null && go.name == "DiscoveryWorld") { root = go; break; }
-        }
-      }
-      if (root == null) {
-        Debug.LogError("[GameInstaller] DiscoveryScene has no DiscoveryWorld root.", this);
-        return;
-      }
-      root.transform.position = DiscoveryBuilder.WorldOffset;
-      DiscoveryBuilder builder = root.GetComponent<DiscoveryBuilder>();
-      if (builder == null) builder = root.AddComponent<DiscoveryBuilder>();
-      builder.Build();
-      DiscoveryArea area = _discoveryArea;
-      if (area == null) {
-        try { area = FindObjectOfType<DiscoveryArea>(); } catch (System.Exception) { }
-      }
-      if (area != null) {
-        Vector3 entry = DiscoveryBuilder.WorldOffset + DiscoveryBuilder.EntryLocal;
-        area.SetWorld(entry, builder.Anchors,
-          DialogueLang.T(DiscoveryBuilder.ObjectiveEn, DiscoveryBuilder.ObjectiveVi));
-        if (builder.ExitPortal != null) builder.ExitPortal.DiscoveryArea = area;
-      }
-      // The activity (teacher + student + the child's search). Lifecycle is the
-      // Math-side area's; the game plays the area's current round (one garden,
-      // two search tiers — the same ladder discipline as #2-#6).
-      try {
-        DiscoveryGame game = root.AddComponent<DiscoveryGame>();
-        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
-          ? _activeBuilder.Player.transform : null;
-        int round = _discoveryArea != null ? _discoveryArea.Round : DiscoveryArea.DefaultRound;
-        string miloVoice = null;
-        try {
-          NpcDefinition milo = NpcRoster.Get("milo");
-          if (milo != null) miloVoice = milo.voice;
-        } catch (System.Exception) { }
-        game.Build(builder, playerT,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio,
-          _discoveryArea != null ? _discoveryArea.Lifecycle : null, round,
-          _discoveryArea != null ? (System.Action<int>)_discoveryArea.NotifyCompleted : null,
-          miloVoice);
-        if (_discoveryArea != null) _discoveryArea.BindGame(game);
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Discovery wiring failed (garden stays still): " + e.Message, this);
-      }
-      try {
-        Debug.Log("[GameInstaller] Discovery scene built (gameplay #7) entry="
-          + (DiscoveryBuilder.WorldOffset + DiscoveryBuilder.EntryLocal).ToString("F1"));
-      } catch (System.Exception) { }
-    } catch (System.Exception e) {
-      Debug.LogError("[GameInstaller] DiscoveryScene build failed: " + e.Message, this);
-    }
-  }
+  // GAMEPLAY #7 ("Vườn Khám Phá") + PHASE 5 LEGACY PURGE: the Discovery Garden
+  // scene, its builder/area/game and this build branch are deleted (owner plan
+  // §9); no discovery route exists anymore.
 
   // COUNTING GARDEN CLEANUP (product decision): the build_yard and
   // delivery_village gameplay (scene builds + wiring) were removed. Their hub
   // gates remain LANDMARK SKELETONS with no playable path.
 
-  // Phase 3.0.x S3: Math playable-skeleton wiring (runs on the main thread
-  // inside the sceneLoaded callback, before the loader task completes).
-  // Tess host + quest director + counting-object bus bindings. Best-effort:
-  // any failure degrades to a silent-but-enterable world (travel roots still
-  // set by the caller) — never a stranded player, never an exception out.
-  void WireMathContent(GameObject root, MathWorldBuilder builder) {
-    try {
-      if (builder != null && builder.CountingObjects != null && EventBus != null) {
-        foreach (Interactable inter in builder.CountingObjects) {
-          if (inter != null) inter.Bind(EventBus);
-        }
-      }
-      Tess.Bind(Audio);
-      Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
-        ? _activeBuilder.Player.transform : null;
-      GameObject tessGo = new GameObject("Tess");
-      tessGo.transform.SetParent(root.transform, true);
-      MathHostPresenter host = tessGo.AddComponent<MathHostPresenter>();
-      host.SpawnPosition = MathWorldBuilder.WorldOffset + MathWorldBuilder.HostAnchorLocal;
-      host.PlayerTarget = playerT;
-      host.Bind(EventBus, Quests, Hints);
-      NpcDefinition tessDef = NpcRoster.Get("tess");
-      GameObject labelGo = new GameObject("TessLabel");
-      labelGo.transform.SetParent(tessGo.transform, false);
-      WorldNameLabel label = labelGo.AddComponent<WorldNameLabel>();
-      if (tessDef != null) label.Setup(tessDef.displayName, tessGo.transform, tessDef.labelHeight);
-      else label.Setup("Tess", tessGo.transform, 2.35f);
-      label.Show();
-      GameObject dirGo = new GameObject("MathQuestDirector");
-      dirGo.transform.SetParent(root.transform, true);
-      MathQuestDirector director = dirGo.AddComponent<MathQuestDirector>();
-      MarketHUD hud = _activeBuilder != null ? _activeBuilder.Hud : null;
-      director.Build(EventBus, Quests, host, hud);
-      // S3B: carry-token lifecycle + bloom consumer (bus-only wiring, same
-      // best-effort discipline as above).
-      Interactable cube = null;
-      try {
-        if (builder.CountingObjects != null && builder.CountingObjects.Count > 0)
-          cube = builder.CountingObjects[0];
-      } catch (System.Exception) { }
-      Transform hand = null;
-      try { hand = _activeBuilder != null ? _activeBuilder.PlayerHand : null; }
-      catch (System.Exception) { }
-      if (hand == null) hand = playerT;
-      GameObject carryGo = new GameObject("MathTokenCarry");
-      carryGo.transform.SetParent(root.transform, true);
-      MathTokenCarry carry = carryGo.AddComponent<MathTokenCarry>();
-      try { carry.Build(EventBus, Quests, cube, hand); }
-      catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Math carry wiring failed: " + e.Message, this);
-      }
-      try {
-        if (builder.BloomRoot != null) {
-          MathBloomDisplay bloom = builder.BloomRoot.gameObject.AddComponent<MathBloomDisplay>();
-          bloom.Build(EventBus, Quests); // journey fix: adopt a completed quest on re-entry
-        }
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Math bloom wiring failed: " + e.Message, this);
-      }
-      // S2 PIONEER MICRO-WORLD (v2): the Counting Garden is its OWN scene,
-      // LAZY-loaded only when the child walks into the hub gate. This area
-      // module (living in MathScene) drives the travel beats and receives the
-      // garden scene's entry + anchors on each load.
-      try {
-        CountingGardenArea area = root.GetComponent<CountingGardenArea>();
-        if (area == null) {
-          GameObject areaGo = new GameObject("CountingGardenArea");
-          areaGo.transform.SetParent(root.transform, true);
-          area = areaGo.AddComponent<CountingGardenArea>();
-        }
-        _gardenArea = area;
-        area.RandomRabbitTargets = true; // S3-P2Z20: live play asks random number questions
-        area.Bind(
-          WorldTransitions,
-          SceneOps,
-          _activeBuilder != null ? _activeBuilder.Player : null,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
-          _activeBuilder != null ? _activeBuilder.Hud : null,
-          MathWorldBuilder.WorldOffset + MathWorldBuilder.GardenHubReturnLocal);
-        area.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
-        // S3-P2X: the persistent zone panel (built by MarketBootstrap on THIS
-        // object) is the UI end of the focus beat; the area owns the logic.
-        try {
-          MarketBootstrap bootstrap = GetComponent<MarketBootstrap>();
-          Debug.Log("[GameInstaller] zone panel bind check: bootstrap=" + (bootstrap != null)
-            + " panel=" + (bootstrap != null && bootstrap.ZonePanel != null)
-            + " area=" + (area != null), this);
-          if (bootstrap != null && bootstrap.ZonePanel != null) area.BindPanel(bootstrap.ZonePanel);
-        } catch (System.Exception) { }
-        if (builder.CountingGardenPortal != null) builder.CountingGardenPortal.Area = area;
-        MicroWorldPortal[] portals = root.GetComponentsInChildren<MicroWorldPortal>(true);
-        foreach (MicroWorldPortal portal in portals) {
-          // Only portals whose areaId is the garden belong to the garden area;
-          // the discovery portal (and any future hub portal) is left alone.
-          if (portal != null && portal.areaId == CountingGardenArea.AreaId) portal.Area = area;
-        }
-        try { Debug.Log("[GameInstaller] Counting Garden area wired (" + portals.Length + " hub portals).", this); }
-        catch (System.Exception) { }
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Counting Garden wiring failed: " + e.Message, this);
-      }
-      // COUNTING GARDEN CLEANUP (product decision): the Build Yard, Delivery
-      // Village and Match Meadow area modules were removed together with their
-      // gameplay (scenes, drivers, tests). Their hub gates remain LANDMARK
-      // SKELETONS; no travel/area path exists for them anymore.
-      // S3-P2Z18 GAMEPLAY #7: the Discovery Garden's own area module (living
-      // in MathScene like the others) drives gate -> micro-world travel.
-      try {
-        DiscoveryArea discoveryArea = root.GetComponent<DiscoveryArea>();
-        if (discoveryArea == null) {
-          GameObject discoveryGo = new GameObject("DiscoveryArea");
-          discoveryGo.transform.SetParent(root.transform, true);
-          discoveryArea = discoveryGo.AddComponent<DiscoveryArea>();
-        }
-        _discoveryArea = discoveryArea;
-        discoveryArea.Bind(
-          WorldTransitions,
-          SceneOps,
-          _activeBuilder != null ? _activeBuilder.Player : null,
-          _activeBuilder != null ? _activeBuilder.WorldCamera : null,
-          _activeBuilder != null ? _activeBuilder.Hud : null,
-          MathWorldBuilder.WorldOffset + MathWorldBuilder.DiscoveryHubReturnLocal);
-        discoveryArea.BindRouter(_activeBuilder != null ? _activeBuilder.Router : null);
-        if (builder.DiscoveryPortal != null) builder.DiscoveryPortal.DiscoveryArea = discoveryArea;
-        try { Debug.Log("[GameInstaller] Discovery area wired (portal="
-          + (builder.DiscoveryPortal != null) + ").", this); }
-        catch (System.Exception) { }
-      } catch (System.Exception e) {
-        Debug.LogWarning("[GameInstaller] Discovery area wiring failed: " + e.Message, this);
-      }
-    } catch (System.Exception e) {
-      Debug.LogWarning("[GameInstaller] Math content wiring failed (world stays enterable): " + e.Message, this);
-    }
-  }
+  // PHASE 5 LEGACY PURGE: WireMathContent (MathScene content: Tess host, quest
+  // director, token carry, bloom display, counting-garden + discovery areas) is
+  // deleted with MathScene/CountingGardenArea/DiscoveryArea.
+
   // Phase 2.4: persisted gender (Boy default for migration). Applied to the
   // already-built PlayerVisual via re-tint (same mesh, no rebuild) so no
   // gameplay interrupts.
@@ -1019,8 +813,6 @@ public class GameInstaller : MonoBehaviour {
   // Girl coerces to Boy on boot (logged). Save fields stay (architecture
   // intact, no save-format break).
   MarketBuilder _activeBuilder;
-  CountingGardenArea _gardenArea;
-  DiscoveryArea _discoveryArea;
   SelectionYardArea _yardArea;
 
   public PlayerGender CurrentGender {

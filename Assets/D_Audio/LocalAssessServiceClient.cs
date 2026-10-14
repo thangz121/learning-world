@@ -33,6 +33,14 @@ public class LocalAssessServiceClient {
     public float no_speech;
     public int latency_ms;
     public string engine;
+    public int accuracy_percent;
+    public string pron_level;
+    public string feedback_vi;
+    public string tip;
+    public string error_phoneme;
+    public string error_type;
+    public string target_phonemes;
+    public string spoken_phonemes;
   }
 
   // ---- pure helpers (EditMode-testable, no UnityWebRequest) --------------------

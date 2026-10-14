@@ -48,7 +48,8 @@ public sealed class PhoneCameraWatcher : IDisposable {
   long _stopCount;
   long _downCount;
   long _frameBytes;
-  int _lastFrameTick = -1;
+  int _lastFrameTick;
+  bool _hasFrame;
 
   public PhoneCameraWatcher(string host, int port, CameraFrameSource source) {
     _host = string.IsNullOrEmpty(host) ? PhoneCameraProtocol.LoopbackHost : host;
@@ -109,8 +110,7 @@ public sealed class PhoneCameraWatcher : IDisposable {
     lock (_mutex) {
       frames = _frameCount;
       bytes = _frameBytes;
-      ageMs = _lastFrameTick < 0 ? -1
-        : unchecked(Environment.TickCount - _lastFrameTick);
+      ageMs = _hasFrame ? unchecked(Environment.TickCount - _lastFrameTick) : -1;
     }
   }
 
@@ -132,7 +132,7 @@ public sealed class PhoneCameraWatcher : IDisposable {
   void RecordFrameBytes(int n) {
     lock (_mutex) {
       _frameBytes += Math.Max(0, n);
-      try { _lastFrameTick = Environment.TickCount; } catch (Exception) { }
+      try { _lastFrameTick = Environment.TickCount; _hasFrame = true; } catch (Exception) { }
     }
   }
 

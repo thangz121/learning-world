@@ -109,6 +109,26 @@ class Handler(BaseHTTPRequestHandler):
                 return
             result = assess(wav_bytes)
             result["target"] = target
+            
+            # Enrich with phoneme-level analysis and kid-friendly feedback
+            try:
+                from pronunciation_analyzer import analyze_pronunciation
+                analysis = analyze_pronunciation(target, result.get("transcript", ""))
+                result["accuracy_percent"] = analysis["percent"]
+                result["pron_level"] = analysis["level"]
+                result["feedback_vi"] = analysis["feedback_vi"]
+                result["tip"] = analysis["tip"]
+                result["error_phoneme"] = analysis["error_phoneme"]
+                result["error_type"] = analysis["error_type"]
+                result["target_phonemes"] = " ".join(analysis["target_phonemes"])
+                result["spoken_phonemes"] = " ".join(analysis["spoken_phonemes"])
+            except Exception as e:
+                result["accuracy_percent"] = 0
+                result["feedback_vi"] = ""
+                result["tip"] = ""
+                result["error_phoneme"] = ""
+                result["error_type"] = "none"
+
             self._send_json(200, result)
         except Exception as exc:  # noqa: BLE001
             self._send_json(500, {"error": "assess_failed", "detail": str(exc)[:200]})

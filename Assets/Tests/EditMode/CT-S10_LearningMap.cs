@@ -27,7 +27,7 @@ public class CT_S10_LearningMap {
 
   // B. Approved skill trees (5/4/4/4/4), exact display names, unique ids.
   [Test] public void S10B_SkillTrees() {
-    Assert.AreEqual(5, LearningMap.SkillsOf("math").Length, "math has 5 skills");
+    Assert.AreEqual(4, LearningMap.SkillsOf("math").Length, "math has 4 skills (order deleted)");
     Assert.AreEqual(4, LearningMap.SkillsOf("thinking").Length, "thinking has 4 skills");
     Assert.AreEqual(4, LearningMap.SkillsOf("vietnamese").Length, "vietnamese has 4 skills");
     Assert.AreEqual(4, LearningMap.SkillsOf("english").Length, "english has 4 skills");
@@ -44,7 +44,7 @@ public class CT_S10_LearningMap {
         Assert.IsFalse(string.IsNullOrEmpty(skills[s].DisplayName), "skill has a name");
       }
     }
-    Assert.AreEqual(21, total, "21 skills total (invent nothing)");
+    Assert.AreEqual(20, total, "20 skills total (order deleted by owner; invent nothing)");
     Assert.AreEqual("Đếm", LearningMap.SkillDisplay("math_counting"), "counting name");
     Assert.AreEqual("Hình học", LearningMap.SkillDisplay("math_geometry"), "geometry name");
     Assert.AreEqual("Tiền đọc - tiền viết", LearningMap.SkillDisplay("vietnamese_pre_literacy"),
@@ -53,14 +53,15 @@ public class CT_S10_LearningMap {
     Assert.AreEqual("Đời sống", LearningMap.SkillDisplay("exploration_daily_life"), "daily life name");
     Assert.IsNull(LearningMap.Skill("math_counting2"), "no invented skills");
     // Subject lookups through skills.
-    Assert.AreEqual("math", LearningMap.SubjectOfSkill("math_order").Id, "skill->subject");
+    Assert.IsNull(LearningMap.Skill("math_order"), "order skill deleted (owner, 2026-10-13)");
+    Assert.IsNull(LearningMap.Skill("ordering_station"), "ordering game id deleted (owner)");
     Assert.AreEqual("counting", LearningMap.Skill("math_counting").Id.Replace("math_", ""),
       "counting lives under math");
   }
 
   // C. Game registry + ABSOLUTE acceptance baseline.
   [Test] public void S10C_AcceptedGamesOnly() {
-    Assert.AreEqual(7, LearningMap.Games.Length, "two accepted + geometry + market + city + listening + speaking (station closed)");
+    Assert.AreEqual(9, LearningMap.Games.Length, "two accepted + geometry + market + city + 4 english games");
     var accepted = new List<string>();
     for (int i = 0; i < LearningMap.Games.Length; i++)
       if (LearningMap.Games[i].HumanAccepted) accepted.Add(LearningMap.Games[i].Id);
@@ -72,6 +73,8 @@ public class CT_S10_LearningMap {
     Assert.IsFalse(accepted.Contains("classification_city"), "city is not accepted");
     Assert.IsFalse(accepted.Contains("listen_garden"), "listening is not accepted");
     Assert.IsFalse(accepted.Contains("speaking_stage"), "speaking is not accepted");
+    Assert.IsFalse(accepted.Contains("wonder_kitchen"), "kitchen is not accepted");
+    Assert.IsFalse(accepted.Contains("sentence_express"), "sentences is not accepted");
     Assert.IsFalse(accepted.Contains("ordering_station"), "station is not accepted");
     Assert.AreEqual("Cho thỏ ăn", LearningMap.GameDisplay("rabbit_feeding"), "rabbit display");
     Assert.AreEqual("Bậc thang con số", LearningMap.GameDisplay("number_stairs"), "stairs display");
@@ -122,16 +125,33 @@ public class CT_S10_LearningMap {
     Assert.AreEqual("english_speaking", LearningMap.Game("speaking_stage").SkillId,
       "speaking lives under English -> Speaking");
     Assert.AreEqual(1, LearningMap.GamesOf("english_speaking").Length, "speaking owns 1 game");
-    // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: rút khỏi catalog — sân Thứ tự thành sân
-    // trống, cổng không sáng, không vào được.
-    Assert.IsNull(LearningMap.Game("ordering_station"), "station unregistered");
-    Assert.AreEqual(0, LearningMap.GamesOf("math_order").Length, "order yard is empty");
+    Assert.AreEqual("Căn Bếp Thần Kỳ", LearningMap.GameDisplay("wonder_kitchen"), "kitchen display");
+    Assert.AreEqual("WonderKitchenPlayScene", LearningMap.Game("wonder_kitchen").SceneName,
+      "kitchen scene");
+    Assert.AreEqual(GameStatus.Implemented, LearningMap.Game("wonder_kitchen").Status,
+      "kitchen stays IMPLEMENTED");
+    Assert.AreEqual("english_vocabulary", LearningMap.Game("wonder_kitchen").SkillId,
+      "kitchen lives under English -> Vocabulary");
+    Assert.AreEqual(1, LearningMap.GamesOf("english_vocabulary").Length, "vocabulary owns 1 game");
+    Assert.AreEqual("Đoàn Tàu Ghép Câu", LearningMap.GameDisplay("sentence_express"), "sentences display");
+    Assert.AreEqual("SentenceExpressPlayScene", LearningMap.Game("sentence_express").SceneName,
+      "sentences scene");
+    Assert.AreEqual(GameStatus.Implemented, LearningMap.Game("sentence_express").Status,
+      "sentences stays IMPLEMENTED");
+    Assert.AreEqual("english_sentences", LearningMap.Game("sentence_express").SkillId,
+      "sentences lives under English -> Sentences");
+    Assert.AreEqual(1, LearningMap.GamesOf("english_sentences").Length, "sentences owns 1 game");
+    // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the game
+    // AND the skill are gone from the map; the door no longer exists anywhere.
+    Assert.IsNull(LearningMap.Game("ordering_station"), "station deleted");
+    Assert.IsNull(LearningMap.Skill("math_order"), "order skill deleted; math owns 4 skills");
     for (int i = 0; i < LearningMap.Subjects.Length; i++) {
       SkillEntry[] skills = LearningMap.Subjects[i].Skills;
       for (int s = 0; s < skills.Length; s++) {
         if (skills[s].Id == "math_counting" || skills[s].Id == "math_geometry"
             || skills[s].Id == "math_comparison" || skills[s].Id == "math_classification"
-            || skills[s].Id == "english_listening" || skills[s].Id == "english_speaking") continue;
+            || skills[s].Id == "english_listening" || skills[s].Id == "english_speaking"
+            || skills[s].Id == "english_vocabulary" || skills[s].Id == "english_sentences") continue;
         Assert.AreEqual(0, LearningMap.GamesOf(skills[s].Id).Length,
           "no fake games under " + skills[s].Id);
       }
@@ -148,6 +168,10 @@ public class CT_S10_LearningMap {
     Assert.IsTrue(LearningMap.CanLaunch("listen_garden"), "listening arena may be entered");
     Assert.IsFalse(LearningMap.IsPlayable("speaking_stage"), "speaking is not HUMAN_ACCEPTED");
     Assert.IsTrue(LearningMap.CanLaunch("speaking_stage"), "speaking arena may be entered");
+    Assert.IsFalse(LearningMap.IsPlayable("wonder_kitchen"), "kitchen is not HUMAN_ACCEPTED");
+    Assert.IsTrue(LearningMap.CanLaunch("wonder_kitchen"), "kitchen arena may be entered");
+    Assert.IsFalse(LearningMap.IsPlayable("sentence_express"), "sentences is not HUMAN_ACCEPTED");
+    Assert.IsTrue(LearningMap.CanLaunch("sentence_express"), "sentences arena may be entered");
     Assert.IsFalse(LearningMap.IsPlayable("ordering_station"), "closed station is not playable");
     Assert.IsFalse(LearningMap.CanLaunch("ordering_station"), "closed station cannot be entered");
     Assert.IsFalse(LearningMap.IsPlayable("anything_else"), "unknown is never playable");

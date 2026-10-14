@@ -12,7 +12,7 @@ public class ListeningGardenBuilder : MonoBehaviour {
   public const float BoundZ = 14f;
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -3f);
   public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -10.8f);
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 2.8f, -4.2f);
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 4.8f, -6.5f);
   public static readonly Vector3 PlaySpotLocal = new Vector3(0f, 0f, -0.5f);
   public static readonly Vector3 BellLocal = new Vector3(0f, 0f, 1.2f);
   public const float PodZ = 3.7f;
@@ -20,14 +20,16 @@ public class ListeningGardenBuilder : MonoBehaviour {
   public const string ObjectiveEn = "Listen and find the picture.";
   public const string ObjectiveVi = "Nghe và tìm hình nhé.";
 
-  static readonly Color Lawn = new Color(0.44f, 0.70f, 0.42f);
-  static readonly Color Wood = new Color(0.55f, 0.40f, 0.24f);
-  static readonly Color Cream = new Color(0.99f, 0.95f, 0.85f);
-  static readonly Color Gold = new Color(0.98f, 0.78f, 0.25f);
-  static readonly Color Leaf = new Color(0.45f, 0.70f, 0.42f);
-  static readonly Color Coral = new Color(0.92f, 0.45f, 0.38f);
-  static readonly Color Sky = new Color(0.62f, 0.80f, 0.92f);
-  static readonly Color BallOrange = new Color(0.98f, 0.62f, 0.18f);
+  static readonly Color Lawn = new Color(0.38f, 0.76f, 0.55f);
+  static readonly Color Wood = new Color(0.68f, 0.48f, 0.62f); // Fairy lilac wood
+  static readonly Color Cream = new Color(0.99f, 0.96f, 0.90f);
+  static readonly Color Gold = new Color(1.0f, 0.85f, 0.40f);
+  static readonly Color Leaf = new Color(0.40f, 0.80f, 0.58f);
+  static readonly Color Coral = new Color(0.98f, 0.58f, 0.72f); // Pastel princess pink
+  static readonly Color Sky = new Color(0.70f, 0.88f, 1.0f);
+  static readonly Color FairyLavender = new Color(0.85f, 0.72f, 0.98f);
+  static readonly Color FairyMint = new Color(0.65f, 0.96f, 0.85f);
+  static readonly Color BallOrange = new Color(0.98f, 0.65f, 0.25f);
 
   public ActivityAnchors Anchors { get; private set; }
   public Transform EntryPoint { get; private set; }
@@ -35,6 +37,7 @@ public class ListeningGardenBuilder : MonoBehaviour {
   public Transform PlaySpot { get; private set; }
   public Transform RoundRoot { get; private set; }
   public ListeningGardenBell Bell { get; private set; }
+  public TeacherGuidePresenter GuideNpc { get; private set; }
   public readonly List<ListeningGardenChoice> Choices = new List<ListeningGardenChoice>();
 
   public void Build() {
@@ -54,6 +57,7 @@ public class ListeningGardenBuilder : MonoBehaviour {
     BuildGround(root);
     BuildEntryAndExit(root);
     BuildBell(root);
+    BuildGuideNpc(root);
     BuildBackdrops(root);
     GameObject rr = new GameObject("LGRound");
     rr.transform.SetParent(root, false);
@@ -72,7 +76,7 @@ public class ListeningGardenBuilder : MonoBehaviour {
     rim.transform.SetParent(parent, false);
     rim.transform.localPosition = new Vector3(0f, -1.5f, 0f);
     rim.transform.localScale = new Vector3(36f, 1.4f, 36f);
-    rim.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.42f, 0.33f, 0.24f));
+    rim.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.55f, 0.42f, 0.48f));
     Strip(rim);
     Ignore(rim);
     GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -80,27 +84,30 @@ public class ListeningGardenBuilder : MonoBehaviour {
     ground.transform.SetParent(parent, false);
     ground.transform.localScale = new Vector3(3.2f, 1f, 3.2f);
     ground.GetComponent<Renderer>().sharedMaterial = Lit(Lawn);
-    Pad(parent, "LGPlaza", new Vector3(0f, 0.006f, 2.2f), 11.5f, new Color(0.93f, 0.84f, 0.58f));
+    // Sparkling pearl plaza & lavender crystal pathway
+    Pad(parent, "LGPlaza", new Vector3(0f, 0.006f, 2.2f), 11.5f, new Color(0.96f, 0.90f, 0.98f));
     Box(parent, "LGStage", new Vector3(0f, 0.012f, PodZ), new Vector3(10.4f, 0.015f, 2.1f),
-      new Color(0.86f, 0.78f, 0.62f));
+      FairyLavender);
     Box(parent, "LGPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f),
-      new Color(0.76f, 0.60f, 0.40f));
+      new Color(0.92f, 0.84f, 0.95f));
     StageLight(parent, new Vector3(0f, 7.5f, 2.6f));
   }
 
   void BuildEntryAndExit(Transform parent) {
-    Box(parent, "LGEntryPostL", new Vector3(-1.5f, 1.0f, -9.2f), new Vector3(0.2f, 2.0f, 0.2f), Wood);
-    Box(parent, "LGEntryPostR", new Vector3(1.5f, 1.0f, -9.2f), new Vector3(0.2f, 2.0f, 0.2f), Wood);
+    Box(parent, "LGEntryPostL", new Vector3(-1.5f, 1.0f, -9.2f), new Vector3(0.2f, 2.0f, 0.2f), FairyLavender);
+    Box(parent, "LGEntryPostR", new Vector3(1.5f, 1.0f, -9.2f), new Vector3(0.2f, 2.0f, 0.2f), FairyLavender);
     GameObject beam = Box(parent, "LGEntryBeam", new Vector3(0f, 2.08f, -9.2f),
-      new Vector3(3.2f, 0.16f, 0.16f), Cream);
+      new Vector3(3.2f, 0.16f, 0.16f), Coral);
     Ignore(beam);
+    // Glowing crystal orb atop the entrance
+    Ball(parent, "LGEntryOrb", new Vector3(0f, 2.3f, -9.2f), 0.22f, Gold);
     Pad(parent, "LGPlayDisc", PlaySpotLocal + new Vector3(0f, 0.012f, 0f), 3.0f, Gold);
     GameObject spot = new GameObject("LGPlaySpot");
     spot.transform.SetParent(parent, false);
     spot.transform.localPosition = PlaySpotLocal;
     PlaySpot = spot.transform;
     Pad(parent, "LGExitDisc", ExitLocal + new Vector3(0f, 0.012f, 0.3f), 3.0f,
-      new Color(0.70f, 0.90f, 0.72f));
+      FairyMint);
     GameObject exitGo = new GameObject("LGExitPortal");
     exitGo.transform.SetParent(parent, false);
     exitGo.transform.localPosition = ExitLocal;
@@ -111,12 +118,13 @@ public class ListeningGardenBuilder : MonoBehaviour {
     ExitPortal = exit;
   }
 
-  // The hear-it-again bell: the child taps it any time during a round.
+  // The hear-it-again bell: golden fairy chime with pearl clapper
   void BuildBell(Transform parent) {
+    Pad(parent, "BellPad", BellLocal + new Vector3(0f, 0.012f, 0f), 1.3f, FairyLavender);
     GameObject bell = new GameObject("LGBell");
     bell.transform.SetParent(parent, false);
     bell.transform.localPosition = BellLocal;
-    Box(bell.transform, "Post", new Vector3(0f, 0.42f, 0f), new Vector3(0.10f, 0.84f, 0.10f), Wood);
+    Box(bell.transform, "Post", new Vector3(0f, 0.42f, 0f), new Vector3(0.10f, 0.84f, 0.10f), FairyLavender);
     GameObject dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     dome.name = "Dome";
     dome.transform.SetParent(bell.transform, false);
@@ -126,7 +134,6 @@ public class ListeningGardenBuilder : MonoBehaviour {
     Strip(dome);
     Ignore(dome);
     Ball(bell.transform, "Clapper", new Vector3(0f, 0.86f, 0f), 0.07f, Cream);
-    Pad(bell.transform, "BellPad", new Vector3(0f, 0.012f - BellLocal.y, 0f), 1.3f, Cream);
     BoxCollider box = bell.AddComponent<BoxCollider>();
     box.center = new Vector3(0f, 0.85f, 0f);
     box.size = new Vector3(0.9f, 1.5f, 0.9f);
@@ -134,20 +141,46 @@ public class ListeningGardenBuilder : MonoBehaviour {
     Bell = bell.AddComponent<ListeningGardenBell>();
   }
 
+  void BuildGuideNpc(Transform parent) {
+    GameObject guideGo = new GameObject("LGTeacherGuide");
+    guideGo.transform.SetParent(parent, false);
+    // Placed warmly at the side of the stage strip
+    TeacherGuidePresenter guide = guideGo.AddComponent<TeacherGuidePresenter>();
+    guide.Setup(new Vector3(-4.2f, 0f, 2.6f));
+    GuideNpc = guide;
+  }
+
   void BuildBackdrops(Transform parent) {
-    // A little open-air sound garden: two flower beds + a low rail behind the pods.
-    Box(parent, "LGRail", new Vector3(0f, 0.16f, 4.9f), new Vector3(9.2f, 0.08f, 0.14f), Wood);
-    Box(parent, "LGRailL", new Vector3(-4.6f, 0.3f, 4.9f), new Vector3(0.12f, 0.6f, 0.12f), Wood);
-    Box(parent, "LGRailR", new Vector3(4.6f, 0.3f, 4.9f), new Vector3(0.12f, 0.6f, 0.12f), Wood);
-    Pad(parent, "LGBedL", new Vector3(-3.6f, 0.01f, 6.2f), 2.4f, new Color(0.62f, 0.50f, 0.32f));
-    Pad(parent, "LGBedR", new Vector3(3.6f, 0.01f, 6.2f), 2.4f, new Color(0.62f, 0.50f, 0.32f));
+    // Fairy flower terrace with pastel balustrade
+    Box(parent, "LGRail", new Vector3(0f, 0.16f, 4.9f), new Vector3(9.2f, 0.08f, 0.14f), FairyLavender);
+    Box(parent, "LGRailL", new Vector3(-4.6f, 0.3f, 4.9f), new Vector3(0.12f, 0.6f, 0.12f), FairyLavender);
+    Box(parent, "LGRailR", new Vector3(4.6f, 0.3f, 4.9f), new Vector3(0.12f, 0.6f, 0.12f), FairyLavender);
+    Pad(parent, "LGBedL", new Vector3(-3.6f, 0.01f, 6.2f), 2.4f, new Color(0.95f, 0.80f, 0.88f));
+    Pad(parent, "LGBedR", new Vector3(3.6f, 0.01f, 6.2f), 2.4f, new Color(0.95f, 0.80f, 0.88f));
   }
 
   void BuildDressing(Transform parent) {
-    WorldBeauty.BlossomTree(parent, "LGTree0", new Vector3(-7.2f, 0f, 6.2f), 0.7f);
-    WorldBeauty.BlossomTree(parent, "LGTree1", new Vector3(7.4f, 0f, 6.0f), 0.66f);
-    WorldBeauty.FlowerDrift(parent, "LGFlowers0", new Vector3(-3.2f, 0f, -1.4f), 1.0f);
-    WorldBeauty.FlowerDrift(parent, "LGFlowers1", new Vector3(3.4f, 0f, -1.2f), 1.0f);
+    // Majestic pink cherry blossom trees with falling petals
+    WorldBeauty.BlossomTree(parent, "LGTree0", new Vector3(-7.2f, 0f, 6.2f), 0.85f);
+    WorldBeauty.BlossomTree(parent, "LGTree1", new Vector3(7.4f, 0f, 6.0f), 0.82f);
+    WorldBeauty.FlowerDrift(parent, "LGFlowers0", new Vector3(-3.2f, 0f, -1.4f), 1.3f);
+    WorldBeauty.FlowerDrift(parent, "LGFlowers1", new Vector3(3.4f, 0f, -1.2f), 1.3f);
+
+    // Glowing fairy crystal lamps
+    Ball(parent, "LGCrystal0", new Vector3(-4.6f, 0.65f, 4.9f), 0.16f, Gold);
+    Ball(parent, "LGCrystal1", new Vector3(4.6f, 0.65f, 4.9f), 0.16f, Gold);
+
+    // 3D PropKit dressing for lush magical garden atmosphere
+    PropKit.Place(parent, "fence_simple", new Vector3(-4.8f, 0f, 4.8f), 0f, 1.2f, true);
+    PropKit.Place(parent, "fence_simple", new Vector3(4.8f, 0f, 4.8f), 0f, 1.2f, true);
+    PropKit.Place(parent, "flower_purpleA", new Vector3(-3.6f, 0f, 5.8f), 20f, 1.4f, true);
+    PropKit.Place(parent, "flower_yellowA", new Vector3(3.6f, 0f, 5.8f), -20f, 1.4f, true);
+    PropKit.Place(parent, "flower_redA", new Vector3(-1.8f, 0f, 5.2f), 15f, 1.2f, true);
+    PropKit.Place(parent, "flower_purpleA", new Vector3(1.8f, 0f, 5.2f), -15f, 1.2f, true);
+    PropKit.Place(parent, "plant_bushDetailed", new Vector3(-5.6f, 0f, 3.4f), 35f, 1.2f, true);
+    PropKit.Place(parent, "plant_bushDetailed", new Vector3(5.6f, 0f, 3.4f), -35f, 1.2f, true);
+    PropKit.Place(parent, "rock_smallA", new Vector3(-2.4f, 0f, -4.4f), 15f, 1.0f, true);
+    PropKit.Place(parent, "rock_smallB", new Vector3(2.4f, 0f, -4.4f), -25f, 1.0f, true);
   }
 
   void BuildAnchors(Transform parent) {
@@ -201,21 +234,57 @@ public class ListeningGardenBuilder : MonoBehaviour {
       Strip(band);
       Ignore(band);
     } else {
-      GameObject prop = PropKit.Place(root.transform, ListeningWords.PropName(wordId),
-        new Vector3(0f, 0.52f, 0f), 0f, 1.4f, true);
+      float targetSize = TargetSizeFor(wordId);
+      float yaw = PropYaw(wordId);
+      GameObject prop = PropKit.PlaceFitted(root.transform, ListeningWords.PropName(wordId),
+        new Vector3(0f, 0.49f, 0f), yaw, targetSize, true);
       if (prop == null) {
         Ball(root.transform, "FallbackProp", new Vector3(0f, 0.66f, 0f), 0.22f, Coral);
       }
     }
     BoxCollider box = root.AddComponent<BoxCollider>();
-    box.center = new Vector3(0f, 0.66f, 0f);
-    box.size = new Vector3(1.0f, 1.3f, 1.0f);
+    box.center = new Vector3(0f, 0.85f, 0f);
+    box.size = new Vector3(1.2f, 1.5f, 1.2f);
+    UnityEngine.AI.NavMeshObstacle obs = root.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+    obs.shape = UnityEngine.AI.NavMeshObstacleShape.Box;
+    obs.center = new Vector3(0f, 0.5f, 0f);
+    obs.size = new Vector3(1.2f, 1.0f, 1.2f);
+    obs.carving = true;
     Ignore(root);
     ListeningGardenChoice c = root.AddComponent<ListeningGardenChoice>();
     c.WordId = wordId;
     c.IsAnswer = answer;
     Choices.Add(c);
     return c;
+  }
+
+  static float TargetSizeFor(string wordId) {
+    switch ((wordId ?? "").ToLowerInvariant()) {
+      case "table": return 0.80f;
+      case "chair": return 0.75f;
+      case "desk": return 0.75f;
+      case "books": return 0.60f;
+      case "car": return 0.80f;
+      case "truck": return 0.80f;
+      case "tree": return 0.85f;
+      case "rock": return 0.70f;
+      case "flower": return 0.75f;
+      case "mushroom": return 0.70f;
+      case "watermelon": return 0.70f;
+      case "banana": return 0.70f;
+      default: return 0.65f;
+    }
+  }
+
+  static float PropYaw(string wordId) {
+    switch ((wordId ?? "").ToLowerInvariant()) {
+      case "car": return 30f;
+      case "truck": return 30f;
+      case "chair": return 25f;
+      case "desk": return 20f;
+      case "table": return 15f;
+      default: return 0f;
+    }
   }
 
   // ---- small primitives shared with the other arenas --------------------------
@@ -265,6 +334,7 @@ public class ListeningGardenBuilder : MonoBehaviour {
     light.range = 24f;
     light.intensity = 4.2f;
     light.color = new Color(1f, 0.96f, 0.88f);
+    light.shadows = LightShadows.Soft;
   }
 
   static void Strip(GameObject go) {

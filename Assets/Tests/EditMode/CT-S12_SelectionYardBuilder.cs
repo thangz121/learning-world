@@ -35,9 +35,9 @@ public class CT_S12_SelectionYardBuilder {
     SelectionYardBuilder builder = BuildYard("skill", "math", "", out root);
     try {
       Assert.IsTrue(builder.IsGameLevel == false, "skill level");
-      Assert.AreEqual(5, builder.GatePortals.Count, "five skill doors for math");
+      Assert.AreEqual(4, builder.GatePortals.Count, "four skill doors for math (order deleted)");
       string[] want = { "math_counting", "math_geometry", "math_comparison",
-        "math_classification", "math_order" };
+        "math_classification" };
       for (int i = 0; i < want.Length; i++) {
         Assert.AreEqual(want[i], builder.GateTargetIds[i], "door " + i + " is " + want[i]);
         Assert.IsNotNull(LearningMap.Skill(builder.GateTargetIds[i]), "B doors target skill ids");
@@ -51,10 +51,12 @@ public class CT_S12_SelectionYardBuilder {
       Transform[] all = root.GetComponentsInChildren<Transform>(true);
       for (int i = 0; i < all.Length; i++)
         if (all[i].GetComponent<MicroGateHint>() != null) hints++;
-      Assert.AreEqual(4, hints, "four live math skills glow (order closed)");
+      Assert.AreEqual(4, hints, "four live math skills glow (order deleted)");
       Assert.IsNotNull(builder.BackGate, "skill yard has the way back");
       Assert.AreEqual(SelectionGate.GateKind.Back, builder.BackGate.Kind, "back gate kind");
-      Assert.IsNotNull(builder.TitleBoard, "orientation sign staged");
+      Assert.IsNull(FindDeep(root.transform, "SYTitleLabel"),
+        "no orientation title label in any yard (owner removed it)");
+      Assert.IsNull(FindDeep(root.transform, "SYTitlePanel"), "no orientation board either");
       Assert.IsNull(builder.PlaceholderBoard, "no placeholder in a skill yard");
       Assert.IsNotNull(builder.EntryPoint, "entry marker staged");
       Assert.IsNotNull(builder.Anchors, "anchor registry staged");
@@ -103,7 +105,8 @@ public class CT_S12_SelectionYardBuilder {
       Assert.AreEqual(0, builder.GatePortals.Count, "no game doors for an empty skill");
       Assert.IsNotNull(builder.PlaceholderBoard, "placeholder board staged");
       Assert.IsNotNull(FindDeep(root.transform, "SYPlaceholderLabel"), "placeholder label staged");
-      Assert.IsNotNull(builder.TitleBoard, "the empty skill still names itself");
+      Assert.IsNull(FindDeep(root.transform, "SYTitleLabel"),
+        "no orientation sign in an empty yard either (owner removed it)");
       Assert.IsNotNull(builder.BackGate, "and still has the way back");
       // EVERY skill without games renders the placeholder and nothing else.
       for (int i = 0; i < LearningMap.Subjects.Length; i++) {
@@ -180,8 +183,7 @@ public class CT_S12_SelectionYardBuilder {
       b.SkillId = "";
       b.BuildContent(root.transform);
       Transform title = FindDeep(root.transform, "SYTitleLabel");
-      Assert.IsNotNull(title, "title label staged");
-      Assert.Greater(title.position.x, 500f, "title rides the island, never the map origin");
+      Assert.IsNull(title, "no title label anywhere (owner removed the board)");
       Transform door = FindDeep(root.transform, "Label");
       Assert.IsNotNull(door, "door label staged");
       Assert.Greater(door.position.x, 500f, "door labels ride the island too");

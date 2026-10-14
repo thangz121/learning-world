@@ -178,8 +178,11 @@ public sealed class MiloPresenter : MonoBehaviour, IClickTarget {
       // the player turns the face AWAY from the gameplay camera. Face the
       // camera instead (player fallback); greet logic still uses distance.
       Vector3 faceDir = CameraFaceDirection(toPlayer);
-      if (faceDir.sqrMagnitude > 0.0001f)
-        transform.rotation = Quaternion.LookRotation(faceDir);
+      if (faceDir.sqrMagnitude > 0.0001f) {
+        Quaternion look = Quaternion.LookRotation(faceDir);
+        float t = 1f - Mathf.Exp(-3f * dt);
+        transform.rotation = Quaternion.Slerp(transform.rotation, look, t);
+      }
       float dist = toPlayer.magnitude;
       // Greet-once per session (player report 2026-09-17): the latch NEVER
       // re-arms — leaving and re-entering the zone stays silent.

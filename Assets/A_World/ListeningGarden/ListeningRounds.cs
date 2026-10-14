@@ -8,10 +8,10 @@ public static class ListeningRounds {
   public const int LastLevel = 4;
 
   static readonly string[][] Pools = {
-    new[] { "apple", "ball" },
-    new[] { "apple", "ball", "banana" },
-    new[] { "apple", "ball", "banana", "orange" },
-    new[] { "apple", "ball", "banana", "orange", "carrot", "tomato", "watermelon", "grape" },
+    new[] { "chair", "table" },
+    new[] { "car", "truck", "desk" },
+    new[] { "tree", "flower", "rock", "books" },
+    new[] { "chair", "table", "desk", "books", "car", "truck", "tree", "rock", "flower", "mushroom", "apple", "ball", "banana", "orange", "carrot", "tomato", "watermelon", "grape" },
   };
   static readonly int[] ChoicesPerLevel = { 2, 3, 4, 4 };
   static readonly int[] RoundsPerLevel = { 2, 3, 3, 4 };

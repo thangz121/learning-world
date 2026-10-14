@@ -60,12 +60,14 @@ public sealed class PhonePresenceWatcher : IDisposable {
   // payload bytes prove CONTENT flowing, not just control traffic (§req-2).
   // Energy is mean-absolute over little-endian PCM16 samples (/32768 — same
   // convention as PhoneMicProtocol.Pcm16ToFloat32, computed inline to avoid
-  // per-frame float[] allocation). Tick uses Environment.TickCount (no Unity
-  // API on this thread). _lastAudioTick < 0 = no AUDIO frame ever seen.
+  // per-frame float[] allocation). Tick uses Environment.TickCount plus an
+  // explicit seen-flag: after >24.8 days uptime TickCount is negative and must
+  // not be mistaken for "never" (unchecked delta stays correct across the wrap).
   long _audioBytes;
   float _lastAudioEnergy;
   int _lastAudioBytes;
-  int _lastAudioTick = -1;
+  int _lastAudioTick;
+  bool _hasAudio;
 
   // Phase 2.3 recording tap (additive, game-side boundary §3): the game
   // ALREADY observes every AUDIO payload here for link/HUD state, so the
@@ -142,8 +144,7 @@ public sealed class PhonePresenceWatcher : IDisposable {
       bytes = _audioBytes;
       lastEnergy = _lastAudioEnergy;
       lastBytes = _lastAudioBytes;
-      ageMs = _lastAudioTick < 0 ? -1
-        : unchecked(Environment.TickCount - _lastAudioTick);
+      ageMs = _hasAudio ? unchecked(Environment.TickCount - _lastAudioTick) : -1;
     }
   }
 
@@ -164,7 +165,7 @@ public sealed class PhonePresenceWatcher : IDisposable {
       _audioBytes += n;
       _lastAudioEnergy = energy;
       _lastAudioBytes = n;
-      try { _lastAudioTick = Environment.TickCount; } catch (Exception) { }
+      try { _lastAudioTick = Environment.TickCount; _hasAudio = true; } catch (Exception) { }
     }
   }
 

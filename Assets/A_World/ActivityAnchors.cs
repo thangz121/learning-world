@@ -8,7 +8,7 @@
 // re-stageable, not scattered in gameplay scripts.
 // Slots (§9): Entry, GameplayFocus, Npc, Camera (+LookTarget implied by the
 // paired look anchor), Prompt, Feedback, Reward, Exit.
-// Real producers: MathWorldBuilder (Math island) + MarketBuilder (Main).
+  // Real producers: SelectionYardBuilder (B/C yards) + MarketBuilder (Main).
 // Real readers: SmartCamera.FrameAnchor + directors/presenters.
 // C# 9.0 only.
 using UnityEngine;

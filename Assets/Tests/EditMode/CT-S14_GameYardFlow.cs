@@ -104,8 +104,8 @@ public class CT_S14_GameYardFlow {
     } finally { Object.DestroyImmediate(area.gameObject); }
   }
 
-  // F. The arena's own exit portal prefers the Game Yard (the legacy garden
-  // routing stays as the fallback for the old scenes until PHASE 5).
+  // F. The arena's own exit portal routes ONLY through the Game Yard
+  // (PHASE 5: the legacy garden fallback is deleted).
   [Test] public void S14F_ExitPortalPrefersYard() {
     GameObject portalGo = new GameObject("S14Portal");
     GameObject areaGo = null;
@@ -118,14 +118,8 @@ public class CT_S14_GameYardFlow {
       yard.Bind(null, null, null, null, null, Vector3.zero);
       portal.YardArea = yard;
       Assert.AreSame(yard, portal.TargetArea(), "the game yard takes the exit");
-      // With no yard bound, the legacy garden slot still answers.
       portal.YardArea = null;
-      GameObject gardenGo = new GameObject("S14GardenForPortal");
-      try {
-        CountingGardenArea garden = gardenGo.AddComponent<CountingGardenArea>();
-        portal.Area = garden;
-        Assert.AreSame(garden, portal.TargetArea(), "legacy fallback intact");
-      } finally { Object.DestroyImmediate(gardenGo); }
+      Assert.IsNull(portal.TargetArea(), "unbound portal is inert (single routing seam)");
     } finally {
       Object.DestroyImmediate(portalGo);
       if (areaGo != null) Object.DestroyImmediate(areaGo);

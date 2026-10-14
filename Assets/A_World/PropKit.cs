@@ -37,6 +37,44 @@ public static class PropKit {
     return go;
   }
 
+  // Places a prop normalized to targetSize, horizontally centered on localPos.x/z,
+  // with its lowest vertex resting at localPos.y. Automatically fixes non-centered mesh pivots.
+  public static GameObject PlaceFitted(Transform parent, string propName, Vector3 localPos,
+      float yawDeg, float targetSize, bool ignoreFromBuild = false) {
+    if (parent == null || string.IsNullOrEmpty(propName)) return null;
+    GameObject container = new GameObject(propName);
+    container.transform.SetParent(parent, false);
+    container.transform.localPosition = localPos;
+    container.transform.localRotation = Quaternion.identity;
+    container.transform.localScale = Vector3.one;
+
+    GameObject go = Place(container.transform, propName, Vector3.zero, yawDeg, 1f, ignoreFromBuild);
+    if (go == null) {
+      CharacterPresentation.DestroyNow(container);
+      return null;
+    }
+
+    Renderer[] rends = go.GetComponentsInChildren<Renderer>();
+    if (rends != null && rends.Length > 0) {
+      Bounds b = rends[0].bounds;
+      for (int i = 1; i < rends.Length; i++) {
+        if (rends[i] != null) b.Encapsulate(rends[i].bounds);
+      }
+      float maxDim = Mathf.Max(b.size.x, b.size.y, b.size.z);
+      float scale = maxDim > 0.001f ? (targetSize / maxDim) : 1f;
+      go.transform.localScale = new Vector3(scale, scale, scale);
+
+      Bounds sb = rends[0].bounds;
+      for (int i = 1; i < rends.Length; i++) {
+        if (rends[i] != null) sb.Encapsulate(rends[i].bounds);
+      }
+      Vector3 centerInContainer = container.transform.InverseTransformPoint(sb.center);
+      Vector3 minInContainer = container.transform.InverseTransformPoint(new Vector3(sb.center.x, sb.min.y, sb.center.z));
+      go.transform.localPosition = new Vector3(-centerInContainer.x, -minInContainer.y, -centerInContainer.z);
+    }
+    return container;
+  }
+
   static GameObject Load(string propName) {
     GameObject hit;
     if (_prefabs.TryGetValue(propName, out hit) && hit != null) return hit;

@@ -142,7 +142,24 @@ public class RabbitPlayBuilder : MonoBehaviour {
     // could move them). The walkable surface here is the flat ground only, so
     // every decor renderer is excluded from the bake.
     IgnoreAllDecorExceptGround(transform, "RPGround");
+    // USER ORDER 2026-10-13 ("nguoi di xuyen vat the" — child walked through
+    // the hutch, pictured): the decor pass above ignores EVERY renderer, which
+    // also flattened the shelter's solid walls. Un-ignore the hutch walls so
+    // the bake carves its sides/back; low decor stays ignored.
+    ReenableCarve(transform, "RPHutchBack");
+    ReenableCarve(transform, "RPHutchSideL");
+    ReenableCarve(transform, "RPHutchSideR");
     BuildNavMesh(transform);
+  }
+
+  static void ReenableCarve(Transform root, string name) {
+    Transform[] all = root.GetComponentsInChildren<Transform>(true);
+    for (int i = 0; i < all.Length; i++) {
+      if (all[i].name != name) continue;
+      Unity.AI.Navigation.NavMeshModifier mod =
+        all[i].GetComponent<Unity.AI.Navigation.NavMeshModifier>();
+      if (mod != null) mod.ignoreFromBuild = false;
+    }
   }
 
   // USER ROUND 2026-09-29 (round 2): THREE answer boards for the picture-
@@ -307,7 +324,6 @@ public class RabbitPlayBuilder : MonoBehaviour {
     exit.ExitMode = true;
     exit.PlayExit = true; // -> back to the Counting Garden (not the Math hub)
     exit.fireRadius = 1.35f;
-    exit.areaId = CountingGardenArea.AreaId;
     ExitPortal = exit;
     Box(parent, "RPExitPostL", new Vector3(-1.6f, 0.9f, -11.5f),
       new Vector3(0.16f, 1.8f, 0.16f), MintLeaf);
@@ -381,7 +397,7 @@ public class RabbitPlayBuilder : MonoBehaviour {
     a = ClampTarget(a);
     b = ClampTarget(b);
     if (kind == 0) {
-      GameObject d = CountingGardenBuilder.Digit(group, "RPNumberDigit",
+      GameObject d = GardenPrimitives.Digit(group, "RPNumberDigit",
         Vector3.zero, 1.3f, 1.0f, Gold, 90f, a);
       SetMaterial(d, LitEmissive(Gold, 0.5f));
       return;
@@ -407,7 +423,7 @@ public class RabbitPlayBuilder : MonoBehaviour {
   }
 
   void DigitAt(Transform group, string name, float x, float h, float w, int n) {
-    GameObject d = CountingGardenBuilder.Digit(group, name, new Vector3(x, 0f, 0f),
+    GameObject d = GardenPrimitives.Digit(group, name, new Vector3(x, 0f, 0f),
       h, w, Gold, 90f, ClampTarget(n));
     SetMaterial(d, LitEmissive(Gold, 0.5f));
   }
@@ -444,7 +460,7 @@ public class RabbitPlayBuilder : MonoBehaviour {
     if (old != null) {
       try { CharacterPresentation.DestroyNow(old.gameObject); } catch (System.Exception) { }
     }
-    GameObject d = CountingGardenBuilder.Digit(Result.transform, "RPResultDigit",
+    GameObject d = GardenPrimitives.Digit(Result.transform, "RPResultDigit",
       new Vector3(0f, 1.2f, -0.09f), 0.6f, 0.45f, Gold, 90f, ClampTarget(n));
     SetMaterial(d, LitEmissive(Gold, 0.45f));
     return d;
@@ -699,10 +715,10 @@ public class RabbitPlayBuilder : MonoBehaviour {
     GameObject resultFrame = Box(result.transform, "RPResultFrame", new Vector3(0f, 1.6f, 0f),
       new Vector3(1.2f, 1.05f, 0.12f), BoardCream);
     SetMaterial(resultFrame, LitEmissive(BoardCream, 0.18f));
-    GameObject resultDigit = CountingGardenBuilder.Digit(result.transform, "RPResultDigit",
+    GameObject resultDigit = GardenPrimitives.Digit(result.transform, "RPResultDigit",
       new Vector3(0f, 1.2f, -0.09f), 0.6f, 0.45f, Gold, 90f, n);
     SetMaterial(resultDigit, LitEmissive(Gold, 0.45f));
-    CountingGardenBuilder.CheckMark(result.transform, "RPResultCheck",
+    GardenPrimitives.CheckMark(result.transform, "RPResultCheck",
       new Vector3(0f, 1.82f, -0.09f), 0.3f, MintLeaf);
     result.SetActive(false);
     Result = result;
@@ -737,25 +753,27 @@ public class RabbitPlayBuilder : MonoBehaviour {
     StripCollider(bell);
     IgnoreFromBuild(bell);
     GameObject board = Box(parent, "RPSubmitSign", new Vector3(p.x, 1.95f, p.z),
-      new Vector3(1.1f, 0.5f, 0.08f), BoardCream);
+      new Vector3(1.5f, 0.66f, 0.08f), BoardCream);
     SetMaterial(board, LitEmissive(BoardCream, 0.16f));
     IgnoreFromBuild(board);
     // PHASE 4b (user order: no words for pre-readers): the old floating
     // "Submit/Nộp bài" text label is gone — the golden bell + the pad are the
     // wordless submit cue.
     // USER ROUND 2026-10-01: "biển nộp bài bị mất chữ" — the board was blank;
-    // paint the submit word back onto the sign, facing the play spot.
-    GameObject signLabelGo = new GameObject("RPSubmitLabel");
-    signLabelGo.transform.SetParent(parent, false);
-    WorldNameLabel signLabel = signLabelGo.AddComponent<WorldNameLabel>();
-    signLabel.SetupLocked(DialogueLang.T("Submit", "Nộp bài"),
-      parent.TransformPoint(new Vector3(p.x, 1.95f, p.z - 0.18f)),
-      parent.TransformPoint(PlaySpotLocal));
-    signLabel.Show();
+    // paint the submit word back onto the sign.
+    // USER ORDER 2026-10-13 ("bảng nộp bài nhìn không thấy chữ"): the locked
+    // label was only legible from the play-spot side (mirrored scribbles from
+    // every other approach). The submit label now BILLBOARDS (same proven
+    // convention as NPC names) so it reads from every direction.
     GameObject anchor = new GameObject("RPSubmitAnchor");
     anchor.transform.SetParent(parent, false);
     anchor.transform.localPosition = p;
     SubmitAnchor = anchor.transform;
+    GameObject signLabelGo = new GameObject("RPSubmitLabel");
+    signLabelGo.transform.SetParent(parent, false);
+    WorldNameLabel signLabel = signLabelGo.AddComponent<WorldNameLabel>();
+    signLabel.Setup(DialogueLang.T("Submit", "Nộp bài"), anchor.transform, 1.95f);
+    signLabel.Show();
   }
 
   void BuildCameras(Transform parent) {

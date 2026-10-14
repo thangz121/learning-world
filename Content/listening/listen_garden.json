@@ -7,6 +7,16 @@
   "audioRateNormal": 0.85,
   "audioRateSlow": 0.7,
   "words": [
+    { "id": "chair", "en": "chair", "vi": "cái ghế", "prop": "chair" },
+    { "id": "table", "en": "table", "vi": "cái bàn", "prop": "table" },
+    { "id": "desk", "en": "desk", "vi": "bàn học", "prop": "desk" },
+    { "id": "books", "en": "books", "vi": "sách", "prop": "books" },
+    { "id": "car", "en": "car", "vi": "ô tô", "prop": "sedan" },
+    { "id": "truck", "en": "truck", "vi": "xe tải", "prop": "truck" },
+    { "id": "tree", "en": "tree", "vi": "cây", "prop": "tree_default" },
+    { "id": "rock", "en": "rock", "vi": "hòn đá", "prop": "rock_smallA" },
+    { "id": "flower", "en": "flower", "vi": "bông hoa", "prop": "flower_yellowA" },
+    { "id": "mushroom", "en": "mushroom", "vi": "cây nấm", "prop": "mushroom_red" },
     { "id": "apple", "en": "apple", "vi": "quả táo", "prop": "apple" },
     { "id": "ball", "en": "ball", "vi": "quả bóng", "prop": "ball" },
     { "id": "banana", "en": "banana", "vi": "quả chuối", "prop": "banana" },
@@ -17,10 +27,10 @@
     { "id": "grape", "en": "grapes", "vi": "chùm nho", "prop": "grapes" }
   ],
   "levels": [
-    { "level": 1, "pool": ["apple", "ball"], "choices": 2, "rounds": 2 },
-    { "level": 2, "pool": ["apple", "ball", "banana"], "choices": 3, "rounds": 3 },
-    { "level": 3, "pool": ["apple", "ball", "banana", "orange"], "choices": 4, "rounds": 3 },
-    { "level": 4, "pool": ["apple", "ball", "banana", "orange", "carrot", "tomato", "watermelon", "grape"],
+    { "level": 1, "pool": ["chair", "table"], "choices": 2, "rounds": 2 },
+    { "level": 2, "pool": ["car", "truck", "desk"], "choices": 3, "rounds": 3 },
+    { "level": 3, "pool": ["tree", "flower", "rock", "books"], "choices": 4, "rounds": 3 },
+    { "level": 4, "pool": ["chair", "table", "desk", "books", "car", "truck", "tree", "rock", "flower", "mushroom", "apple", "ball", "banana", "orange", "carrot", "tomato", "watermelon", "grape"],
       "choices": 4, "rounds": 4 }
   ]
 }

@@ -216,15 +216,10 @@ public class MarketBuilder : MonoBehaviour {
   public void SetInteractionGate(InteractionGate gate) {
     try { if (Router != null) Router.BindGate(gate); } catch (System.Exception) { }
     try {
-      if (_worldResult != null) {
-        if (_worldResult.EntryGates != null)
-          foreach (SubjectGate g in _worldResult.EntryGates) {
-            if (g != null) g.BindGate(gate);
-          }
-        if (_worldResult.ReturnGates != null)
-          foreach (SubjectGate g in _worldResult.ReturnGates) {
-            if (g != null) g.BindGate(gate);
-          }
+      if (_worldResult != null && _worldResult.EntryGates != null) {
+        foreach (SubjectGate g in _worldResult.EntryGates) {
+          if (g != null) g.BindGate(gate);
+        }
       }
     } catch (System.Exception) { }
   }
@@ -246,8 +241,8 @@ public class MarketBuilder : MonoBehaviour {
     CarveBox(carveName, pos, size);
   }
 
-  // Pushes the nav service into every subject gate (entry one-way in, return
-  // one-way out). Null-safe: an unbound world runs exactly as before.
+  // Pushes the nav service into every subject gate (entry one-way in; the
+  // legacy return gates are deleted with the districts — PHASE 5).
   public void SetWorldNav(IWorldNavService nav) {
     _worldNav = nav;
     if (_worldResult == null || nav == null || Player == null) return;
@@ -256,30 +251,17 @@ public class MarketBuilder : MonoBehaviour {
       SubjectGate g = _worldResult.EntryGates[i];
       if (g != null) g.Bind(nav, SubjectCatalog.All[i].Id, false, playerT);
     }
-    for (int i = 0; i < SubjectCatalog.All.Length && i < _worldResult.ReturnGates.Count; i++) {
-      SubjectGate g = _worldResult.ReturnGates[i];
-      if (g != null) g.Bind(nav, SubjectCatalog.All[i].Id, true, playerT);
-    }
   }
 
   // FULL ARCHITECTURE RESET (PHASE 2): production subject gates open the
   // subject's SKILL yard (A -> B) through the persistent SelectionYardArea.
-  // Entry gates get the yard binding; the legacy district return triggers are
-  // unbound (the districts are dead scenery until PHASE 5 deletes them — Back
-  // is the yard's own portal). Called by GameInstaller AFTER SetWorldNav, so
-  // the yard wins wherever it is bound.
+  // Called by GameInstaller AFTER SetWorldNav, so the yard wins wherever bound.
   public void SetSelectionYard(SelectionYardArea yard) {
     _yardArea = yard;
     if (yard == null || _worldResult == null || Player == null) return;
     for (int i = 0; i < SubjectCatalog.All.Length && i < _worldResult.EntryGates.Count; i++) {
       SubjectGate g = _worldResult.EntryGates[i];
       if (g != null) g.BindYard(yard);
-    }
-    for (int i = 0; i < _worldResult.ReturnGates.Count; i++) {
-      SubjectGate g = _worldResult.ReturnGates[i];
-      if (g == null) continue;
-      SubjectId target = i < SubjectCatalog.All.Length ? SubjectCatalog.All[i].Id : SubjectIds.Main;
-      g.Bind(null, target, true, null); // legacy return trigger goes inert
     }
   }
 
@@ -1608,6 +1590,21 @@ public class MarketBuilder : MonoBehaviour {
     WorldCamera = camGo.AddComponent<SmartCamera>();
     camGo.transform.position = PlayerSpawn + FollowOffset(WorldCamera.defaultOffset);
     camGo.transform.LookAt(PlayerSpawn + Vector3.up);
+
+    // Enable URP Post-Processing on Main Camera
+    var camData = camGo.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+    if (camData == null) camData = camGo.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+    camData.renderPostProcessing = true;
+
+    // Attach Global Post-Processing Volume with rich styling (Bloom, Tonemapping, Color Adjustments)
+    GameObject volGo = new GameObject("GlobalPostProcessVolume");
+    volGo.transform.SetParent(transform, false);
+    UnityEngine.Rendering.Volume vol = volGo.AddComponent<UnityEngine.Rendering.Volume>();
+    vol.isGlobal = true;
+    try {
+      vol.sharedProfile = Resources.Load<UnityEngine.Rendering.VolumeProfile>("DefaultVolumeProfile");
+    } catch (System.Exception) { }
+
     if (Player != null) WorldCamera.Follow(Player.transform, FollowOffset(WorldCamera.defaultOffset));
     FacePlayerToCamera();
   }

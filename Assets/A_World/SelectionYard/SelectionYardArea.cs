@@ -274,9 +274,20 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   public SpeakingStage SpeakingGame { get; private set; }
   public void BindSpeakingStage(SpeakingStage game) { SpeakingGame = game; }
 
-  // Ga Thứ Tự TẠM ĐÓNG 2026-10-02: rút lifecycle + binding trạm (mở lại thì khôi
-  // phục StationLifecycle / StationGame / BindStationGame ở đây + wiring
-  // BuildOrderingStationPlayScene trong GameInstaller).
+  // English -> Vocabulary ("Căn Bếp Thần Kỳ").
+  public ActivityLifecycle KitchenLifecycle { get; private set; } =
+    new ActivityLifecycle("wonder_kitchen", "SelectionYardArea");
+  public WonderKitchen KitchenGame { get; private set; }
+  public void BindKitchenGame(WonderKitchen game) { KitchenGame = game; }
+
+  // English -> Sentences ("Đoàn Tàu Ghép Câu").
+  public ActivityLifecycle SentenceLifecycle { get; private set; } =
+    new ActivityLifecycle("sentence_express", "SelectionYardArea");
+  public SentenceExpress SentenceGame { get; private set; }
+  public void BindSentenceGame(SentenceExpress game) { SentenceGame = game; }
+
+  // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the station
+  // lifecycle, game binding and arena wiring are all removed.
 
   // ---- arena travel (single micro slot: yard out -> arena in, and back) ----------
   public void SetPlay(Vector3 entry, ActivityAnchors anchors, Vector3 center,

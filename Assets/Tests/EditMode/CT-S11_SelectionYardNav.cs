@@ -114,7 +114,7 @@ public class CT_S11_SelectionYardNav {
       area.EnterSkill("math");
       Assert.AreEqual("math", area.PendingSubjectId, "enter math");
       SkillEntry[] skills = LearningMap.SkillsOf(area.PendingSubjectId);
-      Assert.AreEqual(5, skills.Length, "math shows five skill doors");
+      Assert.AreEqual(4, skills.Length, "math shows four skill doors (order deleted)");
       area.SetPendingForTests(SelectionYardArea.YardLevel.None, "", "");
       area.EnterGame("math_counting");
       Assert.AreEqual("math_counting", area.PendingSkillId, "enter counting");

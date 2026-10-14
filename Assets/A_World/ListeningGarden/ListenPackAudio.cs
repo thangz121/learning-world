@@ -18,4 +18,17 @@ public static class ListenPackAudio {
       audio.SpeakAsync(req);
     } catch (Exception) { }
   }
+
+  // Play the instruction "Find the <word>!" via voice listen_v1.
+  public static void PlayFind(IAudioDirector audio, string wordId) {
+    if (audio == null || string.IsNullOrEmpty(wordId)) return;
+    try {
+      var voice = new VoiceProfileId(ListeningWords.VoiceId);
+      var lang = new LanguageCode(ListeningWords.Lang);
+      string spoken = ListeningWords.TextEn(wordId);
+      var req = new DialogueRequest("Find the " + spoken + "!", voice, lang,
+        ListeningWords.RateNormal, 0f, SpeechStyle.Clear, AudioFormat.Mp3_44100, AudioPriority.P2_Instruction);
+      audio.SpeakAsync(req);
+    } catch (Exception) { }
+  }
 }

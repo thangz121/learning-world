@@ -96,7 +96,8 @@ public class MicSetupMonitor : MonoBehaviour {
   // the local dot rides device presence + poll freshness (the local mic is
   // never held open by the HUD — captures own the device).
   float _smoothEnergy;
-  int _lastLocalPollTick = -1;
+  int _lastLocalPollTick;
+  bool _hasLocalPoll;
 
   // Source-precedence report (game -> gateway -> phone START UI): the game
   // decides local-vs-phone (local plugged-in hardware ALWAYS wins, generic
@@ -145,7 +146,7 @@ public class MicSetupMonitor : MonoBehaviour {
     if (!string.IsNullOrEmpty(bridgeHost)) _host = bridgeHost;
     if (bridgePort > 0) _port = bridgePort;
     if (!string.IsNullOrEmpty(toolsDir)) _toolsDir = toolsDir;
-    _lastLocalPollTick = TickMs(); // sampling starts at bind (Start re-stamps)
+    _lastLocalPollTick = TickMs(); _hasLocalPoll = true; // sampling starts at bind (Start re-stamps)
   }
 
   public MicSetupGate Gate => _gate;
@@ -167,7 +168,7 @@ public class MicSetupMonitor : MonoBehaviour {
     _startupDone = true;
     _localTimer = _localPollSec;
     _phoneTimer = _phoneRecheckSec;
-    _lastLocalPollTick = TickMs(); // startup refresh inside the gate counts
+    _lastLocalPollTick = TickMs(); _hasLocalPoll = true; // startup refresh inside the gate counts
     try {
       MicSetupState state = _gate.EvaluateAtStartup();
       if (state == MicSetupState.OfferPhone) ShowOffer();
@@ -293,7 +294,7 @@ public class MicSetupMonitor : MonoBehaviour {
 
   bool IsLocalPollFresh() {
     try {
-      if (_lastLocalPollTick < 0) return false;
+      if (!_hasLocalPoll) return false;
       return unchecked(TickMs() - _lastLocalPollTick) <= 15000;
     } catch (Exception) { return false; }
   }
@@ -615,6 +616,7 @@ public class MicSetupMonitor : MonoBehaviour {
     try {
       if (_local != null) _local.Refresh();
       _lastLocalPollTick = TickMs();
+      _hasLocalPoll = true;
       if (_gate != null) _gate.NotifySourcesChanged();
       try { ReportMicPreferIfChanged(); } catch (Exception) { }
       // Headset plugged while a dialog is open: recovery wins silently.

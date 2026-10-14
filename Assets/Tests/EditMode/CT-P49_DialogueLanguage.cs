@@ -125,36 +125,8 @@ public class CT_P49_DialogueLanguage {
     } finally { TearDown(); }
   }
 
-  // C. The counting lesson (live sequence) speaks the mode's language on every
-  // beat, and still completes its loop.
-  [Test] public void P49C_LessonLocalizes() {
-    SetUp();
-    GameObject garden = new GameObject("P49GardenWorld");
-    GameObject demoGo = new GameObject("P49StairDemo");
-    try {
-      CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
-      builder.BuildContent(garden.transform);
-      FakeAudio audio = new FakeAudio();
-      demoGo.transform.SetParent(garden.transform, false);
-      StairLessonDemo demo = demoGo.AddComponent<StairLessonDemo>();
-      DialogueLang.Set(DialogueLanguage.Vietnamese);
-      demo.Build(builder, null, audio);
-      demo.StartFocusedLesson();
-      int guard = 0;
-      while (demo.LoopCount < 1 && guard < 4000) { demo.Step(0.1f); guard++; }
-      Assert.GreaterOrEqual(demo.LoopCount, 1, "lesson completes in Vietnamese mode");
-      Assert.GreaterOrEqual(audio.Lines.Count, 4, "lesson spoke its lines");
-      foreach (DialogueRequest r in audio.Lines) {
-        Assert.AreEqual("vi-VN", r.Lang.Value, "lesson locale is vi-VN");
-        bool ok = SafetyFilter.ValidateLine(r.Text, false, out string why);
-        Assert.IsTrue(ok, "lesson VI line passes SafetyFilter: '" + r.Text + "' (" + why + ")");
-      }
-    } finally {
-      TearDown();
-      UnityEngine.Object.DestroyImmediate(demoGo);
-      UnityEngine.Object.DestroyImmediate(garden);
-    }
-  }
+  // C. PHASE 5 LEGACY PURGE: P49C_LessonLocalizes deleted with the counting
+  // garden lesson demo (StairLessonDemo). The language engine pins A/B/D stay.
 
   // D. Save round-trip: additive language field; old saves (no field) come
   // back as English; the toggle persists.

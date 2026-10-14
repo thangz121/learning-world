@@ -70,6 +70,11 @@ public class ListeningGarden : MonoBehaviour {
 
   public void Tick(float dt) {
     if (_voice != null) _voice.Tick(dt);
+    if (_builder != null && _builder.Bell != null) {
+      bool shouldRetract = Current == Phase.Play || (Current == Phase.Wait && PlayerNear(SpotWorld(), 2.0f));
+      _builder.Bell.SetRetracted(shouldRetract);
+      _builder.Bell.Tick(dt);
+    }
     if (dt <= 0f || _builder == null) return;
     if (_slowReplayT > 0f) {
       _slowReplayT -= dt;
@@ -88,6 +93,7 @@ public class ListeningGarden : MonoBehaviour {
     _phaseT += dt;
     if (Current == Phase.Wait) TickWait(dt);
     else if (Current == Phase.Play) {
+      if (_isGuiding) TickGuidance(dt);
       _idleT += dt;
       if (_idleT >= 8f && _idleT - dt < 8f) PointTask();
       else if (_idleT >= 15f && _idleT - dt < 15f) PointTask();
@@ -103,6 +109,74 @@ public class ListeningGarden : MonoBehaviour {
     if (PlayerNear(SpotWorld(), 1.5f) || _phaseT >= 8f) BeginRound();
   }
 
+  public const int SkipGuideThreshold = 10;
+
+  int _guideStep = -1;
+  float _guideStepT = 0f;
+  bool _isGuiding = false;
+
+  public bool NeedsGuidance(string wordId) {
+    if (string.IsNullOrEmpty(wordId)) return false;
+    try {
+      LocalSave save = new LocalSave();
+      PlayerProgress progress = save.Load();
+      if (progress != null && progress.Words != null && progress.Words.TryGetValue(wordId, out WordMastery m)) {
+        if (m != null && m.RecognitionHit >= SkipGuideThreshold) return false;
+      }
+    } catch (Exception) { }
+    return true;
+  }
+
+  void RecordCorrectAnswer(string wordId) {
+    if (string.IsNullOrEmpty(wordId)) return;
+    try {
+      LocalSave save = new LocalSave();
+      PlayerProgress progress = save.Load() ?? new PlayerProgress();
+      if (progress.Words == null) progress.Words = new Dictionary<string, WordMastery>();
+      WordMastery m;
+      if (!progress.Words.TryGetValue(wordId, out m) || m == null) {
+        m = new WordMastery { Id = new WordId(wordId), Stage = MasteryStage.Unknown };
+        progress.Words[wordId] = m;
+      }
+      m.RecognitionHit++;
+      m.RecognitionTotal++;
+      save.Save(progress);
+    } catch (Exception) { }
+  }
+
+  void TickGuidance(float dt) {
+    if (!_isGuiding) return;
+    _guideStepT += dt;
+    if (_builder == null || _builder.Choices.Count == 0) {
+      FinishGuidance();
+      return;
+    }
+
+    if (_guideStep < _builder.Choices.Count) {
+      if (_guideStepT >= 1.6f) {
+        _guideStep++;
+        _guideStepT = 0f;
+        if (_guideStep < _builder.Choices.Count) {
+          ListeningGardenChoice pod = _builder.Choices[_guideStep];
+          if (pod != null) {
+            if (_builder.GuideNpc != null) _builder.GuideNpc.PointAt(pod.transform.position);
+            ListenPackAudio.Play(_audio, pod.WordId, false);
+          }
+        } else {
+          // Finished introducing all items -> prompt child to find target
+          if (_builder.GuideNpc != null) _builder.GuideNpc.StopPointing();
+          ListenPackAudio.PlayFind(_audio, TargetWord);
+          _isGuiding = false;
+        }
+      }
+    }
+  }
+
+  void FinishGuidance() {
+    _isGuiding = false;
+    if (_builder != null && _builder.GuideNpc != null) _builder.GuideNpc.StopPointing();
+  }
+
   public void BeginRound() {
     if (Completed) return;
     Current = Phase.Play;
@@ -110,6 +184,7 @@ public class ListeningGarden : MonoBehaviour {
     _idleT = 0f;
     _restT = 0f;
     _slowReplayT = 0f;
+    _isGuiding = false;
     string target;
     string[] choices;
     int answerIndex;
@@ -125,12 +200,27 @@ public class ListeningGarden : MonoBehaviour {
     if (_life != null && _life.State == ActivityState.Available) {
       try { _life.Begin("listening round"); } catch (Exception) { }
     }
-    if (!_introSaid) {
-      _introSaid = true;
-      Say("Listen and find the picture!", "Nghe và tìm hình nhé!");
-      _promptT = 1.7f;
+
+    // Check if this round's target word needs guidance (< 10 correct hits)
+    if (NeedsGuidance(TargetWord) && Application.isPlaying) {
+      _isGuiding = true;
+      _guideStep = 0;
+      _guideStepT = 0f;
+      if (_builder.GuideNpc != null && _builder.Choices.Count > 0) {
+        ListeningGardenChoice firstPod = _builder.Choices[0];
+        if (firstPod != null) {
+          _builder.GuideNpc.PointAt(firstPod.transform.position);
+          ListenPackAudio.Play(_audio, firstPod.WordId, false);
+        }
+      }
     } else {
-      _promptT = 0.8f;
+      if (!_introSaid) {
+        _introSaid = true;
+        Say("Listen and find the picture!", "Nghe và tìm hình nhé!");
+        _promptT = 1.7f;
+      } else {
+        _promptT = 0.8f;
+      }
     }
     PointTask();
   }
@@ -138,14 +228,26 @@ public class ListeningGarden : MonoBehaviour {
   public void TryTapChoice(ListeningGardenChoice choice) {
     if (choice == null || Completed) return;
     if (Current != Phase.Play || _restT > 0f) return;
+    if (_isGuiding && Application.isPlaying) return; // Prevent tapping while NPC is introducing words
     _idleT = 0f;
-    if (choice.IsAnswer) WinRound();
-    else Reject();
+    // Halt any pending player walk so player stays on the play disc instead of walking into props
+    if (_player != null) {
+      ClickToMove ctm = _player.GetComponent<ClickToMove>();
+      if (ctm != null) ctm.Stop();
+    }
+    if (choice.IsAnswer) {
+      choice.PlayCorrectFx();
+      WinRound();
+    } else {
+      choice.PlayWrongFx();
+      Reject();
+    }
   }
 
   // The bell: replay the current word any time during the round.
   public void ReplayPrompt() {
     if (Completed || Current != Phase.Play) return;
+    if (_isGuiding && Application.isPlaying) return; // Wait until NPC finishes introduction
     _slowReplayT = 0f;
     PlaySfx("ding");
     PlayWord(false);
@@ -166,6 +268,8 @@ public class ListeningGarden : MonoBehaviour {
     PlaySfx("success");
     GameJuice.CorrectFx(_fx, _player != null ? _player.position : Vector3.zero, false);
     ActivityFeedback.Correct();
+    RecordCorrectAnswer(TargetWord);
+    if (_builder != null && _builder.GuideNpc != null) _builder.GuideNpc.Celebrate();
     Say("Yes! " + Capitalize(ListeningWords.TextEn(TargetWord)) + "!",
       "Đúng rồi! " + Capitalize(ListeningWords.DisplayVi(TargetWord)) + "!");
     RoundIndex++;
@@ -226,14 +330,8 @@ public class ListeningGarden : MonoBehaviour {
   }
 
   void PointTask() {
-    if (_builder == null) return;
-    ListeningGardenChoice answer = null;
-    for (int i = 0; i < _builder.Choices.Count; i++) {
-      ListeningGardenChoice c = _builder.Choices[i];
-      if (c != null && c.IsAnswer) { answer = c; break; }
-    }
-    if (answer != null) ActivityGuide.PointAt(answer.transform.position);
-    else ActivityGuide.PointAt(_builder.transform.TransformPoint(new Vector3(0f, 0f, 2.4f)));
+    // Child listens to the prompt; no spoiler beacon over the correct answer.
+    ActivityGuide.Clear();
   }
 
   void Say(string en, string vi) {

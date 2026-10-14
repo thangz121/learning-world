@@ -67,6 +67,7 @@ public static class SpeechFailureReasons {
   public const string PermissionDenied = "permission_denied";
   public const string Cancelled = "cancelled";
   public const string Stale = "stale_result_ignored";
+  public const string AdultPromptingDetected = "voice_corrupted_prompting_detected";
 }
 
 // Phoneme/acoustic evidence from a pronunciation backend (§8/§28).
@@ -101,6 +102,11 @@ public struct PronunciationEvidence {
   public float AcousticRunnerUpMatch;
   public float AcousticMargin;
 
+  // --- Phoneme-level Kid Guidance & Feedback ---
+  public string FeedbackVi;
+  public string Tip;
+  public string ErrorPhoneme;
+
   public static PronunciationEvidence None() {
     return new PronunciationEvidence {
       HasPhonemeData = false, Source = "none",
@@ -112,7 +118,8 @@ public struct PronunciationEvidence {
       AcousticMissingEnding = false, AcousticWeakEnding = false,
       AcousticRepetition = false, AcousticSyllables = 0,
       AcousticRunnerUp = default(WordId), AcousticRunnerUpMatch = float.NaN,
-      AcousticMargin = float.NaN
+      AcousticMargin = float.NaN,
+      FeedbackVi = string.Empty, Tip = string.Empty, ErrorPhoneme = string.Empty
     };
   }
 
@@ -581,6 +588,7 @@ public struct CapturedSpeech {
   public bool TimedOut;
   public bool Cancelled;
   public string Error;      // "" when OK
+  public ChildFrontendMetadata Frontend; // Realtime child-VAD & adult suppression metadata
   public bool IsOk() { return string.IsNullOrEmpty(Error) && Samples != null; }
 }
 

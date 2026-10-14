@@ -234,7 +234,7 @@ public class StairHillBuilder : MonoBehaviour {
     a = ClampTarget(a);
     b = ClampTarget(b);
     if (kind == 0) {
-      GameObject d = CountingGardenBuilder.Digit(group, "SHNumberDigit",
+      GameObject d = GardenPrimitives.Digit(group, "SHNumberDigit",
         Vector3.zero, 1.15f, 0.9f, Gold, 90f, a);
       SetMaterial(d, LitEmissive(Gold, 0.5f));
       NoShadows(d);
@@ -261,7 +261,7 @@ public class StairHillBuilder : MonoBehaviour {
   }
 
   void DigitAt(Transform group, string name, float x, float h, float w, int n) {
-    GameObject d = CountingGardenBuilder.Digit(group, name, new Vector3(x, 0f, 0f),
+    GameObject d = GardenPrimitives.Digit(group, name, new Vector3(x, 0f, 0f),
       h, w, Gold, 90f, ClampTarget(n));
     SetMaterial(d, LitEmissive(Gold, 0.5f));
     NoShadows(d);
@@ -286,7 +286,7 @@ public class StairHillBuilder : MonoBehaviour {
       try { CharacterPresentation.DestroyNow(_resultDigit); } catch (Exception) { }
     }
     _resultValue = ClampTarget(n);
-    _resultDigit = CountingGardenBuilder.Digit(_resultGroup, "SHResultDigit",
+    _resultDigit = GardenPrimitives.Digit(_resultGroup, "SHResultDigit",
       new Vector3(0f, 1.2f, -0.18f), 0.6f, 0.45f, Gold, 90f, _resultValue);
     SetMaterial(_resultDigit, LitEmissive(Gold, 0.45f));
     NoShadows(_resultDigit);
@@ -390,7 +390,6 @@ public class StairHillBuilder : MonoBehaviour {
     exit.ExitMode = true;
     exit.PlayExit = true; // -> back to the Counting Garden
     exit.fireRadius = 1.35f;
-    exit.areaId = CountingGardenArea.AreaId;
     ExitPortal = exit;
     Box(parent, "SHExitPostL", new Vector3(-1.6f, 0.9f, exitZ),
       new Vector3(0.16f, 1.8f, 0.16f), MintLeaf);
@@ -438,7 +437,7 @@ public class StairHillBuilder : MonoBehaviour {
       // child would walk past the stairs instead of up them). The collider
       // top is ALSO the walkable surface the NavMesh bakes from (feet on board).
       GameObject tread = BoxSolid(parent, "SHStep" + i, new Vector3(CenterX, top * 0.5f, zc),
-        new Vector3(StairWidth, top, Tread), CountingGardenBuilder.StepWood);
+        new Vector3(StairWidth, top, Tread), GardenPrimitives.StepWood);
       StairTread treadId = tread.AddComponent<StairTread>();
       treadId.Bind(run, i);
       GameObject cap = Box(parent, "SHStepTop" + i, new Vector3(CenterX, top + 0.0045f, zc),
@@ -463,7 +462,7 @@ public class StairHillBuilder : MonoBehaviour {
     float topN = StepCount * Rise;
     float landingZ = BaseZ + StepCount * Tread + LandingDepth * 0.5f;
     BoxSolid(parent, "SHLanding", new Vector3(CenterX, topN * 0.5f, landingZ),
-      new Vector3(LandingWidth, topN, LandingDepth), CountingGardenBuilder.StepWood);
+      new Vector3(LandingWidth, topN, LandingDepth), GardenPrimitives.StepWood);
     Box(parent, "SHLandingTop", new Vector3(CenterX, topN + 0.0045f, landingZ),
       new Vector3(LandingWidth - 0.08f, 0.008f, LandingDepth - 0.06f), StepCap);
     // Goal arch on the landing: two posts + a high bake-ignored beam + blossom
@@ -521,7 +520,7 @@ public class StairHillBuilder : MonoBehaviour {
     foreach (float side in new[] { -1f, 1f }) {
       GameObject board = Box(parent, side < 0f ? "SHStringerL" : "SHStringerR",
         new Vector3(CenterX + side * (StairWidth * 0.5f + 0.06f), yc, zc),
-        new Vector3(0.12f, 0.24f, len), CountingGardenBuilder.StepWood);
+        new Vector3(0.12f, 0.24f, len), GardenPrimitives.StepWood);
       if (board != null) {
         board.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         IgnoreFromBuild(board);
@@ -614,7 +613,7 @@ public class StairHillBuilder : MonoBehaviour {
       new Vector3(1.2f, 1.05f, 0.12f), BoardCream);
     SetMaterial(resultFrame, LitEmissive(BoardCream, 0.18f));
     NoShadows(resultFrame);
-    CountingGardenBuilder.CheckMark(result.transform, "SHResultCheck",
+    GardenPrimitives.CheckMark(result.transform, "SHResultCheck",
       new Vector3(0f, 1.82f, -0.18f), 0.3f, MintLeaf);
     result.SetActive(false);
     Result = result;
@@ -672,7 +671,7 @@ public class StairHillBuilder : MonoBehaviour {
     float x = CenterX - StairWidth * 0.5f - 0.4f;
     for (int i = 1; i <= StepCount; i++) {
       float zc = BaseZ + (i - 0.5f) * Tread;
-      CountingGardenBuilder.Digit(g.transform, "SHEdgeNum" + i,
+      GardenPrimitives.Digit(g.transform, "SHEdgeNum" + i,
         new Vector3(x, i * Rise + 0.05f, zc), 0.4f, 0.3f, Gold, 90f, i);
     }
     g.SetActive(false);

@@ -5,10 +5,10 @@
 // so World-assembly visuals (FlowerPotPresenter) adopt without touching
 // Brain types (frozen asmdef ownership holds).
 // Wiring: whoever builds the scene calls QuestAdoption.AdoptAll with the live
-// QuestState (GameInstaller for Math, MarketBuilder.WireQuestService for Main).
+// QuestState (MarketBuilder.WireQuestService for Main).
 // Apply must be idempotent: AdoptAll can run after an event already applied.
-// Real implementers: MathBloomDisplay, MathTokenCarry, MathHostPresenter,
-// FlowerPotPresenter. C# 9.0 only.
+// Real implementers: MathHostPresenter, FlowerPotPresenter (PHASE 5: the old
+// MathBloomDisplay / MathTokenCarry adopters died with MathScene). C# 9.0 only.
 using System.Collections.Generic;
 
 public interface IQuestAdoptable {

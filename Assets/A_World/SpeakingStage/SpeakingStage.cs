@@ -6,6 +6,7 @@
 // hint. Environment failures (no mic/service dead) never fail the child.
 // C# 9.0 only.
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -18,6 +19,10 @@ public class SpeakingStage : MonoBehaviour {
   public int Level { get; private set; }
   public int RoundIndex { get; private set; }
   public string TargetWord { get; private set; }
+  // The SPOKEN form the child is graded against (id "grape" -> "grapes": the
+  // listening pack speaks "grapes" and children learn the plural, so the
+  // lexical/acoustic target must be the spoken word, not the vocab id).
+  public string SpokenTarget { get; private set; }
   public int AttemptsUsed { get; private set; }
   public int EnvErrors { get; private set; }
   public bool Completed { get; private set; }
@@ -93,15 +98,55 @@ public class SpeakingStage : MonoBehaviour {
     if (PlayerNear(SpotWorld(), 1.8f) || _phaseT >= 8f) BeginRound();
   }
 
+  public const int SkipGuideThreshold = 10;
+
+  public bool NeedsGuidance(string wordId) {
+    if (string.IsNullOrEmpty(wordId)) return false;
+    try {
+      LocalSave save = new LocalSave();
+      PlayerProgress progress = save.Load();
+      if (progress != null && progress.Words != null && progress.Words.TryGetValue(wordId, out WordMastery m)) {
+        if (m != null && m.SpeakingHit >= SkipGuideThreshold) return false;
+      }
+    } catch (Exception) { }
+    return true;
+  }
+
+  void RecordCorrectSpeaking(string wordId) {
+    if (string.IsNullOrEmpty(wordId)) return;
+    try {
+      LocalSave save = new LocalSave();
+      PlayerProgress progress = save.Load() ?? new PlayerProgress();
+      if (progress.Words == null) progress.Words = new Dictionary<string, WordMastery>();
+      WordMastery m;
+      if (!progress.Words.TryGetValue(wordId, out m) || m == null) {
+        m = new WordMastery { Id = new WordId(wordId), Stage = MasteryStage.Unknown };
+        progress.Words[wordId] = m;
+      }
+      m.SpeakingHit++;
+      m.SpeakingTotal++;
+      save.Save(progress);
+    } catch (Exception) { }
+  }
+
   public void BeginRound() {
     if (Completed) return;
     TargetWord = SpeakingPack.WordFor(Level, RoundIndex);
+    SpokenTarget = ListeningWords.TextEn(TargetWord);
     AttemptsUsed = 0;
     if (_builder != null) _builder.ShowPicture(TargetWord);
+    ActivityGuide.Clear();
     ActivityFeedback.ProgressKeep(GlobalRound(), SpeakingPack.TotalRounds());
     if (_life != null && _life.State == ActivityState.Available) {
       try { _life.Begin("speaking round"); } catch (Exception) { }
     }
+
+    if (NeedsGuidance(TargetWord) && Application.isPlaying && _builder != null && _builder.GuideNpc != null && _builder.PictureRoot != null) {
+      _builder.GuideNpc.PointAt(_builder.PictureRoot.position);
+    } else if (_builder != null && _builder.GuideNpc != null) {
+      _builder.GuideNpc.StopPointing();
+    }
+
     if (!_introSaid) {
       _introSaid = true;
       Say("Listen, then say it!", "Nghe rồi nói theo nhé!");
@@ -129,6 +174,11 @@ public class SpeakingStage : MonoBehaviour {
 
   void TickSayReady() {
     if (_phaseT < 0.95f) return;
+    if (_builder != null && _builder.GuideNpc != null) _builder.GuideNpc.StopPointing();
+    if (_speech == null || (_gate != null && _gate.ShouldSkipListening())) {
+      HandleEnvironment();
+      return;
+    }
     Say("Now you say it!", "Con nói nào!");
     StartListening();
   }
@@ -136,11 +186,12 @@ public class SpeakingStage : MonoBehaviour {
   void StartListening() {
     CancelAttempt();
     if (_builder != null) _builder.SetMicRingActive(true);
+    if (_builder != null && _builder.GuideNpc != null) _builder.GuideNpc.PoseListen();
     if (_speech == null) { HandleEnvironment(); return; }
     if (_gate != null && _gate.ShouldSkipListening()) { HandleEnvironment(); return; }
     try {
       _cts = new CancellationTokenSource();
-      _pending = _speech.StartAttemptAsync(new WordId(TargetWord), _cts.Token);
+      _pending = _speech.StartAttemptAsync(new WordId(SpokenTarget), _cts.Token);
       Current = Phase.Listening;
       _phaseT = 0f;
       _listenSafetyT = 0f;
@@ -173,6 +224,7 @@ public class SpeakingStage : MonoBehaviour {
 
   void HandleAssessment(SpeakingAssessment assessment) {
     LastAssessment = assessment;
+    if (_builder != null && _builder.GuideNpc != null) _builder.GuideNpc.StopListening();
     if (assessment.IsEnvironmentError) { HandleEnvironment(); return; }
     if (_builder != null) _builder.SetMicRingActive(false);
     if (!assessment.AttemptDetected) {
@@ -188,7 +240,7 @@ public class SpeakingStage : MonoBehaviour {
     HasLastLevel = true;
     LastPercent = Mathf.Clamp(Mathf.RoundToInt(assessment.OverallScore * 100f), 0, 100);
     try {
-      Debug.Log("[SpeakingStage] target=" + TargetWord + " level=" + level
+      Debug.Log("[SpeakingStage] target=" + SpokenTarget + " level=" + level
         + " score=" + LastPercent + "% attempt=" + (AttemptsUsed + 1)
         + " evidence={" + (assessment.Evidence ?? "") + "}");
     } catch (Exception) { }
@@ -198,13 +250,17 @@ public class SpeakingStage : MonoBehaviour {
     if (level == SpeechLevel.Perfect || level == SpeechLevel.Great) {
       PlaySfx("success");
       GameJuice.CorrectFx(_fx, _player != null ? _player.position : Vector3.zero, false);
+      if (_builder != null) _builder.PlayCorrectFx();
       ActivityFeedback.Correct();
+      RecordCorrectSpeaking(TargetWord);
+      if (_builder != null && _builder.GuideNpc != null) _builder.GuideNpc.Celebrate();
       AfterFeedback(FeedbackAction.Advance);
       return;
     }
     ActivityFeedback.Retry();
     GameJuice.WrongFx(_builder != null ? _builder.transform : transform, _fx,
       _player != null ? _player.position : Vector3.zero);
+    if (_builder != null) _builder.PlayWrongFx();
     AttemptsUsed++;
     if (AttemptsUsed >= SpeakingPack.AttemptsPerWord) {
       AfterFeedback(FeedbackAction.GiveUp);
@@ -225,7 +281,8 @@ public class SpeakingStage : MonoBehaviour {
   }
 
   void TickFeedback() {
-    if (_phaseT < 1.7f) return;
+    float waitTarget = _feedbackAction == FeedbackAction.ReturnToRound ? 2.6f : 1.7f;
+    if (_phaseT < waitTarget) return;
     switch (_feedbackAction) {
       case FeedbackAction.Advance:
         Advance(true);

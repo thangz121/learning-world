@@ -26,7 +26,18 @@ public class ActivityGuide : MonoBehaviour {
     return _instance;
   }
 
+  // Owner order 2026-10-13 ("bo cai khoi chi dinh nay o moi san choi"): the
+  // bobbing gold beacon is OFF inside every play arena; GameInstaller turns
+  // this on when it builds an arena. Hubs/legacy builds keep the default.
+  public static bool Hidden;
+
+  public static void SetHidden(bool hidden) {
+    Hidden = hidden;
+    if (hidden) Clear();
+  }
+
   public static void PointAt(Vector3 world) {
+    if (Hidden) return;
     ActivityGuide g = Ensure();
     if (!g._active) {
       g._active = true;

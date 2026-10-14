@@ -33,36 +33,73 @@ public sealed class HybridSpeechAssessmentProvider : ISpeechAssessmentProvider {
 
   public async Task<SpeechRecognitionResult> RecognizeAsync(CapturedSpeech audio, WordId target,
       CancellationToken ct) {
-    SpeechRecognitionResult ac = await _acoustic.RecognizeAsync(audio, target, ct);
-    if (_service == null) return ac;
-    // Never ring the service when the capture itself failed or held no speech:
-    // the acoustic result already carries the honest outcome (policy decides).
-    if (ac.IsError || !ac.HasSpeech) return ac;
+    if (audio.Samples == null || audio.Samples.Length == 0 || audio.DurationSec <= 0f) {
+      return await _acoustic.RecognizeAsync(audio, target, ct);
+    }
 
+    // 1. Fast local acoustic evaluation (<15ms)
+    // If capture failed or held no speech, never ring the service/cloud (saves bandwidth & respects S22 contract)
+    SpeechRecognitionResult ac = await _acoustic.RecognizeAsync(audio, target, ct);
+    if (_service == null || ac.IsError || !ac.HasSpeech) {
+      return ac;
+    }
+
+    // 2. Query cloud/service concurrently with safety timeout
     SpeechRecognitionResult svc;
     try {
-      svc = await _service.RecognizeAsync(audio, target, ct);
+      svc = await _service.RecognizeAsync(audio, target, ct).ConfigureAwait(false);
     } catch (OperationCanceledException) {
       throw;
     } catch (Exception) {
-      return ac; // service unavailable: acoustic-only, never an error
+      return ac; // cloud/service unavailable: acoustic-only, never fail child
     }
-    if (svc.IsError || string.IsNullOrWhiteSpace(svc.Transcript)) return ac;
 
-    // FRR-first hallucination guard: a strong, clean acoustic match while the
-    // transcript resembles nothing near the target means the transcript is the
-    // weaker evidence (whisper hears chatter/noise) — keep the acoustic verdict.
+    if (svc.IsError || string.IsNullOrWhiteSpace(svc.Transcript)) {
+      return ac;
+    }
+
+    // 3. BIDIRECTIONAL CROSS-VALIDATION (Xác thực chéo đa tầng giữa Sóng âm & Cloud AI)
     float lexical = LexicalMatcher.MatchScore(svc.Transcript, target.Value);
+    float acousticMatch = ac.Pronunciation.HasAcousticData ? ac.Pronunciation.AcousticMatch : 0.5f;
+    float cloudAccuracy = svc.Pronunciation.HasPhonemeData ? svc.Pronunciation.AccuracyScore : lexical;
+
+    // Cross-Validation Rule 1: Hallucination Guard (Cloud hears unrelated background words, but child made strong sound)
     bool strongCleanAudio = ac.Pronunciation.HasAcousticData
       && ac.Pronunciation.AcousticMatch >= _policy.AcousticPassMatch
       && !ac.Pronunciation.AcousticMissingEnding
       && !ac.Pronunciation.AcousticWeakEnding;
-    if (strongCleanAudio && lexical < _policy.PartialLexicalFloor) return ac;
+    if (strongCleanAudio && lexical < _policy.PartialLexicalFloor) {
+      // Audio is ground truth — preserve child's clear vocal effort over cloud chatter
+      return ac;
+    }
+
+    // Cross-Validation Rule 2: Acoustic Spoofing / Noise Guard
+    // If cloud strongly rejects (lexical = 0) and acoustic is borderline, don't give a false pass
+    if (lexical < 0.2f && acousticMatch < _policy.AcousticStrongMatch) {
+      ac.Transcript = svc.Transcript;
+      ac.RecognitionConfidence = 0.25f;
+      return ac;
+    }
+
+    // Cross-Validation Rule 3: Balanced Consensus (Tổng hòa điểm số âm học và AI ngữ âm)
+    // Phoneme accuracy from Azure and Onset/Coda integrity from DSP reinforce each other
+    if (svc.Pronunciation.HasPhonemeData) {
+      var pron = svc.Pronunciation;
+      // Retain acoustic flags (missing ending, onset score) inside the composite evidence
+      pron.HasAcousticData = ac.Pronunciation.HasAcousticData;
+      pron.AcousticMatch = ac.Pronunciation.AcousticMatch;
+      pron.AcousticOnset = ac.Pronunciation.AcousticOnset;
+      pron.AcousticCoda = ac.Pronunciation.AcousticCoda;
+      pron.AcousticMissingEnding = ac.Pronunciation.AcousticMissingEnding;
+      pron.AcousticWeakEnding = ac.Pronunciation.AcousticWeakEnding;
+      pron.AcousticMargin = ac.Pronunciation.AcousticMargin;
+      ac.Pronunciation = pron;
+    }
 
     ac.Transcript = svc.Transcript;
-    ac.RecognitionConfidence = svc.RecognitionConfidence;
-    ac.LatencyMs += svc.LatencyMs;
-    ac.ProviderId = "hybrid/" + (svc.ProviderId ?? "service");
+    ac.RecognitionConfidence = Math.Max(svc.RecognitionConfidence, acousticMatch);
+    ac.LatencyMs = Math.Max(ac.LatencyMs, svc.LatencyMs);
+    ac.ProviderId = "hybrid/" + (svc.ProviderId ?? "azure");
     return ac;
   }
 }

@@ -78,10 +78,10 @@ public class CT_P54_StairTargets {
   [Test] public void P54A_DigitSegMaps() {
     GameObject root = new GameObject("P54Digits");
     try {
-      string[][] want = CountingGardenBuilder.DigitSegSets;
+      string[][] want = GardenPrimitives.DigitSegSets;
       Assert.AreEqual(10, want.Length, "ten digit maps");
       for (int n = 0; n <= 9; n++) {
-        GameObject g = CountingGardenBuilder.Digit(root.transform, "P54D" + n,
+        GameObject g = GardenPrimitives.Digit(root.transform, "P54D" + n,
           Vector3.zero, 1.0f, 0.8f, Color.white, 90f, n);
         Assert.IsNotNull(g, "digit " + n + " builds");
         var names = new List<string>();
@@ -93,18 +93,18 @@ public class CT_P54_StairTargets {
         Object.DestroyImmediate(g);
       }
       // The named wrappers keep their historic shapes (gameplay #1/#2 pins).
-      GameObject d2 = CountingGardenBuilder.Digit2(root.transform, "P54Two",
+      GameObject d2 = GardenPrimitives.Digit2(root.transform, "P54Two",
         Vector3.zero, 1.0f, 0.8f, Color.white, 90f);
       Assert.AreEqual(5, d2.transform.childCount, "Digit2 = A/B/G/E/D");
       Assert.IsNotNull(FindDeep(d2.transform, "P54TwoE"), "Digit2 keeps E");
       Object.DestroyImmediate(d2);
-      GameObject d3 = CountingGardenBuilder.Digit3(root.transform, "P54Three",
+      GameObject d3 = GardenPrimitives.Digit3(root.transform, "P54Three",
         Vector3.zero, 1.0f, 0.8f, Color.white, 90f);
       Assert.AreEqual(5, d3.transform.childCount, "Digit3 = A/B/G/C/D");
       Assert.IsNotNull(FindDeep(d3.transform, "P54ThreeC"), "Digit3 keeps C");
       Object.DestroyImmediate(d3);
       // Out of range reads as 8 (never a blank board).
-      GameObject dX = CountingGardenBuilder.Digit(root.transform, "P54Dx",
+      GameObject dX = GardenPrimitives.Digit(root.transform, "P54Dx",
         Vector3.zero, 1.0f, 0.8f, Color.white, 90f, 42);
       Assert.AreEqual(7, dX.transform.childCount, "unknown digit falls back to 8");
       Object.DestroyImmediate(dX);
@@ -129,7 +129,7 @@ public class CT_P54_StairTargets {
         var names = new List<string>();
         for (int i = 0; i < board.transform.childCount; i++)
           names.Add(board.transform.GetChild(i).name);
-        string[] want = CountingGardenBuilder.DigitSegSets[t];
+        string[] want = GardenPrimitives.DigitSegSets[t];
         Assert.AreEqual(want.Length, names.Count, "board shows " + t + " (not a fixed 3)");
         foreach (string s in want)
           Assert.IsTrue(names.Contains("SHNumberDigit" + s), "board carries " + s);
@@ -343,7 +343,7 @@ public class CT_P54_StairTargets {
   [Test] public void P54I_TargetLadderAndCli() {
     GameObject areaGo = new GameObject("P54AreaLadder");
     try {
-      CountingGardenArea area = areaGo.AddComponent<CountingGardenArea>();
+      SelectionYardArea area = areaGo.AddComponent<SelectionYardArea>();
       area.Bind(null, null, null, null, null, Vector3.zero);
       Assert.AreEqual(3, area.StairTarget, "first visit teaches the reference 3");
       Assert.AreEqual(3, area.StairTarget, "ladder starts at 3");
@@ -360,19 +360,19 @@ public class CT_P54_StairTargets {
       area.TickStairProgressionForTests();
       Assert.AreEqual(1, area.StairTarget, "9 wraps to the 1-step breather");
       // A mid-lesson re-entry (not Completed) never advances.
-      CountingGardenArea area2 = new GameObject("P54AreaMid").AddComponent<CountingGardenArea>();
+      SelectionYardArea area2 = new GameObject("P54AreaMid").AddComponent<SelectionYardArea>();
       try {
         area2.Bind(null, null, null, null, null, Vector3.zero);
         area2.TickStairProgressionForTests();
         Assert.AreEqual(3, area2.StairTarget, "no completion, no advance");
       } finally { Object.DestroyImmediate(area2.gameObject); }
       // CLI parsing (pure): pin the rung, reject strays.
-      Assert.AreEqual(7, CountingGardenArea.ParseStairTargetArg(new[] { "x", "-stair-target", "7" }, 3),
+      Assert.AreEqual(7, SelectionYardArea.ParseStairTargetArg(new[] { "x", "-stair-target", "7" }, 3),
         "CLI pins 7");
-      Assert.AreEqual(3, CountingGardenArea.ParseStairTargetArg(new[] { "-stair-target", "12" }, 3),
+      Assert.AreEqual(3, SelectionYardArea.ParseStairTargetArg(new[] { "-stair-target", "12" }, 3),
         "out-of-range falls back");
-      Assert.AreEqual(3, CountingGardenArea.ParseStairTargetArg(new[] { "x" }, 3), "no flag, no change");
-      Assert.AreEqual(3, CountingGardenArea.ParseStairTargetArg(null, 3), "null args, no change");
+      Assert.AreEqual(3, SelectionYardArea.ParseStairTargetArg(new[] { "x" }, 3), "no flag, no change");
+      Assert.AreEqual(3, SelectionYardArea.ParseStairTargetArg(null, 3), "null args, no change");
     } finally { Object.DestroyImmediate(areaGo); }
   }
 

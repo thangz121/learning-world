@@ -82,8 +82,7 @@ public class MicroGateHint : MonoBehaviour {
   ClickToMove ResolvePlayer() {
     if (Selection != null && Selection.Area != null) return Selection.Area.Player;
     if (Portal == null) return null;
-    if (Portal.Area != null) return Portal.Area.Player;
-    if (Portal.DiscoveryArea != null) return Portal.DiscoveryArea.Player;
+    if (Portal.YardArea != null) return Portal.YardArea.Player;
     return null;
   }
 

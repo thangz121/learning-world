@@ -68,13 +68,6 @@ public class CT_P53_StairGame {
     return true;
   }
 
-  static CountingGardenBuilder BuildGarden(out GameObject garden) {
-    garden = new GameObject("P53GardenWorld");
-    CountingGardenBuilder builder = garden.AddComponent<CountingGardenBuilder>();
-    builder.BuildContent(garden.transform);
-    return builder;
-  }
-
   static StairHillBuilder BuildArena(out GameObject arena) {
     arena = new GameObject("P53StairWorld");
     StairHillBuilder builder = arena.AddComponent<StairHillBuilder>();
@@ -106,53 +99,6 @@ public class CT_P53_StairGame {
     for (int i = 0; i < 8; i++) game.Tick(0.1f);
   }
 
-  // A. Garden: the number-stair hill is the east plot, with the bed contract
-  // (border/pad/fence/anchor/gate) and the mini stair identity; the crescent
-  // walk reaches its mouth and the carrot plot is untouched.
-  [Test] public void P53A_GardenStairPlot() {
-    GameObject garden;
-    CountingGardenBuilder builder = BuildGarden(out garden);
-    try {
-      Assert.AreEqual(2, CountingGardenBuilder.ZoneCount, "two plots");
-      Assert.AreEqual(1, CountingGardenBuilder.StairZoneIndex, "the hill is the east plot");
-      Vector3 center = builder.ZoneCenters[CountingGardenBuilder.StairZoneIndex];
-      Vector3 outDir = (center - CountingGardenBuilder.ArcCenter).normalized;
-      Vector3 mouth = center - outDir * 1.35f;
-      // Bed contract (the picker + layout tests read one shape for every plot).
-      foreach (string n in new[] { "CGZone1Border", "CGZone1Pad", "CGZone1Fence0",
-          "CGZone1Fence6", "CGZone1Anchor", "CGZone1Post", "CGZone1Vignette" }) {
-        Assert.IsNotNull(FindDeep(garden.transform, n), "stair plot piece " + n);
-      }
-      // The numbered gate post carries THREE beads (the arena's target), not six.
-      for (int b = 0; b < 3; b++)
-        Assert.IsNotNull(FindDeep(garden.transform, "CGZone1PostBead" + b), "target bead " + b);
-      Assert.IsNull(FindDeep(garden.transform, "CGZone1PostBead3"), "no fourth bead on the post");
-      // S3-P2Z12b: the diorama (mini lesson + board + steps) is a RUNTIME
-      // component (StairLessonDemo) — the builder stages only the plot
-      // contract. Pinned by P53J below.
-      Assert.IsNull(FindDeep(garden.transform, "CGStairDemoMiniRoot"),
-        "no runtime demo in a plain BuildContent (staged by the installer)");
-      // The crescent walk reaches the stair mouth (the child can walk there).
-      float best = 999f;
-      foreach (Transform t in garden.GetComponentsInChildren<Transform>(true)) {
-        if (t == null || !t.name.StartsWith("CGPathCrescent")) continue;
-        float d = Dist2D(t.localPosition, mouth);
-        if (d < best) best = d;
-      }
-      Assert.Less(best, 3.0f, "the crescent walk passes the stair hill's mouth");
-      // Existing east tree keeps its distance (the hill must not crowd it).
-      // BlossomTree builds named PARTS (Trunk/Canopy*), the trunk carries the pos.
-      Transform tree = FindDeep(garden.transform, "CGBlossomTree5Trunk");
-      Assert.IsNotNull(tree, "east framing tree still there");
-      Assert.Greater(Dist2D(tree.localPosition, center), 3.0f, "the hill never crowds the tree");
-      // The hill fits the island (hedge r19).
-      Assert.Less(Dist2D(center, CountingGardenBuilder.ArcCenter), 16f, "hill inside the island");
-    } finally { Object.DestroyImmediate(garden); }
-  }
-
-  // B. Step identity: ONE deterministic function (StairRun) decides the current
-  // step from a world position — bands tile, nothing is guessed by height, and
-  // standing under/beside the stairs is never a phantom step.
   [Test] public void P53B_StairRunStepIdentity() {
     GameObject arena;
     StairHillBuilder builder = BuildArena(out arena);
@@ -198,16 +144,14 @@ public class CT_P53_StairGame {
     GameObject arena;
     StairHillBuilder builder = BuildArena(out arena);
     try {
-      Assert.Greater(Vector3.Distance(StairHillBuilder.WorldOffset, CountingGardenBuilder.WorldOffset), 40f,
-        "separate island from the garden");
       Assert.Greater(Vector3.Distance(StairHillBuilder.WorldOffset, RabbitPlayBuilder.WorldOffset), 40f,
         "separate island from the rabbit arena");
-      Assert.Greater(Vector3.Distance(StairHillBuilder.WorldOffset, MathWorldBuilder.WorldOffset), 40f,
-        "separate island from Math");
+      Assert.Greater(Vector3.Distance(StairHillBuilder.WorldOffset, GeometryPlayBuilder.WorldOffset), 40f,
+        "separate island from the geometry arena");
       Assert.IsNotNull(builder.ExitPortal, "the hill has its way home");
       Assert.IsTrue(builder.ExitPortal.ExitMode, "it is an exit portal");
-      Assert.IsTrue(builder.ExitPortal.PlayExit, "it returns to the GARDEN (not the Math hub)");
-      Assert.AreEqual(CountingGardenArea.AreaId, builder.ExitPortal.areaId, "targets the garden area");
+      Assert.IsTrue(builder.ExitPortal.PlayExit, "it returns to the GAME YARD");
+      Assert.IsNull(builder.ExitPortal.YardArea, "the yard binds it at launch (bare build unbound)");
       MicroWorldPortal[] portals = arena.GetComponentsInChildren<MicroWorldPortal>(true);
       Assert.AreEqual(1, portals.Length, "one door only");
       float spawnClear = Vector2.Distance(
@@ -262,7 +206,6 @@ public class CT_P53_StairGame {
       Assert.Less(Dist2D(a.Exit.localPosition, StairHillBuilder.ExitLocal), 0.1f, "exit = the door");
       // The builder stages NO controllers: the activity is a runtime component.
       Assert.IsNull(arena.GetComponentInChildren<NumberStairs>(true), "no activity in the built scene");
-      Assert.IsNull(arena.GetComponentInChildren<StairLessonDemo>(true), "no demo here");
     } finally { Object.DestroyImmediate(arena); }
   }
 
@@ -351,11 +294,11 @@ public class CT_P53_StairGame {
     Assert.IsTrue(t.EnterAsync(ops, math, "MathScene").GetAwaiter().GetResult(), "subject loads");
     Assert.IsFalse(ops.Loaded.Contains(StairHillBuilder.SceneName),
       "the stair scene must NOT be loaded at subject entry (lazy)");
-    Assert.IsTrue(t.EnterMicroAsync(ops, CountingGardenBuilder.SceneName).GetAwaiter().GetResult(),
-      "garden loads first");
+    Assert.IsTrue(t.EnterMicroAsync(ops, RabbitPlayBuilder.SceneName).GetAwaiter().GetResult(),
+      "the rabbit arena loads first");
     Assert.IsFalse(t.EnterMicroAsync(ops, StairHillBuilder.SceneName).GetAwaiter().GetResult(),
-      "the stair scene cannot stack onto the garden (one micro slot)");
-    Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "garden unloads");
+      "the stair scene cannot stack onto it (one micro slot)");
+    Assert.IsTrue(t.ExitMicroAsync(ops).GetAwaiter().GetResult(), "the rabbit arena unloads");
     Assert.IsTrue(t.EnterMicroAsync(ops, StairHillBuilder.SceneName).GetAwaiter().GetResult(),
       "the stair scene loads into the freed slot");
     Assert.IsTrue(ops.Loaded.Contains(StairHillBuilder.SceneName), "it is now the live micro scene");
@@ -406,116 +349,6 @@ public class CT_P53_StairGame {
     }
   }
 
-  // J. Garden mini lesson (S3-P2Z12b, user report "NPC dạy trẻ chơi ở đâu?"):
-  // the stair plot hosts the SAME two-NPC teaching miniature as the ball plot —
-  // a scaled diorama with 3 chunky steps (beads 1..3), the "3" board, the goal
-  // arch and both actors — and a focused run completes a pass, opens the panel
-  // gate and resets when the focus is released.
-  [Test] public void P53J_GardenMiniLesson() {
-    GameObject garden;
-    CountingGardenBuilder builder = BuildGarden(out garden);
-    GameObject demoGo = new GameObject("P53StairDemo");
-    try {
-      demoGo.transform.SetParent(garden.transform, false);
-      StairLessonDemo demo = demoGo.AddComponent<StairLessonDemo>();
-      FakeAudio audio = new FakeAudio();
-      demo.Build(builder, null, audio);
-      Assert.IsTrue(demo.ActorsBuilt, "teacher + student built in the plot");
-      Assert.IsNotNull(demo.MiniRoot, "diorama root built");
-      Assert.Less(demo.MiniRoot.localScale.x, 1f, "the diorama is a miniature");
-      Assert.AreEqual(StairLessonDemo.DemoSteps, 3, "the preview shows the goal (3 steps)");
-      for (int i = 1; i <= StairLessonDemo.DemoSteps; i++) {
-        Assert.IsNotNull(FindDeep(garden.transform, "CGStairMiniStep" + i), "mini step " + i);
-        Assert.IsNotNull(FindDeep(garden.transform, "CGStairMiniStepTop" + i), "mini cap " + i);
-        Transform cue = FindDeep(garden.transform, "CGStairMiniCue" + i);
-        Assert.IsNotNull(cue, "mini bead row " + i);
-        Assert.AreEqual(i, cue.childCount, "step " + i + " carries " + i + " beads");
-        Assert.IsNull(FindDeep(garden.transform, "CGStairMiniStep" + i).GetComponent<Collider>(),
-          "scenery is click-through (the plot keeps the garden's ground clicks)");
-      }
-      Assert.IsNotNull(FindDeep(garden.transform, "CGStairMiniBoard3"), "mini board digit");
-      Assert.IsNotNull(FindDeep(garden.transform, "CGStairMiniGoalBeam"), "mini goal arch");
-      // Colours must be REAL: a round-1 bug made the demo's colour fields
-      // self-referential (Gold = Gold) and every "gold" prop rendered black.
-      Transform bead = FindDeep(garden.transform, "CGStairMiniBead1_0");
-      Assert.IsNotNull(bead, "bead built");
-      Color beadColor = bead.GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
-      Assert.Greater(beadColor.r + beadColor.g + beadColor.b, 0.5f,
-        "the counting bead is gold, not black (colour fields sane)");
-      Transform digitSeg = FindDeep(garden.transform, "CGStairMiniBoard3A");
-      Assert.IsNotNull(digitSeg, "digit segment built");
-      Color digitColor = digitSeg.GetComponent<Renderer>().sharedMaterial.GetColor("_BaseColor");
-      Assert.Greater(digitColor.r + digitColor.g + digitColor.b, 0.5f,
-        "the number 3 is gold, not black");
-      Assert.IsTrue(FindDeep(garden.transform, "CGStairMiniTeacherVisual") != null
-        || FindDeep(garden.transform, "CGStairMiniTeacher") != null, "teacher staged");
-      // Focused run = the zone's try-run: a full pass, then the gate opens.
-      Assert.IsFalse(demo.PassDone, "no pass before the run");
-      demo.StartFocusedLesson();
-      Assert.IsTrue(demo.Engaged, "focused run engaged");
-      int guard = 0;
-      while (demo.LoopCount < 1 && guard < 400) { demo.Step(0.1f); guard++; }
-      Assert.GreaterOrEqual(demo.LoopCount, 1, "one full pass done");
-      Assert.IsTrue(demo.PassDone, "the panel gate is opened");
-      Assert.AreEqual(3, demo.StudentStep, "the student reached step 3");
-      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Three.", "Ba.")),
-        "the teacher counts the steps");
-      Assert.GreaterOrEqual(audio.Sfx.FindAll(s => s == "step").Count, 3, "each step sounded");
-      // Releasing the focus (panel Back / another plot) resets the stage.
-      demo.StopFocusedLesson();
-      Assert.IsFalse(demo.Engaged, "release stops the run");
-      Assert.IsFalse(demo.FocusRun, "and clears the focused flag");
-    } finally {
-      Object.DestroyImmediate(demoGo);
-      Object.DestroyImmediate(garden);
-    }
-  }
-
-  // K. Zone-demo routing (S3-P2Z12b): the area resolves EACH staged plot's own
-  // garden demo — the stair plot's focus starts the stair lesson and its
-  // completion opens the panel (the carrot plot keeps its own binding).
-  [Test] public void P53K_ZoneDemoRouting() {
-    GameObject garden;
-    CountingGardenBuilder builder = BuildGarden(out garden);
-    GameObject areaGo = new GameObject("P53AreaRoute");
-    try {
-      CountingGardenArea area = areaGo.AddComponent<CountingGardenArea>();
-      area.Bind(null, null, null, null, null, Vector3.zero);
-      area.SetGarden(CountingGardenBuilder.WorldOffset + CountingGardenBuilder.EntryLocal,
-        builder.Anchors, builder.ZoneSpots);
-      FakeDemo stairDemo = new FakeDemo();
-      FakeDemo rabbitDemo = new FakeDemo();
-      area.BindDemo(CountingGardenBuilder.StairZoneIndex, stairDemo);
-      area.BindDemo(CountingGardenBuilder.RabbitZoneIndex, rabbitDemo);
-      Assert.AreEqual(rabbitDemo, area.DemoFor(CountingGardenBuilder.RabbitZoneIndex),
-        "the carrot plot keeps its own demo binding");
-      Assert.AreEqual(stairDemo, area.DemoFor(CountingGardenBuilder.StairZoneIndex),
-        "the stair plot routes to the stair lesson demo");
-      Assert.IsTrue(area.TryEnterForTests(), "enter the garden");
-      area.FocusZone(CountingGardenBuilder.StairZoneIndex);
-      Assert.IsTrue(stairDemo.Started, "the focused stair plot starts its demo");
-      Assert.IsTrue(area.AwaitingDemo, "the panel waits for the try-run");
-      stairDemo.LoopCount++;
-      area.TickDemoGateForTests();
-      Assert.IsFalse(area.AwaitingDemo, "the completed pass opens the gate");
-      Assert.IsFalse(rabbitDemo.Started, "the rabbit demo is untouched by the stair focus");
-      area.CancelFocus();
-      Assert.IsTrue(stairDemo.Stopped, "leaving the plot releases the demo (voice cut + reset)");
-    } finally {
-      Object.DestroyImmediate(areaGo);
-      Object.DestroyImmediate(garden);
-    }
-  }
-
-  sealed class FakeDemo : IGardenZoneDemo {
-    public int LoopCount { get; set; }
-    public bool PassDone { get; set; }
-    public bool Started { get; private set; }
-    public bool Stopped { get; private set; }
-    public void StartFocusedLesson() { Started = true; }
-    public void StopFocusedLesson() { Stopped = true; }
-  }
-
   // I. Operator window flag (S3-P2Z12 user order: "game nhỏ nhất, góc phải
   // dưới" on the demo machine): the placement is launch-flag driven, inert
   // without the flag, and uses the supported Screen API.
@@ -527,38 +360,6 @@ public class CT_P53_StairGame {
     Assert.IsTrue(src.Contains("MoveMainWindowTo"), "uses the supported Screen API");
     Assert.IsTrue(src.Contains("if (!want) return;"), "inert unless the flag is passed");
     Assert.IsTrue(src.Contains("[RuntimeInitializeOnLoadMethod"), "applies after the first scene load");
-  }
-
-  // L. Garden mini demo teaches +/- (S3-P2Z32): the miniature cycles plain,
-  // addition (2+1) and subtraction (3-1) across passes.
-  [Test] public void P53L_GardenMiniLessonArithmetic() {
-    GameObject garden;
-    CountingGardenBuilder builder = BuildGarden(out garden);
-    GameObject demoGo = new GameObject("P53StairDemoArith");
-    try {
-      demoGo.transform.SetParent(garden.transform, false);
-      StairLessonDemo demo = demoGo.AddComponent<StairLessonDemo>();
-      FakeAudio audio = new FakeAudio();
-      demo.Build(builder, null, audio);
-      Assert.IsNotNull(FindDeep(garden.transform, "CGStairMiniExprAdd"), "add expression built");
-      Assert.IsNotNull(FindDeep(garden.transform, "CGStairMiniExprSub"), "sub expression built");
-      for (int pass = 0; pass < 3; pass++) {
-        demo.StartFocusedLesson();
-        int guard = 0;
-        while (!demo.PassDone && guard < 900) { demo.Step(0.1f); guard++; }
-        Assert.IsTrue(demo.PassDone, "pass " + pass + " completes");
-        demo.StopFocusedLesson();
-      }
-      Assert.GreaterOrEqual(demo.LoopCount, 3, "three passes cycle");
-      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Two plus one is three!",
-        "Hai cộng một bằng ba!")), "the addition pass is demonstrated");
-      Assert.IsTrue(audio.Lines.Contains(DialogueLang.T("Three minus one is two!",
-        "Ba trừ một bằng hai!")), "the subtraction pass is demonstrated");
-      Assert.IsNotNull(FindDeep(garden.transform, "CGStairMiniExprA"), "expression glyphs exist");
-    } finally {
-      Object.DestroyImmediate(demoGo);
-      Object.DestroyImmediate(garden);
-    }
   }
 
   // H. Speech: every new line passes the SafetyFilter (NPC cap = 6 words) in

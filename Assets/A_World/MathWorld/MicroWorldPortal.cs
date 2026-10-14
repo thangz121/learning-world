@@ -1,44 +1,34 @@
-// A_World/MathWorld/MicroWorldPortal.cs — S2 PIONEER MICRO-WORLD (v1).
-// Walk-in portal for a micro-world area: polls the player's XZ distance (same
-// proven pattern as SubjectGate — no physics triggers, no input hacks) and
-// fires the area beat once, re-arming only after the player walks clear. One
-// component, two modes: Enter (hub gate -> area) / Exit (area mouth -> hub).
-// Reusable for the other 9 micro-worlds when their turn comes.
+// A_World/MathWorld/MicroWorldPortal.cs — walk-in portal (Selection Yard era).
+// Polls the player's XZ distance (same proven pattern as SubjectGate — no
+// physics triggers, no input hacks) and fires the area beat once, re-arming
+// only after the player walks clear. One component, two modes: Enter (gate ->
+// area) / Exit (area mouth -> back). PHASE 5 legacy purge: the old counting
+// garden / discovery area fields are gone — the Selection Yard is the only
+// routing target; arena exits (PlayExit) go back to the game yard.
 // C# 9.0 only.
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public class MicroWorldPortal : MonoBehaviour {
-  public CountingGardenArea Area;
-  // Gameplay #7 (S3-P2Z18): the Discovery Garden's own area module.
-  public DiscoveryArea DiscoveryArea;
-  // FULL ARCHITECTURE RESET PHASE 4: an arena opened from the Selection Yard
-  // routes its exit back to the GAME YARD through this reference (the legacy
-  // garden routing stays for the old garden path until PHASE 5 removes it).
+  // FULL ARCHITECTURE RESET: an arena/yard opened from the Selection Yard
+  // routes through this reference (enters and exits).
   public SelectionYardArea YardArea;
   public bool ExitMode;
-  // S3 P2X play arena: this exit unloads the play scene and brings the child
-  // back to the Counting Garden (the exit portal of the GARDEN keeps
-  // ExitMode -> Math Hub). Same poll contract, one mode bit.
+  // Play arenas: this exit unloads the play scene and brings the child back
+  // to the GAME YARD (PlayExit) instead of the hub level.
   public bool PlayExit;
-  public string areaId = CountingGardenArea.AreaId;
   public float fireRadius = 1.3f;
   public float rearmMargin = 0.8f;
 
   // COLD START (journey J4 lesson, user report "vừa sang sân đã bị quay lại"):
   // the latch starts TRUE, so a player who SPAWNS inside the radius (e.g. the
-  // garden entry warp next to the exit disc) does NOT fire — the portal only
+  // arena entry warp next to the exit disc) does NOT fire — the portal only
   // arms after the player has walked clear of the radius at least once.
   bool _wasInside = true;
 
-  // The one dispatch seam (S3-P2Z15): every LIVE area implements
-  // IMicroWorldArea. (Build Yard / Delivery / Match gameplay was removed in
-  // the Counting Garden cleanup; their gates remain hub landmarks only.)
-  // PHASE 4: the Selection Yard takes precedence when bound (arena exits).
+  // The one dispatch seam: the Selection Yard area.
   public IMicroWorldArea TargetArea() {
-    if (YardArea != null) return YardArea;
-    if (Area != null) return Area;
-    return DiscoveryArea;
+    return YardArea;
   }
 
   void Update() {
@@ -53,10 +43,7 @@ public class MicroWorldPortal : MonoBehaviour {
     if (!_wasInside && d2 <= fireRadius * fireRadius) {
       _wasInside = true;
       if (PlayExit) {
-        // PHASE 4: the yard path wins when bound; legacy garden otherwise.
-        if (YardArea != null) { YardArea.ExitGameToYard(); return; }
-        CountingGardenArea garden = target as CountingGardenArea;
-        if (garden != null) garden.ExitPlayToGarden();
+        if (YardArea != null) YardArea.ExitGameToYard();
       } else if (ExitMode) {
         target.ExitToHub();
       } else {
