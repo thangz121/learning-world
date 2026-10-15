@@ -254,6 +254,101 @@ public class CT_S17_ShapeBuilder {
     }
   }
 
+  [Test] public void S17G_SixLivingToysAwakening() {
+    GameObject arena;
+    GeometryPlayBuilder builder = BuildArena(out arena);
+    try {
+      ToyKind[] toys = {
+        ToyKind.House, ToyKind.IceCream, ToyKind.Sailboat,
+        ToyKind.Train, ToyKind.Cat, ToyKind.Rocket
+      };
+
+      for (int i = 0; i < toys.Length; i++) {
+        ToyKind toy = toys[i];
+        builder.BuildLivingToyDecor(toy, Vector3.zero);
+        Assert.IsNotNull(builder.ActiveToyDecor, "decor created for " + toy);
+        Assert.IsNotNull(builder.ActiveLivingToy, "animator attached for " + toy);
+        Assert.AreEqual(toy, builder.ActiveLivingToy.Toy, "correct toy kind");
+
+        // Awakening triggers living decor activation
+        builder.AwakenToy(toy);
+        Assert.IsTrue(builder.ActiveToyDecor.activeSelf, "living toy awakened for " + toy);
+
+        // Living toy is interactive tap target
+        builder.ActiveLivingToy.OnClicked();
+      }
+    } finally {
+      Object.DestroyImmediate(arena);
+    }
+  }
+
+  [Test] public void S17H_TapToFlyAndLivingAnimation() {
+    GameObject arena;
+    GeometryPlayBuilder builder = BuildArena(out arena);
+    GameObject player = PlayerAt(GeometryPlayBuilder.PlaySpotLocal);
+    try {
+      FakeAudio audio = new FakeAudio();
+      GeometryPlay game = BuildGame(builder, arena, player, audio,
+        new ActivityLifecycle("shape_builder", "test"));
+
+      // Verify toy localization
+      Assert.AreEqual("choo-choo train", GeometryShapes.ToyNameEn(ToyKind.Train));
+      Assert.AreEqual("tàu hỏa tí hon", GeometryShapes.ToyNameVi(ToyKind.Train));
+      Assert.AreEqual("space rocket", GeometryShapes.ToyNameEn(ToyKind.Rocket));
+      Assert.AreEqual("tên lửa vũ trụ", GeometryShapes.ToyNameVi(ToyKind.Rocket));
+
+      // Test flight and socket ghost
+      GeometryPiece p = builder.SpawnHuntPiece(GeometryKind.Circle, Vector3.zero, Color.red, 1f, 0f);
+      GeometrySocket s = builder.ShowSocket(0, Vector3.forward * 2f, GeometryKind.Circle, false);
+      Assert.IsNotNull(s.transform.Find("Ghost"), "ghost present");
+
+      bool arrived = false;
+      p.BeginFlyTo(s.transform, 0f, () => { arrived = true; });
+      Assert.AreEqual(GeometryPiece.PieceState.Flying, p.State, "flying state");
+
+      // Wrong wobble doesn't crash
+      p.PlayWrongWobble();
+
+      // Clear cleans up toy decor
+      builder.ClearActiveToy();
+      Assert.IsNull(builder.ActiveToyDecor);
+    } finally {
+      Object.DestroyImmediate(player);
+      Object.DestroyImmediate(arena);
+    }
+  }
+
+  [Test] public void S17I_AwakenWiresLivingPartsToPlacedPieces() {
+    GameObject arena;
+    GeometryPlayBuilder builder = BuildArena(out arena);
+    try {
+      // Child placed: 2 circles (wheels/eyes) + 2 triangles (ears)
+      GeometryPiece c1 = builder.SpawnHuntPiece(GeometryKind.Circle, Vector3.zero, Color.red, 1f, 0f);
+      GeometryPiece c2 = builder.SpawnHuntPiece(GeometryKind.Circle, new Vector3(0f, 0f, 1.5f), Color.blue, 1f, 0f);
+      GeometryPiece t1 = builder.SpawnHuntPiece(GeometryKind.Triangle, new Vector3(0f, 0f, 3f), Color.green, 1f, 0f);
+      GeometryPiece t2 = builder.SpawnHuntPiece(GeometryKind.Triangle, new Vector3(0f, 0f, 4.5f), Color.yellow, 1f, 0f);
+      GeometrySocket s1 = builder.ShowSocket(0, Vector3.zero, GeometryKind.Circle, false);
+      GeometrySocket s2 = builder.ShowSocket(1, new Vector3(0f, 0f, 1.5f), GeometryKind.Circle, false);
+      GeometrySocket s3 = builder.ShowSocket(2, new Vector3(0f, 0f, 3f), GeometryKind.Triangle, true);
+      GeometrySocket s4 = builder.ShowSocket(3, new Vector3(0f, 0f, 4.5f), GeometryKind.Triangle, true);
+      s1.Accept(c1); s2.Accept(c2); s3.Accept(t1); s4.Accept(t2);
+
+      builder.BuildLivingToyDecor(ToyKind.Train, Vector3.zero);
+      builder.AwakenToy(ToyKind.Train);
+      Assert.IsNotNull(builder.ActiveLivingToy.Wheels, "train wheels must be wired to the placed circles");
+      Assert.AreEqual(2, builder.ActiveLivingToy.Wheels.Length, "both placed circles become spinning wheels");
+
+      builder.BuildLivingToyDecor(ToyKind.Cat, Vector3.zero);
+      builder.AwakenToy(ToyKind.Cat);
+      Assert.IsNotNull(builder.ActiveLivingToy.EarLeft, "cat ear L wired");
+      Assert.IsNotNull(builder.ActiveLivingToy.EarRight, "cat ear R wired");
+      Assert.IsNotNull(builder.ActiveLivingToy.EyeLeft, "cat eye L wired");
+      Assert.IsNotNull(builder.ActiveLivingToy.EyeRight, "cat eye R wired");
+    } finally {
+      Object.DestroyImmediate(arena);
+    }
+  }
+
   static void FillAssemble(GeometryPlay game, GeometryPlayBuilder builder, GameObject player) {
     for (int n = 0; n < 4; n++) {
       GeometrySocket open = null;

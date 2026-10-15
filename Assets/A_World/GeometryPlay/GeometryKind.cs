@@ -61,4 +61,31 @@ public static class GeometryShapes {
   public static Color ColorAt(int i) {
     return Palette[Mathf.Abs(i) % Palette.Length];
   }
+
+  public static string ToyNameEn(ToyKind t) {
+    if (t == ToyKind.House) return "cozy house";
+    if (t == ToyKind.IceCream) return "sweet ice cream";
+    if (t == ToyKind.Sailboat) return "ocean sailboat";
+    if (t == ToyKind.Train) return "choo-choo train";
+    if (t == ToyKind.Cat) return "playful cat";
+    return "space rocket";
+  }
+
+  public static string ToyNameVi(ToyKind t) {
+    if (t == ToyKind.House) return "ngôi nhà xinh";
+    if (t == ToyKind.IceCream) return "kem ốc quế";
+    if (t == ToyKind.Sailboat) return "thuyền buồm";
+    if (t == ToyKind.Train) return "tàu hỏa tí hon";
+    if (t == ToyKind.Cat) return "chú mèo con";
+    return "tên lửa vũ trụ";
+  }
+}
+
+public enum ToyKind {
+  House = 0,
+  IceCream = 1,
+  Sailboat = 2,
+  Train = 3,
+  Cat = 4,
+  Rocket = 5,
 }

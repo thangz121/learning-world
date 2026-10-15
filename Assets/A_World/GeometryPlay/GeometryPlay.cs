@@ -1,5 +1,6 @@
-// A_World/GeometryPlay/GeometryPlay.cs — Lắp Hình Vui Nhộn. Starts at LV3.
-// Actions change by level. No timer, no game over. C# 9.0 only.
+// A_World/GeometryPlay/GeometryPlay.cs — "Xưởng Đồ Chơi Ma Thuật" (The Magic Toy Forge).
+// Interactive shape assembly with snappy tap-to-fly, magnetic snap, and living toy awakening.
+// No timer, no fail state, celebrated learning. C# 9.0 only.
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -25,6 +26,7 @@ public class GeometryPlay : MonoBehaviour {
   public int MemoryStep { get; private set; }
   public GeometryKind[] Need { get; private set; }
   public string PropertyId { get; private set; }
+  public ToyKind CurrentToy { get; private set; }
 
   GeometryPlayBuilder _builder;
   Transform _player;
@@ -35,11 +37,9 @@ public class GeometryPlay : MonoBehaviour {
   Transform _fx;
   float _phaseT;
   bool _waitCalled;
-  bool _asked;
   float _restT;
   bool _finishAfterRest;
   float _idleT;
-  Vector3[] _huntSlots;
   readonly List<GeometrySocket> _liveSockets = new List<GeometrySocket>();
   readonly Queue<string> _askEn = new Queue<string>();
   readonly Queue<string> _askVi = new Queue<string>();
@@ -90,7 +90,7 @@ public class GeometryPlay : MonoBehaviour {
   void Update() { Tick(Time.deltaTime); }
 
   public void Tick(float dt) {
-    if (dt <= 0f || _builder == null || Completed && Current == Phase.Done) {
+    if (dt <= 0f || _builder == null || (Completed && Current == Phase.Done)) {
       if (_voice != null) _voice.Tick(dt);
       return;
     }
@@ -122,7 +122,7 @@ public class GeometryPlay : MonoBehaviour {
 
   void TickPlay(float dt) {
     if (Carried != null && Action != ActionKind.TapEnv && Action != ActionKind.FindBehind) {
-      GeometrySocket near = NearestOpenSocket(1.05f);
+      GeometrySocket near = NearestOpenSocket(1.25f);
       if (near != null) TryPlace(near);
     }
   }
@@ -136,7 +136,6 @@ public class GeometryPlay : MonoBehaviour {
     if (Completed) return;
     Current = Phase.Hunt;
     _phaseT = 0f;
-    _asked = false;
     Carried = null;
     MemoryStep = 0;
     LastWrongKind = false;
@@ -159,6 +158,7 @@ public class GeometryPlay : MonoBehaviour {
     _liveSockets.Clear();
     Need = null;
     PropertyId = "";
+
     if (Level == 3) ApplyRecognize();
     else if (Level == 4) ApplyDistinguish();
     else if (Level == 5) ApplyProperty();
@@ -186,6 +186,9 @@ public class GeometryPlay : MonoBehaviour {
     Target = cycle[RoundIndex % cycle.Length];
     SpawnFour(false, false, 0);
     ShowPad(Target);
+
+    CurrentToy = (RoundIndex % 2 == 0) ? ToyKind.House : ToyKind.IceCream;
+    _builder.BuildLivingToyDecor(CurrentToy, GeometryPlayBuilder.WorkshopLocal);
   }
 
   void ApplyDistinguish() {
@@ -196,6 +199,9 @@ public class GeometryPlay : MonoBehaviour {
     Target = cycle[RoundIndex % cycle.Length];
     SpawnFour(true, true, RoundIndex + 2);
     ShowPad(Target);
+
+    CurrentToy = ToyKind.Sailboat;
+    _builder.BuildLivingToyDecor(CurrentToy, GeometryPlayBuilder.WorkshopLocal);
   }
 
   void ApplyProperty() {
@@ -204,6 +210,9 @@ public class GeometryPlay : MonoBehaviour {
     Target = GeometryShapes.FromProperty(PropertyId);
     SpawnFour(true, true, 5);
     ShowPad(Target);
+
+    CurrentToy = (PropertyId == "corners3") ? ToyKind.Sailboat : ((PropertyId == "nocorners") ? ToyKind.IceCream : ToyKind.House);
+    _builder.BuildLivingToyDecor(CurrentToy, GeometryPlayBuilder.WorkshopLocal);
   }
 
   void ApplyWorld() {
@@ -217,11 +226,13 @@ public class GeometryPlay : MonoBehaviour {
   void ApplyAssemble() {
     bool house = (RoundIndex % 2) == 0;
     if (house) {
+      CurrentToy = ToyKind.House;
       Need = new GeometryKind[] { GeometryKind.Square, GeometryKind.Triangle };
       SpawnKinds(Need, true, 1);
       LiveSocket(0, GeometryPlayBuilder.BuildLocal, GeometryKind.Square, false);
       LiveSocket(1, GeometryPlayBuilder.BuildLocal + new Vector3(0f, 0.95f, 0f), GeometryKind.Triangle, true);
     } else {
+      CurrentToy = ToyKind.Train;
       Need = new GeometryKind[] { GeometryKind.Rectangle, GeometryKind.Circle, GeometryKind.Circle };
       SpawnKinds(Need, true, 3);
       LiveSocket(0, GeometryPlayBuilder.BuildLocal, GeometryKind.Rectangle, false);
@@ -229,15 +240,18 @@ public class GeometryPlay : MonoBehaviour {
       LiveSocket(2, GeometryPlayBuilder.BuildLocal + new Vector3(1.5f, 0f, -1.1f), GeometryKind.Circle, false);
     }
     Target = Need[0];
+    _builder.BuildLivingToyDecor(CurrentToy, GeometryPlayBuilder.BuildLocal);
   }
 
   void ApplyMemory() {
+    CurrentToy = ToyKind.Cat;
     Need = new GeometryKind[] { GeometryKind.Square, GeometryKind.Circle, GeometryKind.Triangle };
     Target = Need[0];
     SpawnKinds(Need, true, 2);
     LiveSocket(0, GeometryPlayBuilder.WorkshopLocal + new Vector3(-1.7f, 0f, 0f), GeometryKind.Square, false);
     LiveSocket(1, GeometryPlayBuilder.WorkshopLocal, GeometryKind.Circle, false);
     LiveSocket(2, GeometryPlayBuilder.WorkshopLocal + new Vector3(1.7f, 0f, 0f), GeometryKind.Triangle, false);
+    _builder.BuildLivingToyDecor(CurrentToy, GeometryPlayBuilder.WorkshopLocal);
   }
 
   void ApplySpatial() {
@@ -245,10 +259,12 @@ public class GeometryPlay : MonoBehaviour {
     if (k == 0) {
       Action = ActionKind.Spatial;
       Target = GeometryKind.Triangle;
+      CurrentToy = ToyKind.House;
       Need = new GeometryKind[] { GeometryKind.Square, GeometryKind.Triangle };
       SpawnKinds(Need, true, 4);
       LiveSocket(0, GeometryPlayBuilder.WorkshopLocal, GeometryKind.Square, false);
       LiveSocket(1, GeometryPlayBuilder.WorkshopLocal + new Vector3(0f, 0.95f, 0f), GeometryKind.Triangle, true);
+      _builder.BuildLivingToyDecor(CurrentToy, GeometryPlayBuilder.WorkshopLocal);
     } else if (k == 1) {
       Action = ActionKind.FindBehind;
       Target = GeometryKind.Circle;
@@ -267,10 +283,12 @@ public class GeometryPlay : MonoBehaviour {
     } else {
       Action = ActionKind.Spatial;
       Target = GeometryKind.Circle;
+      CurrentToy = ToyKind.Rocket;
       Need = new GeometryKind[] { GeometryKind.Square, GeometryKind.Circle };
       SpawnKinds(Need, true, 6);
       LiveSocket(0, GeometryPlayBuilder.WorkshopLocal, GeometryKind.Square, false);
       LiveSocket(1, GeometryPlayBuilder.WorkshopLocal + new Vector3(-1.7f, 0f, 0f), GeometryKind.Circle, false);
+      _builder.BuildLivingToyDecor(CurrentToy, GeometryPlayBuilder.WorkshopLocal);
     }
   }
 
@@ -373,19 +391,31 @@ public class GeometryPlay : MonoBehaviour {
       TryTap(piece);
       return;
     }
-    if (Carried != null) return;
     if (piece.State != GeometryPiece.PieceState.Idle) return;
-    if (Carried != null && Carried != piece) return;
+    if (Carried != null) return; // one piece at a time — blocks taps during FLIGHT and while carrying
+                                 // (a mid-flight retarget used to overwrite Carried and soft-lock TryPlace)
+
     if (Action == ActionKind.Memory) {
       if (Need == null || MemoryStep >= Need.Length || piece.Kind != Need[MemoryStep]) {
+        piece.PlayWrongWobble();
         Reject("Not this shape.", "Chưa phải hình này.");
         return;
       }
     }
-    if (!PlayerNear(piece.transform.position, 1.8f) && _player != null) {
-      // ClickRouter walks the child in; tests warp. Allow if close enough in tests
-      // by warping callers. Live play arrives then clicks again / pending fires.
+
+    // Live play: auto parabolic flight to matching open socket if playing
+    GeometrySocket open = FirstOpenMatchingKind(piece.Kind);
+    if (Application.isPlaying && open != null && Carried == null && Action != ActionKind.Memory) {
+      Carried = piece;
+      piece.BeginFlyTo(open.transform, open.Yaw, () => {
+        TryPlace(open);
+      });
+      _idleT = 0f;
+      PlaySfx("pickup");
+      GameJuice.PickFx(_fx, piece.transform.position, piece.transform);
+      return;
     }
+
     Transform holder = _player != null ? _player : transform;
     piece.BeginCarry(holder);
     Carried = piece;
@@ -405,6 +435,7 @@ public class GeometryPlay : MonoBehaviour {
       WinRound();
       return;
     }
+    piece.PlayWrongWobble();
     Reject("Not this shape.", "Chưa phải hình này.");
     Ask("You want a " + GeometryShapes.NameEn(Target) + ".",
       "Con đang tìm hình " + GeometryShapes.NameVi(Target) + ".");
@@ -415,25 +446,31 @@ public class GeometryPlay : MonoBehaviour {
     if (_restT > 0f) return;
     if (!socket.gameObject.activeInHierarchy) return;
     GeometryPiece piece = Carried;
+
     if (piece.Kind != socket.Kind) {
       LastWrongKind = true;
+      piece.PlayWrongWobble();
       Reject("Not this shape.", "Chưa phải hình này.");
       return;
     }
+
     if (socket.NeedsUpright && !GeometryShapes.OrientationOk(piece.Kind, piece.Yaw, socket.Yaw)) {
       LastOrientationFix = true;
       piece.transform.rotation = Quaternion.Euler(0f, socket.Yaw, 0f);
       Say("Turn it this way!", "Xoay hình như này!");
     }
+
     socket.Accept(piece);
     Carried = null;
     _idleT = 0f;
     PlaySfx("place");
     GameJuice.PlaceFx(_fx, socket.transform.position, socket.transform);
+
     if (Action == ActionKind.Memory) {
       MemoryStep++;
       if (Need != null && MemoryStep < Need.Length) Target = Need[MemoryStep];
     }
+
     if (AllSocketsFilled()) WinRound();
     else if (_liveSockets.Count > MemoryStep && MemoryStep < _liveSockets.Count)
       ActivityGuide.PointAt(_liveSockets[Mathf.Min(MemoryStep, _liveSockets.Count - 1)].transform.position);
@@ -459,8 +496,15 @@ public class GeometryPlay : MonoBehaviour {
     PlaySfx("success");
     GameJuice.CorrectFx(_fx, _player != null ? _player.position : Vector3.zero, false);
     ActivityFeedback.Correct();
+
+    // Awaken the living toy!
+    if (_builder != null) {
+      _builder.AwakenToy(CurrentToy);
+    }
+
     Say("That's a " + GeometryShapes.NameEn(Target) + "!",
       "Đúng rồi! Hình " + GeometryShapes.NameVi(Target) + "!");
+
     if (Carried != null) { Carried.ReturnHome(); Carried = null; }
     int max = RoundsOf(Level);
     RoundIndex++;
@@ -477,7 +521,7 @@ public class GeometryPlay : MonoBehaviour {
 
   void RestThenAdvance(bool finish) {
     _finishAfterRest = finish;
-    _restT = Application.isPlaying ? 1.6f : 0f;
+    _restT = Application.isPlaying ? 2.0f : 0f;
     if (_restT <= 0f) AfterWin();
   }
 
@@ -569,6 +613,15 @@ public class GeometryPlay : MonoBehaviour {
       if (s == null || !s.gameObject.activeInHierarchy || s.Filled) continue;
       if (Carried != null && s.Kind != Carried.Kind) continue;
       return s;
+    }
+    return null;
+  }
+
+  GeometrySocket FirstOpenMatchingKind(GeometryKind k) {
+    for (int i = 0; i < _liveSockets.Count; i++) {
+      GeometrySocket s = _liveSockets[i];
+      if (s == null || !s.gameObject.activeInHierarchy || s.Filled) continue;
+      if (s.Kind == k) return s;
     }
     return null;
   }

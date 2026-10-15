@@ -1,5 +1,7 @@
-// A_World/GeometryPlay/GeometryPlayBuilder.cs — "Xưởng Hình Học" (one scene,
-// three zones, short walks). Presentation only. C# 9.0 only.
+// A_World/GeometryPlay/GeometryPlayBuilder.cs — "Xưởng Đồ Chơi Ma Thuật"
+// (The Magic Toy Workshop). Stylized 3D craft workbench, holographic blueprint pads,
+// toy showcase shelf, and procedural construction for 6 iconic living toys.
+// C# 9.0 only.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,19 +13,21 @@ public class GeometryPlayBuilder : MonoBehaviour {
   public const float BoundZ = 14f;
   public static readonly Vector3 EntryLocal = new Vector3(0f, 0f, -3f);
   public static readonly Vector3 ExitLocal = new Vector3(0f, 0f, -10.8f);
-  public static readonly Vector3 FollowOffset = new Vector3(0f, 2.8f, -4.2f);
+  public static readonly Vector3 FollowOffset = new Vector3(0f, 3.8f, -5.2f);
   public static readonly Vector3 PlaySpotLocal = new Vector3(0f, 0f, 0.2f);
   public static readonly Vector3 HuntCenter = new Vector3(0f, 0f, 2.6f);
   public static readonly Vector3 WorkshopLocal = new Vector3(0f, 0f, 5.1f);
   public static readonly Vector3 BuildLocal = new Vector3(4.4f, 0f, 4.4f);
-  public const string ObjectiveEn = "Play with shapes";
-  public const string ObjectiveVi = "Lắp hình vui";
+  public const string ObjectiveEn = "Build magical toys with shapes!";
+  public const string ObjectiveVi = "Lắp ráp đồ chơi ma thuật nhé!";
 
+  static readonly Color ParquetWood = new Color(0.72f, 0.54f, 0.38f);
+  static readonly Color DarkTeak = new Color(0.42f, 0.28f, 0.18f);
+  static readonly Color Gold = new Color(0.98f, 0.82f, 0.25f);
+  static readonly Color Cream = new Color(0.99f, 0.96f, 0.90f);
+  static readonly Color BlueprintCyan = new Color(0.24f, 0.65f, 0.92f);
+  static readonly Color MagicPurple = new Color(0.68f, 0.45f, 0.88f);
   static readonly Color Lawn = new Color(0.44f, 0.70f, 0.42f);
-  static readonly Color Sand = new Color(0.86f, 0.78f, 0.62f);
-  static readonly Color Wood = new Color(0.55f, 0.40f, 0.24f);
-  static readonly Color Cream = new Color(0.99f, 0.95f, 0.85f);
-  static readonly Color Gold = new Color(0.98f, 0.78f, 0.25f);
   static readonly Color Stone = new Color(0.68f, 0.68f, 0.66f);
   static readonly Color PathTan = new Color(0.76f, 0.60f, 0.40f);
 
@@ -40,6 +44,10 @@ public class GeometryPlayBuilder : MonoBehaviour {
   public Transform Crate { get; private set; }
   public Transform HuntRoot { get; private set; }
   public Transform SocketRoot { get; private set; }
+  public Transform WorkbenchTransform { get; private set; }
+  public Transform ToyShelfTransform { get; private set; }
+  public GameObject ActiveToyDecor { get; private set; }
+  public LivingToyAnimator ActiveLivingToy { get; private set; }
 
   static Mesh _triMesh;
 
@@ -59,6 +67,8 @@ public class GeometryPlayBuilder : MonoBehaviour {
   public void BuildContent(Transform root) {
     BuildGround(root);
     BuildEntryAndExit(root);
+    BuildWorkbench(root);
+    BuildToyShelf(root);
     BuildZones(root);
     BuildEnv(root);
     BuildDressing(root);
@@ -78,21 +88,23 @@ public class GeometryPlayBuilder : MonoBehaviour {
     rim.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.42f, 0.33f, 0.24f));
     Strip(rim);
     Ignore(rim);
+
     GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
     ground.name = "GPGround";
     ground.transform.SetParent(parent, false);
     ground.transform.localScale = new Vector3(3.2f, 1f, 3.2f);
     ground.GetComponent<Renderer>().sharedMaterial = Lit(Lawn);
-    Pad(parent, "GPPlaza", new Vector3(0f, 0.006f, 1.8f), 9.2f, new Color(0.93f, 0.84f, 0.58f));
+
+    // Warm wooden workshop plaza & crafting rug
+    Pad(parent, "GPPlaza", new Vector3(0f, 0.006f, 1.8f), 9.6f, ParquetWood);
+    Pad(parent, "GPCraftRug", WorkshopLocal + new Vector3(0f, 0.009f, 0f), 7.8f, Cream);
     Box(parent, "GPPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f), PathTan);
     StageLight(parent, new Vector3(0f, 7.5f, 2.8f));
-    // USER ROUND 2026-10-01: the big glowing floor disc was removed (it read as
-    // an annoying blob under the child in every arena).
   }
 
   void BuildEntryAndExit(Transform parent) {
-    Box(parent, "GPEntryPostL", new Vector3(-1.5f, 1.0f, -9.2f), new Vector3(0.2f, 2.0f, 0.2f), Wood);
-    Box(parent, "GPEntryPostR", new Vector3(1.5f, 1.0f, -9.2f), new Vector3(0.2f, 2.0f, 0.2f), Wood);
+    Box(parent, "GPEntryPostL", new Vector3(-1.5f, 1.0f, -9.2f), new Vector3(0.2f, 2.0f, 0.2f), DarkTeak);
+    Box(parent, "GPEntryPostR", new Vector3(1.5f, 1.0f, -9.2f), new Vector3(0.2f, 2.0f, 0.2f), DarkTeak);
     GameObject beam = Box(parent, "GPEntryBeam", new Vector3(0f, 2.08f, -9.2f),
       new Vector3(3.2f, 0.16f, 0.16f), Cream);
     Ignore(beam);
@@ -112,23 +124,56 @@ public class GeometryPlayBuilder : MonoBehaviour {
     ExitPortal = exit;
   }
 
+  void BuildWorkbench(Transform parent) {
+    GameObject bench = new GameObject("GPMasterWorkbench");
+    bench.transform.SetParent(parent, false);
+    bench.transform.localPosition = WorkshopLocal;
+    WorkbenchTransform = bench.transform;
+
+    // Solid mahogany table top
+    Box(bench.transform, "TableTop", new Vector3(0f, 0.32f, 0f), new Vector3(3.6f, 0.16f, 2.4f), DarkTeak);
+    // Table legs with brass rings
+    Box(bench.transform, "LegFL", new Vector3(-1.6f, 0.15f, -1.0f), new Vector3(0.18f, 0.32f, 0.18f), DarkTeak);
+    Box(bench.transform, "LegFR", new Vector3(1.6f, 0.15f, -1.0f), new Vector3(0.18f, 0.32f, 0.18f), DarkTeak);
+    Box(bench.transform, "LegBL", new Vector3(-1.6f, 0.15f, 1.0f), new Vector3(0.18f, 0.32f, 0.18f), DarkTeak);
+    Box(bench.transform, "LegBR", new Vector3(1.6f, 0.15f, 1.0f), new Vector3(0.18f, 0.32f, 0.18f), DarkTeak);
+    // Glowing holographic blueprint drafting mat
+    Box(bench.transform, "BlueprintMat", new Vector3(0f, 0.41f, 0f), new Vector3(2.8f, 0.02f, 1.8f), BlueprintCyan);
+  }
+
+  void BuildToyShelf(Transform parent) {
+    GameObject shelf = new GameObject("GPToyShelf");
+    shelf.transform.SetParent(parent, false);
+    shelf.transform.localPosition = WorkshopLocal + new Vector3(0f, 0f, 2.2f);
+    ToyShelfTransform = shelf.transform;
+
+    // 2-Tier showcase shelf
+    Box(shelf.transform, "ShelfTier1", new Vector3(0f, 0.5f, 0f), new Vector3(3.4f, 0.08f, 0.7f), DarkTeak);
+    Box(shelf.transform, "ShelfTier2", new Vector3(0f, 1.1f, 0.2f), new Vector3(3.2f, 0.08f, 0.6f), DarkTeak);
+    Box(shelf.transform, "Backboard", new Vector3(0f, 0.8f, 0.45f), new Vector3(3.5f, 1.4f, 0.1f), ParquetWood);
+  }
+
   void BuildZones(Transform parent) {
     GameObject hunt = new GameObject("GPHunt");
     hunt.transform.SetParent(parent, false);
     HuntRoot = hunt.transform;
-    Pad(parent, "GPHuntRing", HuntCenter + new Vector3(0f, 0.008f, 0f), 5.6f, new Color(0.80f, 0.72f, 0.52f));
-    GameObject work = new GameObject("GPWorkshop");
-    work.transform.SetParent(parent, false);
-    work.transform.localPosition = WorkshopLocal;
-    Box(work.transform, "GPTable", new Vector3(0f, 0.22f, 0f), new Vector3(2.6f, 0.12f, 1.6f), Wood);
+
+    // 4 Crafting shape pedestals at HuntCenter
+    Pad(parent, "GPHuntRing", HuntCenter + new Vector3(0f, 0.008f, 0f), 5.6f, new Color(0.85f, 0.78f, 0.65f));
+
     GameObject sockRoot = new GameObject("GPSockets");
     sockRoot.transform.SetParent(parent, false);
     SocketRoot = sockRoot.transform;
+
+    // Pre-create 8 sockets (A to H) so any toy model (up to 6 parts) has dedicated sockets
     MakeSocket(sockRoot.transform, "GPSocketA", WorkshopLocal, GeometryKind.Circle, false, 0f);
     MakeSocket(sockRoot.transform, "GPSocketB", BuildLocal, GeometryKind.Square, false, 0f);
     MakeSocket(sockRoot.transform, "GPSocketC", BuildLocal + new Vector3(0f, 0f, 1.1f), GeometryKind.Triangle, true, 0f);
     MakeSocket(sockRoot.transform, "GPSocketD", BuildLocal + new Vector3(-0.7f, 0f, -0.7f), GeometryKind.Circle, false, 0f);
     MakeSocket(sockRoot.transform, "GPSocketE", BuildLocal + new Vector3(0.7f, 0f, -0.7f), GeometryKind.Circle, false, 0f);
+    MakeSocket(sockRoot.transform, "GPSocketF", WorkshopLocal + new Vector3(-1.0f, 0f, 0f), GeometryKind.Rectangle, false, 0f);
+    MakeSocket(sockRoot.transform, "GPSocketG", WorkshopLocal + new Vector3(1.0f, 0f, 0f), GeometryKind.Triangle, true, 0f);
+    MakeSocket(sockRoot.transform, "GPSocketH", WorkshopLocal + new Vector3(0f, 0f, -1.0f), GeometryKind.Circle, false, 0f);
     HideAllSockets();
   }
 
@@ -136,21 +181,26 @@ public class GeometryPlayBuilder : MonoBehaviour {
     EnvWheel = MakeShape(parent, "GPEnvWheel", GeometryKind.Circle,
       new Vector3(-4.8f, 0.45f, 2.6f), GeometryShapes.ColorAt(1), 1.15f, 90f, true);
     EnvWheel.EnvRole = true;
+
     Box(parent, "GPWallW", new Vector3(5.2f, 0.9f, 1.4f), new Vector3(0.18f, 1.8f, 1.8f), Stone);
     EnvWindow = MakeShape(parent, "GPEnvWindow", GeometryKind.Square,
       new Vector3(4.95f, 1.15f, 1.4f), GeometryShapes.ColorAt(2), 0.7f, 0f, true);
     EnvWindow.EnvRole = true;
-    Box(parent, "GPHutBody", new Vector3(-4.2f, 0.55f, 5.2f), new Vector3(1.4f, 1.1f, 1.1f), Wood);
+
+    Box(parent, "GPHutBody", new Vector3(-4.2f, 0.55f, 5.2f), new Vector3(1.4f, 1.1f, 1.1f), DarkTeak);
     EnvRoof = MakeShape(parent, "GPEnvRoof", GeometryKind.Triangle,
       new Vector3(-4.2f, 1.35f, 5.2f), GeometryShapes.ColorAt(0), 0.95f, 0f, true);
     EnvRoof.EnvRole = true;
+
     Box(parent, "GPDoorWall", new Vector3(3.4f, 0.85f, 6.4f), new Vector3(1.6f, 1.7f, 0.16f), Stone);
     EnvDoor = MakeShape(parent, "GPEnvDoor", GeometryKind.Rectangle,
       new Vector3(3.4f, 0.7f, 6.22f), GeometryShapes.ColorAt(3), 0.85f, 0f, true);
     EnvDoor.EnvRole = true;
+
     SetEnvClickable(false);
+
     GameObject crate = Box(parent, "GPCrate", new Vector3(2.2f, 0.45f, 3.4f),
-      new Vector3(1.1f, 0.9f, 1.1f), Wood);
+      new Vector3(1.1f, 0.9f, 1.1f), DarkTeak);
     Crate = crate.transform;
   }
 
@@ -195,6 +245,7 @@ public class GeometryPlayBuilder : MonoBehaviour {
       Sockets[i].ClearOccupant();
       Sockets[i].gameObject.SetActive(false);
     }
+    ClearActiveToy();
   }
 
   public GeometrySocket ShowSocket(int index, Vector3 local, GeometryKind kind, bool upright) {
@@ -228,6 +279,7 @@ public class GeometryPlayBuilder : MonoBehaviour {
     GameObject root = new GameObject(name);
     root.transform.SetParent(parent, false);
     root.transform.localPosition = local;
+
     GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
     pad.name = "Pad";
     pad.transform.SetParent(root.transform, false);
@@ -236,10 +288,12 @@ public class GeometryPlayBuilder : MonoBehaviour {
     pad.GetComponent<Renderer>().sharedMaterial = Lit(Cream);
     Strip(pad);
     Ignore(pad);
+
     BoxCollider box = root.AddComponent<BoxCollider>();
     box.center = new Vector3(0f, 0.18f, 0f);
     box.size = new Vector3(1.5f, 0.45f, 1.5f);
     Ignore(root);
+
     GeometrySocket sock = root.AddComponent<GeometrySocket>();
     sock.Bind(null, kind, upright, yaw);
     Sockets.Add(sock);
@@ -273,10 +327,12 @@ public class GeometryPlayBuilder : MonoBehaviour {
     go.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
     go.transform.localScale = Vector3.one * scale;
     BuildKindVisual(go.transform, kind, color, !env);
+
     BoxCollider box = go.AddComponent<BoxCollider>();
     box.center = new Vector3(0f, env ? 0.28f : 0.36f, 0f);
     box.size = env ? new Vector3(1.25f, 0.7f, 1.25f) : new Vector3(0.9f, 0.8f, 0.9f);
     Ignore(go);
+
     if (!env) {
       UnityEngine.AI.NavMeshObstacle obs = go.AddComponent<UnityEngine.AI.NavMeshObstacle>();
       obs.carving = true;
@@ -285,6 +341,7 @@ public class GeometryPlayBuilder : MonoBehaviour {
       obs.radius = 0.42f;
       obs.height = 0.85f;
     }
+
     GeometryPiece piece = go.AddComponent<GeometryPiece>();
     piece.Kind = kind;
     piece.HomeLocal = local;
@@ -303,7 +360,7 @@ public class GeometryPlayBuilder : MonoBehaviour {
       c.name = "Vis";
       c.transform.SetParent(parent, false);
       c.transform.localPosition = new Vector3(0f, toy ? 0.28f : 0.1f, 0f);
-      c.transform.localScale = toy ? new Vector3(0.56f, 0.56f, 0.56f) : new Vector3(1.0f, 0.14f, 1.0f);
+      c.transform.localScale = toy ? new Vector3(0.68f, 0.68f, 0.68f) : new Vector3(1.0f, 0.14f, 1.0f);
       c.GetComponent<Renderer>().sharedMaterial = Lit(color);
       Strip(c);
       Ignore(c);
@@ -313,9 +370,6 @@ public class GeometryPlayBuilder : MonoBehaviour {
       GameObject t = new GameObject("Vis");
       t.transform.SetParent(parent, false);
       t.transform.localPosition = toy ? new Vector3(0f, 0.14f, 0f) : Vector3.zero;
-      // USER ROUND 2026-10-01: the toy triangle was scaled 4.6x tall (a spike)
-      // so a child could not read it as a triangle. Squat it into an obvious
-      // triangular prism instead.
       t.transform.localScale = toy ? new Vector3(1.7f, 1.9f, 1.7f) : Vector3.one;
       MeshFilter mf = t.AddComponent<MeshFilter>();
       mf.sharedMesh = TriangleMesh();
@@ -329,12 +383,175 @@ public class GeometryPlayBuilder : MonoBehaviour {
     b.transform.SetParent(parent, false);
     b.transform.localPosition = new Vector3(0f, toy ? 0.4f : 0.1f, 0f);
     if (kind == GeometryKind.Rectangle)
-      b.transform.localScale = toy ? new Vector3(1.15f, 0.8f, 0.5f) : new Vector3(1.35f, 0.28f, 0.78f);
+      b.transform.localScale = toy ? new Vector3(1.25f, 0.8f, 0.55f) : new Vector3(1.35f, 0.28f, 0.78f);
     else
-      b.transform.localScale = toy ? new Vector3(0.8f, 0.8f, 0.8f) : new Vector3(1.0f, 0.28f, 1.0f);
+      b.transform.localScale = toy ? new Vector3(0.85f, 0.85f, 0.85f) : new Vector3(1.0f, 0.28f, 1.0f);
     b.GetComponent<Renderer>().sharedMaterial = Lit(color);
     Strip(b);
     Ignore(b);
+  }
+
+  // ================= 6 LIVING TOYS BUILDER =================
+
+  public void ClearActiveToy() {
+    if (ActiveToyDecor != null) {
+      CharacterPresentation.DestroyNow(ActiveToyDecor);
+      ActiveToyDecor = null;
+    }
+    ActiveLivingToy = null;
+  }
+
+  public void BuildLivingToyDecor(ToyKind toy, Vector3 basePos) {
+    ClearActiveToy();
+    GameObject decor = new GameObject("LivingToyDecor_" + toy);
+    decor.transform.SetParent(transform, false);
+    decor.transform.localPosition = basePos;
+    ActiveToyDecor = decor;
+
+    LivingToyAnimator anim = decor.AddComponent<LivingToyAnimator>();
+    anim.Toy = toy;
+    ActiveLivingToy = anim;
+
+    if (toy == ToyKind.House) {
+      // Chimney
+      GameObject chimney = Box(decor.transform, "Chimney", new Vector3(0.42f, 1.6f, 0f), new Vector3(0.24f, 0.55f, 0.24f), new Color(0.85f, 0.35f, 0.28f));
+      anim.Smokestack = chimney.transform;
+      // Front door with brass knob
+      Box(decor.transform, "FrontDoor", new Vector3(0f, 0.38f, -0.46f), new Vector3(0.36f, 0.65f, 0.08f), DarkTeak);
+      GameObject knob = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      knob.name = "DoorKnob";
+      knob.transform.SetParent(decor.transform, false);
+      knob.transform.localPosition = new Vector3(0.12f, 0.38f, -0.52f);
+      knob.transform.localScale = Vector3.one * 0.08f;
+      knob.GetComponent<Renderer>().sharedMaterial = Lit(Gold);
+      Strip(knob);
+      // Attic window
+      GameObject win = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      win.name = "AtticWindow";
+      win.transform.SetParent(decor.transform, false);
+      win.transform.localPosition = new Vector3(0f, 1.15f, -0.42f);
+      win.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+      win.transform.localScale = new Vector3(0.32f, 0.06f, 0.32f);
+      win.GetComponent<Renderer>().sharedMaterial = Lit(Gold);
+      Strip(win);
+    } else if (toy == ToyKind.IceCream) {
+      // Red shiny cherry with green stem
+      GameObject cherry = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      cherry.name = "Cherry";
+      cherry.transform.SetParent(decor.transform, false);
+      cherry.transform.localPosition = new Vector3(0f, 1.82f, 0f);
+      cherry.transform.localScale = Vector3.one * 0.28f;
+      cherry.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.95f, 0.15f, 0.22f));
+      Strip(cherry);
+      anim.Cherry = cherry.transform;
+
+      GameObject stem = Box(cherry.transform, "Stem", new Vector3(0.04f, 0.18f, 0f), new Vector3(0.04f, 0.25f, 0.04f), new Color(0.25f, 0.72f, 0.35f));
+      stem.transform.localRotation = Quaternion.Euler(0f, 0f, 25f);
+    } else if (toy == ToyKind.Sailboat) {
+      // Wooden mast & red pennant flag
+      Box(decor.transform, "Mast", new Vector3(0f, 1.15f, 0f), new Vector3(0.08f, 1.8f, 0.08f), DarkTeak);
+      GameObject flag = Box(decor.transform, "Flag", new Vector3(0.18f, 1.95f, 0f), new Vector3(0.32f, 0.16f, 0.04f), new Color(0.92f, 0.28f, 0.28f));
+      anim.Flag = flag.transform;
+
+      // Water ripples ring
+      GameObject ripples = Pad(decor.transform, "WaterRipples", new Vector3(0f, 0.02f, 0f), 2.8f, new Color(0.35f, 0.75f, 0.95f, 0.55f));
+      anim.WaterRipples = ripples.transform;
+    } else if (toy == ToyKind.Train) {
+      // Smokestack & gold steam dome
+      GameObject stack = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      stack.name = "Smokestack";
+      stack.transform.SetParent(decor.transform, false);
+      stack.transform.localPosition = new Vector3(0.72f, 1.15f, 0f);
+      stack.transform.localScale = new Vector3(0.24f, 0.25f, 0.24f);
+      stack.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.22f, 0.22f, 0.25f));
+      Strip(stack);
+      anim.Smokestack = stack.transform;
+
+      GameObject dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      dome.name = "SteamDome";
+      dome.transform.SetParent(decor.transform, false);
+      dome.transform.localPosition = new Vector3(0.28f, 1.05f, 0f);
+      dome.transform.localScale = new Vector3(0.28f, 0.28f, 0.28f);
+      dome.GetComponent<Renderer>().sharedMaterial = Lit(Gold);
+      Strip(dome);
+
+      // Glowing headlamp
+      GameObject lamp = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      lamp.name = "Headlamp";
+      lamp.transform.SetParent(decor.transform, false);
+      lamp.transform.localPosition = new Vector3(1.02f, 0.65f, 0f);
+      lamp.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+      lamp.transform.localScale = new Vector3(0.22f, 0.12f, 0.22f);
+      lamp.GetComponent<Renderer>().sharedMaterial = Lit(Gold);
+      Strip(lamp);
+      anim.Headlight = lamp.transform;
+
+      // Cowcatcher
+      Box(decor.transform, "Cowcatcher", new Vector3(1.05f, 0.3f, 0f), new Vector3(0.18f, 0.24f, 0.75f), new Color(0.45f, 0.45f, 0.5f));
+    } else if (toy == ToyKind.Cat) {
+      // Pink nose & tail
+      GameObject nose = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+      nose.name = "Nose";
+      nose.transform.SetParent(decor.transform, false);
+      nose.transform.localPosition = new Vector3(0f, 0.54f, -0.48f);
+      nose.transform.localScale = Vector3.one * 0.12f;
+      nose.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.98f, 0.55f, 0.65f));
+      Strip(nose);
+
+      // Tail
+      GameObject tail = Box(decor.transform, "Tail", new Vector3(0f, 0.48f, 0.54f), new Vector3(0.12f, 0.45f, 0.12f), new Color(0.95f, 0.58f, 0.28f));
+      tail.transform.localRotation = Quaternion.Euler(30f, 0f, 0f);
+      anim.Tail = tail.transform;
+
+      // Whiskers
+      Box(decor.transform, "WhiskL1", new Vector3(-0.25f, 0.54f, -0.48f), new Vector3(0.28f, 0.02f, 0.02f), Color.black);
+      Box(decor.transform, "WhiskL2", new Vector3(-0.25f, 0.50f, -0.48f), new Vector3(0.26f, 0.02f, 0.02f), Color.black);
+      Box(decor.transform, "WhiskR1", new Vector3(0.25f, 0.54f, -0.48f), new Vector3(0.28f, 0.02f, 0.02f), Color.black);
+      Box(decor.transform, "WhiskR2", new Vector3(0.25f, 0.50f, -0.48f), new Vector3(0.26f, 0.02f, 0.02f), Color.black);
+    } else if (toy == ToyKind.Rocket) {
+      // Exhaust nozzle & plasma flame cone
+      Box(decor.transform, "Nozzle", new Vector3(0f, 0.18f, 0f), new Vector3(0.38f, 0.18f, 0.38f), new Color(0.32f, 0.32f, 0.35f));
+
+      GameObject flame = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      flame.name = "FlameCone";
+      flame.transform.SetParent(decor.transform, false);
+      flame.transform.localPosition = new Vector3(0f, -0.15f, 0f);
+      flame.transform.localScale = new Vector3(0.32f, 0.45f, 0.32f);
+      flame.GetComponent<Renderer>().sharedMaterial = Lit(new Color(1.0f, 0.65f, 0.15f));
+      Strip(flame);
+      anim.FlameCone = flame.transform;
+    }
+
+    decor.SetActive(false); // starts hidden until completed!
+  }
+
+  public void AwakenToy(ToyKind toy) {
+    if (ActiveToyDecor == null || ActiveLivingToy == null) return;
+
+    // Wire the living animations to the pieces the CHILD actually placed (the build IS the toy):
+    // train wheels = placed circles; cat ears = placed triangles; cat eyes = placed circles.
+    // Without this the animator's Wheels/Ears/Eyes stayed unassigned (dead animations).
+    var circles = new List<Transform>();
+    var triangles = new List<Transform>();
+    for (int i = 0; i < Sockets.Count; i++) {
+      GeometrySocket s = Sockets[i];
+      if (s == null || s.Occupant == null) continue;
+      if (s.Kind == GeometryKind.Circle) circles.Add(s.Occupant.transform);
+      else if (s.Kind == GeometryKind.Triangle) triangles.Add(s.Occupant.transform);
+    }
+    if (toy == ToyKind.Train) {
+      ActiveLivingToy.Wheels = circles.ToArray();
+    } else if (toy == ToyKind.Cat) {
+      if (triangles.Count > 0) ActiveLivingToy.EarLeft = triangles[0];
+      if (triangles.Count > 1) ActiveLivingToy.EarRight = triangles[1];
+      if (circles.Count > 0) ActiveLivingToy.EyeLeft = circles[0];
+      if (circles.Count > 1) ActiveLivingToy.EyeRight = circles[1];
+    }
+
+    ActiveToyDecor.SetActive(true);
+    MagicJuice.FairySparkleBurst(ActiveToyDecor.transform, Vector3.up * 0.8f, 24);
+    MagicJuice.MagicHaloRing(ActiveToyDecor.transform, Vector3.up * 0.3f, MagicJuice.MagicGold, 2.2f);
+    GameJuice.Pop(ActiveToyDecor.transform, 0.35f, 0.5f);
   }
 
   static Mesh TriangleMesh() {
