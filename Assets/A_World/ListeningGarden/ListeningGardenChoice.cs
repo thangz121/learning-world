@@ -67,6 +67,9 @@ public class ListeningGardenChoice : MonoBehaviour, IClickTarget {
     } else {
       GameJuice.Wobble(transform, 8f, 0.35f);
     }
+    // 10b clarity: a soft AMBER "not this one" ring — distinct from the gold/green success FX,
+    // never punishing, so a 4yo can tell wrong from right at a glance.
+    MagicJuice.MagicHaloRing(transform, new Vector3(0f, 0.4f, 0f), new Color(0.95f, 0.72f, 0.25f), 1.2f);
   }
 
   public void OnClicked() {

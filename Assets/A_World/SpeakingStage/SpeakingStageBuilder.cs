@@ -300,9 +300,9 @@ public class SpeakingStageBuilder : MonoBehaviour {
   readonly System.Collections.Generic.List<GameObject> _wordSegs = new System.Collections.Generic.List<GameObject>();
   readonly System.Collections.Generic.List<GameObject> _ipaSegs = new System.Collections.Generic.List<GameObject>();
 
-  // Backlog #11 Speaking UI: PER-SYLLABLE coloring from the Phase 4.1 breakdown
-  // (paints each syllable word/IPA segment with its own syllable_ui_color). Falls back to
-  // whole-word colors by decision when no fusion payload exists (non-MaxSpec providers).
+  // Backlog #11 (real-evidence parity): per-syllable color comes from the syllable's OWN
+  // sub-component statuses (onset/nucleus/coda) plus the REAL policy decision — never from the
+  // uncalibrated fusion star color (advisory 0.0 on real words produced false REDs on passed words).
   public void UpdatePhonemeFeedback(SpeakingAssessment assessment) {
     if (WordText == null || IpaText == null) return;
 
@@ -317,10 +317,15 @@ public class SpeakingStageBuilder : MonoBehaviour {
             syllable_text = syls[i].syllable_text,
             syllable_ipa = syls[i].syllable_ipa,
             is_stressed_target = syls[i].is_stressed,
-            syllable_ui_color = syls[i].ui_color
+            syllable_ui_color = syls[i].ui_color,
+            sub_components = new SyllableSubComponents {
+              onset = new ComponentStatus(syls[i].onset.ipa, syls[i].onset.score, syls[i].onset.flag),
+              nucleus = new ComponentStatus(syls[i].nucleus.ipa, syls[i].nucleus.score, syls[i].nucleus.flag),
+              coda = new ComponentStatus(syls[i].coda.ipa, syls[i].coda.score, syls[i].coda.flag)
+            }
           });
         }
-        BuildSyllableRows(fusionItems);
+        BuildSyllableRows(fusionItems, assessment.Decision);
         return;
       }
     }
@@ -329,7 +334,7 @@ public class SpeakingStageBuilder : MonoBehaviour {
       var fusion = assessment.Pronunciation.FusionPayload;
       var syls = fusion.syllable_by_syllable_breakdown;
       if (syls != null && syls.Count > 0) {
-        BuildSyllableRows(syls);
+        BuildSyllableRows(syls, assessment.Decision);
         return;
       }
     }
@@ -351,10 +356,9 @@ public class SpeakingStageBuilder : MonoBehaviour {
     }
   }
 
-  // One TextMesh per syllable on two rows (word letters + IPA), each tinted by the
-  // payload's own syllable_ui_color ("GREEN" | "YELLOW" | "RED"). Rows replace the
-  // single TextMesh labels while a fusion breakdown is on screen.
-  void BuildSyllableRows(System.Collections.Generic.List<SyllableBreakdownItem> syls) {
+  // One TextMesh per syllable on two rows (word letters + IPA), tinted per-syllable from the
+  // syllable's own sub-component statuses + the real decision (see SyllableColorFor).
+  void BuildSyllableRows(System.Collections.Generic.List<SyllableBreakdownItem> syls, SpeakingDecision decision) {
     ClearSyllableRows();
     WordText.gameObject.SetActive(false);
     IpaText.gameObject.SetActive(false);
@@ -373,7 +377,8 @@ public class SpeakingStageBuilder : MonoBehaviour {
     float x = -total * 0.5f;
     for (int i = 0; i < syls.Count; i++) {
       var s = syls[i];
-      Color c = UiColorToColor(s.syllable_ui_color);
+      Color c = SyllableColorFor(s.sub_components.onset.status, s.sub_components.nucleus.status,
+        s.sub_components.coda.status, decision);
       float cx = x + widths[i] * 0.5f;
 
       GameObject wGo = new GameObject("SylWord" + i);
@@ -423,13 +428,41 @@ public class SpeakingStageBuilder : MonoBehaviour {
     return Mathf.Max(0.08f, text.Length * charSize * 0.62f);
   }
 
-  public static Color UiColorToColor(string uiColor) {
-    switch ((uiColor ?? "").Trim().ToUpperInvariant()) {
-      case "GREEN": return new Color(0.12f, 0.65f, 0.28f);
-      case "YELLOW": return new Color(0.92f, 0.60f, 0.12f);
-      case "RED": return new Color(0.85f, 0.25f, 0.25f);
-      default: return new Color(0.45f, 0.40f, 0.55f);
+  // Per-syllable color from REAL evidence: worst sub-component status wins.
+  // RED = dropped/missing sound; YELLOW = any other flagged deviation (L1 transfer, unreleased,
+  // epenthesis...); GREEN = GOOD/OK. No info at all -> the real decision's color.
+  // 4yo gentle cap: a passed word never shows a RED segment (worst goes to YELLOW).
+  public static Color SyllableColorFor(string onsetStatus, string nucleusStatus, string codaStatus, SpeakingDecision decision) {
+    int worst = -1;
+    worst = Worse(worst, StatusSeverity(onsetStatus));
+    worst = Worse(worst, StatusSeverity(nucleusStatus));
+    worst = Worse(worst, StatusSeverity(codaStatus));
+    if (worst < 0) return DecisionColor(decision);
+    if (worst >= 2 && (decision == SpeakingDecision.StrongPass || decision == SpeakingDecision.Pass)) {
+      worst = 1;
     }
+    if (worst >= 2) return new Color(0.85f, 0.25f, 0.25f); // RED
+    if (worst == 1) return new Color(0.92f, 0.60f, 0.12f); // YELLOW
+    return new Color(0.12f, 0.65f, 0.28f);                 // GREEN
+  }
+
+  static int Worse(int a, int b) { return b > a ? b : a; }
+
+  // Understands BOTH vocabularies: fusion statuses (GOOD/DROPPED/UNRELEASED_VIETNAMESE_STYLE/
+  // L1_UNASPIRATED/CLUSTER_EPENTHESIS) and master-payload flags (OK/DROPPED/UNRELEASED_L1/
+  // UNASPIRATED_L1/SCHWA_EPENTHESIS/PARTIAL_CLUSTER...).
+  static int StatusSeverity(string status) {
+    string s = (status ?? "").Trim().ToUpperInvariant();
+    if (s.Length == 0 || s == "NONE") return -1;
+    if (s == "GOOD" || s == "OK") return 0;
+    if (s.StartsWith("DROPPED") || s.StartsWith("MISSING") || s == "DELETED") return 2;
+    return 1;
+  }
+
+  public static Color DecisionColor(SpeakingDecision d) {
+    if (d == SpeakingDecision.StrongPass || d == SpeakingDecision.Pass) return new Color(0.12f, 0.65f, 0.28f);
+    if (d == SpeakingDecision.Partial || d == SpeakingDecision.PossibleAttempt) return new Color(0.92f, 0.60f, 0.12f);
+    return new Color(0.85f, 0.25f, 0.25f);
   }
 
   public void PlayCorrectFx() {

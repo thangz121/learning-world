@@ -261,6 +261,23 @@ public class ListeningGarden : MonoBehaviour {
     GameJuice.WrongFx(_builder != null ? _builder.transform : transform, _fx,
       _player != null ? _player.position : Vector3.zero);
     _slowReplayT = 1.8f;
+    // 10b/c clarity: after a SECOND miss in the same round, gently show where to look —
+    // the NPC points at the right pod with a soft gold halo (guide, never scold).
+    if (WrongCount >= 2 && _builder != null) {
+      ListeningGardenChoice answerPod = FindAnswerPod();
+      if (answerPod != null) {
+        if (_builder.GuideNpc != null) _builder.GuideNpc.PointAt(answerPod.transform.position);
+        MagicJuice.MagicHaloRing(answerPod.transform, new Vector3(0f, 0.5f, 0f), MagicJuice.MagicGold, 1.8f);
+      }
+    }
+  }
+
+  ListeningGardenChoice FindAnswerPod() {
+    if (_builder == null) return null;
+    for (int i = 0; i < _builder.Choices.Count; i++) {
+      if (_builder.Choices[i] != null && _builder.Choices[i].IsAnswer) return _builder.Choices[i];
+    }
+    return null;
   }
 
   void WinRound() {
