@@ -283,6 +283,53 @@ public class CT_S19_ClassificationCity {
     }
   }
 
+  [Test] public void S19H_MagicalCityExpressAndMayorMilo() {
+    GameObject arena;
+    ClassificationCityBuilder builder = BuildArena(out arena);
+    GameObject player = PlayerAt(ClassificationCityBuilder.PlaySpotLocal);
+    try {
+      FakeAudio audio = new FakeAudio();
+      ActivityLifecycle life = new ActivityLifecycle("classification_city", "test");
+      ClassificationCity game = BuildGame(builder, arena, player, audio, life);
+
+      // 1. Verify Magic City Express Train
+      Assert.IsNotNull(builder.ExpressTrain, "ExpressTrain created");
+      Assert.IsNotNull(builder.ExpressTrain.EngineRoot, "Train locomotive exists");
+      Assert.IsNotNull(builder.ExpressTrain.CarRoot, "Train freight car exists");
+
+      // 2. Verify City Mayor Milo NPC
+      Assert.IsNotNull(builder.MiloNpc, "City Mayor Milo spawned");
+
+      // 3. Verify landmarks visual detail (Animal house chimney, garage gas pump)
+      game.SetLevelForTests(3, 0);
+      Drain(game, 2);
+      Assert.IsTrue(builder.Bins.Count >= 2, "bins spawned");
+      bool hasHouse = false, hasGarage = false;
+      for (int i = 0; i < builder.Bins.Count; i++) {
+        ClassificationBin b = builder.Bins[i];
+        if (b.BinId == "house") {
+          hasHouse = true;
+          Assert.IsNotNull(b.transform.Find("Chimney"), "Cottage chimney exists");
+          Assert.IsNotNull(b.transform.Find("DoorArch"), "Cottage door arch exists");
+        } else if (b.BinId == "garage") {
+          hasGarage = true;
+          Assert.IsNotNull(b.transform.Find("GasPump"), "Garage gas pump exists");
+        }
+      }
+      Assert.IsTrue(hasHouse, "house bin exists");
+      Assert.IsTrue(hasGarage, "garage bin exists");
+
+      // 4. Test Milo and Express train animations
+      builder.MiloCelebrate();
+      builder.MiloWave();
+      builder.ExpressTrain.TriggerTrainRun();
+      Drain(game, 5);
+    } finally {
+      Object.DestroyImmediate(player);
+      Object.DestroyImmediate(arena);
+    }
+  }
+
   static Transform FindDeep(Transform t, string name) {
     if (t == null) return null;
     if (t.name == name) return t;

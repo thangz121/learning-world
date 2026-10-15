@@ -286,6 +286,18 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   public SentenceExpress SentenceGame { get; private set; }
   public void BindSentenceGame(SentenceExpress game) { SentenceGame = game; }
 
+  // Vietnamese subject ("Vườn Đánh Vần" & "Vườn Tri Thức") — two games share ONE scene;
+  // one lifecycle per game, same adopt-on-complete rule as the other arenas.
+  public ActivityLifecycle SpellingLifecycle { get; private set; } =
+    new ActivityLifecycle("spelling_garden", "SelectionYardArea");
+  public PhonicsGarden SpellingGame { get; private set; }
+  public void BindSpellingGarden(PhonicsGarden game) { SpellingGame = game; }
+
+  public ActivityLifecycle DiscoveryLifecycle { get; private set; } =
+    new ActivityLifecycle("discovery_garden", "SelectionYardArea");
+  public PhonicsGarden DiscoveryGame { get; private set; }
+  public void BindDiscoveryGarden(PhonicsGarden game) { DiscoveryGame = game; }
+
   // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the station
   // lifecycle, game binding and arena wiring are all removed.
 

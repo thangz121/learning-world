@@ -241,10 +241,12 @@ public class GameInstaller : MonoBehaviour {
       BuildWonderKitchenPlayScene(scene);
       return;
     }
-    if (scene.name == SentenceExpressBuilder.SceneName) {
-      BuildSentenceExpressPlayScene(scene);
-      return;
-    }
+      if (scene.name == SentenceExpressBuilder.SceneName) {
+        BuildSentenceExpressPlayScene(scene);
+      }
+      if (scene.name == PhonicsGardenBuilder.SceneName) {
+        BuildPhonicsGardenPlayScene(scene);
+      }
     // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the whole
     // arena (code folder, scene, dispatch branch and gate) is removed.
     // PHASE 5 LEGACY PURGE: Discovery Garden, MathScene and CountingGardenScene
@@ -728,6 +730,61 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] SentenceExpressPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildPhonicsGardenPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true);
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "PhonicsGardenWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] PhonicsGardenPlayScene has no PhonicsGardenWorld root.", this);
+        return;
+      }
+      root.transform.position = PhonicsGardenBuilder.WorldOffset;
+      PhonicsGardenBuilder builder = root.GetComponent<PhonicsGardenBuilder>();
+      if (builder == null) builder = root.AddComponent<PhonicsGardenBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = PhonicsGardenBuilder.WorldOffset + PhonicsGardenBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, PhonicsGardenBuilder.WorldOffset,
+          PhonicsGardenBuilder.BoundX, PhonicsGardenBuilder.BoundZ, PhonicsGardenBuilder.FollowOffset,
+          DialogueLang.T("Learn Vietnamese with teacher!", "Học tiếng Việt cùng cô nhé!"));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        PhonicsGarden game = root.GetComponent<PhonicsGarden>();
+        if (game == null) game = root.AddComponent<PhonicsGarden>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        // Both Vietnamese games share this scene; the launched gameId picks the mode + lifecycle.
+        string gameId = _yardArea != null ? _yardArea.CurrentGameId : "";
+        bool discovery = string.Equals(gameId, "discovery_garden", System.StringComparison.OrdinalIgnoreCase);
+        ActivityLifecycle life = _yardArea != null
+          ? (discovery ? _yardArea.DiscoveryLifecycle : _yardArea.SpellingLifecycle) : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, life, null,
+          discovery ? PhonicsPlayMode.RealWorldDiscovery : PhonicsPlayMode.SpellingGarden);
+        if (_yardArea != null) {
+          if (discovery) _yardArea.BindDiscoveryGarden(game);
+          else _yardArea.BindSpellingGarden(game);
+        }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] phonics garden wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Phonics Garden scene built gameId="
+          + (_yardArea != null ? _yardArea.CurrentGameId : "")
+          + " entry=" + (PhonicsGardenBuilder.WorldOffset + PhonicsGardenBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] PhonicsGardenPlayScene build failed: " + e.Message, this);
     }
   }
 

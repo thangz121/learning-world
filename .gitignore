@@ -144,3 +144,5 @@ Research/Speech/ExternalData/
 /TestResults.xml
 /test_results.xml
 /test_piper.wav
+/TestResults_*.log
+/TestResults_*.xml

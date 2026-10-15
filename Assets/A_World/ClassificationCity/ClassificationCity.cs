@@ -1,5 +1,6 @@
-// A_World/ClassificationCity/ClassificationCity.cs — Thành Phố Phân Loại.
+// A_World/ClassificationCity/ClassificationCity.cs — Thành Phố Phân Loại (Magical Sorting City).
 // Starts at LV3. Observe -> rule -> classify -> adapt. No timer, no game over.
+// Features City Mayor Milo NPC and the Magic City Express Train.
 // C# 9.0 only.
 using System;
 using System.Collections.Generic;
@@ -75,6 +76,8 @@ public class ClassificationCity : MonoBehaviour {
     }
     if (_voice != null) _voice.Tick(dt);
     TickAsk();
+    if (_builder.ExpressTrain != null) _builder.ExpressTrain.Tick(dt);
+
     if (Completed && Current == Phase.Done) return;
     if (_restT > 0f) {
       _restT -= dt;
@@ -94,6 +97,7 @@ public class ClassificationCity : MonoBehaviour {
   void TickWait(float dt) {
     if (!_waitCalled && _phaseT >= 1.2f) {
       _waitCalled = true;
+      if (_builder != null) _builder.MiloWave();
       Say("Come sort with me!", "Ra xếp cùng con!");
       ActivityGuide.PointAt(SpotWorld());
     }
@@ -218,9 +222,6 @@ public class ClassificationCity : MonoBehaviour {
       Vehicle(3, false), Vehicle(1, true), Vehicle(0, false),
     };
     SpawnAll(items);
-    // USER ROUND 2026-10-01 ("không có demo"): first-level demo — show one of
-    // each group already parked in its correct bin (same mechanism as the LV10
-    // discover round), so the sorting rule is visible before the child plays.
     ParkExample(first == "animal" ? Animal(4, false) : Vehicle(4, false), 0);
     ParkExample(second == "animal" ? Animal(4, true) : Vehicle(4, true), 1);
   }
@@ -340,7 +341,6 @@ public class ClassificationCity : MonoBehaviour {
       items = new ClassItem[] { ToyBall(0, true), Vehicle(1, true), ToyBlock(2, true), ToyBall(3, false) };
       Criterion = ClassCriterion.Size;
     }
-    // Shuffle which plaza slot the odd item takes (never always last).
     OddIndex = -1;
     ClassItem[] placed = new ClassItem[items.Length];
     int[] map = { 0, 1, 2, 3 };
@@ -369,7 +369,7 @@ public class ClassificationCity : MonoBehaviour {
     string b0 = Groups[0], b1 = Groups[1];
     LiveBin(slots[0], "house", b0, 0);
     LiveBin(slots[1], "house", b1, 0);
-    // Pre-sorted examples (visual, non-interactive).
+
     ClassItem exA0, exA1, exB0, exB1, nw0, nw1;
     if (k == 0) {
       exA0 = ToyBall(0, true); exA1 = Vehicle(1, true);
@@ -444,7 +444,6 @@ public class ClassificationCity : MonoBehaviour {
         || item.State == ClassificationItem.ItemState.Example) return;
     if (Carried != null) return;
     if (Level == 9 && !OddPicked) {
-      // First tap names the odd one; it must be the true odd item.
       ClassItem[] all = CurrentProps();
       int odd = ClassLogic.OddIndex(all, Criterion);
       int idx = IndexOf(item);
@@ -454,6 +453,7 @@ public class ClassificationCity : MonoBehaviour {
         Carried = item;
         _idleT = 0f;
         PlaySfx("pickup");
+        if (_builder != null) _builder.MiloCelebrate();
         Say("Right! To the other pad.", "Đúng! Mang ra khác.");
         ClassificationBin other = _liveBins.Count > 0 ? _liveBins[0] : null;
         if (other != null) ActivityGuide.PointAt(other.transform.position);
@@ -496,6 +496,7 @@ public class ClassificationCity : MonoBehaviour {
       _idleT = 0f;
       PlaySfx("place");
       GameJuice.PlaceFx(_fx, bin.transform.position, bin.transform);
+      if (_builder != null) _builder.MiloCelebrate();
       Say("Right group!", "Đúng nhóm rồi!");
       if (PlacedCount >= NeedCount) WinRound();
     } else {
@@ -528,6 +529,7 @@ public class ClassificationCity : MonoBehaviour {
   void Reject() {
     WrongCount++;
     LastCorrect = false;
+    if (_builder != null) _builder.MiloCurious();
     Say("Not that group.", "Chưa đúng nhóm.");
     ActivityFeedback.Retry();
     GameJuice.WrongFx(_builder != null ? _builder.transform : transform, _fx,
@@ -539,6 +541,14 @@ public class ClassificationCity : MonoBehaviour {
     PlaySfx("success");
     GameJuice.CorrectFx(_fx, _player != null ? _player.position : Vector3.zero, false);
     ActivityFeedback.Correct();
+
+    if (_builder != null) {
+      _builder.MiloCelebrate();
+      if (_builder.ExpressTrain != null) {
+        _builder.ExpressTrain.TriggerTrainRun();
+      }
+    }
+
     if (Carried != null) { Carried.ReturnHome(); Carried = null; }
     int max = RoundsOf(Level);
     RoundIndex++;

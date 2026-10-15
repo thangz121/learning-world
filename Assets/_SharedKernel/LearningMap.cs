@@ -104,6 +104,10 @@ public static class LearningMap {
   public const string WonderKitchenGame = "wonder_kitchen";
   // English -> Sentences (Sentence Express for 4-year-olds).
   public const string SentenceExpressGame = "sentence_express";
+  // Vietnamese -> Letters (Vườn Đánh Vần).
+  public const string SpellingGardenGame = "spelling_garden";
+  // Vietnamese -> Pre-literacy (Vườn Tri Thức Thực Tế).
+  public const string DiscoveryGardenGame = "discovery_garden";
 
   public static readonly SkillEntry[] MathSkills = {
     new SkillEntry(MathCounting, MathId, "Đếm"),
@@ -155,6 +159,7 @@ public static class LearningMap {
   public const string SpeakingStageScene = "SpeakingStagePlayScene";
   public const string WonderKitchenScene = "WonderKitchenPlayScene";
   public const string SentenceExpressScene = "SentenceExpressPlayScene";
+  public const string PhonicsGardenScene = "PhonicsGardenPlayScene";
 
   // Counting games stay HUMAN_ACCEPTED. Geometry is IMPLEMENTED only.
   public static readonly GameEntry[] Games = {
@@ -180,6 +185,12 @@ public static class LearningMap {
     // English -> Sentences: Đoàn Tàu Ghép Câu (Sentence Express).
     new GameEntry(SentenceExpressGame, EnglishSentences, "Đoàn Tàu Ghép Câu",
       SentenceExpressScene, GameStatus.Implemented),
+    // Vietnamese -> Letters: Vườn Đánh Vần.
+    new GameEntry(SpellingGardenGame, VietnameseLetters, "Vườn Đánh Vần",
+      PhonicsGardenScene, GameStatus.Implemented),
+    // Vietnamese -> Pre-literacy: Vườn Tri Thức Thực Tế.
+    new GameEntry(DiscoveryGardenGame, VietnamesePreLiteracy, "Vườn Tri Thức Thực Tế",
+      PhonicsGardenScene, GameStatus.Implemented),
     // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order: "xóa hoàn
     // toàn ... cổng thứ tự"): the skill math_order is gone from this map, the
     // door is gone from every yard, and the code folder/scene/tests are removed.

@@ -1,5 +1,6 @@
-// A_World/ClassificationCity/ClassificationCityBuilder.cs — "Thành Phố Phân Loại".
-// One connected sorting town, short walks. Presentation only. C# 9.0 only.
+// A_World/ClassificationCity/ClassificationCityBuilder.cs — "Thành Phố Phân Loại" (Magical Sorting City).
+// Premium 3D assets, authentic vehicles, organic fruits, cute animals, sorting architecture,
+// City Mayor Milo NPC, and the Magic City Express Train. Presentation only. C# 9.0 only.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -43,6 +44,12 @@ public class ClassificationCityBuilder : MonoBehaviour {
   public readonly List<ClassificationBin> Bins = new List<ClassificationBin>();
   public readonly List<ClassificationItem> Items = new List<ClassificationItem>();
 
+  // Premium Features: Mayor Milo NPC & Magic City Express Train
+  public CityExpressTrain ExpressTrain { get; private set; }
+  public GameObject MiloNpc { get; private set; }
+  Animator _miloAnimator;
+  CharacterPresentation _miloPresentation;
+
   public void Build() {
     BuildContent(transform);
     BuildNavMesh(transform);
@@ -60,11 +67,16 @@ public class ClassificationCityBuilder : MonoBehaviour {
     BuildGround(root);
     BuildEntryAndExit(root);
     BuildBackdrops(root);
+    BuildCityFeatures(root);
+    BuildMayorMilo(root);
+
     GameObject rr = new GameObject("CCRound");
     rr.transform.SetParent(root, false);
     RoundRoot = rr.transform;
+
     BuildDressing(root);
     BuildAnchors(root);
+
     GameObject entry = new GameObject("EntryPoint");
     entry.transform.SetParent(root, false);
     entry.transform.localPosition = EntryLocal;
@@ -80,17 +92,17 @@ public class ClassificationCityBuilder : MonoBehaviour {
     rim.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.42f, 0.33f, 0.24f));
     Strip(rim);
     Ignore(rim);
+
     GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
     ground.name = "CCGround";
     ground.transform.SetParent(parent, false);
     ground.transform.localScale = new Vector3(3.2f, 1f, 3.2f);
     ground.GetComponent<Renderer>().sharedMaterial = Lit(Lawn);
+
     Pad(parent, "CCPlaza", new Vector3(0f, 0.006f, 2.6f), 11f, new Color(0.93f, 0.84f, 0.58f));
     Box(parent, "CCPath", new Vector3(0f, 0.01f, -4.6f), new Vector3(1.8f, 0.02f, 8.4f),
       new Color(0.76f, 0.60f, 0.40f));
     StageLight(parent, new Vector3(0f, 7.5f, 2.8f));
-    // USER ROUND 2026-10-01: the big glowing floor disc was removed (annoying
-    // blob under the child).
   }
 
   void BuildEntryAndExit(Transform parent) {
@@ -99,11 +111,13 @@ public class ClassificationCityBuilder : MonoBehaviour {
     GameObject beam = Box(parent, "CCEntryBeam", new Vector3(0f, 2.08f, -9.2f),
       new Vector3(3.2f, 0.16f, 0.16f), Cream);
     Ignore(beam);
+
     Pad(parent, "CCPlayDisc", PlaySpotLocal + new Vector3(0f, 0.012f, 0f), 3.0f, Gold);
     GameObject spot = new GameObject("CCPlaySpot");
     spot.transform.SetParent(parent, false);
     spot.transform.localPosition = PlaySpotLocal;
     PlaySpot = spot.transform;
+
     Pad(parent, "CCExitDisc", ExitLocal + new Vector3(0f, 0.012f, 0.3f), 3.0f,
       new Color(0.70f, 0.90f, 0.72f));
     GameObject exitGo = new GameObject("CCExitPortal");
@@ -117,23 +131,75 @@ public class ClassificationCityBuilder : MonoBehaviour {
   }
 
   void BuildBackdrops(Transform parent) {
-    // Animal house (west): hut with roof.
+    // Animal house (west): cottage with sloped roof and chimney.
     Box(parent, "CCBackdropHouse", new Vector3(-5.2f, 0.6f, 3.0f), new Vector3(1.8f, 1.2f, 1.5f), Cream);
     Box(parent, "CCBackdropRoof", new Vector3(-5.2f, 1.45f, 3.0f), new Vector3(2.2f, 0.25f, 1.9f), RoofGreen);
-    // Vehicle garage (east): brick block with dark door.
+
+    // Vehicle garage (east): brick depot with rolling door.
     Box(parent, "CCBackdropGarage", new Vector3(5.2f, 0.7f, 3.0f), new Vector3(2.0f, 1.4f, 1.6f), Brick);
     Box(parent, "CCBackdropDoor", new Vector3(5.2f, 0.55f, 2.15f), new Vector3(1.2f, 1.1f, 0.1f),
       new Color(0.25f, 0.22f, 0.28f));
+
     // Food market (north): counter + awning.
     Box(parent, "CCBackdropCounter", new Vector3(0f, 0.45f, 6.6f), new Vector3(2.6f, 0.9f, 1.0f), Wood);
     Box(parent, "CCBackdropAwning", new Vector3(0f, 1.9f, 6.6f), new Vector3(3.0f, 0.12f, 1.4f),
       new Color(0.92f, 0.32f, 0.34f));
-    // Playground corner (north-east): two posts + slide plank.
+
+    // Playground corner (north-east): posts + slide.
     Box(parent, "CCPlayPostA", new Vector3(4.0f, 0.7f, 5.6f), new Vector3(0.14f, 1.4f, 0.14f), Wood);
     Box(parent, "CCPlayPostB", new Vector3(5.0f, 0.7f, 5.6f), new Vector3(0.14f, 1.4f, 0.14f), Wood);
     GameObject slide = Box(parent, "CCPlaySlide", new Vector3(4.5f, 0.5f, 4.7f),
       new Vector3(0.5f, 0.1f, 1.8f), Gold);
     slide.transform.localRotation = Quaternion.Euler(18f, 0f, 0f);
+  }
+
+  void BuildCityFeatures(Transform parent) {
+    // The Magic City Express Train chugging around the plaza
+    ExpressTrain = CityExpressTrain.Build(parent, new Vector3(4.2f, 0.08f, 2.6f));
+  }
+
+  void BuildMayorMilo(Transform parent) {
+    GameObject miloRoot = new GameObject("CityMayorMilo");
+    miloRoot.transform.SetParent(parent, false);
+    // Milo stands at the central city dispatcher podium
+    miloRoot.transform.localPosition = new Vector3(0f, 0f, 5.0f);
+    miloRoot.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+    MiloNpc = miloRoot;
+
+    GameObject visualPrefab = Resources.Load<GameObject>("NpcVisuals/MiloVisual");
+    if (visualPrefab != null) {
+      GameObject visual = Object.Instantiate(visualPrefab, miloRoot.transform, false);
+      visual.name = "MiloVisualRoot";
+      visual.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+      visual.transform.localScale = Vector3.one * 0.5f;
+
+      _miloAnimator = visual.GetComponentInChildren<Animator>(true);
+      SkinnedMeshRenderer skin = visual.GetComponentInChildren<SkinnedMeshRenderer>(true);
+      Transform headBone = null;
+      if (skin != null && skin.bones != null) {
+        foreach (Transform b in skin.bones) {
+          if (b != null && b.name.IndexOf("Head", System.StringComparison.OrdinalIgnoreCase) >= 0) {
+            headBone = b;
+            break;
+          }
+        }
+      }
+      _miloPresentation = visual.AddComponent<CharacterPresentation>();
+      _miloPresentation.SetupFace(skin, headBone, visual.transform, visual.transform);
+    }
+  }
+
+  public void MiloCelebrate() {
+    if (_miloAnimator != null) _miloAnimator.SetTrigger("Celebrate");
+    if (_miloPresentation != null) _miloPresentation.PulseExpression(CharacterExpression.Happy, 2.5f);
+  }
+
+  public void MiloCurious() {
+    if (_miloPresentation != null) _miloPresentation.PulseExpression(CharacterExpression.Curious, 2.0f);
+  }
+
+  public void MiloWave() {
+    if (_miloPresentation != null) _miloPresentation.PulseExpression(CharacterExpression.Happy, 2.0f);
   }
 
   void BuildDressing(Transform parent) {
@@ -185,25 +251,41 @@ public class ClassificationCityBuilder : MonoBehaviour {
 
   void BuildBinVisual(Transform root, string kind, int variant) {
     if (kind == "house") {
+      // Animal Sanctuary Cottage
       Box(root, "Wall", new Vector3(0f, 0.5f, 0f), new Vector3(1.5f, 1.0f, 1.2f), Cream);
       Box(root, "Roof", new Vector3(0f, 1.12f, 0f), new Vector3(1.8f, 0.22f, 1.5f), RoofGreen);
+      // Chimney & cute door
+      Box(root, "Chimney", new Vector3(0.5f, 1.35f, 0.3f), new Vector3(0.24f, 0.45f, 0.24f), Brick);
+      Box(root, "DoorArch", new Vector3(0f, 0.38f, -0.61f), new Vector3(0.55f, 0.75f, 0.05f), Wood);
     } else if (kind == "garage") {
+      // Vehicle Depot Garage
       Box(root, "Wall", new Vector3(0f, 0.6f, 0f), new Vector3(1.6f, 1.2f, 1.3f), Brick);
-      Box(root, "Door", new Vector3(0f, 0.45f, -0.62f), new Vector3(1.0f, 0.9f, 0.08f),
+      Box(root, "RoofTrim", new Vector3(0f, 1.22f, 0f), new Vector3(1.75f, 0.12f, 1.45f), Gold);
+      Box(root, "Door", new Vector3(0f, 0.45f, -0.62f), new Vector3(1.1f, 0.9f, 0.08f),
         new Color(0.25f, 0.22f, 0.28f));
+      // Gas Pump
+      Box(root, "GasPump", new Vector3(0.95f, 0.45f, -0.4f), new Vector3(0.25f, 0.9f, 0.25f), Palette[0]);
     } else if (kind == "market") {
+      // Fresh Food Market
       Box(root, "Counter", new Vector3(0f, 0.4f, 0f), new Vector3(1.6f, 0.8f, 0.9f), Wood);
       Box(root, "Awning", new Vector3(0f, 1.5f, 0f), new Vector3(1.9f, 0.1f, 1.1f),
         new Color(0.92f, 0.32f, 0.34f));
+      // Awning stripes
+      for (int i = 0; i < 3; i++) {
+        Box(root, "AwningStripe" + i, new Vector3(-0.55f + i * 0.55f, 1.52f, 0f),
+          new Vector3(0.26f, 0.11f, 1.12f), Cream);
+      }
     } else if (kind == "playground") {
+      // Toy Playground
       Box(root, "PostA", new Vector3(-0.5f, 0.6f, 0f), new Vector3(0.12f, 1.2f, 0.12f), Wood);
       Box(root, "PostB", new Vector3(0.5f, 0.6f, 0f), new Vector3(0.12f, 1.2f, 0.12f), Wood);
       Box(root, "Bar", new Vector3(0f, 1.25f, 0f), new Vector3(1.2f, 0.1f, 0.1f), Gold);
     } else if (kind == "other") {
+      // Odd-one-out Destination
       Box(root, "Post", new Vector3(0f, 0.5f, 0f), new Vector3(0.14f, 1.0f, 0.14f), Wood);
       Ball(root, "Top", new Vector3(0f, 1.15f, 0f), 0.4f, Gold);
     } else {
-      // Property pads: a low disc + one icon showing the property.
+      // Property pads with illuminated neon rims
       GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
       disc.name = "Disc";
       disc.transform.SetParent(root, false);
@@ -212,6 +294,7 @@ public class ClassificationCityBuilder : MonoBehaviour {
       disc.GetComponent<Renderer>().sharedMaterial = Lit(Cream);
       Strip(disc);
       Ignore(disc);
+
       if (kind == "bigpad") Box(root, "Icon", new Vector3(0f, 0.5f, 0f), new Vector3(0.8f, 0.8f, 0.8f), Wood);
       else if (kind == "smallpad") Box(root, "Icon", new Vector3(0f, 0.25f, 0f), new Vector3(0.4f, 0.4f, 0.4f), Wood);
       else if (kind == "wheelspad") {
@@ -243,17 +326,19 @@ public class ClassificationCityBuilder : MonoBehaviour {
     root.transform.localScale = Vector3.one * s;
     Color col = Palette[Mathf.Abs(props.ColorIdx) % Palette.Length];
     BuildItemVisual(root.transform, props, col);
+
     BoxCollider box = root.AddComponent<BoxCollider>();
     box.center = new Vector3(0f, 0.4f, 0f);
     box.size = new Vector3(1.0f, 0.9f, 1.0f);
     Ignore(root);
+
     ClassificationItem item = root.AddComponent<ClassificationItem>();
     item.Props = props;
     item.ItemId = id;
     item.HomeLocal = home;
     Items.Add(item);
+
     if (example) {
-      // Examples are parked visibly inside their bin by the game.
       Collider c = root.GetComponent<Collider>();
       if (c != null) c.enabled = false;
       item.MarkExample();
@@ -262,38 +347,78 @@ public class ClassificationCityBuilder : MonoBehaviour {
   }
 
   void BuildItemVisual(Transform root, ClassItem props, Color col) {
-    if (props.Category == "animal") {
+    float size = 0.65f;
+
+    if (props.Category == "vehicle") {
+      // Authentic vehicle from PropKit
+      string vProp = "sedan";
+      if (props.ColorIdx == 1) vProp = "truck";
+      else if (props.ColorIdx == 2) vProp = "van";
+      else if (props.ColorIdx == 3) vProp = "tractor";
+
+      GameObject vGo = PropKit.PlaceFitted(root, vProp, Vector3.zero, 0f, size, true);
+      if (vGo == null) {
+        // Robust fallback stylized vehicle
+        Box(root, "Body", new Vector3(0f, 0.35f, 0f), new Vector3(0.7f, 0.3f, 0.4f), col);
+        for (int i = 0; i < 2; i++) {
+          float x = i == 0 ? -0.22f : 0.22f;
+          GameObject w = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+          w.name = "Wheel" + i;
+          w.transform.SetParent(root, false);
+          w.transform.localPosition = new Vector3(x, 0.16f, 0f);
+          w.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+          w.transform.localScale = new Vector3(0.24f, 0.08f, 0.24f);
+          w.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.2f, 0.2f, 0.22f));
+          Strip(w);
+          Ignore(w);
+        }
+      }
+    } else if (props.Category == "food") {
+      // Authentic fruit from PropKit
+      string fProp = "apple";
+      if (props.ColorIdx == 1) fProp = "orange";
+      else if (props.ColorIdx == 2) fProp = "banana";
+      else if (props.ColorIdx == 3) fProp = "strawberry";
+
+      GameObject fGo = PropKit.PlaceFitted(root, fProp, Vector3.zero, 0f, size, true);
+      if (fGo == null) {
+        Ball(root, "Fruit", new Vector3(0f, 0.35f, 0f), 0.5f, col);
+        Box(root, "Leaf", new Vector3(0.1f, 0.62f, 0f), new Vector3(0.12f, 0.06f, 0.12f), Leaf);
+      }
+    } else if (props.Category == "animal") {
+      // Cute 3D pet (Puppy / Bunny)
       GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
       body.name = "Body";
       body.transform.SetParent(root, false);
       body.transform.localPosition = new Vector3(0f, 0.35f, 0f);
-      body.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+      body.transform.localScale = new Vector3(0.48f, 0.48f, 0.48f);
       body.GetComponent<Renderer>().sharedMaterial = Lit(col);
       Strip(body);
       Ignore(body);
-      Ball(root, "Head", new Vector3(0f, 0.68f, -0.1f), 0.34f, col);
-      Ball(root, "EarL", new Vector3(-0.12f, 0.86f, -0.1f), 0.12f, col);
-      Ball(root, "EarR", new Vector3(0.12f, 0.86f, -0.1f), 0.12f, col);
-    } else if (props.Category == "vehicle") {
-      Box(root, "Body", new Vector3(0f, 0.35f, 0f), new Vector3(0.7f, 0.3f, 0.4f), col);
-      for (int i = 0; i < 2; i++) {
-        float x = i == 0 ? -0.22f : 0.22f;
-        GameObject w = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        w.name = "Wheel" + i;
-        w.transform.SetParent(root, false);
-        w.transform.localPosition = new Vector3(x, 0.16f, 0f);
-        w.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        w.transform.localScale = new Vector3(0.24f, 0.08f, 0.24f);
-        w.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.2f, 0.2f, 0.22f));
-        Strip(w);
-        Ignore(w);
-      }
-    } else if (props.Category == "food") {
-      Ball(root, "Fruit", new Vector3(0f, 0.35f, 0f), 0.5f, col);
-      Box(root, "Leaf", new Vector3(0.1f, 0.62f, 0f), new Vector3(0.12f, 0.06f, 0.12f), Leaf);
+
+      Ball(root, "Head", new Vector3(0f, 0.68f, -0.08f), 0.34f, col);
+      Ball(root, "EarL", new Vector3(-0.12f, 0.86f, -0.08f), 0.12f, col);
+      Ball(root, "EarR", new Vector3(0.12f, 0.86f, -0.08f), 0.12f, col);
+      Ball(root, "Nose", new Vector3(0f, 0.65f, -0.26f), 0.08f, new Color(0.15f, 0.15f, 0.15f));
+      Ball(root, "EyeL", new Vector3(-0.08f, 0.72f, -0.24f), 0.06f, Color.white);
+      Ball(root, "EyeR", new Vector3(0.08f, 0.72f, -0.24f), 0.06f, Color.white);
     } else {
-      if (props.HasCorners) Box(root, "Toy", new Vector3(0f, 0.3f, 0f), new Vector3(0.5f, 0.5f, 0.5f), col);
-      else Ball(root, "Toy", new Vector3(0f, 0.32f, 0f), 0.55f, col);
+      // Toys: Gift box with golden ribbon or shiny ball
+      if (props.HasCorners) {
+        Box(root, "Toy", new Vector3(0f, 0.3f, 0f), new Vector3(0.5f, 0.5f, 0.5f), col);
+        Box(root, "ToyRibbon", new Vector3(0f, 0.3f, 0f), new Vector3(0.52f, 0.52f, 0.1f), Gold);
+      } else {
+        Ball(root, "Toy", new Vector3(0f, 0.32f, 0f), 0.55f, col);
+        // Stripe on ball
+        GameObject band = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        band.name = "BallBand";
+        band.transform.SetParent(root, false);
+        band.transform.localPosition = new Vector3(0f, 0.32f, 0f);
+        band.transform.localScale = new Vector3(0.56f, 0.08f, 0.56f);
+        band.GetComponent<Renderer>().sharedMaterial = Lit(Gold);
+        Strip(band);
+        Ignore(band);
+      }
     }
   }
 

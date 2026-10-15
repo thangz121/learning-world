@@ -61,7 +61,7 @@ public class CT_S10_LearningMap {
 
   // C. Game registry + ABSOLUTE acceptance baseline.
   [Test] public void S10C_AcceptedGamesOnly() {
-    Assert.AreEqual(9, LearningMap.Games.Length, "two accepted + geometry + market + city + 4 english games");
+    Assert.AreEqual(11, LearningMap.Games.Length, "two accepted + geometry + market + city + 4 english + 2 vietnamese games");
     var accepted = new List<string>();
     for (int i = 0; i < LearningMap.Games.Length; i++)
       if (LearningMap.Games[i].HumanAccepted) accepted.Add(LearningMap.Games[i].Id);
@@ -75,6 +75,8 @@ public class CT_S10_LearningMap {
     Assert.IsFalse(accepted.Contains("speaking_stage"), "speaking is not accepted");
     Assert.IsFalse(accepted.Contains("wonder_kitchen"), "kitchen is not accepted");
     Assert.IsFalse(accepted.Contains("sentence_express"), "sentences is not accepted");
+    Assert.IsFalse(accepted.Contains("spelling_garden"), "spelling is not accepted");
+    Assert.IsFalse(accepted.Contains("discovery_garden"), "discovery is not accepted");
     Assert.IsFalse(accepted.Contains("ordering_station"), "station is not accepted");
     Assert.AreEqual("Cho thỏ ăn", LearningMap.GameDisplay("rabbit_feeding"), "rabbit display");
     Assert.AreEqual("Bậc thang con số", LearningMap.GameDisplay("number_stairs"), "stairs display");
@@ -151,11 +153,14 @@ public class CT_S10_LearningMap {
         if (skills[s].Id == "math_counting" || skills[s].Id == "math_geometry"
             || skills[s].Id == "math_comparison" || skills[s].Id == "math_classification"
             || skills[s].Id == "english_listening" || skills[s].Id == "english_speaking"
-            || skills[s].Id == "english_vocabulary" || skills[s].Id == "english_sentences") continue;
+            || skills[s].Id == "english_vocabulary" || skills[s].Id == "english_sentences"
+            || skills[s].Id == "vietnamese_letters" || skills[s].Id == "vietnamese_pre_literacy") continue;
         Assert.AreEqual(0, LearningMap.GamesOf(skills[s].Id).Length,
           "no fake games under " + skills[s].Id);
       }
     }
+    Assert.AreEqual(1, LearningMap.GamesOf("vietnamese_letters").Length, "letters owns 1 game");
+    Assert.AreEqual(1, LearningMap.GamesOf("vietnamese_pre_literacy").Length, "pre-literacy owns 1 game");
     Assert.IsTrue(LearningMap.IsPlayable("rabbit_feeding"), "rabbit playable");
     Assert.IsTrue(LearningMap.IsPlayable("number_stairs"), "stairs playable");
     Assert.IsFalse(LearningMap.IsPlayable("shape_builder"), "implemented is not HUMAN_ACCEPTED");
@@ -172,6 +177,10 @@ public class CT_S10_LearningMap {
     Assert.IsTrue(LearningMap.CanLaunch("wonder_kitchen"), "kitchen arena may be entered");
     Assert.IsFalse(LearningMap.IsPlayable("sentence_express"), "sentences is not HUMAN_ACCEPTED");
     Assert.IsTrue(LearningMap.CanLaunch("sentence_express"), "sentences arena may be entered");
+    Assert.IsFalse(LearningMap.IsPlayable("spelling_garden"), "spelling is not HUMAN_ACCEPTED");
+    Assert.IsTrue(LearningMap.CanLaunch("spelling_garden"), "spelling arena may be entered");
+    Assert.IsFalse(LearningMap.IsPlayable("discovery_garden"), "discovery is not HUMAN_ACCEPTED");
+    Assert.IsTrue(LearningMap.CanLaunch("discovery_garden"), "discovery arena may be entered");
     Assert.IsFalse(LearningMap.IsPlayable("ordering_station"), "closed station is not playable");
     Assert.IsFalse(LearningMap.CanLaunch("ordering_station"), "closed station cannot be entered");
     Assert.IsFalse(LearningMap.IsPlayable("anything_else"), "unknown is never playable");
