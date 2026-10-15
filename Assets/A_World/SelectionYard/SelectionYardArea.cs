@@ -298,6 +298,12 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   public PhonicsGarden DiscoveryGame { get; private set; }
   public void BindDiscoveryGarden(PhonicsGarden game) { DiscoveryGame = game; }
 
+  // Vietnamese speaking ("Sân Đình Vui Vẻ")
+  public ActivityLifecycle CourtyardLifecycle { get; private set; } =
+    new ActivityLifecycle("courtyard_speaking", "SelectionYardArea");
+  public VillageCourtyardGameController CourtyardGame { get; private set; }
+  public void BindCourtyardGame(VillageCourtyardGameController game) { CourtyardGame = game; }
+
   // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the station
   // lifecycle, game binding and arena wiring are all removed.
 

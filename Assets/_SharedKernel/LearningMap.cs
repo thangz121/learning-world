@@ -108,6 +108,8 @@ public static class LearningMap {
   public const string SpellingGardenGame = "spelling_garden";
   // Vietnamese -> Pre-literacy (Vườn Tri Thức Thực Tế).
   public const string DiscoveryGardenGame = "discovery_garden";
+  // Vietnamese -> Speaking (Sân Đình Vui Vẻ).
+  public const string CourtyardSpeakingGame = "courtyard_speaking";
 
   public static readonly SkillEntry[] MathSkills = {
     new SkillEntry(MathCounting, MathId, "Đếm"),
@@ -160,6 +162,7 @@ public static class LearningMap {
   public const string WonderKitchenScene = "WonderKitchenPlayScene";
   public const string SentenceExpressScene = "SentenceExpressPlayScene";
   public const string PhonicsGardenScene = "PhonicsGardenPlayScene";
+  public const string VillageCourtyardScene = "VillageCourtyardPlayScene";
 
   // Counting games stay HUMAN_ACCEPTED. Geometry is IMPLEMENTED only.
   public static readonly GameEntry[] Games = {
@@ -191,6 +194,9 @@ public static class LearningMap {
     // Vietnamese -> Pre-literacy: Vườn Tri Thức Thực Tế.
     new GameEntry(DiscoveryGardenGame, VietnamesePreLiteracy, "Vườn Tri Thức Thực Tế",
       PhonicsGardenScene, GameStatus.Implemented),
+    // Vietnamese -> Speaking: Sân Đình Vui Vẻ.
+    new GameEntry(CourtyardSpeakingGame, VietnameseSpeaking, "Sân Đình Vui Vẻ",
+      VillageCourtyardScene, GameStatus.Implemented),
     // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order: "xóa hoàn
     // toàn ... cổng thứ tự"): the skill math_order is gone from this map, the
     // door is gone from every yard, and the code folder/scene/tests are removed.

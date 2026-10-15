@@ -247,6 +247,9 @@ public class GameInstaller : MonoBehaviour {
       if (scene.name == PhonicsGardenBuilder.SceneName) {
         BuildPhonicsGardenPlayScene(scene);
       }
+      if (scene.name == VillageCourtyardBuilder.SceneName) {
+        BuildVillageCourtyardPlayScene(scene);
+      }
     // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the whole
     // arena (code folder, scene, dispatch branch and gate) is removed.
     // PHASE 5 LEGACY PURGE: Discovery Garden, MathScene and CountingGardenScene
@@ -785,6 +788,54 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] PhonicsGardenPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildVillageCourtyardPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true);
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "VillageCourtyardWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] VillageCourtyardPlayScene has no VillageCourtyardWorld root.", this);
+        return;
+      }
+      root.transform.position = VillageCourtyardBuilder.WorldOffset;
+      VillageCourtyardBuilder builder = root.GetComponent<VillageCourtyardBuilder>();
+      if (builder == null) builder = root.AddComponent<VillageCourtyardBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = VillageCourtyardBuilder.WorldOffset + VillageCourtyardBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, VillageCourtyardBuilder.WorldOffset,
+          VillageCourtyardBuilder.BoundX, VillageCourtyardBuilder.BoundZ, VillageCourtyardBuilder.FollowOffset,
+          DialogueLang.T("Speak Vietnamese at the courtyard!", "Bé nói tiếng Việt tại sân đình!"));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        VillageCourtyardGameController game = root.GetComponent<VillageCourtyardGameController>();
+        if (game == null) game = root.AddComponent<VillageCourtyardGameController>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle life = _yardArea != null ? _yardArea.CourtyardLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, life, null, null, null);
+        if (_yardArea != null) {
+          _yardArea.BindCourtyardGame(game);
+        }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] village courtyard wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Village Courtyard scene built entry="
+          + (VillageCourtyardBuilder.WorldOffset + VillageCourtyardBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] VillageCourtyardPlayScene build failed: " + e.Message, this);
     }
   }
 
