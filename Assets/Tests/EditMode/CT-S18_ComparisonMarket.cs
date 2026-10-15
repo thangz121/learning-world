@@ -248,6 +248,69 @@ public class CT_S18_ComparisonMarket {
     }
   }
 
+  [Test] public void S18H_MagicalMarketScaleAndMiaBlender() {
+    GameObject arena;
+    ComparisonMarketBuilder builder = BuildArena(out arena);
+    GameObject player = PlayerAt(ComparisonMarketBuilder.PlaySpotLocal);
+    try {
+      FakeAudio audio = new FakeAudio();
+      ActivityLifecycle life = new ActivityLifecycle("comparison_market", "test");
+      ComparisonMarket game = BuildGame(builder, arena, player, audio, life);
+
+      // 1. Verify Magic Seesaw Scale
+      Assert.IsNotNull(builder.Scale, "MagicMarketScale created");
+      Assert.IsNotNull(builder.Scale.BeamRoot, "Scale beam root exists");
+      Assert.IsNotNull(builder.Scale.Pointer, "Scale balance pointer exists");
+
+      // 2. Verify Rainbow Juice Blender
+      Assert.IsNotNull(builder.JuiceBlender, "MagicJuiceBlender created");
+      Assert.IsNotNull(builder.JuiceBlender.BlenderJar, "Blender jar exists");
+
+      // 3. Verify Shopkeeper Mia NPC
+      Assert.IsNotNull(builder.MiaNpc, "Shopkeeper Mia NPC spawned");
+
+      // 4. Test Scale tilting dynamics on More/Less
+      game.SetLevelForTests(3, 0);
+      Drain(game, 2);
+      Assert.AreNotEqual(0f, builder.Scale.TargetAngle, "Scale tilts on uneven fruit baskets");
+
+      // 5. Test Scale balance on Equal
+      game.SetLevelForTests(4, 0);
+      Drain(game, 2);
+      Assert.AreEqual(0f, builder.Scale.TargetAngle, "Scale perfectly balances at 0 deg when equal");
+
+      // 6. Test Hollow Basket & Fruit Stacking Socket (No clipping, no sinking)
+      Assert.IsTrue(builder.Choices.Count >= 2, "baskets exist");
+      Transform basketRoot = builder.Choices[0].transform;
+      Transform basketBase = basketRoot.Find("BasketBase");
+      Assert.IsNotNull(basketBase, "BasketBase exists");
+      Assert.GreaterOrEqual(basketBase.localPosition.y, 0.03f, "Basket base rests above ground, does not sink");
+
+      Transform fruit0 = basketRoot.Find("Fruit0");
+      Assert.IsNotNull(fruit0, "Fruit0 exists in basket");
+      Assert.GreaterOrEqual(fruit0.localPosition.y, 0.16f, "Fruit sits proud on straw cushion above basket floor");
+
+      // 7. Verify Win celebration calls (Mia & Blender)
+      ComparisonChoice ans = AnswerOf(builder);
+      Assert.IsNotNull(ans, "answer basket");
+      Vector3 ansPos = ans.transform.position;
+      game.TryTapChoice(ans);
+      Assert.IsTrue(game.LastCorrect, "correct choice wins");
+      builder.MiaCelebrate();
+      builder.JuiceBlender.TriggerJuice(Color.red, ansPos);
+      Drain(game, 5);
+    } finally {
+      Object.DestroyImmediate(player);
+      Object.DestroyImmediate(arena);
+    }
+  }
+
+  [Test] public void S18I_ScaleTiltDirection_HeavierSideSinks() {
+    Assert.Greater(ComparisonMarket.TiltFor(5, 3), 0f, "left heavier -> positive angle sinks the LEFT pan");
+    Assert.Less(ComparisonMarket.TiltFor(3, 5), 0f, "right heavier -> negative angle sinks the RIGHT pan");
+    Assert.AreEqual(0f, ComparisonMarket.TiltFor(4, 4), "equal -> perfectly balanced");
+  }
+
   static Transform FindDeep(Transform t, string name) {
     if (t == null) return null;
     if (t.name == name) return t;

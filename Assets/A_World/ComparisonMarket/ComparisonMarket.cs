@@ -1,5 +1,6 @@
-// A_World/ComparisonMarket/ComparisonMarket.cs — Khu Chợ Của Bé.
+// A_World/ComparisonMarket/ComparisonMarket.cs — Khu Chợ Của Bé (Magical Fruit Market).
 // Starts at LV3. Observe -> compare -> decide -> act. No timer, no game over.
+// Features Magic Seesaw Balance Scale, Shopkeeper NPC Mia, and Rainbow Juice Blender.
 // C# 9.0 only.
 using System;
 using System.Collections.Generic;
@@ -78,6 +79,9 @@ public class ComparisonMarket : MonoBehaviour {
     }
     if (_voice != null) _voice.Tick(dt);
     TickAsk();
+    if (_builder.Scale != null) _builder.Scale.Tick(dt);
+    if (_builder.JuiceBlender != null) _builder.JuiceBlender.Tick(dt);
+
     if (Completed && Current == Phase.Done) return;
     if (_restT > 0f) {
       _restT -= dt;
@@ -96,6 +100,7 @@ public class ComparisonMarket : MonoBehaviour {
   void TickWait(float dt) {
     if (!_waitCalled && _phaseT >= 1.2f) {
       _waitCalled = true;
+      if (_builder != null) _builder.MiaWave();
       Say("Come to the market!", "Con ra chợ nhé!");
       ActivityGuide.PointAt(SpotWorld());
     }
@@ -157,6 +162,12 @@ public class ComparisonMarket : MonoBehaviour {
       left, 1f, ComparisonMarketBuilder.AppleColor(i), 0.32f, "L", ans == 0);
     _builder.SpawnBasket(ComparisonMarketBuilder.SlotB, ComparisonMarketBuilder.BasketColor(i + 1),
       right, 1f, ComparisonMarketBuilder.AppleColor(i + 1), 0.32f, "R", ans == 1);
+
+    // Tilt the Magic Seesaw Scale toward the heavier (more fruits) basket.
+    // Beam +Z rotation LOWERS the LEFT pan (SlotA side) — direction fixed (was inverted).
+    if (_builder.Scale != null) {
+      _builder.Scale.SetTargetAngle(TiltFor(left, right));
+    }
   }
 
   // LV4: equal counts, different spacing. Both baskets answer: the point is EQUAL.
@@ -170,6 +181,9 @@ public class ComparisonMarket : MonoBehaviour {
     _builder.SpawnBasket(ComparisonMarketBuilder.SlotB, ComparisonMarketBuilder.BasketColor(1),
       n, 1.6f, ComparisonMarketBuilder.AppleColor(1), 0.32f, "R", false);
     _builder.SpawnEqualPad(new Vector3(0f, 0f, 3.4f), "EQ");
+
+    // Equal counts -> Scale perfectly balanced!
+    if (_builder.Scale != null) _builder.Scale.SetTargetAngle(0f);
   }
 
   // LV5: tap-to-pair, then tap the leftover group.
@@ -197,6 +211,10 @@ public class ComparisonMarket : MonoBehaviour {
     _builder.SpawnBasket(ComparisonMarketBuilder.SlotB, ComparisonMarketBuilder.BasketColor(1),
       oranges, 1f, ComparisonMarketBuilder.OrangeColor(), 0.3f, "R", !leftMore);
     foreach (ComparisonChoice c in _builder.Choices) c.Game = this;
+
+    if (_builder.Scale != null) {
+      _builder.Scale.SetTargetAngle(leftMore ? 8.5f : -8.5f);
+    }
   }
 
   // LV6: MORE with mismatched item sizes (size must not cue quantity).
@@ -212,6 +230,7 @@ public class ComparisonMarket : MonoBehaviour {
       _builder.SpawnBasket(ComparisonMarketBuilder.SlotB, ComparisonMarketBuilder.BasketColor(1),
         n, 1f, ComparisonMarketBuilder.OrangeColor(), 0.24f, "R", false);
       _builder.SpawnEqualPad(new Vector3(0f, 0f, 3.4f), "EQ");
+      if (_builder.Scale != null) _builder.Scale.SetTargetAngle(0f);
       return;
     }
     Relation = TargetRelation.More;
@@ -232,6 +251,10 @@ public class ComparisonMarket : MonoBehaviour {
       b.SpawnBasket(ComparisonMarketBuilder.SlotB, ComparisonMarketBuilder.BasketColor(1),
         right, 1f, ComparisonMarketBuilder.AppleColor(0), rightSize, "R", ans == 1);
     }
+
+    if (_builder.Scale != null) {
+      _builder.Scale.SetTargetAngle(TiltFor(left, right));
+    }
   }
 
   // LV7: bigger / smaller. Object count never cues (one object each side).
@@ -249,6 +272,10 @@ public class ComparisonMarket : MonoBehaviour {
       _builder.SpawnBall(ComparisonMarketBuilder.SlotA, bigLeft ? 0.45f : 0.28f, c0, "L", askLarger == bigLeft);
       _builder.SpawnBall(ComparisonMarketBuilder.SlotB, bigLeft ? 0.28f : 0.45f, c1, "R", askLarger != bigLeft);
     }
+
+    if (_builder.Scale != null) {
+      _builder.Scale.SetTargetAngle(bigLeft ? 8.0f : -8.0f);
+    }
   }
 
   // LV8: longer / shorter ropes, left-aligned on the rail (fair setup).
@@ -261,12 +288,13 @@ public class ComparisonMarket : MonoBehaviour {
     bool longLeft = i < 2;
     Vector3 a = new Vector3(-1.8f, 0f, 4.9f), b = new Vector3(0.2f, 0f, 4.9f);
     Color c0 = ComparisonMarketBuilder.AppleColor(i), c1 = ComparisonMarketBuilder.AppleColor(i + 1);
-    // Left rope is the asked one exactly when its side holds the asked length.
     bool leftAns = longLeft == askLonger;
     float ll = longLeft ? (askLonger ? longLen : shortLen) : (askLonger ? shortLen : longLen);
     float rl = longLeft ? (askLonger ? shortLen : longLen) : (askLonger ? longLen : shortLen);
     _builder.SpawnRope(a, ll, c0, "L", leftAns);
     _builder.SpawnRope(b, rl, c1, "R", !leftAns);
+
+    if (_builder.Scale != null) _builder.Scale.SetTargetAngle(0f);
   }
 
   // LV9: three-way. Third object is a real contender.
@@ -288,6 +316,7 @@ public class ComparisonMarket : MonoBehaviour {
         _builder.SpawnBasket(slots[k], ComparisonMarketBuilder.BasketColor(k), n[k], 1f,
           ComparisonMarketBuilder.AppleColor(k), 0.3f, "S" + k, k == ans);
     }
+    if (_builder.Scale != null) _builder.Scale.SetTargetAngle(0f);
   }
 
   void SpawnThreeBoxes(float[] sizes, int ans) {
@@ -315,6 +344,7 @@ public class ComparisonMarket : MonoBehaviour {
         3, 1f, ComparisonMarketBuilder.AppleColor(0), 0.32f, "L", false);
       _builder.SpawnBasket(ComparisonMarketBuilder.SlotB, ComparisonMarketBuilder.BasketColor(1),
         5, 1f, ComparisonMarketBuilder.AppleColor(1), 0.32f, "R", true);
+      if (_builder.Scale != null) _builder.Scale.SetTargetAngle(-8.5f); // right has more (5) -> right sinks
     } else {
       Relation = TargetRelation.Smaller;
       CType = ComparisonType.Size;
@@ -322,6 +352,7 @@ public class ComparisonMarket : MonoBehaviour {
         ComparisonMarketBuilder.AppleColor(0), "L", false);
       _builder.SpawnBoxProp(ComparisonMarketBuilder.SlotB, 0.5f,
         ComparisonMarketBuilder.AppleColor(1), "R", true);
+      if (_builder.Scale != null) _builder.Scale.SetTargetAngle(8.0f); // left box is bigger -> left sinks
     }
   }
 
@@ -445,9 +476,17 @@ public class ComparisonMarket : MonoBehaviour {
     WinRound();
   }
 
+  // Preschool seesaw reading: the HEAVIER basket's side sinks. Beam +Z rotation lowers the
+  // LEFT pan (SlotA side), so left-heavier -> positive angle. (Direction was inverted until 1.9.46.)
+  public static float TiltFor(int leftCount, int rightCount, float maxTilt = 8.5f) {
+    if (leftCount == rightCount) return 0f;
+    return leftCount > rightCount ? maxTilt : -maxTilt;
+  }
+
   void Reject() {
     WrongCount++;
     LastCorrect = false;
+    if (_builder != null) _builder.MiaCurious();
     Say("Not yet. Look again.", "Chưa đúng. Xem lại nhé.");
     ActivityFeedback.Retry();
     GameJuice.WrongFx(_builder != null ? _builder.transform : transform, _fx,
@@ -459,6 +498,26 @@ public class ComparisonMarket : MonoBehaviour {
     PlaySfx("success");
     GameJuice.CorrectFx(_fx, _player != null ? _player.position : Vector3.zero, false);
     ActivityFeedback.Correct();
+
+    // Trigger Mia celebration and Rainbow Juice Blender reward
+    if (_builder != null) {
+      _builder.MiaCelebrate();
+      if (_builder.JuiceBlender != null) {
+        Color juiceCol = new Color(0.95f, 0.45f, 0.25f);
+        Vector3 srcPos = transform.position;
+        if (Selected != null) srcPos = Selected.transform.position;
+        else if (_builder.Choices.Count > 0) {
+          for (int i = 0; i < _builder.Choices.Count; i++) {
+            if (_builder.Choices[i] != null && _builder.Choices[i].IsAnswer) {
+              srcPos = _builder.Choices[i].transform.position;
+              break;
+            }
+          }
+        }
+        _builder.JuiceBlender.TriggerJuice(juiceCol, srcPos);
+      }
+    }
+
     SayPraise();
     int max = RoundsOf(Level);
     RoundIndex++;
