@@ -227,7 +227,8 @@ public class VillageMarketEditModeTests {
 
     Assert.AreEqual(1, game.WrongAttempts, "Wrong attempts = 1");
     Assert.AreEqual(VillageMarketGameController.Phase.AcousticBoost, game.CurrentPhase, "Phase is AcousticBoost");
-    Assert.AreEqual(0.8f, ducking.PlaybackSpeed, 0.01f, "0.8x slow speed set for acoustic clarity");
+    Assert.AreEqual("mkt_q1_slow", ducking.LastPlayedClipName, "slow mastered clip served for acoustic boost");
+    Assert.AreEqual(1.0f, ducking.PlaybackSpeed, 0.01f, "slow is BAKED (0.8x natural pitch) - played at 1.0, no pitch-shift");
 
     Object.DestroyImmediate(arena);
   }

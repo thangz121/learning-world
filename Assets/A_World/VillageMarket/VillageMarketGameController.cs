@@ -253,7 +253,7 @@ public class VillageMarketGameController : MonoBehaviour {
       if (AudioService != null) {
         AudioClip slowClip = q.slowEmphasizedAudio != null ? q.slowEmphasizedAudio.EditorAsset : null;
         if (slowClip == null) slowClip = VnVoicePack.Get(VoiceKeyFor(q, "slow"));
-        AudioService.PlayVoicePrompt(slowClip, 0.8f, 0f);
+        AudioService.PlayVoicePrompt(slowClip, 1.0f, 0f); // slow is BAKED (0.8x, natural pitch) — never pitch-shift again
 
         // Play real physical / animal sound cue if available
         var targetOption = FindOption(GetPrimaryTargetId(q));
@@ -285,7 +285,7 @@ public class VillageMarketGameController : MonoBehaviour {
       if (AudioService != null) {
         AudioClip slowClip = q.slowEmphasizedAudio != null ? q.slowEmphasizedAudio.EditorAsset : null;
         if (slowClip == null) slowClip = VnVoicePack.Get(VoiceKeyFor(q, "slow"));
-        AudioService.PlayVoicePrompt(slowClip, 0.8f, targetPan);
+        AudioService.PlayVoicePrompt(slowClip, 1.0f, targetPan); // slow is BAKED (0.8x, natural pitch)
       }
     } else {
       // Tier 3: Guided Discovery & Hand-off

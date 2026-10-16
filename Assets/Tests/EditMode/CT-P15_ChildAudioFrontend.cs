@@ -109,9 +109,10 @@ public class CT_P15_ChildAudioFrontend {
       ChildAudioFrontend.Process(oneSecAudio, sampleRate, out warmMeta);
     }
 
-    // Measure latency (best of 3 runs to absorb OS thread scheduling jitter)
+    // Measure latency (best of 5 runs to absorb OS thread scheduling jitter —
+    // batch runs import assets / share CPU with other editor work)
     double minMs = double.MaxValue;
-    for (int r = 0; r < 3; r++) {
+    for (int r = 0; r < 5; r++) {
       Stopwatch sw = Stopwatch.StartNew();
       ChildFrontendMetadata meta;
       ChildAudioFrontend.Process(oneSecAudio, sampleRate, out meta);
