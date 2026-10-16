@@ -1,0 +1,4 @@
+Vietnamese voice pack - ONLINE TTS (CloudflareTranslateTtsProvider worker, lang=vi).
+KHONG phai ban ghi nguoi that (not human recordings). Generated: 2026-10-16 09:57
+Source manifest: Content/vn_voice/manifest.json (keys pinned == runtime lookups).
+Can be replaced/supplemented by studio recordings or an Azure TTS batch later.

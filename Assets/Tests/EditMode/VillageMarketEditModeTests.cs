@@ -359,20 +359,35 @@ public class VillageMarketEditModeTests {
     Object.DestroyImmediate(arena);
   }
 
-  [Test] public void S25M_NoVoicePack_ShowsHonestTextPrompt_NeverFakeDucking() {
+  [Test] public void S25M_VoicePackPresent_SpeaksHonestly_AndUnmappedFallsBackToText() {
+    // (a) Default curriculum ids are mastered -> the pack clip plays and the sign hides.
     var builder = BuildArena(out GameObject arena);
     var ducking = new SpatialAudioDuckingService();
     var game = BuildGame(builder, arena, new FakeAudio(), null, ducking);
-
     game.StartGame();
 
-    Assert.IsNotNull(builder.PromptSign, "prompt sign exists");
-    Assert.IsTrue(builder.PromptSign.text.Contains("Quả Cam"),
-      "text prompt states the target while no voice clip exists");
-    Assert.IsFalse(ducking.IsDucking, "no clip => no fake ducking of the ambient");
-    Assert.AreEqual("", ducking.LastPlayedClipName, "no fabricated prompt name");
+    Assert.AreEqual("mkt_q1_normal", ducking.LastPlayedClipName, "voice-pack clip served for the prompt");
+    Assert.IsTrue(ducking.IsDucking, "ducking engages for a REAL clip");
+    Assert.IsFalse(builder.PromptSign.gameObject.activeInHierarchy, "text sign hidden when voice exists");
 
     Object.DestroyImmediate(arena);
+
+    // (b) Custom question with no mastered clips -> honest text fallback, no fake audio.
+    var builder2 = BuildArena(out GameObject arena2);
+    var ducking2 = new SpatialAudioDuckingService();
+    var game2 = BuildGame(builder2, arena2, new FakeAudio(), null, ducking2, null,
+      new List<ListeningQuestionSO> {
+        ListeningQuestionSO.CreateInstance("Q_Custom", ListeningMode.Level1_DirectNoun,
+          new List<MarketItemOption> { new MarketItemOption("orange", "Quả Cam") },
+          new List<string> { "orange" })
+      });
+    game2.StartGame();
+
+    Assert.IsTrue(builder2.PromptSign.text.Contains("Quả Cam"), "text prompt states the target");
+    Assert.IsFalse(ducking2.IsDucking, "no clip => no fake ducking of the ambient");
+    Assert.AreEqual("", ducking2.LastPlayedClipName, "no fabricated prompt name");
+
+    Object.DestroyImmediate(arena2);
   }
 
   [Test] public void S25N_ItemsRespondToRouterClicks() {

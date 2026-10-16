@@ -101,17 +101,17 @@ public class VillageMarketGameController : MonoBehaviour {
     // 1. Rebuild stall items
     SpawnStallItems(q);
 
-    // 2. Audio Ducking & Voice Prompt. HONEST CONTENT STATE (1.9.49): no Vietnamese voice clips
-    //    ship yet — when a prompt clip is missing the game shows the target on the world sign
-    //    as TEXT (and never ducks/simulates audio). Voice playback activates by itself once a
-    //    real voice pack fills normalPromptAudio / slowEmphasizedAudio / teachBackAudio.
+    // 2. Audio Ducking & Voice Prompt. Voice = the mastered VnVoicePack clip for the built-in
+    //    curriculum (generated via the project TTS worker). Custom questions without mastered
+    //    clips fall back to the honest world sign text — never fake audio.
+    AudioClip normalClip = (q.normalPromptAudio != null && q.normalPromptAudio.EditorAsset != null)
+      ? q.normalPromptAudio.EditorAsset
+      : VnVoicePack.Get(VoiceKeyFor(q, "normal"));
     if (AudioService != null) {
-      AudioClip normalClip = q.normalPromptAudio != null ? q.normalPromptAudio.EditorAsset : null;
       AudioService.PlayVoicePrompt(normalClip, 1.0f, 0f);
     }
     if (Builder != null) {
-      bool hasVoice = q.normalPromptAudio != null && q.normalPromptAudio.EditorAsset != null;
-      if (hasVoice) Builder.HidePromptText();
+      if (normalClip != null) Builder.HidePromptText();
       else Builder.ShowPromptText("Bà cần: " + GetPrimaryTargetDisplayName(q) + "!");
     }
 
@@ -252,6 +252,7 @@ public class VillageMarketGameController : MonoBehaviour {
 
       if (AudioService != null) {
         AudioClip slowClip = q.slowEmphasizedAudio != null ? q.slowEmphasizedAudio.EditorAsset : null;
+        if (slowClip == null) slowClip = VnVoicePack.Get(VoiceKeyFor(q, "slow"));
         AudioService.PlayVoicePrompt(slowClip, 0.8f, 0f);
 
         // Play real physical / animal sound cue if available
@@ -283,6 +284,7 @@ public class VillageMarketGameController : MonoBehaviour {
 
       if (AudioService != null) {
         AudioClip slowClip = q.slowEmphasizedAudio != null ? q.slowEmphasizedAudio.EditorAsset : null;
+        if (slowClip == null) slowClip = VnVoicePack.Get(VoiceKeyFor(q, "slow"));
         AudioService.PlayVoicePrompt(slowClip, 0.8f, targetPan);
       }
     } else {
@@ -307,6 +309,7 @@ public class VillageMarketGameController : MonoBehaviour {
 
       if (AudioService != null) {
         AudioClip teachClip = q.teachBackAudio != null ? q.teachBackAudio.EditorAsset : null;
+        if (teachClip == null) teachClip = VnVoicePack.Get(VoiceKeyFor(q, "teach"));
         AudioService.PlayVoicePrompt(teachClip, 1.0f, 0f);
       }
       if (Builder != null) {
@@ -416,6 +419,16 @@ public class VillageMarketGameController : MonoBehaviour {
     string id = GetPrimaryTargetId(q);
     var opt = FindOption(id);
     return opt != null && !string.IsNullOrEmpty(opt.displayName) ? opt.displayName : id;
+  }
+
+  // Voice-pack key: only the built-in curriculum ids are mastered (Q1_Cam/Q2_DuaHau/Q3_ChuoiSua).
+  // Custom questions fall back to the honest text prompt until their clips are generated.
+  string VoiceKeyFor(ListeningQuestionSO q, string suffix) {
+    if (q == null || string.IsNullOrEmpty(q.questionId)) return null;
+    if (q.questionId.StartsWith("Q1", System.StringComparison.OrdinalIgnoreCase)) return "mkt_q1_" + suffix;
+    if (q.questionId.StartsWith("Q2", System.StringComparison.OrdinalIgnoreCase)) return "mkt_q2_" + suffix;
+    if (q.questionId.StartsWith("Q3", System.StringComparison.OrdinalIgnoreCase)) return "mkt_q3_" + suffix;
+    return null;
   }
 
   MarketItemOption FindOption(string itemId) {
