@@ -173,17 +173,21 @@ public class PhonicsGarden : MonoBehaviour {
     _phaseT = 0f;
     _idleT = 0f;
 
-    if (_builder != null) {
-      _builder.ClearRound();
-      if (_builder.Board != null) {
-        _builder.Board.SetWord(CurrentWord != null ? CurrentWord.FullWord : "");
-        _builder.Board.HidePhotoFrame();
-      }
+      if (_builder != null) {
+        _builder.ClearRound();
+        if (_builder.Board != null) {
+          _builder.Board.SetWord(CurrentWord != null ? CurrentWord.FullWord : "");
+          _builder.Board.HidePhotoFrame();
+          // Teacher says the word (mastered clip: "cá"/"con cá") — text-only fallback otherwise
+          if (CurrentWord != null) {
+            _builder.Board.PlayClip(VnVoicePack.Get(NameClipKey(CurrentWord)));
+          }
+        }
 
-      if (CurrentWord != null) {
-        _builder.SpawnChoiceCards(this, CurrentWord.FullWord, CurrentWord.Distractors);
+        if (CurrentWord != null) {
+          _builder.SpawnChoiceCards(this, CurrentWord.FullWord, CurrentWord.Distractors);
+        }
       }
-    }
 
     CurrentPhase = Phase.IntroSpelling;
     SetCardsInteractable(false);
@@ -245,6 +249,10 @@ public class PhonicsGarden : MonoBehaviour {
       CurrentPhase = Phase.MistakeScaffold1;
       if (_builder != null) _builder.TeacherEncourage();
       Say("Listen again, keep trying!", "Con nghe lại nhé!");
+      // "Đọc lại" = replay the mastered word clip for the child
+      if (_builder != null && _builder.Board != null && CurrentWord != null) {
+        _builder.Board.PlayClip(VnVoicePack.Get(NameClipKey(CurrentWord)));
+      }
       _scaffoldT = 1.0f;
     } else if (MistakeCount == 2) {
       // Tier 2: Sai lần 2 — Mở mỏ neo thị giác (ảnh thật khi có, nếu không là hình minh họa)
@@ -268,20 +276,27 @@ public class PhonicsGarden : MonoBehaviour {
 
       Say("Let us spell together now!", "Cùng học đánh vần nhé!");
 
-      // Explicit phonics instruction on the board
+      // Explicit phonics instruction on the board, then the full teaching spell-line
       if (_builder != null && _builder.Board != null && CurrentWord != null) {
         _builder.Board.PlayExplicitPhonics(CurrentWord.Segments, () => {
           QuestionIndex++;
           ActivityFeedback.ProgressKeep(QuestionIndex, TotalQuestions);
           bool finish = QuestionIndex >= TotalQuestions;
           RestThenAdvance(finish);
-        });
+        }, "spell_" + CurrentWord.WordId);
       } else {
         QuestionIndex++;
         bool finish = QuestionIndex >= TotalQuestions;
         RestThenAdvance(finish);
       }
     }
+  }
+
+  // Voice-pack key for the teacher saying the word itself
+  // ("word_ca" in the spelling garden, "disc_ca" in the discovery garden).
+  string NameClipKey(PhonicsWordData w) {
+    if (w == null || string.IsNullOrEmpty(w.WordId)) return null;
+    return (Mode == PhonicsPlayMode.RealWorldDiscovery ? "disc_" : "word_") + w.WordId;
   }
 
   void ShowPictureClue() {

@@ -54,6 +54,7 @@ public class VillageCourtyardGameController : MonoBehaviour {
   float _restT;
   bool _finishAfterRest;
   bool _waitCalled;
+  float _promptClipLen;
 
   public void Build(VillageCourtyardBuilder builder, Transform player, SmartCamera cam,
       IAudioDirector audio, ActivityLifecycle life, ChildVoiceCaptureService capture = null,
@@ -150,7 +151,7 @@ public class VillageCourtyardGameController : MonoBehaviour {
   }
 
   void TickPresentation(float dt) {
-    if (_phaseT >= 1.5f) {
+    if (_phaseT >= Mathf.Max(1.5f, _promptClipLen + 0.4f)) {
       TransitionToListening();
     }
   }
@@ -187,11 +188,14 @@ public class VillageCourtyardGameController : MonoBehaviour {
 
     CurrentPhase = Phase.PromptPresentation;
 
-    // Teacher model reads reference phrase
+    // Teacher model reads reference phrase with the mastered voice-pack clip (stretched cadence)
     Say("Listen and repeat after me.", "Con lắng nghe cô nhé.");
     if (_builder != null) {
       _builder.TamDemonstrateMouth(1.0f);
     }
+    AudioClip promptClip = PackClip("normal");
+    PlayPromptClip(promptClip);
+    _promptClipLen = promptClip != null ? promptClip.length : 0f;
   }
 
   void TransitionToListening() {
@@ -279,6 +283,7 @@ public class VillageCourtyardGameController : MonoBehaviour {
       } else {
         Say("Almost right, watch my mouth!", "Gần đúng rồi, nhìn miệng cô!");
       }
+      PlayPromptClip(PackClip("slow")); // bản chậm đã nướng 0.8x (giữ cao độ tự nhiên)
 
       if (VoiceCapture != null) VoiceCapture.ResetSpeechBuffer();
       // Allow child to retry speaking
@@ -341,7 +346,13 @@ public class VillageCourtyardGameController : MonoBehaviour {
       return;
     }
     string chunk = ActiveChunks[CurrentChunkIndex];
-    Say("Say this: " + chunk, "Bé nói: " + chunk);
+    AudioClip chunkClip = ChunkClip(CurrentChunkIndex);
+    if (chunkClip != null) {
+      PlayPromptClip(chunkClip); // stretched teaching clip reads the syllable itself
+      Say("Your turn!", "Bé nói nhé!");
+    } else {
+      Say("Say this: " + chunk, "Bé nói: " + chunk);
+    }
 
     if (VoiceCapture != null) {
       VoiceCapture.StartCapture();
@@ -437,6 +448,32 @@ public class VillageCourtyardGameController : MonoBehaviour {
   void Say(string en, string vi) {
     if (_voice == null) return;
     _voice.Speak(DialogueLang.T(en, vi));
+  }
+
+  // Voice-pack helpers: the 5 built-in prompt ids (buoi/chao_ba/yeu_me/hoa_sen/den_long) are
+  // mastered as cdy_<id>_normal/slow + ch_<short>_<n> syllable chunks. Missing -> honest fallback.
+  AudioClip PackClip(string suffix) {
+    if (CurrentPrompt == null || string.IsNullOrEmpty(CurrentPrompt.promptId)) return null;
+    return VnVoicePack.Get("cdy_" + CurrentPrompt.promptId + "_" + suffix);
+  }
+
+  AudioClip ChunkClip(int index) {
+    if (CurrentPrompt == null) return null;
+    string prefix = null;
+    switch (CurrentPrompt.promptId) {
+      case "buoi": prefix = "ch_buoi"; break;
+      case "chao_ba": prefix = "ch_chao"; break;
+      case "yeu_me": prefix = "ch_yeu"; break;
+      case "hoa_sen": prefix = "ch_sen"; break;
+      case "den_long": prefix = "ch_long"; break;
+    }
+    if (prefix == null) return null;
+    return VnVoicePack.Get(prefix + "_" + (index + 1));
+  }
+
+  void PlayPromptClip(AudioClip clip) {
+    if (clip == null || _playbackAudioSource == null) return;
+    try { _playbackAudioSource.PlayOneShot(clip, 1f); } catch (Exception) { }
   }
 
   void PlaySfx(string id) {

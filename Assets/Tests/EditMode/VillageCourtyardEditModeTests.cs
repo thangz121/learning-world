@@ -134,7 +134,7 @@ public class VillageCourtyardEditModeTests {
     var game = BuildGame(builder, arena, audio, null);
 
     game.BeginQuestion();
-    game.Tick(1.6f); // Advance to ListeningState
+    game.Tick(6f); // PromptPresentation now waits for the mastered prompt clip length + margin
     Assert.AreEqual(VillageCourtyardGameController.Phase.ListeningState, game.CurrentPhase);
 
     // Fail 1: Simulated incorrect speech
@@ -298,6 +298,22 @@ public class VillageCourtyardEditModeTests {
     for (int i = 0; i < voice.Length; i++) voice[i] = Mathf.Sin(2f * Mathf.PI * 300f * i / 16000f) * 0.3f;
     capture.PushSampleBlock(voice);
     Assert.IsFalse(capture.WhisperModeActive, "speech resumed — +12dB boost must drop");
+  }
+
+  [Test] public void S24O_VoicePackKeys_PinnedForPromptsAndChunks() {
+    string[] ids = { "buoi", "chao_ba", "yeu_me", "hoa_sen", "den_long" };
+    for (int i = 0; i < ids.Length; i++) {
+      Assert.IsNotNull(VnVoicePack.Get("cdy_" + ids[i] + "_normal"), "normal clip pinned: " + ids[i]);
+      Assert.IsNotNull(VnVoicePack.Get("cdy_" + ids[i] + "_slow"), "slow clip pinned: " + ids[i]);
+    }
+    string[] prefixes = { "ch_buoi", "ch_chao", "ch_yeu", "ch_sen", "ch_long" };
+    for (int i = 0; i < prefixes.Length; i++) {
+      int count = prefixes[i] == "ch_buoi" ? 2 : 3;
+      for (int k = 1; k <= count; k++) {
+        string key = prefixes[i] + "_" + k;
+        Assert.IsNotNull(VnVoicePack.Get(key), "chunk clip pinned: " + key);
+      }
+    }
   }
 
   [Test] public void S24K_SafetyFilterAllDialogues() {

@@ -91,11 +91,11 @@ public static class PhonicsDatabase {
     // 1. CÁ (Animals)
     new PhonicsWordData("ca", "CÁ", "animals",
       new PhonicsSegment[] {
-        new PhonicsSegment("C", "audio_c", 0.4f),
-        new PhonicsSegment("A", "audio_a", 0.4f),
-        new PhonicsSegment("CA", "audio_ca", 0.5f),
-        new PhonicsSegment("´", "audio_sac", 0.35f),
-        new PhonicsSegment("CÁ", "audio_ca_full", 0.6f)
+        new PhonicsSegment("C", "seg_c", 1.05f),
+        new PhonicsSegment("A", "seg_a", 1.05f),
+        new PhonicsSegment("CA", "seg_ca", 1.10f),
+        new PhonicsSegment("´", "seg_sac", 1.00f),
+        new PhonicsSegment("CÁ", "word_ca", 1.15f)
       },
       new string[] { "GÀ", "BÒ" },
       "RealPhotos/Animals/fish_real",
@@ -106,11 +106,11 @@ public static class PhonicsDatabase {
     // 2. BÒ (Animals)
     new PhonicsWordData("bo", "BÒ", "animals",
       new PhonicsSegment[] {
-        new PhonicsSegment("B", "audio_b", 0.4f),
-        new PhonicsSegment("O", "audio_o", 0.4f),
-        new PhonicsSegment("BO", "audio_bo", 0.5f),
-        new PhonicsSegment("`", "audio_huyen", 0.35f),
-        new PhonicsSegment("BÒ", "audio_bo_full", 0.6f)
+        new PhonicsSegment("B", "seg_b", 1.05f),
+        new PhonicsSegment("O", "seg_o", 1.05f),
+        new PhonicsSegment("BO", "seg_bo", 1.10f),
+        new PhonicsSegment("`", "seg_huyen", 1.00f),
+        new PhonicsSegment("BÒ", "word_bo", 1.15f)
       },
       new string[] { "DÊ", "CHÓ" },
       "RealPhotos/Animals/cow_real",
@@ -121,11 +121,11 @@ public static class PhonicsDatabase {
     // 3. GÀ (Animals)
     new PhonicsWordData("ga", "GÀ", "animals",
       new PhonicsSegment[] {
-        new PhonicsSegment("G", "audio_g", 0.4f),
-        new PhonicsSegment("A", "audio_a", 0.4f),
-        new PhonicsSegment("GA", "audio_ga", 0.5f),
-        new PhonicsSegment("`", "audio_huyen", 0.35f),
-        new PhonicsSegment("GÀ", "audio_ga_full", 0.6f)
+        new PhonicsSegment("G", "seg_g", 1.05f),
+        new PhonicsSegment("A", "seg_a", 1.05f),
+        new PhonicsSegment("GA", "seg_ga", 1.10f),
+        new PhonicsSegment("`", "seg_huyen", 1.00f),
+        new PhonicsSegment("GÀ", "word_ga", 1.15f)
       },
       new string[] { "VỊT", "CHIM" },
       "RealPhotos/Animals/rooster_real",
@@ -136,9 +136,11 @@ public static class PhonicsDatabase {
     // 4. CAM (Fruits)
     new PhonicsWordData("cam", "CAM", "fruits",
       new PhonicsSegment[] {
-        new PhonicsSegment("C", "audio_c", 0.4f),
-        new PhonicsSegment("AM", "audio_am", 0.5f),
-        new PhonicsSegment("CAM", "audio_cam_full", 0.6f)
+        new PhonicsSegment("C", "seg_c", 1.05f),
+        new PhonicsSegment("A", "seg_a", 1.05f),
+        new PhonicsSegment("M", "seg_m", 1.05f),
+        new PhonicsSegment("AM", "seg_am", 1.10f),
+        new PhonicsSegment("CAM", "word_cam", 1.15f)
       },
       new string[] { "TÁO", "NHO" },
       "RealPhotos/Fruits/orange_real",
@@ -149,11 +151,13 @@ public static class PhonicsDatabase {
     // 5. TÁO (Fruits)
     new PhonicsWordData("tao", "TÁO", "fruits",
       new PhonicsSegment[] {
-        new PhonicsSegment("T", "audio_t", 0.4f),
-        new PhonicsSegment("AO", "audio_ao", 0.5f),
-        new PhonicsSegment("TAO", "audio_tao", 0.5f),
-        new PhonicsSegment("´", "audio_sac", 0.35f),
-        new PhonicsSegment("TÁO", "audio_tao_full", 0.6f)
+        new PhonicsSegment("T", "seg_t", 1.05f),
+        new PhonicsSegment("A", "seg_a", 1.05f),
+        new PhonicsSegment("O", "seg_o", 1.05f),
+        new PhonicsSegment("AO", "seg_ao", 1.10f),
+        new PhonicsSegment("TAO", "seg_tao", 1.10f),
+        new PhonicsSegment("´", "seg_sac", 1.00f),
+        new PhonicsSegment("TÁO", "word_tao", 1.15f)
       },
       new string[] { "LÊ", "CHUỐI" },
       "RealPhotos/Fruits/apple_real",
@@ -164,9 +168,9 @@ public static class PhonicsDatabase {
     // 6. XE (Vehicles)
     new PhonicsWordData("xe", "XE", "vehicles",
       new PhonicsSegment[] {
-        new PhonicsSegment("X", "audio_x", 0.4f),
-        new PhonicsSegment("E", "audio_e", 0.4f),
-        new PhonicsSegment("XE", "audio_xe_full", 0.6f)
+        new PhonicsSegment("X", "seg_x", 1.05f),
+        new PhonicsSegment("E", "seg_e", 1.05f),
+        new PhonicsSegment("XE", "word_xe", 1.15f)
       },
       new string[] { "TÀU", "THUYỀN" },
       "RealPhotos/Vehicles/car_real",
@@ -177,11 +181,11 @@ public static class PhonicsDatabase {
     // 7. BÀ (Family)
     new PhonicsWordData("ba", "BÀ", "family",
       new PhonicsSegment[] {
-        new PhonicsSegment("B", "audio_b", 0.4f),
-        new PhonicsSegment("A", "audio_a", 0.4f),
-        new PhonicsSegment("BA", "audio_ba", 0.5f),
-        new PhonicsSegment("`", "audio_huyen", 0.35f),
-        new PhonicsSegment("BÀ", "audio_ba_full", 0.6f)
+        new PhonicsSegment("B", "seg_b", 1.05f),
+        new PhonicsSegment("A", "seg_a", 1.05f),
+        new PhonicsSegment("BA", "seg_ba", 1.10f),
+        new PhonicsSegment("`", "seg_huyen", 1.00f),
+        new PhonicsSegment("BÀ", "word_ba", 1.15f)
       },
       new string[] { "MẸ", "BÉ" },
       "RealPhotos/Family/grandmother_real",
@@ -192,11 +196,11 @@ public static class PhonicsDatabase {
     // 8. MẸ (Family)
     new PhonicsWordData("me", "MẸ", "family",
       new PhonicsSegment[] {
-        new PhonicsSegment("M", "audio_m", 0.4f),
-        new PhonicsSegment("E", "audio_e", 0.4f),
-        new PhonicsSegment("ME", "audio_me", 0.5f),
-        new PhonicsSegment(".", "audio_nang", 0.35f),
-        new PhonicsSegment("MẸ", "audio_me_full", 0.6f)
+        new PhonicsSegment("M", "seg_m", 1.05f),
+        new PhonicsSegment("E", "seg_e", 1.05f),
+        new PhonicsSegment("ME", "seg_me", 1.10f),
+        new PhonicsSegment(".", "seg_nang", 1.00f),
+        new PhonicsSegment("MẸ", "word_me", 1.15f)
       },
       new string[] { "BỐ", "BÀ" },
       "RealPhotos/Family/mother_real",
@@ -207,11 +211,13 @@ public static class PhonicsDatabase {
     // 9. TÀU (Vehicles)
     new PhonicsWordData("tau", "TÀU", "vehicles",
       new PhonicsSegment[] {
-        new PhonicsSegment("T", "audio_t", 0.4f),
-        new PhonicsSegment("AU", "audio_au", 0.5f),
-        new PhonicsSegment("TAU", "audio_tau", 0.5f),
-        new PhonicsSegment("`", "audio_huyen", 0.35f),
-        new PhonicsSegment("TÀU", "audio_tau_full", 0.6f)
+        new PhonicsSegment("T", "seg_t", 1.05f),
+        new PhonicsSegment("A", "seg_a", 1.05f),
+        new PhonicsSegment("U", "seg_u", 1.05f),
+        new PhonicsSegment("AU", "seg_au", 1.10f),
+        new PhonicsSegment("TAU", "seg_tau", 1.10f),
+        new PhonicsSegment("`", "seg_huyen", 1.00f),
+        new PhonicsSegment("TÀU", "word_tau", 1.15f)
       },
       new string[] { "XE", "THUYỀN" },
       "RealPhotos/Vehicles/train_real",
@@ -222,11 +228,13 @@ public static class PhonicsDatabase {
     // 10. BÚT (Tools)
     new PhonicsWordData("but", "BÚT", "tools",
       new PhonicsSegment[] {
-        new PhonicsSegment("B", "audio_b", 0.4f),
-        new PhonicsSegment("UT", "audio_ut", 0.5f),
-        new PhonicsSegment("BUT", "audio_but", 0.5f),
-        new PhonicsSegment("´", "audio_sac", 0.35f),
-        new PhonicsSegment("BÚT", "audio_but_full", 0.6f)
+        new PhonicsSegment("B", "seg_b", 1.05f),
+        new PhonicsSegment("U", "seg_u", 1.05f),
+        new PhonicsSegment("T", "seg_t", 1.05f),
+        new PhonicsSegment("UT", "seg_ut", 1.10f),
+        new PhonicsSegment("BUT", "seg_but", 1.10f),
+        new PhonicsSegment("´", "seg_sac", 1.00f),
+        new PhonicsSegment("BÚT", "word_but", 1.15f)
       },
       new string[] { "THƯỚC", "SÁCH" },
       "RealPhotos/Tools/pen_real",
@@ -237,9 +245,12 @@ public static class PhonicsDatabase {
     // 11. HOA (Nature)
     new PhonicsWordData("hoa", "HOA", "nature",
       new PhonicsSegment[] {
-        new PhonicsSegment("H", "audio_h", 0.4f),
-        new PhonicsSegment("OA", "audio_oa", 0.5f),
-        new PhonicsSegment("HOA", "audio_hoa_full", 0.6f)
+        new PhonicsSegment("O", "seg_o", 1.05f),
+        new PhonicsSegment("A", "seg_a", 1.05f),
+        new PhonicsSegment("OA", "seg_oa", 1.10f),
+        new PhonicsSegment("H", "seg_h", 1.05f),
+        new PhonicsSegment("OA", "seg_oa", 1.10f),
+        new PhonicsSegment("HOA", "word_hoa", 1.15f)
       },
       new string[] { "LÁ", "CÂY" },
       "RealPhotos/Nature/flower_real",
@@ -250,9 +261,11 @@ public static class PhonicsDatabase {
     // 12. TAY (Body)
     new PhonicsWordData("tay", "TAY", "body",
       new PhonicsSegment[] {
-        new PhonicsSegment("T", "audio_t", 0.4f),
-        new PhonicsSegment("AY", "audio_ay", 0.5f),
-        new PhonicsSegment("TAY", "audio_tay_full", 0.6f)
+        new PhonicsSegment("T", "seg_t", 1.05f),
+        new PhonicsSegment("A", "seg_a", 1.05f),
+        new PhonicsSegment("Y", "seg_y", 1.05f),
+        new PhonicsSegment("AY", "seg_ay", 1.10f),
+        new PhonicsSegment("TAY", "word_tay", 1.15f)
       },
       new string[] { "CHÂN", "MẮT" },
       "RealPhotos/Body/hand_real",

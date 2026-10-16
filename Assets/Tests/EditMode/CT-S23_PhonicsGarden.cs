@@ -275,6 +275,33 @@ public class CT_S23_PhonicsGarden {
     Assert.AreEqual(0, tracker.PendingReviewCount, "queue empty");
   }
 
+  [Test] public void S23N_VoicePackKeys_PinnedForEverySegmentWordAndSpellLine() {
+    for (int i = 0; i < PhonicsDatabase.Words.Length; i++) {
+      PhonicsWordData w = PhonicsDatabase.Words[i];
+      Assert.IsNotNull(VnVoicePack.Get("word_" + w.WordId), "word clip pinned: " + w.WordId);
+      Assert.IsNotNull(VnVoicePack.Get("spell_" + w.WordId), "spell line pinned: " + w.WordId);
+      Assert.IsNotNull(VnVoicePack.Get("disc_" + w.WordId), "discovery clip pinned: " + w.WordId);
+      for (int s = 0; s < w.Segments.Length; s++) {
+        Assert.IsFalse(string.IsNullOrEmpty(w.Segments[s].AudioKey), "segment audio key set: " + w.WordId);
+        Assert.IsNotNull(VnVoicePack.Get(w.Segments[s].AudioKey),
+          "segment clip pinned: " + w.Segments[s].AudioKey + " (word " + w.WordId + ")");
+      }
+    }
+  }
+
+  [Test] public void S23O_HoaWord_ChainFollowsTeachingVideoOrder() {
+    PhonicsWordData hoa = PhonicsDatabase.GetWord("hoa");
+    Assert.IsNotNull(hoa, "hoa word exists");
+    Assert.AreEqual(6, hoa.Segments.Length, "o -> a -> oa -> hờ -> oa -> hoa");
+    Assert.AreEqual("O", hoa.Segments[0].SegmentText);
+    Assert.AreEqual("A", hoa.Segments[1].SegmentText);
+    Assert.AreEqual("OA", hoa.Segments[2].SegmentText);
+    Assert.AreEqual("H", hoa.Segments[3].SegmentText);
+    Assert.AreEqual("OA", hoa.Segments[4].SegmentText);
+    Assert.AreEqual("HOA", hoa.Segments[5].SegmentText);
+    Assert.AreEqual("word_hoa", hoa.Segments[5].AudioKey);
+  }
+
   [Test] public void S23I_SafetyFilterAllDialogues() {
     string[] lines = {
       "Con ra vườn nhé!",

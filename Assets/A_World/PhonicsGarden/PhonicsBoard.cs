@@ -15,8 +15,25 @@ public class PhonicsBoard : MonoBehaviour {
   Material _boardMat;
   Coroutine _highlightRoutine;
   GameObject _pictogramRoot;
+  AudioSource _player;
 
   public bool PictogramActive { get { return _pictogramRoot != null; } }
+
+  AudioSource EnsurePlayer() {
+    if (_player == null) {
+      _player = GetComponent<AudioSource>();
+      if (_player == null) _player = gameObject.AddComponent<AudioSource>();
+      _player.playOnAwake = false;
+      _player.spatialBlend = 0f;
+    }
+    return _player;
+  }
+
+  // One-shot clip on the board (word name / discovery name / feedback lines)
+  public void PlayClip(AudioClip clip) {
+    if (clip == null) return;
+    EnsurePlayer().PlayOneShot(clip, 1f);
+  }
 
   void Awake() {
     if (WordLabel == null) WordLabel = GetComponentInChildren<TextMesh>(true);
@@ -87,7 +104,9 @@ public class PhonicsBoard : MonoBehaviour {
   }
 
   // Explicit Phonics Instruction: Highlight segments one by one (C -> A -> CA -> Sắc -> CÁ)
-  public void PlayExplicitPhonics(PhonicsSegment[] segments, Action onComplete) {
+  // v2: each segment ALSO plays its mastered voice clip (AudioKey -> VnVoicePack); after the
+  // chain, the full teaching spell-line (e.g. spell_hoa) plays as the pay-off.
+  public void PlayExplicitPhonics(PhonicsSegment[] segments, Action onComplete, string spellLineKey = null) {
     if (!Application.isPlaying) {
       if (segments != null && segments.Length > 0 && WordLabel != null) {
         WordLabel.text = segments[segments.Length - 1].SegmentText;
@@ -96,14 +115,15 @@ public class PhonicsBoard : MonoBehaviour {
       return;
     }
     if (_highlightRoutine != null) StopCoroutine(_highlightRoutine);
-    _highlightRoutine = StartCoroutine(ExplicitPhonicsRoutine(segments, onComplete));
+    _highlightRoutine = StartCoroutine(ExplicitPhonicsRoutine(segments, onComplete, spellLineKey));
   }
 
-  IEnumerator ExplicitPhonicsRoutine(PhonicsSegment[] segments, Action onComplete) {
+  IEnumerator ExplicitPhonicsRoutine(PhonicsSegment[] segments, Action onComplete, string spellLineKey) {
     if (segments == null || segments.Length == 0) {
       onComplete?.Invoke();
       yield break;
     }
+    EnsurePlayer();
 
     Color activeColor = new Color(1f, 0.88f, 0.2f); // gold illumination
     for (int i = 0; i < segments.Length; i++) {
@@ -114,8 +134,26 @@ public class PhonicsBoard : MonoBehaviour {
       }
       if (BoardPlank != null) GameJuice.Pop(BoardPlank, 0.08f, 0.2f);
 
-      float dur = Mathf.Max(0.2f, seg.DurationSeconds);
+      AudioClip clip = VnVoicePack.Get(seg.AudioKey);
+      float dur;
+      if (clip != null) {
+        _player.PlayOneShot(clip, 1f);
+        dur = clip.length + 0.15f; // stay in sync with the actual stretched clip
+      } else {
+        dur = Mathf.Max(0.2f, seg.DurationSeconds);
+      }
       yield return new WaitForSeconds(dur);
+    }
+
+    // Full teaching line (the "o a oa hờ oa hoa" pay-off)
+    AudioClip line = VnVoicePack.Get(spellLineKey);
+    if (line != null) {
+      if (WordLabel != null) {
+        WordLabel.text = segments[segments.Length - 1].SegmentText;
+        WordLabel.color = activeColor;
+      }
+      _player.PlayOneShot(line, 1f);
+      yield return new WaitForSeconds(line.length + 0.25f);
     }
 
     if (WordLabel != null) {
