@@ -250,6 +250,9 @@ public class GameInstaller : MonoBehaviour {
       if (scene.name == VillageCourtyardBuilder.SceneName) {
         BuildVillageCourtyardPlayScene(scene);
       }
+      if (scene.name == VillageMarketBuilder.SceneName) {
+        BuildVillageMarketPlayScene(scene);
+      }
     // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the whole
     // arena (code folder, scene, dispatch branch and gate) is removed.
     // PHASE 5 LEGACY PURGE: Discovery Garden, MathScene and CountingGardenScene
@@ -836,6 +839,55 @@ public class GameInstaller : MonoBehaviour {
       } catch (System.Exception) { }
     } catch (System.Exception e) {
       Debug.LogError("[GameInstaller] VillageCourtyardPlayScene build failed: " + e.Message, this);
+    }
+  }
+
+  void BuildVillageMarketPlayScene(Scene scene) {
+    ActivityGuide.SetHidden(true);
+    try {
+      GameObject root = null;
+      if (scene.IsValid()) {
+        foreach (GameObject go in scene.GetRootGameObjects()) {
+          if (go != null && go.name == "VillageMarketWorld") { root = go; break; }
+        }
+      }
+      if (root == null) {
+        Debug.LogError("[GameInstaller] VillageMarketPlayScene has no VillageMarketWorld root.", this);
+        return;
+      }
+      root.transform.position = VillageMarketBuilder.WorldOffset;
+      VillageMarketBuilder builder = root.GetComponent<VillageMarketBuilder>();
+      if (builder == null) builder = root.AddComponent<VillageMarketBuilder>();
+      ActivityFeedback.TextHidden = true;
+      builder.Build();
+      if (_yardArea != null) {
+        Vector3 entry = VillageMarketBuilder.WorldOffset + VillageMarketBuilder.EntryLocal;
+        _yardArea.SetPlay(entry, builder.Anchors, VillageMarketBuilder.WorldOffset,
+          VillageMarketBuilder.BoundX, VillageMarketBuilder.BoundZ, VillageMarketBuilder.FollowOffset,
+          DialogueLang.T("Go to market with grandma!", "Đi chợ quê cùng bà nhé!"));
+        if (builder.ExitPortal != null) builder.ExitPortal.YardArea = _yardArea;
+      }
+      try {
+        VillageMarketGameController game = root.GetComponent<VillageMarketGameController>();
+        if (game == null) game = root.AddComponent<VillageMarketGameController>();
+        Transform playerT = _activeBuilder != null && _activeBuilder.Player != null
+          ? _activeBuilder.Player.transform : null;
+        ActivityLifecycle life = _yardArea != null ? _yardArea.MarketListeningLifecycle : null;
+        game.Build(builder, playerT,
+          _activeBuilder != null ? _activeBuilder.WorldCamera : null, Audio, life,
+          new SpatialAudioDuckingService(null, builder.VoiceSource, builder.SfxSource), null, null);
+        if (_yardArea != null) {
+          _yardArea.BindMarketListeningGame(game);
+        }
+      } catch (System.Exception e) {
+        Debug.LogWarning("[GameInstaller] village market wiring failed: " + e.Message, this);
+      }
+      try {
+        Debug.Log("[GameInstaller] Village Market scene built entry="
+          + (VillageMarketBuilder.WorldOffset + VillageMarketBuilder.EntryLocal).ToString("F1"));
+      } catch (System.Exception) { }
+    } catch (System.Exception e) {
+      Debug.LogError("[GameInstaller] VillageMarketPlayScene build failed: " + e.Message, this);
     }
   }
 

@@ -304,6 +304,12 @@ public class SelectionYardArea : MonoBehaviour, IMicroWorldArea {
   public VillageCourtyardGameController CourtyardGame { get; private set; }
   public void BindCourtyardGame(VillageCourtyardGameController game) { CourtyardGame = game; }
 
+  // Vietnamese listening ("Chợ Quê Nhộn Nhịp")
+  public ActivityLifecycle MarketListeningLifecycle { get; private set; } =
+    new ActivityLifecycle("market_listening", "SelectionYardArea");
+  public VillageMarketGameController MarketListeningGame { get; private set; }
+  public void BindMarketListeningGame(VillageMarketGameController game) { MarketListeningGame = game; }
+
   // Ga Thứ Tự (ordering_station) DELETED 2026-10-13 (owner order): the station
   // lifecycle, game binding and arena wiring are all removed.
 
