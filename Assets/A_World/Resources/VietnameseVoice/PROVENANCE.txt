@@ -1,5 +1,5 @@
 Vietnamese voice pack - Azure Neural TTS (vi-VN-HoaiMyNeural, region southeastasia).
-KHONG phai ban ghi nguoi that (AI/online synthesized - not human recordings). Generated: 2026-10-16 10:30
-Slow clips are BAKED at 0.8x (SSML prosody, natural pitch) - play them at natural speed.
-Source manifest: Content/vn_voice/manifest.json (keys pinned == runtime lookups).
-Regenerate: powershell -File tools/pregen_vn_voice.ps1 -Source azure|worker
+KHONG phai ban ghi nguoi that (AI/online synthesized - not human recordings). Generated: 2026-10-16 11:12
+Prompt clips: normal + slow (0.8x SSML bake, natural pitch).
+Spelling pieces + teaching lines: SSML 0.5x -> ffmpeg trim + atempo 0.6 (pitch preserved).
+Keys pinned == runtime lookups. Regenerate: tools/pregen_vn_voice.ps1 -Source azure|worker
