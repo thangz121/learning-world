@@ -27,8 +27,11 @@ function Get-EditorProcesses {
   }
 }
 
+$mode = if ($Suite) { 'suite' } else { 'build' }
+$projTag = Split-Path -Leaf $root
+
 function Finish([string]$status, [string]$detail) {
-  $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | $status | $detail"
+  $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | $projTag/$mode | $status | $detail"
   [System.IO.File]::WriteAllText($resultFile, $line + "`r`n", [System.Text.UTF8Encoding]::new($false))
   Write-Output $line
   if ($status -eq 'SUCCEEDED') { exit 0 } else { exit 1 }
