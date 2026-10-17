@@ -2,16 +2,22 @@
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File tools/build_now.ps1            # player build (TempBuildP62)
 #   powershell -ExecutionPolicy Bypass -File tools/build_now.ps1 -Suite     # EditMode test suite
-# Writes tools/build_result.txt (1 line: timestamp | status | detail) and exits 0 on success.
-# Guards: concurrency (one Unity at a time), hang timeout, license-198 guidance.
+#   ... -ProjectPath D:\OtherProject -ExecuteMethod Some.Editor.Build      # any project/method
+# Writes build_result.txt (next to this script): 1 line, timestamp | status | detail. Exit 0 on success.
+# Guards: concurrency (one Unity at a time), hang timeout, license-198/refused guidance.
 param(
   [switch]$Suite,
-  [int]$TimeoutMin = 15
+  [int]$TimeoutMin = 15,
+  [string]$ProjectPath = 'D:\Vscode\little-world-english',
+  [string]$ExecuteMethod = 'TempBuildP62.Build'
 )
 $ErrorActionPreference = 'Stop'
-$root = 'D:\Vscode\little-world-english'
+$root = $ProjectPath
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $unity = 'D:\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe'
-$resultFile = Join-Path $root 'tools\build_result.txt'
+$resultFile = Join-Path $scriptDir 'build_result.txt'
+$tempDir = Join-Path $root 'Temp'
+if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Force -Path $tempDir | Out-Null }
 
 function Finish([string]$status, [string]$detail) {
   $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | $status | $detail"
@@ -34,7 +40,7 @@ if ($Suite) {
   Remove-Item $xmlResults -ErrorAction SilentlyContinue
   & $unity -batchmode -projectPath $root -runTests -testPlatform EditMode -testResults $xmlResults -logFile $log
 } else {
-  & $unity -batchmode -projectPath $root -executeMethod TempBuildP62.Build -logFile $log -quit
+  & $unity -batchmode -projectPath $root -executeMethod $ExecuteMethod -logFile $log -quit
 }
 $deadline = (Get-Date).AddMinutes($TimeoutMin)
 while ((Get-Process Unity -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
