@@ -365,6 +365,9 @@ public class CT_P17x_EnglishAcousticDspEngine {
     string basePath = Path.Combine(
         "Research", "Speech", "ExternalData", "zenodo_200495", "extracted",
         "english_children", "english_words_sentences");
+    if (!Directory.Exists(basePath)) {
+      Assert.Ignore("zenodo native child clips not present on this machine (dataset-gated test; see Research notes)");
+    }
 
     foreach (var it in items) {
       string fullPath = Path.Combine(basePath, it.Speaker, "studio_mic", "numbers", it.Filename);
