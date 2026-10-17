@@ -1,0 +1,20 @@
+{
+  "name": "LWE.Tests.PlayMode",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "LWE.SharedKernel",
+    "LWE.Brain",
+    "LWE.Content",
+    "LWE.Audio",
+    "LWE.World",
+    "LWE.Bootstrap"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}
