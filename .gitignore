@@ -148,3 +148,4 @@ Research/Speech/ExternalData/
 /TestResults_*.xml
 /tools/build_result.txt
 /Temp/agent-*
+/tools/journey_result.txt
