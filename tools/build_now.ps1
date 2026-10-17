@@ -1,15 +1,18 @@
 # tools/build_now.ps1 - one-shot project build/suite runner for ANY agent (CLI or computer-use).
+# This machine's rule (HANDOFF/SESSION_BRIEF): batchmode EditMode suite + production build ONLY -
+# never open the game/journey windows here (real-input journeys belong to the dedicated node).
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File tools/build_now.ps1            # player build (TempBuildP62)
-#   powershell -ExecutionPolicy Bypass -File tools/build_now.ps1 -Suite     # EditMode test suite
+#   powershell -ExecutionPolicy Bypass -File tools/build_now.ps1 -Suite     # full EditMode suite (journey pins incl.)
+#   powershell -ExecutionPolicy Bypass -File tools/build_now.ps1 -Suite -TestFilter CT_S14   # targeted journey fixture
 #   ... -ProjectPath D:\OtherProject -ExecuteMethod Some.Editor.Build      # any project/method
-# Writes build_result.txt (next to this script): 1 line, timestamp | status | detail. Exit 0 on success.
-# Guards: concurrency (one Unity at a time), hang timeout, license-198/refused guidance.
+# Writes build_result.txt (next to this script): 1 line, timestamp | project/mode | status | detail.
 param(
   [switch]$Suite,
   [int]$TimeoutMin = 15,
   [string]$ProjectPath = 'D:\Vscode\little-world-english',
-  [string]$ExecuteMethod = 'TempBuildP62.Build'
+  [string]$ExecuteMethod = 'TempBuildP62.Build',
+  [string]$TestFilter = ''
 )
 $ErrorActionPreference = 'Stop'
 $root = $ProjectPath
@@ -18,6 +21,8 @@ $unity = 'D:\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe'
 $resultFile = Join-Path $scriptDir 'build_result.txt'
 $tempDir = Join-Path $root 'Temp'
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Force -Path $tempDir | Out-Null }
+$mode = if ($Suite) { if ([string]::IsNullOrEmpty($TestFilter)) { 'suite' } else { "suite($TestFilter)" } } else { 'build' }
+$projTag = Split-Path -Leaf $root
 
 # Only the real Unity EDITOR counts as a build process — Unity Hub ships a helper also named
 # "unity.exe" (serve) which must never trip the concurrency guard or be killed.
@@ -26,9 +31,6 @@ function Get-EditorProcesses {
     try { $_.Path -like 'D:\Unity\Hub\Editor\*' } catch { $false }
   }
 }
-
-$mode = if ($Suite) { 'suite' } else { 'build' }
-$projTag = Split-Path -Leaf $root
 
 function Finish([string]$status, [string]$detail) {
   $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | $projTag/$mode | $status | $detail"
@@ -49,7 +51,10 @@ $xmlResults = Join-Path $root 'Temp\agent-suite.xml'
 # 3) Launch + bounded wait (Unity.exe launcher returns immediately; poll the real process)
 if ($Suite) {
   Remove-Item $xmlResults -ErrorAction SilentlyContinue
-  & $unity -batchmode -projectPath $root -runTests -testPlatform EditMode -testResults $xmlResults -logFile $log
+  $suiteArgs = @('-batchmode', '-projectPath', $root, '-runTests', '-testPlatform', 'EditMode',
+    '-testResults', $xmlResults, '-logFile', $log)
+  if (-not [string]::IsNullOrEmpty($TestFilter)) { $suiteArgs += @('-testFilter', $TestFilter) }
+  & $unity @suiteArgs
 } else {
   & $unity -batchmode -projectPath $root -executeMethod $ExecuteMethod -logFile $log -quit
 }
