@@ -19,6 +19,14 @@ $resultFile = Join-Path $scriptDir 'build_result.txt'
 $tempDir = Join-Path $root 'Temp'
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Force -Path $tempDir | Out-Null }
 
+# Only the real Unity EDITOR counts as a build process — Unity Hub ships a helper also named
+# "unity.exe" (serve) which must never trip the concurrency guard or be killed.
+function Get-EditorProcesses {
+  Get-Process Unity -ErrorAction SilentlyContinue | Where-Object {
+    try { $_.Path -like 'D:\Unity\Hub\Editor\*' } catch { $false }
+  }
+}
+
 function Finish([string]$status, [string]$detail) {
   $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | $status | $detail"
   [System.IO.File]::WriteAllText($resultFile, $line + "`r`n", [System.Text.UTF8Encoding]::new($false))
@@ -27,8 +35,8 @@ function Finish([string]$status, [string]$detail) {
 }
 
 # 1) Concurrency guard: this machine shares one Unity licensing client - serialize runs.
-if (Get-Process Unity -ErrorAction SilentlyContinue) {
-  Finish 'BLOCKED' 'another Unity process is already running - wait for it to finish, then rerun'
+if (Get-EditorProcesses) {
+  Finish 'BLOCKED' 'another Unity EDITOR process is already running - wait for it to finish, then rerun'
 }
 
 # 2) Prepare log + arguments
@@ -43,11 +51,11 @@ if ($Suite) {
   & $unity -batchmode -projectPath $root -executeMethod $ExecuteMethod -logFile $log -quit
 }
 $deadline = (Get-Date).AddMinutes($TimeoutMin)
-while ((Get-Process Unity -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+while ((Get-EditorProcesses) -and (Get-Date) -lt $deadline) {
   Start-Sleep -Seconds 10
 }
-if (Get-Process Unity -ErrorAction SilentlyContinue) {
-  Get-Process Unity | Stop-Process -Force -ErrorAction SilentlyContinue
+if (Get-EditorProcesses) {
+  Get-EditorProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
   Finish 'HUNG' "timed out after ${TimeoutMin}m and was killed. If the log mentions LicenseClient waiting: close Unity, kill stale Unity.Licensing.Client, start Unity Hub again, then rerun. log=$log"
 }
 
