@@ -146,3 +146,5 @@ Research/Speech/ExternalData/
 /test_piper.wav
 /TestResults_*.log
 /TestResults_*.xml
+/tools/build_result.txt
+/Temp/agent-*
